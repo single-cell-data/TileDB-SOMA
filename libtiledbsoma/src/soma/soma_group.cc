@@ -112,11 +112,12 @@ SOMAGroup::SOMAGroup(
         default: {  // Only allow read/write when constructing from TileDB.
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(group_->query_type(), &query_type_str);
-            throw TileDBSOMAError(fmt::format(
-                "Internal error: SOMAGroup constructor does not accept a "
-                "TileDB group opened in mode '{}'. The group must be opened in "
-                "either read or write mode.",
-                query_type_str));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Internal error: SOMAGroup constructor does not accept a "
+                    "TileDB group opened in mode '{}'. The group must be opened in "
+                    "either read or write mode.",
+                    query_type_str));
         }
     }
     fill_caches();

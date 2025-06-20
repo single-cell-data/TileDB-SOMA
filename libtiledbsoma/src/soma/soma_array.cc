@@ -128,11 +128,12 @@ SOMAArray::SOMAArray(
         default: {  // Only allow read/write when constructing from TileDB.
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(arr_->query_type(), &query_type_str);
-            throw std::invalid_argument(fmt::format(
-                "Internal error: SOMAArray constructor does not accept a "
-                "TileDB array opened in mode '{}'. The array must be opened in "
-                "either read or write mode.",
-                query_type_str));
+            throw std::invalid_argument(
+                fmt::format(
+                    "Internal error: SOMAArray constructor does not accept a "
+                    "TileDB array opened in mode '{}'. The array must be opened in "
+                    "either read or write mode.",
+                    query_type_str));
         }
     }
     fill_metadata_cache(soma_mode_, timestamp_);
@@ -173,11 +174,12 @@ void SOMAArray::fill_columns() {
 
     if (type().value_or("") == "SOMAGeometryDataFrame") {
         if (!has_metadata(TILEDB_SOMA_SCHEMA_KEY)) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray][fill_columns] Missing required metadata key '{}' "
-                "from SOMAGeometryDataFrame '{}'",
-                TILEDB_SOMA_SCHEMA_KEY,
-                uri()));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAArray][fill_columns] Missing required metadata key '{}' "
+                    "from SOMAGeometryDataFrame '{}'",
+                    TILEDB_SOMA_SCHEMA_KEY,
+                    uri()));
         }
     }
 
@@ -338,10 +340,11 @@ Enumeration SOMAArray::get_existing_enumeration_for_column(std::string column_na
     auto attribute = schema_->attribute(column_name);
     auto enumeration_name = AttributeExperimental::get_enumeration_name(*tctx, attribute);
     if (!enumeration_name.has_value()) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
-            "is non-enumerated",
-            column_name));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
+                "is non-enumerated",
+                column_name));
     }
     return ArrayExperimental::get_enumeration(*tctx, *arr_, enumeration_name.value());
 }
@@ -367,10 +370,11 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAArray::get_enumeration_values_for_colum
 
     // Throw if this column is not of dictionary type
     if (column_schema->dictionary == nullptr) {
-        throw TileDBSOMAError(fmt::format(
-            "[get_enumeration_values_for_column] column named '{}' is not of "
-            "dictionary type",
-            column_name));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[get_enumeration_values_for_column] column named '{}' is not of "
+                "dictionary type",
+                column_name));
     }
 
     // Release the pointers within the ArrowSchema*:
@@ -438,8 +442,9 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAArray::get_enumeration_values_for_colum
             break;
 
         default:
-            throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_dtype)));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_dtype)));
     }
 
     return std::pair(output_arrow_array, output_arrow_schema);
@@ -464,10 +469,11 @@ void SOMAArray::extend_enumeration_values(
         auto attribute = schema_->attribute(column_name);
         auto enumeration_name = AttributeExperimental::get_enumeration_name(*tctx, attribute);
         if (!enumeration_name.has_value()) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray::extend_enumeration_values] column_name '{}' is "
-                "non-enumerated",
-                column_name));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAArray::extend_enumeration_values] column_name '{}' is "
+                    "non-enumerated",
+                    column_name));
         }
         Enumeration core_enum = get_existing_enumeration_for_column(column_name);
 
@@ -753,11 +759,12 @@ void SOMAArray::_set_shape_helper(
 
     size_t array_ndim = static_cast<size_t>(ndim());
     if (newshape.size() != array_ndim) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::resize]: newshape has dimension count {}; array has "
-            "{} ",
-            newshape.size(),
-            array_ndim));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAArray::resize]: newshape has dimension count {}; array has "
+                "{} ",
+                newshape.size(),
+                array_ndim));
     }
 
     size_t idx = 0;
@@ -803,18 +810,20 @@ void SOMAArray::_set_soma_joinid_shape_helper(
         for (const auto& column : columns_ | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
             if (column->name() == SOMA_JOINID) {
                 if (column->domain_type().value() != TILEDB_INT64) {
-                    throw TileDBSOMAError(fmt::format(
-                        "{}: expected soma_joinid to be of type {}; got {}",
-                        function_name_for_messages,
-                        tiledb::impl::type_to_str(TILEDB_INT64),
-                        tiledb::impl::type_to_str(column->domain_type().value())));
+                    throw TileDBSOMAError(
+                        fmt::format(
+                            "{}: expected soma_joinid to be of type {}; got {}",
+                            function_name_for_messages,
+                            tiledb::impl::type_to_str(TILEDB_INT64),
+                            tiledb::impl::type_to_str(column->domain_type().value())));
                 }
 
                 if (column->type() != soma_column_datatype_t::SOMA_COLUMN_DIMENSION) {
-                    throw TileDBSOMAError(fmt::format(
-                        "{}: expected soma_joinid type to be of type "
-                        "SOMA_COLUMN_DIMENSION",
-                        function_name_for_messages));
+                    throw TileDBSOMAError(
+                        fmt::format(
+                            "{}: expected soma_joinid type to be of type "
+                            "SOMA_COLUMN_DIMENSION",
+                            function_name_for_messages));
                 }
 
                 column->set_current_domain_slot(ndrect, std::vector<int64_t>({0, newshape - 1}));
@@ -943,12 +952,13 @@ void SOMAArray::_set_domain_helper(
     }
 
     if (newdomain.second->n_children != static_cast<int64_t>(ndim())) {
-        throw TileDBSOMAError(fmt::format(
-            "{}: requested domain has ndim={} but the dataframe has "
-            "ndim={}",
-            function_name_for_messages,
-            newdomain.second->n_children,
-            ndim()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "{}: requested domain has ndim={} but the dataframe has "
+                "ndim={}",
+                function_name_for_messages,
+                newdomain.second->n_children,
+                ndim()));
     }
 
     if (newdomain.second->n_children != newdomain.first->n_children) {
@@ -1039,11 +1049,12 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_current_do
 
     auto column = get_column(SOMA_JOINID);
     if (column->domain_type().value() != TILEDB_INT64) {
-        throw TileDBSOMAError(fmt::format(
-            "expected {} dim to be {}; got {}",
-            SOMA_JOINID,
-            tiledb::impl::type_to_str(TILEDB_INT64),
-            tiledb::impl::type_to_str(column->domain_type().value())));
+        throw TileDBSOMAError(
+            fmt::format(
+                "expected {} dim to be {}; got {}",
+                SOMA_JOINID,
+                tiledb::impl::type_to_str(TILEDB_INT64),
+                tiledb::impl::type_to_str(column->domain_type().value())));
     }
 
     auto max = column->core_current_domain_slot<int64_t>(*ctx_, *arr_).second + 1;
@@ -1058,11 +1069,12 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
 
     auto column = get_column(SOMA_JOINID);
     if (column->domain_type().value() != TILEDB_INT64) {
-        throw TileDBSOMAError(fmt::format(
-            "expected {} dim to be {}; got {}",
-            SOMA_JOINID,
-            tiledb::impl::type_to_str(TILEDB_INT64),
-            tiledb::impl::type_to_str(column->domain_type().value())));
+        throw TileDBSOMAError(
+            fmt::format(
+                "expected {} dim to be {}; got {}",
+                SOMA_JOINID,
+                tiledb::impl::type_to_str(TILEDB_INT64),
+                tiledb::impl::type_to_str(column->domain_type().value())));
     }
 
     auto max = column->core_domain_slot<int64_t>().second + 1;
@@ -1112,11 +1124,12 @@ std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {
 
 std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::size_t index) const {
     if (index >= columns_.size()) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray] internal coding error: Column index outside of range. "
-            "Requested {}, but {} exist.",
-            index,
-            columns_.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAArray] internal coding error: Column index outside of range. "
+                "Requested {}, but {} exist.",
+                index,
+                columns_.size()));
     }
 
     return columns_[index];

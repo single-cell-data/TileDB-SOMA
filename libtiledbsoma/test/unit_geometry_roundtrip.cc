@@ -118,9 +118,10 @@ TEST_CASE("Geometry: Multipoint roundtrip") {
 }
 
 TEST_CASE("Geometry: MultiLineString roundtrip") {
-    MultiLineString multi_linestring(std::vector<LineString>(
-        {LineString(std::vector<BasePoint>({BasePoint(5.2, 1.3), BasePoint(1.0, 3.0), BasePoint(1.0, 1.4)})),
-         LineString(std::vector<BasePoint>({BasePoint(0, 100), BasePoint(3.15, 1.67)}))}));
+    MultiLineString multi_linestring(
+        std::vector<LineString>(
+            {LineString(std::vector<BasePoint>({BasePoint(5.2, 1.3), BasePoint(1.0, 3.0), BasePoint(1.0, 1.4)})),
+             LineString(std::vector<BasePoint>({BasePoint(0, 100), BasePoint(3.15, 1.67)}))}));
 
     BinaryBuffer buffer = to_wkb(GenericGeometry(multi_linestring));
     CHECK(buffer.size() == 107);
@@ -143,12 +144,13 @@ TEST_CASE("Geometry: MultiLineString roundtrip") {
 }
 
 TEST_CASE("Geometry: MultiPolygon roundtrip") {
-    MultiPolygon multi_polygon(std::vector<Polygon>(
-        {Polygon(
-             std::vector<BasePoint>({BasePoint(5.2, 1.3), BasePoint(1.0, 3.0), BasePoint(1.0, 1.4)}),
-             std::vector<std::vector<BasePoint>>(
-                 {std::vector<BasePoint>({BasePoint(5.234, 1.3), BasePoint(13.0, 3.0)})})),
-         Polygon(std::vector<BasePoint>({BasePoint(5.2, 6.3), BasePoint(1.3664, 3.0), BasePoint(1, 10)}))}));
+    MultiPolygon multi_polygon(
+        std::vector<Polygon>(
+            {Polygon(
+                 std::vector<BasePoint>({BasePoint(5.2, 1.3), BasePoint(1.0, 3.0), BasePoint(1.0, 1.4)}),
+                 std::vector<std::vector<BasePoint>>(
+                     {std::vector<BasePoint>({BasePoint(5.234, 1.3), BasePoint(13.0, 3.0)})})),
+             Polygon(std::vector<BasePoint>({BasePoint(5.2, 6.3), BasePoint(1.3664, 3.0), BasePoint(1, 10)}))}));
 
     BinaryBuffer buffer = to_wkb(GenericGeometry(multi_polygon));
     CHECK(buffer.size() == 167);

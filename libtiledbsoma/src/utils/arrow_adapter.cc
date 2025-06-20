@@ -49,35 +49,39 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     }
 
     if (schema->children != nullptr) {
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] release_schema name {} n_children {} begin "
-            "recurse ",
-            name_for_log,
-            schema->n_children));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] release_schema name {} n_children {} begin "
+                "recurse ",
+                name_for_log,
+                schema->n_children));
 
         for (auto i = 0; i < schema->n_children; i++) {
             if (schema->children[i] != nullptr) {
                 if (schema->children[i]->release != nullptr) {
-                    LOG_TRACE(fmt::format(
-                        "[ArrowAdapter] release_schema name {} schema->child "
-                        "{} "
-                        "release",
-                        name_for_log,
-                        i));
+                    LOG_TRACE(
+                        fmt::format(
+                            "[ArrowAdapter] release_schema name {} schema->child "
+                            "{} "
+                            "release",
+                            name_for_log,
+                            i));
                     schema->children[i]->release(schema->children[i]);
                 }
-                LOG_TRACE(fmt::format(
-                    "[ArrowAdapter] release_schema name {} schema->child {} "
-                    "free",
-                    name_for_log,
-                    i));
+                LOG_TRACE(
+                    fmt::format(
+                        "[ArrowAdapter] release_schema name {} schema->child {} "
+                        "free",
+                        name_for_log,
+                        i));
                 free(schema->children[i]);
                 schema->children[i] = nullptr;
             }
         }
 
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] release_schema name {} n_children {} end recurse ", name_for_log, schema->n_children));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] release_schema name {} n_children {} end recurse ", name_for_log, schema->n_children));
 
         free(schema->children);
         schema->children = nullptr;
@@ -100,10 +104,11 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 void ArrowAdapter::release_array(struct ArrowArray* array) {
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
     if (arrow_buffer != nullptr) {
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] release_array {} use_count={}",
-            arrow_buffer->buffer_->name(),
-            arrow_buffer->buffer_.use_count()));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] release_array {} use_count={}",
+                arrow_buffer->buffer_->name(),
+                arrow_buffer->buffer_.use_count()));
 
         // Delete the ArrowBuffer, which was allocated with new.
         // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
@@ -337,12 +342,13 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->dictionary = nullptr;
         child->release = &ArrowAdapter::release_schema;
         child->private_data = nullptr;
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} format {} "
-            "name {}",
-            i,
-            child->format,
-            child->name));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} format {} "
+                "name {}",
+                i,
+                child->format,
+                child->name));
     }
 
     for (uint32_t i = 0; i < nattr; ++i) {
@@ -363,12 +369,13 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->release = &ArrowAdapter::release_schema;
         child->private_data = nullptr;
 
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} format {} "
-            "name {}",
-            i,
-            child->format,
-            child->name));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} format {} "
+                "name {}",
+                i,
+                child->format,
+                child->name));
 
         auto enmr_name = AttributeExperimental::get_enumeration_name(*ctx, attr);
         if (enmr_name.has_value()) {
@@ -418,11 +425,12 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(const Dimension& d
     arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->private_data = nullptr;
-    LOG_TRACE(fmt::format(
-        "[ArrowAdapter] arrow_schema_from_tiledb_dimension format {} "
-        "name {}",
-        arrow_schema->format,
-        arrow_schema->name));
+    LOG_TRACE(
+        fmt::format(
+            "[ArrowAdapter] arrow_schema_from_tiledb_dimension format {} "
+            "name {}",
+            arrow_schema->format,
+            arrow_schema->name));
 
     return arrow_schema;
 }
@@ -462,11 +470,12 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
         ArrowSchemaSetMetadata(arrow_schema, reinterpret_cast<char*>(metadata_buffer->data));
     }
 
-    LOG_TRACE(fmt::format(
-        "[ArrowAdapter] arrow_schema_from_tiledb_array format {} "
-        "name {}",
-        arrow_schema->format,
-        arrow_schema->name));
+    LOG_TRACE(
+        fmt::format(
+            "[ArrowAdapter] arrow_schema_from_tiledb_array format {} "
+            "name {}",
+            arrow_schema->format,
+            arrow_schema->name));
 
     if (enmr_name.has_value()) {
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
@@ -805,23 +814,25 @@ std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_s
         for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
             if (strcmp(child->name, index_column_schema->children[i]->name) == 0) {
                 if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
-                    columns.push_back(SOMAGeometryColumn::create(
-                        ctx,
-                        child,
-                        index_column_schema->children[i],
-                        index_column_array->children[i],
-                        coordinate_space.value(),
-                        soma_type,
-                        type_metadata,
-                        platform_config));
+                    columns.push_back(
+                        SOMAGeometryColumn::create(
+                            ctx,
+                            child,
+                            index_column_schema->children[i],
+                            index_column_array->children[i],
+                            coordinate_space.value(),
+                            soma_type,
+                            type_metadata,
+                            platform_config));
                 } else {
-                    columns.push_back(SOMADimension::create(
-                        ctx,
-                        index_column_schema->children[i],
-                        index_column_array->children[i],
-                        soma_type,
-                        type_metadata,
-                        platform_config));
+                    columns.push_back(
+                        SOMADimension::create(
+                            ctx,
+                            index_column_schema->children[i],
+                            index_column_array->children[i],
+                            soma_type,
+                            type_metadata,
+                            platform_config));
                 }
                 isattr = false;
                 LOG_DEBUG(fmt::format("[ArrowAdapter] adding dimension {}", child->name));
@@ -960,11 +971,12 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     FilterList filter_list = ArrowAdapter::_create_dim_filter_list(col_name, platform_config, soma_type, ctx);
 
     if (array->length != 5) {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: unexpected length {} != 5 for name "
-            "'{}'",
-            array->length,
-            col_name));
+        throw TileDBSOMAError(
+            fmt::format(
+                "ArrowAdapter: unexpected length {} != 5 for name "
+                "'{}'",
+                array->length,
+                col_name));
     }
 
     const void* buff = array->buffers[1];
@@ -985,14 +997,16 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
     PlatformConfig platform_config) {
     if (strcmp(schema->format, "+l") != 0) {
         throw TileDBSOMAError(
-            fmt::format("[tiledb_dimension_from_arrow_schema_ext] Schema "
-                        "should be of type list."));
+            fmt::format(
+                "[tiledb_dimension_from_arrow_schema_ext] Schema "
+                "should be of type list."));
     }
 
     if (schema->n_children != 1) {
         throw TileDBSOMAError(
-            fmt::format("[tiledb_dimension_from_arrow_schema_ext] Schema "
-                        "should have exactly 1 child"));
+            fmt::format(
+                "[tiledb_dimension_from_arrow_schema_ext] Schema "
+                "should have exactly 1 child"));
     }
 
     auto type = ArrowAdapter::to_tiledb_format(schema->children[0]->format, type_metadata);
@@ -1006,11 +1020,12 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
     FilterList filter_list = ArrowAdapter::_create_dim_filter_list(col_name, platform_config, soma_type, ctx);
 
     if (array->length != 5) {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: unexpected length {} != 5 for name "
-            "'{}'",
-            array->length,
-            col_name));
+        throw TileDBSOMAError(
+            fmt::format(
+                "ArrowAdapter: unexpected length {} != 5 for name "
+                "'{}'",
+                array->length,
+                col_name));
     }
 
     const void* buff = array->children[0]->buffers[1];
@@ -1053,11 +1068,12 @@ std::pair<Attribute, std::optional<Enumeration>> ArrowAdapter::tiledb_attribute_
             ArrowAdapter::arrow_is_var_length_type(enmr_format) ? TILEDB_VAR_NUM : 1,
             arrow_schema->flags & ARROW_FLAG_DICTIONARY_ORDERED);
         AttributeExperimental::set_enumeration_name(*ctx, attr, enmr_label);
-        LOG_DEBUG(fmt::format(
-            "[ArrowAdapter] dictionary for '{}' as '{}' '{}'",
-            std::string(arrow_schema->name),
-            tiledb::impl::type_to_str(enmr_type),
-            std::string(enmr_format)));
+        LOG_DEBUG(
+            fmt::format(
+                "[ArrowAdapter] dictionary for '{}' as '{}' '{}'",
+                std::string(arrow_schema->name),
+                tiledb::impl::type_to_str(enmr_type),
+                std::string(enmr_format)));
     }
 
     return {attr, enmr};
@@ -1109,20 +1125,22 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
     array->length = column->size();
 
-    LOG_TRACE(fmt::format(
-        "[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
-        to_arrow_format(column->type()).data(),
-        column->name().data(),
-        n_buffers,
-        array->n_buffers,
-        column->is_nullable()));
+    LOG_TRACE(
+        fmt::format(
+            "[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
+            to_arrow_format(column->type()).data(),
+            column->name().data(),
+            n_buffers,
+            array->n_buffers,
+            column->is_nullable()));
 
     if (array->n_buffers != n_buffers) {
-        throw TileDBSOMAError(fmt::format(
-            "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
-            n_buffers,
-            column->name(),
-            array->n_buffers));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
+                n_buffers,
+                column->name(),
+                array->n_buffers));
     }
 
     // After allocating and initializing via nanoarrow we
@@ -1360,11 +1378,12 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     auto num_types = tiledb_datatypes.size();
 
     if (num_names != num_types) {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter::make_arrow_schema: internal coding error: num_types "
-            "{} != num_names {}",
-            num_names,
-            num_types));
+        throw TileDBSOMAError(
+            fmt::format(
+                "ArrowAdapter::make_arrow_schema: internal coding error: num_types "
+                "{} != num_names {}",
+                num_names,
+                num_types));
     }
 
     auto arrow_schema = make_managed_unique<ArrowSchema>();
@@ -1382,8 +1401,12 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
 
     for (int i = 0; i < (int)num_names; i++) {
         auto dim_schema = make_arrow_schema_child(names[i], tiledb_datatypes[i]);
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] make_arrow_schema child {} format {} name {}", i, dim_schema->format, dim_schema->name));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] make_arrow_schema child {} format {} name {}",
+                i,
+                dim_schema->format,
+                dim_schema->name));
         arrow_schema->children[i] = dim_schema;
     }
 
@@ -1504,47 +1527,52 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     const ArrowTable& arrow_table, int64_t column_index, int64_t expected_n_buffers) {
     ArrowArray* arrow_array = arrow_table.first.get();
     if (column_index < 0 || column_index >= arrow_array->n_children) {
-        throw std::runtime_error(fmt::format(
-            "ArrowAdapter::_get_and_check_column: column index {} out of "
-            "bounds {}..{}",
-            column_index,
-            0,
-            arrow_array->n_children - 1));
+        throw std::runtime_error(
+            fmt::format(
+                "ArrowAdapter::_get_and_check_column: column index {} out of "
+                "bounds {}..{}",
+                column_index,
+                0,
+                arrow_array->n_children - 1));
     }
 
     ArrowArray* child = arrow_array->children[column_index];
 
     if (child->n_children != 0) {
-        throw std::runtime_error(fmt::format(
-            "ArrowAdapter::_get_and_check_column: column index {} is "
-            "non-terminal",
-            column_index));
+        throw std::runtime_error(
+            fmt::format(
+                "ArrowAdapter::_get_and_check_column: column index {} is "
+                "non-terminal",
+                column_index));
     }
 
     if (expected_n_buffers == 2) {
         if (child->n_buffers != 2) {
-            throw std::runtime_error(fmt::format(
-                "ArrowAdapter::_get_and_check_column: column index {} "
-                "has buffer count {}; expected 2 for non-string data",
-                column_index,
-                child->n_buffers));
+            throw std::runtime_error(
+                fmt::format(
+                    "ArrowAdapter::_get_and_check_column: column index {} "
+                    "has buffer count {}; expected 2 for non-string data",
+                    column_index,
+                    child->n_buffers));
         }
 
     } else if (expected_n_buffers == 3) {
         if (child->n_buffers != 3) {
-            throw std::runtime_error(fmt::format(
-                "ArrowAdapter::_get_and_check_column: column index {} is "
-                "has buffer count {}; expected 3 for string data",
-                column_index,
-                child->n_buffers));
+            throw std::runtime_error(
+                fmt::format(
+                    "ArrowAdapter::_get_and_check_column: column index {} is "
+                    "has buffer count {}; expected 3 for string data",
+                    column_index,
+                    child->n_buffers));
         }
 
     } else {
-        throw std::runtime_error(fmt::format(
-            "ArrowAdapter::_get_and_check_column: internal coding error: "
-            "expected_n_buffers {} is "
-            "neither 2 nor 3.",
-            expected_n_buffers));
+        throw std::runtime_error(
+            fmt::format(
+                "ArrowAdapter::_get_and_check_column: internal coding error: "
+                "expected_n_buffers {} is "
+                "neither 2 nor 3.",
+                expected_n_buffers));
     }
 
     return child;
@@ -1715,8 +1743,10 @@ size_t ArrowAdapter::_set_dictionary_buffers(Enumeration& enumeration, const Con
         case TILEDB_FLOAT64:
             return data_size / sizeof(double_t);
         default:
-            throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(enumeration.type())));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                    tiledb::impl::type_to_str(enumeration.type())));
     }
 }
 

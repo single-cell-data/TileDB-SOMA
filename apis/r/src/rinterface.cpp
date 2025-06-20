@@ -99,12 +99,13 @@ SEXP soma_array_reader(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        tdbs::LOG_INFO(fmt::format(
-            "[soma_array_reader] Dimension {} type {} domain {} extent {}",
-            dim.name(),
-            tiledb::impl::to_str(dim.type()),
-            dim.domain_to_str(),
-            dim.tile_extent_to_str()));
+        tdbs::LOG_INFO(
+            fmt::format(
+                "[soma_array_reader] Dimension {} type {} domain {} extent {}",
+                dim.name(),
+                tiledb::impl::to_str(dim.type()),
+                dim.domain_to_str(),
+                dim.tile_extent_to_str()));
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
@@ -140,10 +141,11 @@ SEXP soma_array_reader(
             "or using iterated partial reads.",
             uri);
     }
-    tdbs::LOG_INFO(fmt::format(
-        "[soma_array_reader] Read complete with {} rows and {} cols",
-        sr_data->get()->num_rows(),
-        sr_data->get()->names().size()));
+    tdbs::LOG_INFO(
+        fmt::format(
+            "[soma_array_reader] Read complete with {} rows and {} cols",
+            sr_data->get()->num_rows(),
+            sr_data->get()->names().size()));
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
@@ -175,8 +177,9 @@ SEXP soma_array_reader(
         // pp.first.get(), sizeof(ArrowArray));
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
-        tdbs::LOG_INFO(fmt::format(
-            "[soma_array_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length));
+        tdbs::LOG_INFO(
+            fmt::format(
+                "[soma_array_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length));
 
         if (pp.first->length > arr->length) {
             tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] Setting array length to {}", pp.first->length));
@@ -375,11 +378,12 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     exitIfError(ArrowSchemaAllocateChildren(sch, lib_retval->n_children), "Bad schema children alloc");
 
     for (size_t i = 0; i < static_cast<size_t>(lib_retval->n_children); i++) {
-        tdbs::LOG_INFO(fmt::format(
-            "[c_schema] Accessing name '{}' format '{}' at position {}",
-            std::string(lib_retval->children[i]->name),
-            std::string(lib_retval->children[i]->format),
-            i));
+        tdbs::LOG_INFO(
+            fmt::format(
+                "[c_schema] Accessing name '{}' format '{}' at position {}",
+                std::string(lib_retval->children[i]->name),
+                std::string(lib_retval->children[i]->format),
+                i));
 
         ArrowSchemaMove(lib_retval->children[i], sch->children[i]);
     }

@@ -91,10 +91,11 @@ void SOMAGeometryDataFrame::initialize() {
     auto coordinate_space_meta = get_metadata(SOMA_COORDINATE_SPACE_KEY);
 
     if (!coordinate_space_meta.has_value()) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryDataFrame][initialize] Missing required '{}' "
-            "metadata key.",
-            SOMA_COORDINATE_SPACE_KEY));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAGeometryDataFrame][initialize] Missing required '{}' "
+                "metadata key.",
+                SOMA_COORDINATE_SPACE_KEY));
     }
 
     coord_space_ = std::apply(SOMACoordinateSpace::from_metadata, coordinate_space_meta.value());

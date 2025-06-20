@@ -121,12 +121,13 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        tdbs::LOG_DEBUG(fmt::format(
-            "[mq_setup] Dimension {} type {} domain {} extent {}",
-            dim.name(),
-            tiledb::impl::to_str(dim.type()),
-            dim.domain_to_str(),
-            dim.tile_extent_to_str()));
+        tdbs::LOG_DEBUG(
+            fmt::format(
+                "[mq_setup] Dimension {} type {} domain {} extent {}",
+                dim.name(),
+                tiledb::impl::to_str(dim.type()),
+                dim.domain_to_str(),
+                dim.tile_extent_to_str()));
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
@@ -272,11 +273,12 @@ void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp:
 
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);
     mq->select_points<int64_t>(dim, vec);
-    tdbs::LOG_DEBUG(fmt::format(
-        "[mq_set_dim_points] Set on dim '{}' for {} points, first two are {} "
-        "and {}",
-        dim,
-        points.length(),
-        vec[0],
-        vec[1]));
+    tdbs::LOG_DEBUG(
+        fmt::format(
+            "[mq_set_dim_points] Set on dim '{}' for {} points, first two are {} "
+            "and {}",
+            dim,
+            points.length(),
+            vec[0],
+            vec[1]));
 }

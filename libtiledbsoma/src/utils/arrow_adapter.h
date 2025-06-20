@@ -1105,25 +1105,25 @@ class ArrowAdapter {
             }
             case TILEDB_UINT8:
                 return std::make_any<std::array<uint8_t, S>>(
-                    std::to_array((uint8_t(&)[S])(*((uint8_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((uint8_t (&)[S])(*((uint8_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_UINT16:
                 return std::make_any<std::array<uint16_t, S>>(
-                    std::to_array((uint16_t(&)[S])(*((uint16_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((uint16_t (&)[S])(*((uint16_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_UINT32:
                 return std::make_any<std::array<uint32_t, S>>(
-                    std::to_array((uint32_t(&)[S])(*((uint32_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((uint32_t (&)[S])(*((uint32_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_UINT64:
                 return std::make_any<std::array<uint64_t, S>>(
-                    std::to_array((uint64_t(&)[S])(*((uint64_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((uint64_t (&)[S])(*((uint64_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_INT8:
                 return std::make_any<std::array<int8_t, S>>(
-                    std::to_array((int8_t(&)[S])(*((int8_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int8_t (&)[S])(*((int8_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_INT16:
                 return std::make_any<std::array<int16_t, S>>(
-                    std::to_array((int16_t(&)[S])(*((int16_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int16_t (&)[S])(*((int16_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_INT32:
                 return std::make_any<std::array<int32_t, S>>(
-                    std::to_array((int32_t(&)[S])(*((int32_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int32_t (&)[S])(*((int32_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_DATETIME_YEAR:
             case TILEDB_DATETIME_MONTH:
             case TILEDB_DATETIME_WEEK:
@@ -1139,7 +1139,7 @@ class ArrowAdapter {
             case TILEDB_DATETIME_AS:
             case TILEDB_INT64:
                 return std::make_any<std::array<int64_t, S>>(
-                    std::to_array((int64_t(&)[S])(*((int64_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int64_t (&)[S])(*((int64_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_FLOAT32:
                 return std::make_any<std::array<float_t, S>>(
                     std::to_array((float_t(&)[S])(*((float_t*)array->buffers[1] + arrow_offset + offset))));

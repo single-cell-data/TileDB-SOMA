@@ -45,8 +45,9 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max + 1});
         dnda->close();
     } else {
-        REQUIRE_THROWS(SOMADenseNDArray::create(
-            uri, dim_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2)));
+        REQUIRE_THROWS(
+            SOMADenseNDArray::create(
+                uri, dim_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2)));
     }
 
     REQUIRE(SOMADenseNDArray::exists(uri, ctx));

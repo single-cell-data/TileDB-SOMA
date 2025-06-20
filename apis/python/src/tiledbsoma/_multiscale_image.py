@@ -80,7 +80,7 @@ class _MultiscaleImageMetadata:
         return cls(datatype=type, **kwargs)
 
 
-class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
+class MultiscaleImage(
     SOMAGroup[DenseNDArray],
     somacore.MultiscaleImage[DenseNDArray, AnySOMAObject],
 ):

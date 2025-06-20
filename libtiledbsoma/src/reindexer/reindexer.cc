@@ -74,8 +74,9 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
         }
         return;
     }
-    LOG_DEBUG(fmt::format(
-        "Lookup with thread concurrency {} on data size {}", context_->thread_pool()->concurrency_level(), size));
+    LOG_DEBUG(
+        fmt::format(
+            "Lookup with thread concurrency {} on data size {}", context_->thread_pool()->concurrency_level(), size));
 
     std::vector<tiledbsoma::ThreadPool::Task> tasks;
 

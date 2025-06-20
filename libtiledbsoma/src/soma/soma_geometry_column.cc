@@ -38,16 +38,18 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
                                                    .template get<std::vector<std::string>>();
 
     if (dimension_names.size() % 2 != 0) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryColumn][deserialize] Invalid number of dimensions: "
-            "expected number divisible by 2, got {}",
-            dimension_names.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAGeometryColumn][deserialize] Invalid number of dimensions: "
+                "expected number divisible by 2, got {}",
+                dimension_names.size()));
     }
     if (attribute_names.size() != 1) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryColumn][deserialize] Invalid number of attributes: "
-            "expected 1, got {}",
-            attribute_names.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAGeometryColumn][deserialize] Invalid number of attributes: "
+                "expected 1, got {}",
+                attribute_names.size()));
     }
 
     std::vector<Dimension> dimensions;
@@ -58,10 +60,11 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
     auto attribute = array.schema().attribute(attribute_names[0]);
 
     if (!metadata.contains(SOMA_COORDINATE_SPACE_KEY)) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryColumn][deserialize] Missing required '{}' "
-            "metadata key.",
-            SOMA_COORDINATE_SPACE_KEY));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAGeometryColumn][deserialize] Missing required '{}' "
+                "metadata key.",
+                SOMA_COORDINATE_SPACE_KEY));
     }
 
     auto coordinate_space = std::apply(SOMACoordinateSpace::from_metadata, metadata.at(SOMA_COORDINATE_SPACE_KEY));
@@ -80,36 +83,39 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     PlatformConfig platform_config) {
     std::vector<Dimension> dims;
     if (type_metadata.compare("WKB") != 0) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryColumn] "
-            "Unkwown type metadata for `{}`: "
-            "Expected 'WKB', got '{}'",
-            SOMA_GEOMETRY_COLUMN_NAME,
-            type_metadata));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAGeometryColumn] "
+                "Unkwown type metadata for `{}`: "
+                "Expected 'WKB', got '{}'",
+                SOMA_GEOMETRY_COLUMN_NAME,
+                type_metadata));
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
-            ctx,
-            spatial_schema->children[j],
-            spatial_array->children[j],
-            soma_type,
-            type_metadata,
-            SOMA_GEOMETRY_DIMENSION_PREFIX,
-            "__min",
-            platform_config));
+        dims.push_back(
+            ArrowAdapter::tiledb_dimension_from_arrow_schema(
+                ctx,
+                spatial_schema->children[j],
+                spatial_array->children[j],
+                soma_type,
+                type_metadata,
+                SOMA_GEOMETRY_DIMENSION_PREFIX,
+                "__min",
+                platform_config));
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
-            ctx,
-            spatial_schema->children[j],
-            spatial_array->children[j],
-            soma_type,
-            type_metadata,
-            SOMA_GEOMETRY_DIMENSION_PREFIX,
-            "__max",
-            platform_config));
+        dims.push_back(
+            ArrowAdapter::tiledb_dimension_from_arrow_schema(
+                ctx,
+                spatial_schema->children[j],
+                spatial_array->children[j],
+                soma_type,
+                type_metadata,
+                SOMA_GEOMETRY_DIMENSION_PREFIX,
+                "__max",
+                platform_config));
     }
 
     auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(ctx, schema, type_metadata, platform_config);
@@ -162,11 +168,12 @@ void SOMAGeometryColumn::_set_dim_ranges(ManagedQuery& query, const std::any& ra
 void SOMAGeometryColumn::_set_current_domain_slot(
     NDRectangle& rectangle, std::span<const std::any> new_current_domain) const {
     if (TDB_DIM_PER_SPATIAL_AXIS * new_current_domain.size() != dimensions.size()) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryColumn] Dimension - Current Domain mismatch. "
-            "Expected current domain of size {}, found {}",
-            dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS,
-            new_current_domain.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAGeometryColumn] Dimension - Current Domain mismatch. "
+                "Expected current domain of size {}, found {}",
+                dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS,
+                new_current_domain.size()));
     }
 
     for (size_t i = 0; i < new_current_domain.size(); ++i) {
@@ -183,11 +190,12 @@ void SOMAGeometryColumn::_set_current_domain_slot(
 std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
     std::optional<NDRectangle>& rectangle, std::span<const std::any> new_current_domain) const {
     if (new_current_domain.size() != dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMADimension][_can_set_current_domain_slot] Expected current "
-            "domain "
-            "size is 2, found {}",
-            new_current_domain.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMADimension][_can_set_current_domain_slot] Expected current "
+                "domain "
+                "size is 2, found {}",
+                new_current_domain.size()));
     }
 
     for (size_t i = 0; i < new_current_domain.size(); ++i) {
@@ -446,12 +454,13 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
             return std::make_pair(parent_array, parent_schema);
         } break;
         default:
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAGeometryColumn][arrow_domain_slot] dim {} has unhandled "
-                "extended type "
-                "{}",
-                name(),
-                tiledb::impl::type_to_str(domain_type().value())));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAGeometryColumn][arrow_domain_slot] dim {} has unhandled "
+                    "extended type "
+                    "{}",
+                    name(),
+                    tiledb::impl::type_to_str(domain_type().value())));
     }
 }
 

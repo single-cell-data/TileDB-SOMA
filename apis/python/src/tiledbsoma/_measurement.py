@@ -16,7 +16,7 @@ from ._soma_object import AnySOMAObject
 from ._sparse_nd_array import SparseNDArray
 
 
-class Measurement(  # type: ignore[misc]  # __eq__ false positive
+class Measurement(
     CollectionBase[AnySOMAObject],
     measurement.Measurement[
         DataFrame,
