@@ -628,7 +628,6 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             domain
         ), f"Unexpected domain in {self.A}: had {self.A.domain}, expected {self.domain}"
 
-    @precondition(lambda self: self.closed or self.mode == "w")
     @rule(data=st.data())
     def expand_domain(self, data: st.DataObject) -> None:
         assert self.index_column_names == self.A.index_column_names
@@ -642,13 +641,18 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             )
         )
 
-        if self.closed:
-            self._open(mode="w")
+        # Always re-open at latest. Without this, there is a good chance we will end up with a
+        # schema fragment with the same timestamp. Concrete case: a write has been done to an
+        # array that has a dict field, which triggers an automatic schema evolution.
+        if not self.closed:
+            self._close()
+        self._open(mode="w")
         assert self.mode == "w"
 
         self.A.change_domain(new_domain)
         self.domain = new_domain  # TODO XXX should be a ledger
         self._close()  # domain is committed upon close
+        assert self.A.closed
 
     ##
     ## --- data
