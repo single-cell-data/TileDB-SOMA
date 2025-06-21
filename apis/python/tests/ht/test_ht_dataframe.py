@@ -302,7 +302,6 @@ def column_values(
     domain: tuple[int, int] | tuple[None, None],
     is_dict_value: bool = False,  # only used for bug workarounds
 ) -> pa.Array:
-
     min_value, max_value = domain
 
     if pa.types.is_timestamp(type):
@@ -412,7 +411,6 @@ def arrow_table2(
     *,
     min_size: int = 0,
 ) -> tuple[pa.Table, dict[str, EnumerationMetadata[Any]]]:
-
     index_domains = {k: v if v is not None else (None, None) for k, v in zip(index_column_names, domain)}
     is_unique = {f.name: (f.name in index_domains or f.name == "soma_joinid") for f in schema}
 
@@ -535,7 +533,6 @@ def arrow_table2(
 
 
 class SOMADataFrameStateMachine(SOMAArrayStateMachine):
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -644,6 +641,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 apply_defaults=True,
             )
         )
+
         if self.closed:
             self._open(mode="w")
         assert self.mode == "w"
@@ -677,7 +675,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(
         lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps
-    )  # only one write per timestamp until sc-61223 and sc-61226 are fixed
+    )  # only one write per timestamp until sc-61223 (is FIXED) and sc-61226 are fixed
     @rule(data=st.data())
     def write(self, data: st.DataObject) -> None:
         df_tbl, self.enumeration_metadata = data.draw(

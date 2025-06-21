@@ -145,7 +145,7 @@ class TenXCountMatrixReader:
         try:
             raw_version = self._root.attrs["software_version"]
         except KeyError as ke:
-            raise SOMAError(f"Unable to read software version from gene expression file " f"{self._path}.") from ke
+            raise SOMAError(f"Unable to read software version from gene expression file {self._path}.") from ke
         if not isinstance(raw_version, str):
             raise SOMAError(
                 f"Unexpected type {type(raw_version)!r} for software version in gene "
@@ -159,7 +159,7 @@ class TenXCountMatrixReader:
             version = version[1]
         else:
             raise SOMAError(
-                f"Unexpected value {raw_version} for 'software_version' in gene " f"expression file {self._path}."
+                f"Unexpected value {raw_version} for 'software_version' in gene expression file {self._path}."
             )
 
         version = version.split(".")

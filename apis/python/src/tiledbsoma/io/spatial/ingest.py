@@ -389,7 +389,7 @@ def from_visium(
         else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
     )
     if input_paths.major_version not in {1, 2}:
-        raise ValueError(f"Visium version {input_paths.version} is not supported. Expected major " f"version 1 or 2.")
+        raise ValueError(f"Visium version {input_paths.version} is not supported. Expected major version 1 or 2.")
 
     # Get JSON scale factors.
     # -- Get the spot diameters from teh scale factors file.

@@ -68,9 +68,7 @@ class Ledger(Generic[LedgerEntryType]):
     def __repr__(self) -> str:
         return (
             f"Ledger(n_entries={len(self.entries)}, "
-            + f"allows_duplicates={self.allows_duplicates}):\n"
-            + "\n".join(repr(f) for f in self.entries)
-            + "\n"
+            f"allows_duplicates={self.allows_duplicates}):\n" + "\n".join(repr(f) for f in self.entries) + "\n"
         )
 
     def read(self, timestamp_ms: int) -> LedgerEntryType:
