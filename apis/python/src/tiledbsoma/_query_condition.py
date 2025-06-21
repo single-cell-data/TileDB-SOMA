@@ -116,11 +116,11 @@ class QueryCondition:
         try:
             self.tree = ast.parse(self.expression, mode="eval")
         except Exception as pex:
-            raise SOMAError("Could not parse the given QueryCondition statement: " f"{self.expression}") from pex
+            raise SOMAError(f"Could not parse the given QueryCondition statement: {self.expression}") from pex
 
         if not self.tree:
             raise SOMAError(
-                "The query condition statement could not be parsed properly. " "(Is this an empty expression?)"
+                "The query condition statement could not be parsed properly. (Is this an empty expression?)"
             )
 
     def init_query_condition(

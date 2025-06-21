@@ -172,7 +172,7 @@ def slice_to_numeric_range(slc: Slice[Any], domain: tuple[_T, _T]) -> tuple[_T, 
         # With the above, we have guaranteed that at least one bound will
         # include the domain.  If we get here, that means that the other bound
         # never included it (e.g. stop == slc.stop < domain_start == start).
-        raise ValueError(f"slice [{slc.start!r}:{slc.stop!r}] does not overlap" f" [{domain_start!r}:{domain_stop!r}]")
+        raise ValueError(f"slice [{slc.start!r}:{slc.stop!r}] does not overlap [{domain_start!r}:{domain_stop!r}]")
 
     return start, stop
 
@@ -188,7 +188,7 @@ def dense_indices_to_shape(
     to the number of dimensions in the array.
     """
     if len(coords) > len(array_shape):
-        raise ValueError(f"coordinate length ({len(coords)}) must be <=" f" array dimension count ({len(array_shape)})")
+        raise ValueError(f"coordinate length ({len(coords)}) must be <= array dimension count ({len(array_shape)})")
 
     shape = tuple(dense_index_to_shape(coord, extent) for coord, extent in zip_longest(coords, array_shape))
     if result_order == somacore.ResultOrder.ROW_MAJOR:

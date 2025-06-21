@@ -241,7 +241,7 @@ def read_release_version() -> str | None:
             ver = fd.readline().strip()
         if not re.search(_PEP386_VERSION_RE, ver):
             err(
-                "version: release version (%s) is invalid, " "will use it anyway\n" % ver,
+                "version: release version (%s) is invalid, will use it anyway\n" % ver,
             )
         return ver
     except FileNotFoundError:

@@ -267,7 +267,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
                 stacklevel=3,
             )
             return self._handle
-        raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")
+        raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")  # noqa: S608
 
     def close(self) -> None:
         if self.closed:

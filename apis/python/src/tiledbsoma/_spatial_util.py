@@ -37,14 +37,14 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
         transform_type = raw.pop("transform_type")
     except KeyError:
         raise KeyError(
-            "'transform_type' not found when attempting to convert " "JSON to CoordinateTransform child class"
+            "'transform_type' not found when attempting to convert JSON to CoordinateTransform child class"
         ) from None
 
     try:
         kwargs = raw.pop("transform")
     except KeyError:
         raise KeyError(
-            "'transform' kwargs options not found when attempting to " "convert JSON to CoordinateTransform child class"
+            "'transform' kwargs options not found when attempting to convert JSON to CoordinateTransform child class"
         ) from None
 
     coord_transform_init: dict[str, type[somacore.CoordinateTransform]] = {

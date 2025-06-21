@@ -605,14 +605,14 @@ class Scene(
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
-            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'") from None
+            raise KeyError(f"No coordinate space registry for '{key}' in collection '{subcollection}'") from None
         base_transform = transform_from_json(transform_json)
         try:
             image: MultiscaleImage = coll[key]  # type: ignore[assignment]
         except KeyError as ke:
             raise KeyError(f"No MultiscaleImage named '{key}' in '{subcollection}'.") from ke
         if not isinstance(image, MultiscaleImage):
-            raise TypeError(f"Item at '{key}' in '{subcollection}' has an unexpected type " f"{type(image)!r}.")
+            raise TypeError(f"Item at '{key}' in '{subcollection}' has an unexpected type {type(image)!r}.")
         level_transform = image.get_transform_from_level(level)
         return base_transform.inverse_transform() @ level_transform
 
@@ -653,7 +653,7 @@ class Scene(
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
-            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'.") from ke
+            raise KeyError(f"No coordinate space registry for '{key}' in collection '{subcollection}'.") from ke
         return transform_from_json(transform_json)
 
     def get_transform_to_multiscale_image(
@@ -683,7 +683,7 @@ class Scene(
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
-            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'") from None
+            raise KeyError(f"No coordinate space registry for '{key}' in collection '{subcollection}'") from None
         base_transform = transform_from_json(transform_json)
         if level is None:
             return base_transform
@@ -692,7 +692,7 @@ class Scene(
         except KeyError as ke:
             raise KeyError(f"No MultiscaleImage named '{key}' in '{subcollection}'.") from ke
         if not isinstance(image, MultiscaleImage):
-            raise TypeError(f"Item at '{key}' in '{subcollection}' has an unexpected type " f"{type(image)!r}.")
+            raise TypeError(f"Item at '{key}' in '{subcollection}' has an unexpected type {type(image)!r}.")
         level_transform = image.get_transform_to_level(level)
         return level_transform @ base_transform
 
@@ -714,5 +714,5 @@ class Scene(
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
-            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'.") from ke
+            raise KeyError(f"No coordinate space registry for '{key}' in collection '{subcollection}'.") from ke
         return transform_from_json(transform_json)
