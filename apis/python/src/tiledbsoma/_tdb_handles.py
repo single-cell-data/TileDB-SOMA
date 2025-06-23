@@ -131,6 +131,8 @@ def open_handle_wrapper(
     }
 
     try:
+        print("class type:", soma_object.type.lower())
+        print("type to class: ", _type_to_class[soma_object.type.lower()])
         return _type_to_class[soma_object.type.lower()].open(
             uri=soma_object.uri,
             mode=soma_object.mode,
