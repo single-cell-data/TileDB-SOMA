@@ -789,9 +789,10 @@ def _read_inner_ndarray(
 
     n_row = len(joinids)
     n_col = len(table["soma_dim_1"].unique())
+    dtype = matrix.schema.field("soma_data").type.to_pandas_dtype()
 
     idx = indexer(table["soma_dim_0"])
-    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=np.float32)
+    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
     return z.reshape(n_row, n_col)
 
