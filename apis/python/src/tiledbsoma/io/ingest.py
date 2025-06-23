@@ -68,7 +68,7 @@ from .. import (
 )
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
-from .._constants import SOMA_JOINID
+from .._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from .._exception import (
     AlreadyExistsError,
     DoesNotExistError,
@@ -94,7 +94,6 @@ from ..options._tiledb_create_write_options import (
 )
 from . import conversions
 from ._common import (
-    _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
     _TILEDBSOMA_TYPE,
     _UNS_OUTGEST_COLUMN_NAME_1D,
     _UNS_OUTGEST_HINT_1D,
@@ -1490,7 +1489,7 @@ def _write_dataframe_impl(
             )
             # Save the original index name for outgest. We use JSON for elegant indication of index name
             # being None (in Python anyway).
-            soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(original_index_metadata)
+            soma_df.metadata[SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(original_index_metadata)
         except (AlreadyExistsError, NotCreateableError) as e:
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{df_uri} already exists") from e

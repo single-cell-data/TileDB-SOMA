@@ -17,7 +17,7 @@ from pandas._testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
 from tiledbsoma import SOMA_JOINID, DataFrame, Experiment
-from tiledbsoma.io._common import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
@@ -118,7 +118,7 @@ def verify_metadata(sdf: DataFrame, persisted_column_names: list[str], persisted
         assert string_col_type == pa.large_string()
 
     # Verify "original index metadata"
-    actual_index_metadata = json.loads(sdf.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON])
+    actual_index_metadata = json.loads(sdf.metadata[SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON])
     assert actual_index_metadata == persisted_metadata
 
 
