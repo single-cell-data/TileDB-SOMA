@@ -15,7 +15,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
                 ("bar", pa.float64()),
                 ("baz", pa.large_string()),
                 ("quux", pa.bool_()),
-            ]
+            ],
         )
 
         soma.DataFrame.create(self.uri, schema=asch, index_column_names=["foo"], domain=[[0, 99]]).close()

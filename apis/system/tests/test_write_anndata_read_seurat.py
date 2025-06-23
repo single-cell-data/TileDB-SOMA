@@ -44,7 +44,7 @@ class TestAnndataSOMASeurat(TestWritePythonReadR):
             f"""
             stopifnot(ncol(seuratObject) == {n_obs})
             stopifnot(nrow(seuratObject) == {n_var})
-        """
+        """,
         )
 
     def test_seurat_var_names_match(self, h5ad):
@@ -53,7 +53,7 @@ class TestAnndataSOMASeurat(TestWritePythonReadR):
         self.r_assert(
             f"""
             stopifnot(all.equal(rownames(x = seuratObject), c({var_names_list})))
-        """
+        """,
         )
 
     def test_seurat_obs_names_match(self, h5ad):
@@ -62,5 +62,5 @@ class TestAnndataSOMASeurat(TestWritePythonReadR):
         self.r_assert(
             f"""
             stopifnot(all.equal(colnames(x = seuratObject), c({obs_names_list})))
-        """
+        """,
         )
