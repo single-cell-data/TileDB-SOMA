@@ -20,7 +20,7 @@ from ._scene import Scene
 from ._soma_object import AnySOMAObject
 
 
-class Experiment(  # type: ignore[misc]  # `SOMAObject.__eq__`, `SOMAGroup.set` false positives
+class Experiment(
     CollectionBase[AnySOMAObject],
     experiment.Experiment[
         DataFrame,
@@ -77,7 +77,7 @@ class Experiment(  # type: ignore[misc]  # `SOMAObject.__eq__`, `SOMAGroup.set` 
         "obs_spatial_presence": ("SOMADataFrame",),
     }
 
-    def axis_query(  # type: ignore
+    def axis_query(
         self,
         measurement_name: str,
         *,

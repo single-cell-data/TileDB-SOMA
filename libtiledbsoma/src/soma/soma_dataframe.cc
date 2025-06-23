@@ -131,14 +131,15 @@ void SOMADataFrame::update_dataframe_schema(
             // SOMA converts string and binary to large string and large binary
             auto enmr_name = attr_name + "_" + ((enmr_type == "u") ? "U" : (enmr_type == "z" ? "Z" : enmr_type));
 
-            LOG_DEBUG(fmt::format(
-                "[SOMADataFrame::update_dataframe_schema] add col name {} "
-                "index_type "
-                "{} value_type {} ordered {}",
-                attr_name,
-                attr_type,
-                enmr_type,
-                ordered));
+            LOG_DEBUG(
+                fmt::format(
+                    "[SOMADataFrame::update_dataframe_schema] add col name {} "
+                    "index_type "
+                    "{} value_type {} ordered {}",
+                    attr_name,
+                    attr_type,
+                    enmr_type,
+                    ordered));
 
             // First we need to check if the array has (ever had) an enumeration
             // of this type in its history.
@@ -164,14 +165,15 @@ void SOMADataFrame::update_dataframe_schema(
                 // We cannot continue without intervention, but let's at least
                 // be as clear as possible why we can't continue.
                 if (ordered != existing_ordered || enmr_type != existing_type) {
-                    throw TileDBSOMAError(fmt::format(
-                        "[SOMADataFrame::update_dataframe_schema] requested "
-                        "enumeration [type='{}', ordered={}] incompatible with "
-                        "existing [type='{}', ordered={}]",
-                        enmr_type,
-                        ordered,
-                        existing_type,
-                        existing_ordered));
+                    throw TileDBSOMAError(
+                        fmt::format(
+                            "[SOMADataFrame::update_dataframe_schema] requested "
+                            "enumeration [type='{}', ordered={}] incompatible with "
+                            "existing [type='{}', ordered={}]",
+                            enmr_type,
+                            ordered,
+                            existing_type,
+                            existing_ordered));
                 }
 
                 array_already_has_it = true;
@@ -185,8 +187,9 @@ void SOMADataFrame::update_dataframe_schema(
                 if (msg.find("already exists in this ArraySchema") != std::string::npos) {
                     array_already_has_it = true;
                 } else if (
-                    msg.find("Unable to check if unknown enumeration is "
-                             "loaded. No enumeration named") != std::string::npos) {
+                    msg.find(
+                        "Unable to check if unknown enumeration is "
+                        "loaded. No enumeration named") != std::string::npos) {
                     array_already_has_it = false;
                 } else {
                     throw(e);
@@ -194,21 +197,24 @@ void SOMADataFrame::update_dataframe_schema(
             }
 
             if (!array_already_has_it) {
-                se.add_enumeration(Enumeration::create_empty(
-                    tctx,
-                    enmr_name,
-                    ArrowAdapter::to_tiledb_format(enmr_type),
-                    enmr_type == "u" || enmr_type == "z" || enmr_type == "U" || enmr_type == "Z" ? TILEDB_VAR_NUM : 1,
-                    ordered));
+                se.add_enumeration(
+                    Enumeration::create_empty(
+                        tctx,
+                        enmr_name,
+                        ArrowAdapter::to_tiledb_format(enmr_type),
+                        enmr_type == "u" || enmr_type == "z" || enmr_type == "U" || enmr_type == "Z" ? TILEDB_VAR_NUM :
+                                                                                                       1,
+                        ordered));
                 AttributeExperimental::set_enumeration_name(tctx, attr, enmr_name);
             }
 
         } else {
-            LOG_DEBUG(fmt::format(
-                "[SOMADataFrame::update_dataframe_schema] add col name {} type "
-                "{}",
-                attr_name,
-                attr_type));
+            LOG_DEBUG(
+                fmt::format(
+                    "[SOMADataFrame::update_dataframe_schema] add col name {} type "
+                    "{}",
+                    attr_name,
+                    attr_type));
         }
 
         se.add_attribute(attr);

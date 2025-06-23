@@ -44,7 +44,7 @@ _Coll = TypeVar("_Coll", bound="CollectionBase[AnySOMAObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
-class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
+class CollectionBase(
     SOMAGroup[CollectionElementType],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
@@ -440,9 +440,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 AnyTileDBCollection = CollectionBase[Any]
 
 
-class Collection(  # type: ignore[misc]  # __eq__ false positive
-    CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
-):
+class Collection(CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]):
     """:class:`Collection` is a persistent container of named SOMA objects, stored as
     a mapping of string keys and SOMA object values. Values may be any
     persistent ``tiledbsoma`` object, including :class:`DataFrame`,

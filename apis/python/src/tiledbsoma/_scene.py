@@ -43,7 +43,7 @@ _spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame
 _SE = TypeVar("_SE", bound=_spatial_element)
 
 
-class Scene(  # type: ignore[misc]   # __eq__ false positive
+class Scene(
     CollectionBase[AnySOMAObject],
     somacore.Scene[MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, AnySOMAObject],
 ):

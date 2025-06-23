@@ -34,10 +34,11 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                                                        nlohmann::json::object();
 
         if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
-                TILEDB_SOMA_SCHEMA_COL_KEY,
-                TILEDB_SOMA_SCHEMA_KEY));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
+                    TILEDB_SOMA_SCHEMA_COL_KEY,
+                    TILEDB_SOMA_SCHEMA_KEY));
         }
 
         soma_schema_columns = soma_schema_extension.value(TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array());
@@ -92,9 +93,10 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
             }
 
             auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
-            auto enumeration = enumeration_name.has_value() ? std::make_optional(ArrayExperimental::get_enumeration(
-                                                                  ctx, array, enumeration_name.value())) :
-                                                              std::nullopt;
+            auto enumeration = enumeration_name.has_value() ?
+                                   std::make_optional(
+                                       ArrayExperimental::get_enumeration(ctx, array, enumeration_name.value())) :
+                                   std::nullopt;
 
             columns.push_back(std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
@@ -108,9 +110,10 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
         for (size_t i = 0; i < array.schema().attribute_num(); ++i) {
             auto attribute = array.schema().attribute(i);
             auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
-            auto enumeration = enumeration_name.has_value() ? std::make_optional(ArrayExperimental::get_enumeration(
-                                                                  ctx, array, enumeration_name.value())) :
-                                                              std::nullopt;
+            auto enumeration = enumeration_name.has_value() ?
+                                   std::make_optional(
+                                       ArrayExperimental::get_enumeration(ctx, array, enumeration_name.value())) :
+                                   std::nullopt;
 
             columns.push_back(std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
@@ -150,11 +153,12 @@ std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::st
         if (current_domain.first == "" && (current_domain.second == "\x7f" || current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAColumn][core_current_domain_slot] unexpected current "
-                "domain returnd ({}, {})",
-                current_domain.first,
-                current_domain.second));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAColumn][core_current_domain_slot] unexpected current "
+                    "domain returnd ({}, {})",
+                    current_domain.first,
+                    current_domain.second));
         }
     } catch (const std::exception& e) {
         throw TileDBSOMAError(e.what());
@@ -170,11 +174,12 @@ std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::st
         if (current_domain.first == "" && (current_domain.second == "\x7f" || current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAColumn][core_current_domain_slot] unexpected current "
-                "domain returnd ({}, {})",
-                current_domain.first,
-                current_domain.second));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAColumn][core_current_domain_slot] unexpected current "
+                    "domain returnd ({}, {})",
+                    current_domain.first,
+                    current_domain.second));
         }
     } catch (const std::exception& e) {
         throw TileDBSOMAError(e.what());
