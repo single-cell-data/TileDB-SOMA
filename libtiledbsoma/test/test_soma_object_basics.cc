@@ -17,6 +17,28 @@ void create_soma_object(std::string_view soma_type, std::string_view uri, std::s
     if (soma_type == "SOMACollection") {
         return SOMACollection::create(uri, context);
     }
+    if (soma_type == "SOMAExperiment") {
+        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
+            {helper::DimInfo(
+                {.name = "soma_joinid",
+                 .tiledb_datatype = TILEDB_INT64,
+                 .dim_max = 100,
+                 .string_lo = "N/A",
+                 .string_hi = "N/A"})},
+            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_STRING_ASCII})});
+        return SOMAExperiment::create(uri, schema, index_columns, context);
+    }
+    if (soma_type == "SOMAMeasurement") {
+        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
+            {helper::DimInfo(
+                {.name = "soma_joinid",
+                 .tiledb_datatype = TILEDB_INT64,
+                 .dim_max = 100,
+                 .string_lo = "N/A",
+                 .string_hi = "N/A"})},
+            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_STRING_ASCII})});
+        return SOMAMeasurement::create(uri, schema, index_columns, context);
+    }
     if (soma_type == "SOMAScene") {
         return SOMAScene::create(uri, context, std::nullopt);
     }
@@ -100,7 +122,7 @@ void create_soma_object(std::string_view soma_type, std::string_view uri, std::s
         SOMACoordinateSpace coord_space{};
         auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
             dim_infos, attr_infos, coord_space);
-        SOMAGeometryDataFrame::create(uri, schema, index_columns, coord_space, context);
+        return SOMAGeometryDataFrame::create(uri, schema, index_columns, coord_space, context);
     }
 
     INFO("No support for testing type " + std::string(soma_type));
@@ -109,9 +131,19 @@ void create_soma_object(std::string_view soma_type, std::string_view uri, std::s
 
 TEST_CASE(
     "SOMAObject: basics",
-    "[SOMAObject][SOMACollection][SOMADataFrame][SOMASparseNDArray]["
-    "SOMADenseNDArray]") {
-    auto soma_type = GENERATE("SOMACollection", "SOMADataFrame", "SOMASparseNDArray", "SOMADenseNDArray");
+    "[SOMAObject][SOMACollection][SOMAMeasurement][SOMAExperiment][SOMADataFrame][SOMASparseNDArray][SOMADenseNDArray]["
+    "SOMAScene][SOMAPointCloudDataFrame][SOMAMultiscaleImage]") {
+    auto soma_type = GENERATE(
+        "SOMACollection",
+        "SOMAMeasurement",
+        "SOMAExperiment",
+        "SOMADataFrame",
+        "SOMASparseNDArray",
+        "SOMADenseNDArray",
+        "SOMAScene",
+        "SOMAPointCloudDataFrame",
+        "SOMAGeometryDataFrame",
+        "SOMAMultiscaleImage");
     INFO("SOMA type: " + std::string(soma_type));
 
     std::string uri = "mem://test-soma-object-basics";
@@ -128,6 +160,9 @@ TEST_CASE(
     auto actual_type = soma_obj->type();
     REQUIRE(actual_type.has_value());
     REQUIRE(actual_type.value() == soma_type);
+
+    auto actual_type2 = get_soma_type(uri, *context);
+    REQUIRE(actual_type == soma_type);
 
     REQUIRE(soma_obj->is_open());
     UNSCOPED_INFO("Actual open mode is " + open_mode_to_string(soma_obj->mode()));
