@@ -26,6 +26,8 @@ ASCII-only dimensions will be relaxed in a future release. Unicode/UTF-8 is
 fully supported in SOMA DataFrame non-indexed columns.
 """
 
+from __future__ import annotations
+
 from typing import Any, Union
 
 import numpy as np

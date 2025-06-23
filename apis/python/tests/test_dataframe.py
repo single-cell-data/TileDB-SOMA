@@ -369,7 +369,7 @@ def test_get_enumeration_values_historical(version, name):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` " "from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
         )
 
     with soma.Experiment.open(uri) as exp:

@@ -135,9 +135,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 try:
                     axis_dtype = schema.field(column_name).type
                 except KeyError as ke:
-                    raise ValueError(
-                        f"Coordinate system axis '{column_name}' must be a column in the " f"schema."
-                    ) from ke
+                    raise ValueError(f"Coordinate system axis '{column_name}' must be a column in the schema.") from ke
                 if not (pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)):
                     raise ValueError(
                         f"Spatial column '{column_name}' must have an integer or "
@@ -147,9 +145,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 try:
                     column_dtype = schema.field(column_name).type
                 except KeyError as ke:
-                    raise ValueError(
-                        f"Coordinate system axis '{column_name}' must be a column in the " f"schema."
-                    ) from ke
+                    raise ValueError(f"Coordinate system axis '{column_name}' must be a column in the schema.") from ke
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
         index_column_names = axis_names + (SOMA_JOINID,)
@@ -266,9 +262,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self._coord_space = coordinate_space_from_json(coord_space)
         for name in self._coord_space.axis_names:
             if name not in self.index_column_names:
-                raise SOMAError(
-                    f"Point cloud dataframe axis '{name}' does not match any of the " f"index column names."
-                )
+                raise SOMAError(f"Point cloud dataframe axis '{name}' does not match any of the index column names.")
 
     # Data operations
 
@@ -379,7 +373,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         if region_transform is None:
             region_transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
             if region_coord_space is not None:
-                raise ValueError("Cannot specify the output coordinate space when region transform i" "is ``None``.")
+                raise ValueError("Cannot specify the output coordinate space when region transform is ``None``.")
             region_coord_space = self._coord_space
         else:
             if region_coord_space is None:
@@ -449,7 +443,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
-                "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
+                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords

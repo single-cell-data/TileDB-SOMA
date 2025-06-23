@@ -35,7 +35,7 @@ except ModuleNotFoundError:
 
 def _check_tiledb_ctx() -> None:
     if not TILEDB_EXISTS:
-        raise ModuleNotFoundError("The 'tiledb' module is required to access 'tiledb_ctx' but is " "not installed.")
+        raise ModuleNotFoundError("The 'tiledb' module is required to access 'tiledb_ctx' but is not installed.")
 
 
 ConfigVal = Union[str, float]
@@ -149,9 +149,7 @@ class SOMATileDBContext(ContextBase):
                 default settings.
         """
         if tiledb_ctx is not None and tiledb_config is not None:
-            raise ValueError(
-                "only one of tiledb_config or tiledb_ctx" " may be set when constructing a SOMATileDBContext"
-            )
+            raise ValueError("only one of tiledb_config or tiledb_ctx may be set when constructing a SOMATileDBContext")
 
         # A TileDB Context may only be passed if tiledb is installed
         if tiledb_ctx is not None:
@@ -310,9 +308,7 @@ class SOMATileDBContext(ContextBase):
         with self._lock:
             if tiledb_config is not None:
                 if tiledb_ctx:
-                    raise ValueError(
-                        "Either tiledb_config or tiledb_ctx may be provided" " to replace(), but not both."
-                    )
+                    raise ValueError("Either tiledb_config or tiledb_ctx may be provided to replace(), but not both.")
                 new_config = cast("ReplaceConfig", self._internal_tiledb_config())
                 new_config.update(tiledb_config)
                 new_tiledb_config: ConfigDict | None = {k: v for k, v in new_config.items() if v is not None}

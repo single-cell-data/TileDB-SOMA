@@ -149,7 +149,7 @@ def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
     typename = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
     cls = _type_name_to_cls(typename)  # type: ignore[no-untyped-call]
     if not isinstance(hdl, cls._wrapper_type):
-        raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)}" f" cannot be converted to a {typename}")
+        raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)} cannot be converted to a {typename}")
     return cast(
         "_soma_object.SOMAObject[_Wrapper]",
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),

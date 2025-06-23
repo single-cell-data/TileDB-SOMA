@@ -883,7 +883,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` " "from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
         )
 
     obs_condition, obs_count = obs_params

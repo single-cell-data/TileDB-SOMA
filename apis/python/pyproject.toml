@@ -25,23 +25,27 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [  # see https://docs.astral.sh/ruff/rules/
-    "B",    # bugbear
+    "B",    # flake8-bugbear
     "D",    # pydocstyle (Google convention, see setting below)
     "E",    # pycodestyle
     "F",    # Pyflakes
+    "FA",   # flake8-futue-annotations
     "I",    # isort
+    "ISC",  # flake8-implicit-str-concat
+    "S",    # flake8-bandit
     "W",    # pycodestyle warnings
 ]
 ignore = [
     "E501",  # line too long
     "D417",  # disable documentation for every function parameter
     "D205",  # disable blank line requirement between summary and description
+    "S101",  # Use of `assert` detected
 ]
 extend-select = []
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
-"!apis/python/src/**.py" = ["D", "B"]
+"!apis/python/src/**.py" = ["D", "B", "S"]
 
 # Temporarily disable checks in the io and io.spatial modules.
 "apis/python/src/tiledbsoma/io/**/*.py" = [

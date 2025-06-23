@@ -390,7 +390,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         if region_transform is None:
             region_transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
             if region_coord_space is not None:
-                raise ValueError("Cannot specify the output coordinate space when region transform " "is ``None``.")
+                raise ValueError("Cannot specify the output coordinate space when region transform is ``None``.")
             region_coord_space = self._coord_space
         else:
             if region_coord_space is None:
@@ -460,7 +460,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
-                "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
+                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         self._write_table(values, write_options.sort_coords)
