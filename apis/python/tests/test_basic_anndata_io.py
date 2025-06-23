@@ -676,14 +676,16 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         dtype=pd.CategoricalDtype(categories=[], ordered=False),
     )
     conftest_pbmc_small.obs["empty_extension_all"] = pd.Series(
-        [np.nan] * conftest_pbmc_small.n_obs, dtype=pd.Int64Dtype()
+        [np.nan] * conftest_pbmc_small.n_obs,
+        dtype=pd.Int64Dtype(),
     )
     # Create column of partially-null values
     rng = np.random.RandomState(seed)
 
     conftest_pbmc_small.obs["empty_categorical_partial"] = rng.choice((np.nan, 1.0), conftest_pbmc_small.n_obs, True)
     conftest_pbmc_small.obs["empty_extension_partial"] = pd.Series(
-        [1] * conftest_pbmc_small.n_obs + [np.nan], dtype=pd.Int64Dtype()
+        [1] * conftest_pbmc_small.n_obs + [np.nan],
+        dtype=pd.Int64Dtype(),
     )
 
     original = conftest_pbmc_small.copy()
@@ -1277,7 +1279,7 @@ def test_decat_append(tmp_path):
             "string_enum": pd.Series(np.asarray(string_enum_values_under), dtype="category"),
             "float_enum": pd.Series(np.asarray(float_enum_values_under), dtype="category"),
             "bool_enum": pd.Series(np.asarray(bool_enum_values_under), dtype="category"),
-        }
+        },
     )
     obs_under.set_index("obs_id", inplace=True)
 
@@ -1288,7 +1290,7 @@ def test_decat_append(tmp_path):
             "string_enum": pd.Series(np.asarray(string_enum_values_over), dtype="category"),
             "float_enum": pd.Series(np.asarray(float_enum_values_over), dtype="category"),
             "bool_enum": pd.Series(np.asarray(bool_enum_values_over), dtype="category"),
-        }
+        },
     )
     obs_over.set_index("obs_id", inplace=True)
 
@@ -1296,7 +1298,7 @@ def test_decat_append(tmp_path):
         data={
             "var_id": np.asarray(var_ids),
             "mybool": np.asarray([True] * nvar),
-        }
+        },
     )
     var.set_index("var_id", inplace=True)
 

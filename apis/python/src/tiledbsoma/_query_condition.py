@@ -120,7 +120,7 @@ class QueryCondition:
 
         if not self.tree:
             raise SOMAError(
-                "The query condition statement could not be parsed properly. (Is this an empty expression?)"
+                "The query condition statement could not be parsed properly. (Is this an empty expression?)",
             )
 
     def init_query_condition(
@@ -137,7 +137,7 @@ class QueryCondition:
         if not isinstance(self.c_obj, clib.PyQueryCondition):
             raise SOMAError(
                 "Malformed query condition statement. A query condition must "
-                "be made up of one or more boolean expressions."
+                "be made up of one or more boolean expressions.",
             )
 
         return query_attrs
@@ -197,7 +197,7 @@ class QueryConditionTree(ast.NodeVisitor):
         raise SOMAError(
             f"Unhandled dot operator in {ast.dump(node)} -- if your attribute name "
             'has a dot in it, e.g. `orig.ident`, please wrap it with `attr("...")`, '
-            'e.g. `attr("orig.ident")`'
+            'e.g. `attr("orig.ident")`',
         )
 
     def visit_Compare(self, node: ast.Compare) -> clib.PyQueryCondition:
@@ -231,12 +231,12 @@ class QueryConditionTree(ast.NodeVisitor):
             if isinstance(node.left, ast.Call):
                 if node.left.func.id != "attr":
                     raise SOMAError(
-                        f"query condition left-hand side function call must be 'attr'; got '{node.left.func.id}'"
+                        f"query condition left-hand side function call must be 'attr'; got '{node.left.func.id}'",
                     )
 
                 if len(node.left.args) != 1:
                     raise SOMAError(
-                        f"query condition left-hand side 'attr' function call must have one argument; got '{len(node.left.args)}'"
+                        f"query condition left-hand side 'attr' function call must have one argument; got '{len(node.left.args)}'",
                     )
 
                 arg = node.left.args[0]
@@ -386,7 +386,7 @@ class QueryConditionTree(ast.NodeVisitor):
         else:
             raise SOMAError(
                 f"Incorrect type for comparison value: {ast.dump(val_node)}: right-hand sides must be constant"
-                " expressions, not variables -- did you mean to quote the right-hand side as a string?"
+                " expressions, not variables -- did you mean to quote the right-hand side as a string?",
             )
 
         return val
@@ -445,7 +445,7 @@ class QueryConditionTree(ast.NodeVisitor):
             op = self.visit(node.op)
         except KeyError:
             raise SOMAError(
-                f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported."
+                f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported.",
             ) from None
 
         result = self.visit(node.left)
@@ -454,7 +454,7 @@ class QueryConditionTree(ast.NodeVisitor):
             visited = self.visit(value)
             if not isinstance(result, clib.PyQueryCondition):
                 raise Exception(
-                    f"Unable to parse expression component {ast.dump(node)} -- did you mean to quote it as a string?"
+                    f"Unable to parse expression component {ast.dump(node)} -- did you mean to quote it as a string?",
                 ) from None
             result = result.combine(visited, op)
 

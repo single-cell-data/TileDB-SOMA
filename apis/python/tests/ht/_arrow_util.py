@@ -25,7 +25,7 @@ def combine_chunks(a: pa.ChunkedArray) -> pa.Array:
                         index_type=type.index_type,
                         value_type=pa.string(),
                         ordered=type.ordered,
-                    )
+                    ),
                 )
                 .combine_chunks()
                 .cast(type)
@@ -38,7 +38,7 @@ def combine_chunks(a: pa.ChunkedArray) -> pa.Array:
                         index_type=type.index_type,
                         value_type=pa.binary(),
                         ordered=type.ordered,
-                    )
+                    ),
                 )
                 .combine_chunks()
                 .cast(type)

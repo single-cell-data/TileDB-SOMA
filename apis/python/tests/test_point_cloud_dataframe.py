@@ -494,7 +494,7 @@ def point_cloud_read_spatial_region_transform_setup(uri, transform, input_axes, 
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc:
         read_spatial_region = ptc.read_spatial_region(
-            region_transform=transform(input_axes=input_names, output_axes=output_names, **kwargs)
+            region_transform=transform(input_axes=input_names, output_axes=output_names, **kwargs),
         )
 
         assert read_spatial_region.data.concat() == ptc.read().concat()
@@ -542,7 +542,11 @@ def test_point_cloud_read_spatial_region_identity_transform(tmp_path):
     ],
 )
 def test_point_cloud_read_spatial_region_uniform_scale_transform(
-    tmp_path, name, scale, expected_scale_factors, expected_scale
+    tmp_path,
+    name,
+    scale,
+    expected_scale_factors,
+    expected_scale,
 ):
     coordinate_transform = point_cloud_read_spatial_region_transform_setup(
         uri=tmp_path.as_uri(),
@@ -712,26 +716,28 @@ def test_fragments_in_writes(tmp_path, dtype):
             "x": pd.Series([0, 1, 2, 3], dtype=dtype),
             "y": pd.Series([0, 1, 2, 3], dtype=dtype),
             "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
-        }
+        },
     )
     df_1 = pd.DataFrame(
         {
             "x": pd.Series([4, 5, 6, 7], dtype=dtype),
             "y": pd.Series([0, 1, 2, 3], dtype=dtype),
             "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
-        }
+        },
     )
     df_2 = pd.DataFrame(
         {
             "x": pd.Series([8, 9, 10, 11], dtype=dtype),
             "y": pd.Series([0, 1, 2, 3], dtype=dtype),
             "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
-        }
+        },
     )
     expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
 
     soma.PointCloudDataFrame.create(
-        uri, schema=pa.Schema.from_pandas(df_0, preserve_index=False), domain=[[0, 11], [0, 11], [0, 11]]
+        uri,
+        schema=pa.Schema.from_pandas(df_0, preserve_index=False),
+        domain=[[0, 11], [0, 11], [0, 11]],
     ).close()
 
     with soma.PointCloudDataFrame.open(uri, mode="w") as A:
@@ -742,7 +748,7 @@ def test_fragments_in_writes(tmp_path, dtype):
                     pa.Table.from_pandas(df_0, preserve_index=False),
                     pa.Table.from_pandas(df_1, preserve_index=False),
                     pa.Table.from_pandas(df_2, preserve_index=False),
-                ]
+                ],
             ),
             platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
         )

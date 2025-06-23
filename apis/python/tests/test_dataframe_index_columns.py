@@ -1207,7 +1207,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1219,7 +1219,7 @@ def arrow_table():
                 [
                     pa.scalar(946684800, pa.timestamp("s")),
                     pa.scalar(946684809, pa.timestamp("s")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1231,7 +1231,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [[np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]],
             "default23",
@@ -1243,13 +1243,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684802, pa.timestamp("s")),
                     pa.scalar(946684803, pa.timestamp("s")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1260,13 +1260,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [
                 slice(
                     pa.scalar(946684802, pa.timestamp("s")),
                     pa.scalar(946684803, pa.timestamp("s")),
-                )
+                ),
             ],
             "default23",
         ],
@@ -1277,7 +1277,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [slice(None, pa.scalar(946684802, pa.timestamp("s")))],
             {
@@ -1292,7 +1292,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [slice(pa.scalar(946684802, pa.timestamp("s")), None)],
             {
@@ -1307,7 +1307,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [slice(None, None)],
             "default01234",
@@ -1319,15 +1319,15 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [
                 np.asarray(
                     [
                         pa.scalar(946684802, pa.timestamp("s")),
                         pa.scalar(946684803, pa.timestamp("s")),
-                    ]
-                )
+                    ],
+                ),
             ],
             "default23",
         ],
@@ -1338,7 +1338,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [pa.array([946684802, 946684803])],
             "default23",
@@ -1350,7 +1350,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("s")),
                     pa.scalar(1000000000, pa.timestamp("s")),
-                ]
+                ],
             ],
             [pa.array([946684802, 946684803], pa.timestamp("s"))],
             "default23",
@@ -1363,7 +1363,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1375,7 +1375,7 @@ def arrow_table():
                 [
                     pa.scalar(946684800000, pa.timestamp("ms")),
                     pa.scalar(946684800009, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1387,13 +1387,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684800002, pa.timestamp("ms")),
                     pa.scalar(946684800003, pa.timestamp("ms")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1404,13 +1404,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684800002, pa.timestamp("ms")),
                     pa.scalar(946684800003, pa.timestamp("ms")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1421,13 +1421,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [
                 slice(
                     pa.scalar(946684800002, pa.timestamp("ms")),
                     pa.scalar(946684800003, pa.timestamp("ms")),
-                )
+                ),
             ],
             "default23",
         ],
@@ -1438,7 +1438,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [slice(None, pa.scalar(946684800002, pa.timestamp("ms")))],
             {
@@ -1453,7 +1453,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [slice(pa.scalar(946684800002, pa.timestamp("ms")), None)],
             {
@@ -1468,7 +1468,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [slice(None, None)],
             "default01234",
@@ -1480,15 +1480,15 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [
                 np.asarray(
                     [
                         pa.scalar(946684800002, pa.timestamp("ms")),
                         pa.scalar(946684800003, pa.timestamp("ms")),
-                    ]
-                )
+                    ],
+                ),
             ],
             "default23",
         ],
@@ -1499,7 +1499,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [pa.array([946684800002, 946684800003])],
             "default23",
@@ -1511,7 +1511,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ms")),
                     pa.scalar(1000000000000, pa.timestamp("ms")),
-                ]
+                ],
             ],
             [pa.array([946684800002, 946684800003], pa.timestamp("ms"))],
             "default23",
@@ -1524,7 +1524,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1536,7 +1536,7 @@ def arrow_table():
                 [
                     pa.scalar(946684800000000, pa.timestamp("us")),
                     pa.scalar(946684800000009, pa.timestamp("us")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1548,13 +1548,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684800000002, pa.timestamp("us")),
                     pa.scalar(946684800000003, pa.timestamp("us")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1565,13 +1565,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684800000002, pa.timestamp("us")),
                     pa.scalar(946684800000003, pa.timestamp("us")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1582,13 +1582,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [
                 slice(
                     pa.scalar(946684800000002, pa.timestamp("us")),
                     pa.scalar(946684800000003, pa.timestamp("us")),
-                )
+                ),
             ],
             "default23",
         ],
@@ -1599,7 +1599,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [slice(None, pa.scalar(946684800000002, pa.timestamp("us")))],
             {
@@ -1614,7 +1614,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [slice(pa.scalar(946684800000002, pa.timestamp("us")), None)],
             {
@@ -1629,7 +1629,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [slice(None, None)],
             "default01234",
@@ -1641,15 +1641,15 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [
                 np.asarray(
                     [
                         pa.scalar(946684800000002, pa.timestamp("us")),
                         pa.scalar(946684800000003, pa.timestamp("us")),
-                    ]
-                )
+                    ],
+                ),
             ],
             "default23",
         ],
@@ -1660,7 +1660,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [pa.array([946684800000002, 946684800000003])],
             "default23",
@@ -1672,7 +1672,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("us")),
                     pa.scalar(1000000000000000, pa.timestamp("us")),
-                ]
+                ],
             ],
             [pa.array([946684800000002, 946684800000003], pa.timestamp("us"))],
             "default23",
@@ -1685,7 +1685,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1697,7 +1697,7 @@ def arrow_table():
                 [
                     pa.scalar(946684800000000000, pa.timestamp("ns")),
                     pa.scalar(946684800000000009, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [],
             "default01234",
@@ -1709,13 +1709,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684800000000002, pa.timestamp("ns")),
                     pa.scalar(946684800000000003, pa.timestamp("ns")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1726,13 +1726,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [
                 [
                     pa.scalar(946684800000000002, pa.timestamp("ns")),
                     pa.scalar(946684800000000003, pa.timestamp("ns")),
-                ]
+                ],
             ],
             "default23",
         ],
@@ -1743,13 +1743,13 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [
                 slice(
                     pa.scalar(946684800000000002, pa.timestamp("ns")),
                     pa.scalar(946684800000000003, pa.timestamp("ns")),
-                )
+                ),
             ],
             "default23",
         ],
@@ -1760,7 +1760,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [slice(None, pa.scalar(946684800000000002, pa.timestamp("ns")))],
             {
@@ -1775,7 +1775,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [slice(pa.scalar(946684800000000002, pa.timestamp("ns")), None)],
             {
@@ -1790,7 +1790,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [slice(None, None)],
             "default01234",
@@ -1802,15 +1802,15 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [
                 np.asarray(
                     [
                         pa.scalar(946684800000000002, pa.timestamp("ns")),
                         pa.scalar(946684800000000003, pa.timestamp("ns")),
-                    ]
-                )
+                    ],
+                ),
             ],
             "default23",
         ],
@@ -1821,7 +1821,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [pa.array([946684800000000002, 946684800000000003])],
             "default23",
@@ -1833,7 +1833,7 @@ def arrow_table():
                 [
                     pa.scalar(0, pa.timestamp("ns")),
                     pa.scalar(1000000000000000000, pa.timestamp("ns")),
-                ]
+                ],
             ],
             [pa.array([946684800000000002, 946684800000000003], pa.timestamp("ns"))],
             "default23",

@@ -135,7 +135,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 f" or the {name}.open(uri, ...) class method."
                 f" To create a new {name}, use the {name}.create class method."
                 f" Directly calling `{name}(...)` is intended for TileDB SOMA"
-                f" internal use only."
+                f" internal use only.",
             )
         self._handle = handle
         self._close_stack.enter_context(self._handle)

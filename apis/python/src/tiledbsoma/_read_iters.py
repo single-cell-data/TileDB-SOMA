@@ -156,7 +156,10 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
-            self.shape, axis, size, reindex_disable_on_axis
+            self.shape,
+            axis,
+            size,
+            reindex_disable_on_axis,
         )
 
         self.major_axis = self.axis[0]
@@ -165,9 +168,11 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         # materialize all indexing info.
         self.joinids: list[pa.Array] = [
             pa.array(
-                np.concatenate(list(_coords_strider(self.coords[d], self.shape[d], self.shape[d])))
-                if d != self.major_axis
-                else np.array([], dtype=np.int64)
+                (
+                    np.concatenate(list(_coords_strider(self.coords[d], self.shape[d], self.shape[d])))
+                    if d != self.major_axis
+                    else np.array([], dtype=np.int64)
+                ),
             )
             for d in range(self.ndim)
         ]
@@ -248,7 +253,9 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         raise NotImplementedError("Blockwise iterators do not support concat operation")
 
     def _maybe_eager_iterator(
-        self, x: Iterator[_EagerRT], _pool: ThreadPoolExecutor | None = None
+        self,
+        x: Iterator[_EagerRT],
+        _pool: ThreadPoolExecutor | None = None,
     ) -> Iterator[_EagerRT]:
         """Private."""
         return EagerIterator(x, pool=_pool) if self.eager else x
@@ -276,7 +283,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                     result_order=self.result_order,
                     value_filter=None,
                     platform_config=self.platform_config,
-                )
+                ),
             ), tuple(joinids)
 
     def _reindexed_table_reader(
@@ -381,7 +388,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
                 [
                     (f"soma_dim_{self.major_axis}", "ascending"),
                     (f"soma_dim_{self.minor_axis}", "ascending"),
-                ]
+                ],
             )
             ijd = (
                 (coo_tbl.column(0).to_numpy(), coo_tbl.column(1).to_numpy()),
@@ -425,7 +432,8 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             yield sp, indices
 
     def _cs_reader(
-        self, _pool: ThreadPoolExecutor | None = None
+        self,
+        _pool: ThreadPoolExecutor | None = None,
     ) -> Iterator[tuple[sparse.csr_matrix | sparse.csc_matrix, IndicesType],]:
         """Private.
 
@@ -494,7 +502,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 result_order=self.result_order,
                 value_filter=None,
                 platform_config=self.platform_config,
-            )
+            ),
         )
         return self._from_table(arrow_tables)
 

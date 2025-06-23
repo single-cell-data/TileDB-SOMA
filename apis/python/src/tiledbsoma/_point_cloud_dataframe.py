@@ -139,7 +139,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 if not (pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)):
                     raise ValueError(
                         f"Spatial column '{column_name}' must have an integer or "
-                        f"floating-point type. Column type is {axis_dtype!r}"
+                        f"floating-point type. Column type is {axis_dtype!r}",
                     )
             else:
                 try:
@@ -183,7 +183,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             if ndom != nidx:
                 raise ValueError(
                     f"if domain is specified, it must have the same length as "
-                    f"index_column_names; got {ndom} != {nidx}"
+                    f"index_column_names; got {ndom} != {nidx}",
                 )
 
         index_column_schema = []
@@ -194,10 +194,18 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             dtype = _arrow_types.tiledb_type_from_arrow_type(pa_field.type, is_indexed_column=True)
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain, False, index_column_name, pa_field.type, dtype
+                slot_soma_domain,
+                False,
+                index_column_name,
+                pa_field.type,
+                dtype,
             )
             (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None, True, index_column_name, pa_field.type, dtype
+                None,
+                True,
+                index_column_name,
+                pa_field.type,
+                dtype,
             )
 
             extent = _find_extent_for_domain(
@@ -382,13 +390,13 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 raise ValueError(
                     f"The input axes '{region_transform.input_axes}' of the region "
                     f"transform must match the axes '{region_coord_space.axis_names}' "
-                    f"of the coordinate space the requested region is defined in."
+                    f"of the coordinate space the requested region is defined in.",
                 )
             if region_transform.output_axes != self._coord_space.axis_names:
                 raise ValueError(
                     f"The output axes of '{region_transform.output_axes}' of the "
                     f"transform must match the axes '{self._coord_space.axis_names}' "
-                    f"of the coordinate space of this point cloud dataframe."
+                    f"of the coordinate space of this point cloud dataframe.",
                 )
 
         # Process the user provided region.
@@ -443,7 +451,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
-                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions"
+                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions",
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
@@ -477,7 +485,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 raise ValueError(
                     f"Cannot change axis names of a point cloud dataframe. Existing "
                     f"axis names are {self._coord_space.axis_names}. New coordinate "
-                    f"space has axis names {value.axis_names}."
+                    f"space has axis names {value.axis_names}.",
                 )
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(value)
         self._coord_space = value

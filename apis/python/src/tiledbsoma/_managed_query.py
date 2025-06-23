@@ -109,7 +109,10 @@ class ManagedQuery:
                     raise ValueError("Domain should be expressed per axis for geometry columns")
 
                 self.set_geometry_coord(
-                    dim, cast("tuple[Mapping[str, float], Mapping[str, float]]", dom), coord, axis_names
+                    dim,
+                    cast("tuple[Mapping[str, float], Mapping[str, float]]", dom),
+                    coord,
+                    axis_names,
                 )
                 return
 
@@ -177,7 +180,7 @@ class ManagedQuery:
         if len(coords) > len(self._array._handle._handle.dimension_names):
             raise ValueError(
                 f"The coords ({len(coords)} elements) must be shorter than ndim"
-                f" ({len(self._array._handle._handle.dimension_names)})"
+                f" ({len(self._array._handle._handle.dimension_names)})",
             )
 
         for i, coord in enumerate(coords):

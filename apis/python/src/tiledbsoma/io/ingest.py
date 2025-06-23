@@ -242,9 +242,9 @@ def register_h5ads(
                     partial(
                         ExperimentAmbientLabelMapping._validate_anndata,
                         append_obsm_varm,
-                    )
+                    ),
                 ),
-            )
+            ),
         )
     logging.log_io(None, "Loaded per-axis metadata")
 
@@ -285,7 +285,7 @@ def register_anndatas(
             obs_field_name,
             var_field_name,
             partial(ExperimentAmbientLabelMapping._validate_anndata, append_obsm_varm),
-        )
+        ),
     ]
 
     return ExperimentAmbientLabelMapping._register_common(
@@ -563,7 +563,7 @@ def _from_anndata(
         for key, val in getattr(anndata, ad_key).items():
             if not isinstance(val, get_args(Matrix)):
                 raise TypeError(
-                    f"{ad_key} value at {key} is not of type {list(cl.__name__ for cl in get_args(Matrix))}: {type(val)}"
+                    f"{ad_key} value at {key} is not of type {list(cl.__name__ for cl in get_args(Matrix))}: {type(val)}",
                 )
 
     # For single ingest (no append):
@@ -586,7 +586,7 @@ def _from_anndata(
     else:
         if not registration_mapping.prepared and Experiment.exists(experiment_uri):
             raise SOMAError(
-                "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method."
+                "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method.",
             )
         joinid_maps = registration_mapping.id_mappings_for_anndata(anndata, measurement_name=measurement_name)
         filter_existing_obs_joinids = registration_mapping.obs_axis.allow_duplicate_ids
@@ -849,7 +849,7 @@ def _from_anndata(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.""",
 )
 def append_obs(
     exp: Experiment,
@@ -915,7 +915,7 @@ def append_obs(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.""",
 )
 def append_var(
     exp: Experiment,
@@ -985,7 +985,7 @@ def append_var(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.""",
 )
 def append_X(
     exp: Experiment,
@@ -1232,7 +1232,7 @@ def _extract_new_values_for_append_aux(
                 arrow_table[SOMA_JOINID].to_numpy(),
                 previous_sjids_table[SOMA_JOINID].to_numpy(),
                 invert=True,
-            )
+            ),
         )
 
         arrow_table = arrow_table.filter(mask)
@@ -1523,7 +1523,7 @@ def _write_dataframe_impl(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-To add a new matrix as a layer within an existing SOMA Experiment (e.g., to X, obsm, varm), please use the more specific functions tiledbsoma.io.add_X_layer or tiledbsoma.io.add_matrix_to_collection. If you need to create a standalone SOMA NDArray outside of a pre-defined Experiment structure, please use the direct SOMA API constructors, such as tiledbsoma.SparseNDArray.create."""
+To add a new matrix as a layer within an existing SOMA Experiment (e.g., to X, obsm, varm), please use the more specific functions tiledbsoma.io.add_X_layer or tiledbsoma.io.add_matrix_to_collection. If you need to create a standalone SOMA NDArray outside of a pre-defined Experiment structure, please use the direct SOMA API constructors, such as tiledbsoma.SparseNDArray.create.""",
 )
 def create_from_matrix(
     cls: type[_NDArr],
@@ -1781,7 +1781,7 @@ def _update_dataframe(
                 ["…"] if len(jid_diffs) > max_jid_diffs_to_display else []
             )
             raise ValueError(
-                f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}"
+                f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}",
             )
 
         old_keys = set(old_sig.keys())
@@ -2503,7 +2503,11 @@ def _write_matrix_to_sparseNDArray(
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
         else:
             chunk_size = _find_sparse_chunk_size(  # type: ignore[unreachable]
-                matrix, i, stride_axis, goal_chunk_nnz, mean_nnz
+                matrix,
+                i,
+                stride_axis,
+                goal_chunk_nnz,
+                mean_nnz,
             )
         if chunk_size == -1:  # completely empty array; nothing to write
             if i > 0:
@@ -2557,7 +2561,7 @@ def _write_matrix_to_sparseNDArray(
             if num_tries > max_tries:
                 raise SOMAError(
                     f"Unable to accommodate goal_chunk_nnz {goal_chunk_nnz}. "
-                    "This may be reduced in TileDBCreateOptions."
+                    "This may be reduced in TileDBCreateOptions.",
                 )
 
             ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
@@ -2565,7 +2569,7 @@ def _write_matrix_to_sparseNDArray(
             if chunk_size < 1:
                 raise SOMAError(
                     f"Unable to accommodate a single row at goal_chunk_nnz {goal_chunk_nnz}. "
-                    "This may be reduced in TileDBCreateOptions."
+                    "This may be reduced in TileDBCreateOptions.",
                 )
             i2 = i + chunk_size
             coords[stride_axis] = slice(i, i2)
@@ -2650,7 +2654,7 @@ def _chunk_is_contained_in(
 
     if len(chunk_bounds) != len(storage_nonempty_domain):
         raise SOMAError(
-            f"internal error: ingest data ndim {len(chunk_bounds)} != storage ndim {len(storage_nonempty_domain)}"
+            f"internal error: ingest data ndim {len(chunk_bounds)} != storage ndim {len(storage_nonempty_domain)}",
         )
     for i in range(len(chunk_bounds)):
         if not _chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i):
@@ -2915,7 +2919,7 @@ def _ingest_uns_1d_string_array(
         data={
             SOMA_JOINID: np.arange(n, dtype=np.int64),
             _UNS_OUTGEST_COLUMN_NAME_1D: [str(e) if e else "" for e in value],
-        }
+        },
     )
     df.set_index("soma_joinid", inplace=True)
 

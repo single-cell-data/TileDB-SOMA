@@ -90,7 +90,7 @@ def sparse_chunk(
                     "soma_dim_0": new_dim0,
                     "soma_dim_1": new_dim1,
                     "soma_data": tbl["soma_data"],
-                }
+                },
             )
             new_tbls.append(new_tbl)
         cm = CompressedMatrix.from_soma(

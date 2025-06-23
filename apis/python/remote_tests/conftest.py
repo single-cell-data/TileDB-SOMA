@@ -43,5 +43,5 @@ def conftest_context(conftest_token, conftest_namespace):
         tiledb_config={
             "rest.token": conftest_token,
             "rest.payer_namespace": conftest_namespace,
-        }
+        },
     )

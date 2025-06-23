@@ -117,7 +117,8 @@ class TileDBCreateOptions:
         ),
     )
     validity_filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(
-        converter=_normalize_filters_optional, default=None
+        converter=_normalize_filters_optional,
+        default=None,
     )
     allows_duplicates: bool = attrs_.field(
         validator=vld.instance_of(bool),
@@ -241,7 +242,7 @@ def _dig_platform_config(input: object, typ: type[_T], full_path: tuple[str, ...
         path_dots = ".".join(full_path)
         raise TypeError(
             f"`{path_dots}` entry of `platform_config` must be"
-            f" either a dict or `{typ.__name__}`, not {type(current)}"
+            f" either a dict or `{typ.__name__}`, not {type(current)}",
         )
     # It's of the expected type! Return it.
     return current

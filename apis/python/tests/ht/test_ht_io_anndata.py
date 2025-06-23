@@ -202,7 +202,7 @@ def matrixes(
             ht_np.integer_dtypes(endianness="="),
             ht_np.unsigned_integer_dtypes(endianness="="),
             # ht_np.boolean_dtypes(),  # bools not currently supported by TileDB-SOMA
-        )
+        ),
     )
 
     size = math.prod(shape)
@@ -392,7 +392,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
                 ),
                 unique_by=key_unique_by,
             ),
-        )
+        ),
     )
 
 

@@ -53,8 +53,8 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                             "soma_joinid": np.arange(4),
                             "x": np.array([0, 0, 0.5, 0.5]),
                             "y": np.array([0, 0.5, 0, 0.5]),
-                        }
-                    )
+                        },
+                    ),
                 )
                 points1.metadata["soma_geometry"] = 1.0
                 points1.metadata["soma_geometry_type"] = "radius"
@@ -73,8 +73,8 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                             "soma_joinid": np.arange(4),
                             "x": np.array([0, 0, -0.5, -0.5]),
                             "y": np.array([0, -0.5, 0, -0.5]),
-                        }
-                    )
+                        },
+                    ),
                 )
 
                 # Add point cloud without shape to scene 1 varl.
@@ -91,8 +91,8 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                             "soma_joinid": np.arange(4),
                             "x": np.array([0, 0, -0.5, -0.5]),
                             "y": np.array([0, -0.5, 0, -0.5]),
-                        }
-                    )
+                        },
+                    ),
                 )
 
                 # Add point cloud with shape to scene 1 varl.
@@ -109,8 +109,8 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                             "soma_joinid": np.arange(4),
                             "x": np.array([0, 0, 0.5, 0.5]),
                             "y": np.array([0, 0.5, 0, 0.5]),
-                        }
-                    )
+                        },
+                    ),
                 )
                 points4.metadata["soma_geometry"] = 2.0
                 points4.metadata["soma_geometry_type"] = "radius"
@@ -219,7 +219,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
             "obs_id": np.arange(4),
             "radius": np.ones((4,), dtype=np.float64),
             "geometry": shapely.points([[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]).tolist(),
-        }
+        },
     )
     assert all(points1 == points1_expected)
     assert points1.attrs["transform"] == {"scene1": sd.transformations.Scale([0.5, 0.5], ("x", "y"))}
@@ -231,7 +231,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
             "x": np.array([0, 0, -0.5, -0.5]),
             "y": np.array([0, -0.5, 0, -0.5]),
             "var_id": np.arange(4),
-        }
+        },
     )
     points2_data = points2.compute()
     print(points2_data)
@@ -245,7 +245,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
             "x": np.array([0, 0, -0.5, -0.5]),
             "y": np.array([0, -0.5, 0, -0.5]),
             "obs_id": np.arange(4),
-        }
+        },
     )
     points3_data = points3.compute()
     print(points3_data)
@@ -259,7 +259,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
             "var_id": np.arange(4),
             "radius": np.ones((4,), dtype=np.float64),
             "geometry": shapely.points([[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]).tolist(),
-        }
+        },
     )
     assert all(points4 == points4_expected)
     assert points4.attrs["transform"] == {"scene1": sd.transformations.Scale([4.0, 4.0], ("x", "y"))}

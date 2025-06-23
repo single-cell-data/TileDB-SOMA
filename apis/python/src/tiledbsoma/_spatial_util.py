@@ -37,14 +37,14 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
         transform_type = raw.pop("transform_type")
     except KeyError:
         raise KeyError(
-            "'transform_type' not found when attempting to convert JSON to CoordinateTransform child class"
+            "'transform_type' not found when attempting to convert JSON to CoordinateTransform child class",
         ) from None
 
     try:
         kwargs = raw.pop("transform")
     except KeyError:
         raise KeyError(
-            "'transform' kwargs options not found when attempting to convert JSON to CoordinateTransform child class"
+            "'transform' kwargs options not found when attempting to convert JSON to CoordinateTransform child class",
         ) from None
 
     coord_transform_init: dict[str, type[somacore.CoordinateTransform]] = {
@@ -96,7 +96,7 @@ def transform_region(
         if ndim != len(transform.input_axes):
             raise ValueError(
                 f"Input region must have {len(transform.input_axes)} dimension, "
-                f"but region with {ndim} dimensions provided."
+                f"but region with {ndim} dimensions provided.",
             )
     else:
         if len(region) != 4:
@@ -199,7 +199,7 @@ def process_spatial_df_region(
         if not isinstance(transform, somacore.ScaleTransform):
             raise NotImplementedError(
                 f"Support for querying point clouds with a transform of type "
-                f"{type(transform)!r} our a bounding box region is not yet supported."
+                f"{type(transform)!r} our a bounding box region is not yet supported.",
             )
         # Note: transform_region currently only supports 2D regions. This code block
         # operates under the same assumption.

@@ -106,7 +106,7 @@ def _transform_to_spatialdata(
         return sd.transformations.Affine(transform.augmented_matrix, input_axes, output_axes)
 
     raise NotImplementedError(
-        f"Support for converting transform of type {type(transform).__name__} is not yet implemented."
+        f"Support for converting transform of type {type(transform).__name__} is not yet implemented.",
     )
 
 
@@ -177,13 +177,13 @@ def to_spatialdata_shapes(
         radius = points.metadata["soma_geometry"]
     except KeyError as ke:
         raise KeyError(
-            "Missing metadata 'soma_geometry' needed for reading the point cloud dataframe as a shape."
+            "Missing metadata 'soma_geometry' needed for reading the point cloud dataframe as a shape.",
         ) from ke
     try:
         soma_geometry_type = points.metadata["soma_geometry_type"]
         if soma_geometry_type != "radius":
             raise NotImplementedError(
-                f"Support for a point cloud with shape '{soma_geometry_type}' is not yet implemented."
+                f"Support for a point cloud with shape '{soma_geometry_type}' is not yet implemented.",
             )
     except KeyError as ke:
         raise KeyError("Missing metadata 'soma_geometry_type'.") from ke
@@ -208,7 +208,7 @@ def to_spatialdata_shapes(
         geometry = gpd.points_from_xy(data.pop(orig_axis_names[0]), data.pop(orig_axis_names[1]))
     else:
         raise NotImplementedError(
-            f"Support for export {ndim}D point cloud dataframes to SpatialData shapes is not yet implemented."
+            f"Support for export {ndim}D point cloud dataframes to SpatialData shapes is not yet implemented.",
         )
     df = gpd.GeoDataFrame(data, geometry=geometry)
     df.attrs["transform"] = transforms
@@ -240,7 +240,7 @@ def to_spatialdata_image(
     """
     if not image.has_channel_axis:
         raise NotImplementedError(
-            "Support for exporting a MultiscaleImage to without a channel axis to SpatialData is not yet implemented."
+            "Support for exporting a MultiscaleImage to without a channel axis to SpatialData is not yet implemented.",
         )
 
     # Convert from SOMA axis names to SpatialData axis names.
@@ -310,7 +310,7 @@ def to_spatialdata_multiscale_image(
     # Check for channel axis.
     if not image.has_channel_axis:
         raise NotImplementedError(
-            "Support for exporting a MultiscaleImage to without a channel axis to SpatialData is not yet implemented."
+            "Support for exporting a MultiscaleImage to without a channel axis to SpatialData is not yet implemented.",
         )
 
     # Convert from SOMA axis names to SpatialData axis names.
@@ -526,10 +526,10 @@ def _spatial_to_spatialdata(
                             obs_id_name: joinid_series,
                             "region_key": key,
                             "instance_key": joinid_series.index,
-                        }
+                        },
                     )
                     for key, joinid_series in region_joinids.items()
-                ]
+                ],
             )
             if not region_df.empty:
                 try:
@@ -542,7 +542,7 @@ def _spatial_to_spatialdata(
                     )
                 except pd.errors.MergeError as err:
                     raise NotImplementedError(
-                        "Unable to export to SpatialData; exported assets have overlapping observations."
+                        "Unable to export to SpatialData; exported assets have overlapping observations.",
                     ) from err
                 adata.obs["region_key"] = pd.Categorical(adata.obs["region_key"])
                 regions = list(region_joinids.keys())

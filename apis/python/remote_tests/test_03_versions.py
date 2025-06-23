@@ -120,7 +120,10 @@ def test_upgrade_experiment_shapes(conftest_context, uri_and_info):
 
     handle = io.StringIO()
     upgradeable = tiledbsoma.io.upgrade_experiment_shapes(
-        uri, check_only=True, context=conftest_context, output_handle=handle
+        uri,
+        check_only=True,
+        context=conftest_context,
+        output_handle=handle,
     )
     handle.seek(0)
     lines = handle.readlines()
@@ -235,9 +238,9 @@ def test_get_experiment_shapes(conftest_context, uri_and_info):
                             "shape": (2147483646, 2147483646),
                             "maxshape": (2147483646, 2147483646),
                             "upgraded": False,
-                        }
+                        },
                     },
-                }
+                },
             },
         }
         assert dict_output == expect
@@ -272,9 +275,9 @@ def test_get_experiment_shapes(conftest_context, uri_and_info):
                             "shape": (2700, 13714),
                             "maxshape": (9223372036854773759, 9223372036854773759),
                             "upgraded": True,
-                        }
+                        },
                     },
-                }
+                },
             },
         }
         assert dict_output == expect

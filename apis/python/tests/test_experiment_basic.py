@@ -15,7 +15,7 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
             ("foo", pa.int32()),
             ("bar", pa.float64()),
             ("baz", pa.large_string()),
-        ]
+        ],
     )
 
     pydict = {}
@@ -41,7 +41,7 @@ def create_and_populate_var(uri: str) -> soma.DataFrame:
         [
             ("quux", pa.large_string()),
             ("xyzzy", pa.float64()),
-        ]
+        ],
     )
 
     pydict = {}

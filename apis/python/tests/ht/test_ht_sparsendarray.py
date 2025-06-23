@@ -70,16 +70,18 @@ def sparse_array_shape(
                 st.one_of(
                     st.none(),
                     st.integers(min_value=min_values[i], max_value=max_values[i]),
-                )
+                ),
             )
             for i in range(ndim)
         ]
     else:
         elements = [
             draw(
-                st.integers(min_value=min_values[i], max_value=max_values[i])
-                if min_values[i] < max_values[i]
-                else st.just(min_values[i])
+                (
+                    st.integers(min_value=min_values[i], max_value=max_values[i])
+                    if min_values[i] < max_values[i]
+                    else st.just(min_values[i])
+                ),
             )
             for i in range(ndim)
         ]
@@ -145,7 +147,7 @@ def sparse_array(
             not in [
                 pa.float16(),
             ]
-        )
+        ),
     ),
     shape=st.lists(
         st.one_of(st.none(), st.integers(min_value=1, max_value=2**31 - 1)),
@@ -259,7 +261,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
 
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(
-        lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps
+        lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps,
     )  # only one write per timestamp until sc-61223 and sc-61226 are fixed
     @rule(data=st.data())
     def write(self, data: st.DataObject) -> None:
@@ -275,7 +277,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
                 name=new_fragments.pop(),
                 data=coo_tbl,
                 index_columns=[f"soma_dim_{n}" for n in range(len(self.shape))],
-            )
+            ),
         )
 
 

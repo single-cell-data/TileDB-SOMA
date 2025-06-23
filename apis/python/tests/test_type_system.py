@@ -128,7 +128,7 @@ def test_bool_arrays(tmp_path, bool_array):
         [
             ("soma_joinid", pa.int64()),
             ("b", pa.bool_()),
-        ]
+        ],
     )
     index_column_names = ["soma_joinid"]
 

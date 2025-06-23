@@ -132,13 +132,13 @@ class VisiumPaths:
                 raise OSError(
                     f"No expression matrix ending in {gene_expression_suffix} found "
                     f"in {base_path}. If the file has been renamed, it can be directly "
-                    f"specified with the `gene_expression` argument."
+                    f"specified with the `gene_expression` argument.",
                 )
             if len(possible_paths) > 1:
                 raise OSError(
                     f"Multiple files ending in {gene_expression_suffix} "
                     f"found in {base_path}. The desired file must be specified with "
-                    f"the `gene_expression` argument."
+                    f"the `gene_expression` argument.",
                 )
             gene_expression = possible_paths[0]
 
@@ -197,7 +197,7 @@ class VisiumPaths:
                 raise OSError(
                     f"No tissue position file found in {spatial_dir}. Tried file: "
                     f"{possible_file_name}. If the file has been renamed it can be "
-                    f"directly specified using argument `tissue_positions`."
+                    f"directly specified using argument `tissue_positions`.",
                 )
 
         if scale_factors is None:
@@ -363,7 +363,7 @@ def from_visium(
     if ingest_mode != "write":
         raise NotImplementedError(
             f"Support for ingest mode '{ingest_mode}' is not implemented. Currently, "
-            f"only support for 'write' mode is implemented."
+            f"only support for 'write' mode is implemented.",
         )
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
     if ingestion_params.appending and X_kind == DenseNDArray:
@@ -412,7 +412,7 @@ def from_visium(
     # Create axes and transformations
     # mypy false positive https://github.com/python/mypy/issues/5313
     coord_space = CoordinateSpace(
-        (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
+        (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels")),  # type: ignore[arg-type]
     )
 
     # Read 10x HDF5 gene expression file.
@@ -428,7 +428,7 @@ def from_visium(
             {
                 SOMA_JOINID: pa.array(np.arange(nobs, dtype=np.int64)),
                 "obs_id": reader.obs_id,
-            }
+            },
         )
         var_data = pa.Table.from_pydict(
             {
@@ -437,7 +437,7 @@ def from_visium(
                 "gene_ids": reader.gene_id,
                 "feature_types": reader.feature_type,
                 "genome": reader.genome,
-            }
+            },
         )
     logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
@@ -593,7 +593,7 @@ def from_visium(
                                     transform=ScaleTransform(("x", "y"), ("x", "y"), updated_scales),
                                 )
                             tissue_image.coordinate_space = CoordinateSpace(
-                                (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
+                                (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels")),  # type: ignore[arg-type]
                             )
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
@@ -614,7 +614,8 @@ def from_visium(
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
                         scene.set_transform_to_point_cloud_dataframe(
-                            "loc", transform=IdentityTransform(("x", "y"), ("x", "y"))
+                            "loc",
+                            transform=IdentityTransform(("x", "y"), ("x", "y")),
                         )
                         loc.coordinate_space = coord_space
 
@@ -734,7 +735,7 @@ def _write_X_layer(
                 "soma_data": reader.data,
                 "soma_dim_0": reader.obs_indices,
                 "soma_dim_1": reader.var_indices,
-            }
+            },
         )
         soma_ndarray.write(data, platform_config=platform_config)
     else:
@@ -768,7 +769,7 @@ def _write_scene_presence_dataframe(
                     ("soma_joinid", pa.int64()),
                     ("scene_id", pa.string()),
                     ("data", pa.bool_()),
-                ]
+                ],
             ),
             domain=((0, max_joinid_len - 1), ("", "")),
             index_column_names=("soma_joinid", "scene_id"),
@@ -798,7 +799,7 @@ def _write_scene_presence_dataframe(
                 "soma_joinid": joinids,
                 "scene_id": nvalues * [scene_id],
                 "data": nvalues * [True],
-            }
+            },
         )
         _write_arrow_table(arrow_table, soma_df, tiledb_create_options, tiledb_write_options)
 
@@ -839,7 +840,7 @@ def _write_visium_spots(
                 "barcode": id_column_name,
                 "pxl_row_in_fullres": "y",
                 "pxl_col_in_fullres": "x",
-            }
+            },
         )
         .assign(spot_diameter_fullres=np.double(spot_diameter))
     )

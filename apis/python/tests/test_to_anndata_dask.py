@@ -175,7 +175,7 @@ def test_dask_query_to_anndata_timestamp(
                     soma_dim_0=soma_dim_0,
                     soma_dim_1=soma_dim_1,
                     soma_data=soma_data,
-                )
+                ),
             )
             data.write(tbl)
         return ts

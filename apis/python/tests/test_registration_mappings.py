@@ -210,7 +210,7 @@ PANDAS_INDEXING_TEST_DF = pd.DataFrame(
         "soma_joinid": np.arange(3, dtype=np.int64),
         "alt_id": ["A", "C", "G"],
         "obs_id": ["AT", "CT", "GT"],
-    }
+    },
 )
 @pytest.mark.parametrize(
     [          "index_col_and_name"      ,  "default_index_name"  ,  "signature_col_names"  ],
@@ -236,7 +236,7 @@ PANDAS_INDEXING_TEST_DF = pd.DataFrame(
         # default RangeIndex ⇒ columns are preserved
         [ (      None    ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
         [ (      None    ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
-    ]
+    ],
 )
 def test_pandas_indexing(
     index_col_and_name: tuple[str | None] | tuple[str, str | None],
@@ -666,7 +666,7 @@ def test_multiples_without_experiment(
                 ],
                 dtype=np.float64,
             ),
-        }
+        },
     )
 
     with tiledbsoma.Experiment.open(experiment_uri) as exp:
@@ -906,7 +906,7 @@ def test_append_items_with_experiment(obs_field_name, var_field_name, tmp_path):
                     ],
                     dtype=np.float64,
                 ),
-            }
+            },
         )
 
         assert all(actual_X == expect_X)
@@ -1091,7 +1091,7 @@ def test_append_with_disjoint_measurements(tmp_path, obs_field_name, var_field_n
                     ],
                     dtype=np.float64,
                 ),
-            }
+            },
         )
 
         if use_same_cells:
@@ -1111,7 +1111,7 @@ def test_append_with_disjoint_measurements(tmp_path, obs_field_name, var_field_n
                         ],
                         dtype=np.float64,
                     ),
-                }
+                },
             )
         else:
             expect_X_two = pd.DataFrame(
@@ -1132,7 +1132,7 @@ def test_append_with_disjoint_measurements(tmp_path, obs_field_name, var_field_n
                         ],
                         dtype=np.float64,
                     ),
-                }
+                },
             )
 
         assert all(actual_X_one == expect_X_one)
@@ -1150,7 +1150,7 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
         context = tiledbsoma.SOMATileDBContext(
             tiledb_config={
                 "soma.init_buffer_bytes": 2048,
-            }
+            },
         )
 
     with tiledbsoma.Experiment.open(soma_larger, context=context) as exp:
@@ -1496,7 +1496,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
     if not os.path.isdir(original_data_uri):
         raise RuntimeError(
             f"Missing '{original_data_uri}' directory. Try running `make data` "
-            "from the TileDB-SOMA project root directory."
+            "from the TileDB-SOMA project root directory.",
         )
 
     with tiledbsoma.Experiment.open(original_data_uri) as exp:
@@ -1609,7 +1609,8 @@ def test_prepare_experiment(tmp_path) -> None:
         assert rd.var_axes[ms].enum_values == {}
 
     assert rd.obs_axis.enum_values["A"] == pd.CategoricalDtype(
-        categories=np.array(["red", "green", "blue", "black", "white"]), ordered=False
+        categories=np.array(["red", "green", "blue", "black", "white"]),
+        ordered=False,
     )
     assert rd.obs_axis.enum_values["B"] == pd.CategoricalDtype(categories=[True, False], ordered=False)
 
@@ -1753,7 +1754,10 @@ def test_allow_duplicate_obs_ids_catches_dups(tmp_path):
 
     # catch dup between AnnData?
     tiledbsoma.io.from_anndata(
-        (tmp_path / "soma1").as_posix(), adata1, measurement_name=ms_name, ingest_mode="schema_only"
+        (tmp_path / "soma1").as_posix(),
+        adata1,
+        measurement_name=ms_name,
+        ingest_mode="schema_only",
     )
     with pytest.raises(tiledbsoma.SOMAError):
         tiledbsoma.io.register_anndatas(

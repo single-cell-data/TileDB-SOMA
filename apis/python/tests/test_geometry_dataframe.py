@@ -76,10 +76,10 @@ def test_geometry_basic_read(tmp_path):
         assert result[0].to_numpy()[1] == rect.wkb
 
         assert shapely.from_wkb(result["soma_geometry"].to_numpy()[0]) == shapely.Polygon(
-            [(0, 0), (0, 1), (1, 0), (0, 0)]
+            [(0, 0), (0, 1), (1, 0), (0, 0)],
         )
         assert shapely.from_wkb(result["soma_geometry"].to_numpy()[1]) == shapely.Polygon(
-            [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+            [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)],
         )
 
 
@@ -108,5 +108,5 @@ def test_geometry_basic_spatial_read(tmp_path):
         assert len(result) == 1
 
         assert shapely.from_wkb(result["soma_geometry"].to_numpy()[0]) == shapely.Polygon(
-            [(0, 0), (0, 1), (1, 0), (0, 0)]
+            [(0, 0), (0, 1), (1, 0), (0, 0)],
         )
