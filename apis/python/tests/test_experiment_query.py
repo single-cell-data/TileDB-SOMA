@@ -918,7 +918,7 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
         )
 
     with soma.open(uri) as exp:
-        adata = exp.axis_query(measurement_name="RNA").to_anndata(
+        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
             "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
         )
 
