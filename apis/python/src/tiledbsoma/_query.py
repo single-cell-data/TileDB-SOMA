@@ -468,8 +468,11 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         #
         """
         Results:
+        
         X only: works
         all: works
+        obsm, obsp only: works
+
         obsp only: fail
         none: fail
         """
@@ -479,9 +482,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         for k in obsm_layers:
             if k not in self._ms.obsm:
                 raise KeyError(f"Unknown obsm layer name; {k}")
-        for k in obsp_layers:
-            if k not in self._ms.obsp:
-                raise KeyError(f"Unknown obsp layer name; {k}")
+        # for k in obsp_layers:
+        #     if k not in self._ms.obsp:
+        #         raise KeyError(f"Unknown obsp layer name; {k}")
         # for k in varm_layers:
         #     if k not in self._ms.varm:
         #         raise KeyError(f"Unknown varm layer name; {k}")

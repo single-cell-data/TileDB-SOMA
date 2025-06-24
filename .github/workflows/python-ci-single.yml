@@ -118,10 +118,10 @@ jobs:
       env:
         TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
 
+    # XXX DEBUGING
     - name: Fast fail pre-check
       shell: bash
       run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest -s -v -x apis/python/tests/test_experiment_query.py
-
 
     - name: Run pytests for Python
       shell: bash
