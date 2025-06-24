@@ -15,7 +15,7 @@ from tiledbsoma import _collection, _factory, _soma_object
 from tiledbsoma._exception import DoesNotExistError, SOMAError
 from tiledbsoma.options import SOMATileDBContext
 
-from tests._util import raises_no_typeguard
+from tests._util import create_basic_object, raises_no_typeguard
 
 
 # ----------------------------------------------------------------
@@ -404,6 +404,88 @@ def test_cascading_close(tmp_path: pathlib.Path):
         assert not reopened["dog"].closed
     # Closing the reopened collection closes everything.
     assert all(elem.closed for elem in all_elements)
+
+
+def test_collection_entries_from_methods(tmp_path):
+    uri = f"{tmp_path}/collection_with_entries_from_methods"
+
+    with soma.Collection.create(uri) as coll:
+        # Add entries.
+        coll.add_new_collection("experiment", soma.Experiment)
+        coll.add_new_collection("measurement", soma.Measurement)
+        coll.add_new_collection("collection")
+        coll.add_new_dataframe("dataframe", schema=pa.schema([pa.field("myint", pa.int64())]))
+        coll.add_new_dense_ndarray("dense", type=pa.float64(), shape=(100, 100))
+        coll.add_new_sparse_ndarray("sparse", type=pa.float64(), shape=(100, 100))
+
+        # Check accessing entries
+        exp = coll["experiment"]
+        assert not exp.closed
+        meas = coll["measurement"]
+        assert not meas.closed
+        subcoll = coll["collection"]
+        assert not subcoll.closed
+        dataframe = coll["dataframe"]
+        assert not dataframe.closed
+        dense = coll["dense"]
+        assert not dense.closed
+        sparse = coll["sparse"]
+        assert not sparse.closed
+
+    with soma.Collection.open(uri) as coll:
+        # Check
+        exp = coll["experiment"]
+
+        # Check accessing entries
+        exp = coll["experiment"]
+        assert isinstance(exp, soma.Experiment)
+        assert not exp.closed
+        meas = coll["measurement"]
+        assert isinstance(meas, soma.Measurement)
+        assert not meas.closed
+        subcoll = coll["collection"]
+        assert isinstance(subcoll, soma.Collection)
+        assert not subcoll.closed
+        dataframe = coll["dataframe"]
+        assert isinstance(dataframe, soma.DataFrame)
+        assert not dataframe.closed
+        dense = coll["dense"]
+        assert isinstance(dense, soma.DenseNDArray)
+        assert not dense.closed
+        sparse = coll["sparse"]
+        assert isinstance(sparse, soma.SparseNDArray)
+        assert not sparse.closed
+
+
+@pytest.mark.parametrize(
+    "entry_type",
+    [
+        "SOMAExperiment",
+        "SOMAMeasurement",
+        "SOMACollection",
+        "SOMAScene",
+        "SOMADataFrame",
+        "SOMASparseNDArray",
+        "SOMADenseNDArray",
+        "SOMAScene",
+        "SOMAPointCloudDataFrame",
+        "SOMAGeometryDataFrame",
+        "SOMAMultiscaleImage",
+    ],
+)
+def test_collection_entries_from_setter(tmp_path, entry_type):
+    uri = f"{tmp_path}/collection_with_{entry_type.lower()}"
+
+    with soma.Collection.create(uri) as coll:
+        with create_basic_object(entry_type, f"{uri}_entry") as entry:
+            coll["entry"] = entry
+            entry2 = coll["entry"]
+            assert entry2 is entry
+
+    with soma.Collection.open(uri) as coll:
+        entry = coll["entry"]
+        assert not entry.closed
+    assert entry.closed
 
 
 # Helper tests
