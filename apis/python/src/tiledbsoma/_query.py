@@ -468,7 +468,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         #
         """
         Results:
-        
+
         X only: works
         all: works
         obsm, obsp only: works
