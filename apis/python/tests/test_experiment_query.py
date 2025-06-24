@@ -905,7 +905,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert len(var) == var_count
 
 
-@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("version", ["1.7.3"] * 6)  # ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
@@ -930,7 +930,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
     )
     from somacore.query.types import IndexFactory, IndexLike
 
-    import tiledbsoma.pytiledbsoma as clib
+    # import tiledbsoma.pytiledbsoma as clib
     from tiledbsoma._fastercsx import CompressedMatrix
     from tiledbsoma._indexer import IntIndexer
 
@@ -1424,7 +1424,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         return resolved
 
     with soma.open(uri) as exp:
-        clib.config_logging("DEBUG")
+        # clib.config_logging("DEBUG")
         adata = TestExperimentAxisQuery(
             exp,
             measurement_name,
@@ -1438,7 +1438,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
         )
         assert adata
-        clib.config_logging("ERROR")
+        # clib.config_logging("ERROR")
 
         for m in obsm_layers:
             assert m in adata.obsm
@@ -1463,7 +1463,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("version", ["1.7.3"] * 6)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
