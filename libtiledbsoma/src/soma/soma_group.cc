@@ -124,6 +124,7 @@ SOMAGroup::SOMAGroup(
 }
 
 void SOMAGroup::fill_caches() {
+    LOG_DEBUG(fmt::format("[SOMAGroup] fill_caches for group '{}'", uri_));
     if (group_->query_type() == TILEDB_WRITE) {
         cache_group_ = std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     } else {
@@ -147,6 +148,7 @@ void SOMAGroup::fill_caches() {
         std::string key = mem.name().has_value() ? mem.name().value() : mem.uri();
         members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);
     }
+    LOG_DEBUG(fmt::format("[SOMAGroup] fill_caches for group DONE '{}'", uri_));
 }
 
 void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
