@@ -465,15 +465,22 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         var_joinids = self.var_joinids()
 
         # XXX begin
-        for k in all_x_arrays:
-            if k not in self._ms.X:
-                raise KeyError(f"Unknown X layer name; {k}")
+        #
+        """
+        Results:
+        X only: works
+        all: works
+        none: fail
+        """
+        # for k in all_x_arrays:
+        #     if k not in self._ms.X:
+        #         raise KeyError(f"Unknown X layer name; {k}")
         # for k in obsm_layers:
         #     if k not in self._ms.obsm:
         #         raise KeyError(f"Unknown obsm layer name; {k}")
-        # for k in obsp_layers:
-        #     if k not in self._ms.obsp:
-        #         raise KeyError(f"Unknown obsp layer name; {k}")
+        for k in obsp_layers:
+            if k not in self._ms.obsp:
+                raise KeyError(f"Unknown obsp layer name; {k}")
         # for k in varm_layers:
         #     if k not in self._ms.varm:
         #         raise KeyError(f"Unknown varm layer name; {k}")
