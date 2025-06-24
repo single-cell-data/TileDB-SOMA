@@ -21,7 +21,7 @@ def test_to_anndata(version, name_and_expected_shape):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
     with tiledbsoma.Experiment.open(uri) as exp:
@@ -75,7 +75,7 @@ def test_get_experiment_shapes(version_and_upgraded):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
     # The output includes URIs which vary randomly from one test run to another;
@@ -125,7 +125,7 @@ def test_get_experiment_shapes(version_and_upgraded):
                             "shape": (2147483646, 2147483646),
                             "maxshape": (2147483646, 2147483646),
                             "upgraded": False,
-                        }
+                        },
                     },
                     "obsm": {
                         "X_draw_graph_fr": {
@@ -187,7 +187,7 @@ def test_get_experiment_shapes(version_and_upgraded):
                             "shape": (2147483646, 2147483646),
                             "maxshape": (2147483646, 2147483646),
                             "upgraded": False,
-                        }
+                        },
                     },
                 },
                 "raw": {
@@ -208,7 +208,7 @@ def test_get_experiment_shapes(version_and_upgraded):
                             "shape": (2147483646, 2147483646),
                             "maxshape": (2147483646, 2147483646),
                             "upgraded": False,
-                        }
+                        },
                     },
                 },
             },
@@ -243,7 +243,7 @@ def test_get_experiment_shapes(version_and_upgraded):
                             "shape": (2638, 1838),
                             "maxshape": (9223372036854773759, 9223372036854773759),
                             "upgraded": True,
-                        }
+                        },
                     },
                     "obsm": {
                         "X_draw_graph_fr": {
@@ -305,7 +305,7 @@ def test_get_experiment_shapes(version_and_upgraded):
                             "shape": (1838, 50),
                             "maxshape": (9223372036854773759, 9223372036854773759),
                             "upgraded": True,
-                        }
+                        },
                     },
                 },
                 "raw": {
@@ -326,7 +326,7 @@ def test_get_experiment_shapes(version_and_upgraded):
                             "shape": (2638, 13714),
                             "maxshape": (9223372036854773759, 9223372036854773759),
                             "upgraded": True,
-                        }
+                        },
                     },
                 },
             },

@@ -123,7 +123,7 @@ def dataframe_schema(
             required_fields=(pa.field("soma_joinid", pa.int64(), nullable=False),),
             unique_field_names=True,
             elements=dataframe_datatype(),
-        )
+        ),
     )
     assert len(schema) > 1
 
@@ -198,10 +198,12 @@ def default_max_domain(datatype: pa.DataType) -> AxisDomain:
     if pa.types.is_timestamp(datatype):
         return (
             pa.scalar(
-                -(2**63) + 1, type=pa.timestamp(datatype.unit)
+                -(2**63) + 1,
+                type=pa.timestamp(datatype.unit),
             ),  # NB: -2**63 is NaT, per NEP-7, and indices can't be nullable
             pa.scalar(
-                2**63 - 1_000_001, type=pa.timestamp(datatype.unit)
+                2**63 - 1_000_001,
+                type=pa.timestamp(datatype.unit),
             ),  # sc-61331: 1_000_001 appears to be a weird buggy magic number?
         )
 
@@ -250,7 +252,7 @@ def dataframe_domain(
                         min_value=max_lower,
                         max_value=current_lower,
                         allow_nan=False,
-                    )
+                    ),
                 )
                 if current_lower is None or draw(st.booleans())
                 else current_lower
@@ -262,7 +264,7 @@ def dataframe_domain(
                         min_value=current_upper,
                         max_value=max_upper,
                         allow_nan=False,
-                    )
+                    ),
                 )
                 if current_upper is None or draw(st.booleans())
                 else current_upper
@@ -349,7 +351,7 @@ def column_values(
                     elements=st.binary(min_size=1).filter(lambda b: b"\x00" not in b),
                     unique=unique,
                     padding=False,
-                )
+                ),
             )
         else:
             return draw(arrow_array(np.dtype(bytes), size, unique=unique, padding=False))
@@ -429,7 +431,7 @@ def arrow_table2(
                     st.integers(
                         min_value=1,
                         max_value=min(MAX_CATEGORIES, enmr.max_categories - enmr.num_categories),
-                    )
+                    ),
                 )
                 assert new_cat_count <= enmr.max_categories
 
@@ -443,7 +445,7 @@ def arrow_table2(
                             unique=True,
                             domain=(None, None),
                             is_dict_value=True,
-                        )
+                        ),
                     )
                     new_unique_cats = setdiff(set(new_cats.to_pylist()), set(enmr.categories))
                     enmr = enmr.extend_categories(new_unique_cats)
@@ -470,7 +472,7 @@ def arrow_table2(
                             min(
                                 max_size,
                                 (d[1] - d[0]) / np.finfo(f.type.to_pandas_dtype()).tiny + 1,
-                            )
+                            ),
                         )
                 elif pa.types.is_timestamp(f.type):
                     delta = int(d[1].cast("int64").as_py()) - int(d[0].cast("int64").as_py())
@@ -500,7 +502,7 @@ def arrow_table2(
                     shape=(size,),
                     unique=is_unique[field_name],
                     elements=st.integers(min_value=0, max_value=enmr.num_categories - 1),
-                )
+                ),
             )
             columns[field_name] = pa.DictionaryArray.from_arrays(indices, dictionary, ordered=field.type.ordered)
         else:
@@ -547,7 +549,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         # dependencies (e.g, some types may not be an index column).
         self.index_column_names, self.schema, self.enumeration_metadata = dataframe_schema
         self.domain = data.draw(  # TODO XXX: should be a ledger
-            dataframe_domain(schema=self.schema, index_column_names=self.index_column_names)
+            dataframe_domain(schema=self.schema, index_column_names=self.index_column_names),
         )
         super().setup(
             soma.DataFrame.create(
@@ -557,7 +559,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 index_column_names=self.index_column_names,
                 context=self.context,
                 tiledb_timestamp=None,  # TODO: no time-travel for now
-            )
+            ),
         )
         self.domain = self.A.domain
         assert not self.A.closed
@@ -625,7 +627,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                     domain.append(None)
 
         assert self.A.domain == tuple(
-            domain
+            domain,
         ), f"Unexpected domain in {self.A}: had {self.A.domain}, expected {self.domain}"
 
     @rule(data=st.data())
@@ -638,7 +640,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 current_domain=self.domain,
                 max_domain=self.A.maxdomain,
                 apply_defaults=True,
-            )
+            ),
         )
 
         # Always re-open at latest. Without this, there is a good chance we will end up with a
@@ -678,7 +680,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
 
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(
-        lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps
+        lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps,
     )  # only one write per timestamp until sc-61223 (is FIXED) and sc-61226 are fixed
     @rule(data=st.data())
     def write(self, data: st.DataObject) -> None:
@@ -689,7 +691,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 self.enumeration_metadata,
                 self.domain,
                 min_size=1,
-            )
+            ),
         )
         fragments_before_write = get_entries(f"{self.uri}/__fragments")
         self.A.write(df_tbl)
@@ -701,7 +703,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 name=new_fragments.pop(),
                 data=df_tbl,
                 index_columns=self.index_column_names,
-            )
+            ),
         )
 
 

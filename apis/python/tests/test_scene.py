@@ -39,7 +39,7 @@ def test_scene_basic(tmp_path):
                         ("foo", pa.int32()),
                         ("bar", pa.float64()),
                         ("baz", pa.large_string()),
-                    ]
+                    ],
                 ),
                 domain=[[0, 9]],
             )
@@ -154,7 +154,7 @@ def test_scene_coord_space_after_create(tmp_path):
         [
             soma.Axis(name="x"),
             soma.Axis(name="y"),
-        ]
+        ],
     )
     coord_space_json = """
     [
@@ -407,13 +407,17 @@ def test_scene_set_transform_to_point_cloud(tmp_path, coord_transform, transform
             bad_coord_space = soma.CoordinateSpace.from_axis_names(("xbad", "ybad"))
             with pytest.raises(ValueError):
                 scene.set_transform_to_point_cloud_dataframe(
-                    "ptc", transform=transform, coordinate_space=bad_coord_space
+                    "ptc",
+                    transform=transform,
+                    coordinate_space=bad_coord_space,
                 )
 
             coord_space = soma.CoordinateSpace((soma.Axis(name="x", unit="nm"), soma.Axis(name="y", unit="nm")))
 
             point_cloud = scene.set_transform_to_point_cloud_dataframe(
-                "ptc", transform=transform, coordinate_space=coord_space
+                "ptc",
+                transform=transform,
+                coordinate_space=coord_space,
             )
             actual_coord_space = point_cloud.coordinate_space
             assert actual_coord_space == coord_space

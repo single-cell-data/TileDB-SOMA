@@ -135,13 +135,13 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     ##
     METADATA_KEY_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
     METADATA_KEYS = st.text(min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET).filter(
-        lambda k: not k.startswith("soma_")
+        lambda k: not k.startswith("soma_"),
     )
     METADATA_VALUE_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
     METADATA_VALUES = st.one_of(
         st.text(alphabet=METADATA_VALUE_ALPHABET, min_size=0)
         | st.integers(min_value=np.iinfo(np.int64).min, max_value=np.iinfo(np.int64).max)
-        | st.floats()
+        | st.floats(),
     )
     IGNORE_KEYS = re.compile(r"^soma_.*$")
 
@@ -155,9 +155,11 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     def check_metadata(self) -> None:
         array_metadata = self.filter_metadata(dict(self.A.metadata))
         expected_metadata = self.filter_metadata(
-            self.metadata_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_dict()
-            if self.pending_metadata is None
-            else self.pending_metadata
+            (
+                self.metadata_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_dict()
+                if self.pending_metadata is None
+                else self.pending_metadata
+            ),
         )
         assert set(array_metadata.keys()) == set(expected_metadata.keys())
         for k in array_metadata.keys():
@@ -209,7 +211,7 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         self.type = type
         self.schema = pa.schema(
             [pa.field(f"soma_dim_{n}", pa.int64(), nullable=False) for n in range(len(shape))]
-            + [pa.field("soma_data", self.type, nullable=False)]
+            + [pa.field("soma_data", self.type, nullable=False)],
         )
         assert all((shape[i] or 1) == self.A.shape[i] for i in range(len(shape)))
         assert self.schema == self.A.schema

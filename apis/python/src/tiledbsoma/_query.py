@@ -694,7 +694,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             raise ValueError(f"layer {layer_name!r} is not available in {annotation_name!r}.") from None
         if not isinstance(layer, SparseNDArray):
             raise TypeError(
-                f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}."
+                f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}.",
             )
         return layer
 
@@ -818,7 +818,7 @@ def _read_as_csr(
             pa.field("soma_dim_0", pa.from_numpy_dtype(index_dtype)),
             pa.field("soma_dim_1", pa.from_numpy_dtype(index_dtype)),
             matrix.schema.field("soma_data"),
-        ]
+        ],
     )
 
     def _read_and_reindex(X: SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64]) -> pa.Table:
@@ -858,7 +858,7 @@ def _read_as_csr(
             partition_size,
             len(d0_joinids) - partition_size + 1,
             partition_size,
-        )
+        ),
     )
     if len(splits) > 1:
         d0_joinids_splits = np.array_split(np.partition(d0_joinids, splits), splits)
@@ -869,7 +869,7 @@ def _read_as_csr(
                 (matrix,) * len(d0_joinids_splits),
                 d0_joinids_splits,
                 (d1_joinids,) * len(d0_joinids_splits),
-            )
+            ),
         )
 
     else:

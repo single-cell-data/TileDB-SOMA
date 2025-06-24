@@ -144,7 +144,7 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
         [
             ("foo", pa.int32()),
             ("bar", pa.float64()),
-        ]
+        ],
     )
 
     pydict = {}

@@ -26,6 +26,7 @@ line-length = 120
 [tool.ruff.lint]
 select = [  # see https://docs.astral.sh/ruff/rules/
     "B",    # flake8-bugbear
+    "COM",  # flake8-commas
     "D",    # pydocstyle (Google convention, see setting below)
     "E",    # pycodestyle
     "F",    # Pyflakes
@@ -46,6 +47,9 @@ extend-select = []
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
 "!apis/python/src/**.py" = ["D", "B", "S"]
+
+# Ignore in notebooks
+"apis/python/**/*.ipynb" = ["COM"]
 
 # Temporarily disable checks in the io and io.spatial modules.
 "apis/python/src/tiledbsoma/io/**/*.py" = [

@@ -45,7 +45,7 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
             f"""
             stopifnot(ncol(seuratObject) == {n_obs})
             stopifnot(nrow(seuratObject) == {n_var})
-            """
+            """,
         )
 
     def test_anndata_var_names_match(self, anndata_from_seurat):
@@ -54,7 +54,7 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
         self.r_assert(
             f"""
             stopifnot(all.equal(rownames(x = seuratObject), c({var_names_list})))
-            """
+            """,
         )
 
     def test_seurat_obs_names_match(self, anndata_from_seurat):
@@ -63,5 +63,5 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
         self.r_assert(
             f"""
             stopifnot(all.equal(colnames(x = seuratObject), c({obs_names_list})))
-        """
+        """,
         )

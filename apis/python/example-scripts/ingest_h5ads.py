@@ -146,7 +146,7 @@ def main():
             use_multiprocessing=True,  # performance improvement when reading H5AD files
         )
     logger.info(
-        f"Ingest plan created, n_obs={registration_mapping.get_obs_shape()}, n_vars={registration_mapping.get_var_shapes()}"
+        f"Ingest plan created, n_obs={registration_mapping.get_obs_shape()}, n_vars={registration_mapping.get_var_shapes()}",
     )
 
     ##
@@ -383,14 +383,14 @@ def logger_setup() -> None:
                 "default": {
                     "class": "logging.Formatter",
                     "format": "[%(asctime)s %(process)d] %(message)s",
-                }
+                },
             },
             "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "default"}},
             "loggers": {
                 "ingest_h5ads": {"level": "INFO", "handlers": ["console"]},
                 "tiledbsoma": {"level": "WARNING", "handlers": ["console"]},
             },
-        }
+        },
     )
 
 

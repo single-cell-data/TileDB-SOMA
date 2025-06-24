@@ -68,7 +68,7 @@ def from_datatype(datatype: pa.DataType, *args, **kwargs) -> st.SearchStrategy[p
         return elems.map(lambda v: pa.scalar(v, type=datatype))
     else:
         return ht_np.from_dtype(np.dtype(datatype.to_pandas_dtype()), *args, **kwargs).map(
-            lambda v: pa.scalar(v, type=datatype)
+            lambda v: pa.scalar(v, type=datatype),
         )
 
 
@@ -139,8 +139,8 @@ def arrow_datetime_datatypes(draw: st.DrawFn) -> pa.DataType:
                 pa.time64(unit=draw(st.sampled_from(("us", "ns")))),
                 pa.date32(),
                 pa.date64(),
-            )
-        )
+            ),
+        ),
     )
 
 
@@ -157,8 +157,8 @@ def arrow_decimal_datatypes(draw: st.DrawFn) -> pa.DataType:
                     precision=draw(st.integers(min_value=1, max_value=76)),
                     scale=draw(st.integers(min_value=-(2**31), max_value=2**31 - 1)),
                 ),
-            )
-        )
+            ),
+        ),
     )
 
 
@@ -177,12 +177,12 @@ def arrow_nondict_datatypes(draw: st.DrawFn) -> pa.DataType:
                     pa.string(),
                     pa.large_binary(),
                     pa.large_string(),
-                )
+                ),
             ),
             arrow_timestamp_datatypes(),
             arrow_datetime_datatypes(),
             arrow_decimal_datatypes(),
-        )
+        ),
     )
 
 
@@ -200,7 +200,7 @@ def arrow_datatypes(draw: st.DrawFn) -> pa.DataType:
         st.one_of(
             arrow_nondict_datatypes(),
             arrow_dictionary_datatypes(),
-        )
+        ),
     )
 
 
@@ -213,7 +213,7 @@ def ndarray_datatype() -> st.SearchStrategy[pa.DataType]:
             and not pa.types.is_time(t)
             and not pa.types.is_date(t)
             and t not in [pa.float16()]
-        )
+        ),
     )
 
 
@@ -499,7 +499,7 @@ def arrow_chunked_array_fast(
             padding=padding,
             min_value=min_value,
             max_value=max_value,
-        )
+        ),
     )
 
     # sometimes, we want multiple (separate) underlying arrays, just to mix things up and
@@ -588,7 +588,7 @@ def field_to_large_type_equivalent(f: pa.Field) -> pa.Field:
                     index_type=f.type.index_type,
                     value_type=pa.large_string(),
                     ordered=f.type.ordered,
-                )
+                ),
             )
         elif pa.types.is_binary(f.type.value_type):
             return f.with_type(
@@ -596,7 +596,7 @@ def field_to_large_type_equivalent(f: pa.Field) -> pa.Field:
                     index_type=f.type.index_type,
                     value_type=pa.large_binary(),
                     ordered=f.type.ordered,
-                )
+                ),
             )
         else:
             return f
@@ -673,7 +673,7 @@ def arrays_equal(read: pa.ChunkedArray, expected: pa.ChunkedArray, *, equal_nan:
             pa.compute.equal(
                 combine_chunks(read).dictionary_decode(),
                 combine_chunks(expected).dictionary_decode(),
-            )
+            ),
         )
         if not is_eq:
             note("arrays_equal: dictionary arrays not equal")

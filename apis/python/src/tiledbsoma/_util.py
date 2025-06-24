@@ -306,7 +306,7 @@ def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
         pa.types.is_large_string(dtype)
         or pa.types.is_large_binary(dtype)
         or pa.types.is_string(dtype)
-        or pa.types.is_binary(dtype)
+        or pa.types.is_binary(dtype),
     )
 
 

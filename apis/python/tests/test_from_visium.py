@@ -22,7 +22,7 @@ def visium_v1_path():
     if not os.path.isdir(visium_path):
         raise RuntimeError(
             "Missing 'data/example-visium-v1' directory. Try running `make data` "
-            "from the TileDB-SOMA project root directory."
+            "from the TileDB-SOMA project root directory.",
         )
     for filename in [
         "filtered_feature_bc_matrix.h5",
@@ -37,7 +37,7 @@ def visium_v1_path():
             raise RuntimeError(
                 f"Missing file 'data/example-visium-v1/{filename}'. Try removing "
                 f"the directory 'data/example-visium-v1' and re-running `make data'"
-                f"from the project root directory."
+                f"from the project root directory.",
             )
 
     return visium_path
@@ -50,7 +50,7 @@ def visium_v2_path():
     if not os.path.isdir(visium_path):
         raise RuntimeError(
             "Missing 'data/example-visium-v2' directory. Try running `make data` "
-            "from the TileDB-SOMA project root directory."
+            "from the TileDB-SOMA project root directory.",
         )
     for filename in [
         "filtered_feature_bc_matrix.h5",
@@ -65,7 +65,7 @@ def visium_v2_path():
             raise RuntimeError(
                 f"Missing file 'data/example-visium-v2/{filename}'. Try removing "
                 f"the directory 'data/example-visium-v2' and re-running `make data'"
-                f"from the project root directory."
+                f"from the project root directory.",
             )
 
     return visium_path

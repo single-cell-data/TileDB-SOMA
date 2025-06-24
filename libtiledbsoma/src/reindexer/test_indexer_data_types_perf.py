@@ -70,7 +70,7 @@ def main():
             list(range(70000000, 80000000)),
             list(range(80000000, 90000000)),
             list(range(90000000, 100000000)),
-        ]
+        ],
     )
     lookups = []
     for _x in range(10):

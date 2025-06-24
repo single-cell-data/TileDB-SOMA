@@ -81,7 +81,13 @@ def test_from_ijd(
     sp = sparse.random(shape[0], shape[1], density=0.01, dtype=value_dtype, random_state=rng)
 
     cm = fastercsx.CompressedMatrix.from_ijd(
-        sp.row, sp.col, sp.data, sp.shape, format, make_sorted=True, context=context
+        sp.row,
+        sp.col,
+        sp.data,
+        sp.shape,
+        format,
+        make_sorted=True,
+        context=context,
     )
     assert_eq(sp, cm)
     assert cm.nbytes == (cm.indptr.nbytes + cm.indices.nbytes + cm.data.nbytes)
@@ -122,7 +128,7 @@ def test_from_soma_array(
                 "soma_dim_0": pa.array(i_),
                 "soma_dim_1": pa.array(j_),
                 "soma_data": pa.array(d_),
-            }
+            },
         )
         for i_, j_, d_ in zip(i, j, d)
     ]
@@ -166,7 +172,7 @@ def test_from_soma_chunked_array(
                 "soma_dim_0": pa.chunked_array(np.array_split(i_, n_chunks)),
                 "soma_dim_1": pa.chunked_array(np.array_split(j_, n_chunks)),
                 "soma_data": pa.chunked_array(np.array_split(d_, n_chunks)),
-            }
+            },
         )
         for i_, j_, d_ in zip(i, j, d)
     ]

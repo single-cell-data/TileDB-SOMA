@@ -577,7 +577,7 @@ def _extract_uns(
                 else:
                     if hint is not None:
                         logging.log_io_same(
-                            f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
+                            f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame",
                         )
                     return _read_dataframe(element, fallback_index_name="index")
 

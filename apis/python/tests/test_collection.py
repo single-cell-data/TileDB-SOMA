@@ -25,7 +25,7 @@ def create_and_populate_dataframe(path: str) -> soma.DataFrame:
             ("foo", pa.int32()),
             ("bar", pa.float64()),
             ("baz", pa.large_string()),
-        ]
+        ],
     )
 
     with soma.DataFrame.create(path, schema=arrow_schema, domain=[[0, 999]]) as df:
@@ -224,7 +224,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
             f"""
             <Collection {a_uri!r} (open for 'w') (1 item)
                 'Another_Name': Experiment {b_uri!r} (open for 'w') (empty)>
-            """
+            """,
         ).strip()
     )
     assert a["Another_Name"] is b
@@ -235,7 +235,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
             f"""
             <Collection {a_uri!r} (open for 'w') (1 item)
                 'Another_Name': Experiment {b_uri!r} (CLOSED for 'w')>
-            """
+            """,
         ).strip()
     )
     a.close()
@@ -251,7 +251,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
             f"""
             <Collection {a_uri!r} (open for 'r') (1 item)
                 'Another_Name': {b_uri!r} (unopened)>
-            """
+            """,
         ).strip()
     )
     assert a_reopened["Another_Name"].uri == b_uri
@@ -261,7 +261,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
             f"""
             <Collection {a_uri!r} (open for 'r') (1 item)
                 'Another_Name': Experiment {b_uri!r} (open for 'r') (empty)>
-            """
+            """,
         ).strip()
     )
     del a_reopened
@@ -281,7 +281,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
                 f"""
                 <Collection {a_moved_uri!r} (open for 'r') (1 item)
                     'Another_Name': Experiment {new_b_uri!r} (open for 'r') (empty)>
-                """
+                """,
             ).strip()
         )
     else:
@@ -294,7 +294,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
                 f"""
                 <Collection {a_moved_uri!r} (open for 'r') (1 item)
                     'Another_Name': {b_uri!r} (unopened)>
-                """
+                """,
             ).strip()
         )
 

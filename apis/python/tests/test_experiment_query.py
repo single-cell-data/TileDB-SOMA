@@ -125,7 +125,7 @@ def test_experiment_query_all(soma_experiment):
             "label": [str(i) for i in range(11)],
         }
         assert pa.concat_tables(query.X("raw").tables()) == pa.concat_tables(
-            soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables()
+            soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables(),
         )
         assert query.X("raw").tables().concat() == pa.concat_tables(query.X("raw").tables())
         raw = query.X("raw")
@@ -197,7 +197,7 @@ def test_experiment_query_coords(soma_experiment):
                 [
                     raw_X["soma_dim_0"].to_numpy(),
                     raw_X["soma_dim_1"].to_numpy(),
-                ]
+                ],
             ).T,
             shape=soma_experiment.ms["RNA"].X["raw"].shape,
         )
@@ -647,7 +647,7 @@ def test_X_as_series():
         pa.Table.from_arrays(
             [soma_dim_0, soma_dim_1, soma_data],
             names=["soma_dim_0", "soma_dim_1", "soma_data"],
-        )
+        ),
     )
 
     assert isinstance(ser, pd.Series)
@@ -768,7 +768,7 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
             [
                 ("soma_joinid", pa.int64()),
                 ("label", pa.large_string()),
-            ]
+            ],
         ),
         domain=[[0, sz - 1]],
         index_column_names=["soma_joinid"],
@@ -778,8 +778,8 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
             {
                 "soma_joinid": [i for i in range(sz)],
                 "label": [str(i) for i in range(sz)],
-            }
-        )
+            },
+        ),
     )
 
 
@@ -793,7 +793,7 @@ def add_sparse_array(coll: CollectionBase, key: str, shape: tuple[int, int]) -> 
             format="coo",
             dtype=np.float32,
             random_state=np.random.default_rng(),
-        )
+        ),
     )
     a.write(tensor)
 
@@ -883,7 +883,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
     obs_condition, obs_count = obs_params

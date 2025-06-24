@@ -71,7 +71,7 @@ def test_sparse_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_typ
             tmp_path.as_posix(),
             soma.pytiledbsoma.OpenMode.soma_read,
             soma.pytiledbsoma.SOMAContext(),
-        )
+        ),
     ) as b:
         assert a.schema == b.schema
 
@@ -160,7 +160,7 @@ def create_random_tensor(
                 format=format,
                 random_state=rng,
                 dtype=dtype,
-            )
+            ),
         )
 
     if format == "csr":
@@ -172,7 +172,7 @@ def create_random_tensor(
                 format=format,
                 random_state=rng,
                 dtype=dtype,
-            )
+            ),
         )
 
 
@@ -348,7 +348,7 @@ def test_sparse_nd_array_read_as_pandas(tmp_path, dtype: np.dtype, shape: tuple[
 
     dim_names = [f"soma_dim_{n}" for n in range(len(shape))]
     assert df.sort_values(by=dim_names, ignore_index=True).equals(
-        data.to_pandas().sort_values(by=dim_names, ignore_index=True)
+        data.to_pandas().sort_values(by=dim_names, ignore_index=True),
     )
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
@@ -387,7 +387,7 @@ def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
             "soma_dim_0": soma_dim_0,
             "soma_dim_1": soma_dim_1,
             "soma_data": soma_data,
-        }
+        },
     )
 
     soma_dim_0 = pa.array([2, 2, 2], type=pa.int64())
@@ -1022,9 +1022,9 @@ def test_tile_extents(tmp_path):
                     "dims": {
                         "soma_dim_0": {"tile": 2048},
                         "soma_dim_1": {"tile": 2048},
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     ).close()
 
@@ -1140,13 +1140,16 @@ def a_soma_context() -> SOMATileDBContext:
         tiledb_config={
             "soma.init_buffer_bytes": 128 * 1024**2,
             "tiledb.init_buffer_bytes": 128 * 1024**2,
-        }
+        },
     )
 
 
 @pytest.fixture
 def a_random_sparse_nd_array(
-    tmp_path, a_soma_context: SOMATileDBContext, shape: tuple[int, ...], density: float
+    tmp_path,
+    a_soma_context: SOMATileDBContext,
+    shape: tuple[int, ...],
+    density: float,
 ) -> str:
     uri = tmp_path.as_posix()
     dtype = np.float32
@@ -1537,7 +1540,7 @@ def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> Non
             for axis in (0, 1):
                 for compress in (True, False):
                     sp, _ = next(
-                        A.read(coords, result_order=result_order).blockwise(axis=axis).scipy(compress=compress)
+                        A.read(coords, result_order=result_order).blockwise(axis=axis).scipy(compress=compress),
                     )
 
                     if compress:
@@ -1643,7 +1646,8 @@ def test_blockwise_scipy_reindex_disable_major_dim(a_random_sparse_nd_array: str
 
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 def test_blockwise_iterator_uses_thread_pool_from_context(
-    a_random_sparse_nd_array: str, shape: tuple[int, ...]
+    a_random_sparse_nd_array: str,
+    shape: tuple[int, ...],
 ) -> None:
     pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=2))
     pool.submit.assert_not_called()
@@ -1707,7 +1711,7 @@ def test_global_writes(tmp_path):
                     {
                         "soma_dim_0": pa.array([2, 1, 0], type=pa.int64()),
                         "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
-                    }
+                    },
                 ),
                 platform_config=write_options,
             )
@@ -1774,8 +1778,8 @@ def test_pass_configs(tmp_path):
                 platform_config={
                     "sm.mem.total_budget": "10000",
                     "sm.io_concurrency_level": "1",
-                }
-            ).tables()
+                },
+            ).tables(),
         )
 
 
@@ -1906,19 +1910,19 @@ def test_fragments_in_writes(tmp_path, element_type):
         {
             "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=np.int64),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
-        }
+        },
     )
     df_1 = pd.DataFrame(
         {
             "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=np.int64),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
-        }
+        },
     )
     df_2 = pd.DataFrame(
         {
             "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=np.int64),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
-        }
+        },
     )
     expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
 
@@ -1932,7 +1936,7 @@ def test_fragments_in_writes(tmp_path, element_type):
                     pa.Table.from_pandas(df_0, preserve_index=False),
                     pa.Table.from_pandas(df_1, preserve_index=False),
                     pa.Table.from_pandas(df_2, preserve_index=False),
-                ]
+                ],
             ),
             platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
         )
@@ -1962,21 +1966,21 @@ def test_fragments_in_writes_2d(tmp_path, dtype):
             "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=dtype),
             "soma_dim_1": pd.Series([0, 1, 2, 3], dtype=dtype),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
-        }
+        },
     )
     df_1 = pd.DataFrame(
         {
             "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=dtype),
             "soma_dim_1": pd.Series([4, 5, 6, 7], dtype=dtype),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
-        }
+        },
     )
     df_2 = pd.DataFrame(
         {
             "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=dtype),
             "soma_dim_1": pd.Series([8, 9, 10, 11], dtype=dtype),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
-        }
+        },
     )
     expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
 
@@ -1990,7 +1994,7 @@ def test_fragments_in_writes_2d(tmp_path, dtype):
                     pa.Table.from_pandas(df_0, preserve_index=False),
                     pa.Table.from_pandas(df_1, preserve_index=False),
                     pa.Table.from_pandas(df_2, preserve_index=False),
-                ]
+                ],
             ),
             platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
         )

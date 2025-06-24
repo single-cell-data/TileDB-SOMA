@@ -21,7 +21,7 @@ from tiledbsoma.io.conversions import df_to_arrow_table
                 {
                     "id": pa.array([1, 3, 5, 6], type=pa.int64()),
                     "alpha": pa.array([0, 1, 2, 3], type=pa.float32()),
-                }
+                },
             ),
         ],
     ],

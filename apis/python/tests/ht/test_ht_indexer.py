@@ -46,8 +46,8 @@ def test_IntIndexer_ndarray_lookup(data: npt.NDArray[Any], context: soma.SOMATil
                 splits=3,
                 unique=True,
             ),
-        )
-    )
+        ),
+    ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
 def test_IntIndexer_arrow_lookup(data: pa.ChunkedArray, context: soma.SOMATileDBContext) -> None:
@@ -87,8 +87,8 @@ def test_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[np.int64], cont
             ht_np.arrays(dtype=ht_np.array_dtypes(), shape=ht_np.array_shapes(), unique=True),
             ht_np.arrays(dtype=ht_np.array_dtypes(), shape=ht_np.array_shapes(), unique=False),
             st.from_type(Union[float, list, dict, str, bytearray]),
-        )
-    )
+        ),
+    ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
 def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], context: soma.SOMATileDBContext) -> None:
@@ -104,8 +104,8 @@ def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], cont
         (
             ht_np.arrays(dtype=ht_np.array_dtypes(), shape=ht_np.array_shapes(), unique=False),
             everything_except(np.ndarray),
-        )
-    )
+        ),
+    ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
 def test_fuzz_pytiledbsoma_Indexer_get_indexer_general(data: Any, context: soma.SOMATileDBContext) -> None:

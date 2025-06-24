@@ -69,7 +69,7 @@ class _MultiscaleImageMetadata:
                 "shape": self.shape,
                 "has_channel_axis": self.has_channel_axis,
                 "datatype": type_str,
-            }
+            },
         )
 
     @classmethod
@@ -185,7 +185,7 @@ class MultiscaleImage(
             raise ValueError(
                 f"Invalid shape {level_shape}. Expected {ndim} dimensions for a "
                 f"multiscale image {channel_descript} on a coordinate space with "
-                f"{len(coordinate_space)} dimensions."
+                f"{len(coordinate_space)} dimensions.",
             )
         if data_axis_order is None:
             axis_permutation = tuple(range(ndim - 1, -1, -1))
@@ -196,7 +196,7 @@ class MultiscaleImage(
             if set(data_axis_order) != set(axis_indices.keys()):
                 raise ValueError(
                     f"Invalid data axis order '{data_axis_order}'. Must be a "
-                    f"permutation of the axes '{tuple(axis_indices.keys())}'."
+                    f"permutation of the axes '{tuple(axis_indices.keys())}'.",
                 )
             axis_permutation = tuple(axis_indices[name] for name in data_axis_order)
 
@@ -244,7 +244,7 @@ class MultiscaleImage(
                 spatial_encoding_version = str(spatial_encoding_version, "utf-8")
             if spatial_encoding_version not in {"0.1.0", "0.2.0"}:
                 raise ValueError(
-                    f"Unsupported MultiscaleImage with spatial encoding version {spatial_encoding_version}"
+                    f"Unsupported MultiscaleImage with spatial encoding version {spatial_encoding_version}",
                 )
         except KeyError as ke:
             raise SOMAError("Missing spatial encoding version. May be deprecated experimental MultiscaleImage.") from ke
@@ -265,7 +265,7 @@ class MultiscaleImage(
             metadata_json = str(metadata_json, "utf-8")
         if not isinstance(metadata_json, str):
             raise SOMAError(
-                f"Stored '{SOMA_MULTISCALE_IMAGE_SCHEMA}' metadata is unexpected type {type(metadata_json)!r}."
+                f"Stored '{SOMA_MULTISCALE_IMAGE_SCHEMA}' metadata is unexpected type {type(metadata_json)!r}.",
             )
         image_meta = _MultiscaleImageMetadata.from_json(metadata_json)
         self._data_axis_permutation = image_meta.data_axis_permutation
@@ -318,7 +318,7 @@ class MultiscaleImage(
             actual_nchannels = shape[channel_index]
             if actual_nchannels != expected_nchannels:
                 raise ValueError(
-                    f"New level must have {expected_nchannels}, but provided shape has {actual_nchannels} channels."
+                    f"New level must have {expected_nchannels}, but provided shape has {actual_nchannels} channels.",
                 )
 
         # Add the level properties to level list.
@@ -380,7 +380,7 @@ class MultiscaleImage(
         Lifecycle: experimental
         """
         raise NotImplementedError(
-            "Support for setting external DenseNDArray objects to a MultiscaleImage is not yet implemented."
+            "Support for setting external DenseNDArray objects to a MultiscaleImage is not yet implemented.",
         )
 
     # Data operations
@@ -461,7 +461,7 @@ class MultiscaleImage(
             if not isinstance(region_transform, ScaleTransform):
                 raise NotImplementedError(
                     f"Support for reading levels with a region transform of type "
-                    f"{type(region_transform)!r} is not yet supported."
+                    f"{type(region_transform)!r} is not yet supported.",
                 )
             # Create or check output coordinates.
             if region_coord_space is None:
@@ -473,7 +473,7 @@ class MultiscaleImage(
                     f"The output axes of '{region_transform.output_axes}' of the "
                     f"region transform must match the axes "
                     f"'{self._coord_space.axis_names}' of the coordinate space of "
-                    f"this multiscale image."
+                    f"this multiscale image.",
                 )
             region_transform = group_to_level @ region_transform
             assert isinstance(region_transform, ScaleTransform)
@@ -549,7 +549,7 @@ class MultiscaleImage(
                 raise ValueError(
                     f"Cannot change axis names of a multiscale image. Existing axis "
                     f"names are {self._coord_space.axis_names}. New coordinate space "
-                    f"has axis names {value.axis_names}."
+                    f"has axis names {value.axis_names}.",
                 )
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(value)
         self._coord_space = value

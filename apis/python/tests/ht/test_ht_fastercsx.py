@@ -125,7 +125,7 @@ def coo_ijd(
                 shape=nnz,
                 min_value=0,
                 max_value=shape[0] - 1,
-            )
+            ),
         )
         j = draw(
             arrow_array_fast(
@@ -133,14 +133,14 @@ def coo_ijd(
                 shape=nnz,
                 min_value=0,
                 max_value=shape[1] - 1,
-            )
+            ),
         )
         d = draw(
             arrow_array(
                 dtype=dtype,
                 shape=nnz,
                 elements=limit_value_range_element_strategy(dtype),
-            )
+            ),
         )
 
     else:
