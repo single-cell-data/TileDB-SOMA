@@ -254,5 +254,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           filename: .github/workflows/daily-python-packaging-issue-template.md
-          assignees: nguyenv, ryan-williams, johnkerl
+          assignees: jp-dark, aaronwolen
           update_existing: true
