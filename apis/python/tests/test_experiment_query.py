@@ -909,7 +909,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
 def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
-    import tiledbsoma.pytiledbsoma as clib
+    # import tiledbsoma.pytiledbsoma as clib
 
     # clib.config_logging("DEBUG")
 
