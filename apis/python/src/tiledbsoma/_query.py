@@ -468,18 +468,18 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         for k in all_x_arrays:
             if k not in self._ms.X:
                 raise KeyError(f"Unknown X layer name; {k}")
-        for k in obsm_layers:
-            if k not in self._ms.obsm:
-                raise KeyError(f"Unknown obsm layer name; {k}")
-        for k in obsp_layers:
-            if k not in self._ms.obsp:
-                raise KeyError(f"Unknown obsp layer name; {k}")
-        for k in varm_layers:
-            if k not in self._ms.varm:
-                raise KeyError(f"Unknown varm layer name; {k}")
-        for k in varp_layers:
-            if k not in self._ms.varp:
-                raise KeyError(f"Unknown varp layer name; {k}")
+        # for k in obsm_layers:
+        #     if k not in self._ms.obsm:
+        #         raise KeyError(f"Unknown obsm layer name; {k}")
+        # for k in obsp_layers:
+        #     if k not in self._ms.obsp:
+        #         raise KeyError(f"Unknown obsp layer name; {k}")
+        # for k in varm_layers:
+        #     if k not in self._ms.varm:
+        #         raise KeyError(f"Unknown varm layer name; {k}")
+        # for k in varp_layers:
+        #     if k not in self._ms.varp:
+        #         raise KeyError(f"Unknown varp layer name; {k}")
         # XXX end
 
         x_matrices = {
