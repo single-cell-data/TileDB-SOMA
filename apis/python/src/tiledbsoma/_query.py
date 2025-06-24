@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import enum
+import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
@@ -812,6 +813,7 @@ def _read_inner_ndarray(
     joinids: pa.IntegerArray,
     indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
 ) -> npt.NDArray[np.float32]:
+    print(f"_read_inner_ndarray start {matrix.uri}", file=sys.stderr)
     table = matrix.read((joinids, slice(None))).tables().concat()
 
     n_row = len(joinids)
@@ -821,6 +823,7 @@ def _read_inner_ndarray(
     idx = indexer(table["soma_dim_0"])
     z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
+    print(f"_read_inner_ndarray done {matrix.uri}", file=sys.stderr)
     return z.reshape(n_row, n_col)
 
 
@@ -831,6 +834,7 @@ def _read_as_csr(
     d0_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
     d1_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
 ) -> sp.csr_matrix:
+    print(f"_read_as_csr start {matrix.uri}", file=sys.stderr)
     d0_joinids = d0_joinids_arr.to_numpy()
     d1_joinids = d1_joinids_arr.to_numpy()
     try:
@@ -903,4 +907,6 @@ def _read_as_csr(
     else:
         tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
-    return CompressedMatrix.from_soma(tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context).to_scipy()
+    res = CompressedMatrix.from_soma(tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context).to_scipy()
+    print(f"_read_as_csr done {matrix.uri}", file=sys.stderr)
+    return res

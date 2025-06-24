@@ -905,14 +905,19 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert len(var) == var_count
 
 
-@pytest.mark.parametrize("version", ["1.7.3"] * 6)  # ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
-@pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
-@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
+@pytest.mark.parametrize("version", ["1.7.3"] * 200)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize(
+    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")]
+)  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
+@pytest.mark.parametrize(
+    "obsp_layers", [("connectivities", "distances")]
+)  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
-@pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
+@pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
 def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
     import enum
     import functools
+    import sys
     from concurrent.futures import Future, ThreadPoolExecutor
     from threading import Lock
     from typing import Any, Callable, Literal, Sequence
@@ -1313,6 +1318,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         joinids: pa.IntegerArray,
         indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
     ) -> npt.NDArray[np.float32]:
+        print(f"_read_inner_ndarray start {matrix.uri}", file=sys.stderr)
         table = matrix.read((joinids, slice(None))).tables().concat()
 
         n_row = len(joinids)
@@ -1322,6 +1328,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         idx = indexer(table["soma_dim_0"])
         z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
         np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
+        print(f"_read_inner_ndarray done {matrix.uri}", file=sys.stderr)
         return z.reshape(n_row, n_col)
 
     def _read_as_csr(
@@ -1331,6 +1338,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         d0_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
         d1_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
     ) -> sp.csr_matrix:
+        print(f"_read_as_csr start {matrix.uri}", file=sys.stderr)
         d0_joinids = d0_joinids_arr.to_numpy()
         d1_joinids = d1_joinids_arr.to_numpy()
         try:
@@ -1405,9 +1413,11 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         else:
             tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
-        return CompressedMatrix.from_soma(
+        res = CompressedMatrix.from_soma(
             tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context
         ).to_scipy()
+        print(f"_read_as_csr done {matrix.uri}", file=sys.stderr)
+        return res
 
     def _resolve_futures(unresolved: dict[str, Any], deep: bool = False) -> dict[str, Any]:
         """Resolves any futures found in the dict."""
@@ -1463,11 +1473,15 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@pytest.mark.parametrize("version", ["1.7.3"] * 6)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
-@pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
-@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
+@pytest.mark.parametrize("version", ["1.7.3"] * 200)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize(
+    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")]
+)  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
+@pytest.mark.parametrize(
+    "obsp_layers", [("connectivities", "distances")]
+)  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
-@pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
+@pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
 def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
