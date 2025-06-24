@@ -76,7 +76,9 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
     }
     LOG_DEBUG(
         fmt::format(
-            "Lookup with thread concurrency {} on data size {}", context_->thread_pool()->concurrency_level(), size));
+            "[Re-indexer] Lookup with thread concurrency {} on data size {}",
+            context_->thread_pool()->concurrency_level(),
+            size));
 
     std::vector<tiledbsoma::ThreadPool::Task> tasks;
 
@@ -91,7 +93,7 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
         if (end > size) {
             end = size;
         }
-        LOG_DEBUG(fmt::format("Creating tileDB task for the range from {} to {} ", start, end));
+        LOG_DEBUG(fmt::format("[Re-indexer] Creating tileDB task for the range from {} to {} ", start, end));
         tiledbsoma::ThreadPool::Task task = context_->thread_pool()->execute([this, start, end, &results, &keys]() {
             for (size_t i = start; i < end; i++) {
                 auto k = kh_get(m64, hash_, keys[i]);
@@ -106,9 +108,10 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
         });
         assert(task.valid());
         tasks.emplace_back(std::move(task));
-        LOG_DEBUG(fmt::format("Task for the range from {} to {} inserted in the queue", start, end));
+        LOG_DEBUG(fmt::format("[Re-indexer] Task for the range from {} to {} inserted in the queue", start, end));
     }
     context_->thread_pool()->wait_all(tasks);
+    LOG_DEBUG("[Re-indexer] lookup done");
 }
 
 IntIndexer::~IntIndexer() {

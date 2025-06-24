@@ -930,6 +930,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
     )
     from somacore.query.types import IndexFactory, IndexLike
 
+    import tiledbsoma.pytiledbsoma as clib
     from tiledbsoma._fastercsx import CompressedMatrix
     from tiledbsoma._indexer import IntIndexer
 
@@ -1423,6 +1424,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         return resolved
 
     with soma.open(uri) as exp:
+        clib.config_logging("DEBUG")
         adata = TestExperimentAxisQuery(
             exp,
             measurement_name,
@@ -1436,6 +1438,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
         )
         assert adata
+        clib.config_logging("ERROR")
 
         for m in obsm_layers:
             assert m in adata.obsm
@@ -1464,7 +1467,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
-@pytest.mark.parametrize("varm_layers", [()])  #  [(), ("PCs",)])
+@pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
 def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
