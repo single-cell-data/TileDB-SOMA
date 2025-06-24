@@ -905,56 +905,9 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert len(var) == var_count
 
 
-@pytest.mark.skip()
-@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5"])  # ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
-@pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
-@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",)])
-@pytest.mark.parametrize("varp_layers", [()])
-@pytest.mark.parametrize("varm_layers", [()])  #  [(), ("PCs",)])
-def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
-    # import tiledbsoma.pytiledbsoma as clib
-
-    # clib.config_logging("DEBUG")
-
-    name = "pbmc3k_processed"
-    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
-    uri = str(path)
-    if not os.path.isdir(uri):
-        raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
-        )
-
-    with soma.open(uri) as exp:
-        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
-            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
-        )
-
-        for m in obsm_layers:
-            assert m in adata.obsm
-            assert adata.obsm[m].dtype == exp.ms["RNA"].obsm[m].schema.field("soma_data").type.to_pandas_dtype()
-            assert adata.obsm[m].shape[0] == adata.shape[0]
-
-        for m in varm_layers:
-            assert m in adata.varm
-            assert adata.varm[m].dtype == exp.ms["RNA"].varm[m].schema.field("soma_data").type.to_pandas_dtype()
-            assert adata.varm[m].shape[0] == adata.shape[1]
-
-        for sm in obsp_layers:
-            assert sm in adata.obsp
-            assert adata.obsp[sm].dtype == exp.ms["RNA"].obsp[sm].schema.field("soma_data").type.to_pandas_dtype()
-            assert adata.obsp[sm].shape[0] == adata.shape[0]
-            assert adata.obsp[sm].shape[1] == adata.shape[0]
-
-        for sm in varp_layers:
-            assert sm in adata.varp
-            assert adata.varp[sm].dtype == exp.ms["RNA"].varp[sm].schema.field("soma_data").type.to_pandas_dtype()
-            assert adata.varp[sm].shape[0] == adata.shape[1]
-            assert adata.varp[sm].shape[1] == adata.shape[1]
-
-
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
-@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",)])
+@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
 def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
@@ -989,9 +942,6 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
         )
-
-    obs_query = soma.AxisQuery(coords=(slice(0, 500),))
-    var_query = soma.AxisQuery()
 
     def _to_numpy(it: Numpyable) -> npt.NDArray[np.int64]:
         if isinstance(it, np.ndarray):
@@ -1473,17 +1423,61 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         return resolved
 
     with soma.open(uri) as exp:
-        index_factory = functools.partial(
-            IntIndexer,
-            context=exp.context,
-        )
-        Q = TestExperimentAxisQuery(
-            exp, measurement_name, obs_query=obs_query, var_query=var_query, index_factory=index_factory
-        )
-        adata = Q.to_anndata(
+        adata = TestExperimentAxisQuery(
+            exp,
+            measurement_name,
+            obs_query=AxisQuery(coords=(slice(0, 500),)),
+            var_query=AxisQuery(),
+            index_factory=functools.partial(
+                IntIndexer,
+                context=exp.context,
+            ),
+        ).to_anndata(
             "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
         )
         assert adata
+
+        for m in obsm_layers:
+            assert m in adata.obsm
+            assert adata.obsm[m].dtype == exp.ms["RNA"].obsm[m].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.obsm[m].shape[0] == adata.shape[0]
+
+        for m in varm_layers:
+            assert m in adata.varm
+            assert adata.varm[m].dtype == exp.ms["RNA"].varm[m].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.varm[m].shape[0] == adata.shape[1]
+
+        for sm in obsp_layers:
+            assert sm in adata.obsp
+            assert adata.obsp[sm].dtype == exp.ms["RNA"].obsp[sm].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.obsp[sm].shape[0] == adata.shape[0]
+            assert adata.obsp[sm].shape[1] == adata.shape[0]
+
+        for sm in varp_layers:
+            assert sm in adata.varp
+            assert adata.varp[sm].dtype == exp.ms["RNA"].varp[sm].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.varp[sm].shape[0] == adata.shape[1]
+            assert adata.varp[sm].shape[1] == adata.shape[1]
+
+
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
+@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
+@pytest.mark.parametrize("varp_layers", [()])
+@pytest.mark.parametrize("varm_layers", [()])  #  [(), ("PCs",)])
+def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
+    name = "pbmc3k_processed"
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(path)
+    if not os.path.isdir(uri):
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+        )
+
+    with soma.open(uri) as exp:
+        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
+            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
+        )
 
         for m in obsm_layers:
             assert m in adata.obsm
