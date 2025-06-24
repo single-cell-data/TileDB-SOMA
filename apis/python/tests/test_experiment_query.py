@@ -911,7 +911,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
 def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
     import tiledbsoma.pytiledbsoma as clib
 
-    clib.config_logging("TRACE")
+    clib.config_logging("DEBUG")
 
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
