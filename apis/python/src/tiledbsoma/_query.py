@@ -486,16 +486,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         #         raise KeyError(f"Unknown varp layer name; {k}")
         # XXX end
 
-        obsm_future = {
-            key: tp.submit(
-                _read_inner_ndarray,
-                self._get_annotation_layer("obsm", key),
-                obs_joinids,
-                self.indexer.by_obs,
-            )
-            for key in obsm_layers
-        }
-
         x_matrices = {
             _xname: (
                 tp.submit(
@@ -517,15 +507,15 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         }
         x_future = x_matrices.pop(X_name)
 
-        # obsm_future = {
-        #     key: tp.submit(
-        #         _read_inner_ndarray,
-        #         self._get_annotation_layer("obsm", key),
-        #         obs_joinids,
-        #         self.indexer.by_obs,
-        #     )
-        #     for key in obsm_layers
-        # }
+        obsm_future = {
+            key: tp.submit(
+                _read_inner_ndarray,
+                self._get_annotation_layer("obsm", key),
+                obs_joinids,
+                self.indexer.by_obs,
+            )
+            for key in obsm_layers
+        }
         varm_future = {
             key: tp.submit(
                 _read_inner_ndarray,
