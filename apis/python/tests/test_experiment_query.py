@@ -904,6 +904,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
         var = query.var().concat()
         assert len(var) == var_count
 
+
 @pytest.mark.skip()
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5"])  # ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
