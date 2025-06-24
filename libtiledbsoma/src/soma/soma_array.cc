@@ -104,9 +104,13 @@ SOMAArray::SOMAArray(
     , ctx_(ctx)
     , timestamp_(timestamp)
     , soma_mode_(mode) {
+    std::cerr << "SOMAArray::SOMAArray ENTER" << std::endl;
     validate(soma_mode_, timestamp_);
+    std::cerr << "SOMAArray::SOMAArray 1" << std::endl;
     fill_metadata_cache(soma_mode_, timestamp_);
+    std::cerr << "SOMAArray::SOMAArray 2" << std::endl;
     fill_columns();
+    std::cerr << "SOMAArray::SOMAArray EXIT" << std::endl;
 }
 
 SOMAArray::SOMAArray(
@@ -312,6 +316,7 @@ void SOMAArray::validate(OpenMode mode, std::optional<TimestampRange> timestamp)
             throw TileDBSOMAError("Internal error: Unrecognized OpenMode.");
     }
 
+    std::cerr << "SOMAArray::validate 1" << std::endl;
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
         if (timestamp) {
@@ -325,6 +330,7 @@ void SOMAArray::validate(OpenMode mode, std::optional<TimestampRange> timestamp)
         }
         LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
         ArrayExperimental::load_all_enumerations(*ctx_->tiledb_ctx(), *(arr_.get()));
+        std::cerr << "SOMAArray::validate 2" << std::endl;
         schema_ = std::make_shared<ArraySchema>(arr_->schema());
     } catch (const std::exception& e) {
         throw TileDBSOMAError(fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));

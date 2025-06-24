@@ -466,22 +466,15 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         # XXX begin
         #
-        """
-        Results:
 
-        X only: works
-        all: works
-        obsm, obsp only: works
+        # _ = tp.map(print, (self._get_annotation_layer("obsm", key) for key in obsm_layers))
 
-        obsp only: fail
-        none: fail
-        """
         # for k in all_x_arrays:
         #     if k not in self._ms.X:
         #         raise KeyError(f"Unknown X layer name; {k}")
-        for k in obsm_layers:
-            if k not in self._ms.obsm:
-                raise KeyError(f"Unknown obsm layer name; {k}")
+        # for k in obsm_layers:
+        #     if k not in self._ms.obsm:
+        #         raise KeyError(f"Unknown obsm layer name; {k}")
         # for k in obsp_layers:
         #     if k not in self._ms.obsp:
         #         raise KeyError(f"Unknown obsp layer name; {k}")
