@@ -523,7 +523,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         }
         x_future = x_matrices.pop(X_name)
         # XXX: DEBUG - force barrier for X read
-        _ = x_future.result()
+        # _ = x_future.result() if isinstance(x_future, Future) else None
         # XXX: END DEBUG
 
         obsm_future = {

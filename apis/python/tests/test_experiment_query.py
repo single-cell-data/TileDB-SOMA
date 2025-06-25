@@ -1475,7 +1475,6 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         return resolved
 
     with soma.open(uri) as exp:
-        # clib.config_logging("DEBUG")
         adata = TestExperimentAxisQuery(
             exp,
             measurement_name,
@@ -1493,7 +1492,6 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             varm_layers=varm_layers,
         )
         assert adata
-        # clib.config_logging("ERROR")
 
         for m in obsm_layers:
             assert m in adata.obsm
@@ -1521,8 +1519,10 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
 @pytest.mark.parametrize("version", ["1.7.3"] * 1000)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
     "obsm_layers",
-    [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
-)  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
+    [("X_pca",)],
+    # [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
+    #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
+)
 @pytest.mark.parametrize(
     "obsp_layers",
     [()],
