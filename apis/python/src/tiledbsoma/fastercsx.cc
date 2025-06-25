@@ -305,7 +305,6 @@ void compress_coo(
     py::array Bp,
     py::array Bj,
     py::array Bd) {
-    std::cerr << "fastercsx::compress_coo START" << std::endl;
     // Error checks first
     std::vector<py::array> Ai, Aj, Ad;
     try {
@@ -356,7 +355,6 @@ void compress_coo(
         csx_major_index_type,
         csx_minor_index_type,
         coo_index_type);
-    std::cerr << "fastercsx::compress_coo END" << std::endl;
 }
 
 /**
@@ -367,8 +365,6 @@ void compress_coo(
  * coordinates are unique.
  */
 bool sort_csx_indices(std::shared_ptr<tiledbsoma::SOMAContext> ctx, py::array Bp, py::array Bj, py::array Bd) {
-    LOG_DEBUG("fasercsx::sort_csx_indices START");
-    std::cerr << "fastercsx::sort_csx_indices START" << std::endl;
     // Error checks first
     //
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
@@ -408,8 +404,6 @@ bool sort_csx_indices(std::shared_ptr<tiledbsoma::SOMAContext> ctx, py::array Bp
         csx_major_index_type,
         csx_minor_index_type);
 
-    LOG_DEBUG("fasercsx::sort_csx_indices END");
-    std::cerr << "fastercsx::sort_csx_indices END" << std::endl;
     return no_duplicates;
 };
 

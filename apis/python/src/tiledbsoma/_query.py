@@ -110,9 +110,7 @@ class AxisIndexer(query.AxisIndexer):
         """Private. Return an index for the ``obs`` axis."""
         with self._obs_lock:
             if self._cached_obs is None:
-                print(f"AxisIndexer:_obs_index - creating index {self._cached_obs}", file=sys.stderr)
                 self._cached_obs = self._index_factory(self.query.obs_joinids().to_numpy())
-                print(f"AxisIndexer:_obs_index - done {self._cached_obs}", file=sys.stderr)
         return self._cached_obs
 
     @property
@@ -120,9 +118,7 @@ class AxisIndexer(query.AxisIndexer):
         """Private. Return an index for the ``var`` axis."""
         with self._var_lock:
             if self._cached_var is None:
-                print("AxisIndexer:_var_index - creating index", file=sys.stderr)
                 self._cached_var = self._index_factory(self.query.var_joinids().to_numpy())
-                print("AxisIndexer:_var_index - done", file=sys.stderr)
         return self._cached_var
 
     def by_obs(self, coords: Numpyable) -> npt.NDArray[np.intp]:

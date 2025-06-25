@@ -73,7 +73,6 @@ void SOMASparseNDArray::create(
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
-    LOG_DEBUG(fmt::format("[SOMASparseNDArray] static method 'open' opening array '{}'", uri));
     auto array = std::make_unique<SOMASparseNDArray>(mode, uri, ctx, timestamp);
 
     if (!array->check_type("SOMASparseNDArray")) {

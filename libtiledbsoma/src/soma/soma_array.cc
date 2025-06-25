@@ -104,13 +104,9 @@ SOMAArray::SOMAArray(
     , ctx_(ctx)
     , timestamp_(timestamp)
     , soma_mode_(mode) {
-    LOG_DEBUG("SOMAArray::SOMAArray ENTER");
     validate(soma_mode_, timestamp_);
-    LOG_DEBUG("SOMAArray::SOMAArray 1");
     fill_metadata_cache(soma_mode_, timestamp_);
-    LOG_DEBUG("SOMAArray::SOMAArray 2");
     fill_columns();
-    LOG_DEBUG("SOMAArray::SOMAArray EXIT");
 }
 
 SOMAArray::SOMAArray(
