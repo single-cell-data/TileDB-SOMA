@@ -1485,6 +1485,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
 @pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
 def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
     import tiledbsoma.pytiledbsoma as clib
+
     clib.config_logging("INFO")
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name

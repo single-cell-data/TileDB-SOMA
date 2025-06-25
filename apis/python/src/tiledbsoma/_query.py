@@ -469,28 +469,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
 
-        # XXX begin
-        #
-
-        # _ = tp.map(print, (self._get_annotation_layer("obsm", key) for key in obsm_layers))
-
-        # for k in all_x_arrays:
-        #     if k not in self._ms.X:
-        #         raise KeyError(f"Unknown X layer name; {k}")
-        # for k in obsm_layers:
-        #     if k not in self._ms.obsm:
-        #         raise KeyError(f"Unknown obsm layer name; {k}")
-        # for k in obsp_layers:
-        #     if k not in self._ms.obsp:
-        #         raise KeyError(f"Unknown obsp layer name; {k}")
-        # for k in varm_layers:
-        #     if k not in self._ms.varm:
-        #         raise KeyError(f"Unknown varm layer name; {k}")
-        # for k in varp_layers:
-        #     if k not in self._ms.varp:
-        #         raise KeyError(f"Unknown varp layer name; {k}")
-        # XXX end
-
         x_matrices = {
             _xname: (
                 tp.submit(
@@ -568,6 +546,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 if var[name].dtype.name == "category":
                     var[name] = var[name].cat.remove_unused_categories()
 
+        print("Into future resolve", file=sys.stderr)
         return AnnData(
             X=x_future.result() if isinstance(x_future, Future) else x_future,
             obs=obs,
