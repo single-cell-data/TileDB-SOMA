@@ -137,12 +137,56 @@ individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 Expression matrices are transposed (cells as rows) prior to writing. All
 other slots, including results from extended assays (eg. \code{SCTAssay},
 \code{ChromatinAssay}) are lost.
+
+\subsection{Performance Considerations}{
+Ingestion of very large dense layers, such as \code{scale.data}, can be
+extremely slow and memory intensive. For better performance, users can remove
+these layers prior to ingestion and either ingest them separately as dense
+arrays, or regenerate them after export
+\preformatted{
+# Using SeuratObject v5 syntax on a v3 `Assay`
+# Cache the layer for separate ingestion, skip if planning to regenerate
+mat <- object[["ASSAY"]]$scale.data
+
+# Remove the `scale.data` layer
+object <- object[["ASSAY"]]$scale.data <- NULL
+
+# Ingest the smaller object
+uri <- write_soma(object, "/path/to/soma")
+
+# Ingest the `scale.data` layer densely
+# Pad the `scale.data` layer so that its soma join IDs match the experiment
+padded <- matrix(
+  data = vector("numeric", length = prod(dim(object[["ASSAY"]]))),
+  nrow = nrow(object[["ASSAY"]]),
+  ncol = ncol(object[["ASSAY"]])
+)
+rowidx <- match(rownames(mat), rownames(object[["ASSAY"]]))
+colidx <- match(colnames(mat), colnames(object[["ASSAY"]]))
+padded[rowidx, colidx] <- mat
+
+# Use `write_soma()` to ingest densely and register it within the SOMA
+# Measurement for the original assay
+exp <- SOMAExperimentOpen(uri, "WRITE")
+arr <- write_soma(
+  padded,
+  "scale_data",
+  soma_parent = exp$ms$get("ASSAY")$X,
+  sparse = FALSE,
+  key = "scale_data"
+)
+arr$close()
+exp$close()
+}
+Please note that dense arrays cannot be subsetted using the
+\code{\link{SOMAExperimentAxisQuery}} mechanism
+}
 }
 
 \section{Writing v5 \code{Assays}}{
 
 \pkg{Seurat} v5 \code{\link[SeuratObject:Assay5]{Assays}s} are written
-out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
+out as individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 \itemize{
 \item the layer matrices are written out as
 \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
