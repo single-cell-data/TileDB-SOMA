@@ -522,6 +522,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             for _xname, layer in all_x_arrays.items()
         }
         x_future = x_matrices.pop(X_name)
+        # XXX: DEBUG - force barrier for X read
+        _ = x_future.result()
+        # XXX: END DEBUG
 
         obsm_future = {
             key: tp.submit(
