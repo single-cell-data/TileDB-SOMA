@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- \[[#4147](https://github.com/single-cell-data/TileDB-SOMA/pull/4147)\] [python] Fix a race condition in SOMA collection caching which would result in redundant object opens.
+
 ### Security
 
 ## [Release 1.18.0]
