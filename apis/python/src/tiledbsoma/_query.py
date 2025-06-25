@@ -110,7 +110,9 @@ class AxisIndexer(query.AxisIndexer):
         """Private. Return an index for the ``obs`` axis."""
         with self._obs_lock:
             if self._cached_obs is None:
+                print(f"AxisIndexer:_obs_index - creating index {self._cached_obs}", file=sys.stderr)
                 self._cached_obs = self._index_factory(self.query.obs_joinids().to_numpy())
+                print(f"AxisIndexer:_obs_index - done {self._cached_obs}", file=sys.stderr)
         return self._cached_obs
 
     @property
@@ -118,7 +120,9 @@ class AxisIndexer(query.AxisIndexer):
         """Private. Return an index for the ``var`` axis."""
         with self._var_lock:
             if self._cached_var is None:
+                print("AxisIndexer:_var_index - creating index", file=sys.stderr)
                 self._cached_var = self._index_factory(self.query.var_joinids().to_numpy())
+                print("AxisIndexer:_var_index - done", file=sys.stderr)
         return self._cached_var
 
     def by_obs(self, coords: Numpyable) -> npt.NDArray[np.intp]:
@@ -709,6 +713,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             layer_name:
                 Name of the layer.
         """
+        print("_get_annotation_layer start", annotation_name, layer_name, file=sys.stderr)
         try:
             coll: Collection[NDArray] = self._ms[annotation_name]  # type: ignore
         except KeyError:
@@ -724,6 +729,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             raise TypeError(
                 f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}."
             )
+        print("_get_annotation_layer done", annotation_name, layer_name, file=sys.stderr)
         return layer
 
     @property
