@@ -7,7 +7,6 @@ from __future__ import annotations
 import datetime
 import json
 import pathlib
-import sys
 import time
 import urllib.parse
 from concurrent.futures import Future
@@ -450,8 +449,6 @@ def _resolve_futures(unresolved: dict[str, Any], deep: bool = False) -> dict[str
             v = _resolve_futures(v, deep=deep)
 
         resolved[k] = v
-
-        print(f"Resolved {k}", file=sys.stderr)
 
     return resolved
 

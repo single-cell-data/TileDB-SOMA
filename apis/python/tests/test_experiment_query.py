@@ -1516,19 +1516,20 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@pytest.mark.parametrize("version", ["1.7.3"] * 2500)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("version", ["1.16.1"])  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
     "obsm_layers",
-    [()],
+    # [()],
     # [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
-    #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
+    [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
 )
 @pytest.mark.parametrize(
     "obsp_layers",
-    [()],
-)  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
+    # [()],
+    [(), ("connectivities",), ("distances",), ("connectivities", "distances")],
+)
 @pytest.mark.parametrize("varp_layers", [()])
-@pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
+@pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
 def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name

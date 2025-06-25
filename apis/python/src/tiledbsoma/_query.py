@@ -576,8 +576,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 if var[name].dtype.name == "category":
                     var[name] = var[name].cat.remove_unused_categories()
 
-        print("Into future resolve", file=sys.stderr)
-        return AnnData(
+        adata = AnnData(
             X=x_future.result() if isinstance(x_future, Future) else x_future,
             obs=obs,
             var=var,
@@ -587,6 +586,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             varp=(_resolve_futures(varp_future) or None),
             layers=(_resolve_futures(x_matrices) or None),
         )
+        print(f"to_anndata: done {self.experiment.uri}", file=sys.stderr)
+        return adata
 
     def to_spatialdata(  # type: ignore[no-untyped-def]
         self,
