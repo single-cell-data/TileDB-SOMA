@@ -913,6 +913,7 @@ def _read_as_csr(
     else:
         tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
+    print(f"_read_as_csr into from_soma {matrix.uri}", file=sys.stderr)
     res = CompressedMatrix.from_soma(tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context).to_scipy()
     print(f"_read_as_csr done {matrix.uri}", file=sys.stderr)
     return res
