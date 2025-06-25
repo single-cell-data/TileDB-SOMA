@@ -696,7 +696,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         original_index_metadata = json.loads(axis_df.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null"))
         if not (original_index_metadata is None or isinstance(original_index_metadata, str)):
             raise ValueError(
-                f"{axis_df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}"
+                f"{axis_df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}",
             )
 
         df: pd.DataFrame = arrow_table.to_pandas()

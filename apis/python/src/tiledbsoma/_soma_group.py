@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from threading import Lock
 from typing import Any, Callable, Generic, Iterable, Iterator, TypeVar, cast
 
 import attrs
@@ -39,7 +40,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         Experimental.
     """
 
-    __slots__ = ("_contents", "_mutated_keys")
+    __slots__ = ("_contents", "_mutated_keys", "_reify_lock")
 
     def __init__(
         self,
@@ -53,6 +54,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         This is loaded at startup when we have a read handle.
         """
         self._mutated_keys: set[str] = set()
+        self._reify_lock = Lock()
 
     def __len__(self) -> int:
         """Return the number of members in the collection."""
@@ -66,20 +68,23 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             entry = self._contents[key]
         except KeyError:
             raise KeyError(err_str) from None
-        if entry.soma is None:
-            from . import _factory  # Delayed binding to resolve circular import.
 
-            uri = entry.entry.uri
-            mode = self.mode
-            context = self.context
-            timestamp = self.tiledb_timestamp_ms
-            clib_type = entry.entry.wrapper_type.clib_type
+        with self._reify_lock:
+            if entry.soma is None:
+                from . import _factory  # Delayed binding to resolve circular import.
 
-            wrapper = _tdb_handles.open_handle_wrapper(uri, mode, context, timestamp, clib_type)
-            entry.soma = _factory.reify_handle(wrapper)
+                uri = entry.entry.uri
+                mode = self.mode
+                context = self.context
+                timestamp = self.tiledb_timestamp_ms
+                clib_type = entry.entry.wrapper_type.clib_type
 
-            # Since we just opened this object, we own it and should close it.
-            self._close_stack.enter_context(entry.soma)
+                wrapper = _tdb_handles.open_handle_wrapper(uri, mode, context, timestamp, clib_type)
+                entry.soma = _factory.reify_handle(wrapper)
+
+                # Since we just opened this object, we own it and should close it.
+                self._close_stack.enter_context(entry.soma)
+
         return cast("CollectionElementType", entry.soma)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
