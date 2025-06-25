@@ -83,7 +83,7 @@ Open the SOMA collection for read or write.\cr
 called#' directly; use factory functions
 (eg. \code{\link{SOMACollectionOpen}()}) instead.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$open(mode = c("READ", "WRITE"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$open(mode = c("READ", "WRITE", "DELETE"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

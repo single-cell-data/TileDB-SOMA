@@ -122,6 +122,7 @@ The mode of the object, one of:
 \item \dQuote{\code{CLOSED}}
 \item \dQuote{\code{READ}}
 \item \dQuote{\code{WRITE}}
+\item \dQuote{\code{DELETE}}
 }
 }
 }
@@ -141,6 +142,7 @@ Close and reopen the TileDB object in a new mode
 \itemize{
 \item \dQuote{\code{READ}}
 \item \dQuote{\code{WRITE}}
+\item \dQuote{\code{DELETE}}
 }}
 
 \item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
