@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 from concurrent import futures
@@ -22,6 +23,7 @@ from tiledbsoma import (
     pytiledbsoma,
 )
 from tiledbsoma._collection import CollectionBase
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
@@ -127,7 +129,7 @@ def test_experiment_query_all(soma_experiment):
             "label": [str(i) for i in range(11)],
         }
         assert pa.concat_tables(query.X("raw").tables()) == pa.concat_tables(
-            soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables()
+            soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables(),
         )
         assert query.X("raw").tables().concat() == pa.concat_tables(query.X("raw").tables())
         raw = query.X("raw")
@@ -199,7 +201,7 @@ def test_experiment_query_coords(soma_experiment):
                 [
                     raw_X["soma_dim_0"].to_numpy(),
                     raw_X["soma_dim_1"].to_numpy(),
-                ]
+                ],
             ).T,
             shape=soma_experiment.ms["RNA"].X["raw"].shape,
         )
@@ -649,7 +651,7 @@ def test_X_as_series():
         pa.Table.from_arrays(
             [soma_dim_0, soma_dim_1, soma_data],
             names=["soma_dim_0", "soma_dim_1", "soma_data"],
-        )
+        ),
     )
 
     assert isinstance(ser, pd.Series)
@@ -770,7 +772,7 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
             [
                 ("soma_joinid", pa.int64()),
                 ("label", pa.large_string()),
-            ]
+            ],
         ),
         domain=[[0, sz - 1]],
         index_column_names=["soma_joinid"],
@@ -780,8 +782,8 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
             {
                 "soma_joinid": [i for i in range(sz)],
                 "label": [str(i) for i in range(sz)],
-            }
-        )
+            },
+        ),
     )
 
 
@@ -795,7 +797,7 @@ def add_sparse_array(coll: CollectionBase, key: str, shape: tuple[int, int]) -> 
             format="coo",
             dtype=np.float32,
             random_state=np.random.default_rng(),
-        )
+        ),
     )
     a.write(tensor)
 
@@ -885,11 +887,18 @@ def test_experiment_query_historical(version, obs_params, var_params):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
     obs_condition, obs_count = obs_params
     var_condition, var_count = var_params
+
+    def expected_index_name(df, hint, fallback) -> str:
+        if hint:
+            return json.loads(hint)
+        if fallback in df.columns:
+            return fallback
+        return ""
 
     with soma.open(uri) as exp:
         query = exp.axis_query(
@@ -904,14 +913,35 @@ def test_experiment_query_historical(version, obs_params, var_params):
         var = query.var().concat()
         assert len(var) == var_count
 
+        adata = query.to_anndata("data")
+        assert adata.n_obs == obs_count
+        assert adata.n_vars == var_count
+        assert adata.X.shape == (obs_count, var_count)
+        assert adata.obs.index.name == expected_index_name(
+            obs.to_pandas(), exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None), "obs_id",
+        )
+        assert adata.var.index.name == expected_index_name(
+            var.to_pandas(),
+            exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "var_id",
+        )
+
+        adata = query.to_anndata("data", obs_id_name="soma_joinid", var_id_name="soma_joinid")
+        assert adata.obs.index.name == "soma_joinid"
+        assert adata.var.index.name == "soma_joinid"
+
+        adata = query.to_anndata("data", obs_id_name="obs_id", var_id_name="var_id")
+        assert adata.obs.index.name == "obs_id"
+        assert adata.var.index.name == "var_id"
+
 
 @pytest.mark.skip()
 @pytest.mark.parametrize("version", ["1.7.3"] * 200)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
-    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")]
+    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
 )  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize(
-    "obsp_layers", [("connectivities", "distances")]
+    "obsp_layers", [("connectivities", "distances")],
 )  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
@@ -947,7 +977,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
     def _to_numpy(it: Numpyable) -> npt.NDArray[np.int64]:
@@ -1155,7 +1185,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
                 raise ValueError(f"layer {layer_name!r} is not available in {annotation_name!r}.") from None
             if not isinstance(layer, soma.SparseNDArray):
                 raise TypeError(
-                    f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}."
+                    f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}.",
                 )
             return layer
 
@@ -1355,11 +1385,11 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
                 pa.field("soma_dim_0", pa.from_numpy_dtype(index_dtype)),
                 pa.field("soma_dim_1", pa.from_numpy_dtype(index_dtype)),
                 matrix.schema.field("soma_data"),
-            ]
+            ],
         )
 
         def _read_and_reindex(
-            X: soma.SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64]
+            X: soma.SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64],
         ) -> pa.Table:
             def _reindex(batch: pa.RecordBatch) -> pa.RecordBatch:
                 return pa.RecordBatch.from_pydict(
@@ -1397,7 +1427,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
                 partition_size,
                 len(d0_joinids) - partition_size + 1,
                 partition_size,
-            )
+            ),
         )
         if len(splits) > 1:
             d0_joinids_splits = np.array_split(np.partition(d0_joinids, splits), splits)
@@ -1408,14 +1438,14 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
                     (matrix,) * len(d0_joinids_splits),
                     d0_joinids_splits,
                     (d1_joinids,) * len(d0_joinids_splits),
-                )
+                ),
             )
 
         else:
             tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
         res = CompressedMatrix.from_soma(
-            tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context
+            tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context,
         ).to_scipy()
         print(f"_read_as_csr done {matrix.uri}", file=sys.stderr)
         return res
@@ -1446,7 +1476,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
                 context=exp.context,
             ),
         ).to_anndata(
-            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
+            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers,
         )
         assert adata
         # clib.config_logging("ERROR")
@@ -1476,10 +1506,10 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
 
 @pytest.mark.parametrize("version", ["1.7.3"] * 1000)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
-    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")]
+    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
 )  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize(
-    "obsp_layers", [()]
+    "obsp_layers", [()],
 )  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
@@ -1489,12 +1519,12 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
     with soma.open(uri) as exp:
         adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
-            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers
+            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers,
         )
 
         for m in obsm_layers:

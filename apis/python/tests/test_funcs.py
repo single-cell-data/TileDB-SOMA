@@ -38,7 +38,7 @@ def test_forwards_kwargs(dst_sig: str, outer_sig: str, want: str):
         def dst{dst_sig}: ...
         @forwards_kwargs_to(dst)
         def outer{outer_sig}: ...
-        """
+        """,
     )
     variables = dict(forwards_kwargs_to=_funcs.forwards_kwargs_to)
     exec(code, variables)

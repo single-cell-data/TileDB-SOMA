@@ -37,14 +37,13 @@ from .. import (
     _util,
     logging,
 )
-from .._constants import SOMA_JOINID
+from .._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from .._dask.load import SOMADaskConfig, load_daskarray
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
-from .._util import MISSING, Sentinel, _resolve_futures
+from .._util import MISSING, Sentinel, _df_set_index, _resolve_futures
 from . import conversions
 from ._common import (
-    _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
     _UNS_OUTGEST_COLUMN_NAME_1D,
     _UNS_OUTGEST_COLUMN_PREFIX_2D,
     _UNS_OUTGEST_HINT_1D,
@@ -197,34 +196,18 @@ def _read_dataframe(
     `test_dataframe_io_roundtrips.py` / https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
     """
     # Read and validate the "original index metadata" stored alongside this SOMA DataFrame.
-    original_index_metadata = json.loads(df.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null"))
+    original_index_metadata = json.loads(df.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null"))
     if not (original_index_metadata is None or isinstance(original_index_metadata, str)):
-        raise ValueError(f"{df.uri}: invalid {_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}")
+        raise ValueError(
+            f"{df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}",
+        )
 
     pdf: pd.DataFrame = df.read().concat().to_pandas()
     # SOMA DataFrames always have a `soma_joinid` added, as part of the ingest process, which we remove on outgest.
     pdf.drop(columns=SOMA_JOINID, inplace=True)
 
     default_index_name = default_index_name or original_index_metadata
-    if default_index_name is not None:
-        # One or both of the following was true:
-        # - Original DataFrame had an index name (other than "index") ⇒ that name was written as `OriginalIndexMetadata`
-        # - `default_index_name` was provided (e.g. `{obs,var}_id_name` args to `to_anndata`)
-        #
-        # ⇒ Verify a column with that name exists, and set it as index (keeping its name).
-        if default_index_name not in pdf.keys():
-            raise ValueError(f"Requested ID column name {default_index_name} not found in input: {pdf.keys()}")
-        pdf.set_index(default_index_name, inplace=True)
-    else:
-        # The assumption here is that the original index was unnamed, and was given a "fallback name" (e.g. "obs_id",
-        # "var_id") during ingest that matches the `fallback_index_name` arg here. In this case, we restore that column
-        # as index, and remove the name.
-        #
-        # NOTE: several edge cases result in the outgested DF not matching the original DF; see
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
-        if fallback_index_name is not None and fallback_index_name in pdf:
-            pdf.set_index(fallback_index_name, inplace=True)
-            pdf.index.name = None
+    _df_set_index(pdf, default_index_name, fallback_index_name)
 
     return pdf
 
@@ -577,7 +560,7 @@ def _extract_uns(
                 else:
                     if hint is not None:
                         logging.log_io_same(
-                            f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
+                            f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame",
                         )
                     return _read_dataframe(element, fallback_index_name="index")
 

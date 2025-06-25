@@ -17,7 +17,7 @@ from pandas._testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
 from tiledbsoma import SOMA_JOINID, DataFrame, Experiment
-from tiledbsoma.io._common import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
@@ -53,7 +53,7 @@ ROUND_TRIPS = [
         make_pd_df("index=xx,yy,zz", col0="aa,bb,cc", col1="AA,BB,CC"),
         # ⇒ index name is lost
         make_pd_df(      "xx,yy,zz", col0="aa,bb,cc", col1="AA,BB,CC"),
-        [ "obs_id", "col0", "col1", ],
+        [ "obs_id", "col0", "col1" ],
     ),
     RoundTrip(
         '2. DataFrame has a column named `obs_id`',
@@ -61,7 +61,7 @@ ROUND_TRIPS = [
         # ⇒ `obs_id` column becomes `df.index`, loses name
         # ⇒ Original `df.index` dropped
         make_pd_df("aa,bb,cc", col0="AA,BB,CC"),
-        [ "col0", "obs_id", ],
+        [ "col0", "obs_id" ],
     ),
     RoundTrip(
         '3. DataFrame has a column named "index", and `df.index` is unnamed',
@@ -69,14 +69,14 @@ ROUND_TRIPS = [
         # ⇒ "index" column is promoted to `df.index` (unnamed)
         # ⇒ Original (unnamed) index becomes a column named `level_0`
         make_pd_df("AA,BB,CC", level_0="xx,yy,zz", col0="aa,bb,cc"),
-        [ "level_0", "col0", "obs_id", ],
+        [ "level_0", "col0", "obs_id" ],
     ),
     RoundTrip(
         '4. DataFrame has a column named "index", and `df.index` is named `id_column_name` (default `obs_id`)',
         make_pd_df("obs_id=xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column is dropped
         make_pd_df("obs_id=xx,yy,zz", col0="aa,bb,cc"),
-        [ "obs_id", "col0", ],
+        [ "obs_id", "col0" ],
         "obs_id",
     ),
     RoundTrip(
@@ -84,7 +84,7 @@ ROUND_TRIPS = [
         make_pd_df("idx=xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column renamed to `obs_id`
         make_pd_df("idx=xx,yy,zz", col0="aa,bb,cc", obs_id="AA,BB,CC"),
-        [ "idx", "col0", "obs_id", ],
+        [ "idx", "col0", "obs_id" ],
         "idx",
     ),
     RoundTrip(
@@ -94,14 +94,14 @@ ROUND_TRIPS = [
         # ⇒ `obs_id` column → unnamed index
         # ⇒ "index" column dropped
         make_pd_df("aa,bb,cc", level_0="xx,yy,zz"),
-        [ "level_0", "obs_id", ],
+        [ "level_0", "obs_id" ],
     ),
     RoundTrip(
         '7. DataFrame has columns named "index" and `id_column_name` (default: obs_id), and `df.index` has a name:',
         make_pd_df("idx=xx,yy,zz", obs_id="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column is dropped
         make_pd_df("idx=xx,yy,zz", obs_id="aa,bb,cc"),
-        [ "idx", "obs_id", ],
+        [ "idx", "obs_id" ],
         "idx",
     ),
 ]
@@ -118,7 +118,7 @@ def verify_metadata(sdf: DataFrame, persisted_column_names: list[str], persisted
         assert string_col_type == pa.large_string()
 
     # Verify "original index metadata"
-    actual_index_metadata = json.loads(sdf.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON])
+    actual_index_metadata = json.loads(sdf.metadata[SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON])
     assert actual_index_metadata == persisted_metadata
 
 

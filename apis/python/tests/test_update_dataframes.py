@@ -152,7 +152,9 @@ def verify_updates(
 # 1. `readback=False`: `new_obs` and `new_var` come directly from the input `conftest_pbmc_small` object
 # 2. `readback=True`: `new_obs` and `new_var` are ingested to SOMA, then exported back to pandas DataFrames.
 with_and_without_soma_roundtrip = pytest.mark.parametrize(
-    "multiple_fixtures_with_readback", [False, True], indirect=True
+    "multiple_fixtures_with_readback",
+    [False, True],
+    indirect=True,
 )
 
 

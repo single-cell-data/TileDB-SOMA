@@ -118,7 +118,7 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: tuple[int, ...]):
             uri,
             soma.pytiledbsoma.OpenMode.soma_read,
             soma.pytiledbsoma.SOMAContext(),
-        )
+        ),
     ) as a:
         mq = soma.pytiledbsoma.ManagedQuery(a, a.context())
         table = mq.next()["soma_data"]
@@ -218,7 +218,7 @@ def test_dense_nd_array_ned_write(tmp_path):
                     [100, 101, 102, 103, 104, 105],
                     [200, 201, 202, 203, 204, 205],
                     [300, 301, 302, 303, 304, 305],
-                ]
+                ],
             ),
         },
         {
@@ -231,7 +231,7 @@ def test_dense_nd_array_ned_write(tmp_path):
                     [100, 101, 102, 103, 104, 105],
                     [200, 201, 202, 203, 204, 205],
                     [300, 301, 302, 303, 304, 305],
-                ]
+                ],
             ),
         },
     ],
@@ -371,9 +371,9 @@ def test_tile_extents(tmp_path):
                     "dims": {
                         "soma_dim_0": {"tile": 512},
                         "soma_dim_1": {"tile": 512},
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     ).close()
 
@@ -497,7 +497,7 @@ def test_pass_configs(tmp_path):
             platform_config={
                 "sm.mem.total_budget": "300000",
                 "sm.io_concurrency_level": "1",
-            }
+            },
         )
 
 

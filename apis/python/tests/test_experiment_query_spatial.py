@@ -55,7 +55,7 @@ def add_presence_dataframe(
                 ("soma_joinid", pa.int64()),
                 ("scene_id", pa.string()),
                 ("data", pa.bool_()),
-            ]
+            ],
         ),
         domain=((0, max_joinids - 1), ("", "")),
         index_column_names=("soma_joinid", "scene_id"),
@@ -66,8 +66,8 @@ def add_presence_dataframe(
                 "soma_joinid": joinids,
                 "scene_id": scene_ids,
                 "data": len(scene_ids) * [True],
-            }
-        )
+            },
+        ),
     )
 
 
@@ -218,14 +218,14 @@ def check_for_scene_data(sdata, has_scenes: list[bool]):
                 "x": x.flatten()[:8],
                 "y": y.flatten()[:8],
                 "soma_joinid": np.arange(index * 16, (index + 1) * 16 - 8, dtype=np.int64),
-            }
+            },
         )
         expected_shapes = pd.DataFrame.from_dict(
             {
                 "soma_joinid": np.arange(index * 16 + 8, (index + 1) * 16, dtype=np.int64),
                 "radius": 8 * [2.0],
                 "geometry": shapely.points(list(zip(x.flatten()[8:], y.flatten()[8:]))).tolist(),
-            }
+            },
         )
 
         scene_id = f"scene{index}"

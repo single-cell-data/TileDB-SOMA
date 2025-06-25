@@ -71,7 +71,7 @@ if tiledbsoma_dir is not None and tiledb_dir is None:
         "If TILEDBSOMA_PATH is set, then TILEDB_PATH must "
         "also be set. TILEDB_PATH must be set to the location of "
         "the TileDB shared object library linked to the "
-        "TileDB-SOMA shared object library"
+        "TileDB-SOMA shared object library",
     )
 
 if tiledbsoma_dir is None:
@@ -336,7 +336,7 @@ setuptools.setup(
             extra_link_args=CXX_FLAGS,
             extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20"] + CXX_FLAGS,
             language="c++",
-        )
+        ),
     ],
     zip_safe=False,
     setup_requires=["pybind11"],

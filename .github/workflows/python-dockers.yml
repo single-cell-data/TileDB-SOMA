@@ -78,5 +78,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           filename: .github/workflows/daily-python-dockers-issue-template.md
-          assignees: ryan-williams, jp-dark
+          assignees: jp-dark, aaronwolen
           update_existing: true

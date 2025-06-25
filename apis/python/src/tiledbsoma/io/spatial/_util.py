@@ -149,7 +149,7 @@ class TenXCountMatrixReader:
         if not isinstance(raw_version, str):
             raise SOMAError(
                 f"Unexpected type {type(raw_version)!r} for software version in gene "
-                f"expression file {self._path}. Expected a string."
+                f"expression file {self._path}. Expected a string.",
             )
         version: str | list[str] = raw_version.split("-")
         if len(version) == 1:
@@ -159,7 +159,7 @@ class TenXCountMatrixReader:
             version = version[1]
         else:
             raise SOMAError(
-                f"Unexpected value {raw_version} for 'software_version' in gene expression file {self._path}."
+                f"Unexpected value {raw_version} for 'software_version' in gene expression file {self._path}.",
             )
 
         version = version.split(".")
@@ -167,7 +167,7 @@ class TenXCountMatrixReader:
             raise SOMAError(
                 f"Unexpected value {raw_version} for 'software_version' in gene "
                 f"expression file {self._path}. Expected a version in the form "
-                f"'software_name-major.minor.patch'."
+                f"'software_name-major.minor.patch'.",
             )
         try:
             major = _str_to_int(version[0])
@@ -177,7 +177,7 @@ class TenXCountMatrixReader:
             raise SOMAError(
                 f"Unexpected value {raw_version} for 'software_version' in gene "
                 f"expression file {self._path}. Expected a version in the form "
-                f"'software_name-major.minor.patch'."
+                f"'software_name-major.minor.patch'.",
             ) from err
         return (major, minor, patch)
 

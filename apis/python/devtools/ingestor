@@ -258,7 +258,7 @@ def ingest_one(
 
     if ingest_mode not in tiledbsoma._types.INGEST_MODES:
         raise tiledbsoma._exception.SOMAError(
-            f'expected ingest_mode to be one of {tiledbsoma._types.INGEST_MODES}; got "{ingest_mode}"'
+            f'expected ingest_mode to be one of {tiledbsoma._types.INGEST_MODES}; got "{ingest_mode}"',
         )
 
     # Check that the input exists.

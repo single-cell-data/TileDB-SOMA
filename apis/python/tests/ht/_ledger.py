@@ -40,7 +40,9 @@ class LedgerEntry(Generic[LedgerEntryDataType], metaclass=ABCMeta):
 
     @abstractmethod
     def consolidate_with(
-        self, other: LedgerEntry[LedgerEntryDataType], allow_duplicates: bool
+        self,
+        other: LedgerEntry[LedgerEntryDataType],
+        allow_duplicates: bool,
     ) -> LedgerEntry[LedgerEntryDataType]:
         pass
 
@@ -250,10 +252,10 @@ def combine_first(first: pd.DataFrame, second: pd.DataFrame) -> pd.DataFrame:
         if first_series.dtype == "category":
             assert first_series.cat.ordered == second_series.cat.ordered
             merged_categories = list(
-                dict.fromkeys(first_series.cat.categories) | dict.fromkeys(second_series.cat.categories)
+                dict.fromkeys(first_series.cat.categories) | dict.fromkeys(second_series.cat.categories),
             )
             combined_series = combined_series.astype(
-                pd.CategoricalDtype(categories=merged_categories, ordered=first_series.cat.ordered)
+                pd.CategoricalDtype(categories=merged_categories, ordered=first_series.cat.ordered),
             )
 
         new_data[col] = combined_series

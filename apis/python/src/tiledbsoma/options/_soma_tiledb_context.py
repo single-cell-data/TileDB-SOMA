@@ -362,7 +362,7 @@ def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:
 
     if TILEDB_EXISTS and isinstance(context, TileDBCtx):
         raise TypeError(
-            "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
+            "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)",
         )
 
     if not isinstance(context, SOMATileDBContext):

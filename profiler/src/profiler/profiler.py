@@ -70,7 +70,7 @@ GNU_TIME_OUTPUT_REGEXP = re.compile(
     r"Signals delivered: (?P<signals_delivered>.+)\n"
     r"Page size \(bytes\): (?P<page_size_bytes>.+)\n"
     r"Exit status: (?P<exit_status>.+)\n"
-    r".*"
+    r".*",
 )
 
 # parameterize as cmd line arg

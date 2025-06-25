@@ -172,13 +172,13 @@ class Scene(
             raise ValueError(
                 f"The name of the transform input axes, {transform.input_axes}, do "
                 f"not match the name of the axes, {self.coordinate_space.axis_names}, "
-                f"in the scene coordinate space."
+                f"in the scene coordinate space.",
             )
         if coordinate_space is not None and transform.output_axes != coordinate_space.axis_names:
             raise ValueError(
                 f"The name of the transform output axes, {transform.output_axes}, do "
                 f"not match the name of the axes, {coordinate_space.axis_names}, ."
-                f" in the provided coordinate space."
+                f" in the provided coordinate space.",
             )
 
         # Check asset exists in the specified location.
@@ -198,7 +198,7 @@ class Scene(
                 raise ValueError(
                     f"The name of transform output axes, {transform.output_axes}, do "
                     f"not match the name of the axes in the multiscale image coordinate"
-                    f" space, {elem_axis_names}."
+                    f" space, {elem_axis_names}.",
                 )
         else:
             elem.coordinate_space = coordinate_space
@@ -306,7 +306,7 @@ class Scene(
                     f"The name of the transform input axes, {transform.input_axes}, "
                     f"do not match the name of the axes, "
                     f"{self.coordinate_space.axis_names}, in the scene coordinate "
-                    f"space."
+                    f"space.",
                 )
 
             if transform.input_axes != self.coordinate_space.axis_names:
@@ -314,7 +314,7 @@ class Scene(
                     f"The name of the transform input axes, {transform.input_axes}, "
                     f"do not match the name of the axes, "
                     f"{self.coordinate_space.axis_names}, in the scene coordinate "
-                    f"space."
+                    f"space.",
                 )
 
             # Get multisclae image coordinate space and check.
@@ -327,7 +327,7 @@ class Scene(
                 raise ValueError(
                     f"The name of the transform output axes, {transform.output_axes}, "
                     f"do not match the name of the axes, {elem_axis_names}, of the "
-                    f"coordinate space the multiscale image is defined on."
+                    f"coordinate space the multiscale image is defined on.",
                 )
 
         # Open the subcollection and add the new multiscale image.
@@ -404,7 +404,7 @@ class Scene(
                     f"The name of the transform input axes, {transform.input_axes}, "
                     f"do not match the name of the axes, "
                     f"{self.coordinate_space.axis_names}, in the scene coordinate "
-                    f"space."
+                    f"space.",
                 )
 
             # Get point cloud coordinate space and check
@@ -417,7 +417,7 @@ class Scene(
                 raise ValueError(
                     f"The name of the transform output axes, {transform.output_axes}, "
                     f"do not match the name of the axes, {elem_axis_names}, of the "
-                    f"coordinate space the point cloud is defined on."
+                    f"coordinate space the point cloud is defined on.",
                 )
 
         # Open the collection and add the new point cloud.
@@ -557,7 +557,9 @@ class Scene(
         )
 
     def get_transform_from_geometry_dataframe(
-        self, key: str, subcollection: str | Sequence[str] = "obsl"
+        self,
+        key: str,
+        subcollection: str | Sequence[str] = "obsl",
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested geometry dataframe
         to the scene.
@@ -634,7 +636,9 @@ class Scene(
         return transform.inverse_transform()
 
     def get_transform_to_geometry_dataframe(
-        self, key: str, subcollection: str | Sequence[str] = "obsl"
+        self,
+        key: str,
+        subcollection: str | Sequence[str] = "obsl",
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         geometery dataframe.

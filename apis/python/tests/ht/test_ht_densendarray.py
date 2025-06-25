@@ -53,9 +53,11 @@ def dense_array_shape(
 
     elements = [
         draw(
-            st.integers(min_value=min_values[i], max_value=max_values[i])
-            if min_values[i] < max_values[i]
-            else st.just(min_values[i])
+            (
+                st.integers(min_value=min_values[i], max_value=max_values[i])
+                if min_values[i] < max_values[i]
+                else st.just(min_values[i])
+            ),
         )
         for i in range(ndim)
     ]
@@ -151,7 +153,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
                 self.shape,
                 fill_value_for_type(self.type),
                 dtype=self.type.to_pandas_dtype(),
-            )
+            ),
         )
         assert initial_array_state.shape == self.shape
         assert initial_array_state.type == self.type
@@ -233,7 +235,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
 
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(
-        lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps
+        lambda self: self.A.tiledb_timestamp_ms not in self.data_ledger.timestamps,
     )  # only one write per timestamp until sc-61223 and sc-61226 are fixed
     @rule(data=st.data())
     def write(self, data: st.DataObject) -> None:
@@ -249,7 +251,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
             ht_np.arrays(
                 self.type.to_pandas_dtype(),
                 shape=tuple(bot_right[i] - top_left[i] + 1 for i in range(ndim)),
-            )
+            ),
         )
 
         # Write sub-array to the SOMA array
@@ -268,7 +270,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
                 timestamp_ms=self.A.tiledb_timestamp_ms,
                 name=new_fragments.pop(),
                 data=pa.Tensor.from_numpy(merged_array),
-            )
+            ),
         )
 
 

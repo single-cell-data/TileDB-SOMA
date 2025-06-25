@@ -237,7 +237,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
             ("mystring", pa.string()),
             ("myint", pa.int16()),
             ("myfloat", pa.float32()),
-        ]
+        ],
     )
 
     data_dict = {
@@ -339,7 +339,7 @@ def test_domain_mods(tmp_path):
             ("myint", pa.int16()),
             ("myfloat", pa.float32()),
             ("mybool", pa.bool_()),  # not supported as an index type
-        ]
+        ],
     )
     index_column_names = ["soma_joinid", "mystring", "myint", "myfloat"]
 
@@ -717,7 +717,7 @@ def test_canned_experiments(tmp_path, has_shapes):
                         "shape": (2639, 1839),
                         "maxshape": (9223372036854773759, 9223372036854773759),
                         "upgraded": True,
-                    }
+                    },
                 },
                 "obsm": {
                     "X_draw_graph_fr": {
@@ -779,7 +779,7 @@ def test_canned_experiments(tmp_path, has_shapes):
                         "shape": (1839, 50),
                         "maxshape": (9223372036854773759, 9223372036854773759),
                         "upgraded": True,
-                    }
+                    },
                 },
             },
             "raw": {
@@ -800,7 +800,7 @@ def test_canned_experiments(tmp_path, has_shapes):
                         "shape": (2639, 13720),
                         "maxshape": (9223372036854773759, 9223372036854773759),
                         "upgraded": True,
-                    }
+                    },
                 },
             },
         },

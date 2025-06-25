@@ -263,7 +263,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
-                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
+                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}",
                 )
 
         index_column_schema = []
@@ -274,10 +274,18 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             dtype = _arrow_types.tiledb_type_from_arrow_type(pa_field.type, is_indexed_column=True)
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain, False, index_column_name, pa_field.type, dtype
+                slot_soma_domain,
+                False,
+                index_column_name,
+                pa_field.type,
+                dtype,
             )
             (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None, True, index_column_name, pa_field.type, dtype
+                None,
+                True,
+                index_column_name,
+                pa_field.type,
+                dtype,
             )
 
             extent = _find_extent_for_domain(
@@ -297,7 +305,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 upper = slot_core_current_domain[1]
                 if lower < 0 or upper < 0 or upper < lower:
                     raise ValueError(
-                        f"domain for soma_joinid must be non-negative with lower <= upper; got ({lower}, {upper})"
+                        f"domain for soma_joinid must be non-negative with lower <= upper; got ({lower}, {upper})",
                     )
 
             # Here is our Arrow data API for communicating schema info between
@@ -403,7 +411,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         for column_name, values_for_column in values.items():
             if not isinstance(values_for_column, pa.Array):
                 raise ValueError(
-                    f"value for column name '{column_name}' must be pyarrow.Array: got '{type(values_for_column)}'"
+                    f"value for column name '{column_name}' must be pyarrow.Array: got '{type(values_for_column)}'",
                 )
 
             # As with get_enumeration_values: we are trusting pyarrow to raise
@@ -414,7 +422,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 raise KeyError(f"schema column name '{column_name}' is not of dictionary type")
             if pa.types.is_dictionary(values_for_column.type):
                 raise ValueError(
-                    f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead"
+                    f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead",
                 )
 
         self._handle.extend_enumeration_values(values, deduplicate)
@@ -551,12 +559,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         dim_names = self._tiledb_dim_names()
         if len(dim_names) != len(newdomain):
             raise ValueError(
-                f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}"
+                f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}",
             )
 
         if any([slot is not None and len(slot) != 2 for slot in newdomain]):
             raise ValueError(
-                f"{function_name_for_messages}: requested domain must have low,high pairs, or `None`, in each slot"
+                f"{function_name_for_messages}: requested domain must have low,high pairs, or `None`, in each slot",
             )
 
         # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
@@ -800,7 +808,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
-                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions"
+                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions",
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         self._write_table(values, write_options.sort_coords)
@@ -842,7 +850,7 @@ def _canonicalize_schema(
         geometry_type = schema.field(SOMA_GEOMETRY).type
         if geometry_type != pa.binary() and geometry_type != pa.large_binary():
             raise ValueError(
-                f"{SOMA_GEOMETRY} field must be of type Arrow binary or large_binary but is {geometry_type}"
+                f"{SOMA_GEOMETRY} field must be of type Arrow binary or large_binary but is {geometry_type}",
             )
         schema.set(
             schema.get_field_index(SOMA_GEOMETRY),
@@ -856,7 +864,7 @@ def _canonicalize_schema(
     for field_name in schema.names:
         if field_name.startswith("soma_") and field_name != SOMA_JOINID and field_name != SOMA_GEOMETRY:
             raise ValueError(
-                f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
+                f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``",
             )
 
     # verify that all index_column_names are present in the schema
@@ -868,12 +876,12 @@ def _canonicalize_schema(
             and index_column_name != SOMA_GEOMETRY
         ):
             raise ValueError(
-                f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
+                f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"',
             )
         if index_column_name not in schema_names_set:
             schema_names_string = "{}".format(list(schema_names_set))
             raise ValueError(
-                f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}"
+                f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}",
             )
         dtype = schema.field(index_column_name).type
         if not pa.types.is_dictionary(dtype) and dtype not in [
@@ -932,7 +940,8 @@ def _fill_out_slot_soma_domain(
                     raise ValueError("Axis domain should be a tuple[float, float]")
                 else:
                     if np.issubdtype(type(axis_domain[0]), NPFloating) or np.issubdtype(
-                        type(axis_domain[1]), NPFloating
+                        type(axis_domain[1]),
+                        NPFloating,
                     ):
                         raise ValueError("Axis domain should be a tuple[float, float]")
 
@@ -1105,7 +1114,9 @@ def _find_extent_for_domain(
 # extent exceeds max value representable by domain type. Reduce domain max
 # by 1 tile extent to allow for expansion.
 def _revise_domain_for_extent(
-    domain: tuple[Any, Any], extent: Any, saturated_range: bool | tuple[bool, ...]
+    domain: tuple[Any, Any],
+    extent: Any,
+    saturated_range: bool | tuple[bool, ...],
 ) -> tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
         domain = cast("tuple[Any, Any]", (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1])))

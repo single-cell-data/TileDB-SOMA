@@ -66,7 +66,7 @@ def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d, transform, expecte
             "obs_id": np.arange(4),
             "radius": 2.0 * np.ones((4,), dtype=np.float64),
             "geometry": shapely.points([[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]).tolist(),
-        }
+        },
     )
     assert all(expected == shape)
 
@@ -109,7 +109,7 @@ def test_export_to_points_2d(sample_point_cloud_dataframe_2d, transform, expecte
             "x": [0, 0, 0.5, 0.5],
             "y": [0, 0.5, 0, 0.5],
             "obs_id": np.arange(4),
-        }
+        },
     )
     assert all(points == expected)
 

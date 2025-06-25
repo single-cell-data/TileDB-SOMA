@@ -107,7 +107,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
                         ("x", "y"),
                         ("x", "y"),
                     ),
-                ]
+                ],
             ),
             "scene0",
         ),
@@ -193,7 +193,7 @@ def test_export_image_level_to_spatialdata(
                             ("x", "y"),
                             ("x", "y"),
                         ),
-                    ]
+                    ],
                 ),
                 sd.transformations.Sequence(
                     [
@@ -203,7 +203,7 @@ def test_export_image_level_to_spatialdata(
                             ("x", "y"),
                             ("x", "y"),
                         ),
-                    ]
+                    ],
                 ),
             ],
             "scene0",

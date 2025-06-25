@@ -351,7 +351,12 @@ def create_multiscale(baseuri, coord_space, axis_order, has_channel_axis, shapes
     ],
 )
 def test_multiscale_with_axis_names(
-    tmp_path, coord_space, axis_order, has_channel_axis, shapes, expected_scale_factors
+    tmp_path,
+    coord_space,
+    axis_order,
+    has_channel_axis,
+    shapes,
+    expected_scale_factors,
 ):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_with_axis_names")
     image_uri = create_multiscale(baseuri, coord_space, axis_order, has_channel_axis, shapes)
@@ -479,7 +484,12 @@ def test_multiscale_with_axis_names(
     ],
 )
 def test_multiscale_2d_read_region_with_channel(
-    tmp_path, shapes, data_axis_order, region, expected_coords, scale_factors
+    tmp_path,
+    shapes,
+    data_axis_order,
+    region,
+    expected_coords,
+    scale_factors,
 ):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(baseuri, ("x", "y"), data_axis_order, True, shapes)
@@ -566,7 +576,7 @@ def test_multiscale_2d_read_region_no_channel(tmp_path, shapes, region, scale_fa
                             region[0],
                             region[2] // scale_factors[i][1],
                         ),
-                    )
+                    ),
                 )
             assert np.array_equal(actual_data, expected_data)
 
@@ -636,6 +646,6 @@ def test_multiscale_3d_read_region_no_channel(tmp_path, shapes, region, scale_fa
                         slice(region[2], region[5] // scale_factors[i][2]),
                         slice(region[1], region[4] // scale_factors[i][1]),
                         slice(region[0], region[3] // scale_factors[i][0]),
-                    )
+                    ),
                 )
             assert np.array_equal(actual_data, expected_data)

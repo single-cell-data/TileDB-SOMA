@@ -19,7 +19,7 @@ def sample_arrow_table():
             pa.field("ascii", pa.large_string()),
             pa.field("bytes", pa.large_binary()),
             pa.field("float32", pa.float32()),
-        ]
+        ],
     )
 
     df = pd.DataFrame(
@@ -33,7 +33,7 @@ def sample_arrow_table():
             "ascii": ["aa", "bbb", "cccccc"],
             "bytes": [b"aa", b"bbb", b"ccc"],
             "float32": np.array([0.0, 1.0, 2.0], np.float32),
-        }
+        },
     )
 
     return pa.Table.from_pandas(df, schema)
@@ -81,7 +81,7 @@ def test_dataframe_unicode_value_filter(sample_dataframe_path):
 
         # filter on unicode, equality
         assert sdf.read(
-            value_filter="unicode == '\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}'"
+            value_filter="unicode == '\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}'",
         ).concat().to_pydict() == {
             "soma_joinid": [0],
             "unicode": [

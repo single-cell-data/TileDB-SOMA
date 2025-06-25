@@ -100,14 +100,14 @@ def case(
         strings=dict(
             aaa="AAA",
             nnn=111,
-        )
+        ),
     ),
     case(
         "Overwrite np.array inside collection (raise)",
         strings=dict(
            string_np_ndarray_1d=np.asarray(list("abc")),
         ),
-        err=r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']"
+        err=r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']",
     ),
     case(
         "Overwrite np.array inside collection (skip)",
@@ -116,7 +116,7 @@ def case(
         ),
         strict="info",
         valid_updates=[],
-        logs=[r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']"]
+        logs=[r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']"],
     ),
     case(
         "No partial updates inside collection",
@@ -124,7 +124,7 @@ def case(
             foo="FOO",
             string_np_ndarray_1d=np.asarray(list("abc")),
         ),
-        err=r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']"
+        err=r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']",
     ),
     case(
         "Partial update inside collection",
@@ -134,7 +134,7 @@ def case(
         ),
         strict="info",
         valid_updates={"strings": "foo"},
-        logs=[r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']"]
+        logs=[r"ms/RNA/uns/strings\[string_np_ndarray_1d]: already exists \(type DataFrame\), refusing to overwrite with \['a' 'b' 'c']"],
     ),
     case(
         "Overwrite scalar with DataFrame",
@@ -167,7 +167,7 @@ def case(
             r"ms/RNA/uns\[pd_df_indexed]: already exists \(type DataFrame\), refusing to overwrite with   column_1\n"
             r"0        g\n"
             r"1        h\n"
-            r"2        i"
+            r"2        i",
         ],
     ),
 ])

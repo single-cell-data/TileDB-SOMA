@@ -151,5 +151,5 @@ def images_to_datatree(image_data_arrays: Sequence[xr.DataArray]) -> DataTree:
     if _version_less_than(sd.__version__, (0, 2, 5)):
         return DataTree.from_dict({f"scale{index}": image for index, image in enumerate(image_data_arrays)})
     return DataTree.from_dict(
-        {f"scale{index}": xr.Dataset({"image": image}) for index, image in enumerate(image_data_arrays)}
+        {f"scale{index}": xr.Dataset({"image": image}) for index, image in enumerate(image_data_arrays)},
     )

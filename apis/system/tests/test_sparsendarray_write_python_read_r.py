@@ -54,5 +54,5 @@ class TestSparseNDArrayWritePythonReadR(TestWritePythonReadR):
         # [0., 0., 0., 0., 0.]
 
         self.r_assert(
-            "stopifnot(all.equal(as.matrix(M), matrix(c(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0), nrow=5, ncol=5, byrow=TRUE)))"
+            "stopifnot(all.equal(as.matrix(M), matrix(c(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0), nrow=5, ncol=5, byrow=TRUE)))",
         )
