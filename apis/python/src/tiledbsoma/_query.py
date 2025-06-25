@@ -459,7 +459,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[_xname] = x_array
 
-        # XXX DEBUG
+        # XXX DEBUG - force preload of all collections
         [self._ms.obsm[k] for k in obsm_layers]
         [self._ms.obsp[k] for k in obsp_layers]
         [self._ms.varm[k] for k in varm_layers]
@@ -475,6 +475,11 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         )
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
+
+        # XXX DEBUG - force index creation
+        _ = self.indexer._obs_index
+        _ = self.indexer._var_index
+        # XXX END DEBUG
 
         x_matrices = {
             _xname: (
