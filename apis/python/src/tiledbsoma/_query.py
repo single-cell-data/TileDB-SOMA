@@ -459,6 +459,13 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[_xname] = x_array
 
+        # XXX DEBUG
+        [self._ms.obsm[k] for k in obsm_layers]
+        [self._ms.obsp[k] for k in obsp_layers]
+        [self._ms.varm[k] for k in varm_layers]
+        [self._ms.varp[k] for k in varp_layers]
+        # XXX END DEBUG
+
         obs_table, var_table = tp.map(
             self._read_axis_dataframe,
             (AxisName.OBS, AxisName.VAR),
