@@ -918,7 +918,9 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert adata.n_vars == var_count
         assert adata.X.shape == (obs_count, var_count)
         assert adata.obs.index.name == expected_index_name(
-            obs.to_pandas(), exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None), "obs_id",
+            obs.to_pandas(),
+            exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "obs_id",
         )
         assert adata.var.index.name == expected_index_name(
             var.to_pandas(),
@@ -938,10 +940,12 @@ def test_experiment_query_historical(version, obs_params, var_params):
 @pytest.mark.skip()
 @pytest.mark.parametrize("version", ["1.7.3"] * 200)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
-    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
+    "obsm_layers",
+    [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
 )  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize(
-    "obsp_layers", [("connectivities", "distances")],
+    "obsp_layers",
+    [("connectivities", "distances")],
 )  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
@@ -1389,7 +1393,9 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
         )
 
         def _read_and_reindex(
-            X: soma.SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64],
+            X: soma.SparseNDArray,
+            oids: npt.NDArray[np.int64],
+            vids: npt.NDArray[np.int64],
         ) -> pa.Table:
             def _reindex(batch: pa.RecordBatch) -> pa.RecordBatch:
                 return pa.RecordBatch.from_pydict(
@@ -1445,7 +1451,11 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
         res = CompressedMatrix.from_soma(
-            tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context,
+            tbl,
+            (len(d0_joinids), len(d1_joinids)),
+            "csr",
+            True,
+            matrix.context,
         ).to_scipy()
         print(f"_read_as_csr done {matrix.uri}", file=sys.stderr)
         return res
@@ -1476,7 +1486,11 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
                 context=exp.context,
             ),
         ).to_anndata(
-            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers,
+            "data",
+            obsm_layers=obsm_layers,
+            obsp_layers=obsp_layers,
+            varp_layers=varp_layers,
+            varm_layers=varm_layers,
         )
         assert adata
         # clib.config_logging("ERROR")
@@ -1506,10 +1520,12 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
 
 @pytest.mark.parametrize("version", ["1.7.3"] * 1000)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
-    "obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
+    "obsm_layers",
+    [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")],
 )  #  [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize(
-    "obsp_layers", [()],
+    "obsp_layers",
+    [()],
 )  # [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [()])  # [(), ("PCs",)])
@@ -1524,7 +1540,11 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
 
     with soma.open(uri) as exp:
         adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
-            "data", obsm_layers=obsm_layers, obsp_layers=obsp_layers, varp_layers=varp_layers, varm_layers=varm_layers,
+            "data",
+            obsm_layers=obsm_layers,
+            obsp_layers=obsp_layers,
+            varp_layers=varp_layers,
+            varm_layers=varm_layers,
         )
 
         for m in obsm_layers:
