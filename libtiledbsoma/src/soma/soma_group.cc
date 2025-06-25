@@ -88,6 +88,7 @@ SOMAGroup::SOMAGroup(
     , soma_mode_(mode) {
     // Note: both OpenMode.write and OpenMode.del should be opened in
     // TILEDB_WRITE mode.
+    std::cerr << fmt::format("[SOMAGroup] ctor A '{}'", uri_) << std::endl;
     group_ = std::make_shared<Group>(
         *ctx_->tiledb_ctx(),
         std::string(uri),
@@ -102,6 +103,7 @@ SOMAGroup::SOMAGroup(
     , uri_(util::rstrip_uri(group->uri()))
     , group_(group)
     , timestamp_(timestamp) {
+    std::cerr << fmt::format("[SOMAGroup] ctor B '{}'", uri_) << std::endl;
     switch (group_->query_type()) {
         case TILEDB_READ:
             soma_mode_ = OpenMode::soma_read;
@@ -125,6 +127,7 @@ SOMAGroup::SOMAGroup(
 
 void SOMAGroup::fill_caches() {
     LOG_DEBUG(fmt::format("[SOMAGroup] fill_caches for group '{}'", uri_));
+    std::cerr << fmt::format("[SOMAGroup] fill_caches for group '{}'", uri_) << std::endl;
     if (group_->query_type() == TILEDB_WRITE) {
         cache_group_ = std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     } else {
@@ -149,9 +152,11 @@ void SOMAGroup::fill_caches() {
         members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);
     }
     LOG_DEBUG(fmt::format("[SOMAGroup] fill_caches for group DONE '{}'", uri_));
+    std::cerr << fmt::format("[SOMAGroup] fill_caches for group DONE '{}'", uri_) << std::endl;
 }
 
 void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    std::cerr << fmt::format("[SOMAGroup] open '{}'", uri_) << std::endl;
     timestamp_ = timestamp;
     soma_mode_ = mode;
     group_->set_config(_set_timestamp(ctx_, timestamp));
