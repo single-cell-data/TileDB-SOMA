@@ -829,8 +829,9 @@ def _read_inner_ndarray(
     idx = indexer(table["soma_dim_0"])
     z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
+    res = z.reshape(n_row, n_col)
     print(f"_read_inner_ndarray done {matrix.uri}", file=sys.stderr)
-    return z.reshape(n_row, n_col)
+    return res
 
 
 def _read_as_csr(
@@ -898,6 +899,7 @@ def _read_as_csr(
             partition_size,
         )
     )
+    print(f"_read_as_csr into _read_and_reindex (splits={len(splits)}) {matrix.uri}", file=sys.stderr)
     if len(splits) > 1:
         d0_joinids_splits = np.array_split(np.partition(d0_joinids, splits), splits)
         tp = matrix.context.threadpool
