@@ -1516,7 +1516,7 @@ def test_annotation_matrix_slots_expand(version, obsm_layers, obsp_layers, varm_
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@pytest.mark.parametrize("version", ["1.7.3"] * 1000)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("version", ["1.7.3"] * 2500)  #  ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
     "obsm_layers",
     [("X_pca",)],
