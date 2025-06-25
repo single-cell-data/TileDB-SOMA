@@ -305,7 +305,6 @@ void compress_coo(
     py::array Bp,
     py::array Bj,
     py::array Bd) {
-    // Error checks first
     std::vector<py::array> Ai, Aj, Ad;
     try {
         // convert py::tuple[py::array] to vector[py::array]

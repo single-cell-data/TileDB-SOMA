@@ -12,7 +12,6 @@
  */
 
 #include "soma_sparse_ndarray.h"
-#include "../utils/logger.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {
@@ -79,7 +78,6 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
         throw TileDBSOMAError("[SOMASparseNDArray::open] Object is not a SOMASparseNDArray");
     }
 
-    LOG_DEBUG("SOMASparseNDArray::open EXIT");
     return array;
 }
 
