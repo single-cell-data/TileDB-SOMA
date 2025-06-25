@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from concurrent import futures
@@ -20,6 +21,7 @@ from tiledbsoma import (
     pytiledbsoma,
 )
 from tiledbsoma._collection import CollectionBase
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
@@ -889,6 +891,13 @@ def test_experiment_query_historical(version, obs_params, var_params):
     obs_condition, obs_count = obs_params
     var_condition, var_count = var_params
 
+    def expected_index_name(df, hint, fallback) -> str:
+        if hint:
+            return json.loads(hint)
+        if fallback in df.columns:
+            return fallback
+        return ""
+
     with soma.open(uri) as exp:
         query = exp.axis_query(
             measurement_name="RNA",
@@ -901,3 +910,24 @@ def test_experiment_query_historical(version, obs_params, var_params):
 
         var = query.var().concat()
         assert len(var) == var_count
+
+        adata = query.to_anndata("data")
+        assert adata.n_obs == obs_count
+        assert adata.n_vars == var_count
+        assert adata.X.shape == (obs_count, var_count)
+        assert adata.obs.index.name == expected_index_name(
+            obs.to_pandas(), exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None), "obs_id"
+        )
+        assert adata.var.index.name == expected_index_name(
+            var.to_pandas(),
+            exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "var_id",
+        )
+
+        adata = query.to_anndata("data", obs_id_name="soma_joinid", var_id_name="soma_joinid")
+        assert adata.obs.index.name == "soma_joinid"
+        assert adata.var.index.name == "soma_joinid"
+
+        adata = query.to_anndata("data", obs_id_name="obs_id", var_id_name="var_id")
+        assert adata.obs.index.name == "obs_id"
+        assert adata.var.index.name == "var_id"

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - \[[#4126](https://github.com/single-cell-data/TileDB-SOMA/pull/4126)\] [python] At package import time, validate that the expected TileDB version is installed and used. Raises a RuntimeError exception if the condition is not met. This is an attempt to better warn users who have corrupted conda installations.
+- \[[#4137](https://github.com/single-cell-data/TileDB-SOMA/pull/4137)\] [python][BREAKING] Add user-specified obs/var index column to `ExperimentAxisQuery.to_anndata`. This change will also set the index columns based upon metadata hints, following the conventions of `tiledbsoma.io`. See the docstrings for more details. Prior to this change, the index dtype would be set to `string` in all cases - this change removes the forced cast, and leaves the column type as-is.
 
 ### Deprecated
 
