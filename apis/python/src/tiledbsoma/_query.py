@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import enum
 import json
-import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
@@ -478,13 +477,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[_xname] = x_array
 
-        # XXX DEBUG - force preload of all collections
-        [self._ms.obsm[k] for k in obsm_layers]
-        [self._ms.obsp[k] for k in obsp_layers]
-        [self._ms.varm[k] for k in varm_layers]
-        [self._ms.varp[k] for k in varp_layers]
-        # XXX END DEBUG
-
         obs, var = tp.map(
             self._read_axis_dataframe,
             (AxisName.OBS, AxisName.VAR),
@@ -496,11 +488,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         )
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
-
-        # XXX DEBUG - force index creation
-        _ = self.indexer._obs_index
-        _ = self.indexer._var_index
-        # XXX END DEBUG
 
         x_matrices = {
             _xname: (
@@ -522,9 +509,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             for _xname, layer in all_x_arrays.items()
         }
         x_future = x_matrices.pop(X_name)
-        # XXX: DEBUG - force barrier for X read
-        # _ = x_future.result() if isinstance(x_future, Future) else None
-        # XXX: END DEBUG
 
         obsm_future = {
             key: tp.submit(
@@ -576,7 +560,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 if var[name].dtype.name == "category":
                     var[name] = var[name].cat.remove_unused_categories()
 
-        adata = AnnData(
+        return AnnData(
             X=x_future.result() if isinstance(x_future, Future) else x_future,
             obs=obs,
             var=var,
@@ -586,8 +570,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             varp=(_resolve_futures(varp_future) or None),
             layers=(_resolve_futures(x_matrices) or None),
         )
-        print(f"to_anndata: done {self.experiment.uri}", file=sys.stderr)
-        return adata
 
     def to_spatialdata(  # type: ignore[no-untyped-def]
         self,
@@ -738,7 +720,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             layer_name:
                 Name of the layer.
         """
-        print("_get_annotation_layer start", annotation_name, layer_name, file=sys.stderr)
         try:
             coll: Collection[NDArray] = self._ms[annotation_name]  # type: ignore
         except KeyError:
@@ -746,7 +727,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         if not isinstance(coll, Collection):
             raise TypeError(f"Unexpected SOMA type {type(coll).__name__} for {annotation_name!r}.")
 
-        print("_get_annotation_layer got container", annotation_name, layer_name, file=sys.stderr)
         try:
             layer = coll[layer_name]
         except KeyError:
@@ -755,7 +735,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             raise TypeError(
                 f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}.",
             )
-        print("_get_annotation_layer done", annotation_name, layer_name, file=sys.stderr)
         return layer
 
     @property
@@ -845,21 +824,16 @@ def _read_inner_ndarray(
     joinids: pa.IntegerArray,
     indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
 ) -> npt.NDArray[np.float32]:
-    print(f"_read_inner_ndarray start {matrix.uri}", file=sys.stderr)
     table = matrix.read((joinids, slice(None))).tables().concat()
 
     n_row = len(joinids)
     n_col = len(table["soma_dim_1"].unique())
     dtype = matrix.schema.field("soma_data").type.to_pandas_dtype()
 
-    print(f"_read_inner_ndarray into reindex {matrix.uri}", file=sys.stderr)
     idx = indexer(table["soma_dim_0"])
-    print(f"_read_inner_ndarray into copy {matrix.uri}", file=sys.stderr)
     z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
-    res = z.reshape(n_row, n_col)
-    print(f"_read_inner_ndarray done {matrix.uri}", file=sys.stderr)
-    return res
+    return z.reshape(n_row, n_col)
 
 
 def _read_as_csr(
@@ -869,7 +843,6 @@ def _read_as_csr(
     d0_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
     d1_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
 ) -> sp.csr_matrix:
-    print(f"_read_as_csr start {matrix.uri}", file=sys.stderr)
     d0_joinids = d0_joinids_arr.to_numpy()
     d1_joinids = d1_joinids_arr.to_numpy()
     try:
@@ -927,7 +900,6 @@ def _read_as_csr(
             partition_size,
         ),
     )
-    print(f"_read_as_csr into _read_and_reindex (splits={len(splits)}) {matrix.uri}", file=sys.stderr)
     if len(splits) > 1:
         d0_joinids_splits = np.array_split(np.partition(d0_joinids, splits), splits)
         tp = matrix.context.threadpool
@@ -943,7 +915,4 @@ def _read_as_csr(
     else:
         tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
-    print(f"_read_as_csr into from_soma {matrix.uri}", file=sys.stderr)
-    res = CompressedMatrix.from_soma(tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context).to_scipy()
-    print(f"_read_as_csr done {matrix.uri}", file=sys.stderr)
-    return res
+    return CompressedMatrix.from_soma(tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context).to_scipy()
