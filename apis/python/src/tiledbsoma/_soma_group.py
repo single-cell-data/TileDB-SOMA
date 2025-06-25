@@ -66,7 +66,6 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             entry = self._contents[key]
         except KeyError:
             raise KeyError(err_str) from None
-
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
 
@@ -81,7 +80,6 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
-
         return cast("CollectionElementType", entry.soma)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
