@@ -66,7 +66,7 @@ Open the SOMA object for read or write.\cr
 called directly; use factory functions
 (eg. \code{\link{SOMASparseNDArrayOpen}()}) instead.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$open(mode = c("READ", "WRITE"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$open(mode = c("READ", "WRITE", "DELETE"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
