@@ -721,6 +721,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         if not isinstance(coll, Collection):
             raise TypeError(f"Unexpected SOMA type {type(coll).__name__} for {annotation_name!r}.")
 
+        print("_get_annotation_layer got container", annotation_name, layer_name, file=sys.stderr)
         try:
             layer = coll[layer_name]
         except KeyError:
@@ -826,7 +827,9 @@ def _read_inner_ndarray(
     n_col = len(table["soma_dim_1"].unique())
     dtype = matrix.schema.field("soma_data").type.to_pandas_dtype()
 
+    print(f"_read_inner_ndarray into reindex {matrix.uri}", file=sys.stderr)
     idx = indexer(table["soma_dim_0"])
+    print(f"_read_inner_ndarray into copy {matrix.uri}", file=sys.stderr)
     z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
     res = z.reshape(n_row, n_col)
