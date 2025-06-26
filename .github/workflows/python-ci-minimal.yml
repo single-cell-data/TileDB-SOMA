@@ -32,9 +32,9 @@ jobs:
         os: [macos-latest]  # [ubuntu-24.04, macos-latest]
         python-version: ['3.9', '3.12', '3.13']
         include:
-          - os: ubuntu-24.04
-            cc: gcc-13
-            cxx: g++-13
+          # - os: ubuntu-24.04
+          #   cc: gcc-13
+          #   cxx: g++-13
           - os: macos-latest
             cc: clang
             cxx: clang++
