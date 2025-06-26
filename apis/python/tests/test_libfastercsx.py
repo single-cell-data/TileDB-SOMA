@@ -58,7 +58,6 @@ def test_construction(
     value_dtype: np.dtype[Any],
     context: clib.SOMAContext,
 ) -> None:
-
     rng = np.random.default_rng()
     sp = sparse.random(shape[0], shape[1], density=0.01, dtype=value_dtype, random_state=rng)
 
@@ -197,7 +196,6 @@ def test_multichunk(nchunks: int, shape: tuple[int, int], density: float, contex
 
 
 def test_sort_csx_indices_bad_args(rng: np.random.Generator, context: clib.SOMAContext) -> None:
-
     sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng).tocsr()
     p, j, d = sp.indptr, sp.indices, sp.data
 
@@ -244,7 +242,6 @@ def test_sort_csx_indices_bad_args(rng: np.random.Generator, context: clib.SOMAC
 
 
 def test_compress_coo_bad_args(rng: np.random.Generator, context: clib.SOMAContext) -> None:
-
     sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng)
     i, j, d = sp.row, sp.col, sp.data
 

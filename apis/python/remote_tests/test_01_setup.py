@@ -70,7 +70,6 @@ def test_basic_write(conftest_context, conftest_namespace, conftest_default_s3_p
     reason="As of 2025-02-05 UDFs require Python 3.9",
 )
 def test_remote_version(conftest_tiledb_cloud_login):
-
     def remote_version():
         import tiledbsoma
 

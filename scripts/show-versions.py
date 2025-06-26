@@ -14,7 +14,6 @@ try:
 
     HAS_SPATIALDATA = True
 except ImportError:
-
     HAS_SPATIALDATA = False
 
 

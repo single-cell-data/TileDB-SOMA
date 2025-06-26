@@ -15,7 +15,6 @@ from .._util import TESTDATA
 
 
 class CachingReaderStateMachine(RuleBasedStateMachine):
-
     def __init__(self) -> None:
         super().__init__()
         self._fname = TESTDATA / "pbmc3k.h5ad"
