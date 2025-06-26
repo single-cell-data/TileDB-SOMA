@@ -1761,7 +1761,6 @@ def test_pass_configs(tmp_path):
         "r",
         context=soma.SOMATileDBContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
-
         # This errors out as 0 is not a valid value to set the total memory
         # budget or number of threads
         with pytest.raises(soma.SOMAError):

@@ -29,7 +29,6 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
 
     # TODO: indexing option ...
     with soma.DataFrame.create(uri, schema=obs_arrow_schema, domain=domain) as obs:
-
         obs.write(rb)
 
     return _factory.open(uri)

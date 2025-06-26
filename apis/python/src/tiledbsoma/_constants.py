@@ -4,7 +4,6 @@
 
 """Global package constants."""
 
-
 SOMA_JOINID = "soma_joinid"
 SOMA_GEOMETRY = "soma_geometry"
 SOMA_COORDINATE_SPACE_METADATA_KEY = "soma_coordinate_space"

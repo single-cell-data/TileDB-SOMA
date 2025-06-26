@@ -241,8 +241,7 @@ def _dig_platform_config(input: object, typ: type[_T], full_path: tuple[str, ...
     if not isinstance(current, (typ, dict)):
         path_dots = ".".join(full_path)
         raise TypeError(
-            f"`{path_dots}` entry of `platform_config` must be"
-            f" either a dict or `{typ.__name__}`, not {type(current)}",
+            f"`{path_dots}` entry of `platform_config` must be either a dict or `{typ.__name__}`, not {type(current)}",
         )
     # It's of the expected type! Return it.
     return current

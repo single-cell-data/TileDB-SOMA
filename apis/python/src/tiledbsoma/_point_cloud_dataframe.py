@@ -182,8 +182,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
-                    f"if domain is specified, it must have the same length as "
-                    f"index_column_names; got {ndom} != {nidx}",
+                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}",
                 )
 
         index_column_schema = []

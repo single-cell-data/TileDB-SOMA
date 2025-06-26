@@ -47,7 +47,6 @@ def context(concurrency: int | None) -> soma.SOMATileDBContext:
 
 
 def assert_eq(sp: sparse.spmatrix, cm: fastercsx.CompressedMatrix) -> bool:
-
     sp_csx = sp.tocsr() if cm.format == "csr" else sp.tocsc()
 
     assert cm.data.shape == sp_csx.data.shape
@@ -255,7 +254,6 @@ def test_bad_arguments(context: soma.SOMATileDBContext, rng: np.random.Generator
     sp = sparse.random(970, 31, density=0.01, dtype=np.float32, random_state=rng)
 
     with suppress_type_checks():  # w/o this, typeguard raises, which defeats the point of the test
-
         # context - bad type
         with pytest.raises(AttributeError):
             fastercsx.CompressedMatrix.from_ijd(sp.row, sp.col, sp.data, sp.shape, "csr", True, None)

@@ -128,7 +128,6 @@ def densendarray_datatype() -> st.SearchStrategy[pa.DataType]:
 
 
 class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
-
     def __init__(self) -> None:
         super().__init__(shapes_factory=dense_array_shape)
 
@@ -239,7 +238,6 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
     )  # only one write per timestamp until sc-61223 and sc-61226 are fixed
     @rule(data=st.data())
     def write(self, data: st.DataObject) -> None:
-
         # draw sub-array
         ndim = len(self.shape)
         first = tuple(data.draw(st.integers(min_value=0, max_value=s - 1)) for s in self.shape)
