@@ -35,8 +35,8 @@ def test():
             for C, K in [
                 ("X", "data"),
                 ("obsm", "X_pca"),
-                ("obsm", "X_draw_graph_fr"),
-                ("obsm", "X_tsne"),
+                # ("obsm", "X_draw_graph_fr"),
+                # ("obsm", "X_tsne"),
                 # ("obsm", "X_umap"),
                 # ("obsp", "connectivities"),
                 # ("obsp", "distances"),
