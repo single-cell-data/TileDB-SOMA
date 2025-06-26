@@ -118,12 +118,16 @@ jobs:
       env:
         TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
 
+    - name: Python fast fail check
+      shell: bash
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
+
     - name: Run pytests for Python
       shell: bash
       # Setting PYTHONPATH ensures the tests load the in-tree source code under apis/python/src
       # instead of the copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
-      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v --durations=20 --maxfail=50
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v -s --durations=20 --maxfail=50
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov
