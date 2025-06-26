@@ -338,7 +338,7 @@ def build_clib_platform_config(
 
 
 def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
-    column_config: dict[str, dict[str, _JSONFilterList | int]] = dict()
+    column_config: dict[str, dict[str, _JSONFilterList | int]] = {}
 
     if col is None:
         return ""
@@ -415,7 +415,7 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
         if len(info) == 1:
             filter = _convert_filter[cast("str", info["_type"])]
         else:
-            filter = dict()
+            filter = {}
             for option_name, option_value in info.items():
                 filter_name = _convert_filter[cast("str", info["_type"])]
                 if option_name == "_type":

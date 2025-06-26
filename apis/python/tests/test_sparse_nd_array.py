@@ -451,7 +451,7 @@ def test_empty_read(tmp_path):
         assert sum(len(t) for t in a.read(coords).tables()) == 0
 
 
-@pytest.mark.xfail(sys.version_info.minor > 7, reason="bug ARROW-17933")
+@pytest.mark.xfail(sys.version_info > (3, 7), reason="bug ARROW-17933")
 def test_empty_read_sparse_coo(tmp_path):
     """
     this test is factored from test_empty_read() because it is subject
