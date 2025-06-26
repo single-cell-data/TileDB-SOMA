@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from concurrent import futures
 from contextlib import nullcontext
 from unittest import mock
@@ -981,6 +982,44 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
             assert adata.varp[sm].dtype == exp.ms["RNA"].varp[sm].schema.field("soma_data").type.to_pandas_dtype()
             assert adata.varp[sm].shape[0] == adata.shape[1]
             assert adata.varp[sm].shape[1] == adata.shape[1]
+
+
+@pytest.mark.parametrize("K", range(3000))
+def test_possible_macos_segv_2(K) -> None:
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
+
+    def read_axis_df(axis_df, coords):
+        return axis_df.read(coords).concat(), axis_df.uri
+
+    def read_slot(slot_df, coords):
+        return slot_df.read(coords).tables().concat(), slot_df.uri
+
+    with soma.open(path.as_posix()) as exp:
+        tp = exp.context.threadpool
+
+        (obs_df, _), (var_df, _) = tp.map(
+            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 499),), (slice(None),))
+        )
+        obs_joinids = obs_df["soma_joinid"]
+        var_joinids = var_df["soma_joinid"]
+
+        futures = []
+        ms = exp.ms["RNA"]
+        for C, K in [
+            ("X", "data"),
+            ("obsm", "X_pca"),
+            ("obsm", "X_draw_graph_fr"),
+            ("obsm", "X_tsne"),
+            ("obsm", "X_umap"),
+            ("obsp", "connectivities"),
+            ("obsp", "distances"),
+            ("varm", "PCs"),
+        ]:
+            futures += [tp.submit(read_slot, ms[C][K], (obs_joinids, var_joinids))]
+
+        for ftr in futures:
+            data, uri = ftr.result()
+            print(f"{uri} complete", file=sys.stderr)
 
 
 @pytest.mark.parametrize("K", range(500))
