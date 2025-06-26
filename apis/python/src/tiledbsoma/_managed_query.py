@@ -201,7 +201,7 @@ class ManagedQuery:
 
         column = self._array._handle._handle.get_column(dim.name)
 
-        if all([is_slice_of(x, np.float64) for x in coord]):
+        if all(is_slice_of(x, np.float64) for x in coord):
             range_min = []
             range_max = []
             for sub_coord, dom_min, dom_max in zip(coord, ordered_dom_min, ordered_dom_max):
@@ -217,7 +217,7 @@ class ManagedQuery:
                     range_max.append(lo_hi[1])
 
             column.set_dim_ranges_double_array(self._handle, [(range_min, range_max)])
-        elif all([isinstance(x, np.number) for x in coord]):
+        elif all(isinstance(x, np.number) for x in coord):
             column.set_dim_points_double_array(self._handle, [coord])
         else:
             raise ValueError(f"Unsupported spatial coordinate type. Expected slice or float, found {type(coord)}")

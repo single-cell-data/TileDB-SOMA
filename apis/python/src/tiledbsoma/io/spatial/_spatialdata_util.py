@@ -68,8 +68,7 @@ def _convert_axis_names(
     if data_axis_names is None:
         data_axis_names = coord_axis_names
     spatial_data_axes = tuple(dim_map[axis_name] for axis_name in data_axis_names)
-    soma_dim_map = {key: val for key, val in dim_map.items()}
-    return spatial_data_axes, soma_dim_map
+    return spatial_data_axes, dim_map
 
 
 def _get_transform_from_collection(key: str, metadata: Mapping[str, Any]) -> somacore.CoordinateTransform | None:

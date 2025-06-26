@@ -26,6 +26,8 @@ line-length = 120
 [tool.ruff.lint]
 select = [  # see https://docs.astral.sh/ruff/rules/
     "B",    # flake8-bugbear
+    "BLE",  # flake8-blind-exception
+    "C4",   # flake8-comprehensions
     "COM",  # flake8-commas
     "D",    # pydocstyle (Google convention, see setting below)
     "E",    # pycodestyle
@@ -35,6 +37,7 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "ISC",  # flake8-implicit-str-concat
     "S",    # flake8-bandit
     "W",    # pycodestyle warnings
+    "YTT",  # flake8-2020
 ]
 ignore = [
     "E501",  # line too long
@@ -46,7 +49,8 @@ extend-select = []
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
-"!apis/python/src/**.py" = ["D", "B", "S"]
+# Over time, we should enforce them more broadly.
+"!apis/python/src/**.py" = ["BLE", "C4", "D", "B", "S"]
 
 # Ignore in notebooks
 "apis/python/**/*.ipynb" = ["COM"]

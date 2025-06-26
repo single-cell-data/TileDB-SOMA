@@ -403,7 +403,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         coords, data_region, inv_transform = process_spatial_df_region(
             region,
             region_transform,
-            dict(),  # Move index value_filters into this dict to optimize queries
+            {},  # Move index value_filters into this dict to optimize queries
             self._tiledb_dim_names(),
             self._coord_space.axis_names,
             self._handle.schema,

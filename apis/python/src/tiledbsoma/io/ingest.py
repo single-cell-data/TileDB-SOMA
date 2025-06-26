@@ -562,7 +562,7 @@ def _from_anndata(
         for key, val in getattr(anndata, ad_key).items():
             if not isinstance(val, get_args(Matrix)):
                 raise TypeError(
-                    f"{ad_key} value at {key} is not of type {list(cl.__name__ for cl in get_args(Matrix))}: {type(val)}",
+                    f"{ad_key} value at {key} is not of type {[cl.__name__ for cl in get_args(Matrix)]}: {type(val)}",
                 )
 
     # For single ingest (no append):
@@ -607,11 +607,11 @@ def _from_anndata(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
 
-    ingest_ctx: IngestCtx = dict(
-        context=context,
-        ingestion_params=ingestion_params,
-        additional_metadata=additional_metadata,
-    )
+    ingest_ctx: IngestCtx = {
+        "context": context,
+        "ingestion_params": ingestion_params,
+        "additional_metadata": additional_metadata,
+    }
     ingest_platform_ctx: IngestPlatformCtx = dict(**ingest_ctx, platform_config=platform_config)
 
     # Must be done first, to create the parent directory.
@@ -1805,8 +1805,8 @@ def _update_dataframe(
         arrow_table = conversions.df_to_arrow_table(new_data)
         arrow_schema = arrow_table.schema.remove_metadata()
 
-        add_attrs = dict()
-        add_enmrs = dict()
+        add_attrs = {}
+        add_enmrs = {}
         for add_key in add_keys:
             # Don't directly use the new dataframe's dtypes. Go through the
             # to-Arrow-schema logic, and back, as this recapitulates the original
@@ -2774,12 +2774,12 @@ def _ingest_uns_node(
         coll.metadata[key] = value
         return
 
-    ingest_platform_ctx: IngestPlatformCtx = dict(
-        platform_config=platform_config,
-        context=context,
-        ingestion_params=ingestion_params,
-        additional_metadata=additional_metadata,
-    )
+    ingest_platform_ctx: IngestPlatformCtx = {
+        "platform_config": platform_config,
+        "context": context,
+        "ingestion_params": ingestion_params,
+        "additional_metadata": additional_metadata,
+    }
     if isinstance(value, Mapping):
         # Mappings are represented as sub-dictionaries.
         _ingest_uns_dict(
