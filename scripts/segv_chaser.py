@@ -3,11 +3,11 @@ import faulthandler
 import pathlib
 import sys
 
-faulthandler.enable()
-
-import numpy as np
 import pyarrow as pa
+
 import tiledbsoma as soma
+
+faulthandler.enable()
 
 
 def test():
