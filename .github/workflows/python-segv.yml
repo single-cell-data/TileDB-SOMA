@@ -1,0 +1,34 @@
+name: Debug WF for MacOS issue
+
+on: pull_request
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python_version: ["3.12", "3.13"]
+
+    runs-on: macos-latest
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python_version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Install tiledbsoma
+        run: pip -v install -U tiledbsoma
+
+      - name: Show package versions
+        run: python scripts/show-versions.py
+
+      - name: Run test script
+        run: python scripts/segv_chaser.py
+
+      - name: Install dev dependencies
+        run: pip -v install -r apis/python/requirements_dev.txt
+
+      - name: Run segv pytest
+        run: python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x

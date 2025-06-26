@@ -1010,7 +1010,7 @@ def test_possible_macos_segv_3(K) -> None:
         slot_arrays = [
             exp.ms["RNA"][C][K]
             for C, K in [
-                ("X", "data"),
+                # ("X", "data"),    # num 6
                 ("obsm", "X_pca"),
                 ("obsm", "X_draw_graph_fr"),
                 ("obsm", "X_tsne"),
@@ -1021,21 +1021,6 @@ def test_possible_macos_segv_3(K) -> None:
             ]
         ]
         futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]
-
-        # futures = []
-        # ms = exp.ms["RNA"]
-        # for C, K in [
-        #     ("X", "data"),
-        #     ("obsm", "X_pca"),
-        #     ("obsm", "X_draw_graph_fr"),
-        #     ("obsm", "X_tsne"),
-        #     ("obsm", "X_umap"),
-        #     ("obsp", "connectivities"),
-        #     ("obsp", "distances"),
-        #     ("varm", "PCs"),
-        # ]:
-        #     futures += [tp.submit(read_slot, ms[C][K], (obs_joinids, var_joinids))]
-
         for ftr in futures:
             data, uri = ftr.result()
             print(f"{uri} complete", file=sys.stderr)
