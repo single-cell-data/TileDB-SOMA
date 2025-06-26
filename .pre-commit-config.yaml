@@ -7,15 +7,14 @@ repos:
       types_or: [c++, c]
       files: 'libtiledbsoma/.*|apis/python/src/.*|apis/r/src/.*'
       exclude: 'libtiledbsoma/src/external/.*|apis/r/src/RcppExports.cpp'
-  - repo: https://github.com/psf/black
-    rev: "25.1.0"
-    hooks:
-    - id: black
-      args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.0
     hooks:
-    - id: ruff
+    - id: ruff-check
+      types_or: [ python, pyi ]
+      args: ["--config=apis/python/pyproject.toml"]
+    - id: ruff-format
+      types_or: [ python, pyi ]
       args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.1
