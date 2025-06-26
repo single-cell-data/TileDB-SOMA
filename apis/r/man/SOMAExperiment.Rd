@@ -132,7 +132,7 @@ A \code{\link{SOMAExperimentAxisQuery}} object.
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-update_obs}{}}}
 \subsection{Method \code{update_obs()}}{
 Update the \code{obs} data frame to add or remove columns.
-See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+See \code{\link[tiledbsoma:SOMADataFrame]{SOMADataFrame$update()}} for
 more details.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_obs(values, row_index_name = NULL)}\if{html}{\out{</div>}}
@@ -158,7 +158,7 @@ to the value specified by \code{row_index_name}.}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-update_var}{}}}
 \subsection{Method \code{update_var()}}{
 Update the \code{var} data frame to add or remove columns.
-See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+See \code{\link[tiledbsoma:SOMADataFrame]{SOMADataFrame$update()}} for
 more details.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_var(values, measurement_name, row_index_name = NULL)}\if{html}{\out{</div>}}
