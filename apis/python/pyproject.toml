@@ -40,10 +40,11 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "YTT",  # flake8-2020
 ]
 ignore = [
-    "E501",  # line too long
-    "D417",  # disable documentation for every function parameter
-    "D205",  # disable blank line requirement between summary and description
-    "S101",  # Use of `assert` detected
+    "E501",     # line too long
+    "D417",     # disable documentation for every function parameter
+    "D205",     # disable blank line requirement between summary and description
+    "S101",     # Use of `assert` detected
+    "COM812",   # Ignore recommended by Ruff
 ]
 extend-select = []
 
@@ -83,7 +84,3 @@ markers = [
     "slow: mark test as slow",
     "spatialdata: test of SpatialData integration",
 ]
-
-[tool.black]
-line-length = 120
-target-version = ["py39", "py310", "py311", "py312", "py313"]

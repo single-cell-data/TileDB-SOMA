@@ -168,7 +168,6 @@ def test_fuzz_SparseNDArray_create(
     context: tiledbsoma.SOMATileDBContext | None,
     tiledb_timestamp: int | datetime.datetime | None,
 ) -> None:
-
     try:
         fname = (tmp_path / uri).as_posix()
         A = soma.SparseNDArray.create(
@@ -192,7 +191,6 @@ def test_fuzz_SparseNDArray_create(
 
 
 class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
-
     def __init__(self) -> None:
         super().__init__(shapes_factory=sparse_array_shape)
 

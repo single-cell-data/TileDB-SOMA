@@ -110,7 +110,6 @@ class ArrowTableLedgerEntry(LedgerEntry[pa.Table]):
         )
 
     def consolidate_with(self, other: ArrowTableLedgerEntry, allow_duplicates: bool) -> ArrowTableLedgerEntry:
-
         assert (self.timestamp_ms, self.name) < (other.timestamp_ms, other.name)
         assert schemas_equal(self.data.schema, other.data.schema)
         assert self.index_columns == other.index_columns

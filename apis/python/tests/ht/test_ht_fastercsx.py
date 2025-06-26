@@ -74,7 +74,6 @@ def coo_ijd(
     tuple[npt.NDArray[Any], ...],
     tuple[npt.NDArray[Any], ...],
 ]:
-
     dtype = resolve_dtype(draw, dtype)
     shape = draw(shape) if isinstance(shape, st.SearchStrategy) else shape
     assert isinstance(shape, tuple) and len(shape) == 2

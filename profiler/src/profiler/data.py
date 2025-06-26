@@ -102,7 +102,7 @@ class FileBasedProfileDB(ProfileDB):
                 with open(os.path.join(command_hash, "command.txt"), "r") as f:
                     command = f.read()
                 n_runs = len(glob.glob(os.path.join(command_hash, "*.json")))
-                result += f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
+                result += f'[{command_hash.split("/")[-1]}] "{command}": {n_runs} runs\n'
             return result
         return ""
 

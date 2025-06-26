@@ -48,7 +48,6 @@ def test_sparse_nd_array_basics(
 
     # Test the various accessors
     with tiledbsoma.SparseNDArray.open(uri) as snda:
-
         assert snda.shape == arg_shape
 
         assert snda.tiledbsoma_has_upgraded_shape
@@ -471,7 +470,6 @@ def test_canned_experiments(tmp_path, has_shapes):
         _assert_huge_shape(ndarray.maxshape)
 
     with tiledbsoma.Experiment.open(uri) as exp:
-
         _check_dataframe(exp.obs, has_shapes, 2638)
 
         assert "raw" in exp.ms
@@ -505,7 +503,6 @@ def test_canned_experiments(tmp_path, has_shapes):
 
     # Check upgrade_domain for dataframes
     with tiledbsoma.Experiment.open(uri, "w") as exp:
-
         ok, msg = exp.obs.tiledbsoma_upgrade_domain([[10, 4]], check_only=True)
         if has_shapes:
             assert not ok
@@ -601,7 +598,6 @@ def test_canned_experiments(tmp_path, has_shapes):
 
     # Check post-upgrade shapes
     with tiledbsoma.Experiment.open(uri) as exp:
-
         _check_dataframe(exp.obs, True, 2638)
 
         assert "raw" in exp.ms
