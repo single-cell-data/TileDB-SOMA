@@ -983,7 +983,7 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@pytest.mark.parametrize("K", range(200))
+@pytest.mark.parametrize("K", range(250))
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize("obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [("connectivities", "distances")])

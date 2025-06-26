@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import enum
 import json
+import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
@@ -488,6 +489,17 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         )
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
+
+        # DEBUG - force early completion for various lazy ops
+        _ = [self._ms.obsm[k] for k in obsm_layers]
+        _ = [self._ms.obsp[k] for k in obsp_layers]
+        _ = [self._ms.varm[k] for k in varm_layers]
+        _ = [self._ms.varp[k] for k in varp_layers]
+        _ = self._indexer._var_index  # build var index
+        _ = self._indexer._obs_index  # build obs index
+        del _
+        print("DEBUG: Past pre-load step", file=sys.stderr)
+        # END DEBUG
 
         x_matrices = {
             _xname: (
