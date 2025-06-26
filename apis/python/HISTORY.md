@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - \[[#4126](https://github.com/single-cell-data/TileDB-SOMA/pull/4126)\] [python] At package import time, validate that the expected TileDB version is installed and used. Raises a RuntimeError exception if the condition is not met. This is an attempt to better warn users who have corrupted conda installations.
+- \[[#4137](https://github.com/single-cell-data/TileDB-SOMA/pull/4137)\] [python][BREAKING] Add user-specified obs/var index column to `ExperimentAxisQuery.to_anndata`. This change will also set the index columns based upon metadata hints, following the conventions of `tiledbsoma.io`. See the docstrings for more details. Prior to this change, the index dtype would be set to `string` in all cases - this change removes the forced cast, and leaves the column type as-is.
 
 ### Deprecated
 
@@ -21,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 
 ### Fixed
+
+- \[[#4139](https://github.com/single-cell-data/tiledb-soma/pull/4139)\] [python] ExperimentAxisQuery.to_anndata would export obsm/varm as float32, regardless of the underlying SOMA data type. With this fix, the exported matrix will have the same data type as the original data.
+- \[[#4147](https://github.com/single-cell-data/TileDB-SOMA/pull/4147)\] [python] Fix a race condition in SOMA collection caching which would result in redundant object opens.
 
 ### Security
 
