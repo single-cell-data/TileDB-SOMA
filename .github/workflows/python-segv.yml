@@ -10,9 +10,6 @@ jobs:
 
     runs-on: macos-latest
     steps:
-      - name: install gdb
-        run: brew install gdb
-
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
@@ -24,13 +21,6 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
 
-      - name: inspect
-        run: |
-          which python
-          file `which python`
-          which python3.13
-          file `which python3.13`
-          
       - name: Install tiledbsoma
         run: pip -v install -U tiledbsoma
 
@@ -38,10 +28,15 @@ jobs:
         run: python scripts/show-versions.py
 
       - name: Run test script
-        run: gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python scripts/segv_chaser.py
+        run: |
+          lldb -b -o 'run scripts/segv_chaser.py' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
+          # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python scripts/segv_chaser.py
 
       - name: Install dev dependencies
         run: pip -v install -r apis/python/requirements_dev.txt
 
       - name: Run segv pytest
-        run: gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
+        run: |
+          lldb -b -o 'run -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
+
+          # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
