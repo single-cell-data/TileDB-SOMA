@@ -241,9 +241,9 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
     @invariant()
     def check_shape(self) -> None:
         assert hasattr(self.A, "shape")  # sc-61123
-        assert self.A.shape == tuple(
-            (s or 1) for s in self.shape
-        ), f"Unexpected shape in {self.A}: had {self.A.shape}, expected {self.shape}"
+        assert self.A.shape == tuple((s or 1) for s in self.shape), (
+            f"Unexpected shape in {self.A}: had {self.A.shape}, expected {self.shape}"
+        )
         assert self.A.ndim == len(self.shape)
 
     @precondition(lambda self: self.closed or self.mode == "w")

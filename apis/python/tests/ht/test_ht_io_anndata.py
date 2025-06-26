@@ -284,7 +284,6 @@ def map_of_matrixes(
     shape_prelude: tuple[int, ...],
     formats: "MatrixFormats" | None = None,
 ) -> dict[str, np.ndarray | sp.sparray | sp.spmatrix | np.ma.MaskedArray]:
-
     def key_unique_by(i: str) -> str:
         return i[0].lower() if HT_TEST_CONFIG["sc-63402_workaround"] else i[0]
 
@@ -527,7 +526,6 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
 
 
 def assert_anndata_equal(src_adata: anndata.AnnData, read_adata: anndata.AnnData) -> None:
-
     assert (
         src_adata.shape == read_adata.shape
         and src_adata.n_obs == read_adata.n_obs

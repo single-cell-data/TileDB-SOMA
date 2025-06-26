@@ -21,7 +21,6 @@ def util_make_uri(
     default_s3_path: str,
 ) -> tuple[str, str]:
     if os.getenv("TILEDB_SOMA_CLOUD_TEST_LOCAL_PATHS") is None:
-
         # The default_s3_path contains the "s3://..." prefix and a trailing slash.
         # Note that double slashes can cause group-creation failures so we need
         # to carefully strip them out.

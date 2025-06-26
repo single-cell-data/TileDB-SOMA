@@ -121,7 +121,6 @@ def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
 
 
 def test_expected_errors() -> None:
-
     context = SOMATileDBContext()
 
     # ndim != 1

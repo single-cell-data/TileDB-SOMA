@@ -460,7 +460,6 @@ def _treewalk(
     # to be shown *all* the component arrays which have issues, not just
     # the first such.
     with tiledbsoma.open(uri, context=kwargs["context"]) as item:
-
         # Non-terminal
         if isinstance(item, tiledbsoma.Experiment):
             retval = {}
@@ -689,7 +688,6 @@ def _leaf_visitor_upgrade(
                 print("  Already upgraded", file=output_handle)
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
-
         old_bounds = item.non_empty_domain()
         # Make a tuple of hi+1
         counts_from_old_bounds = tuple(e[1] + 1 for e in old_bounds)
@@ -775,7 +773,6 @@ def _leaf_visitor_resize(
 ) -> dict[str, Any]:
     retval = {"status": True}
     if isinstance(item, tiledbsoma.DataFrame):
-
         if node_name == "obs":
             new_soma_joinid_shape = nobs
             if new_soma_joinid_shape is None:
@@ -820,7 +817,6 @@ def _leaf_visitor_resize(
                 writer.tiledbsoma_resize_soma_joinid_shape(new_soma_joinid_shape)
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
-
         _print_leaf_node_banner(
             uri=item.uri,
             type_name="SparseNDArray",
@@ -856,7 +852,6 @@ def _leaf_visitor_resize(
                 writer.resize(new_shape)
 
     elif isinstance(item, tiledbsoma.DenseNDArray):
-
         _print_leaf_node_banner(
             uri=item.uri,
             type_name="DenseNDArray",

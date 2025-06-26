@@ -116,7 +116,6 @@ def process_image_region(
     channel_coords: options.DenseCoord,
     data_order: tuple[int, ...],
 ) -> tuple[options.DenseNDCoords, options.SpatialRegion | None, somacore.CoordinateTransform]:
-
     if region is None:
         # Select the full region.
         data_region: options.SpatialRegion | None = None

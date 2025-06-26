@@ -101,7 +101,6 @@ def test_geometry_basic_spatial_read(tmp_path):
         geom.from_outlines(rb)
 
     with soma.GeometryDataFrame.open(uri) as geom:
-
         result = geom.read_spatial_region(region=[0.5, 0.5, 1.5, 1.5]).data.concat()
 
         # Internal columns will be hidden in a subsequent PR
