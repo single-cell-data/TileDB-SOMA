@@ -10,6 +10,7 @@ import enum
 import json
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
+from threading import Lock
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -101,19 +102,23 @@ class AxisIndexer(query.AxisIndexer):
     _index_factory: IndexFactory
     _cached_obs: IndexLike | None = None
     _cached_var: IndexLike | None = None
+    _obs_lock: Lock = attrs.field(factory=Lock)
+    _var_lock: Lock = attrs.field(factory=Lock)
 
     @property
     def _obs_index(self) -> IndexLike:
         """Private. Return an index for the ``obs`` axis."""
-        if self._cached_obs is None:
-            self._cached_obs = self._index_factory(self.query.obs_joinids().to_numpy())
+        with self._obs_lock:
+            if self._cached_obs is None:
+                self._cached_obs = self._index_factory(self.query.obs_joinids().to_numpy())
         return self._cached_obs
 
     @property
     def _var_index(self) -> IndexLike:
         """Private. Return an index for the ``var`` axis."""
-        if self._cached_var is None:
-            self._cached_var = self._index_factory(self.query.var_joinids().to_numpy())
+        with self._var_lock:
+            if self._cached_var is None:
+                self._cached_var = self._index_factory(self.query.var_joinids().to_numpy())
         return self._cached_var
 
     def by_obs(self, coords: Numpyable) -> npt.NDArray[np.intp]:
@@ -696,7 +701,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         original_index_metadata = json.loads(axis_df.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null"))
         if not (original_index_metadata is None or isinstance(original_index_metadata, str)):
             raise ValueError(
-                f"{axis_df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}"
+                f"{axis_df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}",
             )
 
         df: pd.DataFrame = arrow_table.to_pandas()
@@ -823,9 +828,10 @@ def _read_inner_ndarray(
 
     n_row = len(joinids)
     n_col = len(table["soma_dim_1"].unique())
+    dtype = matrix.schema.field("soma_data").type.to_pandas_dtype()
 
     idx = indexer(table["soma_dim_0"])
-    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=np.float32)
+    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
     return z.reshape(n_row, n_col)
 

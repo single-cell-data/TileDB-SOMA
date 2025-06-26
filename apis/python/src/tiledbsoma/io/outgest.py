@@ -199,7 +199,7 @@ def _read_dataframe(
     original_index_metadata = json.loads(df.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null"))
     if not (original_index_metadata is None or isinstance(original_index_metadata, str)):
         raise ValueError(
-            f"{df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}"
+            f"{df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}",
         )
 
     pdf: pd.DataFrame = df.read().concat().to_pandas()
