@@ -24,6 +24,13 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
 
+      - name: inspect
+        run: |
+          which python
+          file `which python`
+          which python3.13
+          file `which python3.13`
+          
       - name: Install tiledbsoma
         run: pip -v install -U tiledbsoma
 
