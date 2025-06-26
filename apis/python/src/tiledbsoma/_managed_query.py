@@ -31,16 +31,15 @@ class ManagedQuery:
     _handle: clib.ManagedQuery = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:
-        clib_handle = self._array._handle._handle
+        array_handle = self._array._handle._handle
 
         if self._platform_config is not None:
-            cfg = clib_handle.context().config()
+            cfg = array_handle.context().config()
             cfg.update(self._platform_config)
             ctx = clib.SOMAContext(cfg)
+            object.__setattr__(self, "_handle", clib.ManagedQuery(array_handle, ctx))
         else:
-            ctx = clib_handle.context()
-
-        object.__setattr__(self, "_handle", clib.ManagedQuery(clib_handle, ctx))
+            object.__setattr__(self, "_handle", clib.ManagedQuery(array_handle))
 
     def _set_coord_by_py_seq_or_np_array(self, dim: pa.Field, coord: object) -> None:
         if isinstance(coord, np.ndarray):
