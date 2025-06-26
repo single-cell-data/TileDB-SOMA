@@ -916,7 +916,9 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert adata.n_vars == var_count
         assert adata.X.shape == (obs_count, var_count)
         assert adata.obs.index.name == expected_index_name(
-            obs.to_pandas(), exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None), "obs_id"
+            obs.to_pandas(),
+            exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "obs_id",
         )
         assert adata.var.index.name == expected_index_name(
             var.to_pandas(),
