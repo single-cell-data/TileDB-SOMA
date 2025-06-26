@@ -20,7 +20,6 @@ _UNBATCHED = options.BatchSize()
 
 
 class SpatialDataFrame(SOMAArray):
-
     __slots__ = ()
 
     def keys(self) -> tuple[str, ...]:

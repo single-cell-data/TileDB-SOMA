@@ -105,7 +105,6 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
-
         with pytest.deprecated_call() if ingest_mode == "resume" else contextlib.nullcontext():
             uri = tiledbsoma.io.from_anndata(
                 output_path,
@@ -1255,7 +1254,6 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids, allow_duplica
 #   o When a high-cardinality enum is appended to existing storage with categorical of string;
 #   o When a low-cardinality enum is appended to existing storage with plain string.
 def test_decat_append(tmp_path):
-
     # Prepare the AnnData inputs
     nobs_under = tiledbsoma.io.conversions.COLUMN_DECAT_THRESHOLD - 2
     nobs_over = tiledbsoma.io.conversions.COLUMN_DECAT_THRESHOLD + 2

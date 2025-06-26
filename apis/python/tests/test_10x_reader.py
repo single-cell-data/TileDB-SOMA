@@ -9,7 +9,6 @@ ioutil = pytest.importorskip("tiledbsoma.io.spatial._util")
 
 @attrs.define(frozen=True)
 class SpaceRangerMatrixData:
-
     # Version
     version: tuple[int, int, int]
 
@@ -170,7 +169,6 @@ def check_reader(reader, data):
 
 
 def test_space_ranger_matrix_reader_direct_load(fake_space_ranger_matrix_1):
-
     # Open the reader, load the version and other data, and close.
     reader = ioutil.TenXCountMatrixReader(fake_space_ranger_matrix_1.filepath)
     reader.open()
@@ -182,6 +180,5 @@ def test_space_ranger_matrix_reader_direct_load(fake_space_ranger_matrix_1):
 
 
 def test_space_ranger_matrix_reader_lazy_load(fake_space_ranger_matrix_1):
-
     with ioutil.TenXCountMatrixReader(fake_space_ranger_matrix_1.filepath) as reader:
         check_reader(reader, fake_space_ranger_matrix_1)

@@ -79,7 +79,6 @@ def test_multiscale_basic(tmp_path):
         level_shape=(128, 64),
         has_channel_axis=False,
     ) as image:
-
         # Add medium sized downsample.
         image.add_new_level("level1", shape=(64, 32))
 
@@ -90,7 +89,6 @@ def test_multiscale_basic(tmp_path):
 
     # Open for reading and check metadata.
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
-
         # Check the base properties for the image.
         assert image.level_shape(0) == (128, 64)
         assert image.nchannels == 1
@@ -192,7 +190,6 @@ def test_multiscale_basic(tmp_path):
 
 
 class TestSimpleMultiscale2D:
-
     @pytest.fixture(scope="class")
     def image_uri(self, tmp_path_factory):
         """Create a multiscale image and return the path."""

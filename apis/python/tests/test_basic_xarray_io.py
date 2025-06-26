@@ -11,7 +11,6 @@ xr = pytest.importorskip("xarray")
 
 
 class TestDenseNDDataArray1D:
-
     @pytest.fixture(scope="class")
     def xr_soma_data_array(self, tmp_path_factory):
         baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
@@ -82,7 +81,6 @@ class TestDenseNDDataArray1D:
 
 
 class TestDenseNDDataArray3D:
-
     @pytest.fixture(scope="class")
     def xr_soma_data_array(self, tmp_path_factory):
         baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()

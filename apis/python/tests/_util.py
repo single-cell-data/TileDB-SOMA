@@ -45,9 +45,9 @@ from typeguard import suppress_type_checks
 
 
 def assert_uns_equal(uns0, uns1):
-    assert (
-        uns0.keys() == uns1.keys()
-    ), f"extra keys: {uns0.keys() - uns1.keys()}, missing keys: {uns1.keys() - uns0.keys()}"
+    assert uns0.keys() == uns1.keys(), (
+        f"extra keys: {uns0.keys() - uns1.keys()}, missing keys: {uns1.keys() - uns0.keys()}"
+    )
     for k, v0 in uns0.items():
         try:
             v1 = uns1[k]

@@ -31,7 +31,6 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
         assert exp.uri == uri
         # Create spatial folder.
         with exp.add_new_collection("spatial") as spatial:
-
             # Create scene 1.
             with spatial.add_new_collection("scene1", soma.Scene, coordinate_space=("x_scene1", "y_scene1")) as scene1:
                 scene1.add_new_collection("obsl")

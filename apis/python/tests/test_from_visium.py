@@ -138,7 +138,6 @@ def test_from_visium(tmp_path, version, visium_v1_path, visium_v2_path):
 
     # Verify Visium Experiment has expected data.
     with soma.Experiment.open(exp_uri) as exp:
-
         # Check a chunk of RNA/X.
         assert isinstance(exp.ms["RNA"].X["data"], soma.SparseNDArray)
         X_data = exp.ms["RNA"].X["data"].read().coos().concat().to_numpy()

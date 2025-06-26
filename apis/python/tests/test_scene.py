@@ -136,7 +136,6 @@ def test_scene_coord_space_at_create(tmp_path, input, expected):
     uri = tmp_path.as_uri()
 
     with soma.Scene.create(uri, coordinate_space=input) as scene:
-
         # Reserved metadata key should not be settable?
         # with pytest.raises(soma.SOMAError):
         #     scene.metadata["soma_coordinate_space"] = "user_metadata"
@@ -208,7 +207,6 @@ class TestSceneDeepSubcollections:
 
         # Create a scene with multi-level collections.
         with soma.Scene.create(scene_uri) as scene:
-
             obsl = scene.add_new_collection("obsl")
             obsl.metadata["name"] = "obsl"
 
