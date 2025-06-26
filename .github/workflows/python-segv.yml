@@ -28,10 +28,10 @@ jobs:
         run: python scripts/show-versions.py
 
       - name: Run test script
-        run: python scripts/segv_chaser.py
+        run: gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python scripts/segv_chaser.py
 
       - name: Install dev dependencies
         run: pip -v install -r apis/python/requirements_dev.txt
 
       - name: Run segv pytest
-        run: python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
+        run: gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
