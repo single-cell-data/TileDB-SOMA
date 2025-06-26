@@ -986,7 +986,7 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
 
 
 @suppress_type_checks
-@pytest.mark.parametrize("K", range(3000))
+@pytest.mark.parametrize("K", range(5000))
 def test_possible_macos_segv_3(K) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
 
@@ -1006,22 +1006,35 @@ def test_possible_macos_segv_3(K) -> None:
         # var_joinids = var_df["soma_joinid"]
         obs_joinids = pa.array(range(500))
         var_joinids = pa.array(range(1838))
-        # assert np.array_equal(obs_joinids.to_numpy(), obs_df["soma_joinid"].to_numpy())
-        # assert np.array_equal(var_joinids.to_numpy(), var_df["soma_joinid"].to_numpy())
 
-        futures = []
-        ms = exp.ms["RNA"]
-        for C, K in [
-            ("X", "data"),
-            ("obsm", "X_pca"),
-            ("obsm", "X_draw_graph_fr"),
-            ("obsm", "X_tsne"),
-            ("obsm", "X_umap"),
-            ("obsp", "connectivities"),
-            ("obsp", "distances"),
-            ("varm", "PCs"),
-        ]:
-            futures += [tp.submit(read_slot, ms[C][K], (obs_joinids, var_joinids))]
+        slot_arrays = [
+            exp.ms["RNA"][C][K]
+            for C, K in [
+                ("X", "data"),
+                ("obsm", "X_pca"),
+                ("obsm", "X_draw_graph_fr"),
+                ("obsm", "X_tsne"),
+                ("obsm", "X_umap"),
+                ("obsp", "connectivities"),
+                ("obsp", "distances"),
+                ("varm", "PCs"),
+            ]
+        ]
+        futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]
+
+        # futures = []
+        # ms = exp.ms["RNA"]
+        # for C, K in [
+        #     ("X", "data"),
+        #     ("obsm", "X_pca"),
+        #     ("obsm", "X_draw_graph_fr"),
+        #     ("obsm", "X_tsne"),
+        #     ("obsm", "X_umap"),
+        #     ("obsp", "connectivities"),
+        #     ("obsp", "distances"),
+        #     ("varm", "PCs"),
+        # ]:
+        #     futures += [tp.submit(read_slot, ms[C][K], (obs_joinids, var_joinids))]
 
         for ftr in futures:
             data, uri = ftr.result()
