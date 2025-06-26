@@ -182,7 +182,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         assert context is not None
         self.minor_axes_indexer = {
             d: IntIndexer(self.joinids[d].to_numpy(), context=context)
-            for d in (self.axes_to_reindex - set((self.major_axis,)))
+            for d in (self.axes_to_reindex - {self.major_axis})
         }
 
         # Ask subclass to create the type-specific reader/iterator
