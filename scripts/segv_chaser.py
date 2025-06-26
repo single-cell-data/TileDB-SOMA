@@ -10,7 +10,7 @@ import tiledbsoma as soma
 faulthandler.enable()
 
 
-def test():
+def test(i: int):
     path = pathlib.Path("data") / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
 
     def read_axis_df(axis_df, coords):
@@ -46,13 +46,13 @@ def test():
         futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]
         for ftr in futures:
             data, uri = ftr.result()
-            print(f"{uri} complete", file=sys.stderr)
+            print(f"[{i}]: {uri} complete", file=sys.stderr)
             assert data is not None
 
 
 def main():
-    for _ in range(5000):
-        test()
+    for i in range(10000):
+        test(i)
     return 0
 
 
