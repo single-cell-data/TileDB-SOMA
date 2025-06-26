@@ -10,6 +10,9 @@ jobs:
 
     runs-on: macos-latest
     steps:
+      - name: install gdb
+        run: brew install gdb
+
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
