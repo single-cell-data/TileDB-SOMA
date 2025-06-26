@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 from concurrent import futures
 from contextlib import nullcontext
 from unittest import mock
@@ -933,8 +934,8 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert adata.var.index.name == "var_id"
 
 
-@pytest.mark.parametrize("K", range(100))
-@pytest.mark.parametrize("version", ["1.7.3"])
+@pytest.mark.parametrize("K", range(200))
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize("obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
@@ -949,11 +950,11 @@ def test_possible_macos_segv(K, version, obsm_layers, obsp_layers, varm_layers, 
         )
 
     with soma.open(uri) as exp:
-        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
+        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 199),))).to_anndata(
             "data",
             obsm_layers=obsm_layers,
             obsp_layers=obsp_layers,
             varp_layers=varp_layers,
             varm_layers=varm_layers,
         )
-        assert adata
+        assert adata.n_obs == 200
