@@ -999,13 +999,15 @@ def test_possible_macos_segv_3(K) -> None:
     with soma.open(path.as_posix()) as exp:
         tp = exp.context.threadpool
 
-        # (obs_df, _), (var_df, _) = tp.map(
-        #     read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 499),), (slice(None),))
-        # )
+        (obs_df, _), (var_df, _) = tp.map(
+            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 499),), (slice(None),))
+        )
         # obs_joinids = obs_df["soma_joinid"]
         # var_joinids = var_df["soma_joinid"]
         obs_joinids = pa.array(range(500))
         var_joinids = pa.array(range(1838))
+        # assert np.array_equal(obs_joinids.to_numpy(), obs_df["soma_joinid"].to_numpy())
+        # assert np.array_equal(var_joinids.to_numpy(), var_df["soma_joinid"].to_numpy())
 
         futures = []
         ms = exp.ms["RNA"]
@@ -1024,6 +1026,7 @@ def test_possible_macos_segv_3(K) -> None:
         for ftr in futures:
             data, uri = ftr.result()
             print(f"{uri} complete", file=sys.stderr)
+            assert data is not None
 
 
 @suppress_type_checks
@@ -1063,6 +1066,7 @@ def test_possible_macos_segv_2(K) -> None:
         for ftr in futures:
             data, uri = ftr.result()
             print(f"{uri} complete", file=sys.stderr)
+            assert data is not None
 
 
 @suppress_type_checks
