@@ -29,6 +29,15 @@ TEST_CASE("SOMACollection: basic") {
     soma_collection->close();
 }
 
+TEST_CASE("SOMACollection: does not exist", "[SOMACollection]") {
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "not_an_acutal_path";
+
+    REQUIRE_THROWS_WITH(
+        SOMACollection::open(uri, OpenMode::soma_read, ctx, std::nullopt),
+        "Group: Cannot open group; Group does not exist.");
+}
+
 TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     TimestampRange ts(0, 2);
     auto ctx = std::make_shared<SOMAContext>();

@@ -33,6 +33,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_factory.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.cc
@@ -199,6 +200,7 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_point_cloud_dataframe.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_multiscale_image.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_facotry.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
 # )
@@ -228,6 +230,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_point_cloud_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_multiscale_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_factory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_transformers.h
   DESTINATION "include/tiledbsoma/soma"
 )

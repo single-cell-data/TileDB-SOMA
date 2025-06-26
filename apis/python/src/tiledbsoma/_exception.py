@@ -49,6 +49,7 @@ def is_does_not_exist_error(e: RuntimeError | SOMAError) -> bool:
         or "HTTP code 401" in stre
         or "HTTP code 404" in stre
         or "[SOMAObject::open] " in stre
+        or "has TileDB type Invalid" in stre
     ):
         return True
 
