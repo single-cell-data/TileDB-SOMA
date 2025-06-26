@@ -29,7 +29,9 @@ jobs:
 
       - name: Run test script
         run: |
-          lldb -b -o 'run scripts/segv_chaser.py' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
+          python scripts/segv_chaser.py
+
+          # lldb -b -o 'run scripts/segv_chaser.py' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
           # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python scripts/segv_chaser.py
 
       - name: Install dev dependencies
@@ -37,6 +39,7 @@ jobs:
 
       - name: Run segv pytest
         run: |
-          lldb -b -o 'run -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
+          python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv
 
+          # lldb -b -o 'run -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
           # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
