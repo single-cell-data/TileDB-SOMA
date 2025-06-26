@@ -110,7 +110,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     auto arr = tdbs::SOMAArray(OpenMode::soma_read, uri, somactx, tsrng);
 
-    auto mq = new tdbs::ManagedQuery(arr, somactx->tiledb_ctx(), name);
+    auto mq = new tdbs::ManagedQuery(arr.tiledb_array(), somactx->tiledb_ctx(), name);
     mq->set_layout(tdb_result_order);
     if (!column_names.empty()) {
         mq->select_columns(column_names);

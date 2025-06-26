@@ -190,10 +190,6 @@ const std::string SOMAArray::uri() const {
     return uri_;
 };
 
-std::shared_ptr<SOMAContext> SOMAArray::ctx() {
-    return ctx_;
-};
-
 void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
     soma_mode_ = mode;
