@@ -275,16 +275,19 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
             joinids = list(self.joinids)
             joinids[self.major_axis] = pa.array(coord_chunk)
-            yield pa.concat_tables(
-                ArrowTableRead(
-                    array=self.array,
-                    coords=step_coords,
-                    column_names=[],  # select all columns
-                    result_order=self.result_order,
-                    value_filter=None,
-                    platform_config=self.platform_config,
+            yield (
+                pa.concat_tables(
+                    ArrowTableRead(
+                        array=self.array,
+                        coords=step_coords,
+                        column_names=[],  # select all columns
+                        result_order=self.result_order,
+                        value_filter=None,
+                        platform_config=self.platform_config,
+                    ),
                 ),
-            ), tuple(joinids)
+                tuple(joinids),
+            )
 
     def _reindexed_table_reader(
         self,

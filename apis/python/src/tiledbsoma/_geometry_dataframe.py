@@ -159,8 +159,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
-                    f"if domain is specified, it must have the same length as "
-                    f"index_column_names; got {ndom} != {nidx}",
+                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}",
                 )
 
         mutable_soma_domain = list(soma_domain)
@@ -279,7 +278,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         )
 
     def _parse_special_metadata(self) -> None:
-
         # Get and validate coordinate space.
         try:
             coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]

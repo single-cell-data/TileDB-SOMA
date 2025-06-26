@@ -241,17 +241,22 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
     @invariant()
     def check_shape(self) -> None:
         assert hasattr(self.A, "shape")  # sc-61123
-        assert self.A.shape == tuple(
-            (s or 1) for s in self.shape
-        ), f"Unexpected shape in {self.A}: had {self.A.shape}, expected {self.shape}"
+        assert self.A.shape == tuple((s or 1) for s in self.shape), (
+            f"Unexpected shape in {self.A}: had {self.A.shape}, expected {self.shape}"
+        )
         assert self.A.ndim == len(self.shape)
 
     @precondition(lambda self: self.closed or self.mode == "w")
     @rule(data=st.data())
     def expand_shape(self, data: st.DataObject) -> None:
-        if self.closed:
-            self._open(mode="w")
+        # Always re-open at latest. Without this, there is a good chance we will end up with a
+        # schema fragment with the same timestamp. Concrete case: a write has been done to an
+        # array that has a dict field, which triggers an automatic schema evolution.
+        if not self.closed:
+            self._close()
+        self._open(mode="w")
         assert self.mode == "w"
+
         new_shape = data.draw(self.shapes_factory(min_shape=self.shape, max_shape=self.A.maxshape))
         self.A.resize(new_shape)
         self.shape = new_shape

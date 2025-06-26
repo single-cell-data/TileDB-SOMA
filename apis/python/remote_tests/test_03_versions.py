@@ -21,7 +21,6 @@ if os.getenv("TILEDB_REST_UNITTEST_TOKEN") is None:
 def test_basic_readback(conftest_context, uri_and_info):
     uri, info = uri_and_info
     with tiledbsoma.Experiment.open(uri, context=conftest_context) as exp:
-
         md = dict(exp.metadata)
         assert md["dataset_type"] == "soma"
         assert md["soma_object_type"] == "SOMAExperiment"
@@ -66,7 +65,6 @@ def test_basic_readback(conftest_context, uri_and_info):
 def test_dataframe_queries(conftest_context, uri_and_info):
     uri, info = uri_and_info
     with tiledbsoma.Experiment.open(uri, context=conftest_context) as exp:
-
         qobs = (
             exp.obs.read(
                 coords=[slice(0, 99)],
@@ -96,7 +94,6 @@ def test_dataframe_queries(conftest_context, uri_and_info):
 def test_experiment_queries(conftest_context, uri_and_info):
     uri, info = uri_and_info
     with tiledbsoma.Experiment.open(uri, context=conftest_context) as exp:
-
         query = tiledbsoma.ExperimentAxisQuery(
             experiment=exp,
             measurement_name="RNA",
@@ -208,7 +205,6 @@ def test_get_experiment_shapes(conftest_context, uri_and_info):
     dict_output["ms"]["RNA"]["X"]["data"]["uri"] = "test"
 
     if info["shape"] == "old":
-
         expect = {
             "obs": {
                 "uri": "test",

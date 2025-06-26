@@ -31,7 +31,6 @@ def extend_enumerations(df: DataFrame, columns: dict[str, pd.CategoricalDtype]) 
     current_enums = get_enumerations(df, list(columns.keys()))
     columns_to_extend = {}
     for column_name, cat_dtype in columns.items():
-
         # first confirm this is a dictionary. If it has been decategorical-ized, i.e.,
         # are an array of the value type, don't extend.
         if column_name not in current_enums:

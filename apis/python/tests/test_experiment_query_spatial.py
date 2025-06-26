@@ -34,7 +34,7 @@ def add_multiscale_image(
         )
 
         for index, level_shape in enumerate(shapes[1:]):
-            level = image.add_new_level(f"level{index+1}", shape=level_shape)
+            level = image.add_new_level(f"level{index + 1}", shape=level_shape)
             level.write(
                 coords,
                 pa.Tensor.from_numpy(np.random.randint(0, 255, size=level_shape, dtype=np.uint8)),
@@ -85,7 +85,6 @@ def add_point_cloud_dataframe(
         schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
         domain=[[-1, 1], [-1, 1], [0, 63]],
     ) as points:
-
         if circles:
             points.metadata["soma_geometry"] = 2.0
             points.metadata["soma_geometry_type"] = "radius"
@@ -139,7 +138,6 @@ def soma_spatial_experiment(tmp_path_factory) -> soma.Experiment:
     n_vars = 100
 
     with soma.Experiment.create(uri) as exp:
-
         # Add spatial data.
         spatial = exp.add_new_collection("spatial")
         for index in range(4):

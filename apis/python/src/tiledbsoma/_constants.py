@@ -4,7 +4,6 @@
 
 """Global package constants."""
 
-
 SOMA_JOINID = "soma_joinid"
 SOMA_GEOMETRY = "soma_geometry"
 SOMA_COORDINATE_SPACE_METADATA_KEY = "soma_coordinate_space"
@@ -23,3 +22,5 @@ SPATIAL_DISCLAIMER = (
     "Support for spatial types is experimental. Changes to both the API and data "
     "storage may not be backwards compatible."
 )
+
+SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON = "soma_dataframe_original_index_name"

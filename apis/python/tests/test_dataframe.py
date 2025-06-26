@@ -417,7 +417,6 @@ def test_get_enumeration_values_historical(version, name):
     ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"],
 )
 def test_extend_enumeration_values_historical(tmp_path, version):
-
     original_data_uri = str(ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / "pbmc3k_processed")
 
     if not os.path.isdir(original_data_uri):
@@ -707,7 +706,6 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered,
         schema=schema,
         domain=domain,
     ) as sdf:
-
         # Dupes in the inputs are disallowed regardless of the deduplicate flag.
         values_list = [
             {"string_enum": pa.array(["hello", "hello", "goodbye"], type=pa.string())},
@@ -748,7 +746,6 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered,
             sdf.write(data)
 
     with soma.DataFrame.open(uri, "w") as sdf:
-
         # Dupes between the inputs and the existing schema are allowed only
         # if the deduplicate flag is set.
         values_list = [
@@ -3125,7 +3122,6 @@ def test_pass_configs(tmp_path, arrow_schema):
         "r",
         context=soma.SOMATileDBContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
-
         # This errors out as 0 is not a valid value to set the total memory
         # budget or number of threads
         with pytest.raises(soma.SOMAError):
@@ -3483,7 +3479,6 @@ def test_dictionary_value_type_62364(tmp_path, dt_type):
 
 
 def test_no_extent_warning_61509(tmp_path):
-
     schema = pa.schema(
         [
             pa.field("float_index", type=pa.float64(), nullable=False),

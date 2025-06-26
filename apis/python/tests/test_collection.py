@@ -1,6 +1,8 @@
+import concurrent.futures
 import os
 import pathlib
 import textwrap
+from itertools import repeat
 from typing import TypeVar, Union
 
 import numpy as np
@@ -16,6 +18,8 @@ from tiledbsoma._exception import DoesNotExistError, SOMAError
 from tiledbsoma.options import SOMATileDBContext
 
 from tests._util import raises_no_typeguard
+
+from ._util import ROOT_DATA_DIR
 
 
 # ----------------------------------------------------------------
@@ -561,3 +565,20 @@ def test_keys_with_sanitized_uris(tmp_path, key, sanitized_key):
 
     with soma.Collection.open(uri) as c:
         assert c[key].uri == f"{uri}/{sanitized_key}"
+
+
+def test_parallel_getitem(tmp_path) -> None:
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04/1.16.1/pbmc3k_processed"
+    uri = str(path)
+    if not os.path.isdir(uri):
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
+        )
+
+    def get_obsm(exp, key) -> soma.SparseNDArray:
+        return exp.ms["RNA"].obsm[key]
+
+    tp = concurrent.futures.ThreadPoolExecutor()
+    with soma.open(uri) as exp:
+        results = list(tp.map(get_obsm, repeat(exp), ("X_umap", "X_umap", "X_umap", "X_umap")))
+    assert all(r is results[0] for r in results)

@@ -98,7 +98,6 @@ def optional_path_validator(instance, attribute, x: Path | None) -> None:  # typ
 
 @attrs.define(kw_only=True)
 class VisiumPaths:
-
     @classmethod
     def from_base_folder(
         cls,
@@ -455,7 +454,6 @@ def from_visium(
     start_time = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
     with _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx) as experiment:
-
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
         df_uri = _util.uri_joinpath(experiment_uri, "obs")
@@ -694,7 +692,6 @@ def _write_X_layer(
     assert reader._data is not None
     matrix_type = pa.from_numpy_dtype(reader._data.dtype)
     try:
-
         soma_ndarray = cls.create(
             uri,
             type=matrix_type,

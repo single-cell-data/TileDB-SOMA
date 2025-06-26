@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import json
 import os
 import re
 from concurrent import futures
@@ -20,6 +23,7 @@ from tiledbsoma import (
     pytiledbsoma,
 )
 from tiledbsoma._collection import CollectionBase
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
@@ -889,6 +893,13 @@ def test_experiment_query_historical(version, obs_params, var_params):
     obs_condition, obs_count = obs_params
     var_condition, var_count = var_params
 
+    def expected_index_name(df, hint, fallback) -> str:
+        if hint:
+            return json.loads(hint)
+        if fallback in df.columns:
+            return fallback
+        return ""
+
     with soma.open(uri) as exp:
         query = exp.axis_query(
             measurement_name="RNA",
@@ -901,3 +912,72 @@ def test_experiment_query_historical(version, obs_params, var_params):
 
         var = query.var().concat()
         assert len(var) == var_count
+
+        adata = query.to_anndata("data")
+        assert adata.n_obs == obs_count
+        assert adata.n_vars == var_count
+        assert adata.X.shape == (obs_count, var_count)
+        assert adata.obs.index.name == expected_index_name(
+            obs.to_pandas(),
+            exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "obs_id",
+        )
+        assert adata.var.index.name == expected_index_name(
+            var.to_pandas(),
+            exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "var_id",
+        )
+
+        adata = query.to_anndata("data", obs_id_name="soma_joinid", var_id_name="soma_joinid")
+        assert adata.obs.index.name == "soma_joinid"
+        assert adata.var.index.name == "soma_joinid"
+
+        adata = query.to_anndata("data", obs_id_name="obs_id", var_id_name="var_id")
+        assert adata.obs.index.name == "obs_id"
+        assert adata.var.index.name == "var_id"
+
+
+@pytest.mark.parametrize("version", ["1.16.1"])
+@pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
+@pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
+@pytest.mark.parametrize("varp_layers", [()])
+@pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
+def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
+    name = "pbmc3k_processed"
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(path)
+    if not os.path.isdir(uri):
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
+        )
+
+    with soma.open(uri) as exp:
+        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
+            "data",
+            obsm_layers=obsm_layers,
+            obsp_layers=obsp_layers,
+            varp_layers=varp_layers,
+            varm_layers=varm_layers,
+        )
+
+        for m in obsm_layers:
+            assert m in adata.obsm
+            assert adata.obsm[m].dtype == exp.ms["RNA"].obsm[m].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.obsm[m].shape[0] == adata.shape[0]
+
+        for m in varm_layers:
+            assert m in adata.varm
+            assert adata.varm[m].dtype == exp.ms["RNA"].varm[m].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.varm[m].shape[0] == adata.shape[1]
+
+        for sm in obsp_layers:
+            assert sm in adata.obsp
+            assert adata.obsp[sm].dtype == exp.ms["RNA"].obsp[sm].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.obsp[sm].shape[0] == adata.shape[0]
+            assert adata.obsp[sm].shape[1] == adata.shape[0]
+
+        for sm in varp_layers:
+            assert sm in adata.varp
+            assert adata.varp[sm].dtype == exp.ms["RNA"].varp[sm].schema.field("soma_data").type.to_pandas_dtype()
+            assert adata.varp[sm].shape[0] == adata.shape[1]
+            assert adata.varp[sm].shape[1] == adata.shape[1]

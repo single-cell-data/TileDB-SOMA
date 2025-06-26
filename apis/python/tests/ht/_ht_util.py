@@ -487,7 +487,6 @@ def arrow_chunked_array_fast(
     max_value: Any = None,
     splits: int | Sequence[int] | st.SearchStrategy[Sequence[int]] | None = None,
 ) -> pa.ChunkedArray:
-
     shape = draw(arrow_shape(shape))
     length = shape[0]
 

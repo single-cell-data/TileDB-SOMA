@@ -7,8 +7,10 @@
 from __future__ import annotations
 
 import enum
+import json
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
+from threading import Lock
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -51,7 +53,7 @@ from somacore.query.query import (
 from somacore.query.types import IndexFactory, IndexLike
 from typing_extensions import Self
 
-from ._constants import SPATIAL_DISCLAIMER
+from ._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SPATIAL_DISCLAIMER
 from ._dask.load import SOMADaskConfig, load_daskarray
 from ._exception import SOMAError
 
@@ -61,7 +63,7 @@ if TYPE_CHECKING:
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from ._util import _resolve_futures
+from ._util import _df_set_index, _resolve_futures
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -100,19 +102,23 @@ class AxisIndexer(query.AxisIndexer):
     _index_factory: IndexFactory
     _cached_obs: IndexLike | None = None
     _cached_var: IndexLike | None = None
+    _obs_lock: Lock = attrs.field(factory=Lock)
+    _var_lock: Lock = attrs.field(factory=Lock)
 
     @property
     def _obs_index(self) -> IndexLike:
         """Private. Return an index for the ``obs`` axis."""
-        if self._cached_obs is None:
-            self._cached_obs = self._index_factory(self.query.obs_joinids().to_numpy())
+        with self._obs_lock:
+            if self._cached_obs is None:
+                self._cached_obs = self._index_factory(self.query.obs_joinids().to_numpy())
         return self._cached_obs
 
     @property
     def _var_index(self) -> IndexLike:
         """Private. Return an index for the ``var`` axis."""
-        if self._cached_var is None:
-            self._cached_var = self._index_factory(self.query.var_joinids().to_numpy())
+        with self._var_lock:
+            if self._cached_var is None:
+                self._cached_var = self._index_factory(self.query.var_joinids().to_numpy())
         return self._cached_var
 
     def by_obs(self, coords: Numpyable) -> npt.NDArray[np.intp]:
@@ -405,6 +411,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         varp_layers: Sequence[str] = (),
         drop_levels: bool = False,
         dask: SOMADaskConfig | None = None,
+        obs_id_name: str | None = None,
+        var_id_name: str | None = None,
     ) -> AnnData:
         """Exports the query to an in-memory ``AnnData`` object.
 
@@ -429,6 +437,26 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             dask:
                 If not ``None``, load the X layer as a Dask array. See
                 :class:`DaskConfig` for details.
+            obs_id_name:
+                If specified, set this column as the index in the ``obs`` dataframe.
+                If not specified, the default index column (see Notes below) will be determined,
+                and set as the dataframe index.
+            var_id_name:
+                If specified, set this column as the index in the ``obs`` dataframe.
+                If not specified, the default index column (see Notes below) will be determined,
+                and set as the dataframe index.
+
+        Notes:
+        The default index column for the ``obs`` and ``var`` dataframes is determined with the following
+        algorithm:
+
+        - if the index column name is explicitly specified (e.g., via ``obs_id_name``), it
+          will be used as the index.
+        - if the original index column was written to the DataFrame metadata (e.g., during
+          ingestion from AnnData), this will be used as the index.
+        - if the dataframe contains a column named ``obs_id`` (for obs) or ``var_id`` (for var),
+          this will be used as the index.
+        - otherwise, the default Pandas index will be used.
 
         Lifecycle: experimental
         """
@@ -449,12 +477,14 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[_xname] = x_array
 
-        obs_table, var_table = tp.map(
+        obs, var = tp.map(
             self._read_axis_dataframe,
             (AxisName.OBS, AxisName.VAR),
             (self._obs_df, self._var_df),
             (self._matrix_axis_query.obs, self._matrix_axis_query.var),
             (column_names, column_names),
+            (obs_id_name, var_id_name),
+            ("obs_id", "var_id"),
         )
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
@@ -520,12 +550,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             )
             for key in varp_layers
         }
-
-        obs = obs_table.to_pandas()
-        obs.index = obs.index.astype(str)
-
-        var = var_table.to_pandas()
-        var.index = var.index.astype(str)
 
         # Drop unused categories on axis dataframes if requested
         if drop_levels:
@@ -634,7 +658,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         axis_df: DataFrame,
         axis_query: AxisQuery,
         axis_column_names: AxisColumnNames,
-    ) -> pa.Table:
+        default_index_name: str | None = None,
+        fallback_index_name: str | None = None,
+    ) -> pd.DataFrame:
         """Reads the specified axis. Will cache join IDs if not present."""
         column_names = axis_column_names.get(axis.value)
 
@@ -670,7 +696,20 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         # the joinid cache.
         if added_soma_joinid_to_columns:
             arrow_table = arrow_table.drop(["soma_joinid"])
-        return arrow_table
+
+        # Read and validate the "original index metadata" stored alongside this SOMA DataFrame.
+        original_index_metadata = json.loads(axis_df.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null"))
+        if not (original_index_metadata is None or isinstance(original_index_metadata, str)):
+            raise ValueError(
+                f"{axis_df.uri}: invalid {SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}",
+            )
+
+        df: pd.DataFrame = arrow_table.to_pandas()
+
+        default_index_name = default_index_name or original_index_metadata
+        _df_set_index(df, default_index_name, fallback_index_name)
+
+        return df
 
     def _get_annotation_layer(self, annotation_name: str, layer_name: str) -> SparseNDArray:
         """Helper function to make error messages consistent.
@@ -789,9 +828,10 @@ def _read_inner_ndarray(
 
     n_row = len(joinids)
     n_col = len(table["soma_dim_1"].unique())
+    dtype = matrix.schema.field("soma_data").type.to_pandas_dtype()
 
     idx = indexer(table["soma_dim_0"])
-    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=np.float32)
+    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
     return z.reshape(n_row, n_col)
 

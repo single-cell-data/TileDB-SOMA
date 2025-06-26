@@ -8,7 +8,6 @@ from .common import TestWritePythonReadR
 
 
 class TestCharacterMetadataWritePythonReadR(TestWritePythonReadR):
-
     @pytest.fixture(scope="class")
     def experiment(self):
         exp = tiledbsoma.Experiment.create(self.uri)
