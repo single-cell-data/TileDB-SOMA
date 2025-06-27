@@ -15,7 +15,8 @@ jobs:
         run: sysctl -a
 
       - name: Select XCode version
-        if: startsWith(matrix.os, 'macos')
+        # if: startsWith(matrix.os, 'macos')
+        if: ${{ matrix.os }} == "macos-latest"
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: "15.4"
