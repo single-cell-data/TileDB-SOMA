@@ -12,7 +12,11 @@
  */
 
 #include "soma_sparse_ndarray.h"
+
+#include <stdexcept>
+#include "../utils/logger.h"
 #include "soma_coordinates.h"
+#include "tiledb_adapter/soma_query_condition.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -92,4 +96,42 @@ std::string_view SOMASparseNDArray::soma_data_type() {
 managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
+
+void SOMASparseNDArray::delete_cells(const std::vector<std::pair<std::vector<int64_t>, bool>> coords) {
+    if (coords.size() > ndim()) {
+        throw std::invalid_argument(
+            fmt::format(
+                "Coordinates for {} columns were provided, but this array only has {} columns. The number of coords "
+                "provided must be less than or equal to the number of columns.",
+                coords.size(),
+                ndim()));
+    }
+
+    SOMACoordQueryCondition qc{*ctx_, dimension_names()};
+    for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
+        // const auto& coords_pair = coords[dim_index];
+        //const std::vector < i& coord_values = coords_pair->first;
+        //bool is_range = coords_pair->second;
+        const auto& [coord_values, is_range] = coords[dim_index];
+        if (is_range) {
+            if (coord_values.size() != 2) {
+                throw std::invalid_argument(
+                    fmt::format(
+                        "Internal error: Range-based coordinates for deletes must have exactly 2 elements. The "
+                        "coordinates for column '{}' have {} elements.",
+                        get_column(dim_index)->name(),
+                        coord_values.size()));
+            }
+            qc.add_range<int64_t>(dim_index, coord_values[0], coord_values[1]);
+        } else {
+            qc.add_points<int64_t>(dim_index, coord_values);
+        }
+    }
+    auto soma_delete_cond = qc.get_soma_query_condition();
+    if (!soma_delete_cond.is_initialized()) {
+        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
+    }
+    delete_cells_impl(soma_delete_cond.query_condition());
+}
+
 }  // namespace tiledbsoma

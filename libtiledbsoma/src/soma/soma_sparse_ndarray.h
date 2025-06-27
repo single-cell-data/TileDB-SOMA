@@ -125,6 +125,16 @@ class SOMASparseNDArray : public SOMAArray {
      * @return std::string_view Arrow format string.
      */
     std::string_view soma_data_type();
+
+    /**
+     * @brief Delete cells from the array.
+     *
+     * This deletes cells that fall within the intersection of the provided coordinates.
+     * @param coords A vector of coordinates and boolean flag. If `true`, the flag indicates
+     * the coordinates should be viewed as a range. In this case, there must be exactly two
+     * values.
+     */
+    void delete_cells(const std::vector<std::pair<std::vector<int64_t>, bool>> coords);
 };
 }  // namespace tiledbsoma
 
