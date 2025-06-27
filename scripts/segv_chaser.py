@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import faulthandler
-import pathlib
+import gc
 import sys
 
 import pyarrow as pa
@@ -11,7 +11,13 @@ faulthandler.enable()
 
 
 def test(i: int):
-    path = pathlib.Path("data") / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
+    path = "./data/soma-experiment-versions-2025-04-04/1.7.3/pbmc3k_processed"
+    tiledb_config = {
+        "sm.mem.total_budget": 128 * 1024**2,
+        "sm.memory_budget": 64 * 1024**2,
+        "sm.memory_budget_var": 64 * 1024**2,
+        "soma.init_buffer_bytes": 32 * 1024**2,
+    }
 
     def read_axis_df(axis_df, coords):
         return axis_df.read(coords).concat(), axis_df.uri
@@ -19,7 +25,7 @@ def test(i: int):
     def read_slot(slot_df, coords):
         return slot_df.read(coords).tables().concat(), slot_df.uri
 
-    with soma.open(path.as_posix()) as exp:
+    with soma.open(path, context=soma.SOMATileDBContext(tiledb_config=tiledb_config)) as exp:
         tp = exp.context.threadpool
 
         (obs_df, _), (var_df, _) = tp.map(
@@ -48,6 +54,7 @@ def test(i: int):
             data, uri = ftr.result()
             print(f"[{i}]: {uri} complete", file=sys.stderr)
             assert data is not None
+            gc.collect()
 
 
 def main():

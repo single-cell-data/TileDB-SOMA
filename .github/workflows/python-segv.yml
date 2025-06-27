@@ -26,15 +26,15 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
 
-      # - name: Install tiledbsoma
-      #   run: pip -v install -U tiledbsoma
-
       - name: Install tiledbsoma
-        # run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
-        run: make install build=Debug
-        env:
-          CC: clang
-          CXX: clang++
+        run: pip -v install -U tiledbsoma
+
+      # - name: Install tiledbsoma
+      #   # run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+      #   run: make install build=Debug
+      #   env:
+      #     CC: clang
+      #     CXX: clang++
 
       - name: Show package versions
         run: python scripts/show-versions.py
