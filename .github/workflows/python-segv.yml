@@ -8,12 +8,14 @@ jobs:
       fail-fast: true
       matrix:
         python_version: ["3.12", "3.13"]
-        os: ["macos-latest"]  # , "macos-13", "macos-14", "macos-15"]
+        os: ["macos-latest"] # , "macos-13", "macos-14", "macos-15"]
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: System info
-        run: sysctl -a
+        run: |
+          printenv
+          sysctl -a
 
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
@@ -55,12 +57,12 @@ jobs:
 
           # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python scripts/segv_chaser.py
 
-      - name: Install dev dependencies
-        run: pip -v install -r apis/python/requirements_dev.txt
+      # - name: Install dev dependencies
+      #   run: pip -v install -r apis/python/requirements_dev.txt
 
-      - name: Run segv pytest
-        run: |
-          python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv
+      # - name: Run segv pytest
+      #   run: |
+      #     python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv
 
-          # lldb -b -o 'run -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
-          # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x
+      #     # lldb -b -o 'run -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' python
+      #     # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python -m pytest apis/python/tests/test_experiment_query.py -k test_possible_macos_segv -v -s -x

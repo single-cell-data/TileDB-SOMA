@@ -25,7 +25,6 @@ on:
 
 jobs:
   build:
-    if: false
     strategy:
       fail-fast: true
 
