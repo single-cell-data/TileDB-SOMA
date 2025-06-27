@@ -161,7 +161,7 @@ TEST_CASE(
     REQUIRE(actual_type.has_value());
     REQUIRE(actual_type.value() == soma_type);
 
-    auto actual_type2 = get_soma_type(uri, *context);
+    auto actual_type2 = get_soma_type_metadata_value(uri, *context);
     REQUIRE(actual_type == soma_type);
 
     REQUIRE(soma_obj->is_open());

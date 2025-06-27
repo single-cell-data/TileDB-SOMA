@@ -121,32 +121,31 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         "Print TileDB internal statistics. Lifecycle: experimental.");
 
     m.def(
-        "get_soma_type",
+        "get_soma_type_metadata_value",
         [](std::string_view uri,
            std::shared_ptr<SOMAContext> context,
            std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-            return tiledbsoma::get_soma_type(uri, *context, timestamp);
+            return tiledbsoma::get_soma_type_metadata_value(uri, *context, timestamp);
         },
-        "Returns the datatype of a SOMA object as a string.");
+        "Returns the SOMA datatype metadata value from a TileDB object.");
 
     m.def(
-        "get_tiledb_array_soma_type",
+        "get_soma_type_metadata_value_from_array",
         [](std::string_view uri,
            std::shared_ptr<SOMAContext> context,
            std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-            return tiledbsoma::get_tiledb_array_soma_type(uri, *context, timestamp);
+            return tiledbsoma::get_soma_type_metadata_value_from_array(uri, *context, timestamp);
         },
-        "Returns the datatype for a SOMA object that is stored as a TileDB array.");
+        "Returns the SOMA datatype metadata value from a TileDB array.");
 
     m.def(
-        "get_tiledb_group_soma_type",
+        "get_soma_type_metadata_value_from_group",
         [](std::string_view uri,
            std::shared_ptr<SOMAContext> context,
            std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-            return tiledbsoma::get_tiledb_group_soma_type(uri, *context, timestamp);
+            return tiledbsoma::get_soma_type_metadata_value_from_group(uri, *context, timestamp);
         },
-
-        "Returns the datatype for a SOMA object that is stored as a TileDB group.");
+        "Returns the SOMA datatype metadata value from a TileDB group.");
 
     py::class_<PlatformConfig>(m, "PlatformConfig")
         .def(py::init<>())

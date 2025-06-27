@@ -87,11 +87,11 @@ def open_handle_wrapper(
 
     try:
         if clib_type is None:
-            clib_type = clib.get_soma_type(uri, context.native_context, (0, timestamp_ms))
+            clib_type = clib.get_soma_type_metadata_value(uri, context.native_context, (0, timestamp_ms))
         elif clib_type.lower() == "somaarray":
-            clib_type = clib.get_tiledb_array_soma_type(uri, context.native_context, (0, timestamp_ms))
+            clib_type = clib.get_soma_type_metadata_value_from_array(uri, context.native_context, (0, timestamp_ms))
         elif clib_type.lower() == "somagroup":
-            clib_type = clib.get_tiledb_group_soma_type(uri, context.native_context, (0, timestamp_ms))
+            clib_type = clib.get_soma_type_metadata_value_from_group(uri, context.native_context, (0, timestamp_ms))
     except SOMAError as soma_err:
         # Note: SOMAError is only raised above if the reference isn't a TileDB object or
         # it doesn't have SOMA datatype metadata.

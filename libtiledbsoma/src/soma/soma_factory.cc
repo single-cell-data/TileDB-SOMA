@@ -14,20 +14,22 @@
 
 #include "soma_factory.h"
 
+#include <tiledb/tiledb>
 #include "../utils/logger.h"
 #include "soma_context.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
 
-std::string get_soma_type(std::string_view uri, const SOMAContext& ctx, std::optional<TimestampRange> timestamp) {
+std::string get_soma_type_metadata_value(
+    std::string_view uri, const SOMAContext& ctx, std::optional<TimestampRange> timestamp) {
     auto tiledb_type = Object::object(*ctx.tiledb_ctx(), std::string(uri)).type();
 
     switch (tiledb_type) {
         case Object::Type::Array:
-            return get_tiledb_array_soma_type(uri, ctx, timestamp);
+            return get_soma_type_metadata_value_from_array(uri, ctx, timestamp);
         case Object::Type::Group:
-            return get_tiledb_group_soma_type(uri, ctx, timestamp);
+            return get_soma_type_metadata_value_from_group(uri, ctx, timestamp);
         case Object::Type::Invalid:
             throw TileDBSOMAError(
                 fmt::format(
@@ -49,7 +51,7 @@ std::string get_soma_type(std::string_view uri, const SOMAContext& ctx, std::opt
     }
 }
 
-std::string get_tiledb_array_soma_type(
+std::string get_soma_type_metadata_value_from_array(
     std::string_view uri, const SOMAContext& ctx, std::optional<TimestampRange> timestamp) {
     auto temporal_policy = timestamp.has_value() ?
                                TemporalPolicy(TimestampStartEnd, timestamp->first, timestamp->second) :
@@ -87,7 +89,7 @@ std::string get_tiledb_array_soma_type(
     return std::string(static_cast<const char*>(value), value_num);
 }
 
-std::string get_tiledb_group_soma_type(
+std::string get_soma_type_metadata_value_from_group(
     std::string_view uri, const SOMAContext& ctx, std::optional<TimestampRange> timestamp) {
     auto cfg = ctx.tiledb_ctx()->config();
     if (timestamp.has_value()) {
