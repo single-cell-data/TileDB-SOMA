@@ -244,7 +244,7 @@ LIB_DIRS = [
     str(tiledb_dir / "lib"),
 ]
 
-CXX_FLAGS = ["-g"]  # ["-O3"]
+CXX_FLAGS = ["-O3"]
 
 if platform.machine() == "x86_64":
     CXX_FLAGS.append("-mavx2")
