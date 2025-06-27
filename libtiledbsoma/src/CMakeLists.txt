@@ -200,7 +200,7 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_point_cloud_dataframe.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_multiscale_image.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_facotry.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_factory.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
 # )
