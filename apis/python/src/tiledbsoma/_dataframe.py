@@ -562,7 +562,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}",
             )
 
-        if any([slot is not None and len(slot) != 2 for slot in newdomain]):
+        if any(slot is not None and len(slot) != 2 for slot in newdomain):
             raise ValueError(
                 f"{function_name_for_messages}: requested domain must have low,high pairs, or `None`, in each slot",
             )
@@ -835,7 +835,7 @@ def _canonicalize_schema(
 
     # Check for column names containing null bytes
     for field in schema:
-        if any([char == "\x00" for char in field.name]):
+        if any(char == "\x00" for char in field.name):
             raise ValueError(f"Illegal character in field name `{field.name}`. Null byte found.")
 
     if SOMA_JOINID in schema.names:

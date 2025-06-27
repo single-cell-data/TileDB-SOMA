@@ -117,7 +117,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
         std::vector<int32_t> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+        auto mq = soma_array->create_managed_query("");
         mq.set_layout(ResultOrder::unordered);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -185,7 +185,7 @@ TEST_CASE("SOMAArray: random nnz") {
         auto soma_array = SOMAArray::open(OpenMode::soma_write, base_uri, ctx);
 
         // Write data to array
-        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+        auto mq = soma_array->create_managed_query("");
         mq.set_layout(ResultOrder::unordered);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -213,7 +213,7 @@ TEST_CASE("SOMAArray: random nnz") {
         auto soma_array = SOMAArray::open(OpenMode::soma_write, base_uri, ctx);
 
         // Write data to array
-        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+        auto mq = soma_array->create_managed_query("");
         mq.set_layout(ResultOrder::unordered);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -223,18 +223,20 @@ TEST_CASE("SOMAArray: random nnz") {
     }
 
     // Get total cell num
-    auto soma_array = SOMAArray::open(OpenMode::soma_read, base_uri, ctx);
+    {
+        auto soma_array = SOMAArray::open(OpenMode::soma_read, base_uri, ctx);
 
-    uint64_t nnz = soma_array->nnz();
-    auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
-    mq.set_layout(ResultOrder::unordered);
+        uint64_t nnz = soma_array->nnz();
+        auto mq = soma_array->create_managed_query();
+        mq.set_layout(ResultOrder::unordered);
 
-    uint64_t total_cell_num = 0;
-    while (auto batch = mq.read_next()) {
-        total_cell_num += (*batch)->num_rows();
+        uint64_t total_cell_num = 0;
+        while (auto batch = mq.read_next()) {
+            total_cell_num += (*batch)->num_rows();
+        }
+
+        REQUIRE(nnz == total_cell_num);
     }
-
-    REQUIRE(nnz == total_cell_num);
 }
 
 TEST_CASE("SOMAArray: nnz") {
@@ -278,7 +280,7 @@ TEST_CASE("SOMAArray: nnz") {
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
 
         // Check that data from SOMAArray::read_next matches expected data
-        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+        auto mq = soma_array->create_managed_query();
         mq.set_layout(ResultOrder::unordered);
         while (!mq.results_complete()) {
             auto arrbuf = mq.read_next().value();
@@ -450,7 +452,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
     auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
-    auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    auto mq = soma_array->create_managed_query();
 
     size_t loops = 0;
     while (auto batch = mq.read_next())
@@ -465,7 +467,7 @@ TEST_CASE("SOMAArray: ResultOrder") {
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
     auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
-    auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    auto mq = soma_array->create_managed_query();
     REQUIRE(mq.result_order() == ResultOrder::automatic);
     mq.set_layout(ResultOrder::rowmajor);
     REQUIRE(mq.result_order() == ResultOrder::rowmajor);
@@ -563,14 +565,14 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     uint8_t a0_data = 0b10101010;
     std::memcpy((void*)a0_expected->buffers[1], &a0_data, sizeof(uint8_t));
 
-    auto mq_write = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    auto mq_write = soma_array->create_managed_query();
     mq_write.set_array_data(arrow_schema.get(), arrow_array.get());
     mq_write.submit_write();
     mq_write.close();
     soma_array->close();
 
     soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
-    auto mq_read = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    auto mq_read = soma_array->create_managed_query();
     auto arrbuf = mq_read.read_next().value();
 
     auto d0_span = arrbuf->at(dim_name)->data<int64_t>();

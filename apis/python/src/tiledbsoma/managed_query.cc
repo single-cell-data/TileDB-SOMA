@@ -31,10 +31,15 @@ void load_managed_query(py::module& m) {
     py::class_<ManagedQuery>(m, "ManagedQuery")
         .def(
             py::init([](SOMAArray array, std::shared_ptr<SOMAContext> ctx, std::string_view name) {
-                return ManagedQuery(array, ctx->tiledb_ctx(), name);
+                return array.create_managed_query(ctx, name);
             }),
             py::arg("array"),
             py::arg("ctx"),
+            py::arg("name") = "unnamed")
+
+        .def(
+            py::init([](SOMAArray array, std::string_view name) { return array.create_managed_query(name); }),
+            py::arg("array"),
             py::arg("name") = "unnamed")
 
         .def("is_empty_query", &ManagedQuery::is_empty_query)

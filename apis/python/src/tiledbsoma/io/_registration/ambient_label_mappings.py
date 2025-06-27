@@ -626,7 +626,7 @@ class AnnDataAxisMetadata:
     @classmethod
     def reduce(cls, ams: list[Self]) -> AnnDataAxisMetadata:
         assert all(isinstance(a, cls) for a in ams)
-        assert all([a.field_name == ams[0].field_name for a in ams])
+        assert all(a.field_name == ams[0].field_name for a in ams)
         if not all(a.field_index.dtype == ams[0].field_index.dtype for a in ams):
             raise SOMAError("All AnnData must have a common dtype for their index.")
 

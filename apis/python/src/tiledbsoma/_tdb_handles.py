@@ -800,7 +800,8 @@ class MetadataWrapper(MutableMapping[str, Any]):
                         set_metadata(key, np.array([val]))
                 if mod is _DictMod.DELETED:
                     self.owner._handle.delete_metadata(key)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # This should be done with Exception Groups
                 errors.append(e)
 
         # Temporary hack: When we flush writes, note that the cache

@@ -31,16 +31,15 @@ class ManagedQuery:
     _handle: clib.ManagedQuery = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:
-        clib_handle = self._array._handle._handle
+        array_handle = self._array._handle._handle
 
         if self._platform_config is not None:
-            cfg = clib_handle.context().config()
+            cfg = array_handle.context().config()
             cfg.update(self._platform_config)
             ctx = clib.SOMAContext(cfg)
+            object.__setattr__(self, "_handle", clib.ManagedQuery(array_handle, ctx))
         else:
-            ctx = clib_handle.context()
-
-        object.__setattr__(self, "_handle", clib.ManagedQuery(clib_handle, ctx))
+            object.__setattr__(self, "_handle", clib.ManagedQuery(array_handle))
 
     def _set_coord_by_py_seq_or_np_array(self, dim: pa.Field, coord: object) -> None:
         if isinstance(coord, np.ndarray):
@@ -200,7 +199,7 @@ class ManagedQuery:
 
         column = self._array._handle._handle.get_column(dim.name)
 
-        if all([is_slice_of(x, np.float64) for x in coord]):
+        if all(is_slice_of(x, np.float64) for x in coord):
             range_min = []
             range_max = []
             for sub_coord, dom_min, dom_max in zip(coord, ordered_dom_min, ordered_dom_max):
@@ -216,7 +215,7 @@ class ManagedQuery:
                     range_max.append(lo_hi[1])
 
             column.set_dim_ranges_double_array(self._handle, [(range_min, range_max)])
-        elif all([isinstance(x, np.number) for x in coord]):
+        elif all(isinstance(x, np.number) for x in coord):
             column.set_dim_points_double_array(self._handle, [coord])
         else:
             raise ValueError(f"Unsupported spatial coordinate type. Expected slice or float, found {type(coord)}")

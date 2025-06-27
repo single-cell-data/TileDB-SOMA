@@ -73,8 +73,6 @@ using StatusAndReason = std::pair<bool, std::string>;
 
 class SOMAArray : public SOMAObject {
    public:
-    friend class ManagedQuery;
-
     //===================================================================
     //= public static
     //===================================================================
@@ -187,7 +185,9 @@ class SOMAArray : public SOMAObject {
      *
      * @return SOMAContext
      */
-    std::shared_ptr<SOMAContext> ctx();
+    inline std::shared_ptr<SOMAContext> ctx() {
+        return ctx_;
+    }
 
     /**
      * Open the SOMAArray object.
@@ -196,6 +196,33 @@ class SOMAArray : public SOMAObject {
      * @param timestamp Timestamp
      */
     void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
+     * Creates a new ManagedQuery for this array.
+     *
+     * @param name Name of the array.
+     */
+    inline ManagedQuery create_managed_query(std::string_view name = "unnamed") const {
+        return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
+    }
+
+    /**
+     * Returns a shared pointer of the internal TileDB array.
+     */
+    inline std::shared_ptr<Array> tiledb_array() {
+        return arr_;
+    }
+
+    /**
+     * Creates a new ManagedQuery for this array.
+     *
+     * @param ctx SOMA context to use for the query.
+     * @param name Name of the array.
+     */
+    inline ManagedQuery create_managed_query(
+        std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const {
+        return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
+    }
 
     /**
      * Close the SOMAArray object.
