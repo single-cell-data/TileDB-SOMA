@@ -234,7 +234,7 @@ TEST_CASE("SOMAArray: Invalid datatype metadata", "[SOMAArray][Metadata]") {
         Array array{tiledb_ctx, uri, TILEDB_WRITE, TemporalPolicy()};
         std::string fake_type{"not_a_soma_type"};
         int64_t value{4};
-        array.put_metadata("soma_object_type", TILEDB_INT64, sizeof(int64_t), &value);
+        array.put_metadata("soma_object_type", TILEDB_INT64, 1, &value);
         array.close();
 
         REQUIRE_THROWS(
@@ -305,7 +305,7 @@ TEST_CASE("SOMAGroup: Invalid datatype metadata", "[SOMAGroup][Metadata]") {
         Group group{tiledb_ctx, uri, TILEDB_WRITE};
         std::string fake_type{"not_a_soma_type"};
         int64_t value{4};
-        group.put_metadata("soma_object_type", TILEDB_INT64, sizeof(int64_t), &value);
+        group.put_metadata("soma_object_type", TILEDB_INT64, 1, &value);
         group.close();
 
         REQUIRE_THROWS(
