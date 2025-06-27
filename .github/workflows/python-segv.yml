@@ -36,14 +36,14 @@ jobs:
           # lldb -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' -o quit `which python`
           # lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' -o quit `which python`
 
-          lldb -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
-          lldb -O 'settings set target.process.stop-on-exec false' -o 'run -c "import ctypes; ctypes.string_at(0)"' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
+          lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
+          lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c "import ctypes; print(\"hi\"); ctypes.string_at(0)"' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
 
       - name: Run test script
         run: |
           # python scripts/segv_chaser.py
 
-          lldb -O 'settings set target.process.stop-on-exec false' -o 'run scripts/segv_chaser.py' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
+          lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run scripts/segv_chaser.py' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
 
           # gdb --batch --return-child-result -ex "run" --ex "thread apply all bt" --args python scripts/segv_chaser.py
 
