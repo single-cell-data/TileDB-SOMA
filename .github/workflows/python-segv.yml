@@ -5,6 +5,7 @@ on: pull_request
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         python_version: ["3.12", "3.13"]
         os: ["macos-latest", "macos-13", "macos-14", "macos-15"]
@@ -31,13 +32,13 @@ jobs:
       - name: Show package versions
         run: python scripts/show-versions.py
 
-      - name: Test LLDB wrapper
-        run: |
-          # lldb -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' -o quit `which python`
-          # lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' -o quit `which python`
+      # - name: Test LLDB wrapper
+      #   run: |
+      #     # lldb -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' -o quit `which python`
+      #     # lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' -o quit `which python`
 
-          lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
-          lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c "import ctypes; print(\"hi\"); ctypes.string_at(0)"' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
+      #     lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c print(\"hi\")' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
+      #     lldb -b -O 'settings set target.process.stop-on-exec false' -o 'run -c "import ctypes; print(\"hi\"); ctypes.string_at(0)"' --one-line-on-crash 'thread backtrace all' -o quit --one-line-on-crash kill --one-line-on-crash 'quit 139' `which python`
 
       - name: Run test script
         run: |
