@@ -1,7 +1,7 @@
 ############################################################
 # Definitions
 ############################################################
-
+enable_testing()
 # Set root source directory as compiler definition for use in tests
 get_filename_component(TILEDBSOMA_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../" ABSOLUTE)
 add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
@@ -174,6 +174,81 @@ if (WIN32)
 endif()
 
 
+
+
+############################################################
+# SOMA TileDB adpater tests
+############################################################
+
+add_executable(test_tiledb_adapter
+    $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+    $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
+    $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
+    common.cc
+    common.h
+    test_soma_query_condition.cc
+)
+
+if(SPDLOG_LINK_SHARED)
+  target_link_libraries(test_tiledb_adapter PRIVATE spdlog::spdlog)
+else()
+  target_include_directories(test_tiledb_adapter PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
+target_link_libraries(test_tiledb_adapter
+  PRIVATE
+    Catch2::Catch2WithMain
+    TileDB::tiledb_shared
+)
+
+target_link_options(test_tiledb_adapter
+  PRIVATE
+    ${TILEDBSOMA_SANITIZER_FLAG}
+)
+
+target_include_directories(test_tiledb_adapter
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/external/include
+    ${pybind11_INCLUDE_DIRS}
+    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+)
+
+target_compile_definitions(test_tiledb_adapter
+  PRIVATE
+  CATCH_CONFIG_MAIN
+)
+target_compile_options(test_tiledb_adapter
+  PRIVATE
+    ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_WERROR_OPTION}
+)
+
+if (NOT MSVC)
+  # Allow deprecated function for writing to an array with a timestamp
+  target_compile_options(test_tiledb_adapter PRIVATE -Wno-deprecated-declarations)
+endif()
+
+if (NOT APPLE AND NOT WIN32)
+    target_link_libraries(test_tiledb_adapter PRIVATE pthread)
+endif()
+
+add_test(
+    NAME "test_tiledb_adapter"
+    COMMAND $<TARGET_FILE:test_tiledb_adapter> "--durations=yes"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+if (WIN32)
+  add_custom_command(TARGET test_tiledb_adapter POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:test_tiledb_adapter> $<TARGET_FILE_DIR:test_tiledb_adapter>
+    COMMAND_EXPAND_LISTS
+  )
+endif()
+
+
+
+
 ############################################################
 # Target for all unit tests
 ############################################################
@@ -182,6 +257,7 @@ add_custom_target(build_tests)
 add_dependencies(build_tests
   unit_soma
   unit_geometry
+  test_tiledb_adapter
 )
 
 ############################################################

@@ -44,7 +44,7 @@ class SOMACoordQueryCondition {
      * @param stop_value The last value of the range.
      */
     template <typename T>
-    void add_range(const std::string& elem_name, T start_value, T stop_value) {
+    SOMACoordQueryCondition& add_range(const std::string& elem_name, T start_value, T stop_value) {
         auto qc_range = QueryCondition::create<T>(*ctx_, elem_name, start_value, TILEDB_GE)
                             .combine(QueryCondition::create<T>(*ctx_, elem_name, stop_value, TILEDB_LE), TILEDB_AND);
         if (initialized_) {
@@ -53,6 +53,7 @@ class SOMACoordQueryCondition {
             qc_ = qc_range;
             initialized_ = true;
         }
+        return *this;
     }
 
     /**
@@ -69,7 +70,7 @@ class SOMACoordQueryCondition {
      *
      */
     template <typename T>
-    void add_points(const std::string& elem_name, const std::vector<T>& values) {
+    SOMACoordQueryCondition& add_points(const std::string& elem_name, const std::vector<T>& values) {
         auto qc_coords = QueryConditionExperimental::create<T>(*ctx_, elem_name, values, TILEDB_IN);
         if (initialized_) {
             qc_ = qc_.combine(qc_coords, TILEDB_AND);
@@ -77,6 +78,7 @@ class SOMACoordQueryCondition {
             qc_ = qc_coords;
             initialized_ = true;
         }
+        return *this;
     }
 
     inline bool is_initialized() const {
