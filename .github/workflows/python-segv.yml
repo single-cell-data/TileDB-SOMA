@@ -7,9 +7,19 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.12", "3.13"]
+        os: ["macos-latest", "macos-13", "macos-14", "macos-15"]
 
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
+      - name: System info
+        run: sysctl -a
+
+      - name: Select XCode version
+        if: startsWith(matrix.os, 'macos')
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "15.4"
+
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
@@ -26,6 +36,11 @@ jobs:
 
       - name: Show package versions
         run: python scripts/show-versions.py
+
+      - name: Test LLDB wrapper
+        run: |
+          lldb -o 'run -c print(\"hi\")' -o quit `which python`
+          lldb -b -o 'run -c print(\"hi\")' -o quit `which python`
 
       - name: Run test script
         run: |
