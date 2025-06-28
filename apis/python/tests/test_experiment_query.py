@@ -790,16 +790,21 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
 
 def add_sparse_array(coll: CollectionBase, key: str, shape: tuple[int, int]) -> None:
     a = coll.add_new_sparse_ndarray(key, type=pa.float32(), shape=shape)
-    tensor = pa.SparseCOOTensor.from_scipy(
-        sparse.random(
+
+    # always have at least one value in the matrix (ARROW-17933)
+    while True:
+        m = sparse.random(
             shape[0],
             shape[1],
             density=0.1,
             format="coo",
             dtype=np.float32,
             random_state=np.random.default_rng(),
-        ),
-    )
+        )
+        if m.nnz > 0:
+            break
+
+    tensor = pa.SparseCOOTensor.from_scipy(m)
     a.write(tensor)
 
 
