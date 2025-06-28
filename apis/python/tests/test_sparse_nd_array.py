@@ -1574,6 +1574,7 @@ def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> Non
     ],
 )
 def test_blockwise_indices(
+    soma_tiledb_context,
     a_random_sparse_nd_array: str,
     coords: tuple[Any, ...],
     expected_indices: tuple[Any, ...],
@@ -1582,7 +1583,7 @@ def test_blockwise_indices(
     size = 1111
 
     # blockwise table
-    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+    with soma.open(a_random_sparse_nd_array, mode="r", context=soma_tiledb_context) as A:
         for axis, reindex_disable_on_axis in itertools.product((0, 1), (None, [0], [1], [0, 1])):
             minor_axis = 1 - axis
             block = 0

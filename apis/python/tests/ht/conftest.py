@@ -20,9 +20,10 @@ from tests.ht._ht_util import (
 
 
 @pytest.fixture(scope="class")
-def make_tmp_dir(request, tmp_path_factory) -> None:
-    """Set a class variable - useful for Hypothesis RuleBasedStateMachine test objects."""
+def setup_fixtures(request, tmp_path_factory, soma_tiledb_context: soma.SOMATileDBContext) -> None:
+    """Set a class variable pointing at required fixtures - useful for Hypothesis RuleBasedStateMachine test objects."""
     request.cls.tmp_path_factory = tmp_path_factory
+    request.cls.soma_tiledb_context = soma_tiledb_context
 
 
 @pytest.fixture

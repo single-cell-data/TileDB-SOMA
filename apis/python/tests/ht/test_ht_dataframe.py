@@ -707,4 +707,4 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         )
 
 
-TestSOMADataFrame = pytest.mark.usefixtures("make_tmp_dir")(SOMADataFrameStateMachine.TestCase)
+TestSOMADataFrame = pytest.mark.usefixtures("setup_fixtures")(SOMADataFrameStateMachine.TestCase)

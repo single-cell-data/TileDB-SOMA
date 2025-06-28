@@ -29,7 +29,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
 
     def __init__(self) -> None:
         super().__init__()
-        self.context = soma.SOMATileDBContext()
+        self.context = self.TestCase.soma_tiledb_context
         self.closed: bool = True
         self.mode: Literal["r", "w"] | None = None
         self.A: SOMAArray | None = None

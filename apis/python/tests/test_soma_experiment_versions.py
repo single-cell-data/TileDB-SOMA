@@ -12,7 +12,7 @@ from ._util import ROOT_DATA_DIR
     "name_and_expected_shape",
     [["pbmc3k_unprocessed", (2700, 13714)], ["pbmc3k_processed", (2638, 1838)]],
 )
-def test_to_anndata(version, name_and_expected_shape):
+def test_to_anndata(soma_tiledb_context, version, name_and_expected_shape):
     """Checks that experiments written by older versions are still readable,
     in the particular form of doing an outgest."""
 
@@ -24,7 +24,7 @@ def test_to_anndata(version, name_and_expected_shape):
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
-    with tiledbsoma.Experiment.open(uri) as exp:
+    with tiledbsoma.Experiment.open(uri, context=soma_tiledb_context) as exp:
         adata = tiledbsoma.io.to_anndata(
             exp,
             measurement_name="RNA",
