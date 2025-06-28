@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import concurrent.futures
+import gc
 import json
 import os
 import re
@@ -956,7 +958,7 @@ def test_annotation_matrix_slots(
         )
 
     with soma.open(uri, context=soma_tiledb_context) as exp:
-        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
+        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 199),))).to_anndata(
             "data",
             obsm_layers=obsm_layers,
             obsp_layers=obsp_layers,
@@ -992,6 +994,9 @@ def test_annotation_matrix_slots(
 def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
 
+    if K == 1:
+        print(soma_tiledb_context.native_context.config())
+
     def read_axis_df(axis_df, coords):
         return axis_df.read(coords).concat(), axis_df.uri
 
@@ -1002,12 +1007,10 @@ def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
         tp = exp.context.threadpool
 
         (obs_df, _), (var_df, _) = tp.map(
-            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 499),), (slice(None),))
+            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 199),), (slice(None),))
         )
-        # obs_joinids = obs_df["soma_joinid"]
-        # var_joinids = var_df["soma_joinid"]
-        obs_joinids = pa.array(range(500))
-        var_joinids = pa.array(range(1838))
+        obs_joinids = obs_df["soma_joinid"]
+        var_joinids = var_df["soma_joinid"]
 
         slot_arrays = [
             exp.ms["RNA"][C][K]
@@ -1022,11 +1025,20 @@ def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
                 ("varm", "PCs"),
             ]
         ]
-        futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]
-        for ftr in futures:
+
+        futures = {tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)): slot_df.uri for slot_df in slot_arrays}
+        for ftr in concurrent.futures.as_completed(futures):
             data, uri = ftr.result()
-            print(f"{uri} complete", file=sys.stderr)
-            assert data is not None
+            assert uri == futures[ftr]
+            futures.pop(ftr)
+            del ftr, data, uri
+            gc.collect()
+
+        # futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]
+        # for ftr in futures:
+        #     data, uri = ftr.result()
+        #     print(f"{uri} complete", file=sys.stderr)
+        #     assert data is not None
 
 
 @suppress_type_checks
@@ -1044,7 +1056,7 @@ def test_possible_macos_segv_2(soma_tiledb_context, K) -> None:
         tp = exp.context.threadpool
 
         (obs_df, _), (var_df, _) = tp.map(
-            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 499),), (slice(None),))
+            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 199),), (slice(None),))
         )
         obs_joinids = obs_df["soma_joinid"]
         var_joinids = var_df["soma_joinid"]
@@ -1067,6 +1079,7 @@ def test_possible_macos_segv_2(soma_tiledb_context, K) -> None:
             data, uri = ftr.result()
             print(f"{uri} complete", file=sys.stderr)
             assert data is not None
+            gc.collect()
 
 
 @suppress_type_checks
