@@ -32,7 +32,7 @@ def soma_tiledb_config() -> dict[str, Any] | None:
             "sm.mem.total_budget": 1 * 1024**3,
             "sm.memory_budget": 512 * 1024**2,
             "sm.memory_budget_var": 512 * 1024**2,
-            "soma.init_buffer_bytes": 32 * 1024**2,
+            "soma.init_buffer_bytes": 128 * 1024**2,
         }
     return tiledb_config
 

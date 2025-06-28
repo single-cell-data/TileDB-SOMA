@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import concurrent.futures
 import gc
 import json
 import os
@@ -987,57 +986,13 @@ def test_annotation_matrix_slots(
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@pytest.mark.parametrize("K", range(100))
-def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
-    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
-
-    def read_axis_df(axis_df, coords):
-        return axis_df.read(coords).concat(), axis_df.uri
-
-    def read_slot(slot_df, coords):
-        return slot_df.read(coords).tables().concat(), slot_df.uri
-
-    with soma.open(path.as_posix(), context=soma_tiledb_context) as exp:
-        tp = exp.context.threadpool
-
-        (obs_df, _), (var_df, _) = tp.map(
-            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 199),), (slice(None),))
-        )
-        obs_joinids = obs_df["soma_joinid"]
-        var_joinids = var_df["soma_joinid"]
-
-        slot_arrays = [
-            exp.ms["RNA"][C][K]
-            for C, K in [
-                ("X", "data"),
-                ("obsm", "X_pca"),
-                ("obsm", "X_draw_graph_fr"),
-                ("obsm", "X_tsne"),
-                ("obsm", "X_umap"),
-                ("obsp", "connectivities"),
-                ("obsp", "distances"),
-                ("varm", "PCs"),
-            ]
-        ]
-
-        futures = {tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)): slot_df.uri for slot_df in slot_arrays}
-        for ftr in concurrent.futures.as_completed(futures):
-            data, uri = ftr.result()
-            assert uri == futures[ftr]
-            futures.pop(ftr)
-            del ftr, data, uri
-            gc.collect()
-
-
-@pytest.mark.parametrize("K", range(50))
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize("obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [("PCs",)])
-def test_possible_macos_segv(
-    soma_tiledb_context, K, version, obsm_layers, obsp_layers, varm_layers, varp_layers
-) -> None:
+def test_possible_macos_segv(soma_tiledb_context, version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
+    # Chasing OOM in CI
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
