@@ -20,9 +20,8 @@ from ._util import TESTDATA
 @pytest.fixture(scope="session")
 def soma_tiledb_config() -> dict[str, Any] | None:
     # Configuration primarily focuses on memory usage, as the CI environment
-    # is often memory constrained. The smallest runners are currently 7GiB
-    # of RAM, whereas the TileDB core has a default memory budget exceeding
-    # 10GiB.
+    # is memory constrained. The smallest runners have 7GiB of RAM, whereas
+    # whereas the TileDB core has a default memory budget of 10GiB.
 
     # See https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables
     # for default variables in GHA.
@@ -42,7 +41,7 @@ def soma_tiledb_config() -> dict[str, Any] | None:
 
 @pytest.fixture(scope="module")
 def soma_tiledb_context(soma_tiledb_config: dict[str, Any] | None) -> tiledbsoma.SOMATileDBContext:
-    """Fixture which builds a SOMATileDBContext based on a reasonable default configuration."""
+    """Fixture which builds a SOMATileDBContext based on a reasonable (i.e., small) default configuration."""
     return tiledbsoma.SOMATileDBContext(tiledb_config=soma_tiledb_config)
 
 
