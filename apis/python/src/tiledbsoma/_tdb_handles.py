@@ -83,36 +83,20 @@ def open_handle_wrapper(
     clib_type: str | None = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
-    open_mode = _open_mode_to_clib_mode(mode)
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    _type_to_open = {
-        "somaarray": clib.SOMAArray.open,
-        "somagroup": clib.SOMAGroup.open,
-        "somadataframe": clib.SOMADataFrame.open,
-        "somapointclouddataframe": clib.SOMAPointCloudDataFrame.open,
-        "somageometrydataframe": clib.SOMAGeometryDataFrame.open,
-        "somadensendarray": clib.SOMADenseNDArray.open,
-        "somasparsendarray": clib.SOMASparseNDArray.open,
-        "somacollection": clib.SOMACollection.open,
-        "somaexperiment": clib.SOMAExperiment.open,
-        "somameasurement": clib.SOMAMeasurement.open,
-        "somascene": clib.SOMAScene.open,
-        "somamultiscaleimage": clib.SOMAMultiscaleImage.open,
-        None: clib.SOMAObject.open,
-    }
-
-    if clib_type is not None:
-        clib_type = clib_type.lower()
-
     try:
-        soma_object = _type_to_open[clib_type](
-            uri=uri,
-            mode=open_mode,
-            context=context.native_context,
-            timestamp=(0, timestamp_ms),
-        )
-    except (RuntimeError, SOMAError) as tdbe:
+        if clib_type is None:
+            clib_type = clib.get_soma_type_metadata_value(uri, context.native_context, (0, timestamp_ms))
+        elif clib_type.lower() == "somaarray":
+            clib_type = clib.get_soma_type_metadata_value_from_array(uri, context.native_context, (0, timestamp_ms))
+        elif clib_type.lower() == "somagroup":
+            clib_type = clib.get_soma_type_metadata_value_from_group(uri, context.native_context, (0, timestamp_ms))
+    except SOMAError as soma_err:
+        # Note: SOMAError is only raised above if the reference isn't a TileDB object or
+        # it doesn't have SOMA datatype metadata.
+        raise DoesNotExistError(soma_err) from soma_err
+    except RuntimeError as tdbe:
         if is_does_not_exist_error(tdbe):
             raise DoesNotExistError(tdbe) from tdbe
         raise SOMAError(tdbe) from tdbe
@@ -131,14 +115,9 @@ def open_handle_wrapper(
     }
 
     try:
-        return _type_to_class[soma_object.type.lower()].open(
-            uri=soma_object.uri,
-            mode=soma_object.mode,
-            context=context,
-            timestamp=soma_object.timestamp,
-        )
+        return _type_to_class[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
     except KeyError:
-        raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}") from None
+        raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 
 
 @attrs.define(eq=False, hash=False, slots=False)
