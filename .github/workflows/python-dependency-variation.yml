@@ -17,7 +17,6 @@ on:
 
 jobs:
   ci:
-    if: false
     strategy:
       fail-fast: false
       matrix:

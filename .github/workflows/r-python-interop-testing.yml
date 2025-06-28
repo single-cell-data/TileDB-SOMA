@@ -20,7 +20,6 @@ on:
 
 jobs:
   ci:
-    if: false
     strategy:
       matrix:
         include:

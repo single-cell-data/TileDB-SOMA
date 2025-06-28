@@ -17,7 +17,6 @@ on:
 
 jobs:
   codecov:
-    if: false
     runs-on: macos-latest
     steps:
     - name: Checkout TileDB-SOMA

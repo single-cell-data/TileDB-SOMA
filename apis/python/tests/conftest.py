@@ -24,6 +24,9 @@ def soma_tiledb_config() -> dict[str, Any] | None:
     # of RAM, whereas the TileDB core has a default memory budget exceeding
     # 10GiB.
 
+    # See https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables
+    # for default variables in GHA.
+
     tiledb_config: dict | None = None
 
     is_CI = os.getenv("CI", "false") == "true"

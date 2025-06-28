@@ -985,31 +985,5 @@ def test_annotation_matrix_slots(
             assert adata.varp[sm].shape[0] == adata.shape[1]
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
-
-@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
-@pytest.mark.parametrize("obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
-@pytest.mark.parametrize("obsp_layers", [("connectivities", "distances")])
-@pytest.mark.parametrize("varp_layers", [()])
-@pytest.mark.parametrize("varm_layers", [("PCs",)])
-def test_possible_macos_segv(soma_tiledb_context, version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
-    # Chasing OOM in CI
-    name = "pbmc3k_processed"
-    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
-    uri = str(path)
-    if not os.path.isdir(uri):
-        raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
-        )
-
-    with soma.open(uri, context=soma_tiledb_context) as exp:
-        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 199),))).to_anndata(
-            "data",
-            obsm_layers=obsm_layers,
-            obsp_layers=obsp_layers,
-            varp_layers=varp_layers,
-            varm_layers=varm_layers,
-        )
-        assert adata.n_obs == 200
-
     del adata
     gc.collect()
