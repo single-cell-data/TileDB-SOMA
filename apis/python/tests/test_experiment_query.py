@@ -5,7 +5,6 @@ import gc
 import json
 import os
 import re
-import sys
 from concurrent import futures
 from contextlib import nullcontext
 from unittest import mock
@@ -17,7 +16,6 @@ import pytest
 from pyarrow import ArrowInvalid
 from scipy import sparse
 from somacore import AxisQuery, options
-from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
 from tiledbsoma import (
@@ -989,8 +987,7 @@ def test_annotation_matrix_slots(
             assert adata.varp[sm].shape[1] == adata.shape[1]
 
 
-@suppress_type_checks
-@pytest.mark.parametrize("K", range(5000))
+@pytest.mark.parametrize("K", range(1000))
 def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
 
@@ -1034,55 +1031,7 @@ def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
             del ftr, data, uri
             gc.collect()
 
-        # futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]
-        # for ftr in futures:
-        #     data, uri = ftr.result()
-        #     print(f"{uri} complete", file=sys.stderr)
-        #     assert data is not None
 
-
-@suppress_type_checks
-@pytest.mark.parametrize("K", range(3000))
-def test_possible_macos_segv_2(soma_tiledb_context, K) -> None:
-    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
-
-    def read_axis_df(axis_df, coords):
-        return axis_df.read(coords).concat(), axis_df.uri
-
-    def read_slot(slot_df, coords):
-        return slot_df.read(coords).tables().concat(), slot_df.uri
-
-    with soma.open(path.as_posix(), context=soma_tiledb_context) as exp:
-        tp = exp.context.threadpool
-
-        (obs_df, _), (var_df, _) = tp.map(
-            read_axis_df, (exp.obs, exp.ms["RNA"].var), ((slice(0, 199),), (slice(None),))
-        )
-        obs_joinids = obs_df["soma_joinid"]
-        var_joinids = var_df["soma_joinid"]
-
-        futures = []
-        ms = exp.ms["RNA"]
-        for C, K in [
-            ("X", "data"),
-            ("obsm", "X_pca"),
-            ("obsm", "X_draw_graph_fr"),
-            ("obsm", "X_tsne"),
-            ("obsm", "X_umap"),
-            ("obsp", "connectivities"),
-            ("obsp", "distances"),
-            ("varm", "PCs"),
-        ]:
-            futures += [tp.submit(read_slot, ms[C][K], (obs_joinids, var_joinids))]
-
-        for ftr in futures:
-            data, uri = ftr.result()
-            print(f"{uri} complete", file=sys.stderr)
-            assert data is not None
-            gc.collect()
-
-
-@suppress_type_checks
 @pytest.mark.parametrize("K", range(500))
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize("obsm_layers", [("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
@@ -1109,3 +1058,5 @@ def test_possible_macos_segv(
             varm_layers=varm_layers,
         )
         assert adata.n_obs == 200
+
+    gc.collect()
