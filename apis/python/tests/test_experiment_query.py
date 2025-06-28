@@ -881,7 +881,7 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
         ['var_id not in ["S100A6", "CYBA", "NONESUCH"]', 1836],
     ],
 )
-def test_experiment_query_historical(version, obs_params, var_params):
+def test_experiment_query_historical(soma_tiledb_context, version, obs_params, var_params):
     """Checks that experiments written by older versions are still queryable."""
 
     name = "pbmc3k_processed"
@@ -902,7 +902,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
             return fallback
         return ""
 
-    with soma.open(uri) as exp:
+    with soma.open(uri, context=soma_tiledb_context) as exp:
         query = exp.axis_query(
             measurement_name="RNA",
             obs_query=AxisQuery(value_filter=obs_condition),
@@ -944,7 +944,9 @@ def test_experiment_query_historical(version, obs_params, var_params):
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
-def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
+def test_annotation_matrix_slots(
+    soma_tiledb_context, version, obsm_layers, obsp_layers, varm_layers, varp_layers
+) -> None:
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
@@ -953,7 +955,7 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
-    with soma.open(uri) as exp:
+    with soma.open(uri, context=soma_tiledb_context) as exp:
         adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
             "data",
             obsm_layers=obsm_layers,
@@ -987,7 +989,7 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
 
 @suppress_type_checks
 @pytest.mark.parametrize("K", range(5000))
-def test_possible_macos_segv_3(K) -> None:
+def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
 
     def read_axis_df(axis_df, coords):
@@ -996,7 +998,7 @@ def test_possible_macos_segv_3(K) -> None:
     def read_slot(slot_df, coords):
         return slot_df.read(coords).tables().concat(), slot_df.uri
 
-    with soma.open(path.as_posix()) as exp:
+    with soma.open(path.as_posix(), context=soma_tiledb_context) as exp:
         tp = exp.context.threadpool
 
         (obs_df, _), (var_df, _) = tp.map(
@@ -1029,7 +1031,7 @@ def test_possible_macos_segv_3(K) -> None:
 
 @suppress_type_checks
 @pytest.mark.parametrize("K", range(3000))
-def test_possible_macos_segv_2(K) -> None:
+def test_possible_macos_segv_2(soma_tiledb_context, K) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
 
     def read_axis_df(axis_df, coords):
@@ -1038,7 +1040,7 @@ def test_possible_macos_segv_2(K) -> None:
     def read_slot(slot_df, coords):
         return slot_df.read(coords).tables().concat(), slot_df.uri
 
-    with soma.open(path.as_posix()) as exp:
+    with soma.open(path.as_posix(), context=soma_tiledb_context) as exp:
         tp = exp.context.threadpool
 
         (obs_df, _), (var_df, _) = tp.map(
@@ -1074,7 +1076,9 @@ def test_possible_macos_segv_2(K) -> None:
 @pytest.mark.parametrize("obsp_layers", [("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [("PCs",)])
-def test_possible_macos_segv(K, version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
+def test_possible_macos_segv(
+    soma_tiledb_context, K, version, obsm_layers, obsp_layers, varm_layers, varp_layers
+) -> None:
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
@@ -1083,7 +1087,7 @@ def test_possible_macos_segv(K, version, obsm_layers, obsp_layers, varm_layers, 
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
-    with soma.open(uri) as exp:
+    with soma.open(uri, context=soma_tiledb_context) as exp:
         adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 199),))).to_anndata(
             "data",
             obsm_layers=obsm_layers,

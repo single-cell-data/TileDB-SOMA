@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import multiprocessing
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 import anndata
 import pytest
@@ -11,6 +15,32 @@ import tiledbsoma.io
 from tiledbsoma import Experiment
 
 from ._util import TESTDATA
+
+
+@pytest.fixture(scope="session")
+def soma_tiledb_config() -> dict[str, Any] | None:
+    # Configuration primarily focuses on memory usage, as the CI environment
+    # is often memory constrained. The smallest runners are currently 7GiB
+    # of RAM, whereas the TileDB core has a default memory budget exceeding
+    # 10GiB.
+
+    tiledb_config: dict | None = None
+
+    is_CI = os.getenv("CI", False)
+    if is_CI:
+        tiledb_config = {
+            "sm.mem.total_budget": 128 * 1024**2,
+            "sm.memory_budget": 64 * 1024**2,
+            "sm.memory_budget_var": 64 * 1024**2,
+            "soma.init_buffer_bytes": 32 * 1024**2,
+        }
+    return tiledb_config
+
+
+@pytest.fixture(scope="module")
+def soma_tiledb_context(soma_tiledb_config: dict[str, Any] | None) -> tiledbsoma.SOMATileDBContext:
+    """Fixture which builds a SOMATileDBContext based on a reasonable default configuration."""
+    return tiledbsoma.SOMATileDBContext(tiledb_config=soma_tiledb_config)
 
 
 @pytest.fixture
