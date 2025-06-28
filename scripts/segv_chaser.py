@@ -41,12 +41,12 @@ def test(i: int):
             for C, K in [
                 ("X", "data"),
                 ("obsm", "X_pca"),
-                # ("obsm", "X_draw_graph_fr"),
-                # ("obsm", "X_tsne"),
-                # ("obsm", "X_umap"),
-                # ("obsp", "connectivities"),
-                # ("obsp", "distances"),
-                # ("varm", "PCs"),
+                ("obsm", "X_draw_graph_fr"),
+                ("obsm", "X_tsne"),
+                ("obsm", "X_umap"),
+                ("obsp", "connectivities"),
+                ("obsp", "distances"),
+                ("varm", "PCs"),
             ]
         ]
         futures = [tp.submit(read_slot, slot_df, (obs_joinids, var_joinids)) for slot_df in slot_arrays]

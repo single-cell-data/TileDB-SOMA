@@ -1012,7 +1012,7 @@ def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
         slot_arrays = [
             exp.ms["RNA"][C][K]
             for C, K in [
-                # ("X", "data"),    # num 6
+                ("X", "data"),
                 ("obsm", "X_pca"),
                 ("obsm", "X_draw_graph_fr"),
                 ("obsm", "X_tsne"),
