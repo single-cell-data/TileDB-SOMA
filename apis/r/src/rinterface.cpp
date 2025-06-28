@@ -88,7 +88,7 @@ SEXP soma_array_reader(
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
     auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, somactx, tsrng);
 
-    auto mq = tdbs::ManagedQuery(*sr, somactx->tiledb_ctx(), "unnamed");
+    auto mq = sr->create_managed_query("unnamed");
     mq.set_layout(tdb_result_order);
     if (!column_names.empty()) {
         mq.select_columns(column_names);
@@ -214,7 +214,7 @@ void set_log_level(const std::string& level) {
 // [[Rcpp::export]]
 Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& colnames) {
     auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri);
-    auto mq = tdbs::ManagedQuery(*sr, sr->ctx()->tiledb_ctx());
+    auto mq = sr->create_managed_query();
     auto sr_data = mq.read_next();
     size_t n = colnames.size();
     Rcpp::CharacterVector vs(n);

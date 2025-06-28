@@ -135,7 +135,7 @@ struct VariouslyIndexedDataFrameFixture {
         }
         char_offsets.push_back(offset);
 
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
         mq.setup_write_column(i64_name, i64_data.size(), i64_data.data(), (uint64_t*)nullptr);
         mq.setup_write_column(str_name, strings.size(), char_data.data(), char_offsets.data());
         mq.setup_write_column(u32_name, u32_data.size(), u32_data.data(), (uint64_t*)nullptr);
@@ -337,7 +337,7 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        ManagedQuery external_query(*open(OpenMode::soma_read), ctx_->tiledb_ctx());
+        auto external_query = open(OpenMode::soma_read)->create_managed_query();
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, 1234);
@@ -484,7 +484,7 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        ManagedQuery external_query(*open(OpenMode::soma_read), ctx_->tiledb_ctx());
+        auto external_query = open(OpenMode::soma_read)->create_managed_query();
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, 1234);

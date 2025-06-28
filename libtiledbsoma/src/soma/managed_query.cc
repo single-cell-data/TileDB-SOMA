@@ -18,7 +18,6 @@
 
 #include <unordered_set>
 
-#include "soma_array.h"
 #include "utils/common.h"
 #include "utils/logger.h"
 #include "utils/util.h"
@@ -36,14 +35,6 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::shared_ptr<Context
     , array_(array)
     , name_(name)
     , schema_(std::make_shared<ArraySchema>(array->schema())) {
-    reset();
-}
-
-ManagedQuery::ManagedQuery(SOMAArray array, std::shared_ptr<Context> ctx, std::string_view name)
-    : ctx_(ctx)
-    , array_(array.arr_)
-    , name_(name)
-    , schema_(std::make_shared<ArraySchema>(array.arr_->schema())) {
     reset();
 }
 
