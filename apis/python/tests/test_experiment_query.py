@@ -939,7 +939,7 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
         assert adata.var.index.name == "var_id"
 
 
-@pytest.mark.parametrize("version", ["1.16.1"])
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
@@ -990,9 +990,6 @@ def test_annotation_matrix_slots(
 @pytest.mark.parametrize("K", range(1000))
 def test_possible_macos_segv_3(soma_tiledb_context, K) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.7.3" / "pbmc3k_processed"
-
-    if K == 1:
-        print(soma_tiledb_context.native_context.config())
 
     def read_axis_df(axis_df, coords):
         return axis_df.read(coords).concat(), axis_df.uri
@@ -1059,4 +1056,5 @@ def test_possible_macos_segv(
         )
         assert adata.n_obs == 200
 
+    del adata
     gc.collect()

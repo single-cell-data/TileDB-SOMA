@@ -13,10 +13,10 @@ faulthandler.enable()
 def test(i: int):
     path = "./data/soma-experiment-versions-2025-04-04/1.7.3/pbmc3k_processed"
     tiledb_config = {
-        "sm.mem.total_budget": 128 * 1024**2,
+        "sm.mem.total_budget": 1 * 1024**3,
         "sm.memory_budget": 64 * 1024**2,
         "sm.memory_budget_var": 64 * 1024**2,
-        "soma.init_buffer_bytes": 32 * 1024**2,
+        "soma.init_buffer_bytes": 8 * 1024**2,
     }
 
     def read_axis_df(axis_df, coords):

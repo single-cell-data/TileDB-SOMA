@@ -29,8 +29,9 @@ def soma_tiledb_config() -> dict[str, Any] | None:
     is_CI = os.getenv("CI", "false") == "true"
     if is_CI:
         tiledb_config = {
-            "sm.memory_budget": 32 * 1024**2,
-            "sm.memory_budget_var": 32 * 1024**2,
+            "sm.mem.total_budget": 1 * 1024**3,
+            "sm.memory_budget": 64 * 1024**2,
+            "sm.memory_budget_var": 64 * 1024**2,
             "soma.init_buffer_bytes": 8 * 1024**2,
         }
     return tiledb_config
