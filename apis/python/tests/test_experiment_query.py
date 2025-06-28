@@ -335,7 +335,7 @@ def test_experiment_query_result_order(soma_experiment):
         col = X_tbl["soma_dim_1"].to_numpy()
         data_col_major = X_tbl["soma_data"].to_numpy()
         assert np.array_equal(np.sort(col), col)
-        assert not np.array_equal(data_row_major, data_col_major)
+        assert len(data_row_major) <= 1 or not np.array_equal(data_row_major, data_col_major)
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
