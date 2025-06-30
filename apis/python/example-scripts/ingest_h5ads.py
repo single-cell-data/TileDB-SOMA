@@ -65,7 +65,7 @@ from concurrent.futures import Executor, Future, ProcessPoolExecutor
 from itertools import repeat
 from typing import Any, Callable, Iterable, Iterator, TypeVar
 
-import anndata
+import anndata as ad
 
 import tiledbsoma
 import tiledbsoma.io
@@ -102,15 +102,15 @@ def main():
     context = tiledbsoma.SOMATileDBContext(tiledb_config=TileDBCloudConfig)
 
     ##
-    ## Step 1 - create Experiment (empty)
+    # Step 1 - create Experiment (empty)
     ##
     if not args.append:
         tiledbsoma.io.from_anndata(
             experiment_uri,
             (
-                anndata.read_h5ad(h5ad_paths[0], backed="r")
+                ad.read_h5ad(h5ad_paths[0], backed="r")
                 if not args.normalize
-                else normalize_anndata(anndata.read_h5ad(h5ad_paths[0], backed="r"))
+                else normalize_anndata(ad.read_h5ad(h5ad_paths[0], backed="r"))
             ),
             measurement_name=args.measurement_name,
             obs_id_name=args.obs_id_name,
@@ -122,13 +122,13 @@ def main():
         logger.info("Experiment created")
 
     ##
-    ## Step 2 - build ingestion plan
+    # Step 2 - build ingestion plan
     ##
     logger.info("Registering all H5ADs")
     if args.normalize:
         registration_mapping = tiledbsoma.io.register_anndatas(
             experiment_uri,
-            (normalize_anndata(anndata.read_h5ad(p, backed="r")) for p in h5ad_paths),
+            (normalize_anndata(ad.read_h5ad(p, backed="r")) for p in h5ad_paths),
             measurement_name=args.measurement_name,
             obs_field_name=args.obs_id_name,
             var_field_name=args.var_id_name,
@@ -150,13 +150,13 @@ def main():
     )
 
     ##
-    ## Step 3 - evolve the experiment in preparation for parallel ingest
+    # Step 3 - evolve the experiment in preparation for parallel ingest
     ##
     registration_mapping.prepare_experiment(experiment_uri, context=context)
     logger.info("Experiment prepared for ingestion.")
 
     ##
-    ## Step 4 - parallel ingest each H5AD
+    # Step 4 - parallel ingest each H5AD
     ##
     with ProcessPoolExecutor(max_workers=args.num_workers, initializer=logger_setup, max_tasks_per_child=1) as ppe:
         # Use a lazy executor so that the params which consume a lot of memory (e.g.,registration_map)
@@ -184,7 +184,7 @@ def main():
     return 0
 
 
-def normalize_anndata(adata: anndata.AnnData) -> anndata.AnnData:
+def normalize_anndata(adata: ad.AnnData) -> ad.AnnData:
     """Hook to perform any required AnnData on-the-fly "normalization" steps, at dataloading
     time, such as removing obsp/varp, cleaning up uns, etc.
 
@@ -229,10 +229,10 @@ def worker_load_dataset(
 
     if normalize:
         # load AnnData and call the user-defined normalized hook
-        ad = normalize_anndata(anndata.read_h5ad(filename))
+        adata = normalize_anndata(ad.read_h5ad(filename))
         tiledbsoma.io.from_anndata(
             experiment_uri,
-            ad,
+            adata,
             measurement_name=measurement_name,
             obs_id_name=obs_id_name,
             var_id_name=var_id_name,
@@ -241,7 +241,7 @@ def worker_load_dataset(
             registration_mapping=registration_mapping,
             context=context,
         )
-        del ad
+        del adata
 
     else:
         # just ingest the H5AD directly

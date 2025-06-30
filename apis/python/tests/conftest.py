@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-import anndata
+import anndata as ad
 import pytest
 from anndata import AnnData
 
@@ -54,7 +54,7 @@ def conftest_pbmc_small_h5ad_path(request) -> Path:
 @pytest.fixture
 def conftest_pbmc_small(conftest_pbmc_small_h5ad_path) -> AnnData:
     """Tiny (80x20) AnnData, useful for unit-test / CI runs."""
-    return anndata.read_h5ad(conftest_pbmc_small_h5ad_path)
+    return ad.read_h5ad(conftest_pbmc_small_h5ad_path)
 
 
 @pytest.fixture
@@ -90,7 +90,7 @@ def conftest_pbmc3k_h5ad_path(request) -> Path:
 @pytest.fixture
 def conftest_pbmc3k_adata(conftest_pbmc3k_h5ad_path):
     """Larger (2638x1838) AnnData, which also includes obsm, obsp, and varm arrays."""
-    return anndata.read_h5ad(conftest_pbmc3k_h5ad_path)
+    return ad.read_h5ad(conftest_pbmc3k_h5ad_path)
 
 
 multiprocessing.set_start_method("spawn", force=True)

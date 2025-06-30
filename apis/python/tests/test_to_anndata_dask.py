@@ -123,6 +123,8 @@ sweep_queries = pytest.mark.parametrize(
         (filter("nCount_RNA > 100"), filter('attr("vst.variance.standardized") > 2.0'), (62, 5), 310),
     ],
 )
+
+
 # fmt: on
 @sweep_queries
 @pytest.mark.parametrize("obs_chunk_size", [20, 30, 80, 100])

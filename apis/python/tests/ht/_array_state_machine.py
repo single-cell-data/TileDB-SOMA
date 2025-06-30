@@ -91,7 +91,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.mode = None
 
     ##
-    ## ---- Open/close state
+    # ---- Open/close state
     ##
 
     @precondition(lambda self: self.is_initialized)
@@ -131,7 +131,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.mode = mode
 
     ##
-    ## --- metadata
+    # --- metadata
     ##
     METADATA_KEY_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
     METADATA_KEYS = st.text(min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET).filter(
@@ -218,7 +218,7 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         self.shape = tuple((shape[i] or 1) for i in range(len(shape)))  # XXX TODO: shape should be a ledger
 
     ##
-    ## --- schema
+    # --- schema
     ##
 
     @precondition(lambda self: not self.closed)
@@ -234,7 +234,7 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         assert self.A.schema == self.schema
 
     ##
-    ## --- shape
+    # --- shape
     ##
 
     @precondition(lambda self: not self.closed)

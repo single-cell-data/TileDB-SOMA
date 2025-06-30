@@ -5,7 +5,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy
+import scanpy as sc
 import scipy.sparse as sp
 
 import tiledbsoma as soma
@@ -120,7 +120,7 @@ def test_from_visium(tmp_path, version, visium_v1_path, visium_v2_path):
     visium_paths = spatial_io.VisiumPaths.from_base_folder(visium_dir_path)
     settings = ad.settings.override(check_uniqueness=False) if hasattr(ad, "settings") else nullcontext()
     with settings:
-        adata = scanpy.read_10x_h5(visium_paths.gene_expression)
+        adata = sc.read_10x_h5(visium_paths.gene_expression)
 
     # Set URI for output data.
     uri = f"{tmp_path.as_uri()}/from_visium_for_visium_{version}"

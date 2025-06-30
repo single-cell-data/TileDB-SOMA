@@ -21,7 +21,7 @@ from typing import (
     get_args,
 )
 
-import anndata
+import anndata as ad
 import deepdiff
 import hypothesis as ht
 import numpy as np
@@ -178,7 +178,7 @@ def keys() -> st.SearchStrategy[str]:
 
 
 # AnnData <= 0.10 does not support scipy sparse_array
-if Version(anndata.__version__) >= Version("0.11.0"):
+if Version(ad.__version__) >= Version("0.11.0"):
     MatrixFormats = Literal["csr_matrix", "csc_matrix", "csr_array", "csc_array", "ndarray", "ma"]
 else:
     MatrixFormats = Literal["csr_matrix", "csc_matrix", "ndarray", "ma"]
@@ -396,7 +396,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
 
 
 @st.composite
-def anndatas(draw: st.DrawFn) -> anndata.AnnData:
+def anndatas(draw: st.DrawFn) -> ad.AnnData:
     """
     Generate a non-empty (i.e., minimum shape (1,1) anndata)
     """
@@ -423,7 +423,7 @@ def anndatas(draw: st.DrawFn) -> anndata.AnnData:
     # of raw.X/raw.var on the obs axis.
     raw = {"X": X, "var": var}
 
-    adata = anndata.AnnData(
+    adata = ad.AnnData(
         X=X,
         obs=obs,
         var=var,
@@ -480,7 +480,7 @@ def ndarray_equal(a: np.ndarray, b: np.ndarray) -> bool:
         return np.array_equal(a, b)
 
 
-def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) -> None:
+def assert_uns_equal(src_adata: ad.AnnData, read_adata: ad.Anndata) -> None:
     """
     src_adata is original in-mem AnnData (oracle)
     read_adata is the read-back round-tripped AnnData created by tiledbsoma.io
@@ -525,7 +525,7 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
         del diff["type_changes"]
 
 
-def assert_anndata_equal(src_adata: anndata.AnnData, read_adata: anndata.AnnData) -> None:
+def assert_anndata_equal(src_adata: ad.AnnData, read_adata: ad.AnnData) -> None:
     assert (
         src_adata.shape == read_adata.shape
         and src_adata.n_obs == read_adata.n_obs
@@ -564,7 +564,7 @@ def assert_anndata_equal(src_adata: anndata.AnnData, read_adata: anndata.AnnData
 )
 def test_roundtrip_from_anndata_to_anndata(
     data: st.DataFn,
-    adata: anndata.AnnData,
+    adata: ad.AnnData,
     measurement_name: str,
     context: tiledbsoma.SOMATileDBContext | None,
     tmp_path_factory,  # fixture

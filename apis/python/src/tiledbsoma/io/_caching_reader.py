@@ -1,3 +1,5 @@
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+
 from __future__ import annotations
 
 import ctypes

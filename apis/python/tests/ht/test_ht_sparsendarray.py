@@ -224,7 +224,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         self.A = soma.SparseNDArray.open(self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp)
 
     ##
-    ## --- schema
+    # --- schema
     ##
     @precondition(lambda self: not self.closed)
     @invariant()
@@ -234,7 +234,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         assert self.A.is_sparse
 
     ##
-    ## --- data
+    # --- data
     ##
 
     @precondition(lambda self: not self.closed and self.mode == "r")

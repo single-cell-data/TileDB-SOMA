@@ -581,7 +581,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         self.A = soma.DataFrame.open(self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp)
 
     ##
-    ## --- schema
+    # --- schema
     ##
 
     @precondition(lambda self: not self.closed)
@@ -599,7 +599,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         assert self.index_column_names == self.A.index_column_names
 
     ##
-    ## --- domain
+    # --- domain
     ##
 
     @precondition(lambda self: not self.closed)
@@ -657,7 +657,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         assert self.A.closed
 
     ##
-    ## --- data
+    # --- data
     ##
 
     @precondition(lambda self: not self.closed and self.mode == "r")

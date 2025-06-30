@@ -7,7 +7,7 @@ import os
 import sys
 
 import pytest
-import scanpy
+import scanpy as sc
 
 import tiledbsoma
 import tiledbsoma.io
@@ -48,7 +48,7 @@ def test_basic_write(conftest_context, conftest_namespace, conftest_default_s3_p
         conftest_default_s3_path,
     )
 
-    adata = scanpy.datasets.pbmc3k()
+    adata = sc.datasets.pbmc3k()
 
     tiledbsoma.io.from_anndata(
         creation_uri,

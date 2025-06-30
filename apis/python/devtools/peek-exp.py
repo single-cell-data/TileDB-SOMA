@@ -4,9 +4,9 @@
 
 import sys
 
-import anndata
-import numpy
-import pandas
+import anndata  # noqa: ICN001
+import numpy  # noqa: ICN001
+import pandas  # noqa: ICN001
 import scipy  # noqa: F401
 
 import tiledbsoma
