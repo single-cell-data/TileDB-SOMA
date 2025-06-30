@@ -66,9 +66,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
 
     # Stringify types skipping the soma_joinid field (it is specific to SOMA data
     # and does not exist in AnnData/H5AD).
-    arrow_columns = {name: _stringify_type(schema.field(name).type) for name in schema.names if name != "soma_joinid"}
-
-    return arrow_columns
+    return {name: _stringify_type(schema.field(name).type) for name in schema.names if name != "soma_joinid"}
 
 
 def _prepare_df_for_ingest(df: pd.DataFrame, id_column_name: str | None) -> str | None:
@@ -202,8 +200,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
 
 def csr_from_coo_table(tbl: pa.Table, num_rows: int, num_cols: int, context: SOMATileDBContext) -> sp.csr_matrix:
     """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrix``."""
-    s = CompressedMatrix.from_soma(tbl, (num_rows, num_cols), "csr", True, context).to_scipy()
-    return s
+    return CompressedMatrix.from_soma(tbl, (num_rows, num_cols), "csr", True, context).to_scipy()
 
 
 def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
@@ -303,7 +300,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
     for field in arrow_table.schema:
         if field.name == "__index_level_0__":
             continue
-        elif pa.types.is_dictionary(field.type):
+        if pa.types.is_dictionary(field.type):
             old_index_type = field.type.index_type
             new_index_type = pa.int32() if old_index_type in [pa.int8(), pa.int16()] else old_index_type
             # This is part two of what we need to do to get null-filled Pandas
@@ -321,9 +318,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
             new_map[field.name] = field.type
     new_schema = pa.schema(new_map, metadata=arrow_table.schema.metadata)
 
-    arrow_table = pa.Table.from_pandas(df, schema=new_schema)
-
-    return arrow_table
+    return pa.Table.from_pandas(df, schema=new_schema)
 
 
 def df_to_arrow_schema(df: pd.DataFrame, default_index_name: str) -> pa.Schema:
@@ -334,5 +329,4 @@ def df_to_arrow_schema(df: pd.DataFrame, default_index_name: str) -> pa.Schema:
     df = df.head(1).copy()  # since reset_index can be expensive on full data
     _prepare_df_for_ingest(df, default_index_name)
     arrow_table = df_to_arrow_table(df)
-    arrow_schema = arrow_table.schema.remove_metadata()
-    return arrow_schema
+    return arrow_table.schema.remove_metadata()

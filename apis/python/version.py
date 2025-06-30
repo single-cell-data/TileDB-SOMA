@@ -154,13 +154,11 @@ def get_default_remote() -> str | None:
         tracked_remote = tracked_branch.split("/")[0]
         err(f"Parsed tracked remote {tracked_remote} from branch {tracked_branch}")
         return tracked_remote
-    else:
-        remote = line("git", "remote")
-        if remote:
-            err(f"Checking tags at default/only remote {remote}")
-            return remote
-        else:
-            return None
+    remote = line("git", "remote")
+    if remote:
+        err(f"Checking tags at default/only remote {remote}")
+        return remote
+    return None
 
 
 def get_git_version() -> str | None:
@@ -223,16 +221,13 @@ def get_git_version() -> str | None:
         sha_base10 = get_sha_base10()
         if sha_base10:
             return f"{latest_tag}.post0.dev{sha_base10}"
-        else:
-            err("Failed to find current SHA")
-            return None
-    else:
-        commits = int(m.group("commits"))
-        if commits:
-            sha_base10 = int(m.group("sha"), 16)
-            return f"{ver}.post{commits}.dev{sha_base10}"
-        else:
-            return ver
+        err("Failed to find current SHA")
+        return None
+    commits = int(m.group("commits"))
+    if commits:
+        sha_base10 = int(m.group("sha"), 16)
+        return f"{ver}.post{commits}.dev{sha_base10}"
+    return ver
 
 
 def read_release_version() -> str | None:

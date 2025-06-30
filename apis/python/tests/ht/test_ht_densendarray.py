@@ -81,13 +81,12 @@ def dense_indices(draw: st.DrawFn, shape: tuple[int, ...]) -> tuple[int | slice,
     def one_dim(s: int) -> int | slice:
         if draw(st.booleans()):
             return draw(st.integers(min_value=0, max_value=s))
-        else:
-            element = st.integers(min_value=0, max_value=s)
-            a, b = draw(element), draw(element)
-            a, b = (a, b) if a <= b else (b, a)
-            if a == 0 and b == s and draw(st.booleans()):
-                return slice(None)
-            return slice(a, b, None)
+        element = st.integers(min_value=0, max_value=s)
+        a, b = draw(element), draw(element)
+        a, b = (a, b) if a <= b else (b, a)
+        if a == 0 and b == s and draw(st.booleans()):
+            return slice(None)
+        return slice(a, b, None)
 
     return tuple(one_dim(s) for s in shape)
 

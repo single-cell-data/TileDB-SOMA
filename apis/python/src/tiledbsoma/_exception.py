@@ -13,16 +13,12 @@ class SOMAError(Exception):
     Lifecycle: Maturing.
     """
 
-    pass
-
 
 class DoesNotExistError(SOMAError):
     """Raised when attempting to open a non-existent or inaccessible SOMA object.
 
     Lifecycle: Maturing.
     """
-
-    pass
 
 
 def is_does_not_exist_error(e: RuntimeError | SOMAError) -> bool:
@@ -62,8 +58,6 @@ class AlreadyExistsError(SOMAError):
     Lifecycle: Maturing.
     """
 
-    pass
-
 
 def is_already_exists_error(e: SOMAError) -> bool:
     """Given a SOMAError, return true if it indicates the object already exists.
@@ -91,8 +85,6 @@ class NotCreateableError(SOMAError):
 
     Lifecycle: Maturing
     """
-
-    pass
 
 
 def is_duplicate_group_key_error(e: SOMAError) -> bool:

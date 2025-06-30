@@ -122,7 +122,7 @@ def dataframe_indexes(draw: st.DrawFn, size: int, name: str) -> st.SearchStrateg
         return ht_pd.range_indexes(min_size=size, max_size=size, name=st.just(f"{name}_index"))
 
     elements, dtype = elements_and_dtypes(draw(df_index_dtypes()), is_index=True)
-    indexes = ht_pd.indexes(
+    return ht_pd.indexes(
         min_size=size,
         max_size=size,
         name=st.just(f"{name}_index"),
@@ -130,7 +130,6 @@ def dataframe_indexes(draw: st.DrawFn, size: int, name: str) -> st.SearchStrateg
         elements=elements,
         unique=True,
     )
-    return indexes
 
 
 @st.composite
@@ -245,14 +244,13 @@ def matrixes(
 
     if format == "ma":
         return np.ma.masked_array(vals, mask=mask)
-    elif format in ("csr_matrix", "csr_array"):
+    if format in ("csr_matrix", "csr_array"):
         vals.reshape((size,))[masked] = 0
         return sp.csr_matrix(vals) if format == "csr_matrix" else sp.csr_array(vals)
-    elif format in ("csc_matrix", "csc_array"):
+    if format in ("csc_matrix", "csc_array"):
         vals.reshape((size,))[masked] = 0
         return sp.csc_matrix(vals) if format == "csc_matrix" else sp.csc_array(vals)
-    else:
-        raise ValueError(f"oops, bad code - missing format path for {format}")
+    raise ValueError(f"oops, bad code - missing format path for {format}")
 
 
 @st.composite
@@ -423,7 +421,7 @@ def anndatas(draw: st.DrawFn) -> ad.AnnData:
     # of raw.X/raw.var on the obs axis.
     raw = {"X": X, "var": var}
 
-    adata = ad.AnnData(
+    return ad.AnnData(
         X=X,
         obs=obs,
         var=var,
@@ -435,8 +433,6 @@ def anndatas(draw: st.DrawFn) -> ad.AnnData:
         varp=varp,
         raw=raw,
     )
-
-    return adata
 
 
 def assert_matrix_equal(m1: np.ndarray | sp.sparray | None, m2: np.ndarray | sp.sparray | None) -> None:
@@ -476,8 +472,7 @@ def ndarray_equal(a: np.ndarray, b: np.ndarray) -> bool:
     """
     if np.issubdtype(a.dtype, np.floating) or np.issubdtype(b.dtype, np.floating):
         return np.allclose(a, b, equal_nan=True)
-    else:
-        return np.array_equal(a, b)
+    return np.array_equal(a, b)
 
 
 def assert_uns_equal(src_adata: ad.AnnData, read_adata: ad.Anndata) -> None:

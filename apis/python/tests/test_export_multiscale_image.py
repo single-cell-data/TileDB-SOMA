@@ -43,8 +43,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
         # Create very small downsample and write to it.
         l2 = image.add_new_level("level2", shape=(3, 8, 8))
         l2.write(coords, pa.Tensor.from_numpy(sample_2d_data[2]))
-    image2d = soma.MultiscaleImage.open(image_uri)
-    return image2d
+    return soma.MultiscaleImage.open(image_uri)
 
 
 @pytest.mark.parametrize(

@@ -29,8 +29,7 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
         point_cloud.write(data)
         point_cloud.metadata["soma_geometry"] = 2.0
         point_cloud.metadata["soma_geometry_type"] = "radius"
-    point_cloud = soma.PointCloudDataFrame.open(uri)
-    return point_cloud
+    return soma.PointCloudDataFrame.open(uri)
 
 
 @pytest.mark.parametrize(

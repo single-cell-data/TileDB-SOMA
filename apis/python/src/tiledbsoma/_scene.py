@@ -263,7 +263,7 @@ class Scene(
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @_funcs.forwards_kwargs_to(MultiscaleImage.create, exclude=("context", "tiledb_timestamp"))
     def add_new_multiscale_image(
@@ -475,7 +475,7 @@ class Scene(
 
         Lifecycle: experimental
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def set_transform_to_multiscale_image(
         self,

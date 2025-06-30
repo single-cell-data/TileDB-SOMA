@@ -256,9 +256,8 @@ class CompressedMatrix:
             matrix._has_canonical_format = True
             return matrix
 
-        else:
-            return (
-                scipy.sparse.csr_matrix((data, indices, indptr), shape=shape)
-                if format == "csr"
-                else scipy.sparse.csc_matrix((data, indices, indptr), shape=shape)
-            )
+        return (
+            scipy.sparse.csr_matrix((data, indices, indptr), shape=shape)
+            if format == "csr"
+            else scipy.sparse.csc_matrix((data, indices, indptr), shape=shape)
+        )

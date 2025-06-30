@@ -41,19 +41,18 @@ def resolve_dtype(
         dtype = draw(dtype)
     if isinstance(dtype, pa.DataType):
         dtype = dtype.to_pandas_dtype()
-    dtype = np.dtype(dtype)
-    return dtype
+    return np.dtype(dtype)
 
 
 def from_datatype(datatype: pa.DataType, *args, **kwargs) -> st.SearchStrategy[pa.Scalar]:
     """Strategy to return an element of the given type."""
     if datatype in [pa.binary(), pa.large_binary()]:
         return st.binary(*args, **kwargs).map(lambda v: pa.scalar(v, type=datatype))
-    elif datatype in [pa.string(), pa.large_string()]:
+    if datatype in [pa.string(), pa.large_string()]:
         return st.text(*args, **kwargs).map(lambda v: pa.scalar(v, type=datatype))
-    elif datatype == pa.null():
+    if datatype == pa.null():
         return st.none()
-    elif pa.types.is_timestamp(datatype):
+    if pa.types.is_timestamp(datatype):
         allow_nan = kwargs.get("allow_nan", False)
 
         # NEP-7 defines the NaT value as integer -2**63
@@ -66,10 +65,9 @@ def from_datatype(datatype: pa.DataType, *args, **kwargs) -> st.SearchStrategy[p
             else st.integers(min_value.value, max_value.value)
         )
         return elems.map(lambda v: pa.scalar(v, type=datatype))
-    else:
-        return ht_np.from_dtype(np.dtype(datatype.to_pandas_dtype()), *args, **kwargs).map(
-            lambda v: pa.scalar(v, type=datatype),
-        )
+    return ht_np.from_dtype(np.dtype(datatype.to_pandas_dtype()), *args, **kwargs).map(
+        lambda v: pa.scalar(v, type=datatype),
+    )
 
 
 def tiledb_timestamps(from_future: bool = False):
@@ -251,7 +249,7 @@ def dataframe_datatype() -> st.SearchStrategy[pa.DataType]:
 @st.composite
 def arrow_schema_field_name(draw: st.DrawFn) -> str:
     # TileDB attribute names may not start with '__', and SOMA fields may not start with `soma_`
-    elements = st.text(min_size=1).filter(lambda n: not (n.startswith("__") or n.startswith("soma_")))
+    elements = st.text(min_size=1).filter(lambda n: not (n.startswith(("__", "soma_"))))
     if HT_TEST_CONFIG["sc-61291_workaround"]:
         elements = elements.filter(lambda n: "\x00" not in n)
     return draw(elements)
@@ -589,7 +587,7 @@ def field_to_large_type_equivalent(f: pa.Field) -> pa.Field:
                     ordered=f.type.ordered,
                 ),
             )
-        elif pa.types.is_binary(f.type.value_type):
+        if pa.types.is_binary(f.type.value_type):
             return f.with_type(
                 pa.dictionary(
                     index_type=f.type.index_type,
@@ -597,14 +595,12 @@ def field_to_large_type_equivalent(f: pa.Field) -> pa.Field:
                     ordered=f.type.ordered,
                 ),
             )
-        else:
-            return f
-    elif pa.types.is_string(f.type):
-        return f.with_type(pa.large_string())
-    elif pa.types.is_binary(f.type):
-        return f.with_type(pa.large_binary())
-    else:
         return f
+    if pa.types.is_string(f.type):
+        return f.with_type(pa.large_string())
+    if pa.types.is_binary(f.type):
+        return f.with_type(pa.large_binary())
+    return f
 
 
 def schemas_equal(

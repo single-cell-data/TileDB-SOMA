@@ -51,8 +51,7 @@ def extract_tiledb_data(data: ProfileData, metric: str) -> Union[int, float, Non
             return value
         perf_match = re.match(rf"\s+\"{metric}\": (\d+)\s*,", line)
         if perf_match:
-            value = int(perf_match.groups()[0])
-            return value
+            return int(perf_match.groups()[0])
     return None
 
 
@@ -61,8 +60,7 @@ def extract_context_data(data: ProfileData, metric: str) -> Union[int, float, No
     context = data.context
     if metric in context.keys():
         return context[metric]
-    else:
-        raise Exception(f"context does not have the following metric {metric}")
+    raise Exception(f"context does not have the following metric {metric}")
 
 
 def create_pandas_df(profile_datas: list[ProfileData]) -> pd.DataFrame:

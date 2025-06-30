@@ -124,8 +124,7 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
 
     if n_partitions > 1:  # don't consume threads unless there is a reason to do so
         return pa.concat_tables(X.context.threadpool.map(_read_sparse_X, (X,) * n_partitions, partitions))
-    else:
-        return _read_sparse_X(X, partitions[0])
+    return _read_sparse_X(X, partitions[0])
 
 
 if TYPE_CHECKING:
@@ -157,14 +156,14 @@ def _extract_X_key(
             **dask,
         )
     # Read data from SOMA into memory
-    elif isinstance(X, DenseNDArray):
+    if isinstance(X, DenseNDArray):
 
         def _read_dense_X(A: DenseNDArray) -> Matrix:
             return A.read((slice(None), slice(None))).to_numpy()
 
         return tp.submit(_read_dense_X, X)
 
-    elif isinstance(X, SparseNDArray):
+    if isinstance(X, SparseNDArray):
 
         def _read_X_partitions() -> Matrix:
             stk_of_coo = _read_partitioned_sparse(X, nobs)
@@ -172,8 +171,7 @@ def _extract_X_key(
 
         return X.context.threadpool.submit(_read_X_partitions)
 
-    else:
-        raise TypeError(f"Unexpected NDArray type {type(X)}")
+    raise TypeError(f"Unexpected NDArray type {type(X)}")
 
 
 def _read_dataframe(
@@ -468,10 +466,9 @@ def _extract_obsm_or_varm(
         raise ValueError(f"expected shape == 2; got {shape}")
 
     if isinstance(soma_nd_array, DenseNDArray):
-        matrix = soma_nd_array.read().to_numpy()
         # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python
         # 3.8 and we still support Python 3.7
-        return matrix
+        return soma_nd_array.read().to_numpy()
 
     matrix_tbl = _read_partitioned_sparse(soma_nd_array, num_rows)
 
@@ -554,15 +551,14 @@ def _extract_uns(
                 if hint == _UNS_OUTGEST_HINT_1D:
                     pdf = element.read().concat().to_pandas()
                     return _outgest_uns_1d_string_array(pdf, element.uri)
-                elif hint == _UNS_OUTGEST_HINT_2D:
+                if hint == _UNS_OUTGEST_HINT_2D:
                     pdf = element.read().concat().to_pandas()
                     return _outgest_uns_2d_string_array(pdf, element.uri)
-                else:
-                    if hint is not None:
-                        logging.log_io_same(
-                            f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame",
-                        )
-                    return _read_dataframe(element, fallback_index_name="index")
+                if hint is not None:
+                    logging.log_io_same(
+                        f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame",
+                    )
+                return _read_dataframe(element, fallback_index_name="index")
 
             extracted[key] = tp.submit(_outgest_df, element, hint, key, collection)
 

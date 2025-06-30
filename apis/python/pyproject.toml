@@ -37,10 +37,16 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "FA",   # flake8-future-annotations
     "I",    # isort
     "ICN",  # flake8-import-conventions
+    "INP",  # flake8-no-pep420
     "ISC",  # flake8-implicit-str-concat
     "LOG",  # flake8-logging
+    "PIE",  # flake8-pie
     "S",    # flake8-bandit
     "T10",  # flake8-debugger
+    "T20",  # flake8-print
+    "Q",    # flake8-quotes
+    "RET",  # flake8-return
+    "RSE",  # flake8-raise
     "W",    # pycodestyle warnings
     "YTT",  # flake8-2020
 ]
@@ -56,7 +62,7 @@ extend-select = []
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
 # Over time, we should enforce these rules more broadly.
-"!apis/python/src/**.py" = ["BLE", "C4", "CPY", "D", "B", "S"]
+"!apis/python/src/**.py" = ["BLE", "C4", "CPY", "D", "B", "INP", "S", "T20"]
 
 # Ignore in notebooks
 "apis/python/**/*.ipynb" = ["COM"]

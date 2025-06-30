@@ -162,7 +162,7 @@ def case(
         int_scalar=22,
         pd_df_indexed=TEST_UNS["pd_df_indexed"].assign(column_1=list("ghi")),
         strict="info",
-        valid_updates=['int_scalar'],  # `int_scalar` is updated, `pd_df_indexed` is not ("info" msg logged below)
+        valid_updates=["int_scalar"],  # `int_scalar` is updated, `pd_df_indexed` is not ("info" msg logged below)
         logs=[
             r"ms/RNA/uns\[pd_df_indexed]: already exists \(type DataFrame\), refusing to overwrite with   column_1\n"
             r"0        g\n"

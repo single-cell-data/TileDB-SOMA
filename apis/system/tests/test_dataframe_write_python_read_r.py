@@ -30,8 +30,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
         with soma.DataFrame.open(self.uri, "w") as sdf:
             sdf.write(rb)
 
-        df = rb.to_pandas()  # Alternatively, we could re-open the dataframe
-        return df
+        return rb.to_pandas()  # Alternatively, we could re-open the dataframe
 
     # Prepares an R script with the dependencies and loads the data.frame in `df`.
     # Future assertions can be done by appending to this script

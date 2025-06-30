@@ -151,13 +151,12 @@ class S3ProfileDB(ProfileDB):
                 keys.append(object_key)
         return keys
 
-    def read_s3_text(self, key: str) -> str:
+    def read_s3_text(self, key: str) -> str:  # noqa: RET503
         # Assume the key is associated with one object. Otherwise, return the first object
         result = self.s3.list_objects(Bucket=self.bucket_name, Prefix=key)
         for o in result.get("Contents"):
             data = self.s3.get_object(Bucket=self.bucket_name, Key=o.get("Key"))
-            contents = data["Body"].read().decode("utf-8")
-            return contents
+            return data["Body"].read().decode("utf-8")
 
     def bucket_exist_and_accessible(self):
         try:

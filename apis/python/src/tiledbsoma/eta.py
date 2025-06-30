@@ -31,8 +31,7 @@ class Tracker:
         """
         self._ingest(chunk_percent, chunk_seconds)
         eta_seconds = self._predict()
-        eta_format = self._format_seconds(eta_seconds)
-        return eta_format
+        return self._format_seconds(eta_seconds)
 
     def _ingest(self, chunk_percent: float, chunk_seconds: float) -> None:
         """Takes the current percent done like 10.3 and current chunk seconds
@@ -66,12 +65,11 @@ class Tracker:
         """Formats the ETA seconds as a compact, human-readable string."""
         if seconds >= 86400:
             return "%.2f days" % (seconds / 86400)
-        elif seconds >= 3600:
+        if seconds >= 3600:
             return "%.2f hours" % (seconds / 3600)
-        elif seconds >= 60:
+        if seconds >= 60:
             return "%.2f minutes" % (seconds / 60)
-        else:
-            return "%.2f seconds" % (seconds)
+        return "%.2f seconds" % (seconds)
 
     def __str__(self) -> str:
         """User-friendly string."""

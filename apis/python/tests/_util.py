@@ -125,12 +125,11 @@ def parse_col(col_str: str) -> tuple[str | None, list[str]]:
     pcs = col_str.split("=")
     if len(pcs) == 1:
         return None, col_str.split(",")
-    elif len(pcs) == 2:
+    if len(pcs) == 2:
         name, vals_str = pcs
         vals = vals_str.split(",")
         return name, vals
-    else:
-        raise ValueError(f"Invalid column string: {col_str}")
+    raise ValueError(f"Invalid column string: {col_str}")
 
 
 def make_pd_df(index_str: str | None = None, **cols) -> pd.DataFrame:
@@ -192,8 +191,7 @@ def maybe_raises(expected_exception: Err | None, *args: Any, **kwargs: Any) -> M
                 raise ValueError("Cannot specify 'match' in both kwargs and `expected_exception`")
             kwargs["match"] = match
         return pytest.raises(exc, *args, **kwargs)
-    else:
-        return nullcontext()
+    return nullcontext()
 
 
 def verify_logs(caplog: LogCaptureFixture, expected_logs: list[str] | None) -> None:

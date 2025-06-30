@@ -100,8 +100,7 @@ def sparse_chunk(
             make_sorted=True,
             context=soma_ctx,
         )
-        csx = cm.to_scipy()
-        return csx
+        return cm.to_scipy()
 
 
 def load_daskarray(

@@ -86,7 +86,7 @@ def build_profile_data(stderr_: str, stdout_: str, prof1: str | None, prof2: str
     # cast all dict int values
     gnu_time_output_values.update({k: int(v) for k, v in gnu_time_output_values.items() if v.isdigit()})
 
-    data = ProfileData(
+    return ProfileData(
         stdout=stdout_,
         stderr=stderr_,
         timestamp=datetime.utcnow().timestamp(),
@@ -97,8 +97,6 @@ def build_profile_data(stderr_: str, stdout_: str, prof1: str | None, prof2: str
         custom_out=[prof1, prof2],
         **gnu_time_output_values,
     )
-
-    return data
 
 
 def read_tiledb_stats_output() -> dict[str, Any]:

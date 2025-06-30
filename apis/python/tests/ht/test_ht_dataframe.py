@@ -319,9 +319,7 @@ def column_values(
         )
         return draw(arrow_array(type, size, elements=elements, unique=unique, padding=False))
 
-    elif pa.types.is_floating(type) and (
-        HT_TEST_CONFIG["sc-61506_workaround"] or HT_TEST_CONFIG["sc-62449_workaround"]
-    ):
+    if pa.types.is_floating(type) and (HT_TEST_CONFIG["sc-61506_workaround"] or HT_TEST_CONFIG["sc-62449_workaround"]):
         dtype = np.dtype(type.to_pandas_dtype())
         elements = ht_np.from_dtype(dtype, min_value=min_value, max_value=max_value)
         if HT_TEST_CONFIG["sc-61506_workaround"]:
@@ -337,12 +335,12 @@ def column_values(
 
         return draw(arrow_array(type, size, elements=elements, unique=unique, padding=False))
 
-    elif pa.types.is_primitive(type):
+    if pa.types.is_primitive(type):
         dtype = np.dtype(type.to_pandas_dtype())
         elements = ht_np.from_dtype(dtype, min_value=min_value, max_value=max_value)
         return draw(arrow_array(type, size, elements=elements, unique=unique, padding=False))
 
-    elif type in [pa.binary(), pa.large_binary()]:
+    if type in [pa.binary(), pa.large_binary()]:
         if HT_TEST_CONFIG["sc-62447_workaround"]:
             return draw(
                 arrow_array(
@@ -353,10 +351,9 @@ def column_values(
                     padding=False,
                 ),
             )
-        else:
-            return draw(arrow_array(np.dtype(bytes), size, unique=unique, padding=False))
+        return draw(arrow_array(np.dtype(bytes), size, unique=unique, padding=False))
 
-    elif type in [pa.string(), pa.large_string()]:
+    if type in [pa.string(), pa.large_string()]:
         dtype = np.dtype(str)
         if is_index:
             # TileDB string index columns are restricted to "7 bit ASCII". These tests use
@@ -390,17 +387,16 @@ def setdiff(a: set[Any], b: set[Any]) -> set[Any]:
     if a_wo_nan != a and b_wo_nan != b:
         # both had a Nan, so diff the wo_nan sets
         return a_wo_nan - b_wo_nan
-    elif a_wo_nan == a and b_wo_nan == b:
+    if a_wo_nan == a and b_wo_nan == b:
         # neither had a NaN, so diff the original sets
         return a - b
-    elif a_wo_nan != a and b_wo_nan == b:
+    if a_wo_nan != a and b_wo_nan == b:
         # a had a NaN, b did not, diff the wo sets and add a NaN.
         # this handles the case where set a had multiple (different)
         # NaNs
         return (a_wo_nan - b_wo_nan) | {np.nan}
-    else:
-        # b had a NaN, a did not, so just diff the wo sets
-        return a_wo_nan - b_wo_nan
+    # b had a NaN, a did not, so just diff the wo sets
+    return a_wo_nan - b_wo_nan
 
 
 @st.composite

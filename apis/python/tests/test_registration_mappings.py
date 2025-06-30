@@ -1572,7 +1572,7 @@ def test_prepare_experiment(tmp_path) -> None:
                 },
                 index=[f"AD2:{i}" for i in range(8)],
             ),
-            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(0, 6)]),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(6)]),
         ),
         ad.AnnData(
             X=None,

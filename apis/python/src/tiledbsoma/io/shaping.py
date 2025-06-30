@@ -105,7 +105,7 @@ def get_experiment_shapes(
     # printing things as it finds them, rather than giving the user a wait
     # followed by a final burst of output.
 
-    retval = _treewalk(
+    return _treewalk(
         uri,
         leaf_visitor=_leaf_visitor_get_shapes,
         nobs=None,
@@ -117,7 +117,6 @@ def get_experiment_shapes(
         context=context,
         output_handle=None,
     )
-    return retval
 
 
 def show_experiment_shapes(

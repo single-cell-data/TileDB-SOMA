@@ -166,17 +166,15 @@ def _update_uns_dict(
                 msg = f"{coll.uri}[{k}]: already exists (type {type(cur).__name__}), refusing to overwrite with {v}"
                 if strict in ["dry_run", "raise"]:
                     raise ValueError(msg)
-                else:
-                    msg = f"Skipping {msg}"
-                    if strict == "warn":
-                        logger.warning(msg)
-                    elif strict == "info":
-                        logger.info(msg)
-                    elif strict == "debug":
-                        logger.debug(msg)
-                    return False
-            else:
-                return strict != "dry_run"
+                msg = f"Skipping {msg}"
+                if strict == "warn":
+                    logger.warning(msg)
+                elif strict == "info":
+                    logger.info(msg)
+                elif strict == "debug":
+                    logger.debug(msg)
+                return False
+            return strict != "dry_run"
 
         if isinstance(v, (str, int, float, np.generic)):
             if k in coll:
