@@ -717,7 +717,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
             assert getter(k).nullable
 
 
-def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
+def test_export_obsm_with_holes(soma_tiledb_context, h5ad_file_with_obsm_holes, tmp_path):
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     original = adata.copy()
 
@@ -732,7 +732,7 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
 
     assert_adata_equal(original, adata)
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
+    with tiledbsoma.Experiment.open(output_path, context=soma_tiledb_context) as exp:
         meta = exp.ms["RNA"].obsm["X_pca"].metadata
         with pytest.raises(KeyError):
             meta["soma_dim_0_domain_lower"]
@@ -752,11 +752,11 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
         assert try4.obsm["X_pca"].shape == (2638, 50)
 
 
-def test_X_empty(h5ad_file_X_empty, tmp_path):
+def test_X_empty(soma_tiledb_context, h5ad_file_X_empty, tmp_path):
     output_path = tmp_path.as_posix()
     tiledbsoma.io.from_h5ad(output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA")
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
+    with tiledbsoma.Experiment.open(output_path, context=soma_tiledb_context) as exp:
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert "data" in exp.ms["RNA"].X
@@ -766,11 +766,11 @@ def test_X_empty(h5ad_file_X_empty, tmp_path):
         # TODO: more
 
 
-def test_X_none(h5ad_file_X_none, tmp_path):
+def test_X_none(soma_tiledb_context, h5ad_file_X_none, tmp_path):
     output_path = tmp_path.as_posix()
     tiledbsoma.io.from_h5ad(output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA")
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
+    with tiledbsoma.Experiment.open(output_path, context=soma_tiledb_context) as exp:
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []

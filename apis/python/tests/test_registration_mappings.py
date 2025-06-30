@@ -391,8 +391,8 @@ def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name, tmp_p
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("permutation", [[0, 1, 2, 3], [2, 3, 0, 1], [3, 2, 1, 0]])
-@pytest.mark.parametrize("solo_experiment_first", [True, False])
-@pytest.mark.parametrize("use_multiprocessing", [False, True])
+@pytest.mark.parametrize("solo_experiment_first", [True, False], ids=["solo-first", "all-at-once"])
+@pytest.mark.parametrize("use_multiprocessing", [False, True], ids=["with-multiprocessing", "without-multiprocessing"])
 def test_multiples_without_experiment(
     tmp_path,
     obs_field_name,
@@ -1325,7 +1325,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         assert readback_b == obs_ids_b
 
 
-def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
+def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
     uri = tmp_path.as_posix()
 
     # Data for "RNA" measurement of SOMA experiment
@@ -1400,7 +1400,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         uns_keys=[],
     )
 
-    with tiledbsoma.Experiment.open(uri) as exp:
+    with tiledbsoma.Experiment.open(uri, context=soma_tiledb_context) as exp:
         assert "RNA" in exp.ms
         assert "protein" in exp.ms
 
@@ -1483,7 +1483,7 @@ def test_registration_lists_and_tuples(tmp_path):
         ["1.15.7", True],
     ],
 )
-def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
+def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, version_and_shaped):
     version, shaped = version_and_shaped
 
     import os
@@ -1538,7 +1538,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
         registration_mapping=rd,
     )
 
-    with tiledbsoma.Experiment.open(uri) as exp:
+    with tiledbsoma.Experiment.open(uri, context=soma_tiledb_context) as exp:
         assert "RNA" in exp.ms
 
         assert exp.obs.count == 5400

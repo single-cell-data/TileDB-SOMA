@@ -272,4 +272,4 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         )
 
 
-TestSOMADenseNDArray = pytest.mark.usefixtures("make_tmp_dir")(SOMADenseNDArrayStateMachine.TestCase)
+TestSOMADenseNDArray = pytest.mark.usefixtures("setup_fixtures")(SOMADenseNDArrayStateMachine.TestCase)
