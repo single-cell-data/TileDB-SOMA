@@ -60,7 +60,6 @@ ignore = [
     "S101",     # Use of `assert` detected
     "COM812",   # Ignore recommended by Ruff
     "SIM105",   # contextlib.suppress
-
 ]
 extend-select = []
 
