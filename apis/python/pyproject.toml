@@ -19,6 +19,7 @@ ignore_errors = true
 
 [tool.ruff]
 fix = true
+preview = true
 exclude = ["*.cc"]
 target-version = "py39"
 line-length = 120
@@ -29,13 +30,17 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "BLE",  # flake8-blind-exception
     "C4",   # flake8-comprehensions
     "COM",  # flake8-commas
+    "CPY",  # flake8-copyright
     "D",    # pydocstyle (Google convention, see setting below)
     "E",    # pycodestyle
     "F",    # Pyflakes
-    "FA",   # flake8-futue-annotations
+    "FA",   # flake8-future-annotations
     "I",    # isort
+    "ICN",  # flake8-import-conventions
     "ISC",  # flake8-implicit-str-concat
+    "LOG",  # flake8-logging
     "S",    # flake8-bandit
+    "T10",  # flake8-debugger
     "W",    # pycodestyle warnings
     "YTT",  # flake8-2020
 ]
@@ -50,8 +55,8 @@ extend-select = []
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
-# Over time, we should enforce them more broadly.
-"!apis/python/src/**.py" = ["BLE", "C4", "D", "B", "S"]
+# Over time, we should enforce these rules more broadly.
+"!apis/python/src/**.py" = ["BLE", "C4", "CPY", "D", "B", "S"]
 
 # Ignore in notebooks
 "apis/python/**/*.ipynb" = ["COM"]
@@ -77,6 +82,16 @@ no-lines-before = ["tiledb"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.flake8-copyright]
+author = "TileDB, Inc. and The Chan Zuckerberg Initiative Foundation"
+notice-rgx = "(?i)Copyright \\(C\\)"  # do not require year
+min-file-size = 1   # don't require copyright on empty files, e.g., __init__.py
+
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+# additional import aliases to be enforced
+anndata = "ad"
+scanpy = "sc"
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:Support for spatial types is experimental"]
