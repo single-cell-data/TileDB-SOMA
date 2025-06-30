@@ -279,4 +279,4 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         )
 
 
-TestSOMASparseNDArray = pytest.mark.usefixtures("make_tmp_dir")(SOMASparseNDArrayStateMachine.TestCase)
+TestSOMASparseNDArray = pytest.mark.usefixtures("setup_fixtures")(SOMASparseNDArrayStateMachine.TestCase)

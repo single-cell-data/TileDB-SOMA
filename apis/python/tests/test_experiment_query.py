@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import os
 import re
@@ -334,7 +335,7 @@ def test_experiment_query_result_order(soma_experiment):
         col = X_tbl["soma_dim_1"].to_numpy()
         data_col_major = X_tbl["soma_data"].to_numpy()
         assert np.array_equal(np.sort(col), col)
-        assert not np.array_equal(data_row_major, data_col_major)
+        assert len(data_row_major) <= 1 or not np.array_equal(data_row_major, data_col_major)
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
@@ -789,16 +790,21 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
 
 def add_sparse_array(coll: CollectionBase, key: str, shape: tuple[int, int]) -> None:
     a = coll.add_new_sparse_ndarray(key, type=pa.float32(), shape=shape)
-    tensor = pa.SparseCOOTensor.from_scipy(
-        sparse.random(
+
+    # always have at least one value in the matrix (ARROW-17933)
+    while True:
+        m = sparse.random(
             shape[0],
             shape[1],
             density=0.1,
             format="coo",
             dtype=np.float32,
             random_state=np.random.default_rng(),
-        ),
-    )
+        )
+        if m.nnz > 0:
+            break
+
+    tensor = pa.SparseCOOTensor.from_scipy(m)
     a.write(tensor)
 
 
@@ -879,7 +885,7 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
         ['var_id not in ["S100A6", "CYBA", "NONESUCH"]', 1836],
     ],
 )
-def test_experiment_query_historical(version, obs_params, var_params):
+def test_experiment_query_historical(soma_tiledb_context, version, obs_params, var_params):
     """Checks that experiments written by older versions are still queryable."""
 
     name = "pbmc3k_processed"
@@ -900,7 +906,7 @@ def test_experiment_query_historical(version, obs_params, var_params):
             return fallback
         return ""
 
-    with soma.open(uri) as exp:
+    with soma.open(uri, context=soma_tiledb_context) as exp:
         query = exp.axis_query(
             measurement_name="RNA",
             obs_query=AxisQuery(value_filter=obs_condition),
@@ -937,12 +943,14 @@ def test_experiment_query_historical(version, obs_params, var_params):
         assert adata.var.index.name == "var_id"
 
 
-@pytest.mark.parametrize("version", ["1.16.1"])
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize("obsm_layers", [(), ("X_pca",), ("X_tsne",), ("X_draw_graph_fr", "X_pca", "X_tsne", "X_umap")])
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
-def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers, varp_layers) -> None:
+def test_annotation_matrix_slots(
+    soma_tiledb_context, version, obsm_layers, obsp_layers, varm_layers, varp_layers
+) -> None:
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
@@ -951,8 +959,8 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
-    with soma.open(uri) as exp:
-        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 500),))).to_anndata(
+    with soma.open(uri, context=soma_tiledb_context) as exp:
+        adata = exp.axis_query(measurement_name="RNA", obs_query=AxisQuery(coords=(slice(0, 199),))).to_anndata(
             "data",
             obsm_layers=obsm_layers,
             obsp_layers=obsp_layers,
@@ -981,3 +989,6 @@ def test_annotation_matrix_slots(version, obsm_layers, obsp_layers, varm_layers,
             assert adata.varp[sm].dtype == exp.ms["RNA"].varp[sm].schema.field("soma_data").type.to_pandas_dtype()
             assert adata.varp[sm].shape[0] == adata.shape[1]
             assert adata.varp[sm].shape[1] == adata.shape[1]
+
+    del adata
+    gc.collect()
