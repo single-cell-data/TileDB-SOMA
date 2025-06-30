@@ -19,7 +19,7 @@ def conftest_token():
 def conftest_tiledb_cloud_login(conftest_token):
     print("conftest_tiledb_cloud_login")
     tiledb.cloud.login(token=conftest_token)
-    return None
+    return
 
 
 @pytest.fixture

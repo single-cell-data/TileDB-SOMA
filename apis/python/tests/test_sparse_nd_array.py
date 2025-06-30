@@ -175,6 +175,8 @@ def create_random_tensor(
             ),
         )
 
+    return None
+
 
 def tensors_are_same_value(a: AnySparseTensor, b: AnySparseTensor) -> bool:
     """
@@ -1697,7 +1699,7 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
 
 
 def test_global_writes(tmp_path):
-    write_options = soma.TileDBWriteOptions(**{"sort_coords": False})
+    write_options = soma.TileDBWriteOptions(sort_coords=False)
 
     with soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint8(), shape=(3,)) as A:
         schema = A.schema
@@ -1816,8 +1818,7 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
     def test(path, tiledb_config):
         context = soma.SOMATileDBContext().replace(tiledb_config=tiledb_config)
         X = soma.SparseNDArray.open(path, context=context, mode="r")
-        mq = X.read().tables()
-        return mq
+        return X.read().tables()
 
     for _ in range(100):
         # Run test multiple times. While the C++ this tests (dtor order)
@@ -1938,7 +1939,7 @@ def test_fragments_in_writes(tmp_path, element_type):
                     pa.Table.from_pandas(df_2, preserve_index=False),
                 ],
             ),
-            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+            platform_config=soma.TileDBWriteOptions(sort_coords=False),
         )
 
     # There should be a single fragment even though there are three chunks (and
@@ -1996,7 +1997,7 @@ def test_fragments_in_writes_2d(tmp_path, dtype):
                     pa.Table.from_pandas(df_2, preserve_index=False),
                 ],
             ),
-            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+            platform_config=soma.TileDBWriteOptions(sort_coords=False),
         )
 
     # There should be a single fragment even though there are three chunks (and

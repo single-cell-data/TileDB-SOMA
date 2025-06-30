@@ -519,12 +519,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     function_name_for_messages=function_name_for_messages,
                 ),
             )
-        else:
-            self._handle._handle.resize_soma_joinid_shape(
-                newshape,
-                function_name_for_messages=function_name_for_messages,
-            )
-            return (True, "")
+        self._handle._handle.resize_soma_joinid_shape(
+            newshape,
+            function_name_for_messages=function_name_for_messages,
+        )
+        return (True, "")
 
     def tiledbsoma_upgrade_soma_joinid_shape(self, newshape: int, check_only: bool = False) -> StatusAndReason:
         """This is like ``upgrade_domain``, but it only applies the specified
@@ -546,12 +545,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     function_name_for_messages=function_name_for_messages,
                 ),
             )
-        else:
-            self._handle._handle.upgrade_soma_joinid_shape(
-                newshape,
-                function_name_for_messages=function_name_for_messages,
-            )
-            return (True, "")
+        self._handle._handle.upgrade_soma_joinid_shape(
+            newshape,
+            function_name_for_messages=function_name_for_messages,
+        )
+        return (True, "")
 
     def _upgrade_or_change_domain_helper(self, newdomain: Domain, function_name_for_messages: str) -> Any:
         """Converts the user-level tuple of low/high pairs into a pyarrow table suitable for calling libtiledbsoma."""
@@ -630,12 +628,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     function_name_for_messages,
                 ),
             )
-        else:
-            self._handle._handle.upgrade_domain(
-                pyarrow_domain_table,
-                function_name_for_messages,
-            )
-            return (True, "")
+        self._handle._handle.upgrade_domain(
+            pyarrow_domain_table,
+            function_name_for_messages,
+        )
+        return (True, "")
 
     def change_domain(self, newdomain: Domain, check_only: bool = False) -> StatusAndReason:
         """Allows you to enlarge the domain of a SOMA :class:`DataFrame`, when
@@ -685,9 +682,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     function_name_for_messages,
                 ),
             )
-        else:
-            self._handle._handle.change_domain(pyarrow_domain_table, function_name_for_messages)
-            return (True, "")
+        self._handle._handle.change_domain(pyarrow_domain_table, function_name_for_messages)
+        return (True, "")
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
@@ -1133,7 +1129,6 @@ def _revise_domain_for_extent(
             )
 
         raise ValueError("Expected a complex domain")
-    elif saturated_range:
+    if saturated_range:
         return (domain[0], domain[1] - extent)
-    else:
-        return domain
+    return domain

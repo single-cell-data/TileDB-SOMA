@@ -71,8 +71,7 @@ def _read_visium_software_version(
     gene_expression_path: str | Path,
 ) -> tuple[int, int, int]:
     with TenXCountMatrixReader(gene_expression_path) as reader:
-        version = reader.software_version
-    return version
+        return reader.software_version
 
 
 class TenXCountMatrixReader:

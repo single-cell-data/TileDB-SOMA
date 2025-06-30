@@ -56,7 +56,7 @@ ROUND_TRIPS = [
         ["obs_id", "col0", "col1"],
     ),
     RoundTrip(
-        '2. DataFrame has a column named `obs_id`',
+        "2. DataFrame has a column named `obs_id`",
         make_pd_df("xx,yy,zz", col0="AA,BB,CC", obs_id="aa,bb,cc"),
         # ⇒ `obs_id` column becomes `df.index`, loses name
         # ⇒ Original `df.index` dropped

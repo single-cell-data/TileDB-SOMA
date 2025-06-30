@@ -4,10 +4,9 @@ import subprocess
 def embed_into_R_code(x):
     if isinstance(x, bool):
         return str(x).upper()
-    elif isinstance(x, str):
+    if isinstance(x, str):
         return f'"{x}"'
-    else:
-        return str(x)
+    return str(x)
 
 
 def embed_python_list_into_R_code(xs):

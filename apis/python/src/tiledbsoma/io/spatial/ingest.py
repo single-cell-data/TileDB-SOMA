@@ -252,7 +252,7 @@ def register_visium_datasets(
         context: Optional :class:`SOMATileDBContext` for opening the existing
             :class:`Experiment`.
     """
-    raise NotImplementedError()
+    raise NotImplementedError
 
 
 def from_visium(

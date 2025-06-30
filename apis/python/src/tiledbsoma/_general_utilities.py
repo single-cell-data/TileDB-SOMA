@@ -68,10 +68,10 @@ def show_package_versions() -> None:
     """
     u = platform.uname()
     # fmt: off
-    print("tiledbsoma.__version__             ", get_implementation_version())
-    print("TileDB core version (libtiledbsoma)", get_libtiledbsoma_core_version())
-    print("python version                     ", ".".join(str(v) for v in sys.version_info))
-    print("OS version                         ", u.system, u.release)
+    print("tiledbsoma.__version__             ", get_implementation_version())  # noqa: T201
+    print("TileDB core version (libtiledbsoma)", get_libtiledbsoma_core_version())  # noqa: T201
+    print("python version                     ", ".".join(str(v) for v in sys.version_info))  # noqa: T201
+    print("OS version                         ", u.system, u.release)  # noqa: T201
     # fmt: on
 
 

@@ -585,7 +585,7 @@ class ExperimentAmbientLabelMapping:
         def check_df(df: pd.DataFrame | None, df_name: str) -> None:
             if df is None or df.index.empty:
                 raise ValueError(f"Unable to ingest AnnData with empty {df_name} dataframe.")
-            elif not df.index.is_unique:
+            if not df.index.is_unique:
                 raise ValueError(f"Non-unique registration values have been provided in {df_name} dataframe.")
 
         check_df(adata.obs, "obs")

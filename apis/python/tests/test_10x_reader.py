@@ -61,7 +61,7 @@ def fake_space_ranger_matrix_1(tmp_path_factory):
     h5path = tmp_path_factory.mktemp("space_ranger") / "fake_space_ranger_matrix_1.h5"
 
     # Create test data.
-    test_data = SpaceRangerMatrixData(
+    return SpaceRangerMatrixData(
         version=(2, 0, 1),
         nobs=9,
         nvar=7,
@@ -121,7 +121,6 @@ def fake_space_ranger_matrix_1(tmp_path_factory):
         ),
         filepath=h5path,
     )
-    return test_data
 
 
 def check_reader(reader, data):

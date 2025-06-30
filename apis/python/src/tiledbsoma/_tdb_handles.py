@@ -67,12 +67,11 @@ def _open_mode_to_clib_mode(mode: options.OpenMode) -> clib.OpenMode:
     """Convert options.OpenMode to clib.OpenMode."""
     if mode == "r":
         return clib.OpenMode.soma_read
-    elif mode == "w":
+    if mode == "w":
         return clib.OpenMode.soma_write
-    elif mode == "d":
+    if mode == "d":
         return clib.OpenMode.soma_delete
-    else:
-        raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
+    raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
 
 
 def open_handle_wrapper(
@@ -201,7 +200,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         timestamp: int,
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.

@@ -99,12 +99,10 @@ def get_libtiledbsoma_library_name():
     if os.name == "posix":
         if sys.platform == "darwin":
             return "libtiledbsoma.dylib"
-        else:
-            return "libtiledbsoma.so"
-    elif os.name == "nt":
+        return "libtiledbsoma.so"
+    if os.name == "nt":
         return "tiledbsoma.dll"
-    else:
-        raise RuntimeError(f"Unsupported OS name {os.name}")
+    raise RuntimeError(f"Unsupported OS name {os.name}")
 
 
 def find_libtiledbsoma_full_path_on_linux(lib_name):

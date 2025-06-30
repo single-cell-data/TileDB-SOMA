@@ -26,8 +26,7 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
         """
         self.execute_R_script(base_script)
         pbmc = soma.open(self.uri)
-        ad = io.to_anndata(pbmc, measurement_name="RNA")
-        return ad
+        return io.to_anndata(pbmc, measurement_name="RNA")
 
     def base_R_script(self):
         # Since we can't read Seurat in python, we need to do assertions in R, hence this script

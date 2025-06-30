@@ -2191,14 +2191,13 @@ def _find_sparse_chunk_size(
             mean_nnz=mean_nnz,
         )
 
-    else:
-        return _find_sparse_chunk_size_backed(
-            matrix=matrix,
-            start_index=start_index,
-            axis=axis,
-            goal_chunk_nnz=goal_chunk_nnz,
-            mean_nnz=mean_nnz,
-        )
+    return _find_sparse_chunk_size_backed(
+        matrix=matrix,
+        start_index=start_index,
+        axis=axis,
+        goal_chunk_nnz=goal_chunk_nnz,
+        mean_nnz=mean_nnz,
+    )
 
 
 def _find_sparse_chunk_size_non_backed(
@@ -2511,8 +2510,7 @@ def _write_matrix_to_sparseNDArray(
         if chunk_size == -1:  # completely empty array; nothing to write
             if i > 0:
                 break
-            else:
-                chunk_size = 1
+            chunk_size = 1
 
         # Don't display something like '0..100000 out of 98765' as this looks wrong.
         # Cap the part after the '..' at the dim_max_size.

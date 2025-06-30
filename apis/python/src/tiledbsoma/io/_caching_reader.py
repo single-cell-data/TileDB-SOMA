@@ -88,8 +88,7 @@ class CachingReader:
         self._file.seek(block_idx * self._cache_block_size)
         bytes_read = self._file.readinto(memoryview(buffer))
         assert nbytes == bytes_read == len(buffer)
-        a = pa.UInt8Array.from_buffers(pa.uint8(), len(buffer), [None, buffer])
-        return a
+        return pa.UInt8Array.from_buffers(pa.uint8(), len(buffer), [None, buffer])
 
     def _load_cache(self, start: int, end: int) -> list[pa.UInt8Array]:
         end = min(end, self._file_length)

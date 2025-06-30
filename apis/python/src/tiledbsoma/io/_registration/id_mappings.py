@@ -30,8 +30,7 @@ class AxisIDMapping:
     def get_shape(self) -> int:
         if len(self.data) == 0:
             return 0
-        else:
-            return int(self.data.max() + 1)
+        return int(self.data.max() + 1)
 
     def is_identity(self) -> bool:
         # fast rejection first

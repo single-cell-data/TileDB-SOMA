@@ -42,8 +42,7 @@ def rng() -> np.random.Generator:
 def context(concurrency: int | None) -> soma.SOMATileDBContext:
     if concurrency is None:
         return soma.SOMATileDBContext()
-    else:
-        return soma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
+    return soma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
 
 
 def assert_eq(sp: sparse.spmatrix, cm: fastercsx.CompressedMatrix) -> bool:

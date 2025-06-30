@@ -30,16 +30,15 @@ def util_make_uri(
         readback_uri = f"tiledb://{namespace}/{basename}_{stamp}"
         return (creation_uri, readback_uri)
 
-    else:
-        uri = f"/tmp/tiledbsoma-cloud-test/{dirname}/{basename}"
-        if os.path.exists(uri):
-            shutil.rmtree(uri)
-        pathlib.Path(os.path.dirname(uri)).mkdir(parents=True, exist_ok=True)
-        # Please leave this comment in place.
-        print()
-        print("USING LOCAL URI", uri)
-        print()
-        return (uri, uri)
+    uri = f"/tmp/tiledbsoma-cloud-test/{dirname}/{basename}"
+    if os.path.exists(uri):
+        shutil.rmtree(uri)
+    pathlib.Path(os.path.dirname(uri)).mkdir(parents=True, exist_ok=True)
+    # Please leave this comment in place.
+    print()
+    print("USING LOCAL URI", uri)
+    print()
+    return (uri, uri)
 
 
 def util_tear_down_uri(uri):

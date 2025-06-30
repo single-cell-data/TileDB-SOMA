@@ -85,8 +85,7 @@ def make_relative_path(uri: str, relative_to: str) -> str:
     if uri_scheme != relative_to_scheme:
         raise ValueError("Unable to make relative path between URIs with different scheme")
 
-    relpath = pathlib.PurePath(p_uri.path).relative_to(p_relative_to.path).as_posix()
-    return relpath
+    return pathlib.PurePath(p_uri.path).relative_to(p_relative_to.path).as_posix()
 
 
 def is_relative_uri(uri: str) -> bool:
@@ -467,8 +466,6 @@ class Sentinel:
     when ``None`` is actually a valid option, and we want to distinguish between
     the user passing ``foo=None`` and the user not passing any ``foo`` at all.
     """
-
-    pass
 
 
 MISSING = Sentinel()

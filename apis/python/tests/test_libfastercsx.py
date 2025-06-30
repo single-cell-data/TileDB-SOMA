@@ -29,8 +29,7 @@ def rng() -> np.random.Generator:
 def context(concurrency: int | None) -> clib.SOMAContext:
     if concurrency is None:
         return clib.SOMAContext()
-    else:
-        return clib.SOMAContext({"soma.compute_concurrency_level": f"{concurrency}"})
+    return clib.SOMAContext({"soma.compute_concurrency_level": f"{concurrency}"})
 
 
 @pytest.mark.parametrize("shape", [(0, 0), (1, 0), (0, 1), (10, 100), (100, 10), (9972, 1), (1, 9972)])

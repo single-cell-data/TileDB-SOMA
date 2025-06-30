@@ -3584,7 +3584,7 @@ def test_fragments_in_writes(tmp_path, dtype):
                     pa.Table.from_pandas(df_2, preserve_index=False),
                 ],
             ),
-            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+            platform_config=soma.TileDBWriteOptions(sort_coords=False),
         )
 
     # There should be a single fragment even though there are three chunks (and
@@ -3639,7 +3639,7 @@ def test_fragments_in_writes_str(tmp_path):
                     pa.Table.from_pandas(df_2, preserve_index=False),
                 ],
             ),
-            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+            platform_config=soma.TileDBWriteOptions(sort_coords=False),
         )
 
     # There should be a single fragment even though there are three chunks (and
@@ -3676,7 +3676,7 @@ def test_fragments_in_writes_ooo_batch(tmp_path):
             "obs": pd.Series(["A", "B"], dtype="str"),
         },
     )
-    cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
+    cfg = soma.TileDBWriteOptions(sort_coords=False)
     soma.DataFrame.create(uri, schema=schema, domain=[[0, 5]]).close()
 
     with soma.DataFrame.open(uri, mode="w") as A:
@@ -3716,7 +3716,7 @@ def test_fragments_in_writes_empty_batch(tmp_path):
     )
     expected_df = pd.concat([df, empty_df], ignore_index=True)
 
-    cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
+    cfg = soma.TileDBWriteOptions(sort_coords=False)
     soma.DataFrame.create(uri, schema=schema, domain=[[0, 3]]).close()
 
     with soma.DataFrame.open(uri, mode="w") as A:
@@ -3760,7 +3760,7 @@ def test_fragments_in_writes_null(tmp_path):
     )
     expected_df = pd.concat([df, null_df], ignore_index=True)
 
-    cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
+    cfg = soma.TileDBWriteOptions(sort_coords=False)
     soma.DataFrame.create(uri, schema=schema, domain=[[0, 4]]).close()
 
     with soma.DataFrame.open(uri, mode="w") as A:
@@ -3849,7 +3849,7 @@ def test_gow_mixed_idxes(tmp_path):
                     pa.Table.from_pandas(df_1, preserve_index=False),
                 ],
             ),
-            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+            platform_config=soma.TileDBWriteOptions(sort_coords=False),
         )
 
     with soma.open(uri) as A:

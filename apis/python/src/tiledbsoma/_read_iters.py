@@ -241,7 +241,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _create_reader(self) -> Iterator[_RT]:
         """Sub-class responsibility."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __next__(self) -> _RT:
         return next(self._reader)
@@ -486,7 +486,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _from_table(self, arrow_table: pa.Table) -> _RT:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __next__(self) -> _RT:
         return self._from_table(self.mq._handle.next())

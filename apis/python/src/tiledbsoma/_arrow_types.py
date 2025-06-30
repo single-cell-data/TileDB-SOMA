@@ -168,12 +168,10 @@ def arrow_type_from_tiledb_dtype(tiledb_dtype: npt.DTypeLike, bytes_are_ascii: b
     if tiledb_dtype == "bytes":
         if bytes_are_ascii:
             return pa.large_string()
-        else:
-            return pa.large_binary()
-    elif tiledb_dtype == "ascii" or tiledb_dtype == np.dtype(str):
+        return pa.large_binary()
+    if tiledb_dtype == "ascii" or tiledb_dtype == np.dtype(str):
         return pa.large_string()
-    else:
-        return pa.from_numpy_dtype(tiledb_dtype)
+    return pa.from_numpy_dtype(tiledb_dtype)
 
 
 def is_string_dtypelike(dtype: npt.DTypeLike) -> bool:

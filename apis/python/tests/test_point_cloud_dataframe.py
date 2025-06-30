@@ -750,7 +750,7 @@ def test_fragments_in_writes(tmp_path, dtype):
                     pa.Table.from_pandas(df_2, preserve_index=False),
                 ],
             ),
-            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+            platform_config=soma.TileDBWriteOptions(sort_coords=False),
         )
 
     # There should be a single fragment even though there are three chunks (and

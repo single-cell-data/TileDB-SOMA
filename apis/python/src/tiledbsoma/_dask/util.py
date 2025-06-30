@@ -77,19 +77,18 @@ def _make_context(tiledb_configs: tuple[tuple[str, Any], ...]) -> SOMATileDBCont
 def coord_to_joinids(coord: SparseNDCoord, n: int) -> JoinIDs:
     if not coord:
         return np.arange(n)
-    elif isinstance(coord, (pa.IntegerArray, pa.ChunkedArray)):
+    if isinstance(coord, (pa.IntegerArray, pa.ChunkedArray)):
         return coord.to_numpy()
-    elif isinstance(coord, slice):
+    if isinstance(coord, slice):
         start = coord.start or 0
         stop = coord.stop or n
         step = coord.step or 1
         return np.arange(start, stop, step)
-    elif isinstance(coord, Sequence):
+    if isinstance(coord, Sequence):
         return np.array(coord)
-    elif isinstance(coord, int):
+    if isinstance(coord, int):
         return np.array([coord])
-    else:
-        raise ValueError(f"Unexpected coord type {type(coord)}: {coord}")
+    raise ValueError(f"Unexpected coord type {type(coord)}: {coord}")
 
 
 def coords_to_joinids(coords: SparseNDCoords | None, shape: tuple[int, ...]) -> tuple[JoinIDs, JoinIDs]:

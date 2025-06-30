@@ -25,8 +25,7 @@ def build(keys, pandas):
 
 
 def lookup(indexer, lookups):
-    results = indexer.get_indexer(lookups)
-    return results
+    return indexer.get_indexer(lookups)
 
 
 def run(data_type, keys, lookups, pandas):

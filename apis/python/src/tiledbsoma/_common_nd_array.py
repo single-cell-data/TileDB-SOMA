@@ -98,9 +98,8 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         if check_only:
             return self._handle.tiledbsoma_can_resize(newshape)
-        else:
-            self._handle.resize(newshape)
-            return (True, "")
+        self._handle.resize(newshape)
+        return (True, "")
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None], check_only: bool = False) -> StatusAndReason:
         """Allows the array to have a resizeable shape as described in the TileDB-SOMA
@@ -109,9 +108,8 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         if check_only:
             return self._handle.tiledbsoma_can_upgrade_shape(newshape)
-        else:
-            self._handle.tiledbsoma_upgrade_shape(newshape)
-            return (True, "")
+        self._handle.tiledbsoma_upgrade_shape(newshape)
+        return (True, "")
 
     @property
     def shape(self) -> tuple[int, ...]:
