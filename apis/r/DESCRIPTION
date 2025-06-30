@@ -33,7 +33,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.1.0)
 Imports:
     arrow (>= 19.0.1),
     bit64 (>= 4.6.0.1),
