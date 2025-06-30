@@ -728,9 +728,13 @@ def test_export_obsm_with_holes(soma_tiledb_context, h5ad_file_with_obsm_holes, 
     assert ado.shape == (2638, 50)
 
     output_path = tmp_path.as_posix()
-    tiledbsoma.io.from_anndata(output_path, adata, "RNA")
+    tiledbsoma.io.from_anndata(output_path, adata, "RNA", context=soma_tiledb_context)
 
     assert_adata_equal(original, adata)
+
+    # for memory constrained runners
+    del adata, original
+    gc.collect()
 
     with tiledbsoma.Experiment.open(output_path, context=soma_tiledb_context) as exp:
         meta = exp.ms["RNA"].obsm["X_pca"].metadata
@@ -747,6 +751,10 @@ def test_export_obsm_with_holes(soma_tiledb_context, h5ad_file_with_obsm_holes, 
         # No longer throws as of new-shape feature in TileDB-SOMA 1.15.
         try3 = tiledbsoma.io.to_anndata(exp, "RNA")
         assert try3.obsm["X_pca"].shape == (2638, 50)
+
+        # for memory constrained runners
+        del try3
+        gc.collect()
 
         try4 = tiledbsoma.io.to_anndata(exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}})
         assert try4.obsm["X_pca"].shape == (2638, 50)
