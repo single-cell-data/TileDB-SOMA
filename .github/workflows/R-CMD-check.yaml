@@ -7,7 +7,7 @@ on:
       - '**'
       - '!**.md'
       - '!.github/**'
-      - '.github/workflows/r-ci.yml'
+      - '.github/workflows/R-CMD-check.yaml'
       - '!.pre-commit-config.yaml'
       - '!apis/python/**'
       - '!docker/**'
