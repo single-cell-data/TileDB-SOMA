@@ -1653,21 +1653,29 @@ def update_obs(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "obs_id",
 ) -> None:
-    """Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
-    entire ``obs`` to incorporate the changes (this is distinct from ``append_obs``
-    which adds new rows, while allowing no schema/column changes).
+    """Replaces the entire ``obs`` DataFrame with the contents of a new pandas DataFrame.
 
-    All columns present in current SOMA-experiment storage but absent from the new
-    dataframe will be dropped.  All columns absent in current SOMA-experiment storage
-    but present in the new dataframe will be added. Any columns present in both
-    will be left alone, with the exception that if the new dataframe has a different
-    type for the column, the entire update will raise a ``ValueError`` exception.
+    This function is designed to perform a full replacement of the ``obs`` DataFrame. It assumes the input ``new_data``
+    DataFrame represents the desired final state for the ``obs`` SOMA DataFrame. The operation implicitly relies on row
+    order for alignment.
+
+    **Details:**
+    * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``obs`` will be added. Columns present
+        in the existing ``obs`` but absent from ``new_data`` will be dropped.
+    * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows
+        and order as the existing ``obs`` DataFrame. It does *not* perform a join based on user-defined cell IDs or
+        other index columns.
+
+    To avoid data misalignment, the following workflow is recommended:
+
+    1. Read the *entire* existing  ``obs`` DataFrame into memory.
+    2. Perform all desired modifications (updating values, adding/dropping columns)
+       on this DataFrame, preserving the original row order.
+    3. Pass the fully modified DataFrame to ``update_obs``'s ``new_data`` argument.
 
     Args:
         exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must be opened for write.
-
-        new_data: a Pandas dataframe with the desired contents.
-
+        new_data: A pandas DataFrame containing the final desired data for the `obs` SOMA DataFrame.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to update this array, provided in the form
@@ -1701,25 +1709,29 @@ def update_var(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
-    """Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
-    specified measurement's entire ``var`` to incorporate the changes (this is distinct
-    from ``append_var`` which adds new rows, while allowing no schema/column changes).
+    """Replaces the entire ``var`` DataFrame with the contents of a new pandas DataFrame.
 
-    All columns present in current SOMA-experiment storage but absent from the new
-    dataframe will be dropped.  All columns absent in current SOMA-experiment storage
-    but present in the new dataframe will be added. Any columns present in both
-    will be left alone, with the exception that if the new dataframe has a different
-    type for the column, the entire update will raise a ``ValueError`` exception.
+    This function is designed to perform a full replacement of the ``var`` DataFrame. It assumes the input ``new_data``
+    DataFrame represents the desired final state for the ``var`` SOMA DataFrame. The operation implicitly relies on row
+    order for alignment.
+
+    **Details:**
+    * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``var`` will be added. Columns present
+        in the existing ``var`` but absent from ``new_data`` will be dropped.
+    * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows
+        and order as the existing ``var`` DataFrame. It does *not* perform a join based on user-defined cell IDs or
+        other index columns.
+
+    To avoid data misalignment, the following workflow is recommended:
+
+    1. Read the *entire* existing  ``var`` DataFrame into memory.
+    2. Perform all desired modifications (updating values, adding/dropping columns)
+       on this DataFrame, preserving the original row order.
+    3. Pass the fully modified DataFrame to ``update_var``'s ``new_data`` argument.
 
     Args:
-        exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must
-        be opened for write.
-
-        measurement_name: Specifies which measurement's ``var`` within the experiment
-        is to be updated.
-
-        new_data: a Pandas dataframe with the desired contents.
-
+        exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must be opened for write.
+        new_data: A pandas DataFrame containing the final desired data for the `var` SOMA DataFrame.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to update this array, provided in the form
