@@ -6,7 +6,7 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     like those commonly used for single cell data analysis. It is documented at
     <https://github.com/single-cell-data>; a formal specification available is at
     <https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md>.
-Version: 1.18.99.2
+Version: 1.18.99.3
 Authors@R: c(
     person(given = "Aaron", family = "Wolen",
            role = "aut", email = "aaron@tiledb.com",
@@ -33,7 +33,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.1.0)
 Imports:
     arrow (>= 19.0.1),
     bit64 (>= 4.6.0.1),

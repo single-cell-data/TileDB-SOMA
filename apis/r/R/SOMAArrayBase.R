@@ -1,7 +1,7 @@
 #' SOMA Array Base Class
 #'
-#' Virtual base class to add SOMA-specific functionality to the
-#' \code{\link{TileDBArray}} class (lifecycle: maturing).
+#' Virtual base class to add array-specific functionality to the
+#' \code{\link{SOMAObject}} class (lifecycle: maturing).
 #'
 #' @keywords internal
 #'

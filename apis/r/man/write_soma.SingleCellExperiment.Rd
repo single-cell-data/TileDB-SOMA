@@ -96,6 +96,7 @@ the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level.
 
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SingleCellExperiment", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 uri <- withr::local_tempfile(pattern = "single-cell-experiment")
 
 mat <- abs(Matrix::rsparsematrix(
@@ -116,13 +117,6 @@ mat <- abs(Matrix::rsparsematrix(
 uri <- write_soma(sce, uri)
 
 (exp <- SOMAExperimentOpen(uri))
-exp$obs
-(ms <- exp$ms$get("RNA"))
-ms$var
-ms$X$names()
-ms$obsm$names()
-
-\dontshow{
 exp$close()
 }
 \dontshow{\}) # examplesIf}

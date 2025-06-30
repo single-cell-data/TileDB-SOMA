@@ -232,7 +232,7 @@ Add object to an ephemeral collection.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{object}}{A TileDB object (eg. \code{\link{TileDBGroup}}) to add
+\item{\code{object}}{A SOMA object (eg. \code{\link{SOMACollection}}) to add
 to the collection.}
 
 \item{\code{name}}{A name to add \code{object} as.}

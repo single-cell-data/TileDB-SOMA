@@ -5,6 +5,7 @@
 #' @export
 #'
 #' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)
+#' # Write a Bioconductor S4 DataFrame object to a SOMA
 #' uri <- withr::local_tempfile(pattern = "s4-data-frame")
 #' data("pbmc_small", package = "SeuratObject")
 #' obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]]
@@ -12,9 +13,7 @@
 #'
 #' (sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
 #'
-#' \dontshow{
 #' sdf$close()
-#' }
 #'
 write_soma.DataFrame <- function(
   x,
@@ -57,6 +56,7 @@ write_soma.DataFrame <- function(
 #' @export
 #'
 #' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)
+#' # Write a Bioconductor SelfHits object to a SOMA
 #' uri <- withr::local_tempfile(pattern = "hits")
 #' (hits <- S4Vectors::SelfHits(
 #'   c(2, 3, 3, 3, 3, 3, 4, 4, 4),
@@ -67,9 +67,7 @@ write_soma.DataFrame <- function(
 #'
 #' (arr <- write_soma(hits, uri, soma_parent = NULL, relative = FALSE))
 #'
-#' \dontshow{
 #' arr$close()
-#' }
 #'
 write_soma.Hits <- function(
   x,
@@ -131,6 +129,7 @@ write_soma.Hits <- function(
 #' @export
 #'
 #' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SingleCellExperiment", quietly = TRUE)
+#' \donttest{
 #' uri <- withr::local_tempfile(pattern = "single-cell-experiment")
 #'
 #' mat <- abs(Matrix::rsparsematrix(
@@ -151,13 +150,6 @@ write_soma.Hits <- function(
 #' uri <- write_soma(sce, uri)
 #'
 #' (exp <- SOMAExperimentOpen(uri))
-#' exp$obs
-#' (ms <- exp$ms$get("RNA"))
-#' ms$var
-#' ms$X$names()
-#' ms$obsm$names()
-#'
-#' \dontshow{
 #' exp$close()
 #' }
 #'
@@ -351,6 +343,7 @@ write_soma.SingleCellExperiment <- function(
 #' @export
 #'
 #' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)
+#' \donttest{
 #' uri <- withr::local_tempfile(pattern = "summarized-experiment")
 #'
 #' mat <- abs(Matrix::rsparsematrix(
@@ -369,7 +362,6 @@ write_soma.SingleCellExperiment <- function(
 #' ms$var
 #' ms$X$names()
 #'
-#' \dontshow{
 #' exp$close()
 #' }
 #'
