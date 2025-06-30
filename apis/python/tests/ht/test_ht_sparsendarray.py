@@ -59,10 +59,7 @@ def sparse_array_shape(
     # that force the max of any one dimension to be a bit smaller. Set our per-dim
     # limit to the min of the nth root of int64.max or the tiledb limit.
     shape_limit = min(int((2**63 - 1) ** (1 / ndim)), (2**63 - 2050))
-    if max_shape is None:
-        max_values = [shape_limit] * ndim
-    else:
-        max_values = [min(shape_limit, s) for s in max_shape]
+    max_values = [shape_limit] * ndim if max_shape is None else [min(shape_limit, s) for s in max_shape]
 
     if allow_none:
         elements = [
@@ -247,7 +244,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         assert tables_equal(
             found,
             expected,
-            equal_nan=True if pa.types.is_floating(self.type) else False,
+            equal_nan=bool(pa.types.is_floating(self.type)),
         ), f"{found}\n is not equal to {expected}"
 
     @precondition(lambda self: not self.closed and self.mode == "r")

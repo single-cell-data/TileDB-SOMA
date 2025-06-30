@@ -27,21 +27,13 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 
-from .. import (
-    Collection,
-    DataFrame,
-    DenseNDArray,
-    Experiment,
-    Measurement,
-    SparseNDArray,
-    _util,
-    logging,
-)
-from .._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
-from .._dask.load import SOMADaskConfig, load_daskarray
-from .._exception import SOMAError
-from .._types import NPNDArray, Path
-from .._util import MISSING, Sentinel, _df_set_index, _resolve_futures
+from tiledbsoma import Collection, DataFrame, DenseNDArray, Experiment, Measurement, SparseNDArray, _util, logging
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
+from tiledbsoma._dask.load import SOMADaskConfig, load_daskarray
+from tiledbsoma._exception import SOMAError
+from tiledbsoma._types import NPNDArray, Path
+from tiledbsoma._util import MISSING, Sentinel, _df_set_index, _resolve_futures
+
 from . import conversions
 from ._common import (
     _UNS_OUTGEST_COLUMN_NAME_1D,
@@ -277,7 +269,7 @@ def to_anndata(
     s = _util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
-    if measurement_name not in experiment.ms.keys():
+    if measurement_name not in experiment.ms:
         raise ValueError(f"requested measurement name {measurement_name} not found in input: {experiment.ms.keys()}")
     measurement = experiment.ms[measurement_name]
     tp = experiment.context.threadpool
@@ -361,7 +353,7 @@ def to_anndata(
     obsm = {}
     if "obsm" in measurement:
         obsm_width_hints = obsm_varm_width_hints.get("obsm", {})
-        for key in measurement.obsm.keys():
+        for key in measurement.obsm:
             obsm[key] = tp.submit(
                 _extract_obsm_or_varm,
                 measurement.obsm[key],
@@ -374,7 +366,7 @@ def to_anndata(
     varm = {}
     if "varm" in measurement:
         varm_width_hints = obsm_varm_width_hints.get("obsm", {})
-        for key in measurement.varm.keys():
+        for key in measurement.varm:
             varm[key] = tp.submit(
                 _extract_obsm_or_varm,
                 measurement.varm[key],
@@ -396,7 +388,7 @@ def to_anndata(
                 A.context,
             )
 
-        for key in measurement.obsp.keys():
+        for key in measurement.obsp:
             obsp[key] = tp.submit(load_obsp, measurement, key, nobs)
 
     varp = {}
@@ -411,7 +403,7 @@ def to_anndata(
                 A.context,
             )
 
-        for key in measurement.varp.keys():
+        for key in measurement.varp:
             varp[key] = tp.submit(load_varp, measurement, key, nvar)
 
     uns_future: Future[dict[str, FutureUnsDictNode]] | None = None
@@ -498,7 +490,7 @@ def _extract_obsm_or_varm(
     description = f'{collection_name}["{element_name}"]'
 
     # First, try width config
-    num_cols = width_configs.get(element_name, None)
+    num_cols = width_configs.get(element_name)
 
     # Second, try the shape feature introduced in TileDB-SOMA 1.15
     if num_cols is None and soma_nd_array.tiledbsoma_has_upgraded_shape:
@@ -537,7 +529,7 @@ def _extract_uns(
     """This is a helper function for ``to_anndata`` of ``uns`` elements."""
     extracted: dict[str, FutureUnsDictNode] = {}
     tp = collection.context.threadpool
-    for key in collection.keys():
+    for key in collection:
         if level == 0 and uns_keys is not None and key not in uns_keys:
             continue
 

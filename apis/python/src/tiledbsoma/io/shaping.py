@@ -15,8 +15,7 @@ import sys
 from typing import Any, Callable, TypeVar, Union, cast
 
 import tiledbsoma
-
-from .._soma_object import SOMAObject
+from tiledbsoma._soma_object import SOMAObject
 
 Printable = Union[io.TextIOWrapper, io.StringIO]
 printableStdout = cast("Printable", sys.stdout)
@@ -368,8 +367,8 @@ def resize_experiment(
     # on one measurement while the experiment's other measurements aren't being
     # updated -- then we need to find those other measurements' var-shapes.
     with tiledbsoma.Experiment.open(uri, context=context) as exp:
-        for ms_key in exp.ms.keys():
-            if ms_key not in nvars.keys():
+        for ms_key in exp.ms:
+            if ms_key not in nvars:
                 nvars[ms_key] = exp.ms[ms_key].var._maybe_soma_joinid_shape or 1
 
     retval = _treewalk(
@@ -647,10 +646,7 @@ def _leaf_visitor_upgrade(
     retval = {"status": True}
 
     if isinstance(item, tiledbsoma.DataFrame):
-        if item.index_column_names == ("soma_joinid",):
-            count = item.non_empty_domain()[0][1] + 1
-        else:
-            count = item.count
+        count = item.non_empty_domain()[0][1] + 1 if item.index_column_names == ("soma_joinid",) else item.count
 
         _print_leaf_node_banner(
             uri=item.uri,

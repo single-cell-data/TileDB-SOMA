@@ -472,24 +472,20 @@ def test_error_corners(soma_experiment: Experiment):
         soma_experiment.axis_query("no-such-measurement")
 
     # Unknown X layer name
-    with pytest.raises(KeyError):
-        with soma_experiment.axis_query("RNA") as query:
-            next(query.X("no-such-layer"))
+    with pytest.raises(KeyError), soma_experiment.axis_query("RNA") as query:
+        next(query.X("no-such-layer"))
 
     # Unknown X layer name
-    with pytest.raises(ValueError):
-        with soma_experiment.axis_query("RNA") as query:
-            query.to_anndata("no-such-layer")
+    with pytest.raises(ValueError), soma_experiment.axis_query("RNA") as query:
+        query.to_anndata("no-such-layer")
 
     # Unknown obsp layer name
-    with pytest.raises(ValueError):
-        with soma_experiment.axis_query("RNA") as query:
-            next(query.obsp("no-such-layer"))
+    with pytest.raises(ValueError), soma_experiment.axis_query("RNA") as query:
+        next(query.obsp("no-such-layer"))
 
     # Unknown varp layer name
-    with pytest.raises(ValueError):
-        with soma_experiment.axis_query("RNA") as query:
-            next(query.varp("no-such-layer"))
+    with pytest.raises(ValueError), soma_experiment.axis_query("RNA") as query:
+        next(query.varp("no-such-layer"))
 
     # Illegal layer name type
     for lyr_name in [True, 3, 99.3]:

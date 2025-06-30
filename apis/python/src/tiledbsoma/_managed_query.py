@@ -42,9 +42,8 @@ class ManagedQuery:
             object.__setattr__(self, "_handle", clib.ManagedQuery(array_handle))
 
     def _set_coord_by_py_seq_or_np_array(self, dim: pa.Field, coord: object) -> None:
-        if isinstance(coord, np.ndarray):
-            if coord.ndim != 1:
-                raise ValueError(f"only 1D numpy arrays may be used to index; got {coord.ndim}")
+        if isinstance(coord, np.ndarray) and coord.ndim != 1:
+            raise ValueError(f"only 1D numpy arrays may be used to index; got {coord.ndim}")
 
         column = self._array._handle._handle.get_column(dim.name)
 
@@ -99,20 +98,19 @@ class ManagedQuery:
 
         column = array_handle.get_column(dim.name)
 
-        if dim.metadata is not None:
-            if dim.metadata[b"dtype"].decode("utf-8") == "WKB":
-                if axis_names is None:
-                    raise ValueError("Axis names are required to set geometry column coordinates")
-                if not isinstance(dom[0], Mapping) or not isinstance(dom[1], Mapping):
-                    raise ValueError("Domain should be expressed per axis for geometry columns")
+        if dim.metadata is not None and dim.metadata[b"dtype"].decode("utf-8") == "WKB":
+            if axis_names is None:
+                raise ValueError("Axis names are required to set geometry column coordinates")
+            if not isinstance(dom[0], Mapping) or not isinstance(dom[1], Mapping):
+                raise ValueError("Domain should be expressed per axis for geometry columns")
 
-                self.set_geometry_coord(
-                    dim,
-                    cast("tuple[Mapping[str, float], Mapping[str, float]]", dom),
-                    coord,
-                    axis_names,
-                )
-                return
+            self.set_geometry_coord(
+                dim,
+                cast("tuple[Mapping[str, float], Mapping[str, float]]", dom),
+                coord,
+                axis_names,
+            )
+            return
 
         if isinstance(coord, (str, bytes)):
             column.set_dim_points_string_or_bytes(self._handle, [coord])

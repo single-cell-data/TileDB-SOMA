@@ -32,7 +32,7 @@ except ImportError as err:
 from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
 from somacore.options import PlatformConfig
 
-from ... import (
+from tiledbsoma import (
     Collection,
     DataFrame,
     DenseNDArray,
@@ -45,29 +45,15 @@ from ... import (
     _util,
     logging,
 )
-from ..._common_nd_array import NDArray
-from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
-from ..._exception import (
-    AlreadyExistsError,
-    NotCreateableError,
-    SOMAError,
-)
-from ..._soma_object import AnySOMAObject
-from ..._types import IngestMode
-from ...options import SOMATileDBContext
-from ...options._soma_tiledb_context import _validate_soma_tiledb_context
-from ...options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
-from .. import conversions
-from .._common import AdditionalMetadata
-from .._registration import (
-    AxisIDMapping,
-    ExperimentAmbientLabelMapping,
-    ExperimentIDMapping,
-)
-from ..ingest import (
+from tiledbsoma._common_nd_array import NDArray
+from tiledbsoma._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
+from tiledbsoma._exception import AlreadyExistsError, NotCreateableError, SOMAError
+from tiledbsoma._soma_object import AnySOMAObject
+from tiledbsoma._types import IngestMode
+from tiledbsoma.io import conversions
+from tiledbsoma.io._common import AdditionalMetadata
+from tiledbsoma.io._registration import AxisIDMapping, ExperimentAmbientLabelMapping, ExperimentIDMapping
+from tiledbsoma.io.ingest import (
     IngestCtx,
     IngestionParams,
     IngestPlatformCtx,
@@ -77,6 +63,10 @@ from ..ingest import (
     _write_matrix_to_denseNDArray,
     add_metadata,
 )
+from tiledbsoma.options import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
+from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+
 from ._util import TenXCountMatrixReader, _read_visium_software_version
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
@@ -187,10 +177,7 @@ class VisiumPaths:
         # Find the tissue positions file path if it wasn't supplied.
         if tissue_positions is None:
             major_version = version[0] if isinstance(version, tuple) else version
-            if major_version == 1:
-                possible_file_name = "tissue_positions_list.csv"
-            else:
-                possible_file_name = "tissue_positions.csv"
+            possible_file_name = "tissue_positions_list.csv" if major_version == 1 else "tissue_positions.csv"
             tissue_positions = spatial_dir / possible_file_name
             if not tissue_positions.exists():
                 raise OSError(
@@ -826,10 +813,7 @@ def _write_visium_spots(
     """
     start_time = _util.get_start_stamp()
     logging.log_io(None, "START WRITING loc")
-    if major_version == 1:
-        names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"]
-    else:
-        names = None
+    names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"] if major_version == 1 else None
     df = (
         pd.read_csv(input_tissue_positions, names=names)
         .rename(

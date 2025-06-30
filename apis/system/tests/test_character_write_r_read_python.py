@@ -20,5 +20,5 @@ class TestCharacterMetadataWriteRReadPython(TestReadPythonWriteR):
 
     def test_py_character(self, R_character):
         with tiledbsoma.open(self.uri) as exp:
-            for key in exp.metadata.keys():
+            for key in exp.metadata:
                 assert isinstance(exp.metadata.get(key), str)

@@ -14,9 +14,9 @@ from typing import Any, Literal, Mapping, Optional, Union, cast
 from somacore import ContextBase
 from typing_extensions import Self
 
-from .. import pytiledbsoma as clib
-from .._types import OpenTimestamp
-from .._util import ms_to_datetime, to_timestamp_ms
+from tiledbsoma import pytiledbsoma as clib
+from tiledbsoma._types import OpenTimestamp
+from tiledbsoma._util import ms_to_datetime, to_timestamp_ms
 
 try:
     from tiledb import Ctx as TileDBCtx

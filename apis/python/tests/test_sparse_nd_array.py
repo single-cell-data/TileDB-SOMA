@@ -201,12 +201,10 @@ def tensors_are_same_value(a: AnySparseTensor, b: AnySparseTensor) -> bool:
             np.take_along_axis(b_data, bi, axis=0),
         ):
             return False
-        if not np.array_equal(
+        return np.array_equal(
             np.take_along_axis(a_coords, ai, axis=0),
             np.take_along_axis(b_coords, bi, axis=0),
-        ):
-            return False
-        return True
+        )
 
     # coordinate order in the tensors may not be the same, leading to these gymnastics
     if isinstance(a, pa.SparseCOOTensor):
@@ -293,9 +291,8 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     del a
 
     # Array write should fail if array opened in read mode
-    with soma.SparseNDArray.open(uri) as a:
-        with pytest.raises(soma.SOMAError):
-            a.write(data)
+    with soma.SparseNDArray.open(uri) as a, pytest.raises(soma.SOMAError):
+        a.write(data)
 
     # Read back and validate
     with soma.SparseNDArray.open(uri) as b:
@@ -417,9 +414,8 @@ def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
     else:
         # tiledbsoma._exception.SOMAError: [TileDB::Dimension] Error:
         # Coordinate 2 is out of domain bounds [0, 1] on dimension 'soma_dim_0'
-        with pytest.raises(soma.SOMAError):
-            with soma.SparseNDArray.open(uri, "w") as snda:
-                snda.write(batch2)
+        with pytest.raises(soma.SOMAError), soma.SparseNDArray.open(uri, "w") as snda:
+            snda.write(batch2)
 
 
 def test_empty_read(tmp_path):
@@ -956,9 +952,8 @@ def test_sparse_nd_array_not_implemented(tmp_path):
     """Poke all of the expected not implemented API"""
     soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint32(), shape=(99,)).close()
 
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
-        with pytest.raises(NotImplementedError):
-            next(a.read().dense_tensors())
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as a, pytest.raises(NotImplementedError):
+        next(a.read().dense_tensors())
 
 
 def test_sparse_nd_array_error_corners(tmp_path):
@@ -978,10 +973,9 @@ def test_sparse_nd_array_error_corners(tmp_path):
         with pytest.raises(ValueError):
             a.write(pa.SparseCSCMatrix.from_scipy(sparse.random(10, 10, format="csc", dtype=np.uint32)))
 
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as a, raises_no_typeguard(TypeError):
         # other coord types are illegal
-        with raises_no_typeguard(TypeError):
-            next(a.read("hi").tables())
+        next(a.read("hi").tables())
 
 
 @pytest.mark.parametrize(
@@ -1007,9 +1001,8 @@ def test_bad_coords(tmp_path, bad_coords):
     with soma.SparseNDArray.create(uri=tmp_path.as_posix(), type=pa.uint32(), shape=(99,)) as a:
         a.write(create_random_tensor(format="coo", shape=(99,), dtype=np.uint32, density=0.1))
 
-    with _factory.open(tmp_path.as_posix()) as a:
-        with pytest.raises(ValueError):
-            next(a.read(bad_coords).tables())
+    with _factory.open(tmp_path.as_posix()) as a, pytest.raises(ValueError):
+        next(a.read(bad_coords).tables())
 
 
 def test_tile_extents(tmp_path):
@@ -1210,10 +1203,9 @@ def test_blockwise_table_iter(
             # get the whole enchilada in ragged form
             truth_tbl = A.read(coords=coords).tables().concat()
 
-            block = 0
             size = max(5, min(A.shape[axis] // 3, 1000))  # shoot for 3 blocks, in range [5,1000]
             tbls = []
-            for tbl, joinids in (
+            for block, (tbl, joinids) in enumerate(
                 A.read(coords=coords, result_order=result_order)
                 .blockwise(
                     axis=axis,
@@ -1232,7 +1224,6 @@ def test_blockwise_table_iter(
                     assert np.isin(tbl.column(f"soma_dim_{d}").to_numpy(), joinids[d].to_numpy()).all()
 
                 tbls.append(tbl)
-                block += 1
 
             # check that stacked blocks match the full (ragged) read
             row_sort_order = [(f"soma_dim_{n}", "ascending") for n in range(ndim)]
@@ -1259,8 +1250,7 @@ def test_blockwise_table_iter_size(a_random_sparse_nd_array: str, shape: tuple[i
     for axis in range(ndim):
         with soma.open(a_random_sparse_nd_array, mode="r") as A:
             assert shape == A.shape
-            block = 0
-            for tbl, joinids in (
+            for block, (tbl, joinids) in enumerate(
                 A.read()
                 .blockwise(
                     axis=axis,
@@ -1281,8 +1271,6 @@ def test_blockwise_table_iter_size(a_random_sparse_nd_array: str, shape: tuple[i
                     joinids[axis].to_numpy() >= (block * size),
                     joinids[axis].to_numpy() < ((block + 1) * size),
                 ).all()
-
-                block += 1
 
 
 @pytest.mark.parametrize(
@@ -1366,9 +1354,8 @@ def test_blockwise_table_iter_reindex(
 
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 def test_blockwise_table_iter_error_checks(a_random_sparse_nd_array: str, shape: tuple[int, ...]) -> None:
-    with soma.open(a_random_sparse_nd_array, mode="r") as A:
-        with pytest.raises(NotImplementedError):
-            next(A.read().blockwise(axis=0).tables().concat())
+    with soma.open(a_random_sparse_nd_array, mode="r") as A, pytest.raises(NotImplementedError):
+        next(A.read().blockwise(axis=0).tables().concat())
 
 
 @pytest.mark.parametrize(
@@ -1477,10 +1464,7 @@ def test_blockwise_scipy_iter(
 
                 # sanity check coordinates
                 if not reindex_sparse_axis:
-                    if not compress:
-                        minor = sp.col if axis == 0 else sp.row
-                    else:
-                        minor = sp.indices
+                    minor = (sp.col if axis == 0 else sp.row) if not compress else sp.indices
                     assert np.isin(minor, joinids[minor_axis]).all()
 
                 results.append(sp)
@@ -1510,9 +1494,8 @@ def test_blockwise_scipy_iter_error_checks(a_random_sparse_nd_array: str, shape:
 
 @pytest.mark.parametrize("density,shape", [(0.1, (4, 8, 16))])
 def test_blockwise_scipy_iter_not_2D(a_random_sparse_nd_array: str, shape: tuple[int, ...]) -> None:
-    with soma.open(a_random_sparse_nd_array, mode="r") as A:
-        with pytest.raises(soma.SOMAError):
-            next(A.read().blockwise(axis=0).scipy())
+    with soma.open(a_random_sparse_nd_array, mode="r") as A, pytest.raises(soma.SOMAError):
+        next(A.read().blockwise(axis=0).scipy())
 
 
 @pytest.mark.parametrize("density,shape", [(0.01, (10_000, 1230))])
@@ -1588,8 +1571,7 @@ def test_blockwise_indices(
     with soma.open(a_random_sparse_nd_array, mode="r", context=soma_tiledb_context) as A:
         for axis, reindex_disable_on_axis in itertools.product((0, 1), (None, [0], [1], [0, 1])):
             minor_axis = 1 - axis
-            block = 0
-            for _, indices in (
+            for block, (_, indices) in enumerate(
                 A.read(coords)
                 .blockwise(
                     axis=axis,
@@ -1603,7 +1585,6 @@ def test_blockwise_indices(
                 beg = block * size
                 assert np.array_equal(expected_indices[axis][beg : beg + size], indices[axis].to_numpy())
                 assert np.array_equal(expected_indices[minor_axis], indices[minor_axis].to_numpy())
-                block += 1
 
         # blockwise scipy
         for axis in (0, 1):
@@ -1704,20 +1685,22 @@ def test_global_writes(tmp_path):
     with soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint8(), shape=(3,)) as A:
         schema = A.schema
 
-    with pytest.raises(
-        soma.SOMAError,
-        match=r"Write failed; Coordinates (.*) succeed (.*) in the global order",
+    with (
+        pytest.raises(
+            soma.SOMAError,
+            match=r"Write failed; Coordinates (.*) succeed (.*) in the global order",
+        ),
+        soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A,
     ):
-        with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
-            A.write(
-                pa.Table.from_pydict(
-                    {
-                        "soma_dim_0": pa.array([2, 1, 0], type=pa.int64()),
-                        "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
-                    },
-                ),
-                platform_config=write_options,
-            )
+        A.write(
+            pa.Table.from_pydict(
+                {
+                    "soma_dim_0": pa.array([2, 1, 0], type=pa.int64()),
+                    "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
+                },
+            ),
+            platform_config=write_options,
+        )
 
     data = pa.Table.from_pydict(
         {
@@ -1736,13 +1719,12 @@ def test_global_writes(tmp_path):
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.read().tables().concat() == data
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError), soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
         # Takes TileDBWriteOptions as of TileDB-SOMA 1.13
-        with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
-            A.write(
-                data,
-                platform_config=soma.TileDBCreateOptions(),
-            )
+        A.write(
+            data,
+            platform_config=soma.TileDBCreateOptions(),
+        )
 
 
 def test_pass_configs(tmp_path):

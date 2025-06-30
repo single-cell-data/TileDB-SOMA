@@ -14,7 +14,7 @@ import pyarrow as pa
 import pyarrow.compute as pacomp
 from typing_extensions import Self
 
-from ..._exception import SOMAError
+from tiledbsoma._exception import SOMAError
 
 
 def _expand_compressed_index_pointers(indptr: npt.NDArray, nval: int) -> npt.NDArray:

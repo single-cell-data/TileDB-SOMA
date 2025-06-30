@@ -34,10 +34,7 @@ def run(data_type, keys, lookups, pandas):
     build_time = perf_counter()
     lookup(indexer, lookups)
     lookup_time = perf_counter()
-    if pandas:
-        name = "pandas"
-    else:
-        name = "reindexer"
+    name = "pandas" if pandas else "reindexer"
     print(f"{data_type}: Setup time: {name}: {build_time - start_time}: Lookup time: {lookup_time - build_time}")
 
 

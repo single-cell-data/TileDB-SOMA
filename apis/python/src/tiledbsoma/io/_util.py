@@ -14,10 +14,11 @@ import anndata as ad
 import pyarrow as pa
 from anndata._core import file_backing
 
-from .. import pytiledbsoma as clib
-from .._exception import SOMAError
-from .._types import Path
-from ..options import SOMATileDBContext
+from tiledbsoma import pytiledbsoma as clib
+from tiledbsoma._exception import SOMAError
+from tiledbsoma._types import Path
+from tiledbsoma.options import SOMATileDBContext
+
 from ._caching_reader import CachingReader
 
 _pa_type_to_str_fmt = {

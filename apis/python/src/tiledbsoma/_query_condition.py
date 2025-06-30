@@ -257,10 +257,7 @@ class QueryConditionTree(ast.NodeVisitor):
             if pa.types.is_dictionary(dt):
                 dt = dt.value_type
 
-            if pa_types_is_string_or_bytes(dt):
-                dtype = "string"
-            else:
-                dtype = np.dtype(dt.to_pandas_dtype()).name
+            dtype = "string" if pa_types_is_string_or_bytes(dt) else np.dtype(dt.to_pandas_dtype()).name
 
             # sdf.read(column_names=["foo"], value_filter='bar == 999') should
             # result in bar being added to the column names. See also
@@ -292,10 +289,7 @@ class QueryConditionTree(ast.NodeVisitor):
         if pa.types.is_dictionary(dt):
             dt = dt.value_type
 
-        if pa_types_is_string_or_bytes(dt):
-            dtype = "string"
-        else:
-            dtype = np.dtype(dt.to_pandas_dtype()).name
+        dtype = "string" if pa_types_is_string_or_bytes(dt) else np.dtype(dt.to_pandas_dtype()).name
         val = self.cast_val_to_dtype(val, dtype)
 
         pyqc = clib.PyQueryCondition()

@@ -2029,9 +2029,8 @@ def test_types_write_errors(
         domain=domain,
     )
 
-    with pytest.raises(error):
-        with soma.DataFrame.open(uri, "w") as sdf:
-            sdf.write(arrow_table)
+    with pytest.raises(error), soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(arrow_table)
 
 
 @pytest.mark.parametrize(
@@ -2129,6 +2128,5 @@ def test_types_read_errors(
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_table)
 
-    with pytest.raises(soma.SOMAError):
-        with soma.DataFrame.open(uri, "r") as sdf:
-            sdf.read(coords=coords).concat()
+    with pytest.raises(soma.SOMAError), soma.DataFrame.open(uri, "r") as sdf:
+        sdf.read(coords=coords).concat()

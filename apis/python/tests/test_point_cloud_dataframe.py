@@ -442,9 +442,8 @@ def test_point_cloud_read_spatial_region_2d_bad(tmp_path, name, region, exc_type
         rb = pa.Table.from_pydict(pydict)
         ptc.write(rb)
 
-    with soma.PointCloudDataFrame.open(uri, "r") as ptc:
-        with pytest.raises(exc_type):
-            ptc.read_spatial_region(region=region)
+    with soma.PointCloudDataFrame.open(uri, "r") as ptc, pytest.raises(exc_type):
+        ptc.read_spatial_region(region=region)
 
 
 @pytest.mark.skip("3D regions not supported yet")
@@ -472,9 +471,8 @@ def test_point_cloud_read_spatial_region_3d_bad(tmp_path, name, region, exc_type
         rb = pa.Table.from_pydict(pydict)
         ptc.write(rb)
 
-    with soma.PointCloudDataFrame.open(uri, "r") as ptc:
-        with pytest.raises(exc_type):
-            ptc.read_spatial_region(region=region)
+    with soma.PointCloudDataFrame.open(uri, "r") as ptc, pytest.raises(exc_type):
+        ptc.read_spatial_region(region=region)
 
 
 def point_cloud_read_spatial_region_transform_setup(uri, transform, input_axes, kwargs):

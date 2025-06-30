@@ -27,9 +27,8 @@ from ._util import create_basic_object, raises_no_typeguard
 def test_experiment_reopen(tmp_path, soma_type):
     # Create object and an error is thrown for reopen with invalid mode.
     uri = f"{tmp_path}/{soma_type}"
-    with create_basic_object(soma_type, uri, tiledb_timestamp=1) as x1:
-        with raises_no_typeguard(ValueError):
-            x1.reopen("invalid")
+    with create_basic_object(soma_type, uri, tiledb_timestamp=1) as x1, raises_no_typeguard(ValueError):
+        x1.reopen("invalid")
 
     # Check reopen without specifying timestamp.
     with tiledbsoma.open(uri, "r") as x1:

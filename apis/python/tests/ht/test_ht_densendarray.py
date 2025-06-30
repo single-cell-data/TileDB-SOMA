@@ -46,10 +46,7 @@ def dense_array_shape(
     # to keep the array under some number of elements max, use the nth root as max per-dim size
     MAX_ELEM = 2**20  # 1M
     shape_limit = int(MAX_ELEM ** (1 / ndim))
-    if max_shape is None:
-        max_values = [shape_limit] * ndim
-    else:
-        max_values = [min(shape_limit, s) for s in max_shape]
+    max_values = [shape_limit] * ndim if max_shape is None else [min(shape_limit, s) for s in max_shape]
 
     elements = [
         draw(

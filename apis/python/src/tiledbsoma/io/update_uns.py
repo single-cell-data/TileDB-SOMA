@@ -198,9 +198,8 @@ def _update_uns_dict(
                 ) as df:
                     _maybe_set(coll, k, df, use_relative_uri=use_relative_uri)
         elif isinstance(v, dict):
-            if exists:
-                if not isinstance(cur, Collection):
-                    raise ValueError(f"{coll.uri}/{k}: expected Collection, found {type(cur).__name__}")
+            if exists and not isinstance(cur, Collection):
+                raise ValueError(f"{coll.uri}/{k}: expected Collection, found {type(cur).__name__}")
             _update_uns_dict(
                 coll[k],
                 v,

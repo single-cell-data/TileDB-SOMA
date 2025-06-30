@@ -480,11 +480,10 @@ def test_collection_entries_from_methods(tmp_path):
 def test_collection_entries_from_setter(tmp_path, entry_type):
     uri = f"{tmp_path}/collection_with_{entry_type.lower()}"
 
-    with soma.Collection.create(uri) as coll:
-        with create_basic_object(entry_type, f"{uri}_entry") as entry:
-            coll["entry"] = entry
-            entry2 = coll["entry"]
-            assert entry2 is entry
+    with soma.Collection.create(uri) as coll, create_basic_object(entry_type, f"{uri}_entry") as entry:
+        coll["entry"] = entry
+        entry2 = coll["entry"]
+        assert entry2 is entry
 
     with soma.Collection.open(uri) as coll:
         entry = coll["entry"]

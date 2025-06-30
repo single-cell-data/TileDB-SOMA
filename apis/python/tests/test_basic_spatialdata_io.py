@@ -30,118 +30,120 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
     with soma.Experiment.create(uri) as exp:
         assert exp.uri == uri
         # Create spatial folder.
-        with exp.add_new_collection("spatial") as spatial:
+        with (
+            exp.add_new_collection("spatial") as spatial,
+            spatial.add_new_collection("scene1", soma.Scene, coordinate_space=("x_scene1", "y_scene1")) as scene1,
+        ):
             # Create scene 1.
-            with spatial.add_new_collection("scene1", soma.Scene, coordinate_space=("x_scene1", "y_scene1")) as scene1:
-                scene1.add_new_collection("obsl")
-                scene1.add_new_collection("varl")
-                scene1.varl.add_new_collection("RNA")
-                scene1.add_new_collection("img")
+            scene1.add_new_collection("obsl")
+            scene1.add_new_collection("varl")
+            scene1.varl.add_new_collection("RNA")
+            scene1.add_new_collection("img")
 
-                # Add point cloud with shape to scene 1 obsl.
-                points1 = scene1.add_new_point_cloud_dataframe(
-                    "points1",
-                    "obsl",
-                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 2.0),
-                    schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[0, 1], [0, 1], [0, 3]],
-                )
-                points1.write(
-                    pa.Table.from_pydict(
-                        {
-                            "soma_joinid": np.arange(4),
-                            "x": np.array([0, 0, 0.5, 0.5]),
-                            "y": np.array([0, 0.5, 0, 0.5]),
-                        },
-                    ),
-                )
-                points1.metadata["soma_geometry"] = 1.0
-                points1.metadata["soma_geometry_type"] = "radius"
+            # Add point cloud with shape to scene 1 obsl.
+            points1 = scene1.add_new_point_cloud_dataframe(
+                "points1",
+                "obsl",
+                transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 2.0),
+                schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
+                domain=[[0, 1], [0, 1], [0, 3]],
+            )
+            points1.write(
+                pa.Table.from_pydict(
+                    {
+                        "soma_joinid": np.arange(4),
+                        "x": np.array([0, 0, 0.5, 0.5]),
+                        "y": np.array([0, 0.5, 0, 0.5]),
+                    },
+                ),
+            )
+            points1.metadata["soma_geometry"] = 1.0
+            points1.metadata["soma_geometry_type"] = "radius"
 
-                # Add point cloud wihtout shape to scene 1 obsl
-                points3 = scene1.add_new_point_cloud_dataframe(
-                    "points3",
-                    "obsl",
-                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 4.0),
-                    schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[-1, 0], [-1, 0], [0, 3]],
-                )
-                points3.write(
-                    pa.Table.from_pydict(
-                        {
-                            "soma_joinid": np.arange(4),
-                            "x": np.array([0, 0, -0.5, -0.5]),
-                            "y": np.array([0, -0.5, 0, -0.5]),
-                        },
-                    ),
-                )
+            # Add point cloud wihtout shape to scene 1 obsl
+            points3 = scene1.add_new_point_cloud_dataframe(
+                "points3",
+                "obsl",
+                transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 4.0),
+                schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
+                domain=[[-1, 0], [-1, 0], [0, 3]],
+            )
+            points3.write(
+                pa.Table.from_pydict(
+                    {
+                        "soma_joinid": np.arange(4),
+                        "x": np.array([0, 0, -0.5, -0.5]),
+                        "y": np.array([0, -0.5, 0, -0.5]),
+                    },
+                ),
+            )
 
-                # Add point cloud without shape to scene 1 varl.
-                points2 = scene1.add_new_point_cloud_dataframe(
-                    "points2",
-                    ["varl", "RNA"],
-                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), -1.0),
-                    schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[-1, 0], [-1, 0], [0, 3]],
-                )
-                points2.write(
-                    pa.Table.from_pydict(
-                        {
-                            "soma_joinid": np.arange(4),
-                            "x": np.array([0, 0, -0.5, -0.5]),
-                            "y": np.array([0, -0.5, 0, -0.5]),
-                        },
-                    ),
-                )
+            # Add point cloud without shape to scene 1 varl.
+            points2 = scene1.add_new_point_cloud_dataframe(
+                "points2",
+                ["varl", "RNA"],
+                transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), -1.0),
+                schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
+                domain=[[-1, 0], [-1, 0], [0, 3]],
+            )
+            points2.write(
+                pa.Table.from_pydict(
+                    {
+                        "soma_joinid": np.arange(4),
+                        "x": np.array([0, 0, -0.5, -0.5]),
+                        "y": np.array([0, -0.5, 0, -0.5]),
+                    },
+                ),
+            )
 
-                # Add point cloud with shape to scene 1 varl.
-                points4 = scene1.add_new_point_cloud_dataframe(
-                    "points4",
-                    ["varl", "RNA"],
-                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.25),
-                    schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[0, 1], [0, 1], [0, 3]],
-                )
-                points4.write(
-                    pa.Table.from_pydict(
-                        {
-                            "soma_joinid": np.arange(4),
-                            "x": np.array([0, 0, 0.5, 0.5]),
-                            "y": np.array([0, 0.5, 0, 0.5]),
-                        },
-                    ),
-                )
-                points4.metadata["soma_geometry"] = 2.0
-                points4.metadata["soma_geometry_type"] = "radius"
+            # Add point cloud with shape to scene 1 varl.
+            points4 = scene1.add_new_point_cloud_dataframe(
+                "points4",
+                ["varl", "RNA"],
+                transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.25),
+                schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
+                domain=[[0, 1], [0, 1], [0, 3]],
+            )
+            points4.write(
+                pa.Table.from_pydict(
+                    {
+                        "soma_joinid": np.arange(4),
+                        "x": np.array([0, 0, 0.5, 0.5]),
+                        "y": np.array([0, 0.5, 0, 0.5]),
+                    },
+                ),
+            )
+            points4.metadata["soma_geometry"] = 2.0
+            points4.metadata["soma_geometry_type"] = "radius"
 
-                # Add multiscale image with a single image.
-                with scene1.add_new_multiscale_image(
-                    "image1",
-                    "img",
-                    type=pa.uint8(),
-                    level_shape=(3, 64, 64),
-                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.5),
-                ) as image1:
-                    coords = (slice(None), slice(None), slice(None))
-                    l0 = image1["level0"]
-                    l0.write(coords, pa.Tensor.from_numpy(sample_2d_data[0]))
+            # Add multiscale image with a single image.
+            with scene1.add_new_multiscale_image(
+                "image1",
+                "img",
+                type=pa.uint8(),
+                level_shape=(3, 64, 64),
+                transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.5),
+            ) as image1:
+                coords = (slice(None), slice(None), slice(None))
+                l0 = image1["level0"]
+                l0.write(coords, pa.Tensor.from_numpy(sample_2d_data[0]))
 
-                # Add multiscale image with multiple resolutions.
-                with scene1.add_new_multiscale_image(
-                    "image2",
-                    "img",
-                    type=pa.uint8(),
-                    level_key="fullres",
-                    level_shape=(3, 32, 32),
-                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.5),
-                ) as image2:
-                    coords = (slice(None), slice(None), slice(None))
-                    fullres = image2["fullres"]
-                    fullres.write(coords, pa.Tensor.from_numpy(sample_2d_data[1]))
-                    hires = image2.add_new_level("hires", shape=(3, 16, 16))
-                    hires.write(coords, pa.Tensor.from_numpy(sample_2d_data[2]))
-                    lowres = image2.add_new_level("lowres", shape=(3, 8, 8))
-                    lowres.write(coords, pa.Tensor.from_numpy(sample_2d_data[3]))
+            # Add multiscale image with multiple resolutions.
+            with scene1.add_new_multiscale_image(
+                "image2",
+                "img",
+                type=pa.uint8(),
+                level_key="fullres",
+                level_shape=(3, 32, 32),
+                transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.5),
+            ) as image2:
+                coords = (slice(None), slice(None), slice(None))
+                fullres = image2["fullres"]
+                fullres.write(coords, pa.Tensor.from_numpy(sample_2d_data[1]))
+                hires = image2.add_new_level("hires", shape=(3, 16, 16))
+                hires.write(coords, pa.Tensor.from_numpy(sample_2d_data[2]))
+                lowres = image2.add_new_level("lowres", shape=(3, 8, 8))
+                lowres.write(coords, pa.Tensor.from_numpy(sample_2d_data[3]))
 
     return soma.Experiment.open(uri, mode="r")
 
@@ -168,13 +170,13 @@ def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
     assert rna.var.shape == conftest_pbmc_small.var.shape
     assert rna.X.shape == conftest_pbmc_small.X.shape
 
-    for key in conftest_pbmc_small.obsm.keys():
+    for key in conftest_pbmc_small.obsm:
         assert rna.obsm[key].shape == conftest_pbmc_small.obsm[key].shape
-    for key in conftest_pbmc_small.varm.keys():
+    for key in conftest_pbmc_small.varm:
         assert rna.varm[key].shape == conftest_pbmc_small.varm[key].shape
-    for key in conftest_pbmc_small.obsp.keys():
+    for key in conftest_pbmc_small.obsp:
         assert rna.obsp[key].shape == conftest_pbmc_small.obsp[key].shape
-    for key in conftest_pbmc_small.varp.keys():
+    for key in conftest_pbmc_small.varp:
         assert rna.varp[key].shape == conftest_pbmc_small.varp[key].shape
 
     # Check the values of the anndata table.

@@ -833,10 +833,7 @@ def _read_inner_ndarray(
     # Prior to the shape / current_domain change in release 1.15.0, there
     # was no way to determine the "max" number of features, aka shape, of
     # the sparse obsm/varm array. Guess based upon the array contents.
-    if matrix.tiledbsoma_has_upgraded_shape:
-        n_col = matrix.shape[1]
-    else:
-        n_col = pa.compute.max(table["soma_dim_1"]).as_py() + 1
+    n_col = matrix.shape[1] if matrix.tiledbsoma_has_upgraded_shape else pa.compute.max(table["soma_dim_1"]).as_py() + 1
 
     z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=dtype)
     np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])

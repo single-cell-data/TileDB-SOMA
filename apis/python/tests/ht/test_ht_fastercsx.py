@@ -209,7 +209,7 @@ def test_fastercsx_clib_compress_coo(
         np.allclose(
             csr.data,
             scipy_csr.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
+            equal_nan=value_dtype.kind == "f",
             atol=1e-06,
             rtol=1e-04,
         )
@@ -217,7 +217,7 @@ def test_fastercsx_clib_compress_coo(
         else np.array_equal(
             csr.data,
             scipy_csr.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
+            equal_nan=value_dtype.kind == "f",
         )
     )
 
@@ -345,12 +345,12 @@ def test_fastercsx_from_ijd(
         np.allclose(
             cm.data,
             scipy_cm.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
+            equal_nan=value_dtype.kind == "f",
             atol=1e-06,
             rtol=1e-04,
         )
         if not unique
-        else np.array_equal(cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False)
+        else np.array_equal(cm.data, scipy_cm.data, equal_nan=value_dtype.kind == "f")
     )
 
 
@@ -401,7 +401,7 @@ def test_fastercsx_to_scipy(
         np.allclose(
             cm_slc.data,
             scipy_slc.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
+            equal_nan=value_dtype.kind == "f",
             atol=1e-06,
             rtol=1e-04,
         )
@@ -409,6 +409,6 @@ def test_fastercsx_to_scipy(
         else np.array_equal(
             cm_slc.data,
             scipy_slc.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
+            equal_nan=value_dtype.kind == "f",
         )
     )

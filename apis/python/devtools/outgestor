@@ -88,9 +88,8 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if tiledbsoma._util.is_local_path(outdir):
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
+    if tiledbsoma._util.is_local_path(outdir) and not os.path.exists(outdir):
+        os.mkdir(outdir)
 
     if args.debug:
         tiledbsoma.logging.debug()

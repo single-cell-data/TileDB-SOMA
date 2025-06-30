@@ -90,7 +90,7 @@ def test_replace_config_after_construction():
     assert -100 < now - open_ts < 100
     open_ts = context._open_timestamp_ms(None)
     assert -100 < now - open_ts < 100
-    assert 999 == context._open_timestamp_ms(999)
+    assert context._open_timestamp_ms(999) == 999
 
     context_ts_1 = context.replace(timestamp=1)
 

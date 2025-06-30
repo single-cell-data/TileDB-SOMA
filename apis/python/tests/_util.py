@@ -75,7 +75,7 @@ def assert_uns_equal(uns0, uns1):
 
 def assert_array_dicts_equal(d0, d1):
     assert d0.keys() == d1.keys()
-    for k in d0.keys():
+    for k in d0:
         assert_array_equal(d0[k], d1[k])
 
 
@@ -163,9 +163,8 @@ def raises_no_typeguard(exc: type[Exception], *args: Any, **kwargs: Any):
     Otherwise, most errors end up manifesting as ``TypeCheckError``s, during tests (thanks to
     ``typeguard``'s import hook).
     """
-    with suppress_type_checks():
-        with pytest.raises(exc, *args, **kwargs):
-            yield
+    with suppress_type_checks(), pytest.raises(exc, *args, **kwargs):
+        yield
 
 
 # Alias for several types that can be used to specify expected exceptions in `maybe_raises`

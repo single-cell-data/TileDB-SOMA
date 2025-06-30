@@ -277,7 +277,7 @@ if os.name == "posix" and sys.platform != "darwin":
 setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
-    long_description=open("README.md", encoding="utf-8").read(),
+    long_description=open("README.md", encoding="utf-8").read(),  # noqa: SIM115
     long_description_content_type="text/markdown",
     author="TileDB, Inc.",
     author_email="help@tiledb.io",
@@ -352,9 +352,9 @@ setuptools.setup(
         "typing-extensions>=4.5.0",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
-        "dev": open("requirements_dev.txt").read(),
-        "spatial-io": open("requirements_spatial.txt").read(),
-        "all": open("requirements_dev.txt").read() + open("requirements_spatial.txt").read(),
+        "dev": open("requirements_dev.txt").read(),  # noqa: SIM115
+        "spatial-io": open("requirements_spatial.txt").read(),  # noqa: SIM115
+        "all": open("requirements_dev.txt").read() + open("requirements_spatial.txt").read(),  # noqa: SIM115
     },
     python_requires=">=3.9",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},

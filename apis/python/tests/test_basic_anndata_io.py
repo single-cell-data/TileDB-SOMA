@@ -289,16 +289,16 @@ def test_resume_mode(resume_mode_h5ad_file, tmp_path):
         meas2 = exp2.ms["RNA"]
 
         if "obsm" in meas1:
-            for key in meas1.obsm.keys():
+            for key in meas1.obsm:
                 assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(meas2.obsm[key].uri)
         if "varm" in meas1:
-            for key in meas1.varm.keys():
+            for key in meas1.varm:
                 assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(meas2.obsm[key].uri)
         if "obsp" in meas1:
-            for key in meas1.obsp.keys():
+            for key in meas1.obsp:
                 assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(meas2.obsp[key].uri)
         if "varp" in meas1:
-            for key in meas1.varp.keys():
+            for key in meas1.varp:
                 assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(meas2.varm[key].uri)
 
 
@@ -439,9 +439,8 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
 
-    with _factory.open(output_path, "w") as exp:
-        with pytest.raises(KeyError):
-            tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", conftest_pbmc_small.X)
+    with _factory.open(output_path, "w") as exp, pytest.raises(KeyError):
+        tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", conftest_pbmc_small.X)
 
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()))
@@ -520,19 +519,21 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
             with coll:
                 matrix_uri = f"{coll_uri}/{matrix_name}"
 
-                with pytest.deprecated_call():
-                    with tiledbsoma.io.ingest.create_from_matrix(
+                with (
+                    pytest.deprecated_call(),
+                    tiledbsoma.io.ingest.create_from_matrix(
                         tiledbsoma.SparseNDArray,
                         matrix_uri,
                         matrix_data,
                         context=context,
-                    ) as sparse_nd_array:
-                        tiledbsoma.io.ingest._maybe_set(
-                            coll,
-                            matrix_name,
-                            sparse_nd_array,
-                            use_relative_uri=use_relative_uri,
-                        )
+                    ) as sparse_nd_array,
+                ):
+                    tiledbsoma.io.ingest._maybe_set(
+                        coll,
+                        matrix_name,
+                        sparse_nd_array,
+                        use_relative_uri=use_relative_uri,
+                    )
 
     output_path = tmp_path.as_posix()
     original = conftest_pbmc_small.copy()
@@ -553,9 +554,8 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
 
-    with _factory.open(output_path, "w") as exp:
-        with pytest.raises(KeyError):
-            add_X_layer(exp, "nonesuch", "data3", conftest_pbmc_small.X)
+    with _factory.open(output_path, "w") as exp, pytest.raises(KeyError):
+        add_X_layer(exp, "nonesuch", "data3", conftest_pbmc_small.X)
 
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()))
@@ -606,13 +606,13 @@ def test_export_anndata(conftest_pbmc_small, tmp_path):
     assert readback.var.shape == conftest_pbmc_small.var.shape
     assert readback.X.shape == conftest_pbmc_small.X.shape
 
-    for key in conftest_pbmc_small.obsm.keys():
+    for key in conftest_pbmc_small.obsm:
         assert readback.obsm[key].shape == conftest_pbmc_small.obsm[key].shape
-    for key in conftest_pbmc_small.varm.keys():
+    for key in conftest_pbmc_small.varm:
         assert readback.varm[key].shape == conftest_pbmc_small.varm[key].shape
-    for key in conftest_pbmc_small.obsp.keys():
+    for key in conftest_pbmc_small.obsp:
         assert readback.obsp[key].shape == conftest_pbmc_small.obsp[key].shape
-    for key in conftest_pbmc_small.varp.keys():
+    for key in conftest_pbmc_small.varp:
         assert readback.varp[key].shape == conftest_pbmc_small.varp[key].shape
 
     with _factory.open(output_path) as exp:
@@ -866,8 +866,8 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
     assert_adata_equal(original, adata)
 
     with tiledbsoma.Experiment.open(uri) as exp:
-        assert obs_id_name in exp.obs.keys()
-        assert var_id_name in exp.ms["RNA"].var.keys()
+        assert obs_id_name in exp.obs.keys()  # noqa: SIM118
+        assert var_id_name in exp.ms["RNA"].var.keys()  # noqa: SIM118
 
         if indexify_obs:
             expected_obs_keys = ["soma_joinid", obs_id_name] + adata.obs_keys()
