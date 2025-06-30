@@ -7,7 +7,7 @@ import random
 from copy import deepcopy
 from pathlib import Path
 
-import anndata
+import anndata as ad
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -352,7 +352,7 @@ def test_ingest_uns(
     ingest_uns_keys,
 ):
     tmp_uri = tmp_path.as_uri()
-    adata_extended2 = anndata.read_h5ad(conftest_pbmc3k_h5ad_path)
+    adata_extended2 = ad.read_h5ad(conftest_pbmc3k_h5ad_path)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
         adata_extended2,
@@ -718,7 +718,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
 
 
 def test_export_obsm_with_holes(soma_tiledb_context, h5ad_file_with_obsm_holes, tmp_path):
-    adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
+    adata = ad.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     original = adata.copy()
 
     # This data file is prepared such that obsm["X_pca"] has shape (2638, 50)
@@ -842,7 +842,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
             if (i + j) % 2 == 1:
                 X[i, j] = 100 + 10 * i + j
 
-    adata = anndata.AnnData(X=X, obs=obs, var=var)
+    adata = ad.AnnData(X=X, obs=obs, var=var)
     original = adata.copy()
 
     uri = tmp_path.as_posix()
@@ -927,7 +927,7 @@ def make_uns_adata(
     if uns is None:
         uns = TEST_UNS
 
-    adata = anndata.AnnData(obs=obs, var=var, X=X, uns=uns)
+    adata = ad.AnnData(obs=obs, var=var, X=X, uns=uns)
     adata0 = deepcopy(adata)
 
     soma_uri = tmp_path.as_posix()
@@ -1035,7 +1035,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
     X = scipy.sparse.random(nobs, nvar, density=xocc, dtype=np.float64).tocsr()
 
-    adata = anndata.AnnData(X=X, obs=obs, var=var)
+    adata = ad.AnnData(X=X, obs=obs, var=var)
 
     soma_uri = tmp_path.as_posix()
 
@@ -1061,7 +1061,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
 def test_obsm_data_type(conftest_pbmc_small, tmp_path):
     soma_path = tmp_path.as_posix()
-    bdata = anndata.AnnData(
+    bdata = ad.AnnData(
         X=conftest_pbmc_small.X,
         obs=conftest_pbmc_small.obs,
         var=conftest_pbmc_small.var,
@@ -1105,7 +1105,7 @@ def test_outgest_X_layers(tmp_path):
     X = scipy.sparse.random(nobs, nvar, density=xocc, dtype=np.float64).tocsr()
     layers = {"data2": X, "data3": X}
 
-    adata = anndata.AnnData(X=X, obs=obs, var=var, layers=layers)
+    adata = ad.AnnData(X=X, obs=obs, var=var, layers=layers)
 
     soma_uri = tmp_path.as_posix()
 
@@ -1303,8 +1303,8 @@ def test_decat_append(tmp_path):
     X_under = scipy.sparse.random(nobs_under, nvar, density=0.1, dtype=np.float64).tocsr()
     X_over = scipy.sparse.random(nobs_over, nvar, density=0.1, dtype=np.float64).tocsr()
 
-    adata_under = anndata.AnnData(X=X_under, obs=obs_under, var=var)
-    adata_over = anndata.AnnData(X=X_over, obs=obs_over, var=var)
+    adata_under = ad.AnnData(X=X_under, obs=obs_under, var=var)
+    adata_over = ad.AnnData(X=X_over, obs=obs_over, var=var)
 
     # Do the initial ingests from AnnData format to TileDB-SOMA format
     path_under = (tmp_path / "under").as_posix()
@@ -1392,16 +1392,16 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
     # Make a copy of conftest_pbmc_small before modifying so we don't change the
     # original test file
-    ad = conftest_pbmc_small.copy(ad_uri)
+    adata = conftest_pbmc_small.copy(ad_uri)
 
     # host is little-endian, array is big-endian
-    ad.uns["X"] = np.array([7972], dtype=">u2")
+    adata.uns["X"] = np.array([7972], dtype=">u2")
 
-    tiledbsoma.io.from_anndata(exp_uri, ad, "RNA")
+    tiledbsoma.io.from_anndata(exp_uri, adata, "RNA")
 
     with tiledbsoma.Experiment.open(exp_uri) as E:
-        new_ad = tiledbsoma.io.to_anndata(E, "RNA", X_layer_name="data")
-        assert ad.uns["X"] == new_ad.uns["X"]
+        new_adata = tiledbsoma.io.to_anndata(E, "RNA", X_layer_name="data")
+        assert adata.uns["X"] == new_adata.uns["X"]
 
 
 def test_soma_file_handling_65831_65864():
@@ -1425,11 +1425,11 @@ def test_soma_file_handling_65831_65864():
 
 def test_from_anndata_sketchy_key(tmp_path):
     exp_uri = tmp_path.as_posix()
-    ad = anndata.read_h5ad(str(TESTDATA / "pbmc-small.h5ad"))
+    adata = ad.read_h5ad(str(TESTDATA / "pbmc-small.h5ad"))
 
     with pytest.raises(ValueError):
-        tiledbsoma.io.from_anndata(f"{exp_uri}/bad", ad, "..")
+        tiledbsoma.io.from_anndata(f"{exp_uri}/bad", adata, "..")
 
-    tiledbsoma.io.from_anndata(exp_uri, ad, "../..")
+    tiledbsoma.io.from_anndata(exp_uri, adata, "../..")
     with tiledbsoma.Experiment.open(exp_uri) as E:
         assert E["ms"]["../.."].uri == f"file://{exp_uri}/ms/..%2F.."

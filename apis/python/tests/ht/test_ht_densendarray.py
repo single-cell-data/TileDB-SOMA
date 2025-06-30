@@ -180,7 +180,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         self.A = soma.DenseNDArray.open(self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp)
 
     ##
-    ## --- schema
+    # --- schema
     ##
     @precondition(lambda self: not self.closed)
     @invariant()
@@ -197,7 +197,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         return
 
     ##
-    ## --- data
+    # --- data
     ##
     @precondition(lambda self: not self.closed and self.mode == "r")
     @rule(result_order=st.sampled_from(["row-major", "column-major"]))
