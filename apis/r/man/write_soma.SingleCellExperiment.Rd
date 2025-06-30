@@ -117,12 +117,6 @@ mat <- abs(Matrix::rsparsematrix(
 uri <- write_soma(sce, uri)
 
 (exp <- SOMAExperimentOpen(uri))
-exp$obs
-(ms <- exp$ms$get("RNA"))
-ms$var
-ms$X$names()
-ms$obsm$names()
-
 exp$close()
 }
 \dontshow{\}) # examplesIf}
