@@ -391,8 +391,8 @@ def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name, tmp_p
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("permutation", [[0, 1, 2, 3], [2, 3, 0, 1], [3, 2, 1, 0]])
-@pytest.mark.parametrize("solo_experiment_first", [True, False])
-@pytest.mark.parametrize("use_multiprocessing", [False, True])
+@pytest.mark.parametrize("solo_experiment_first", [True, False], ids=["solo-first", "all-at-once"])
+@pytest.mark.parametrize("use_multiprocessing", [False, True], ids=["with-multiprocessing", "without-multiprocessing"])
 def test_multiples_without_experiment(
     tmp_path,
     obs_field_name,

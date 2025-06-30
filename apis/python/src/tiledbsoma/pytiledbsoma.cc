@@ -120,6 +120,33 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         },
         "Print TileDB internal statistics. Lifecycle: experimental.");
 
+    m.def(
+        "get_soma_type_metadata_value",
+        [](std::string_view uri,
+           std::shared_ptr<SOMAContext> context,
+           std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+            return tiledbsoma::get_soma_type_metadata_value(uri, *context, timestamp);
+        },
+        "Returns the SOMA datatype metadata value from a TileDB object.");
+
+    m.def(
+        "get_soma_type_metadata_value_from_array",
+        [](std::string_view uri,
+           std::shared_ptr<SOMAContext> context,
+           std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+            return tiledbsoma::get_soma_type_metadata_value_from_array(uri, *context, timestamp);
+        },
+        "Returns the SOMA datatype metadata value from a TileDB array.");
+
+    m.def(
+        "get_soma_type_metadata_value_from_group",
+        [](std::string_view uri,
+           std::shared_ptr<SOMAContext> context,
+           std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+            return tiledbsoma::get_soma_type_metadata_value_from_group(uri, *context, timestamp);
+        },
+        "Returns the SOMA datatype metadata value from a TileDB group.");
+
     py::class_<PlatformConfig>(m, "PlatformConfig")
         .def(py::init<>())
         .def_readwrite("dataframe_dim_zstd_level", &PlatformConfig::dataframe_dim_zstd_level)
