@@ -515,6 +515,8 @@ test_that("SOMASparseNDArray shape", {
 })
 
 test_that("SOMADenseNDArray shape", {
+  skip_if(!extended_tests())
+  skip_on_cran()
   uri <- withr::local_tempdir("soma-dense-ndarray-shape")
   asch <- create_arrow_schema()
 
