@@ -41,4 +41,4 @@ jobs:
           cmake --build build -j 2
           ls external/lib/
       - name: Run C++ unittests
-        run:  ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
+        run:  ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma/test -C ASAN --verbose --rerun-failed --output-on-failure

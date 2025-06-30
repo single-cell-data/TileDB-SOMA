@@ -24,7 +24,7 @@ jobs:
     - name: Build libTileDB-SOMA
       run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
     - name: Run libTileDB-SOMA unittests
-      run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
+      run: ctest --test-dir build/libtiledbsoma/test -C Release --verbose --rerun-failed --output-on-failure
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
