@@ -214,28 +214,28 @@ data("pbmc_small", package = "SeuratObject")
 suppressWarnings(pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small))
 
 col <- SOMACollectionCreate(uri)
-\dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
+# Write a v3 Assay
 (assay <- pbmc_small[["RNA"]])
 (ms <- write_soma(assay, "RNA", soma_parent = col))
-\dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
+# Write a v5 Assay
 (assay5 <- methods::as(pbmc_small[["RNA"]], "Assay5"))
 (ms5 <- write_soma(assay5, "RNA5", soma_parent = col))
 
 ms5$close()
-\dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
+# Write a dimensional reduction
 (tsne <- pbmc_small[["tsne"]])
 write_soma(tsne, soma_parent = ms)
 ms$obsm
-\dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
+# Write a Seurat Graph
 (snn <- pbmc_small[["RNA_snn"]])
 write_soma(snn, "snn", soma_parent = ms)
 ms$obsp
-\dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
+# Write a Seurat command log
 (cmd <- pbmc_small[["NormalizeData.RNA"]])
 write_soma(cmd, "NormalizeData.RNA", soma_parent = col)
 (logs <- col$get("seurat_commands"))
