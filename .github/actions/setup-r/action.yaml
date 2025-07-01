@@ -33,9 +33,9 @@ runs:
     - name: P3M Bioconductor
       run: |
         echo 'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")' | \
-          tee -a "~/.Rprofile"
+          tee -a "${HOME}/.Rprofile"
         echo 'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
-          tee -a "~/.Rprofile"
+          tee -a "${HOME}/.Rprofile"
       shell: bash
 
     - name: R Package Type (macOS)
