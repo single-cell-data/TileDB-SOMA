@@ -1,0 +1,49 @@
+name: 'Setup R'
+description: 'Setup R and install package dependencies'
+inputs:
+  os:
+    description: 'OS being run on; needed for macOS to enforce binary dependencies'
+    default: ''
+    required: false
+  r:
+    description: 'R version'
+    default: 'release'
+    required: false
+  http-user-agent:
+    description: 'HTTP user agent for P3M'
+    default: ''
+    required: false
+  extra-packages:
+    description: 'Extra packages to be installed by pak'
+    default: ''
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: r-lib/actions/setup-pandoc@v2
+
+    - uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ inputs.r }}
+        http-user-agent: ${{ inputs.http-user-agent }}
+        use-public-rspm: true
+        extra-repositories: https://tiledb-inc.r-universe.dev
+
+    - name: P3M Bioconductor
+      run: |
+        echo 'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")' | \
+          tee -a "${HOME}/.Rprofile"
+        echo 'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
+          tee -a "${HOME}/.Rprofile"
+      shell: bash
+
+    - name: R Package Type (macOS)
+      if: ${{ inputs.os == 'macos-latest' }}
+      run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
+      shell: bash
+
+    - uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        extra-packages: ${{ inputs.extra-packages }}
+        working-directory: 'apis/r/'
