@@ -36,10 +36,12 @@ runs:
           tee -a "$(R RHOME)/etc/Rprofile.site"
         echo 'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
           tee -a "$(R RHOME)/etc/Rprofile.site"
+      shell: bash
 
     - name: R Package Type (macOS)
       if: ${{ inputs.os == 'macos-latest' }}
       run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
+      shell: bash
 
     - uses: r-lib/actions/setup-r-dependencies@v2
       with:
