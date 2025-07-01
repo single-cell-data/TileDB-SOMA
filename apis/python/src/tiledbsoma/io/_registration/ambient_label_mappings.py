@@ -59,7 +59,7 @@ class AxisAmbientLabelMapping:
             (int(self.joinid_map.soma_joinid.max() + 1) if len(self.joinid_map) > 0 else 0),
         )
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # noqa: ANN401
         if not isinstance(other, AxisAmbientLabelMapping):
             raise NotImplementedError("Cannot compare to non-AxisAmbientLabelMapping")
         return (

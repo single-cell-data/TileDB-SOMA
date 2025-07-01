@@ -54,7 +54,7 @@ class IntIndexer:
         Maturing.
     """
 
-    def __init__(self, data: IndexerDataType, *, context: SOMATileDBContext | None = None):
+    def __init__(self, data: IndexerDataType, *, context: SOMATileDBContext | None = None) -> None:
         """Initialize re-indexer for provided indices.
 
         Args:

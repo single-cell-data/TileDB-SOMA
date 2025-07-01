@@ -217,7 +217,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
 
 def check_type(
     name: str,
-    actual_value: Any,
+    actual_value: Any,  # noqa: ANN401
     expected_types: tuple[type[Any], ...],
 ) -> None:
     """Verifies the type of an argument, or produces a useful error message."""

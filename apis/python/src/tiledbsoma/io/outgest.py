@@ -522,7 +522,7 @@ def _extract_obsm_or_varm(
 
 
 def _extract_uns(
-    collection: Collection[Any],
+    collection: Collection[Any],  # noqa: ANN401
     uns_keys: Sequence[str] | None = None,
     level: int = 0,
 ) -> dict[str, FutureUnsDictNode]:
@@ -539,7 +539,7 @@ def _extract_uns(
         elif isinstance(element, DataFrame):
             hint = element.metadata.get(_UNS_OUTGEST_HINT_KEY)
 
-            def _outgest_df(element: Any, hint: Any, key: Any, collection: Collection[Any]) -> NPNDArray | pd.DataFrame:
+            def _outgest_df(element: Any, hint: Any, key: Any, collection: Collection[Any]) -> NPNDArray | pd.DataFrame:  # noqa: ANN401
                 if hint == _UNS_OUTGEST_HINT_1D:
                     pdf = element.read().concat().to_pandas()
                     return _outgest_uns_1d_string_array(pdf, element.uri)

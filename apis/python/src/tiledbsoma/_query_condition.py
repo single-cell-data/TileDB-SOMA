@@ -112,7 +112,7 @@ class QueryCondition:
     tree: ast.Expression = attrs.field(init=False, repr=False)
     c_obj: clib.PyQueryCondition = attrs.field(init=False, repr=False)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         try:
             self.tree = ast.parse(self.expression, mode="eval")
         except Exception as pex:
@@ -127,7 +127,7 @@ class QueryCondition:
         self,
         schema: pa.Schema,
         query_attrs: list[str] | None,
-    ):
+    ) -> list[str] | None:
         try:
             qctree = QueryConditionTree(schema, query_attrs)
             self.c_obj = qctree.visit(self.tree.body)
@@ -148,52 +148,52 @@ class QueryConditionTree(ast.NodeVisitor):
     schema: pa.Schema
     query_attrs: list[str]
 
-    def visit_BitOr(self, node):
+    def visit_BitOr(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_OR
 
-    def visit_Or(self, node):
+    def visit_Or(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_OR
 
-    def visit_BitAnd(self, node):
+    def visit_BitAnd(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_AND
 
-    def visit_And(self, node):
+    def visit_And(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_AND
 
-    def visit_Gt(self, node):
+    def visit_Gt(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_GT
 
-    def visit_GtE(self, node):
+    def visit_GtE(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_GE
 
-    def visit_Lt(self, node):
+    def visit_Lt(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_LT
 
-    def visit_LtE(self, node):
+    def visit_LtE(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_LE
 
-    def visit_Eq(self, node):
+    def visit_Eq(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_EQ
 
-    def visit_NotEq(self, node):
+    def visit_NotEq(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_NE
 
-    def visit_In(self, node):
+    def visit_In(self, node):  # noqa: ANN001, ANN202, ARG002
         return node
 
-    def visit_NotIn(self, node):
+    def visit_NotIn(self, node):  # noqa: ANN001, ANN202, ARG002
         return node
 
-    def visit_Is(self, node):
+    def visit_Is(self, node):  # noqa: ANN001, ANN202, ARG002
         raise SOMAError("the `is` operator is not supported")
 
-    def visit_IsNot(self, node):
+    def visit_IsNot(self, node):  # noqa: ANN001, ANN202, ARG002
         raise SOMAError("the `is not` operator is not supported")
 
-    def visit_List(self, node):
+    def visit_List(self, node):  # noqa: ANN001, ANN202, ARG002
         return list(node.elts)
 
-    def visit_Attribute(self, node) -> clib.PyQueryCondition:
+    def visit_Attribute(self, node) -> clib.PyQueryCondition:  # noqa: ANN001, ANN202, ARG002
         raise SOMAError(
             f"Unhandled dot operator in {ast.dump(node)} -- if your attribute name "
             'has a dot in it, e.g. `orig.ident`, please wrap it with `attr("...")`, '
@@ -334,7 +334,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
         return att, val, op
 
-    def get_att_from_node(self, node: QueryConditionNodeElem) -> Any:
+    def get_att_from_node(self, node: QueryConditionNodeElem) -> Any:  # noqa: ANN401
         if self.is_att_node(node):
             att_node = node
 
@@ -363,7 +363,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
         return att
 
-    def get_val_from_node(self, node: QueryConditionNodeElem) -> Any:
+    def get_val_from_node(self, node: QueryConditionNodeElem) -> Any:  # noqa: ANN401
         val_node = node
 
         if isinstance(node, ast.Call):
@@ -487,7 +487,7 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_NameConstant(self, node: ast.Constant) -> ast.Constant:
         return node
 
-    def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1):
+    def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1) -> ast.Constant:
         if isinstance(node.op, ast.UAdd):
             sign *= 1
         elif isinstance(node.op, ast.USub):

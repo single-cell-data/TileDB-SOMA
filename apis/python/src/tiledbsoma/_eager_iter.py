@@ -15,7 +15,7 @@ class EagerIterator(Iterator[_T]):
         self,
         iterator: Iterator[_T],
         pool: futures.Executor | None = None,
-    ):
+    ) -> None:
         super().__init__()
         self.iterator = iterator
         self._pool = pool or futures.ThreadPoolExecutor()

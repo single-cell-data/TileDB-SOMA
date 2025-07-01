@@ -161,7 +161,7 @@ def _update_uns_dict(
                 cur = coll.metadata[k]
         exists = cur is not None
 
-        def can_write(k: str, v: UnsNode, cur: Any | None) -> bool:
+        def can_write(k: str, v: UnsNode, cur: Any | None) -> bool:  # noqa: ANN401
             if cur is not None:
                 msg = f"{coll.uri}[{k}]: already exists (type {type(cur).__name__}), refusing to overwrite with {v}"
                 if strict in ["dry_run", "raise"]:

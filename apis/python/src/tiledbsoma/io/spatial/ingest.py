@@ -72,7 +72,7 @@ from ._util import TenXCountMatrixReader, _read_visium_software_version
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
-def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
+def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def] # noqa: ARG001, ANN001
     if not value.exists():
         raise OSError(f"Path {value} does not exist")
 
@@ -81,7 +81,7 @@ def optional_path_converter(value: str | Path | None) -> Path | None:
     return None if value is None else Path(value)
 
 
-def optional_path_validator(instance, attribute, x: Path | None) -> None:  # type: ignore[no-untyped-def]
+def optional_path_validator(instance, attribute, x: Path | None) -> None:  # type: ignore[no-untyped-def] # noqa: ARG001, ANN001
     if x is not None and not x.exists():
         raise OSError(f"Path {x} does not exist")
 
@@ -664,8 +664,8 @@ def _write_X_layer(
     cls: type[_NDArr],
     uri: str,
     reader: TenXCountMatrixReader,
-    axis_0_mapping: AxisIDMapping,
-    axis_1_mapping: AxisIDMapping,
+    axis_0_mapping: AxisIDMapping,  # noqa: ARG001
+    axis_1_mapping: AxisIDMapping,  # noqa: ARG001
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata,
@@ -900,8 +900,8 @@ def _create_visium_tissue_images(
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
-    ingestion_params: IngestionParams,
-    use_relative_uri: bool | None = None,
+    ingestion_params: IngestionParams,  # noqa: ARG001
+    use_relative_uri: bool | None = None,  # noqa: ARG001
 ) -> MultiscaleImage:
     """Creates, opens, and writes a ``MultiscaleImage`` with the provide
     visium resolutions levels and returns the open image for writing.

@@ -44,9 +44,9 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
     def __init__(
         self,
-        handle: _tdb_handles.SOMAGroupWrapper[Any],
-        **kwargs: Any,
-    ):
+        handle: _tdb_handles.SOMAGroupWrapper[Any],  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401
+    ) -> None:
         super().__init__(handle, **kwargs)
         self._contents = {key: _CachedElement(entry) for key, entry in handle.initial_contents.items()}
         """The contents of the persisted TileDB Group.
@@ -170,7 +170,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
     def _add_new_element(
         self,
         key: str,
-        kind: type[_TDBO],
+        kind: type[_TDBO],  # noqa: ARG002
         factory: Callable[[str], _TDBO],
         user_uri: str | None,
     ) -> _TDBO:
