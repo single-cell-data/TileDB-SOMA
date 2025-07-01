@@ -43,10 +43,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+          - {os: macos-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'oldrel-1'}
 
     steps:
       - uses: actions/checkout@v4
@@ -54,34 +54,41 @@ jobs:
       - name: Show matrix OS
         run: echo "matrix.config.os:" ${{ matrix.config.os }}
 
-      - uses: r-lib/actions/setup-pandoc@v2
-
-      - uses: r-lib/actions/setup-r@v2
+      - uses: ./.github/actions/setup-r.yaml
         with:
-          r-version: ${{ matrix.config.r }}
-          http-user-agent: ${{ matrix.config.http-user-agent }}
-          use-public-rspm: true
-          extra-repositories: https://tiledb-inc.r-universe.dev
+            os: ${{ matrix.config.os }}}
+            r: ${{ matrix.config.r }}
+            http-user-agent: ${{ matrix.config.http-user-agent }}
+            extra-packages: any::rcmdcheck
 
-      - name: P3M Bioconductor
-        run: |
-          cat(
-            'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n',
-            'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")\n',
-            sep = '',
-            file = '~/.Rprofile',
-            append = TRUE
-          )
-        shell: Rscript {0}
+    #   - uses: r-lib/actions/setup-pandoc@v2
 
-      - name: R Package Type (macOS)
-        if: ${{ matrix.config.os == 'macos-latest' }}
-        run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
+    #   - uses: r-lib/actions/setup-r@v2
+    #     with:
+    #       r-version: ${{ matrix.config.r }}
+    #       http-user-agent: ${{ matrix.config.http-user-agent }}
+    #       use-public-rspm: true
+    #       extra-repositories: https://tiledb-inc.r-universe.dev
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::rcmdcheck
-          working-directory: 'apis/r/'
+    #   - name: P3M Bioconductor
+    #     run: |
+    #       cat(
+    #         'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n',
+    #         'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")\n',
+    #         sep = '',
+    #         file = '~/.Rprofile',
+    #         append = TRUE
+    #       )
+    #     shell: Rscript {0}
+
+    #   - name: R Package Type (macOS)
+    #     if: ${{ matrix.config.os == 'macos-latest' }}
+    #     run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
+
+    #   - uses: r-lib/actions/setup-r-dependencies@v2
+    #     with:
+    #       extra-packages: any::rcmdcheck
+    #       working-directory: 'apis/r/'
 
       - uses: r-lib/actions/check-r-package@v2
         with:
