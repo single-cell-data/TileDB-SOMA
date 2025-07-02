@@ -381,7 +381,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         cls,
         dim_name: str,
         dim_shape: int | None,
-        _ndim: int,  # not needed for sparse
+        ndim: int,  # not needed for sparse  # noqa: ARG003
         create_options: TileDBCreateOptions,
     ) -> tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
