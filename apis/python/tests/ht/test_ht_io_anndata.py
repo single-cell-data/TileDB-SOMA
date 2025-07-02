@@ -460,7 +460,7 @@ def assert_frame_equal_strict(f1: pd.DataFrame, f2: pd.DataFrame) -> None:
 
 def assert_map_of_matrix_equal(m1: Mapping[str, np.ndarray], m2: dict[str, np.ndarray]) -> None:
     assert m1.keys() == m2.keys()
-    for k in m1.keys():
+    for k in m1:
         assert_matrix_equal(m1[k], m2[k])
 
 
@@ -507,14 +507,13 @@ def assert_uns_equal(src_adata: ad.AnnData, read_adata: ad.Anndata) -> None:
             continue
 
         # bools incorrectly read back as uint8
-        if HT_TEST_CONFIG["sc-63447_workaround"]:
-            if (
-                chng["old_type"] in (np.bool_, list)
-                and chng["new_type"] == np.uint8
-                and ndarray_equal(np.asarray(chng["old_value"]).astype(np.uint8), chng["new_value"])
-            ):
-                del diff["type_changes"][key]
-                continue
+        if HT_TEST_CONFIG["sc-63447_workaround"] and (
+            chng["old_type"] in (np.bool_, list)
+            and chng["new_type"] == np.uint8
+            and ndarray_equal(np.asarray(chng["old_value"]).astype(np.uint8), chng["new_value"])
+        ):
+            del diff["type_changes"][key]
+            continue
 
     if diff.get("type_changes", None) == {}:
         del diff["type_changes"]

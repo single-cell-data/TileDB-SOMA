@@ -99,12 +99,11 @@ def test_sparse_nd_array_basics(
             snda.read(coords).tables().concat()
 
     # Test writes out of bounds
-    with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
-        with pytest.raises(tiledbsoma.SOMAError):
-            dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
-            dikt["soma_data"] = [30]
-            table = pa.Table.from_pydict(dikt, schema=snda.schema)
-            snda.write(table)
+    with tiledbsoma.SparseNDArray.open(uri, "w") as snda, pytest.raises(tiledbsoma.SOMAError):
+        dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
+        dikt["soma_data"] = [30]
+        table = pa.Table.from_pydict(dikt, schema=snda.schema)
+        snda.write(table)
 
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
@@ -131,12 +130,11 @@ def test_sparse_nd_array_basics(
         assert snda.shape == arg_shape
 
     # Test writes out of bounds
-    with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
-        with pytest.raises(tiledbsoma.SOMAError):
-            dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
-            dikt["soma_data"] = [30]
-            table = pa.Table.from_pydict(dikt)
-            snda.write(table)
+    with tiledbsoma.SparseNDArray.open(uri, "w") as snda, pytest.raises(tiledbsoma.SOMAError):
+        dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
+        dikt["soma_data"] = [30]
+        table = pa.Table.from_pydict(dikt)
+        snda.write(table)
 
     # Test resize
     new_shape = tuple([arg_shape[i] + 50 for i in range(ndim)])
@@ -426,10 +424,7 @@ def test_domain_mods(tmp_path):
 def test_canned_experiments(tmp_path, has_shapes):
     uri = tmp_path.as_posix()
 
-    if not has_shapes:
-        tgz = TESTDATA / "pbmc-exp-without-shapes.tgz"
-    else:
-        tgz = TESTDATA / "pbmc-exp-with-shapes.tgz"
+    tgz = TESTDATA / "pbmc-exp-without-shapes.tgz" if not has_shapes else TESTDATA / "pbmc-exp-with-shapes.tgz"
 
     with tarfile.open(tgz) as handle:
         if hasattr(tarfile, "data_filter"):
@@ -679,10 +674,7 @@ def test_canned_experiments(tmp_path, has_shapes):
     dict_output["ms"]["raw"]["var"]["uri"] = "test"
     dict_output["ms"]["raw"]["X"]["data"]["uri"] = "test"
 
-    if has_shapes:
-        var_max_domain_hi = 9223372036854773968
-    else:
-        var_max_domain_hi = 9223372036854773758
+    var_max_domain_hi = 9223372036854773968 if has_shapes else 9223372036854773758
 
     expect = {
         "obs": {
@@ -835,9 +827,7 @@ def test_get_experiment_shapes_corner_cases(tmp_path, level):
         expect = {}
     elif level == 2:
         expect = {"ms": {}}
-    elif level == 3:
-        expect = {"ms": {"RNA": {}}}
-    elif level == 4:
+    elif level == 3 or level == 4:
         expect = {"ms": {"RNA": {}}}
     assert actual == expect
 

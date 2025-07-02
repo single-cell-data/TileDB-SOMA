@@ -47,6 +47,9 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "Q",    # flake8-quotes
     "RET",  # flake8-return
     "RSE",  # flake8-raise
+    "SLOT", # flake8-slots
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
     "W",    # pycodestyle warnings
     "YTT",  # flake8-2020
 ]
@@ -56,6 +59,7 @@ ignore = [
     "D205",     # disable blank line requirement between summary and description
     "S101",     # Use of `assert` detected
     "COM812",   # Ignore recommended by Ruff
+    "SIM105",   # contextlib.suppress
 ]
 extend-select = []
 

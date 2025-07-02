@@ -53,7 +53,7 @@ except (AttributeError, ModuleNotFoundError):
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
-from .. import (
+from tiledbsoma import (
     Collection,
     DataFrame,
     DenseNDArray,
@@ -66,32 +66,18 @@ from .. import (
     eta,
     logging,
 )
-from .._collection import AnyTileDBCollection, CollectionBase
-from .._common_nd_array import NDArray
-from .._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
-from .._exception import (
-    AlreadyExistsError,
-    DoesNotExistError,
-    NotCreateableError,
-    SOMAError,
-)
-from .._soma_array import SOMAArray
-from .._soma_object import AnySOMAObject, SOMAObject
-from .._tdb_handles import RawHandle
-from .._types import (
-    _INGEST_MODES,
-    INGEST_MODES,
-    IngestMode,
-    NPNDArray,
-    Path,
-    _IngestMode,
-)
-from ..options import SOMATileDBContext
-from ..options._soma_tiledb_context import _validate_soma_tiledb_context
-from ..options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
+from tiledbsoma._collection import AnyTileDBCollection, CollectionBase
+from tiledbsoma._common_nd_array import NDArray
+from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
+from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, NotCreateableError, SOMAError
+from tiledbsoma._soma_array import SOMAArray
+from tiledbsoma._soma_object import AnySOMAObject, SOMAObject
+from tiledbsoma._tdb_handles import RawHandle
+from tiledbsoma._types import _INGEST_MODES, INGEST_MODES, IngestMode, NPNDArray, Path, _IngestMode
+from tiledbsoma.options import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
+from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+
 from . import conversions
 from ._common import (
     _TILEDBSOMA_TYPE,
@@ -747,7 +733,7 @@ def _from_anndata(
                                 coll,
                                 use_relative_uri=use_relative_uri,
                             )
-                            for key in ad_val.keys():
+                            for key in ad_val:
                                 val = ad_val[key]
                                 num_cols = val.shape[1]
                                 _axis_1_mapping = axis_1_mapping if axis_1_mapping else AxisIDMapping.identity(num_cols)
@@ -2112,10 +2098,7 @@ def _write_matrix_to_denseNDArray(
             "START  chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),
         )
 
-        if matrix.ndim == 2:
-            chunk = matrix[i:i2, :]
-        else:
-            chunk = matrix[i:i2]
+        chunk = matrix[i:i2, :] if matrix.ndim == 2 else matrix[i:i2]
 
         if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -2132,10 +2115,7 @@ def _write_matrix_to_denseNDArray(
                 i = i2
                 continue
 
-        if isinstance(chunk, np.ndarray):
-            tensor = pa.Tensor.from_numpy(chunk)
-        else:
-            tensor = pa.Tensor.from_numpy(chunk.toarray())
+        tensor = pa.Tensor.from_numpy(chunk) if isinstance(chunk, np.ndarray) else pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
             soma_ndarray.write((slice(i, i2 - 1), slice(0, ncol - 1)), tensor)
         else:
@@ -2665,10 +2645,7 @@ def _chunk_is_contained_in(
         raise SOMAError(
             f"internal error: ingest data ndim {len(chunk_bounds)} != storage ndim {len(storage_nonempty_domain)}",
         )
-    for i in range(len(chunk_bounds)):
-        if not _chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i):
-            return False
-    return True
+    return all(_chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i) for i in range(len(chunk_bounds)))
 
 
 def _chunk_is_contained_in_axis(
@@ -2688,10 +2665,7 @@ def _chunk_is_contained_in_axis(
     chunk_lo, chunk_hi = chunk_bounds[stride_axis]
     if chunk_lo < storage_lo or chunk_lo > storage_hi:
         return False
-    if chunk_hi < storage_lo or chunk_hi > storage_hi:
-        return False
-
-    return True
+    return not (chunk_hi < storage_lo or chunk_hi > storage_hi)
 
 
 def _maybe_ingest_uns(

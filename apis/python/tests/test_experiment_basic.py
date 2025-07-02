@@ -123,7 +123,7 @@ def test_experiment_basic(tmp_path):
     assert isinstance(experiment.ms["RNA"].X, soma.Collection)
 
     assert experiment.ms["RNA"].var == experiment["ms"]["RNA"]["var"]
-    assert experiment.ms["RNA"].X == experiment["ms"]["RNA"]["X"]
+    assert experiment["ms"]["RNA"]["X"] == experiment.ms["RNA"].X
 
     assert len(experiment.ms["RNA"].X) == 1
     assert "data" in experiment.ms["RNA"].X

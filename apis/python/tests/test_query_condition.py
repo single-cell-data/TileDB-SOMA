@@ -276,9 +276,8 @@ def test_eval_error_conditions(malformed_condition):
 def test_query_condition_syntax_handling(expression_and_message):
     uri = os.path.join(SOMA_URI, "obs")
     expression, message = expression_and_message
-    with DataFrame.open(uri) as obs:
-        with pytest.raises(SOMAError, match=message):
-            obs.read(value_filter=expression).concat()
+    with DataFrame.open(uri) as obs, pytest.raises(SOMAError, match=message):
+        obs.read(value_filter=expression).concat()
 
 
 if __name__ == "__main__":

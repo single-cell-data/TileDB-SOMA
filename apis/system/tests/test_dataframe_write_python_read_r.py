@@ -47,7 +47,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
         self.r_assert(f"stopifnot(length(df) == {len(dataframe)})")
 
     def test_dataframe_columns_match(self, dataframe):
-        for key in dataframe.keys():
+        for key in dataframe:
             col = dataframe[key].tolist()
             R_list = embed_python_list_into_R_code(col)
             self.r_assert(f"""stopifnot(all.equal(as.list(df)$"{key}", c({R_list})))""")

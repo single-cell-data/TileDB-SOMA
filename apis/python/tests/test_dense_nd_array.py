@@ -98,9 +98,8 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: tuple[int, ...]):
     a.close()
 
     # Array write should fail if array opened in read mode
-    with soma.DenseNDArray.open(uri) as a:
-        with pytest.raises(soma.SOMAError):
-            a.write(coords, pa.Tensor.from_numpy(data))
+    with soma.DenseNDArray.open(uri) as a, pytest.raises(soma.SOMAError):
+        a.write(coords, pa.Tensor.from_numpy(data))
 
     del a
 
@@ -355,9 +354,8 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
         write_coords = tuple(slice(0, dim_len) for dim_len in shape)
         a.write(coords=write_coords, values=pa.Tensor.from_numpy(npa))
 
-    with soma.DenseNDArray.open(tmp_path.as_posix()) as a:
-        with raises_no_typeguard(io["throws"]):
-            a.read(coords=read_coords).to_numpy()
+    with soma.DenseNDArray.open(tmp_path.as_posix()) as a, raises_no_typeguard(io["throws"]):
+        a.read(coords=read_coords).to_numpy()
 
 
 def test_tile_extents(tmp_path):

@@ -22,10 +22,10 @@ import tiledbsoma.io
 import tiledbsoma.logging as logging
 from tiledbsoma import DataFrame, Experiment, SOMAError
 from tiledbsoma._types import PDIndex
+from tiledbsoma.io._util import read_h5ad
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
-from .._util import read_h5ad
 from .enum import extend_enumerations, get_enumerations
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
@@ -369,8 +369,8 @@ class ExperimentAmbientLabelMapping:
             existing_obs_enum_values = _get_enum_values(E.obs)
             existing_var_joinid_maps = {}
             existing_var_enum_values = {}
-            for ms_name in E.ms.keys():
-                if "var" in E.ms[ms_name] and var_field_name in E.ms[ms_name].var.keys():
+            for ms_name in E.ms:
+                if "var" in E.ms[ms_name] and (var_field_name in E.ms[ms_name].var.keys()):  # noqa: SIM118
                     existing_var_joinid_maps[ms_name] = _get_joinid_map(E.ms[ms_name].var, var_field_name)
                     existing_var_enum_values[ms_name] = _get_enum_values(E.ms[ms_name].var)
 
@@ -571,7 +571,7 @@ class ExperimentAmbientLabelMapping:
             k: AxisAmbientLabelMapping(
                 field_name=var_field_name,
                 joinid_map=(var_joinid_maps[k] if k in var_joinid_maps else pd.DataFrame()),
-                enum_values=var_enum_values[k] if k in var_enum_values else {},
+                enum_values=var_enum_values.get(k, {}),
                 allow_duplicate_ids=True,
             )
             for k in set(var_joinid_maps.keys()) | set(var_enum_values.keys())
@@ -593,11 +593,10 @@ class ExperimentAmbientLabelMapping:
         if adata.raw is not None:
             check_df(adata.raw.var, "raw.var")
 
-        if not append_obsm_varm:
-            if len(adata.obsm) > 0 or len(adata.varm) > 0:
-                raise ValueError(
-                    "The append-mode ingest of obsm and varm is only supported via explicit opt-in. Please drop them from the inputs, or retry with append_obsm_varm=True.",
-                )
+        if not append_obsm_varm and (len(adata.obsm) > 0 or len(adata.varm) > 0):
+            raise ValueError(
+                "The append-mode ingest of obsm and varm is only supported via explicit opt-in. Please drop them from the inputs, or retry with append_obsm_varm=True.",
+            )
 
         if len(adata.obsp) > 0 or len(adata.varp) > 0:
             raise ValueError("The append-mode ingest of obsp and varp is not supported. Please retry without them.")

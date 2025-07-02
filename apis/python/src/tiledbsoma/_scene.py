@@ -140,10 +140,7 @@ class Scene(
     def _open_subcollection(self, subcollection: str | Sequence[str]) -> CollectionBase[AnySOMAObject]:
         if len(subcollection) == 0:
             raise ValueError("Invalid subcollection: value cannot be empty.")
-        if isinstance(subcollection, str):
-            subcollection = (subcollection,)
-        else:
-            subcollection = tuple(subcollection)
+        subcollection = (subcollection,) if isinstance(subcollection, str) else tuple(subcollection)
         coll: CollectionBase[AnySOMAObject] = self
         # Keep track of collection hierarchy for informative error reporting
         parent_name: list[str] = []

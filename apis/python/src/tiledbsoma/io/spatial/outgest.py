@@ -14,9 +14,10 @@ except ImportError as err:
     raise err
 
 
-from ... import Experiment
-from ..._constants import SPATIAL_DISCLAIMER
-from .. import to_anndata
+from tiledbsoma import Experiment
+from tiledbsoma._constants import SPATIAL_DISCLAIMER
+from tiledbsoma.io import to_anndata
+
 from ._spatialdata_util import _spatial_to_spatialdata
 
 
@@ -51,10 +52,7 @@ def to_spatialdata(
     if measurement_names is not None:
         measurement_names = tuple(measurement_names)
     if "ms" in experiment:
-        if measurement_names is None:
-            ms_keys = tuple(experiment.ms.keys())
-        else:
-            ms_keys = measurement_names
+        ms_keys = tuple(experiment.ms.keys()) if measurement_names is None else measurement_names
         if table_kwargs is None:
             table_kwargs = {}
         tables = {
@@ -83,10 +81,7 @@ def to_spatialdata(
     if "spatial" not in experiment:
         return sd.SpatialData(tables=tables)
 
-    if scene_names is None:
-        scene_names = tuple(experiment.spatial.keys())
-    else:
-        scene_names = tuple(scene_names)
+    scene_names = tuple(experiment.spatial.keys()) if scene_names is None else tuple(scene_names)
 
     return _spatial_to_spatialdata(
         experiment.spatial,

@@ -85,9 +85,8 @@ def test_dataframe(tmp_path, arrow_schema):
                 sdf.write(rb.to_pandas)
 
     # Array write should fail if array opened in read mode
-    with soma.DataFrame.open(uri, "r") as sdf:
-        with pytest.raises(soma.SOMAError):
-            sdf.write(rb)
+    with soma.DataFrame.open(uri, "r") as sdf, pytest.raises(soma.SOMAError):
+        sdf.write(rb)
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5
@@ -429,32 +428,31 @@ def test_extend_enumeration_values_historical(tmp_path, version):
     uri = (tmp_path / version).as_posix()
     shutil.copytree(original_data_uri, uri)
 
-    with soma.Experiment.open(uri, "w") as exp:
-        with pytest.raises(soma.SOMAError):
-            exp.obs.extend_enumeration_values(
-                {
-                    "louvain": pa.array(
-                        [
-                            "CD4 T cells",
-                            "CD14+ Monocytes",
-                            "B cells",
-                        ],
-                    ),
-                },
-            )
+    with soma.Experiment.open(uri, "w") as exp, pytest.raises(soma.SOMAError):
+        exp.obs.extend_enumeration_values(
+            {
+                "louvain": pa.array(
+                    [
+                        "CD4 T cells",
+                        "CD14+ Monocytes",
+                        "B cells",
+                    ],
+                ),
+            },
+        )
 
-            exp.obs.extend_enumeration_values(
-                {
-                    "louvain": pa.array(
-                        [
-                            "CD4 T cells",
-                            "CD14+ Monocytes",
-                            "B cells",
-                        ],
-                    ),
-                },
-                deduplicate=True,
-            )
+        exp.obs.extend_enumeration_values(
+            {
+                "louvain": pa.array(
+                    [
+                        "CD4 T cells",
+                        "CD14+ Monocytes",
+                        "B cells",
+                    ],
+                ),
+            },
+            deduplicate=True,
+        )
     with soma.Experiment.open(uri) as exp:
         values = exp.obs.get_enumeration_values(["louvain"])
         expect = [
@@ -616,9 +614,8 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
             sdf.write(arrow_data)
 
     # The dataframe must be open for write
-    with soma.DataFrame.open(uri) as sdf:
-        with pytest.raises(soma.SOMAError):
-            sdf.extend_enumeration_values({})
+    with soma.DataFrame.open(uri) as sdf, pytest.raises(soma.SOMAError):
+        sdf.extend_enumeration_values({})
     with pytest.raises(soma.SOMAError):
         assert sdf.closed
         sdf.extend_enumeration_values({})
@@ -643,9 +640,8 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
         # The values provided must be Arrow arrays. Our unit tests run with typeguard,
         # but our end users nominally do not -- so we have to ask typeguard to take
         # a breather here so we can test the UX our users will have.
-        with suppress_type_checks():
-            with pytest.raises(ValueError):
-                sdf.extend_enumeration_values({"string_enum1": ["plain", "strings"]})
+        with suppress_type_checks(), pytest.raises(ValueError):
+            sdf.extend_enumeration_values({"string_enum1": ["plain", "strings"]})
 
         # The values provided must all be non-null
         for nvalues in [
@@ -663,7 +659,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
             "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.float32)),
         }
         type_mismatch_values = {
-            name: pa.array(type_mismatch_pandas_data[name].categories) for name in type_mismatch_pandas_data.keys()
+            name: pa.array(type_mismatch_pandas_data[name].categories) for name in type_mismatch_pandas_data
         }
         with pytest.raises(soma.SOMAError):
             sdf.extend_enumeration_values(type_mismatch_values)
@@ -671,7 +667,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
     # Verify
     with soma.DataFrame.open(uri) as sdf:
         table = sdf.read(column_names=enum_column_names).concat()
-        for column_name in values.keys():
+        for column_name in values:
             field = sdf.schema.field(column_name)
             assert pa.types.is_dictionary(field.type)
 
@@ -1484,9 +1480,8 @@ def test_extend_enumeration_empty(tmp_path):
         },
     )
 
-    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
-        with pytest.raises(soma.SOMAError):
-            sdf.write(data1)
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf, pytest.raises(soma.SOMAError):
+        sdf.write(data1)
 
     data1 = pa.Table.from_pydict(
         {
@@ -1578,9 +1573,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     def _check_tbl(tbl, col_names, ids):
         assert tbl.num_columns == len(sdf.schema if col_names is None else col_names)
 
-        if ids is None:
-            assert tbl.num_rows == n_data
-        elif ids[0] is None:
+        if ids is None or ids[0] is None:
             assert tbl.num_rows == n_data
         elif isinstance(ids[0], int):
             assert tbl.num_rows == 1
@@ -2850,9 +2843,8 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
     # cannot add additional categories as already maxed out earlier
     tbl = pa.Table.from_pandas(df2, preserve_index=False)
-    with pytest.raises(soma.SOMAError):
-        with soma.open(uri, mode="w") as A:
-            A.write(tbl)
+    with pytest.raises(soma.SOMAError), soma.open(uri, mode="w") as A:
+        A.write(tbl)
 
 
 def test_write_str_empty_ned(tmp_path):
@@ -3679,17 +3671,16 @@ def test_fragments_in_writes_ooo_batch(tmp_path):
     cfg = soma.TileDBWriteOptions(sort_coords=False)
     soma.DataFrame.create(uri, schema=schema, domain=[[0, 5]]).close()
 
-    with soma.DataFrame.open(uri, mode="w") as A:
-        with pytest.raises(soma.SOMAError):
-            A.write(
-                pa.concat_tables(
-                    [
-                        pa.Table.from_pandas(df, preserve_index=False),
-                        pa.Table.from_pandas(out_of_order_df, preserve_index=False),
-                    ],
-                ),
-                platform_config=cfg,
-            )
+    with soma.DataFrame.open(uri, mode="w") as A, pytest.raises(soma.SOMAError):
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df, preserve_index=False),
+                    pa.Table.from_pandas(out_of_order_df, preserve_index=False),
+                ],
+            ),
+            platform_config=cfg,
+        )
 
 
 def test_fragments_in_writes_empty_batch(tmp_path):
