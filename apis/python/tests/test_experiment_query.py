@@ -929,14 +929,21 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
             exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
             "var_id",
         )
+        del adata, obs, var
+        gc.collect()
 
         adata = query.to_anndata("data", obs_id_name="soma_joinid", var_id_name="soma_joinid")
         assert adata.obs.index.name == "soma_joinid"
         assert adata.var.index.name == "soma_joinid"
+        del adata
+        gc.collect()
 
         adata = query.to_anndata("data", obs_id_name="obs_id", var_id_name="var_id")
         assert adata.obs.index.name == "obs_id"
         assert adata.var.index.name == "var_id"
+        del adata
+
+    gc.collect()
 
 
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
