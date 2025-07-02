@@ -62,7 +62,7 @@ class CollectionBase(
         cls,
         uri: str,
         *,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: options.PlatformConfig | None = None,  # noqa: ARG003
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -144,7 +144,7 @@ class CollectionBase(
         *,
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> "Collection[AnySOMAObject]": ...
 
     @overload
@@ -155,7 +155,7 @@ class CollectionBase(
         *,
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> _Coll: ...
 
     def add_new_collection(
@@ -165,7 +165,7 @@ class CollectionBase(
         *,
         uri: str | None = None,
         platform_config: options.PlatformConfig | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 
@@ -225,7 +225,7 @@ class CollectionBase(
         )
 
     @_funcs.forwards_kwargs_to(DataFrame.create, exclude=("context", "tiledb_timestamp"))
-    def add_new_dataframe(self, key: str, *, uri: str | None = None, **kwargs: Any) -> DataFrame:
+    def add_new_dataframe(self, key: str, *, uri: str | None = None, **kwargs: Any) -> DataFrame:  # noqa: ANN401
         """Adds a new DataFrame to this collection.
 
         For details about the behavior of ``key`` and ``uri``, see
@@ -267,7 +267,7 @@ class CollectionBase(
         )
 
     @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context", "tiledb_timestamp"))
-    def _add_new_ndarray(self, cls: type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any) -> _NDArr:
+    def _add_new_ndarray(self, cls: type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any) -> _NDArr:  # noqa: ANN401
         """Internal implementation of common NDArray-adding operations."""
         return self._add_new_element(
             key,
@@ -282,7 +282,7 @@ class CollectionBase(
         )
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("kind",))
-    def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
+    def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:  # noqa: ANN401
         """Adds a new DenseNDArray to this Collection.
 
         For details about the behavior of ``key`` and ``uri``, see
@@ -320,7 +320,7 @@ class CollectionBase(
         return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("kind",))
-    def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
+    def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:  # noqa: ANN401
         """Adds a new SparseNDArray to this Collection.
 
         For details about the behavior of ``key`` and ``uri``, see

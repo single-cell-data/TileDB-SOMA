@@ -179,7 +179,7 @@ def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     return cast("_DT", np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
-def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
+def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:  # noqa: ARG001
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent,
     e.g., float16 -> float32.
     """

@@ -69,7 +69,7 @@ class Scene(
         uri: str,
         *,
         coordinate_space: Sequence[str] | CoordinateSpace | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: options.PlatformConfig | None = None,  # noqa: ARG003
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -228,7 +228,7 @@ class Scene(
         *,
         transform: CoordinateTransform | None,
         uri: str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> GeometryDataFrame:
         """Adds a ``GeometryDataFrame`` to the scene and sets a coordinate transform
         between the scene and the dataframe.
@@ -271,7 +271,7 @@ class Scene(
         transform: CoordinateTransform | None,
         uri: str | None = None,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
         between the scene and the dataframe.
@@ -358,7 +358,7 @@ class Scene(
         transform: CoordinateTransform | None,
         uri: str | None = None,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> PointCloudDataFrame:
         """Adds a point cloud to the scene and sets a coordinate transform
         between the scene and the dataframe.

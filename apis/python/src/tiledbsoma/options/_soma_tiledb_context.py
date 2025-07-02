@@ -350,7 +350,7 @@ class SOMATileDBContext(ContextBase):
         return int(time.time() * 1000)
 
 
-def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:
+def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:  # noqa: ANN401
     """Returns the argument, as long as it's a ``SOMATileDBContext``, or a new
     one if the argument is ``None``. While we already have static type-checking,
     a few things are extra-important to have runtime validation on.  Since it's

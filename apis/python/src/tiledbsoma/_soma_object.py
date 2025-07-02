@@ -112,7 +112,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         ),
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
-    ):
+    ) -> None:
         """Internal-only common initializer steps.
 
         This function is internal; users should open TileDB SOMA objects using

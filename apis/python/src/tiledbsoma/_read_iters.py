@@ -66,7 +66,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         platform_config: options.PlatformConfig | None,
         *,
         coord_space: CoordinateSpace | None = None,
-    ):
+    ) -> None:
         """Initializes a new TableReadIter for SOMAArrays.
 
         Args:
@@ -135,7 +135,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         reindex_disable_on_axis: int | Sequence[int] | None = None,
         eager: bool = True,
         context: SOMATileDBContext | None = None,
-    ):
+    ) -> None:
         super().__init__()
 
         self.array = array
@@ -343,7 +343,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         eager: bool = True,
         compress: bool = True,
         context: SOMATileDBContext | None = None,
-    ):
+    ) -> None:
         self.compress = compress
         self.context = context
         super().__init__(
@@ -471,7 +471,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         shape: NTuple,
         result_order: clib.ResultOrder,
         platform_config: options.PlatformConfig | None,
-    ):
+    ) -> None:
         self.array = array
         self.coords = coords
         self.shape = shape
@@ -530,7 +530,7 @@ class ArrowTableRead(Iterator[pa.Table]):
         platform_config: options.PlatformConfig | None,
         *,
         coord_space: CoordinateSpace | None = None,
-    ):
+    ) -> None:
         clib_handle = array._handle._handle
 
         self.mq = ManagedQuery(array, platform_config)

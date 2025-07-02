@@ -171,7 +171,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         obs_query: AxisQuery | None = None,
         var_query: AxisQuery | None = None,
         index_factory: IndexFactory = pd.Index,
-    ):
+    ) -> None:
         if measurement_name not in experiment.ms:
             raise ValueError("Measurement does not exist in the experiment")
         if obs_query is None:
@@ -571,7 +571,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             layers=(_resolve_futures(x_matrices) or None),
         )
 
-    def to_spatialdata(  # type: ignore[no-untyped-def]
+    def to_spatialdata(  # type: ignore[no-untyped-def]  # noqa: ANN202
         self,
         X_name: str,
         *,
@@ -647,7 +647,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
     def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, *_: Any) -> None:
+    def __exit__(self, *_: Any) -> None:  # noqa: ANN401
         pass
 
     # Internals

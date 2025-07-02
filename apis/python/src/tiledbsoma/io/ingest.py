@@ -1836,7 +1836,7 @@ def update_matrix(
     soma_ndarray: SparseNDArray | DenseNDArray,
     new_data: Matrix | h5py.Dataset,
     *,
-    context: SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,  # noqa: ARG001
     platform_config: PlatformConfig | None = None,
 ) -> None:
     """Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
@@ -2016,7 +2016,7 @@ def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Matrix | h5py.Dataset,
     tiledb_create_options: TileDBCreateOptions,
-    tiledb_write_options: TileDBWriteOptions,
+    tiledb_write_options: TileDBWriteOptions,  # noqa: ARG001
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -2136,7 +2136,7 @@ def _write_matrix_to_denseNDArray(
     return
 
 
-def _read_nonempty_domain(arr: SOMAArray) -> Any:
+def _read_nonempty_domain(arr: SOMAArray) -> Any:  # noqa: ANN401
     try:
         return arr._handle.non_empty_domain()
     except (SOMAError, RuntimeError):
@@ -2197,7 +2197,7 @@ def _find_sparse_chunk_size_non_backed(
     start_index: int,
     axis: int,
     goal_chunk_nnz: int,
-    mean_nnz: int,
+    mean_nnz: int,  # noqa: ARG001
 ) -> int:
     """Helper routine for ``_find_sparse_chunk_size`` for when we're operating on AnnData
     matrices in non-backed mode. Here, unlike in backed mode, it's performant to exactly

@@ -45,7 +45,7 @@ class DenseNDArrayWrapper:
         uri: str,
         *,
         context: SOMATileDBContext | None = None,
-    ):
+    ) -> None:
         self._array = DenseNDArray.open(uri, context=context)
         self._dtype: np.typing.DTypeLike = self._array.schema.field("soma_data").type.to_pandas_dtype()
 

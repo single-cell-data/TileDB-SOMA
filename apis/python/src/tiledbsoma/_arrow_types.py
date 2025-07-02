@@ -186,7 +186,7 @@ def is_string_dtypelike(dtype: npt.DTypeLike) -> bool:
     return False
 
 
-def is_string_dtype(dtype: Any) -> bool:
+def is_string_dtype(dtype: Any) -> bool:  # noqa: ANN401
     return dtype.name in ["object", "string", "str32", "str64"]
 
 

@@ -288,7 +288,7 @@ class MultiscaleImage(
         *,
         uri: str | None = None,
         shape: Sequence[int],
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> DenseNDArray:
         """Adds a new resolution level to the ``MultiscaleImage``.
 
