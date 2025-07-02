@@ -478,7 +478,7 @@ class ExperimentAmbientLabelMapping:
         # Step 3: create a joinid map for each axis
         #
         def _make_joinid_map(
-            joinids_index: pd.Index,  # type:ignore[type-arg]
+            joinids_index: pd.Index,
             prev_joinid_map: pd.DataFrame,
             raise_on_dups: bool,
         ) -> pd.DataFrame:
@@ -634,7 +634,7 @@ class AnnDataAxisMetadata:
         if len(ams) == 1:
             return ams[0]
 
-        def _reduce_field_index(indices: list[pd.Index]) -> pd.Index:  # type: ignore[type-arg]
+        def _reduce_field_index(indices: list[pd.Index]) -> pd.Index:
             """Reducer for joinid indices."""
             if len(indices) == 0:
                 return pd.Index([])
@@ -694,7 +694,7 @@ class AnnDataAxisMetadata:
         return {k: _merge_categoricals(k, v) for k, v in inverted_enum_values.items()}
 
 
-def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index:  # type: ignore[type-arg]
+def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index:
     """Given an AnnData obs/var, extract the index for the user-selected join column."""
     if field_name in df:
         return cast("pd.Index[Any]", pd.Index(df[field_name]))

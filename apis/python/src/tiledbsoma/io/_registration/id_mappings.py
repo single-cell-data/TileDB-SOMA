@@ -73,14 +73,14 @@ class ExperimentIDMapping:
         return cls(obs_axis=obs_axis, var_axes=var_axes)
 
 
-def get_dataframe_values(df: pd.DataFrame, field_name: str) -> pd.Series:  # type: ignore[type-arg]
+def get_dataframe_values(df: pd.DataFrame, field_name: str) -> pd.Series:
     """Extracts the label values (e.g. cell barcode, gene symbol) from an AnnData/H5AD
     ``obs`` or ``var`` dataframe.
     """
     if field_name in df:
-        values = cast("pd.Series", df[field_name].astype(str))  # type: ignore[type-arg]
+        values = cast("pd.Series", df[field_name].astype(str))
     elif df.index.name in (field_name, "index", None):
-        values = cast("pd.Series", df.index.to_series().astype(str))  # type: ignore[type-arg]
+        values = cast("pd.Series", df.index.to_series().astype(str))
     else:
         raise ValueError(f"Could not find field name {field_name} in dataframe.")
 
