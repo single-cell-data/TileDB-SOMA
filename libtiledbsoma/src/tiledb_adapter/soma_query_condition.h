@@ -87,39 +87,19 @@ class SOMAQueryCondition {
     }
 
     /**
-     * Create a multi-condition QueryCondition using the `TILEDB_AND` predicate
-     * to combine.
-     *
-     * For uninitialized query conditions:
-     * * If neither query condition is initialized, this is left uninitialized.
-     * * If only one object is initialized, this will be modified to be that condition.
-     *
-     * @param The other QueryCondition to add.
-     * @returns A reference to this object for chaining methods.
-     */
-    SOMAQueryCondition& combine_with_and(const SOMAQueryCondition& other);
-
-    /**
-     * Create a multi-condition QueryCondition using the `TILEDB_AND` predicate
-     * to combine.
-     *
-     * For uninitialized query conditions:
-     * * If neither query condition is initialized, this is left uninitialized.
-     * * If only one object is initialized, this will be modified to be that condition.
-     *
-     * @param The other QueryCondition to add.
-     * @returns A reference to this object for chaining methods.
-     */
-    SOMAQueryCondition& combine_with_or(const SOMAQueryCondition& other);
-
-    /**
      * Return if the query condition is initialized.
      */
     inline bool is_initialized() const {
         return qc_.has_value();
     }
 
+    /**
+     * Return internal TileDB query condition.
+     */
     inline const QueryCondition& query_condition() const {
+        if (!qc_.has_value()) {
+            throw TileDBSOMAError("Internal error: Cannot return query condition. Query condition is not initialized.");
+        }
         return qc_.value();
     }
 
