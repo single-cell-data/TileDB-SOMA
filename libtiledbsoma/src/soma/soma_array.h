@@ -867,6 +867,13 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape();
     std::optional<int64_t> _maybe_soma_joinid_maxshape();
 
+    /**
+     * @brief Run a delete query on the array.
+     *
+     * @param delete_cond The query condition that specifies which cells to delete.
+     */
+    void delete_cells_impl(const QueryCondition& delete_cond);
+
     static Array _create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
