@@ -67,16 +67,15 @@ def forwards_kwargs_to(dst: Callable[..., Any], *, exclude: Collection[str] = ()
                     if dst_param.kind == inspect.Parameter.VAR_KEYWORD:
                         # This is dst's **kwargs parameter. Pass it directly.
                         merged.append(dst_param)
-                    elif _can_be_kwarg(dst_param):
+                    elif _can_be_kwarg(dst_param) and dst_param.name not in claimed_names:
                         # In this case:
                         #     def internal(a, b): ...
                         #     @forwards_kwargs_to(internal)
                         #     def public(b, **kwargs): ...
                         # `b` cannot be forwarded to `internal`, so we skip it.
-                        if dst_param.name not in claimed_names:
-                            # ...however, `a` can.
-                            merged.append(dst_param.replace(kind=inspect.Parameter.KEYWORD_ONLY))
-                            claimed_names.add(dst_param.name)
+                        # ...however, `a` can.
+                        merged.append(dst_param.replace(kind=inspect.Parameter.KEYWORD_ONLY))
+                        claimed_names.add(dst_param.name)
                     # else: this param is positional-only.
             else:
                 # This is one of our other params; add it to the signature.

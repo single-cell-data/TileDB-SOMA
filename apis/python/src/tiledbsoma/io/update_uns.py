@@ -161,7 +161,7 @@ def _update_uns_dict(
                 cur = coll.metadata[k]
         exists = cur is not None
 
-        def can_write(k: str, v: UnsNode, cur: Any | None) -> bool:
+        def can_write(k: str, v: UnsNode, cur: Any | None) -> bool:  # noqa: ANN401
             if cur is not None:
                 msg = f"{coll.uri}[{k}]: already exists (type {type(cur).__name__}), refusing to overwrite with {v}"
                 if strict in ["dry_run", "raise"]:
@@ -198,9 +198,8 @@ def _update_uns_dict(
                 ) as df:
                     _maybe_set(coll, k, df, use_relative_uri=use_relative_uri)
         elif isinstance(v, dict):
-            if exists:
-                if not isinstance(cur, Collection):
-                    raise ValueError(f"{coll.uri}/{k}: expected Collection, found {type(cur).__name__}")
+            if exists and not isinstance(cur, Collection):
+                raise ValueError(f"{coll.uri}/{k}: expected Collection, found {type(cur).__name__}")
             _update_uns_dict(
                 coll[k],
                 v,

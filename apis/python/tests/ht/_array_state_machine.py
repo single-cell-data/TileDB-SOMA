@@ -162,7 +162,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
             ),
         )
         assert set(array_metadata.keys()) == set(expected_metadata.keys())
-        for k in array_metadata.keys():
+        for k in array_metadata:
             if isinstance(array_metadata[k], float) and math.isnan(array_metadata[k]):
                 assert math.isnan(expected_metadata[k])
                 continue

@@ -472,24 +472,20 @@ def test_error_corners(soma_experiment: Experiment):
         soma_experiment.axis_query("no-such-measurement")
 
     # Unknown X layer name
-    with pytest.raises(KeyError):
-        with soma_experiment.axis_query("RNA") as query:
-            next(query.X("no-such-layer"))
+    with pytest.raises(KeyError), soma_experiment.axis_query("RNA") as query:
+        next(query.X("no-such-layer"))
 
     # Unknown X layer name
-    with pytest.raises(ValueError):
-        with soma_experiment.axis_query("RNA") as query:
-            query.to_anndata("no-such-layer")
+    with pytest.raises(ValueError), soma_experiment.axis_query("RNA") as query:
+        query.to_anndata("no-such-layer")
 
     # Unknown obsp layer name
-    with pytest.raises(ValueError):
-        with soma_experiment.axis_query("RNA") as query:
-            next(query.obsp("no-such-layer"))
+    with pytest.raises(ValueError), soma_experiment.axis_query("RNA") as query:
+        next(query.obsp("no-such-layer"))
 
     # Unknown varp layer name
-    with pytest.raises(ValueError):
-        with soma_experiment.axis_query("RNA") as query:
-            next(query.varp("no-such-layer"))
+    with pytest.raises(ValueError), soma_experiment.axis_query("RNA") as query:
+        next(query.varp("no-such-layer"))
 
     # Illegal layer name type
     for lyr_name in [True, 3, 99.3]:
@@ -933,14 +929,21 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
             exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
             "var_id",
         )
+        del adata, obs, var
+        gc.collect()
 
         adata = query.to_anndata("data", obs_id_name="soma_joinid", var_id_name="soma_joinid")
         assert adata.obs.index.name == "soma_joinid"
         assert adata.var.index.name == "soma_joinid"
+        del adata
+        gc.collect()
 
         adata = query.to_anndata("data", obs_id_name="obs_id", var_id_name="var_id")
         assert adata.obs.index.name == "obs_id"
         assert adata.var.index.name == "var_id"
+        del adata
+
+    gc.collect()
 
 
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])

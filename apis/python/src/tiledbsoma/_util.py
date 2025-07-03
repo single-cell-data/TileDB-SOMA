@@ -63,9 +63,7 @@ def format_elapsed(start_stamp: float, message: str) -> str:
 def is_local_path(path: str) -> bool:
     if path.startswith("file://"):
         return True
-    if "://" in path:
-        return False
-    return True
+    return "://" not in path
 
 
 def make_relative_path(uri: str, relative_to: str) -> str:
@@ -211,10 +209,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
     if is_slice_of(coord, int):
         # We verify that ``step`` is None elsewhere, so we can always assume
         # that we're asked for a continuous slice.
-        if coord.stop is None:
-            stop = array_length
-        else:
-            stop = min(coord.stop + 1, array_length)
+        stop = array_length if coord.stop is None else min(coord.stop + 1, array_length)
         return stop - (coord.start or 0)
 
     raise TypeError(f"coordinate {coord} must be integer or integer slice")
@@ -222,7 +217,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
 
 def check_type(
     name: str,
-    actual_value: Any,
+    actual_value: Any,  # noqa: ANN401
     expected_types: tuple[type[Any], ...],
 ) -> None:
     """Verifies the type of an argument, or produces a useful error message."""
@@ -495,7 +490,7 @@ def _df_set_index(
         # - `default_index_name` was provided (e.g. `{obs,var}_id_name` args to `to_anndata`)
         #
         # ⇒ Verify a column with that name exists, and set it as index (keeping its name).
-        if default_index_name not in df.keys():
+        if default_index_name not in df:
             raise ValueError(f"Requested ID column name {default_index_name} not found in input: {df.keys()}")
         df.set_index(default_index_name, inplace=True)
 

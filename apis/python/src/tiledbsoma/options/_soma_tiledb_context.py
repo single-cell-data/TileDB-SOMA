@@ -14,9 +14,9 @@ from typing import Any, Literal, Mapping, Optional, Union, cast
 from somacore import ContextBase
 from typing_extensions import Self
 
-from .. import pytiledbsoma as clib
-from .._types import OpenTimestamp
-from .._util import ms_to_datetime, to_timestamp_ms
+from tiledbsoma import pytiledbsoma as clib
+from tiledbsoma._types import OpenTimestamp
+from tiledbsoma._util import ms_to_datetime, to_timestamp_ms
 
 try:
     from tiledb import Ctx as TileDBCtx
@@ -350,7 +350,7 @@ class SOMATileDBContext(ContextBase):
         return int(time.time() * 1000)
 
 
-def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:
+def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:  # noqa: ANN401
     """Returns the argument, as long as it's a ``SOMATileDBContext``, or a new
     one if the argument is ``None``. While we already have static type-checking,
     a few things are extra-important to have runtime validation on.  Since it's

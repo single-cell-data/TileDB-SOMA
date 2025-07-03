@@ -58,7 +58,7 @@ def extract_tiledb_data(data: ProfileData, metric: str) -> Union[int, float, Non
 def extract_context_data(data: ProfileData, metric: str) -> Union[int, float, None]:
     """Read the context data from a profile stored data and return the expected metric"""
     context = data.context
-    if metric in context.keys():
+    if metric in context:
         return context[metric]
     raise Exception(f"context does not have the following metric {metric}")
 

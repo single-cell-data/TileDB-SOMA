@@ -273,10 +273,8 @@ def ingest_one(
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
     parent = os.path.dirname(output_path.rstrip("/"))
-    if parent != "":
-        if tiledbsoma._util.is_local_path(parent):
-            if not os.path.exists(parent):
-                os.mkdir(parent)
+    if parent != "" and tiledbsoma._util.is_local_path(parent) and not os.path.exists(parent):
+        os.mkdir(parent)
 
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 

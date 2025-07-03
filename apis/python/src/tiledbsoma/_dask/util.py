@@ -41,7 +41,7 @@ class SOMADaskConfig(TypedDict, total=False):
     tiledb_config: dict[str, ConfigVal]
 
 
-def chunk_ids_sizes(joinids: JoinIDs, chunk_size: int, dim_size: int) -> tuple[list[JoinIDs], list[int]]:
+def chunk_ids_sizes(joinids: JoinIDs, chunk_size: int, dim_size: int) -> tuple[list[JoinIDs], list[int]]:  # noqa: ARG001
     """Slice chunks from joinids, return chunks' joinids and sizes."""
     chunk_joinids: list[JoinIDs] = []
     chunk_sizes: list[int] = []

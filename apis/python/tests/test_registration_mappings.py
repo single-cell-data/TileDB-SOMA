@@ -1622,7 +1622,7 @@ def test_prepare_experiment(tmp_path) -> None:
     with tiledbsoma.open(soma_uri) as E:
         # check shapes
         assert E.obs.domain[0] == (0, rd.get_obs_shape() - 1)
-        for k in E.ms.keys():
+        for k in E.ms:
             assert E.ms[k].var.domain[0] == (0, rd.get_var_shapes()[k] - 1)
         assert E.ms["RNA"].X["data"].shape == (
             rd.get_obs_shape(),

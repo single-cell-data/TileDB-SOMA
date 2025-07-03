@@ -381,7 +381,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         cls,
         dim_name: str,
         dim_shape: int | None,
-        ndim: int,  # not needed for sparse
+        ndim: int,  # not needed for sparse  # noqa: ARG003
         create_options: TileDBCreateOptions,
     ) -> tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
@@ -415,7 +415,7 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
         coords: options.SparseNDCoords,
         result_order: clib.ResultOrder,
         platform_config: options.PlatformConfig | None,
-    ):
+    ) -> None:
         """Lifecycle:
         Maturing.
         """
@@ -591,7 +591,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         size: int | Sequence[int] | None,
         reindex_disable_on_axis: int | Sequence[int] | None,
         eager: bool = True,
-    ):
+    ) -> None:
         super().__init__(array, coords, result_order, platform_config)
         self.result_order = result_order
         self.axis = axis

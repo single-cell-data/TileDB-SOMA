@@ -16,10 +16,10 @@ import pyarrow as pa
 import scipy.sparse as sp
 from pandas.api.extensions import ExtensionDtype  # noqa - required to resolve pdt.Dtype below
 
-from .._fastercsx import CompressedMatrix
-from .._funcs import typeguard_ignore
-from .._types import NPNDArray, PDSeries
-from ..options._soma_tiledb_context import SOMATileDBContext
+from tiledbsoma._fastercsx import CompressedMatrix
+from tiledbsoma._funcs import typeguard_ignore
+from tiledbsoma._types import NPNDArray, PDSeries
+from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
@@ -179,7 +179,7 @@ def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     return cast("_DT", np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
-def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
+def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:  # noqa: ARG001
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent,
     e.g., float16 -> float32.
     """
@@ -190,10 +190,13 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     # If the column is categorical-of-string of high cardinality, we declare
     # this is likely a mistake, and it will definitely lead to performance
     # issues in subsequent processing.
-    if isinstance(x, pd.Series) and isinstance(x.dtype, pd.CategoricalDtype):
+    if (
+        isinstance(x, pd.Series)
+        and isinstance(x.dtype, pd.CategoricalDtype)
+        and len(x.cat.categories) > COLUMN_DECAT_THRESHOLD
+    ):
         # Heuristic number
-        if len(x.cat.categories) > COLUMN_DECAT_THRESHOLD:
-            return x.astype(x.cat.categories.dtype)
+        return x.astype(x.cat.categories.dtype)
 
     return x
 

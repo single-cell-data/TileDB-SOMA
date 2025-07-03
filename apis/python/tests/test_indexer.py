@@ -93,10 +93,7 @@ def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.arr
     ],
 )
 def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
-    if contextual:
-        context = _validate_soma_tiledb_context(SOMATileDBContext())
-    else:
-        context = None
+    context = _validate_soma_tiledb_context(SOMATileDBContext()) if contextual else None
     all_results = []
     num_threads = 10
 

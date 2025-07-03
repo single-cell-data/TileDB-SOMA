@@ -54,11 +54,11 @@ class CachingReader:
 
     def __init__(
         self,
-        file: Any,  # file-like object. Unfortunately, Python lacks a good typing signature for this concept.
+        file: Any,  # noqa: ANN401 file-like object. Unfortunately, Python lacks a good typing signature for this concept.
         *,
         memory_budget: int = 64 * 1024**2,
         cache_block_size: int = 1024**2,
-    ):
+    ) -> None:
         if not file.readable():
             raise io.UnsupportedOperation("File must be readable")
         if memory_budget < cache_block_size:

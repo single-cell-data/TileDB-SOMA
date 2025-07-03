@@ -288,7 +288,7 @@ class MultiscaleImage(
         *,
         uri: str | None = None,
         shape: Sequence[int],
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> DenseNDArray:
         """Adds a new resolution level to the ``MultiscaleImage``.
 
@@ -544,13 +544,12 @@ class MultiscaleImage(
         Lifecycle:
             Experimental.
         """
-        if self._coord_space is not None:
-            if value.axis_names != self._coord_space.axis_names:
-                raise ValueError(
-                    f"Cannot change axis names of a multiscale image. Existing axis "
-                    f"names are {self._coord_space.axis_names}. New coordinate space "
-                    f"has axis names {value.axis_names}.",
-                )
+        if self._coord_space is not None and value.axis_names != self._coord_space.axis_names:
+            raise ValueError(
+                f"Cannot change axis names of a multiscale image. Existing axis "
+                f"names are {self._coord_space.axis_names}. New coordinate space "
+                f"has axis names {value.axis_names}.",
+            )
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(value)
         self._coord_space = value
 

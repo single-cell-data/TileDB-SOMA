@@ -30,9 +30,10 @@ except ImportError as err:
     raise err
 
 
-from ... import Collection, MultiscaleImage, PointCloudDataFrame, Scene
-from ..._constants import SOMA_JOINID
-from ..._spatial_util import transform_from_json
+from tiledbsoma import Collection, MultiscaleImage, PointCloudDataFrame, Scene
+from tiledbsoma._constants import SOMA_JOINID
+from tiledbsoma._spatial_util import transform_from_json
+
 from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
 
 if TYPE_CHECKING:
@@ -437,10 +438,7 @@ def _spatial_to_spatialdata(
 
         # Export varl data to SpatialData.
         if "varl" in scene:
-            if measurement_names is None:
-                measurements = tuple(scene.varl.keys())
-            else:
-                measurements = measurement_names
+            measurements = tuple(scene.varl.keys()) if measurement_names is None else measurement_names
             for measurement_name in measurements:
                 if measurement_name not in scene.varl:
                     continue

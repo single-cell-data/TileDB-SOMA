@@ -265,7 +265,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, *_: Any) -> None:
+    def __exit__(self, *_: Any) -> None:  # noqa: ANN401
         self.close()
 
     def __del__(self) -> None:
@@ -708,7 +708,7 @@ class _DictMod(enum.Enum):
     """The key was originally PRESENT but has been deleted."""
 
     @classmethod
-    def start_state(cls, dct: Mapping[Any, Any], key: Any) -> "_DictMod":
+    def start_state(cls, dct: Mapping[Any, Any], key: Any) -> "_DictMod":  # noqa: ANN401
         """Returns the starting state for a DictMod given the key of dct."""
         return cls.PRESENT if key in dct else cls.ABSENT
 
@@ -758,11 +758,11 @@ class MetadataWrapper(MutableMapping[str, Any]):
         self.owner._check_open()
         return iter(self.cache)
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: str) -> Any:  # noqa: ANN401
         self.owner._check_open()
         return self.cache[key]
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:  # noqa: ANN401
         self.owner.writer  # noqa: B018 Ensures we're open in write mode.
         state = self._current_state(key)
         _check_metadata_type(key, value)

@@ -14,7 +14,7 @@ import pyarrow as pa
 import pyarrow.compute as pacomp
 from typing_extensions import Self
 
-from ..._exception import SOMAError
+from tiledbsoma._exception import SOMAError
 
 
 def _expand_compressed_index_pointers(indptr: npt.NDArray, nval: int) -> npt.NDArray:
@@ -105,7 +105,7 @@ class TenXCountMatrixReader:
 
     """
 
-    def __init__(self, input_path: str | Path):
+    def __init__(self, input_path: str | Path) -> None:
         # File management.
         self._path = input_path
         self._root: h5py.File | None = None
@@ -135,7 +135,7 @@ class TenXCountMatrixReader:
         self.open()
         return self
 
-    def __exit__(self, *_: Any) -> None:
+    def __exit__(self, *_: Any) -> None:  # noqa: ANN401
         self.close()
 
     def _read_software_version(self) -> tuple[int, int, int]:

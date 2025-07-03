@@ -70,6 +70,5 @@ def log_io(info_message: str | None, debug_message: str) -> None:
     if logger.level == logging.INFO:
         if info_message is not None:
             logger.info(info_message)
-    elif logger.level <= logging.DEBUG:
-        if debug_message is not None:
-            logger.debug(debug_message)
+    elif logger.level <= logging.DEBUG and debug_message is not None:
+        logger.debug(debug_message)

@@ -184,9 +184,8 @@ def test_update_uns(
     caplog.set_level(logging.INFO)
     soma_uri, adata = make_uns_adata(tmp_path)
 
-    with Experiment.open(soma_uri, "w") as exp:
-        with maybe_raises(err):
-            _update_uns(exp, uns_updates, measurement_name="RNA", strict=strict)
+    with Experiment.open(soma_uri, "w") as exp, maybe_raises(err):
+        _update_uns(exp, uns_updates, measurement_name="RNA", strict=strict)
 
     verify_logs(caplog, logs)
 

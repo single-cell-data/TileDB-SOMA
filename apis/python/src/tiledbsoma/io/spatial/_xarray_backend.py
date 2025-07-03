@@ -25,8 +25,9 @@ except ImportError as err:
     warnings.warn("Experimental spatial exporter requires the xarray package.", stacklevel=1)
     raise err
 
-from ... import DenseNDArray
-from ...options._soma_tiledb_context import SOMATileDBContext
+from tiledbsoma import DenseNDArray
+from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
+
 from ._util import _str_to_int
 
 
@@ -44,7 +45,7 @@ class DenseNDArrayWrapper:
         uri: str,
         *,
         context: SOMATileDBContext | None = None,
-    ):
+    ) -> None:
         self._array = DenseNDArray.open(uri, context=context)
         self._dtype: np.typing.DTypeLike = self._array.schema.field("soma_data").type.to_pandas_dtype()
 

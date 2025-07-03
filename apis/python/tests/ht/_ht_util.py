@@ -114,10 +114,7 @@ def arrow_floating_datatypes(draw: st.DrawFn) -> pa.DataType:
 # pyarrow and pandas timestamp interop lacks support for anything other than `ns`
 # units prior to pandas 2. For info, see https://github.com/apache/arrow/issues/33321
 # The simple solution is to just to restrict types to 'ns' for pandas<2.
-if Version(pd.__version__) >= Version("2.0.0"):
-    TIMESTAMP_UNITS = ("s", "ms", "us", "ns")
-else:
-    TIMESTAMP_UNITS = ("ns",)
+TIMESTAMP_UNITS = ("s", "ms", "us", "ns") if Version(pd.__version__) >= Version("2.0.0") else ("ns",)
 
 
 @st.composite

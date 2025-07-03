@@ -15,8 +15,7 @@ import sys
 from typing import Any, Callable, TypeVar, Union, cast
 
 import tiledbsoma
-
-from .._soma_object import SOMAObject
+from tiledbsoma._soma_object import SOMAObject
 
 Printable = Union[io.TextIOWrapper, io.StringIO]
 printableStdout = cast("Printable", sys.stdout)
@@ -368,8 +367,8 @@ def resize_experiment(
     # on one measurement while the experiment's other measurements aren't being
     # updated -- then we need to find those other measurements' var-shapes.
     with tiledbsoma.Experiment.open(uri, context=context) as exp:
-        for ms_key in exp.ms.keys():
-            if ms_key not in nvars.keys():
+        for ms_key in exp.ms:
+            if ms_key not in nvars:
                 nvars[ms_key] = exp.ms[ms_key].var._maybe_soma_joinid_shape or 1
 
     retval = _treewalk(
@@ -391,8 +390,8 @@ def _treewalk(
     uri: str,
     *,
     node_name: str | None = None,
-    leaf_visitor: Callable[..., dict[str, Any]],
-    **kwargs: Any,
+    leaf_visitor: Callable[..., dict[str, Any]],  # noqa: ANN401
+    **kwargs: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
     """Apply visitor function to the ``Experiment`` elements.
 
@@ -433,7 +432,7 @@ def _treewalk(
     def _recurse(
         parent: tiledbsoma.Experiment | tiledbsoma.Measurement | tiledbsoma.Collection[_SOMAObjectType],
         node_name: str | None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> dict[str, Any]:
         """Applies ``_treewalk`` to the requested child element.
 
@@ -495,17 +494,17 @@ def _treewalk(
 
 
 def _leaf_visitor_show_shapes(
-    item: Any,
+    item: Any,  # noqa: ANN401
     *,
     node_name: str,
-    nobs: int | None,
-    nvars: dict[str, int] | None,
+    nobs: int | None,  # noqa: ARG001
+    nvars: dict[str, int] | None,  # noqa: ARG001
     ms_name: str | None,
     coll_name: str | None,
     verbose: bool,
     check_only: bool,
     output_handle: Printable | None,
-    context: tiledbsoma.SOMATileDBContext | None,
+    context: tiledbsoma.SOMATileDBContext | None,  # noqa: ARG001
 ) -> dict[str, Any]:
     retval = {"status": True}
     if isinstance(item, tiledbsoma.DataFrame):
@@ -632,7 +631,7 @@ def _leaf_visitor_show_shapes(
 
 
 def _leaf_visitor_upgrade(
-    item: Any,
+    item: Any,  # noqa: ANN401
     *,
     node_name: str,
     nobs: int | None,
@@ -647,10 +646,7 @@ def _leaf_visitor_upgrade(
     retval = {"status": True}
 
     if isinstance(item, tiledbsoma.DataFrame):
-        if item.index_column_names == ("soma_joinid",):
-            count = item.non_empty_domain()[0][1] + 1
-        else:
-            count = item.count
+        count = item.non_empty_domain()[0][1] + 1 if item.index_column_names == ("soma_joinid",) else item.count
 
         _print_leaf_node_banner(
             uri=item.uri,
@@ -758,7 +754,7 @@ def _leaf_visitor_upgrade(
 
 
 def _leaf_visitor_resize(
-    item: Any,
+    item: Any,  # noqa: ANN401
     *,
     node_name: str,
     nobs: int | None,
@@ -915,7 +911,7 @@ def _get_leaf_node_description(
 
 def _bannerize(
     node_name: str,
-    value: Any,
+    value: Any,  # noqa: ANN401
     *,
     verbose: bool,
     check_only: bool,
@@ -998,17 +994,17 @@ def _get_new_ndarray_shape(
 
 
 def _leaf_visitor_get_shapes(
-    item: Any,
+    item: Any,  # noqa: ANN401
     *,
-    node_name: str,
-    nobs: int | None,
-    nvars: dict[str, int] | None,
-    ms_name: str | None,
-    coll_name: str | None,
-    verbose: bool,
-    check_only: bool,
-    context: tiledbsoma.SOMATileDBContext | None,
-    output_handle: Printable | None,
+    node_name: str,  # noqa: ARG001
+    nobs: int | None,  # noqa: ARG001
+    nvars: dict[str, int] | None,  # noqa: ARG001
+    ms_name: str | None,  # noqa: ARG001
+    coll_name: str | None,  # noqa: ARG001
+    verbose: bool,  # noqa: ARG001
+    check_only: bool,  # noqa: ARG001
+    context: tiledbsoma.SOMATileDBContext | None,  # noqa: ARG001
+    output_handle: Printable | None,  # noqa: ARG001
 ) -> dict[str, Any]:
     retval: dict[str, Any] = {}
     if isinstance(item, tiledbsoma.DataFrame):

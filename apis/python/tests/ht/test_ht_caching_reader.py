@@ -11,7 +11,7 @@ from hypothesis.stateful import (
 
 from tiledbsoma.io._caching_reader import CachingReader
 
-from .._util import TESTDATA
+from tests._util import TESTDATA
 
 
 class CachingReaderStateMachine(RuleBasedStateMachine):
@@ -56,8 +56,8 @@ class CachingReaderStateMachine(RuleBasedStateMachine):
     @rule()
     def open(self) -> None:
         self._closed = False
-        self.raw = open(self._fname, "rb")
-        self.cached = CachingReader(open(self._fname, "rb"))
+        self.raw = open(self._fname, "rb")  # noqa: SIM115
+        self.cached = CachingReader(open(self._fname, "rb"))  # noqa: SIM115
 
     @precondition(lambda self: not self._closed)
     @rule()
