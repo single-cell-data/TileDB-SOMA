@@ -88,6 +88,8 @@ void load_query_condition(py::module& m) {
 
         .def("combine", &PyQueryCondition::combine)
 
+        .def("negate", &PyQueryCondition::negate)
+
         .def_static(
             "create_string",
             static_cast<PyQueryCondition (*)(
