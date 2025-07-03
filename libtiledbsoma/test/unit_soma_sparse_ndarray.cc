@@ -505,3 +505,106 @@ TEST_CASE("SOMASparseNDArray: resize with timestamp", "[SOMASparseNDArray]") {
     REQUIRE(snda->shape() == new_shape);
     snda->close();
 }
+
+TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
+    // Create a TileDB sparse array with 3 integer dimensions.
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://test-query-condition-sparse";
+    auto index_columns = helper::create_column_index_info(
+        {helper::DimInfo(
+             {.name = "soma_dim_0",
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = 4,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "soma_dim_1",
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = 3,
+              .string_lo = "N/A",
+              .string_hi = "N/A"})});
+
+    SOMASparseNDArray::create(uri, "i", index_columns, ctx);
+    std::vector<std::string> dim_names{"soma_dim_0", "soma_dim_1"};
+
+    {
+        INFO("Write data to array.");
+        std::vector<int64_t> coords_dim_0{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+        std::vector<int64_t> coords_dim_1{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
+        std::vector<int32_t> data(12);
+        std::iota(data.begin(), data.end(), 1);
+
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
+        Query query{*ctx->tiledb_ctx(), array};
+        query.set_layout(TILEDB_GLOBAL_ORDER);
+        query.set_data_buffer("soma_dim_0", coords_dim_0);
+        query.set_data_buffer("soma_dim_1", coords_dim_1);
+        query.set_data_buffer("soma_data", data);
+        query.submit();
+        query.finalize();
+        array.close();
+    }
+
+    // Create variable for tests. Using sections will rerun the this test from beginning to end for each section.
+    std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{};
+    int64_t expected_result_num{0};
+    std::vector<int32_t> expected_data{};
+    std::vector<int64_t> expected_dim_0{};
+    std::vector<int64_t> expected_dim_1{};
+    std::string section_info{};
+
+    SECTION("Delete all using ranges.") {
+        section_info = "Delete all using ranges.";
+        expected_result_num = 0;
+        delete_coords.assign({{{0, 3}, true}, {{0, 2}, true}});
+    }
+    SECTION("Delete 1 row using single range.") {
+        section_info = "Delete 1 row using ranges.";
+        expected_result_num = 9;
+        delete_coords.assign({{{1, 1}, true}});
+        expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+    }
+    SECTION("Delete 1 row using single range and empty coord.") {
+        section_info = "Delete 1 row using ranges.";
+        expected_result_num = 9;
+        delete_coords.assign({{{1, 1}, true}, {{}, false}});
+        expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+    }
+    expected_data.resize(12, 0);
+    expected_dim_0.resize(12, 0);
+    expected_dim_1.resize(12, 0);
+
+    INFO(section_info);
+    {
+        INFO("Delete cells from the sparse array.");
+        auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        sparse_array->delete_cells(delete_coords);
+        sparse_array->close();
+    }
+
+    std::vector<int32_t> actual_data(12);
+    std::vector<int64_t> actual_dim_0(12);
+    std::vector<int64_t> actual_dim_1(12);
+    Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
+    Query query{*ctx->tiledb_ctx(), array};
+    Subarray subarray(*ctx->tiledb_ctx(), array);
+    subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
+    query.set_layout(TILEDB_GLOBAL_ORDER);
+    query.set_subarray(subarray);
+    query.set_data_buffer("soma_dim_0", actual_dim_0);
+    query.set_data_buffer("soma_dim_1", actual_dim_1);
+    query.set_data_buffer("soma_data", actual_data);
+    query.submit();
+    query.finalize();
+    array.close();
+
+    auto actual_result_num = static_cast<int64_t>(query.result_buffer_elements()["soma_data"].second);
+    CHECK(actual_result_num == expected_result_num);
+    CHECK_THAT(actual_dim_0, Catch::Matchers::Equals(expected_dim_0));
+    CHECK_THAT(actual_dim_1, Catch::Matchers::Equals(expected_dim_1));
+    CHECK_THAT(actual_data, Catch::Matchers::Equals(actual_data));
+}

@@ -290,14 +290,14 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
             INFO(log_note);
 
             // Create a query for the entire array.
-            std::vector<int64_t> expected_coords_0(16);
-            std::vector<int64_t> expected_coords_1(16);
-            std::vector<int32_t> expected_data(16);
+            std::vector<int64_t> expected_coords_0(12);
+            std::vector<int64_t> expected_coords_1(12);
+            std::vector<int32_t> expected_data(12);
 
             // Create a query for the entire array.
-            std::vector<int64_t> actual_coords_0(16);
-            std::vector<int64_t> actual_coords_1(16);
-            std::vector<int32_t> actual_data(16);
+            std::vector<int64_t> actual_coords_0(12);
+            std::vector<int64_t> actual_coords_1(12);
+            std::vector<int32_t> actual_data(12);
 
             // Query with subarray.
             Query query1(*ctx->tiledb_ctx(), array);
@@ -315,7 +315,7 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
             query2.set_data_buffer("soma_dim_1", actual_coords_1);
             query2.set_data_buffer("soma_data", actual_data);
             Subarray qc_subarray(*ctx->tiledb_ctx(), array);
-            qc_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 3);
+            qc_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
             query2.set_subarray(qc_subarray);
             query2.set_condition(qc.get_query_condition());
             query2.submit();
@@ -333,14 +333,14 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
         INFO(log_note);
 
         // Create a query for the entire array.
-        std::vector<int64_t> expected_coords_0(16);
-        std::vector<int64_t> expected_coords_1(16);
-        std::vector<int32_t> expected_data(16);
+        std::vector<int64_t> expected_coords_0(12);
+        std::vector<int64_t> expected_coords_1(12);
+        std::vector<int32_t> expected_data(12);
 
         // Create a query for the entire array.
-        std::vector<int64_t> actual_coords_0(16);
-        std::vector<int64_t> actual_coords_1(16);
-        std::vector<int32_t> actual_data(16);
+        std::vector<int64_t> actual_coords_0(12);
+        std::vector<int64_t> actual_coords_1(12);
+        std::vector<int32_t> actual_data(12);
 
         // Query with query condition.
         Query query2(*ctx->tiledb_ctx(), array);
@@ -349,7 +349,7 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
         query2.set_data_buffer("soma_dim_1", actual_coords_1);
         query2.set_data_buffer("soma_data", actual_data);
         Subarray qc_subarray(*ctx->tiledb_ctx(), array);
-        qc_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 3);
+        qc_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
         query2.set_subarray(qc_subarray);
         query2.set_condition(qc.get_query_condition());
         query2.submit();

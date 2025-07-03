@@ -80,6 +80,9 @@ class SOMAQueryCondition {
     template <typename T>
     static SOMAQueryCondition create_from_points(
         const Context& ctx, const std::string& elem_name, const std::vector<T>& values) {
+        if (values.empty()) {
+            return SOMAQueryCondition();
+        }
         return QueryConditionExperimental::create<T>(ctx, elem_name, values, TILEDB_IN);
     }
 
