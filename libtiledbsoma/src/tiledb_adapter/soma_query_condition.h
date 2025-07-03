@@ -16,6 +16,8 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
+
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 #include "../soma/soma_context.h"
@@ -126,7 +128,7 @@ class SOMAQueryCondition {
 class SOMACoordQueryCondition {
    public:
     SOMACoordQueryCondition() = delete;
-    SOMACoordQueryCondition(const SOMAContext& ctx);
+    SOMACoordQueryCondition(const SOMAContext& ctx, const std::vector<std::string>& dim_names);
 
     SOMACoordQueryCondition(SOMACoordQueryCondition&& other) = default;
     SOMACoordQueryCondition(const SOMACoordQueryCondition& other) = default;
@@ -144,16 +146,9 @@ class SOMACoordQueryCondition {
      * @param stop_value The last value of the range.
      */
     template <typename T>
-    SOMACoordQueryCondition& add_range(const std::string& elem_name, T start_value, T stop_value) {
-        auto qc_range = QueryCondition::create<T>(*ctx_, elem_name, start_value, TILEDB_GE)
-                            .combine(QueryCondition::create<T>(*ctx_, elem_name, stop_value, TILEDB_LE), TILEDB_AND);
-        if (initialized_) {
-            qc_ = qc_.combine(qc_range, TILEDB_AND);
-        } else {
-            qc_ = qc_range;
-            initialized_ = true;
-        }
-        return *this;
+    SOMACoordQueryCondition& add_range(int64_t dim_index, T start_value, T stop_value) {
+        return add_coordinate_query_condition(
+            dim_index, SOMAQueryCondition::create_from_range<T>(*ctx_, dim_names_[dim_index], start_value, stop_value));
     }
 
     /**
@@ -170,34 +165,42 @@ class SOMACoordQueryCondition {
      *
      */
     template <typename T>
-    SOMACoordQueryCondition& add_points(const std::string& elem_name, const std::vector<T>& values) {
-        auto qc_coords = QueryConditionExperimental::create<T>(*ctx_, elem_name, values, TILEDB_IN);
-        if (initialized_) {
-            qc_ = qc_.combine(qc_coords, TILEDB_AND);
-        } else {
-            qc_ = qc_coords;
-            initialized_ = true;
-        }
-        return *this;
+    SOMACoordQueryCondition& add_points(int64_t dim_index, const std::vector<T>& values) {
+        return add_coordinate_query_condition(
+            dim_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[dim_index], values));
     }
 
-    inline bool is_initialized() const {
-        return initialized_;
-    }
+    /**
+     * Returns `true` if at least one query condition is set.
+     */
+    bool is_initialized() const;
 
-    inline const QueryCondition& query_condition() const {
-        return qc_;
+    /**
+     * Returns a SOMA query condition that queries for the currently set coordinates.
+     */
+    SOMAQueryCondition get_soma_query_condition() const;
+
+    /**
+     * Returns a TileDB query condition that queries for the currently set coordinates.
+     * 
+     * Throws an error if no query conditions are set.
+     */
+    QueryCondition get_query_condition() const {
+        return get_soma_query_condition().query_condition();
     }
 
    private:
+    /**Add a query condition to a coordinate. */
+    SOMACoordQueryCondition& add_coordinate_query_condition(int64_t index, SOMAQueryCondition&& qc);
+
     /** TileDB context required for creating query conditions. */
     std::shared_ptr<Context> ctx_;
 
-    /** Query condition for coordinates. */
-    QueryCondition qc_;
+    /** Names of the dimensions of the underlying TileDB Array. */
+    std::vector<std::string> dim_names_;
 
-    /** Flag denoting it the query condition has been initialized yet. */
-    bool initialized_ = false;
+    /** Query condition for coordinates. */
+    std::vector<SOMAQueryCondition> coord_qc_;
 };
 
 }  // namespace tiledbsoma
