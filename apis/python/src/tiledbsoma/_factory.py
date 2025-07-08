@@ -132,7 +132,9 @@ def open(
     else:
         raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
 
-    obj = _type_name_to_cls(soma_type_name).open(uri=uri, mode=mode, context=context, tiledb_timestamp=tiledb_timestamp)
+    obj: AnySOMAObject = _type_name_to_cls(soma_type_name).open(
+        uri=uri, mode=mode, context=context, tiledb_timestamp=tiledb_timestamp
+    )
     if soma_type and obj.soma_type.lower() != soma_type_name.lower():
         obj.close()
         raise TypeError(f"Type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}.")
