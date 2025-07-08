@@ -165,16 +165,11 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         timestamp = context._open_timestamp_ms(clib_handle.timestamp)
         try:
             wrapper = cls(uri, mode, context, timestamp, clib_handle)
-            if mode == "w":  # TODO: Fix before merging
-                with cls._opener(uri, "r", context, timestamp) as auxiliary_reader:
-                    wrapper._do_initial_reads(auxiliary_reader)
-            else:
-                wrapper._do_initial_reads(clib_handle)
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise
-
+        wrapper._do_initial_reads(clib_handle)
         obj_type = wrapper.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
         if obj_type is None:
             raise SOMAError(
