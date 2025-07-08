@@ -107,10 +107,10 @@ def open_handle_wrapper(
                 timestamp=(0, timestamp_ms),
                 clib_type=clib_type,
             )
-        except (SOMAError, RuntimeError) as tdbe:
+        except Exception as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
-            raise SOMAError(tdbe) from tdbe
+            raise
         try:
             return _type_to_class[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
         except KeyError:
