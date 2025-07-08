@@ -120,16 +120,18 @@ def open(
     Lifecycle:
         Maturing.
     """
-    context = _validate_soma_tiledb_context(context)
     if soma_type is None:
+        context = _validate_soma_tiledb_context(context)
         handle = _tdb_handles.open_handle_wrapper(uri=uri, mode=mode, context=context, timestamp=tiledb_timestamp)
         return reify_handle(handle)
+
     if isinstance(soma_type, str):
         soma_type_name = soma_type
     elif issubclass(soma_type, somacore.SOMAObject):
         soma_type_name = soma_type.soma_type
     else:
         raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
+
     obj = _type_name_to_cls(soma_type_name).open(uri=uri, mode=mode, context=context, tiledb_timestamp=tiledb_timestamp)
     if soma_type and obj.soma_type.lower() != soma_type_name.lower():
         obj.close()
