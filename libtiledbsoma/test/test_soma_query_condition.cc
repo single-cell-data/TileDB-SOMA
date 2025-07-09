@@ -148,6 +148,12 @@ TEST_CASE("Test SOMAQueryCondition on SparseArray", "[SOMAQueryCondition][SOMASp
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
 
+    // Empty region: invalid - no points.
+    {
+        CHECK_THROWS_AS(
+            SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", {}), std::invalid_argument);
+    }
+
     // Empty region: out-of-bounds points.
     {
         auto qc = SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", {25, 27, 19, 30});

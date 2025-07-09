@@ -15,6 +15,9 @@
 #define SOMA_SPARSE_NDARRAY
 
 #include <filesystem>
+#include <utility>
+#include <variant>
+#include <vector>
 
 #include "soma_array.h"
 
@@ -129,12 +132,20 @@ class SOMASparseNDArray : public SOMAArray {
     /**
      * @brief Delete cells from the array.
      *
-     * This deletes cells that fall within the intersection of the provided coordinates.
-     * @param coords A vector of coordinates and boolean flag. If `true`, the flag indicates
-     * the coordinates should be viewed as a range. In this case, there must be exactly two
-     * values.
+     * This deletes cells that fall within the intersection of the provided coordinates. The coordinates are specified by
+     * a per-dimension vector. If any coordinates are missing (length < number of dimensions) then the remaining dimensions
+     * are set to be unconstrained. At least one constraint must be set.
+     *
+     * Acceptable ways to index a dimension:
+     * * A range (`std::pair<int64_t, int64_t>`) that selects all coordinates from the starting value to the ending values
+     *   including both end points. The range must overlap the valid domain of the dimension.
+     * * A list of points (`std::vector<int64_t>`) to select. All points must be contained inside the domain of the dimension.
+     * * A default placeholder (`std::monostate`) - all values are selected (i.e. unconstrained).
+     *
+     * @param coords A per-dimension vector of coordinates - the intersection of which is the cells to delete.
      */
-    void delete_cells(const std::vector<std::pair<std::vector<int64_t>, bool>> coords);
+    void delete_cells(
+        const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>>& coords);
 };
 }  // namespace tiledbsoma
 

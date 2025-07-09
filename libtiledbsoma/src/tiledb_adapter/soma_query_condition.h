@@ -94,7 +94,8 @@ class SOMAQueryCondition {
     static SOMAQueryCondition create_from_points(
         const Context& ctx, const std::string& elem_name, const std::vector<T>& values) {
         if (values.empty()) {
-            return SOMAQueryCondition();
+            throw std::invalid_argument(
+                fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", elem_name));
         }
         return QueryConditionExperimental::create<T>(ctx, elem_name, values, TILEDB_IN);
     }
