@@ -106,6 +106,7 @@ void SOMASparseNDArray::delete_cells(const std::vector<std::pair<std::vector<int
                 coords.size(),
                 ndim()));
     }
+    const auto& array_shape = shape();
 
     SOMACoordQueryCondition qc{*ctx_, dimension_names()};
     for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
@@ -122,8 +123,44 @@ void SOMASparseNDArray::delete_cells(const std::vector<std::pair<std::vector<int
                         get_column(dim_index)->name(),
                         coord_values.size()));
             }
+            if (coord_values[1] < 0 || coord_values[0] >= array_shape[dim_index]) {
+                if (coord_values[1] < coord_values[0]) {
+                    // This is normally caught in SOMACoordQueryCondition check.
+                    throw std::invalid_argument(
+                        fmt::format(
+                            "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
+                            "than or equal to the starting value.",
+                            coord_values[0],
+                            coord_values[1],
+                            get_column(dim_index)->name()));
+                }
+                throw std::out_of_range(
+                    fmt::format(
+                        "Non-overlapping range [{}, {}] on column '{}' with length={}. Range must overlap "
+                        "[{}, {}].",
+                        coord_values[0],
+                        coord_values[1],
+                        get_column(dim_index)->name(),
+                        array_shape[dim_index],
+                        0,
+                        array_shape[dim_index] - 1));
+            }
             qc.add_range<int64_t>(dim_index, coord_values[0], coord_values[1]);
         } else {
+            for (const auto& val : coord_values) {
+                if (val < 0 || val >= array_shape[dim_index]) {
+                    throw std::out_of_range(
+                        fmt::format(
+                            "Out-of-bounds coordinate {} on column '{}' with length={}. Coordinates must be inside "
+                            "range "
+                            "[{}, {}].",
+                            val,
+                            get_column(dim_index)->name(),
+                            array_shape[dim_index],
+                            0,
+                            array_shape[dim_index] - 1));
+                }
+            }
             qc.add_points<int64_t>(dim_index, coord_values);
         }
     }

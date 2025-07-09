@@ -9,6 +9,9 @@
  * @section DESCRIPTION
  *
  * This file defines helper functions and classes for using query conditions in SOMA.
+ *
+ * WARNING: Do not include in public facing header: this directly imports the logger
+ * for fmt.
  */
 
 #ifndef TILEDBSOMA_TILEDB_ADAPTER_H
@@ -22,6 +25,7 @@
 #include <tiledb/tiledb_experimental>
 #include "../soma/soma_context.h"
 #include "../utils/common.h"
+#include "../utils/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -65,6 +69,15 @@ class SOMAQueryCondition {
     template <typename T>
     static SOMAQueryCondition create_from_range(
         const Context& ctx, const std::string& elem_name, T start_value, T stop_value) {
+        if (stop_value < start_value) {
+            throw std::invalid_argument(
+                fmt::format(
+                    "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
+                    "than or equal to the starting value.",
+                    start_value,
+                    stop_value,
+                    elem_name));
+        }
         return SOMAQueryCondition(
             QueryCondition::create<T>(ctx, elem_name, start_value, TILEDB_GE)
                 .combine(QueryCondition::create<T>(ctx, elem_name, stop_value, TILEDB_LE), TILEDB_AND));

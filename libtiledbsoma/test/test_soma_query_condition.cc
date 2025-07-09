@@ -135,12 +135,10 @@ TEST_CASE("Test SOMAQueryCondition on SparseArray", "[SOMAQueryCondition][SOMASp
         check_query_condition(qc, subarray, "Read all values by range.");
     }
 
-    // Empty region: invalid range.
+    // Error: invalid range.
     {
-        auto qc = SOMAQueryCondition::create_from_range<int64_t>(*tiledb_ctx, "soma_dim_0", 3, 2);
-        CHECK(qc.is_initialized());
-        Subarray subarray(*tiledb_ctx, array);
-        check_empty_query_condition(qc, "Invalid range: expect no values.");
+        CHECK_THROWS_AS(
+            SOMAQueryCondition::create_from_range<int64_t>(*tiledb_ctx, "soma_dim_0", 3, 2), std::invalid_argument);
     }
 
     // Empty region: out-of-bounds range.
@@ -312,8 +310,7 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_range<int64_t>(0, 3, 2);
-        check_empty_query_condition(qc, "Invalid range: expect no values.");
+        CHECK_THROWS_AS(qc.add_range<int64_t>(0, 3, 2), std::invalid_argument);
     }
 
     // Empty region: out-of-bounds range.

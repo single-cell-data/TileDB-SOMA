@@ -11,6 +11,7 @@
  * This file manages unit tests for the SOMASparseNDArray class
  */
 
+#include <stdexcept>
 #include "common.h"
 
 TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
@@ -507,25 +508,24 @@ TEST_CASE("SOMASparseNDArray: resize with timestamp", "[SOMASparseNDArray]") {
 }
 
 TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
-    // Create a TileDB sparse array with 3 integer dimensions.
+    // Create a TileDB sparse array with 2 integer dimensions.
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://test-query-condition-sparse";
     auto index_columns = helper::create_column_index_info(
         {helper::DimInfo(
              {.name = "soma_dim_0",
               .tiledb_datatype = TILEDB_INT64,
-              .dim_max = 4,
+              .dim_max = 3,
               .string_lo = "N/A",
               .string_hi = "N/A"}),
          helper::DimInfo(
              {.name = "soma_dim_1",
               .tiledb_datatype = TILEDB_INT64,
-              .dim_max = 3,
+              .dim_max = 2,
               .string_lo = "N/A",
               .string_hi = "N/A"})});
 
     SOMASparseNDArray::create(uri, "i", index_columns, ctx);
-    std::vector<std::string> dim_names{"soma_dim_0", "soma_dim_1"};
 
     {
         INFO("Write data to array.");
@@ -607,4 +607,83 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     CHECK_THAT(actual_dim_0, Catch::Matchers::Equals(expected_dim_0));
     CHECK_THAT(actual_dim_1, Catch::Matchers::Equals(expected_dim_1));
     CHECK_THAT(actual_data, Catch::Matchers::Equals(actual_data));
+}
+
+TEST_CASE("SOMASparseNDArray: delete cells out-of-bounds errors", "[SOMASparseNDArray][delete]") {
+    // Create a TileDB sparse array with 3 integer dimensions.
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://test-query-condition-sparse";
+    auto index_columns = helper::create_column_index_info(
+        {helper::DimInfo(
+             {.name = "soma_dim_0",
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = 3,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "soma_dim_1",
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = 4,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "soma_dim_2",
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = 11,
+              .string_lo = "N/A",
+              .string_hi = "N/A"})});
+
+    SOMASparseNDArray::create(uri, "i", index_columns, ctx);
+
+    auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+    {
+        INFO("Check throws: no coordinates.");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+    }
+    {
+        INFO("Check throws: full range less than current domain (dim=0).");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{-10, -1}, true}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+    }
+    {
+        INFO("Check throws: full range less than current domain (dim=1).");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{}, false}, {{-10, -1}, true}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+    }
+    {
+        INFO("Check throws: range starts at max value + 1 (dim=0).");
+        auto shape = sparse_array->shape();
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{4, 10}, true}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+    }
+    {
+        INFO("Check throws: range starts at max value + 1 (dim=1).");
+        auto shape = sparse_array->shape();
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{5, 10}, true}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+    }
+    {
+        INFO("Check throws: invalid range");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{3, 1}, true}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+    }
+    {
+        INFO("Check throws: invalid range that is also out of bounds");
+        // Note: the invalid argument error should take precedent over the fact the range is out-of-bounds.
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{20, 11}, true}, {{}, false}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+    }
+    {
+        INFO("Check throws: coordinate out-of-bounds (dim=0) ");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{1, 100, 2}, false}, {{1, 3}, false}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+    }
+    {
+        INFO("Check throws: coordinate out-of-bounds (dim=2)");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{
+            {{1, 1}, true}, {{}, false}, {{-1, 1, 4, 2, 11}, false}};
+        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+    }
+    sparse_array->close();
 }
