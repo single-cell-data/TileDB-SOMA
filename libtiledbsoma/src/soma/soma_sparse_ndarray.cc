@@ -119,7 +119,7 @@ void SOMASparseNDArray::delete_cells(const std::vector<std::pair<std::vector<int
                 throw std::invalid_argument(
                     fmt::format(
                         "Internal error: Range-based coordinates for deletes must have exactly 2 elements. The "
-                        "coordinates for column '{}' have {} elements.",
+                        "range provided for column '{}' have {} elements.",
                         get_column(dim_index)->name(),
                         coord_values.size()));
             }

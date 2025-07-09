@@ -551,65 +551,146 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     std::vector<int32_t> expected_data{};
     std::vector<int64_t> expected_dim_0{};
     std::vector<int64_t> expected_dim_1{};
-    std::string section_info{};
 
-    SECTION("Delete all using ranges.") {
-        section_info = "Delete all using ranges.";
+    auto check_delete = [&](const std::string& log_note) {
+        INFO(log_note);
+        expected_data.resize(12, 0);
+        expected_dim_0.resize(12, 0);
+        expected_dim_1.resize(12, 0);
+
+        {
+            INFO("Delete cells from the sparse array.");
+            auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+            sparse_array->delete_cells(delete_coords);
+            sparse_array->close();
+        }
+
+        std::vector<int32_t> actual_data(12);
+        std::vector<int64_t> actual_dim_0(12);
+        std::vector<int64_t> actual_dim_1(12);
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
+        Query query{*ctx->tiledb_ctx(), array};
+        Subarray subarray(*ctx->tiledb_ctx(), array);
+        subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
+        query.set_layout(TILEDB_GLOBAL_ORDER);
+        query.set_subarray(subarray);
+        query.set_data_buffer("soma_dim_0", actual_dim_0);
+        query.set_data_buffer("soma_dim_1", actual_dim_1);
+        query.set_data_buffer("soma_data", actual_data);
+        query.submit();
+        query.finalize();
+        array.close();
+
+        auto actual_result_num = static_cast<int64_t>(query.result_buffer_elements()["soma_data"].second);
+        CHECK(actual_result_num == expected_result_num);
+        CHECK_THAT(actual_dim_0, Catch::Matchers::Equals(expected_dim_0));
+        CHECK_THAT(actual_dim_1, Catch::Matchers::Equals(expected_dim_1));
+        CHECK_THAT(actual_data, Catch::Matchers::Equals(actual_data));
+    };
+
+    SECTION("Delete all using ranges") {
         expected_result_num = 0;
         delete_coords.assign({{{0, 3}, true}, {{0, 2}, true}});
+        check_delete("Delete all using ranges");
     }
-    SECTION("Delete 1 row using single range.") {
-        section_info = "Delete 1 row using ranges.";
+    SECTION("Delete all using row ranges") {
+        expected_result_num = 0;
+        delete_coords.assign({{{0, 3}, true}, {{0, 2}, true}});
+        check_delete("Delete all using row range");
+    }
+    SECTION("Delete all using column range") {
+        expected_result_num = 0;
+        delete_coords.assign({{{}, false}, {{0, 2}, true}});
+        check_delete("Delete all using column range");
+    }
+    SECTION("Delete all using coordinates") {
+        expected_result_num = 0;
+        delete_coords.assign({{{0, 1, 2, 3}, false}, {{0, 1, 2}, false}});
+        check_delete("Delete all using coordinates");
+    }
+    SECTION("Delete 1 row using range") {
         expected_result_num = 9;
         delete_coords.assign({{{1, 1}, true}});
         expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+        check_delete("Delete 1 row using range");
     }
-    SECTION("Delete 1 row using single range and empty coord.") {
-        section_info = "Delete 1 row using ranges.";
+    SECTION("Delete 1 row using coordinate") {
+        expected_result_num = 9;
+        delete_coords.assign({{{1}, false}});
+        expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+        check_delete("Delete 1 row using coordinate");
+    }
+    SECTION("Delete 1 row using row range, empty coord (select all)") {
         expected_result_num = 9;
         delete_coords.assign({{{1, 1}, true}, {{}, false}});
         expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+        check_delete("Delete 1 row using row range, empty coord");
     }
-    expected_data.resize(12, 0);
-    expected_dim_0.resize(12, 0);
-    expected_dim_1.resize(12, 0);
-
-    INFO(section_info);
-    {
-        INFO("Delete cells from the sparse array.");
-        auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
-        sparse_array->delete_cells(delete_coords);
-        sparse_array->close();
+    SECTION("Delete 1 row using duplicate coordinates") {
+        expected_result_num = 9;
+        delete_coords.assign({{{1, 1, 1}, false}});
+        expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+        check_delete("Delete 1 row using duplicate coordinates");
     }
-
-    std::vector<int32_t> actual_data(12);
-    std::vector<int64_t> actual_dim_0(12);
-    std::vector<int64_t> actual_dim_1(12);
-    Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
-    Query query{*ctx->tiledb_ctx(), array};
-    Subarray subarray(*ctx->tiledb_ctx(), array);
-    subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
-    query.set_layout(TILEDB_GLOBAL_ORDER);
-    query.set_subarray(subarray);
-    query.set_data_buffer("soma_dim_0", actual_dim_0);
-    query.set_data_buffer("soma_dim_1", actual_dim_1);
-    query.set_data_buffer("soma_data", actual_data);
-    query.submit();
-    query.finalize();
-    array.close();
-
-    auto actual_result_num = static_cast<int64_t>(query.result_buffer_elements()["soma_data"].second);
-    CHECK(actual_result_num == expected_result_num);
-    CHECK_THAT(actual_dim_0, Catch::Matchers::Equals(expected_dim_0));
-    CHECK_THAT(actual_dim_1, Catch::Matchers::Equals(expected_dim_1));
-    CHECK_THAT(actual_data, Catch::Matchers::Equals(actual_data));
+    SECTION("Delete 1 row using a coordinate") {
+        expected_result_num = 9;
+        delete_coords.assign({{{1}, false}});
+        expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
+        check_delete("Delete 1 row using a coordinate");
+    }
+    SECTION("Delete multiple rows with coordinates (unordered)") {
+        expected_result_num = 3;
+        delete_coords.assign({{{3, 0, 1}, false}});
+        expected_data.assign({7, 8, 9});
+        expected_dim_0.assign({2, 2, 2});
+        expected_dim_1.assign({0, 1, 2});
+        check_delete("Delete multiple rows with coordinates (unordered)");
+    }
+    SECTION("Delete range on row, range on column") {
+        expected_result_num = 8;
+        delete_coords.assign({{{0, 1}, true}, {{1, 2}, false}});
+        expected_data.assign({1, 4, 7, 8, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 1, 2, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 0, 0, 1, 2, 0, 1, 2});
+        check_delete("Delete range on row, coord on column");
+    }
+    SECTION("Delete range on row, coords on column") {
+        expected_result_num = 9;
+        delete_coords.assign({{{0, 2}, true}, {{1}, false}});
+        expected_data.assign({1, 3, 4, 6, 7, 9, 10, 11, 12});
+        expected_dim_0.assign({0, 0, 1, 1, 2, 2, 3, 3, 3});
+        expected_dim_1.assign({0, 2, 0, 2, 0, 2, 0, 1, 2});
+        check_delete("Delete range on row, coords on column");
+    }
+    SECTION("Delete coords on row, range on column") {
+        expected_result_num = 8;
+        delete_coords.assign({{{1, 3}, false}, {{0, 1}, true}});
+        expected_data.assign({1, 2, 3, 6, 7, 8, 9, 12});
+        expected_dim_0.assign({0, 0, 0, 1, 2, 2, 2, 3});
+        expected_dim_1.assign({0, 1, 2, 2, 0, 1, 2, 2});
+        check_delete("Delete coords on row, range on column");
+    }
+    SECTION("Delete coords on row, coords on column") {
+        expected_result_num = 6;
+        delete_coords.assign({{{3, 0, 2}, false}, {{0, 2}, false}});
+        expected_data.assign({2, 4, 5, 6, 8, 11});
+        expected_dim_0.assign({0, 1, 1, 1, 2, 3});
+        expected_dim_1.assign({1, 0, 1, 2, 1, 1});
+        check_delete("Delete coords on row, coords on column");
+    }
 }
 
-TEST_CASE("SOMASparseNDArray: delete cells out-of-bounds errors", "[SOMASparseNDArray][delete]") {
+TEST_CASE("SOMASparseNDArray: check delete cell exceptions", "[SOMASparseNDArray][delete]") {
     // Create a TileDB sparse array with 3 integer dimensions.
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://test-query-condition-sparse";
@@ -639,51 +720,66 @@ TEST_CASE("SOMASparseNDArray: delete cells out-of-bounds errors", "[SOMASparseND
     {
         INFO("Check throws: no coordinates.");
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
         INFO("Check throws: full range less than current domain (dim=0).");
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{-10, -1}, true}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: full range less than current domain (dim=1).");
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{}, false}, {{-10, -1}, true}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: range starts at max value + 1 (dim=0).");
         auto shape = sparse_array->shape();
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{4, 10}, true}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: range starts at max value + 1 (dim=1).");
         auto shape = sparse_array->shape();
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{5, 10}, true}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
-        INFO("Check throws: invalid range");
+        INFO("Check throws: invalid range (no values)");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{}, true}};
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+    }
+    {
+        INFO("Check throws: invalid range (not enough values)");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{1}, true}};
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+    }
+    {
+        INFO("Check throws: invalid range (too many values)");
+        std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{0, 1, 2}, true}};
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+    }
+    {
+        INFO("Check throws: invalid range (unordered)");
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{3, 1}, true}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
-        INFO("Check throws: invalid range that is also out of bounds");
+        INFO("Check throws: invalid range (unordered) that is also out of bounds");
         // Note: the invalid argument error should take precedent over the fact the range is out-of-bounds.
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{20, 11}, true}, {{}, false}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
         INFO("Check throws: coordinate out-of-bounds (dim=0) ");
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{{{1, 100, 2}, false}, {{1, 3}, false}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: coordinate out-of-bounds (dim=2)");
         std::vector<std::pair<std::vector<int64_t>, bool>> delete_coords{
             {{1, 1}, true}, {{}, false}, {{-1, 1, 4, 2, 11}, false}};
-        REQUIRE_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     sparse_array->close();
 }
