@@ -84,22 +84,6 @@ def open_handle_wrapper(
     """Determine whether the URI is an array or group, and open it."""
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    try:
-        if clib_type is None:
-            clib_type = clib.get_soma_type_metadata_value(uri, context.native_context, (0, timestamp_ms))
-        elif clib_type.lower() == "somaarray":
-            clib_type = clib.get_soma_type_metadata_value_from_array(uri, context.native_context, (0, timestamp_ms))
-        elif clib_type.lower() == "somagroup":
-            clib_type = clib.get_soma_type_metadata_value_from_group(uri, context.native_context, (0, timestamp_ms))
-    except SOMAError as soma_err:
-        # Note: SOMAError is only raised above if the reference isn't a TileDB object or
-        # it doesn't have SOMA datatype metadata.
-        raise DoesNotExistError(soma_err) from soma_err
-    except RuntimeError as tdbe:
-        if is_does_not_exist_error(tdbe):
-            raise DoesNotExistError(tdbe) from tdbe
-        raise SOMAError(tdbe) from tdbe
-
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
         "somapointclouddataframe": PointCloudDataFrameWrapper,
@@ -112,6 +96,25 @@ def open_handle_wrapper(
         "somascene": SceneWrapper,
         "somamultiscaleimage": MultiscaleImageWrapper,
     }
+
+    if clib_type is None or clib_type.lower() in ["somaarray", "somagroup"]:
+        try:
+            open_mode = _open_mode_to_clib_mode(mode)
+            handle = clib.SOMAObject.open(
+                uri=uri,
+                mode=open_mode,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+                clib_type=clib_type,
+            )
+        except Exception as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise
+        try:
+            return _type_to_class[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
+        except KeyError:
+            raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 
     try:
         return _type_to_class[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
@@ -149,17 +152,24 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         try:
             tdb_handle = cls._opener(uri, mode, context, timestamp_ms)
-            wrapper = cls(uri, mode, context, timestamp_ms, tdb_handle)
-            if mode == "w":
-                with cls._opener(uri, "r", context, timestamp_ms) as auxiliary_reader:
-                    wrapper._do_initial_reads(auxiliary_reader)
-            else:
-                wrapper._do_initial_reads(tdb_handle)
         except (RuntimeError, SOMAError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
+        return cls.open_from_handle(tdb_handle, uri=uri, mode=mode, context=context)
 
+    @classmethod
+    def open_from_handle(
+        cls, clib_handle: clib.SOMAObject, *, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+    ) -> Self:
+        timestamp = context._open_timestamp_ms(clib_handle.timestamp)
+        try:
+            wrapper = cls(uri, mode, context, timestamp, clib_handle)
+        except RuntimeError as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise
+        wrapper._do_initial_reads(clib_handle)
         obj_type = wrapper.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
         if obj_type is None:
             raise SOMAError(

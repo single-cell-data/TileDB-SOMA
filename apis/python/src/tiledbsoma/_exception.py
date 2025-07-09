@@ -21,9 +21,8 @@ class DoesNotExistError(SOMAError):
     """
 
 
-def is_does_not_exist_error(e: RuntimeError | SOMAError) -> bool:
-    """Given a RuntimeError or SOMAError, return true if it indicates the object
-    does not exist.
+def is_does_not_exist_error(e: Exception) -> bool:
+    """Given an Exception, return true if it indicates the object does not exist.
 
     Lifecycle: Maturing.
 
