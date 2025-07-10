@@ -1143,10 +1143,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     // Separate out the values already in the array schema from the
     // values not already in the array schema.
     auto enum_values_existing = _enumeration_values_view<std::string_view>(enmr);
-    std::unordered_set<std::string_view> existing_enums_set;
-    for (const auto& existing_enum_val : enum_values_existing) {
-        existing_enums_set.insert(existing_enum_val);
-    }
 
     std::optional<std::unordered_set<std::string_view>> opt_covered_values = _find_covered_enum_values(
         enum_values_in_write, index_schema, index_array);
@@ -1158,7 +1154,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         const auto& covered_values = opt_covered_values.value();
         for (size_t i = 0; i < enum_values_in_write.size(); i++) {
             const auto& enum_val = enum_values_in_write[i];
-            if (!existing_enums_set.contains(enum_val)) {
+            if (!enmr.index_of(enum_val).has_value()) {
                 if (covered_values.find(enum_val) != covered_values.end()) {
                     enum_values_to_add.push_back(enum_val);
                     total_size += enum_val.size();
@@ -1168,7 +1164,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     } else {
         for (size_t i = 0; i < enum_values_in_write.size(); i++) {
             const auto& enum_val = enum_values_in_write[i];
-            if (!existing_enums_set.contains(enum_val)) {
+            if (!enmr.index_of(enum_val).has_value()) {
                 enum_values_to_add.push_back(enum_val);
                 total_size += enum_val.size();
             }
@@ -1344,11 +1340,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // It is important that we use core's logic here, so that when we are
     // able to access its hashmap directly without constructing our own,
     // that transition will be seamless.
-    std::unordered_set<std::string_view> existing_enums_set;
-    for (const auto& enum_value_existing : enum_values_existing) {
-        auto sv = std::string_view(static_cast<char*>((char*)&enum_value_existing), sizeof(enum_value_existing));
-        existing_enums_set.insert(sv);
-    }
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
@@ -1362,7 +1353,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         for (size_t i = 0; i < n; i++) {
             const auto& enum_value_in_write = enum_values_in_write[i];
             const auto& sv = enum_values_in_write_as_sv[i];
-            if (!existing_enums_set.contains(sv)) {
+            if (!enmr.index_of(sv).has_value()) {
                 if (covered_values.find(sv) != covered_values.end()) {
                     enum_values_to_add.push_back(enum_value_in_write);
                 }
@@ -1373,7 +1364,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         for (size_t i = 0; i < n; i++) {
             const auto& enum_value_in_write = enum_values_in_write[i];
             const auto& sv = enum_values_in_write_as_sv[i];
-            if (!existing_enums_set.contains(sv)) {
+            if (!enmr.index_of(sv).has_value()) {
                 enum_values_to_add.push_back(enum_value_in_write);
             }
         }
