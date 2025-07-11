@@ -18,9 +18,9 @@ cd src/libtiledbsoma/build-lib
       -DDOWNLOAD_TILEDB_PREBUILT=ON \
       -DTILEDBSOMA_BUILD_CLI=OFF \
       -DTILEDBSOMA_ENABLE_TESTING=OFF \
+      -DTILEDB_REMOVE_DEPRECATIONS=ON \
       -DOVERRIDE_INSTALL_PREFIX=OFF \
       -DCMAKE_INSTALL_PREFIX=${cwd}/inst/tiledbsoma ..
-
 make
 
 make install-libtiledbsoma
