@@ -65,5 +65,5 @@ jobs:
         with:
           args: 'c("--no-manual", "--as-cran")'
           build_args: '"--no-manual"'
-          error-on: '"warning"'
+          error-on: '"error"'
           working-directory: 'apis/r/'
