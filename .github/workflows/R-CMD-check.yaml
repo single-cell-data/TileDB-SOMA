@@ -1,0 +1,69 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+
+on:
+  pull_request:
+    paths:
+      - '**'
+      - '!**.md'
+      - '!.github/**'
+      - '.github/workflows/R-CMD-check.yaml'
+      - '!.pre-commit-config.yaml'
+      - '!apis/python/**'
+      - '!docker/**'
+      - '!docs/**'
+      - '!LICENSE'
+  push:
+    branches:
+      - main
+      - 'release-*'
+  workflow_dispatch:
+
+name: R-CMD-check.yaml
+
+permissions: read-all
+
+env:
+  COVERAGE_FLAGS: "r"
+  COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  R_KEEP_PKG_SOURCE: yes
+  _R_CHECK_TESTS_NLINES_: 0
+  CATCHSEGV: "TRUE"
+  R_REMOTES_UPGRADE: "never"
+  TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'oldrel-1'}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show matrix OS
+        run: echo "matrix.config.os:" ${{ matrix.config.os }}
+
+      - uses: ./.github/actions/setup-r
+        with:
+            os: ${{ matrix.config.os }}}
+            r: ${{ matrix.config.r }}
+            http-user-agent: ${{ matrix.config.http-user-agent }}
+            extra-packages: any::rcmdcheck
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          build_args: '"--no-manual"'
+          error-on: '"error"'
+          working-directory: 'apis/r/'
