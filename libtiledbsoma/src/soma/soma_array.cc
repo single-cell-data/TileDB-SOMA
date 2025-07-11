@@ -1078,6 +1078,12 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
     return std::optional<int64_t>(max);
 }
 
+void SOMAArray::delete_cells_impl(const QueryCondition& delete_cond) {
+    Query query(*ctx_->tiledb_ctx(), *arr_, TILEDB_DELETE);
+    query.set_condition(delete_cond);
+    query.submit();
+}
+
 bool SOMAArray::_dims_are_int64() {
     for (const auto& column : columns_ | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
         if (column->type() != soma_column_datatype_t::SOMA_COLUMN_DIMENSION ||

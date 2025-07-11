@@ -12,7 +12,13 @@
  */
 
 #include "soma_sparse_ndarray.h"
+
+#include <stdexcept>
+#include <type_traits>
+
+#include "../utils/logger.h"
 #include "soma_coordinates.h"
+#include "tiledb_adapter/soma_query_condition.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -92,4 +98,84 @@ std::string_view SOMASparseNDArray::soma_data_type() {
 managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
+
+void SOMASparseNDArray::delete_cells(
+    const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>>& coords) {
+    if (coords.size() > ndim()) {
+        throw std::invalid_argument(
+            fmt::format(
+                "Coordinates for {} columns were provided, but this array only has {} columns. The number of coords "
+                "provided must be less than or equal to the number of columns.",
+                coords.size(),
+                ndim()));
+    }
+    const auto& array_shape = shape();
+
+    SOMACoordQueryCondition qc{*ctx_, dimension_names()};
+    for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
+        // const auto& coords_pair = coords[dim_index];
+        //const std::vector < i& coord_values = coords_pair->first;
+        //bool is_range = coords_pair->second;
+        const auto& coordinate_values = coords[dim_index];
+
+        std::visit(
+            [&](auto&& coord_vals) {
+                using T = std::decay_t<decltype(coord_vals)>;
+                if constexpr (std::is_same_v<T, std::pair<int64_t, int64_t>>) {
+                    if (coord_vals.second < 0 || coord_vals.first >= array_shape[dim_index]) {
+                        if (coord_vals.second < coord_vals.first) {
+                            // This is normally caught in SOMACoordQueryCondition check, but we need to add here
+                            // as well since it takes priority over non-overlapping range error.
+                            throw std::invalid_argument(
+                                fmt::format(
+                                    "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be "
+                                    "greater than or equal to the starting value.",
+                                    coord_vals.first,
+                                    coord_vals.second,
+                                    get_column(dim_index)->name()));
+                        }
+                        throw std::out_of_range(
+                            fmt::format(
+                                "Non-overlapping range [{}, {}] on column '{}' with length={}. Range must overlap "
+                                "[{}, {}].",
+                                coord_vals.first,
+                                coord_vals.second,
+                                get_column(dim_index)->name(),
+                                array_shape[dim_index],
+                                0,
+                                array_shape[dim_index] - 1));
+                    }
+                    qc.add_range<int64_t>(dim_index, coord_vals.first, coord_vals.second);
+                } else if constexpr (std::is_same_v<T, std::vector<int64_t>>) {
+                    if (coord_vals.empty()) {
+                        // TODO: raise error.
+                    }
+                    for (const auto& val : coord_vals) {
+                        if (val < 0 || val >= array_shape[dim_index]) {
+                            throw std::out_of_range(
+                                fmt::format(
+                                    "Out-of-bounds coordinate {} on column '{}' with length={}. Coordinates must be "
+                                    "inside "
+                                    "range "
+                                    "[{}, {}].",
+                                    val,
+                                    get_column(dim_index)->name(),
+                                    array_shape[dim_index],
+                                    0,
+                                    array_shape[dim_index] - 1));
+                        }
+                    }
+                    qc.add_points<int64_t>(dim_index, coord_vals);
+                }
+                // Otherwise monostate: do nothing.
+            },
+            coordinate_values);
+    }
+    auto soma_delete_cond = qc.get_soma_query_condition();
+    if (!soma_delete_cond.is_initialized()) {
+        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
+    }
+    delete_cells_impl(soma_delete_cond.query_condition());
+}
+
 }  // namespace tiledbsoma
