@@ -178,14 +178,26 @@ def register_h5ads(
     use_multiprocessing: bool = False,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
-    """Extends registration data from the baseline, already-written SOMA
-    experiment to include multiple H5AD input files. See ``from_h5ad`` and
-    ``from_anndata`` on-line help.
+    """Register H5AD files to extend an existing SOMA Experiment.
+
+    This function is the mandatory preparation step for appending one or more H5AD files to an existing SOMA Experiment.
+    It analyzes ``obs``/``var`` identifiers and schema elements across all inputs and the target ``Experiment`` to
+    compute a global ``ExperimentAmbientLabelMapping``. This "registration map" is required for appending new data via
+    :func:`from_anndata` or :func:`from_h5ad`. See ``from_h5ad`` and ``from_anndata`` for details.
+
+    Important Considerations for Append Mode
+    =========================================
+
+    Duplicates Handling
+    -------------------
 
     The registration process will raise an error if any `obs` IDs (from `obs_field_name`)
     are duplicated across the combination of all inputs and the target SOMA Experiment.
     You can set `allow_duplicate_obs_ids=True` to bypass this check if you are adding a
-    new Measurement to existing observations.
+    new ``Measurement`` to existing observations.
+
+    Multiprocessing Support
+    -----------------------
 
     If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
     to register each H5AD in parallel. In cases with many files, this can produce a performance
