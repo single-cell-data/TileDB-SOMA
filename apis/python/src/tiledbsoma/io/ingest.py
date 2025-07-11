@@ -188,6 +188,24 @@ def register_h5ads(
     Important Considerations for Append Mode
     =========================================
 
+    Supported Workflows
+    -------------------
+
+    This function and the subsequent append workflow are designed for two primary scenarios:
+
+    1.  Concatenating multiple datasets where ``obs`` and ``var`` schemas are consistent across all inputs and the
+        target ``Experiment``.
+    2.  Adding a new ``Measurement`` for observations that *already exist* in the ``Experiment``.
+
+    The append workflow does NOT automatically evolve the schema of the ``obs`` DataFrame. Specifically, it does not add
+    new columns to the existing ``obs`` DataFrame if they are present in the input AnnDatas but not in the target
+    ``Experiment``.
+
+    If your append operation requires adding new ``obs`` columns, you must first add them to the existing ``obs``
+    DataFrame manually using ``tiledbsoma.io.update_obs()`` *before* running the creating the registration map. Failing
+    to do so will result in a ``SOMAError`` during the data write step (e.g., ``"Column name not found:
+    [new_column_name]"``).
+
     Duplicates Handling
     -------------------
 
