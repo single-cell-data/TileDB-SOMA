@@ -1015,7 +1015,7 @@ class ManagedQuery {
                 shifted_indexes[i] = oi;
             } else {
                 shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi])
-                                         .value();  //enmr_map[enum_values_in_write[oi]];
+                                         .value();  
             }
         }
 
