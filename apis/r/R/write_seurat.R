@@ -324,6 +324,8 @@ write_soma.DimReduc <- function(
     )
   }
 
+  spdl::debug("gc reduction")
+  gc()
   return(invisible(soma_parent))
 }
 
@@ -404,6 +406,8 @@ write_soma.Graph <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
 
+  spdl::debug("gc graph")
+  gc()
   return(invisible(soma_parent))
 }
 
@@ -699,6 +703,8 @@ write_soma.Seurat <- function(
     )
   }
 
+  spdl::debug("gc seurat")
+  gc()
   return(experiment$uri)
 }
 
@@ -817,5 +823,7 @@ write_soma.SeuratCommand <- function(
     relative = relative
   )
 
+  spdl::debug("gc command")
+  gc()
   return(invisible(soma_parent))
 }

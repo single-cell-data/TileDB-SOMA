@@ -89,24 +89,45 @@ pad_matrix.matrix <- function(x, rowidx, colidx, shape, sparse = FALSE, ...) {
   }
   type <- typeof(x)
   type <- match.arg(arg = type, choices = c("integer", "double", "logical"))
-  mat <- if (isTRUE(sparse)) {
-    Matrix::sparseMatrix(
-      i = integer(),
-      j = integer(),
-      x = switch(EXPR = type,
-        logical = logical(),
-        numeric()
-      ),
+  # mat <- if (isTRUE(sparse)) {
+  #   Matrix::sparseMatrix(
+  #     i = integer(),
+  #     j = integer(),
+  #     x = switch(EXPR = type,
+  #       logical = logical(),
+  #       numeric()
+  #     ),
+  #     dims = shape,
+  #     repr = "T"
+  #   )
+  # } else {
+  #   matrix(
+  #     data = vector(mode = type, length = prod(shape)),
+  #     nrow = shape[1L],
+  #     ncol = shape[2L]
+  #   )
+  # }
+  if (isTRUE(sparse)) {
+    on.exit(gc(), add = TRUE, after = FALSE)
+    return(Matrix::sparseMatrix(
+      i = replicate(n = ncol(x = x), expr = rowidx),
+      j = as.vector(vapply(
+        X = colidx,
+        FUN = rep_len,
+        FUN.VALUE = integer(length = nrow(x = x)),
+        length.out = nrow(x = x),
+        USE.NAMES = FALSE
+      )),
+      x = as.vector(x),
       dims = shape,
       repr = "T"
-    )
-  } else {
-    matrix(
-      data = vector(mode = type, length = prod(shape)),
-      nrow = shape[1L],
-      ncol = shape[2L]
-    )
+    ))
   }
+  mat <- matrix(
+    data = vector(mode = type, length = prod(shape)),
+    nrow = shape[1L],
+    ncol = shape[2L]
+  )
   mat[rowidx, colidx] <- x
   return(mat)
 }
