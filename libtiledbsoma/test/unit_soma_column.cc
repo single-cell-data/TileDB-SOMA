@@ -511,7 +511,7 @@ TEST_CASE_METHOD(
 TEST_CASE("SOMAColumn: Enumeration handling in deserialize") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-enumeration-handling";
-    
+
     // Create array with enumeration
     auto vfs = VFS(*ctx->tiledb_ctx());
     if (vfs.is_dir(uri)) {
@@ -546,14 +546,14 @@ TEST_CASE("SOMAColumn: Enumeration handling in deserialize") {
     {
         Array array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), array, {});
-        
+
         // Should have 3 columns: 1 dimension + 2 attributes
         REQUIRE(columns.size() == 3);
-        
+
         // Check that enumerated attribute is properly handled
         bool found_enumerated = false;
         bool found_non_enumerated = false;
-        
+
         for (const auto& column : columns) {
             if (column->tiledb_attributes().has_value()) {
                 auto attributes = column->tiledb_attributes().value();
@@ -573,7 +573,7 @@ TEST_CASE("SOMAColumn: Enumeration handling in deserialize") {
                 }
             }
         }
-        
+
         REQUIRE(found_enumerated);
         REQUIRE(found_non_enumerated);
         array.close();
@@ -584,7 +584,7 @@ TEST_CASE("SOMAColumn: Enumeration handling in deserialize") {
 TEST_CASE("SOMAColumn: Enumeration handling without metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-enumeration-no-metadata";
-    
+
     // Create array with enumeration but no SOMA metadata
     auto vfs = VFS(*ctx->tiledb_ctx());
     if (vfs.is_dir(uri)) {
@@ -615,13 +615,13 @@ TEST_CASE("SOMAColumn: Enumeration handling without metadata") {
         Array array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         std::map<std::string, tiledbsoma::MetadataValue> empty_metadata;
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), array, empty_metadata);
-        
+
         // Should have 2 columns: 1 dimension + 1 attribute
         REQUIRE(columns.size() == 2);
-        
+
         // Check that enumerated attribute is still properly handled
         bool found_enumerated = false;
-        
+
         for (const auto& column : columns) {
             if (column->tiledb_attributes().has_value()) {
                 auto attributes = column->tiledb_attributes().value();
@@ -635,7 +635,7 @@ TEST_CASE("SOMAColumn: Enumeration handling without metadata") {
                 }
             }
         }
-        
+
         REQUIRE(found_enumerated);
         array.close();
     }
@@ -645,7 +645,7 @@ TEST_CASE("SOMAColumn: Enumeration handling without metadata") {
 TEST_CASE("SOMAColumn: String domain error handling") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-string-domain-errors";
-    
+
     // Create array with string dimension
     auto vfs = VFS(*ctx->tiledb_ctx());
     if (vfs.is_dir(uri)) {
@@ -669,7 +669,7 @@ TEST_CASE("SOMAColumn: String domain error handling") {
     {
         Array array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), array, {});
-        
+
         // Find the string dimension column
         std::shared_ptr<SOMAColumn> string_dim_column = nullptr;
         for (const auto& column : columns) {
@@ -683,14 +683,14 @@ TEST_CASE("SOMAColumn: String domain error handling") {
                 }
             }
         }
-        
+
         REQUIRE(string_dim_column != nullptr);
-        
+
         // Test core_domain_slot for strings (should return empty strings)
         auto core_domain = string_dim_column->core_domain_slot<std::string>();
         REQUIRE(core_domain.first == "");
         REQUIRE(core_domain.second == "");
-        
+
         array.close();
     }
 }
@@ -699,24 +699,16 @@ TEST_CASE("SOMAColumn: String domain error handling") {
 TEST_CASE("SOMAColumn: String current domain with SOMADataFrame") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-string-current-domain-sdf";
-    
+
     // Create SOMADataFrame with string dimension (this automatically sets up current domain)
-    std::vector<helper::DimInfo> dim_infos({
-        helper::DimInfo({
-            .name = "str_dim",
-            .tiledb_datatype = TILEDB_STRING_ASCII,
-            .dim_max = 0,  // Not used for string dims
-            .string_lo = "",
-            .string_hi = ""
-        })
-    });
-    
-    std::vector<helper::AttrInfo> attr_infos({
-        helper::AttrInfo({
-            .name = "value",
-            .tiledb_datatype = TILEDB_INT32
-        })
-    });
+    std::vector<helper::DimInfo> dim_infos({helper::DimInfo(
+        {.name = "str_dim",
+         .tiledb_datatype = TILEDB_STRING_ASCII,
+         .dim_max = 0,  // Not used for string dims
+         .string_lo = "",
+         .string_hi = ""})});
+
+    std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo({.name = "value", .tiledb_datatype = TILEDB_INT32})});
 
     auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
     SOMADataFrame::create(uri, schema, index_columns, ctx);
@@ -726,7 +718,7 @@ TEST_CASE("SOMAColumn: String current domain with SOMADataFrame") {
         auto sdf = SOMADataFrame::open(uri, OpenMode::soma_read, ctx);
         auto raw_array = tiledb::Array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), raw_array, {});
-        
+
         // Find the string dimension column
         std::shared_ptr<SOMAColumn> string_dim_column = nullptr;
         for (const auto& column : columns) {
@@ -740,16 +732,16 @@ TEST_CASE("SOMAColumn: String current domain with SOMADataFrame") {
                 }
             }
         }
-        
+
         REQUIRE(string_dim_column != nullptr);
-        
+
         // Test current domain functionality with SOMADataFrame
         if (sdf->has_current_domain()) {
             auto current_domain_pair = string_dim_column->core_current_domain_slot<std::string>(*ctx, raw_array);
             REQUIRE(current_domain_pair.first == "");
             REQUIRE(current_domain_pair.second == "");
         }
-        
+
         sdf->close();
         raw_array.close();
     }
@@ -759,24 +751,12 @@ TEST_CASE("SOMAColumn: String current domain with SOMADataFrame") {
 TEST_CASE("SOMAColumn: String current domain error path coverage") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-string-current-domain-errors";
-    
+
     // Create SOMADataFrame with string dimension
-    std::vector<helper::DimInfo> dim_infos({
-        helper::DimInfo({
-            .name = "str_dim",
-            .tiledb_datatype = TILEDB_STRING_ASCII,
-            .dim_max = 0,
-            .string_lo = "",
-            .string_hi = ""
-        })
-    });
-    
-    std::vector<helper::AttrInfo> attr_infos({
-        helper::AttrInfo({
-            .name = "value",
-            .tiledb_datatype = TILEDB_INT32
-        })
-    });
+    std::vector<helper::DimInfo> dim_infos({helper::DimInfo(
+        {.name = "str_dim", .tiledb_datatype = TILEDB_STRING_ASCII, .dim_max = 0, .string_lo = "", .string_hi = ""})});
+
+    std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo({.name = "value", .tiledb_datatype = TILEDB_INT32})});
 
     auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
     SOMADataFrame::create(uri, schema, index_columns, ctx);
@@ -786,7 +766,7 @@ TEST_CASE("SOMAColumn: String current domain error path coverage") {
         auto sdf = SOMADataFrame::open(uri, OpenMode::soma_read, ctx);
         auto raw_array = tiledb::Array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), raw_array, {});
-        
+
         // Find the string dimension column
         std::shared_ptr<SOMAColumn> string_dim_column = nullptr;
         for (const auto& column : columns) {
@@ -800,14 +780,14 @@ TEST_CASE("SOMAColumn: String current domain error path coverage") {
                 }
             }
         }
-        
+
         REQUIRE(string_dim_column != nullptr);
-        
+
         // Test basic current domain functionality
         auto current_domain_pair = string_dim_column->core_current_domain_slot<std::string>(*ctx, raw_array);
         REQUIRE(current_domain_pair.first == "");
         REQUIRE(current_domain_pair.second == "");
-        
+
         // Test with valid current domain if available
         if (sdf->has_current_domain()) {
             auto current_domain = sdf->get_current_domain_for_test();
@@ -818,7 +798,7 @@ TEST_CASE("SOMAColumn: String current domain error path coverage") {
                 REQUIRE(ndrect_domain_pair.second == "");
             }
         }
-        
+
         sdf->close();
         raw_array.close();
     }
@@ -828,7 +808,7 @@ TEST_CASE("SOMAColumn: String current domain error path coverage") {
 TEST_CASE("SOMAColumn: Multiple enumerated attributes") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-multiple-enumerations";
-    
+
     // Create array with multiple enumerated attributes
     auto vfs = VFS(*ctx->tiledb_ctx());
     if (vfs.is_dir(uri)) {
@@ -871,13 +851,13 @@ TEST_CASE("SOMAColumn: Multiple enumerated attributes") {
     {
         Array array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), array, {});
-        
+
         // Should have 4 columns: 1 dimension + 3 attributes
         REQUIRE(columns.size() == 4);
-        
+
         std::map<std::string, std::string> found_enumerations;
         bool found_non_enumerated = false;
-        
+
         for (const auto& column : columns) {
             if (column->tiledb_attributes().has_value()) {
                 auto attributes = column->tiledb_attributes().value();
@@ -891,12 +871,12 @@ TEST_CASE("SOMAColumn: Multiple enumerated attributes") {
                 }
             }
         }
-        
+
         REQUIRE(found_enumerations.size() == 2);
         REQUIRE(found_enumerations["color"] == "color_enum");
         REQUIRE(found_enumerations["size"] == "size_enum");
         REQUIRE(found_non_enumerated);
-        
+
         array.close();
     }
 }
@@ -905,24 +885,12 @@ TEST_CASE("SOMAColumn: Multiple enumerated attributes") {
 TEST_CASE("SOMAColumn: String current domain NDRectangle functionality") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-string-ndrectangle-func";
-    
+
     // Create SOMADataFrame with string dimension using working pattern
-    std::vector<helper::DimInfo> dim_infos({
-        helper::DimInfo({
-            .name = "str_dim",
-            .tiledb_datatype = TILEDB_STRING_ASCII,
-            .dim_max = 0,
-            .string_lo = "",
-            .string_hi = ""
-        })
-    });
-    
-    std::vector<helper::AttrInfo> attr_infos({
-        helper::AttrInfo({
-            .name = "value",
-            .tiledb_datatype = TILEDB_INT32
-        })
-    });
+    std::vector<helper::DimInfo> dim_infos({helper::DimInfo(
+        {.name = "str_dim", .tiledb_datatype = TILEDB_STRING_ASCII, .dim_max = 0, .string_lo = "", .string_hi = ""})});
+
+    std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo({.name = "value", .tiledb_datatype = TILEDB_INT32})});
 
     auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
     SOMADataFrame::create(uri, schema, index_columns, ctx);
@@ -932,7 +900,7 @@ TEST_CASE("SOMAColumn: String current domain NDRectangle functionality") {
         auto sdf = SOMADataFrame::open(uri, OpenMode::soma_read, ctx);
         auto raw_array = tiledb::Array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto columns = SOMAColumn::deserialize(*ctx->tiledb_ctx(), raw_array, {});
-        
+
         // Find the string dimension column
         std::shared_ptr<SOMAColumn> string_dim_column = nullptr;
         for (const auto& column : columns) {
@@ -946,27 +914,27 @@ TEST_CASE("SOMAColumn: String current domain NDRectangle functionality") {
                 }
             }
         }
-        
+
         REQUIRE(string_dim_column != nullptr);
-        
+
         // Test current domain functionality
         auto current_domain_pair = string_dim_column->core_current_domain_slot<std::string>(*ctx, raw_array);
         REQUIRE(current_domain_pair.first == "");
         REQUIRE(current_domain_pair.second == "");
-        
+
         // Test with NDRectangle if current domain exists
         if (sdf->has_current_domain()) {
             auto current_domain = sdf->get_current_domain_for_test();
             if (!current_domain.is_empty() && current_domain.type() == TILEDB_NDRECTANGLE) {
                 NDRectangle ndrect = current_domain.ndrectangle();
-                
+
                 // Test NDRectangle version of the method
                 auto ndrect_domain_pair = string_dim_column->core_current_domain_slot<std::string>(ndrect);
                 REQUIRE(ndrect_domain_pair.first == "");
                 REQUIRE(ndrect_domain_pair.second == "");
             }
         }
-        
+
         sdf->close();
         raw_array.close();
     }
