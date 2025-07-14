@@ -1014,8 +1014,7 @@ class ManagedQuery {
             if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
-                shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi])
-                                         .value();  
+                shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi]).value();
             }
         }
 
