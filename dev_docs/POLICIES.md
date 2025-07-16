@@ -1,0 +1,101 @@
+# TileDB-SOMA Development Policies
+
+## Version policy
+
+TileDB-SOMA uses a loose variation of [semantic versioning](https://semver.org/) to organize and govern API compatibility, deprecations and version numbers.
+
+TileDB-SOMA also uses lifecycle tags to indicate the maturity of an interface. All public API should have a lifecycle tag in docstrings. These tags are patterned after the RStudio lifecycle stage model. Tags are:
+
+- `experimental`: Under active development and may undergo significant and breaking changes.
+- `maturing`: Under active development but the interface and behavior have stabilized and are unlikely to change significantly but breaking changes are still possible.
+- `stable`: The interface is considered stable and breaking changes will be avoided where possible. Breaking changes that cannot be avoided will be accompanied by a major version bump.
+- `deprecated`: The API is no longer recommended for use and will be removed in a future release.
+
+If no tag is present, the state is `experimental`.
+
+> [!NOTE]
+> Prior to version 2.0, TileDB-SOMA had no explicit version policy. Versioning was most commonly `1.MAJOR.MINOR`,
+> where breaking changes would occur in `1.X` releases, and any other change could occur on `1.X.Y` versions.
+> Starting with `2.0.0`, versioning will be aligned with the SemVer `MAJOR.MINOR.PATCH` schema.
+
+A release number is comprised of `MAJOR.MINOR.PATCH`.
+
+For **non-experimental** interfaces and features:
+
+- API breaking changes should occur only in `major` releases. These changes will be documented in the Python HISTORY.md or R NEWS.md change logs, with guidance on what has changed, and how to migrate code to the new version. When possible, advance warning will be provided prior to breaking changes.
+- Deprecations may be introduced in `major` or `minor` releases. A deprecation will maintain existing functionality, but provide a warning about the upcoming API change, and any available guidance on migration. Deprecations must be documented in the appropriate change log.
+- Warnings of future compatibility changes, which are not "deprecate and remove", may be introduced in a `major` or `minor` release. Future compatibility warnings must be included in the appropriate change log.
+- A `patch` release may not introduce deprecations or future incompatibility change warnings.
+- Changes to the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec) will only occur on a `major` release.
+- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward- or forward-incompatible will only occur on a `major` release.
+
+## Warning period
+
+For breaking API changes and backward-incompatible updates to the TileDB-SOMA encoding specification, we will generally provide notice of at least two minor releases or 3 months (whichever is greater) before the change takes effect. In rare scenarios where we are unable to adhere to this policy, the discrepancies will be clearly highlighted in the changelog.
+
+Advance warning may not be provided for changes to:
+
+- experimental features in a `major` or `minor` release.
+- the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward compatible.
+- the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec).
+
+## Implementing Deprecation
+
+### Python deprecations
+
+Upon deprecation of Python functionality:
+
+- a `DeprecationWarning` must be issued by the deprecated functionality and a unit test provided to confirm warning issuance.
+- affected lifecyle tags must be set to "deprecated", typically in the docstring and other user-visible documentation.
+- docstrings must clearly indicate the scope of deprecation (e.g., function, a particular set of parameters, etc) and must include actionable guidance on migration.
+- HISTORY.md must clearly indicate the deprecation and any guidance on migration.
+
+For other breaking changes which are not "deprecate and remove":
+
+- a `FutureWarning` must be issued by the deprecated functionality and a unit test provided to confirm warning issuance.
+- docstrings must clearly indicate the scope of the breaking change (e.g, function, a particular set of parameters, etc) and must include actionable guidance on migration
+- HISTORY.md must clearly indicate the breaking change and any guidance on migration.
+
+Where entire classes, methods or functions are deprecated:
+
+- utilize `typing_extensions.deprecated` decorator to provide both static and runtime warnings.
+- update unit tests to ensure that the warning is issued (e.g., utilize `pytest.deprecated_call()`).
+- ensure that `stacklevel` is set so that the warning comes from the invoking (caller's) code.
+
+### R deprecations
+
+Upon deprecation of R functionality, methods, or functions:
+
+- a deprecation warning generated by `lifecycle::deprecate_warn()` must be issued by the deprecated functionality, and a unit test `lifecycle::expect_deprecated()` provided to confirm warning issuance.
+- if any parameters are being deprecated, they must be given a default value of `lifecycle::deprecated()`.
+- documentation must clearly indicate the scope of deprecation (e.g., function, a particular set of parameters, etc) and must include actionable guidance on migration.
+- `NEWS.md` must clearly indicate the deprecation and any guidance on migration.
+
+R functionality additionally enters a defunct stage, in which an error is thrown and the function or parameter stop working, beginning two `minor` releases or 3 months, whichever is greater, after the deprecation:
+
+- a defunct error generated by `lifecycle::deprecate_soft()` must be issued, and a unit test `lifecycle::expect_defunct()` provided to confirm error issuance.
+- documentation must clearly indicate the scope of defunct status (e.g, function, a particular set of parameters, etc) and must include actionable guidance on migration.
+- `NEWS.md` must clearly indicate the defunct status and any guidance on migration.
+
+At next major release after the defunct status, the affected R functionality must be removed.
+
+For other breaking changes which are not "deprecate and remove":
+
+- a warning must be issued by the deprecated functionality and a unit test provided to confirm warning issuance.
+- documentation must clearly indicate the scope of the breaking change (e.g, function, a particular set of parameters, etc) and must include actionable guidance on migration.
+- `NEWS.md` must clearly indicate the breaking change and any guidance on migration.
+- this warning must last for two `minor` releases following the breaking change, after which it may be reclassed as a `message()` or removed entirely.
+
+Where entire classes (S4, RC, and R6) are deprecated:
+
+- a deprecation warning generated by `.Deprecated()` must be issued by the deprecated class's constructor method `initialize()`, and a unit test provided to confirm warning issueance. The replacement class must be specified using the `msg = ` parameter to `.Deprecated()`.
+- documentation must clearly indicate the deprecation and must include actionable guidance on migration.
+- `NEWS.md` must clearly indicate the deprecation and any guidance on migration.
+
+R classes additionally enter a defunct stage, in which an error is thrown and the class can no longer be used, begining two `minor` releases or three months, which is greater, after the deprecation:
+
+- a defunct error generated by `.Defunct()` must be issued, and a unit test provided to confirm error issuance. The replacement class must be specified using the `msg = ` parameter to `.Deprecated()`.
+- documentation must clearly indicate the defunct status and must include actionable guidance on migration.
+- `NEWS.md` must clearly indicate the defunct status and any guidance on migration.
+
+At next major release after the defunct status, the affected R classes must be removed.
