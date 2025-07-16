@@ -1112,8 +1112,6 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_columns();
-
     /**
      * Convenience function for creating an ArraySchemaEvolution object
      * referencing this array's context pointer, along with its open-at
