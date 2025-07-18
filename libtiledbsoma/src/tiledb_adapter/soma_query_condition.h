@@ -19,10 +19,12 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
+#include <tiledb/tiledb.h>
 #include <tiledb/tiledb>
-#include <tiledb/tiledb_experimental>
+
 #include "../soma/soma_context.h"
 #include "../utils/common.h"
 #include "../utils/logger.h"
@@ -92,12 +94,27 @@ class SOMAQueryCondition {
      */
     template <typename T>
     static SOMAQueryCondition create_from_points(
-        const Context& ctx, const std::string& elem_name, const std::vector<T>& values) {
+        const Context& ctx, const std::string& elem_name, std::span<T> values) {
         if (values.empty()) {
             throw std::invalid_argument(
                 fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", elem_name));
         }
-        return QueryConditionExperimental::create<T>(ctx, elem_name, values, TILEDB_IN);
+        // Using C API because C++ API only supports std::vector, not std::span.
+        std::vector<uint64_t> offsets(values.size());
+        for (size_t index = 0; index < values.size(); ++index) {
+            offsets[index] = index * sizeof(T);
+        }
+        tiledb_query_condition_t* qc;
+        ctx.handle_error(tiledb_query_condition_alloc_set_membership(
+            ctx.ptr().get(),
+            elem_name.c_str(),
+            values.data(),
+            values.size() * sizeof(T),
+            offsets.data(),
+            offsets.size() * sizeof(uint64_t),
+            TILEDB_IN,
+            &qc));
+        return QueryCondition(ctx, qc);
     }
 
     /**
@@ -162,7 +179,7 @@ class SOMACoordQueryCondition {
      *
      */
     template <typename T>
-    SOMACoordQueryCondition& add_points(int64_t dim_index, const std::vector<T>& values) {
+    SOMACoordQueryCondition& add_points(int64_t dim_index, std::span<T> values) {
         return add_coordinate_query_condition(
             dim_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[dim_index], values));
     }

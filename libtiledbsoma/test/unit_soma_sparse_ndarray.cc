@@ -549,7 +549,7 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
 
     // Create variable for tests. Using sections will rerun the this test from beginning to end for each section.
-    std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{};
+    std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{};
     int64_t expected_result_num{0};
     std::vector<int32_t> expected_data{};
     std::vector<int64_t> expected_dim_0{};
@@ -608,12 +608,15 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete all using coordinates") {
         expected_result_num = 0;
-        delete_coords.assign({std::vector<int64_t>({0, 1, 2, 3}), std::vector<int64_t>({0, 1, 2})});
+        std::vector<int64_t> points1{0, 1, 2, 3};
+        std::vector<int64_t> points2{0, 1, 2};
+        delete_coords.assign({points1, points2});
         check_delete("Delete all using coordinates");
     }
     SECTION("Delete 1 row using range") {
         expected_result_num = 9;
-        delete_coords.assign({std::vector<int64_t>({1, 1})});
+        std::vector<int64_t> points1{1, 1};
+        delete_coords.assign({points1});
         expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
@@ -621,7 +624,8 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete 1 row using coordinate") {
         expected_result_num = 9;
-        delete_coords.assign({std::vector<int64_t>({1})});
+        std::vector<int64_t> points{1};
+        delete_coords.assign({points});
         expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
@@ -637,7 +641,8 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete 1 row using duplicate coordinates") {
         expected_result_num = 9;
-        delete_coords.assign({std::vector<int64_t>({1, 1, 1})});
+        std::vector<int64_t> points{1, 1, 1};
+        delete_coords.assign({points});
         expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
@@ -645,7 +650,8 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete 1 row using a coordinate") {
         expected_result_num = 9;
-        delete_coords.assign({std::vector<int64_t>({1})});
+        std::vector<int64_t> points{1};
+        delete_coords.assign({points});
         expected_data.assign({1, 2, 3, 7, 8, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 0, 2, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 1, 2, 0, 1, 2, 0, 1, 2});
@@ -653,7 +659,8 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete multiple rows with coordinates (unordered)") {
         expected_result_num = 3;
-        delete_coords.assign({{std::vector<int64_t>({3, 0, 1})}});
+        std::vector<int64_t> points{3, 0, 1};
+        delete_coords.assign({points});
         expected_data.assign({7, 8, 9});
         expected_dim_0.assign({2, 2, 2});
         expected_dim_1.assign({0, 1, 2});
@@ -669,7 +676,8 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete range on row, coords on column") {
         expected_result_num = 9;
-        delete_coords.assign({std::pair<int64_t, int64_t>({0, 2}), std::vector<int64_t>({1})});
+        std::vector<int64_t> points{1};
+        delete_coords.assign({std::pair<int64_t, int64_t>({0, 2}), points});
         expected_data.assign({1, 3, 4, 6, 7, 9, 10, 11, 12});
         expected_dim_0.assign({0, 0, 1, 1, 2, 2, 3, 3, 3});
         expected_dim_1.assign({0, 2, 0, 2, 0, 2, 0, 1, 2});
@@ -677,7 +685,8 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete coords on row, range on column") {
         expected_result_num = 8;
-        delete_coords.assign({std::vector<int64_t>({1, 3}), std::pair<int64_t, int64_t>({0, 1})});
+        std::vector<int64_t> points{1, 3};
+        delete_coords.assign({points, std::pair<int64_t, int64_t>({0, 1})});
         expected_data.assign({1, 2, 3, 6, 7, 8, 9, 12});
         expected_dim_0.assign({0, 0, 0, 1, 2, 2, 2, 3});
         expected_dim_1.assign({0, 1, 2, 2, 0, 1, 2, 2});
@@ -685,7 +694,9 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
     }
     SECTION("Delete coords on row, coords on column") {
         expected_result_num = 6;
-        delete_coords.assign({std::vector<int64_t>({3, 0, 2}), std::vector<int64_t>({0, 2})});
+        std::vector<int64_t> points1{3, 0, 2};
+        std::vector<int64_t> points2{0, 2};
+        delete_coords.assign({points1, points2});
         expected_data.assign({2, 4, 5, 6, 8, 11});
         expected_dim_0.assign({0, 1, 1, 1, 2, 3});
         expected_dim_1.assign({1, 0, 1, 2, 1, 1});
@@ -722,62 +733,65 @@ TEST_CASE("SOMASparseNDArray: check delete cell exceptions", "[SOMASparseNDArray
     auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
     {
         INFO("Check throws: no coordinates.");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{};
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
         INFO("Check throws: full range less than current domain (dim=0).");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::pair<int64_t, int64_t>({-10, -1})};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: full range less than current domain (dim=1).");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::monostate(), std::pair<int64_t, int64_t>(-10, -1)};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: range starts at max value + 1 (dim=0).");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::pair<int64_t, int64_t>(4, 10)};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: range starts at max value + 1 (dim=1).");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::pair<int64_t, int64_t>(5, 10)};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: invalid range (no values)");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::monostate()};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
         INFO("Check throws: invalid range (unordered)");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::pair<int64_t, int64_t>(3, 1)};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
         INFO("Check throws: invalid range (unordered) that is also out of bounds");
         // Note: the invalid argument error should take precedent over the fact the range is out-of-bounds.
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
             std::pair<int64_t, int64_t>(20, 11), std::monostate()};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
     }
     {
         INFO("Check throws: coordinate out-of-bounds (dim=0) ");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
-            std::vector<int64_t>({1, 100, 2}), std::vector<int64_t>({1, 3})};
+        std::vector<int64_t> points1{1, 100, 2};
+        std::vector<int64_t> points2{1, 3};
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
+            points1, points2};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     {
         INFO("Check throws: coordinate out-of-bounds (dim=2)");
-        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>> delete_coords{
-            std::pair<int64_t, int64_t>(1, 1), std::monostate(), std::vector<int64_t>({-1, 1, 4, 2, 11})};
+        std::vector<int64_t> points{-1, 1, 4, 2, 11};
+        std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>> delete_coords{
+            std::pair<int64_t, int64_t>(1, 1), std::monostate(), points};
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
     }
     sparse_array->close();

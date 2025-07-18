@@ -15,6 +15,7 @@
 #define SOMA_SPARSE_NDARRAY
 
 #include <filesystem>
+#include <span>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -145,7 +146,7 @@ class SOMASparseNDArray : public SOMAArray {
      * @param coords A per-dimension vector of coordinates - the intersection of which is the cells to delete.
      */
     void delete_cells(
-        const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>>& coords);
+        const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>>& coords);
 };
 }  // namespace tiledbsoma
 

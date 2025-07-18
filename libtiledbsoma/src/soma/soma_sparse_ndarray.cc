@@ -100,7 +100,7 @@ managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
 }
 
 void SOMASparseNDArray::delete_cells(
-    const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>>& coords) {
+    const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>>& coords) {
     if (coords.size() > ndim()) {
         throw std::invalid_argument(
             fmt::format(
@@ -146,7 +146,7 @@ void SOMASparseNDArray::delete_cells(
                                 array_shape[dim_index] - 1));
                     }
                     qc.add_range<int64_t>(dim_index, coord_vals.first, coord_vals.second);
-                } else if constexpr (std::is_same_v<T, std::vector<int64_t>>) {
+                } else if constexpr (std::is_same_v<T, std::span<int64_t>>) {
                     if (coord_vals.empty()) {
                         // TODO: raise error.
                     }
