@@ -25,6 +25,7 @@
 #include <tiledb/tiledb.h>
 #include <tiledb/tiledb>
 
+#include "../common/soma_column_selection.h"
 #include "../soma/soma_context.h"
 #include "../utils/common.h"
 #include "../utils/logger.h"
@@ -72,13 +73,12 @@ class SOMAQueryCondition {
     static SOMAQueryCondition create_from_range(
         const Context& ctx, const std::string& elem_name, T start_value, T stop_value) {
         if (stop_value < start_value) {
-            throw std::invalid_argument(
-                fmt::format(
-                    "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
-                    "than or equal to the starting value.",
-                    start_value,
-                    stop_value,
-                    elem_name));
+            throw std::invalid_argument(fmt::format(
+                "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
+                "than or equal to the starting value.",
+                start_value,
+                stop_value,
+                elem_name));
         }
         return SOMAQueryCondition(
             QueryCondition::create<T>(ctx, elem_name, start_value, TILEDB_GE)
@@ -182,6 +182,41 @@ class SOMACoordQueryCondition {
     SOMACoordQueryCondition& add_points(int64_t dim_index, std::span<T> values) {
         return add_coordinate_query_condition(
             dim_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[dim_index], values));
+    }
+
+    template <typename T>
+    SOMACoordQueryCondition& add_column_selection(
+        int64_t dim_index, SOMAColumnSelection<T> selection, std::optional<std::pair<T, T>> domain) {
+        std::visit(
+            [&](auto&& val) {
+                using S = std::decay_t<decltype(val)>;
+                if constexpr (std::is_same_v<S, SOMASliceSelection<T>>) {
+                    if (domain.has_value() && !val.has_overlap(domain.value())) {
+                        throw std::out_of_range(fmt::format(
+                            "Non-overlapping slice [{}, {}] on column '{}'. Slice must overlap the current "
+                            "column domain [{}, {}].",
+                            val.start,
+                            val.stop,
+                            dim_names_[dim_index],
+                            domain->first,
+                            domain->second));
+                    }
+                    add_range<T>(dim_index, val.start, val.stop);
+                } else if constexpr (std::is_same_v<S, SOMAPointSelection<T>>) {
+                    if (domain.has_value() && !val.is_subset(domain.value())) {
+                        throw std::out_of_range(fmt::format(
+                            "Out-of-bounds coordinates found on column '{}'. Coordinates must be "
+                            "inside column daomain [{}, {}].",
+                            dim_names_[dim_index],
+                            domain->first,
+                            domain->second));
+                    }
+                    add_points<T>(dim_index, val.points);
+                }
+                // Otherwise monostate: do nothing.
+            },
+            selection);
+        return *this;
     }
 
     /**

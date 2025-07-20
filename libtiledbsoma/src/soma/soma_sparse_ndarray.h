@@ -20,6 +20,7 @@
 #include <variant>
 #include <vector>
 
+#include "../common/soma_column_selection.h"
 #include "soma_array.h"
 
 namespace tiledbsoma {
@@ -138,15 +139,14 @@ class SOMASparseNDArray : public SOMAArray {
      * are set to be unconstrained. At least one constraint must be set.
      *
      * Acceptable ways to index a dimension:
-     * * A range (`std::pair<int64_t, int64_t>`) that selects all coordinates from the starting value to the ending values
-     *   including both end points. The range must overlap the valid domain of the dimension.
-     * * A list of points (`std::vector<int64_t>`) to select. All points must be contained inside the domain of the dimension.
+     * * A slice that selects all coordinates from the starting value to the ending values including both end points. The slice
+     *   must overlap the valid domain of the dimension.
+     * * A list of points to select. All points must be contained inside the domain of the dimension.
      * * A default placeholder (`std::monostate`) - all values are selected (i.e. unconstrained).
      *
      * @param coords A per-dimension vector of coordinates - the intersection of which is the cells to delete.
      */
-    void delete_cells(
-        const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::span<int64_t>>>& coords);
+    void delete_cells(const std::vector<SOMAColumnSelection<int64_t>>& coords);
 };
 }  // namespace tiledbsoma
 
