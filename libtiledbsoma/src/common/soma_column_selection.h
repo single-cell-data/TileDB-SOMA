@@ -94,6 +94,19 @@ struct SOMAPointSelection {
 template <typename T>
 using SOMAColumnSelection = std::variant<std::monostate, SOMASliceSelection<T>, SOMAPointSelection<T>>;
 
+using AnySOMAColumnSelection = std::variant<
+    SOMAColumnSelection<int8_t>,
+    SOMAColumnSelection<int16_t>,
+    SOMAColumnSelection<int32_t>,
+    SOMAColumnSelection<int64_t>,
+    SOMAColumnSelection<uint8_t>,
+    SOMAColumnSelection<uint16_t>,
+    SOMAColumnSelection<uint32_t>,
+    SOMAColumnSelection<uint64_t>,
+    SOMAColumnSelection<float>,
+    SOMAColumnSelection<double>,
+    SOMAColumnSelection<std::string>>;
+
 }  // namespace tiledbsoma
 
 #endif
