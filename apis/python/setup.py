@@ -344,7 +344,7 @@ setuptools.setup(
         "more-itertools",
         "numpy",
         "pandas",
-        "pyarrow",
+        "pyarrow<21.0",
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is also in .pre-commit-config.yaml
