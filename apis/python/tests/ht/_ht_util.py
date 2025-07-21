@@ -666,6 +666,7 @@ def arrays_equal(read: pa.ChunkedArray, expected: pa.ChunkedArray, *, equal_nan:
                 combine_chunks(read).dictionary_decode(),
                 combine_chunks(expected).dictionary_decode(),
             ),
+            min_count=0,
         )
         if not is_eq:
             note("arrays_equal: dictionary arrays not equal")
