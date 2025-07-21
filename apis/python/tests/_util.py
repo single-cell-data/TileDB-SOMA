@@ -247,4 +247,4 @@ def create_basic_object(soma_type, uri, **kwargs) -> tiledbsoma.SOMAObject:
         kwargs.setdefault("level_shape", (3, 64, 128))
         return tiledbsoma.MultiscaleImage.create(uri, **kwargs)
 
-    raise "Internal error: Unexepcted soma type '{soma_type}'."
+    raise f"Internal error: Unexepcted soma type '{soma_type}'."

@@ -58,7 +58,7 @@ INGEST_MODES = get_args(IngestMode)  # for run-time checks
 
 # Internal version of ``IngestMode`` that includes "update"; see ``IngestionParams``.
 _IngestMode = Union[IngestMode, Literal["update"]]
-_INGEST_MODES = INGEST_MODES + ("update",)
+_INGEST_MODES = (*INGEST_MODES, "update")
 
 
 OpenTimestamp = Union[int, datetime.datetime]

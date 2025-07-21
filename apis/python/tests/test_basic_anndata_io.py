@@ -124,14 +124,14 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
 
         # Check obs
         obs = exp.obs.read().concat().to_pandas()
-        assert sorted(obs.columns.to_list()) == sorted(orig.obs_keys() + ["soma_joinid", "obs_id"])
+        assert sorted(obs.columns.to_list()) == sorted([*orig.obs_keys(), "soma_joinid", "obs_id"])
         assert exp.obs.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
         else:
             assert sorted(obs["obs_id"]) == []
         # Convenience accessor
-        assert sorted(exp.obs.keys()) == sorted(list(orig.obs.keys()) + ["soma_joinid", "obs_id"])
+        assert sorted(exp.obs.keys()) == sorted([*list(orig.obs.keys()), "soma_joinid", "obs_id"])
 
         # Check ms
         assert exp.ms.metadata.get(metakey) == "SOMACollection"
@@ -139,14 +139,14 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
 
         # Check var
         var = exp.ms["RNA"].var.read().concat().to_pandas()
-        assert sorted(var.columns.to_list()) == sorted(orig.var_keys() + ["soma_joinid", "var_id"])
+        assert sorted(var.columns.to_list()) == sorted([*orig.var_keys(), "soma_joinid", "var_id"])
         assert exp.ms["RNA"].var.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(var["var_id"]) == sorted(list(orig.var_names))
         else:
             assert sorted(var["var_id"]) == []
         # Convenience accessor
-        assert sorted(exp.ms["RNA"].var.keys()) == sorted(list(orig.var.keys()) + ["soma_joinid", "var_id"])
+        assert sorted(exp.ms["RNA"].var.keys()) == sorted([*list(orig.var.keys()), "soma_joinid", "var_id"])
 
         # Check Xs
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
@@ -447,7 +447,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"])
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted([*list(conftest_pbmc_small.obsm.keys()), "X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
@@ -563,14 +563,14 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path, "w") as exp:
         add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"])
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted([*list(conftest_pbmc_small.obsm.keys()), "X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         # It's nonsense biologically to add this to varp, but as a fake-test unit-test case, we can
         # use varp to test adding to a not-yet-existing collection.
         add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(list(conftest_pbmc_small.varp.keys()) + ["X_pcb"])
+        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted([*list(conftest_pbmc_small.varp.keys()), "X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
@@ -870,15 +870,15 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         assert var_id_name in exp.ms["RNA"].var.keys()  # noqa: SIM118
 
         if indexify_obs:
-            expected_obs_keys = ["soma_joinid", obs_id_name] + adata.obs_keys()
+            expected_obs_keys = ["soma_joinid", obs_id_name, *adata.obs_keys()]
         else:
-            expected_obs_keys = ["soma_joinid"] + adata.obs_keys()
+            expected_obs_keys = ["soma_joinid", *adata.obs_keys()]
         assert list(exp.obs.keys()) == expected_obs_keys
 
         if indexify_var:
-            expected_var_keys = ["soma_joinid", var_id_name] + adata.var_keys()
+            expected_var_keys = ["soma_joinid", var_id_name, *adata.var_keys()]
         else:
-            expected_var_keys = ["soma_joinid"] + adata.var_keys()
+            expected_var_keys = ["soma_joinid", *adata.var_keys()]
         assert list(exp.ms["RNA"].var.keys()) == expected_var_keys
 
         # Implicitly, a check for no-throw

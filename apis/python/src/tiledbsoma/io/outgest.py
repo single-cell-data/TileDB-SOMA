@@ -522,7 +522,7 @@ def _extract_obsm_or_varm(
 
 
 def _extract_uns(
-    collection: Collection[Any],  # noqa: ANN401
+    collection: Collection[Any],
     uns_keys: Sequence[str] | None = None,
     level: int = 0,
 ) -> dict[str, FutureUnsDictNode]:
@@ -573,7 +573,7 @@ def _extract_uns(
 
 def _outgest_uns_1d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
     """Helper methods for _extract_uns."""
-    num_rows, num_cols = pdf.shape
+    _, num_cols = pdf.shape
     # An array like ["a", "b", "c"] had become a DataFrame like
     # soma_joinid value
     # 0           a
@@ -588,7 +588,7 @@ def _outgest_uns_1d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPN
 
 def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
     """Helper methods for _extract_uns."""
-    num_rows, num_cols = pdf.shape
+    _, num_cols = pdf.shape
     if num_cols < 2:
         raise SOMAError(f"Expected 2 columns in {uri_for_logging}; got {num_cols}")
     if SOMA_JOINID not in pdf:

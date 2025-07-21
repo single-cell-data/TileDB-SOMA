@@ -165,7 +165,7 @@ class CollectionBase(
         *,
         uri: str | None = None,
         platform_config: options.PlatformConfig | None = None,
-        **kwargs: Any,  # noqa: ANN401
+        **kwargs: Any,
     ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 

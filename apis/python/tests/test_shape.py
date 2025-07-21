@@ -883,7 +883,7 @@ def test_canned_nonstandard_dataframe_upgrade(tmp_path):
         assert sdf.maxdomain == ((0, 2147483646), (-2147483648, 2147481598), ("", ""))
 
     with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-        ok, msg = sdf.tiledbsoma_upgrade_soma_joinid_shape(1, check_only=True)
+        _ = sdf.tiledbsoma_upgrade_soma_joinid_shape(1, check_only=True)
 
         sdf.tiledbsoma_upgrade_soma_joinid_shape(100)
 

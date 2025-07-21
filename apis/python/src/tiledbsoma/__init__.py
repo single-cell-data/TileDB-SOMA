@@ -137,7 +137,7 @@ except ImportError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)
 
-# ruff: noqa: F401 (allow unused imports)
+
 from somacore import (
     AffineTransform,
     Axis,
@@ -154,7 +154,6 @@ from somacore.options import ResultOrder
 # _before_ imports, but, ruff will tell us that imports need to be
 # at the top of the file:
 #
-# ruff: noqa: E402
 from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
@@ -200,8 +199,9 @@ _verify_expected_tiledb_version()
 __version__ = get_implementation_version()
 
 __all__ = [
-    "AlreadyExistsError",
+    "SOMA_JOINID",
     "AffineTransform",
+    "AlreadyExistsError",
     "Axis",
     "AxisColumnNames",
     "AxisQuery",
@@ -213,35 +213,34 @@ __all__ = [
     "Experiment",
     "ExperimentAxisQuery",
     "GeometryDataFrame",
-    "get_implementation_version",
-    "get_implementation",
-    "get_libtiledbsoma_core_version",
-    "get_SOMA_version",
-    "get_storage_engine",
     "IdentityTransform",
     "IntIndexer",
     "Measurement",
     "MultiscaleImage",
     "NotCreateableError",
-    "open",
     "PointCloudDataFrame",
     "ResultOrder",
-    "ScaleTransform",
-    "Scene",
-    "show_package_versions",
-    "SOMA_JOINID",
     "SOMAError",
     "SOMATileDBContext",
+    "ScaleTransform",
+    "Scene",
     "SparseNDArray",
     "SparseNDArrayRead",
     "TileDBCreateOptions",
     "TileDBWriteOptions",
+    "UniformScaleTransform",
+    "get_SOMA_version",
+    "get_implementation",
+    "get_implementation_version",
+    "get_libtiledbsoma_core_version",
+    "get_storage_engine",
+    "open",
+    "show_package_versions",
     "tiledbsoma_build_index",
+    "tiledbsoma_stats_as_py",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
-    "tiledbsoma_stats_reset",
-    "tiledbsoma_stats_as_py",
     "tiledbsoma_stats_json",
-    "UniformScaleTransform",
+    "tiledbsoma_stats_reset",
 ]

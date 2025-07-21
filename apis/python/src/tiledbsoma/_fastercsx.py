@@ -30,14 +30,14 @@ class CompressedMatrix:
     """
 
     __slots__ = (
-        "indptr",
-        "indices",
+        "context",
         "data",
-        "shape",
         "format",
+        "indices",
+        "indptr",
         "is_sorted",
         "no_duplicates",
-        "context",
+        "shape",
     )
 
     def __init__(

@@ -2126,7 +2126,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], dom
 def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
 
-    schema, sdf, n_data = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"], io["domain"])
+    _, sdf, _ = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"], io["domain"])
     with soma.DataFrame.open(uri=sdf.uri) as sdf:
         assert list(sdf.index_column_names) == io["index_column_names"]
 

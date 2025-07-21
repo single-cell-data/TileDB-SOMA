@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import functools
+from typing import ClassVar
 
 from somacore import experiment, query
 
@@ -70,7 +71,7 @@ class Experiment(
     __slots__ = ()
     _wrapper_type = _tdb_handles.ExperimentWrapper
 
-    _subclass_constrained_soma_types = {
+    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
         "spatial": ("SOMACollection",),

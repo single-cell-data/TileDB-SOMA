@@ -71,11 +71,11 @@ class CachingReader:
 
         self._cache_block_size = cache_block_size
         self._max_cache_blocks = max(1, memory_budget // cache_block_size)
-        _n_blocks = (self._file_length + cache_block_size - 1) // cache_block_size
+        n_blocks = (self._file_length + cache_block_size - 1) // cache_block_size
 
         self._cache_lock = threading.Lock()
         self._cache: OrderedDict[int, pa.UInt8Array] = OrderedDict()
-        self._cache_stats: list[CacheStats] = [CacheStats(block_idx) for block_idx in range(_n_blocks)]
+        self._cache_stats: list[CacheStats] = [CacheStats(block_idx) for block_idx in range(n_blocks)]
 
     def _read_block(self, block_idx: int) -> pa.UInt8Array:
         nbytes = min(
@@ -199,7 +199,7 @@ class CachingReader:
         elif whence == io.SEEK_END:
             new_pos = self._file_length + offset
         else:
-            raise ValueError("Invalid whence value {whence})")
+            raise ValueError(f"Invalid whence value {whence})")
 
         if new_pos < 0:
             raise OSError("seek() returned invalid position")

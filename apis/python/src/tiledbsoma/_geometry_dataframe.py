@@ -415,7 +415,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                 )
 
         # Process the user provided region.
-        coords, data_region, inv_transform = process_spatial_df_region(
+        coords, _, inv_transform = process_spatial_df_region(
             region,
             region_transform,
             {},  # Move index value_filters into this dict to optimize queries

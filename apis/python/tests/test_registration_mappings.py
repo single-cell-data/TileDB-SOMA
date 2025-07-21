@@ -1486,7 +1486,7 @@ def test_registration_lists_and_tuples(tmp_path):
     ],
 )
 def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, version_and_shaped):
-    version, shaped = version_and_shaped
+    version, _ = version_and_shaped
 
     import os
     import shutil

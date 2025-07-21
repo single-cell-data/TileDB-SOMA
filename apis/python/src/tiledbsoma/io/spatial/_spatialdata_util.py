@@ -134,7 +134,7 @@ def to_spatialdata_points(
     """
     # Get the axis names for the spatial data shapes.
     orig_axis_names = points.coordinate_space.axis_names
-    new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
+    _, points_dim_map = _convert_axis_names(orig_axis_names)
 
     # Create the SpatialData transform from the points to the Scene (inverse of the
     # transform SOMA stores).
@@ -190,7 +190,7 @@ def to_spatialdata_shapes(
 
     # Get the axis names for the spatial data shapes.
     orig_axis_names = points.coordinate_space.axis_names
-    new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
+    _, points_dim_map = _convert_axis_names(orig_axis_names)
 
     # Create the SpatialData transform from the points to the Scene (inverse of the
     # transform SOMA stores).
@@ -354,9 +354,12 @@ def to_spatialdata_multiscale_image(
             # First level transform is always the identity, so just directly use
             # inv_transform. For remaining transformations,
             # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
-            spatial_data_transformations = (sd_inv_transform,) + tuple(
-                sd.transformations.Sequence([scale_transform, sd_inv_transform])
-                for scale_transform in sd_scale_transforms
+            spatial_data_transformations = (
+                sd_inv_transform,
+                *tuple(
+                    sd.transformations.Sequence([scale_transform, sd_inv_transform])
+                    for scale_transform in sd_scale_transforms
+                ),
             )
 
     # Create a sequence of resolution level.
