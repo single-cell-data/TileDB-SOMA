@@ -4,7 +4,7 @@
 
 """Implementation of a SOMA Measurement."""
 
-from typing import Union
+from typing import ClassVar, Union
 
 from somacore import measurement
 
@@ -71,7 +71,7 @@ class Measurement(
     __slots__ = ()
     _wrapper_type = _tdb_handles.MeasurementWrapper
 
-    _subclass_constrained_soma_types = {
+    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "var": ("SOMADataFrame",),
         "X": ("SOMACollection",),
         "obsm": ("SOMACollection",),

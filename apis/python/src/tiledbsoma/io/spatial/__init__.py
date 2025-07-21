@@ -11,4 +11,4 @@ may be dropped.
 from .ingest import VisiumPaths, from_visium, register_visium_datasets
 from .outgest import to_spatialdata
 
-__all__ = ["to_spatialdata", "from_visium", "register_visium_datasets", "VisiumPaths"]
+__all__ = ["VisiumPaths", "from_visium", "register_visium_datasets", "to_spatialdata"]

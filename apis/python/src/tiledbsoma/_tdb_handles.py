@@ -40,7 +40,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
-AxisDomain = Union[None, tuple[Any, Any], list[Any]]
+AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
 
 RawHandle = Union[
@@ -84,7 +84,7 @@ def open_handle_wrapper(
     """Determine whether the URI is an array or group, and open it."""
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    _type_to_class = {
+    type_to_class_ = {
         "somadataframe": DataFrameWrapper,
         "somapointclouddataframe": PointCloudDataFrameWrapper,
         "somageometrydataframe": GeometryDataFrameWrapper,
@@ -112,12 +112,12 @@ def open_handle_wrapper(
                 raise DoesNotExistError(tdbe) from tdbe
             raise
         try:
-            return _type_to_class[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
+            return type_to_class_[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
         except KeyError:
             raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 
     try:
-        return _type_to_class[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
+        return type_to_class_[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
     except KeyError:
         raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 
@@ -220,7 +220,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         This is passed a raw TileDB object opened in read mode, since writers
         will need to retrieve data from the backing store on setup.
         """
-        # non–attrs-managed field
+        # non-attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
@@ -398,7 +398,7 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         This is passed a raw TileDB object opened in read mode, since writers
         will need to retrieve data from the backing store on setup.
         """
-        # non–attrs-managed field
+        # non-attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property

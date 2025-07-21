@@ -156,7 +156,7 @@ def main():
     print(f"Command to be run: {args.command}", file=stderr)
     # Run the command, using `time -v` to get detailed memory and time"""
     p = subprocess.Popen(
-        [args.gtime_cmd, "--format", GNU_TIME_FORMAT] + args.command.split(" "),
+        [args.gtime_cmd, "--format", GNU_TIME_FORMAT, *args.command.split(" ")],
         stdout=PIPE,
         stderr=PIPE,
     )

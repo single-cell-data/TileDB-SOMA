@@ -22,7 +22,7 @@ from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_contex
 )
 def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.array):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
-    with pytest.raises(SOMAError, match="There are duplicate keys."):
+    with pytest.raises(SOMAError, match=r"There are duplicate keys."):
         IntIndexer(keys, context=context)
 
     pd_index = pd.Index(keys)

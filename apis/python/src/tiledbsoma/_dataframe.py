@@ -44,7 +44,7 @@ from .options._tiledb_create_write_options import (
 )
 
 _UNBATCHED = options.BatchSize()
-AxisDomain = Union[None, tuple[Any, Any], list[Any]]
+AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
 
 
@@ -911,7 +911,7 @@ def _fill_out_slot_soma_domain(
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,  # noqa: ANN401
-) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:  # noqa: ANN401
+) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:
     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
@@ -1110,10 +1110,10 @@ def _find_extent_for_domain(
 # extent exceeds max value representable by domain type. Reduce domain max
 # by 1 tile extent to allow for expansion.
 def _revise_domain_for_extent(
-    domain: tuple[Any, Any],  # noqa: ANN401
+    domain: tuple[Any, Any],
     extent: Any,  # noqa: ANN401
     saturated_range: bool | tuple[bool, ...],
-) -> tuple[Any, Any]:  # noqa: ANN401
+) -> tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
         domain = cast("tuple[Any, Any]", (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1])))
 

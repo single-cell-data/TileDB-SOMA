@@ -39,7 +39,7 @@ See also https://github.com/single-cell-data/TileDB-SOMA/pull/3415.
 # JSON string or `null`. SOMA DataFrames are always given a `soma_joinid` index, but
 # we want to be able to outgest a `pd.DataFrame` that is identical to the one we
 # ingested, so we store an "original index name" in the DataFrame's metadata.
-OriginalIndexMetadata = Union[None, str]
+OriginalIndexMetadata = Union[str, None]
 
 
 def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
@@ -48,7 +48,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
     This is easier on the eyes, easier to convert from/to JSON for distributed logging,
     and easier to do del-key on.
     """
-    _EQUIVALENCES = {
+    EQUIVALENCES_ = {
         "large_string": "string",
         "large_binary": "binary",
     }
@@ -62,7 +62,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
         if pa.types.is_dictionary(arrow_type):
             arrow_type = arrow_type.index_type
         str_type = str(arrow_type)
-        return _EQUIVALENCES.get(str_type, str_type)
+        return EQUIVALENCES_.get(str_type, str_type)
 
     # Stringify types skipping the soma_joinid field (it is specific to SOMA data
     # and does not exist in AnnData/H5AD).

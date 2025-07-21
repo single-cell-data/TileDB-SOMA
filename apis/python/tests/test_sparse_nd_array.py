@@ -211,9 +211,9 @@ def tensors_are_same_value(a: AnySparseTensor, b: AnySparseTensor) -> bool:
         return _check_coo_values(a.to_numpy(), b.to_numpy())
 
     if isinstance(a, (pa.SparseCSRMatrix, pa.SparseCSCMatrix)):
-        _a = pa.SparseCOOTensor.from_scipy(a.to_scipy().tocoo())
-        _b = pa.SparseCOOTensor.from_scipy(b.to_scipy().tocoo())
-        return _check_coo_values(_a.to_numpy(), _b.to_numpy())
+        a_ = pa.SparseCOOTensor.from_scipy(a.to_scipy().tocoo())
+        b_ = pa.SparseCOOTensor.from_scipy(b.to_scipy().tocoo())
+        return _check_coo_values(a_.to_numpy(), b_.to_numpy())
 
     return False
 
@@ -1408,8 +1408,8 @@ def test_blockwise_scipy_iter(
                 c = slice(c.start, c.stop + 1)
             if c is None:
                 c = slice(None)
-            _coord = tuple([slice(None)] * (i) + [c])
-            csr = operator.getitem(csr, _coord)
+            coord_ = tuple([slice(None)] * (i) + [c])
+            csr = operator.getitem(csr, coord_)
         return csr.tocoo()
 
     # these are not pytest params to speed up tests (by reducing the number of SOMA arrays created)

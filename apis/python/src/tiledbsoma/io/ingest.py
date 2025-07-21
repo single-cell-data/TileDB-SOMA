@@ -736,7 +736,7 @@ def _from_anndata(
                             for key in ad_val:
                                 val = ad_val[key]
                                 num_cols = val.shape[1]
-                                _axis_1_mapping = axis_1_mapping if axis_1_mapping else AxisIDMapping.identity(num_cols)
+                                axis_1_mapping_ = axis_1_mapping if axis_1_mapping else AxisIDMapping.identity(num_cols)
                                 with _create_from_matrix(
                                     # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                     # consider a use-dense flag at the tiledbsoma.io API
@@ -745,7 +745,7 @@ def _from_anndata(
                                     _util.uri_joinpath(ad_val_uri, _util.sanitize_key(key)),
                                     conversions.to_tiledb_supported_array_type(key, val),
                                     axis_0_mapping=axis_0_mapping,
-                                    axis_1_mapping=_axis_1_mapping,
+                                    axis_1_mapping=axis_1_mapping_,
                                     **ingest_platform_ctx,
                                 ) as arr:
                                     _maybe_set(
@@ -1335,7 +1335,7 @@ def _write_arrow_table(
     if arrow_table.nbytes > cap:
         n = len(arrow_table)
         if n < 2:
-            raise SOMAError("single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}")
+            raise SOMAError(f"single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}")
         m = n // 2
         _write_arrow_table(arrow_table[:m], handle, tiledb_create_options, tiledb_write_options)
         _write_arrow_table(arrow_table[m:], handle, tiledb_create_options, tiledb_write_options)
@@ -2070,7 +2070,7 @@ def _write_matrix_to_denseNDArray(
     #   it controls how much is read into client RAM from the backing store on each chunk.
     # * The remote_cap_nbytes is an older parameter.
     # * Compute chunk sizes for both and take the minimum.
-    chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
+    chunk_size_using_nnz = math.ceil(tiledb_create_options.goal_chunk_nnz / ncol)
 
     try:
         # not scipy csr/csc
@@ -2243,7 +2243,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
         hi = min(extent, lo + bsz)
         coords[axis] = slice(lo, hi)
         total_nnz += matrix[tuple(coords)].nnz
-    return int(math.ceil(total_nnz / extent))
+    return math.ceil(total_nnz / extent)
 
 
 def _find_sparse_chunk_size_backed(
@@ -2337,7 +2337,7 @@ def _find_sparse_chunk_size_backed(
     # client RAM from the backing store on each chunk. We also subdivide chunks by
     # remote_cap_nbytes, if necessary, within _write_arrow_table in order to accommodate remote
     # object stores, which is a different ceiling.
-    chunk_size = max(1, int(math.floor(goal_chunk_nnz / mean_nnz)))
+    chunk_size = max(1, math.floor(goal_chunk_nnz / mean_nnz))
     if chunk_size > extent:
         chunk_size = extent
 
@@ -2490,7 +2490,7 @@ def _write_matrix_to_sparseNDArray(
             #   with 2 elements each
             # * Result: we divide by the shape, slotted by the non-stride axis
             non_stride_axis = 1 - stride_axis
-            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
+            chunk_size = math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis])
         else:
             chunk_size = _find_sparse_chunk_size(  # type: ignore[unreachable]
                 matrix,
@@ -2554,7 +2554,7 @@ def _write_matrix_to_sparseNDArray(
                 )
 
             ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
-            chunk_size = int(math.floor(0.9 * (i2 - i) / ratio))
+            chunk_size = math.floor(0.9 * (i2 - i) / ratio)
             if chunk_size < 1:
                 raise SOMAError(
                     f"Unable to accommodate a single row at goal_chunk_nnz {goal_chunk_nnz}. "

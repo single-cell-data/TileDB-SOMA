@@ -390,7 +390,7 @@ def _treewalk(
     uri: str,
     *,
     node_name: str | None = None,
-    leaf_visitor: Callable[..., dict[str, Any]],  # noqa: ANN401
+    leaf_visitor: Callable[..., dict[str, Any]],
     **kwargs: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
     """Apply visitor function to the ``Experiment`` elements.
@@ -777,7 +777,7 @@ def _leaf_visitor_resize(
             new_soma_joinid_shape = _get_new_var_shape(nvars=nvars, ms_name=ms_name)
 
         else:
-            raise tiledbsoma.SOMAError("experiment resize: internal error: dataframe node name '{node_name}'")
+            raise tiledbsoma.SOMAError(f"experiment resize: internal error: dataframe node name '{node_name}'")
 
         _print_leaf_node_banner(
             uri=item.uri,

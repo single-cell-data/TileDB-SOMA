@@ -406,14 +406,14 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         """
         shape = cast("tuple[int, int]", tuple(self.shape))
         assert len(shape) == 2
-        _sp_shape: list[int] = list(shape)
+        sp_shape_: list[int] = list(shape)
 
         if self.major_axis not in self.reindex_disable_on_axis:
-            _sp_shape[self.major_axis] = len(major_coords)
+            sp_shape_[self.major_axis] = len(major_coords)
         if self.minor_axis not in self.reindex_disable_on_axis:
-            _sp_shape[self.minor_axis] = len(minor_coords)
+            sp_shape_[self.minor_axis] = len(minor_coords)
 
-        return cast("tuple[int, int]", tuple(_sp_shape))
+        return cast("tuple[int, int]", tuple(sp_shape_))
 
     def _coo_reader(self, _pool: ThreadPoolExecutor | None = None) -> Iterator[tuple[sparse.coo_matrix, IndicesType]]:
         """Private.
@@ -579,8 +579,8 @@ def _coords_strider(coords: options.SparseNDCoord, length: int, stride: int) -> 
 
     if isinstance(coords, slice):
         _util.validate_slice(coords)  # NB: this enforces step == 1, assumed below
-        start, stop, _step = coords.indices(length - 1)
-        assert _step == 1
+        start, stop, step = coords.indices(length - 1)
+        assert step == 1
         yield from (np.arange(i, min(i + stride, stop + 1), dtype=np.int64) for i in range(start, stop + 1, stride))
 
     else:

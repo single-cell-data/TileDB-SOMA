@@ -148,7 +148,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     raise ValueError(f"Coordinate system axis '{column_name}' must be a column in the schema.") from ke
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
-        index_column_names = axis_names + (SOMA_JOINID,)
+        index_column_names = (*axis_names, SOMA_JOINID)
 
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
@@ -399,7 +399,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 )
 
         # Process the user provided region.
-        coords, data_region, inv_transform = process_spatial_df_region(
+        coords, _, inv_transform = process_spatial_df_region(
             region,
             region_transform,
             {},  # Move index value_filters into this dict to optimize queries

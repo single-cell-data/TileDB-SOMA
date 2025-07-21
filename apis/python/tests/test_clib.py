@@ -79,7 +79,7 @@ def test_get_soma_type_metadata_value_from_array_error(tmp_path_factory):
         coll.close()
 
     ctx = tiledbsoma.SOMATileDBContext()
-    with pytest.raises(Exception, match=".* Array does not exist."):
+    with pytest.raises(Exception, match=r".* Array does not exist."):
         somaclib.get_soma_type_metadata_value_from_array(uri, ctx.native_context, None)
 
 
@@ -89,5 +89,5 @@ def test_get_soma_type_metadata_value_from_group_error(tmp_path_factory):
         df.close()
 
     ctx = tiledbsoma.SOMATileDBContext()
-    with pytest.raises(Exception, match=".* Group does not exist."):
+    with pytest.raises(Exception, match=r".* Group does not exist."):
         somaclib.get_soma_type_metadata_value_from_group(uri, ctx.native_context, None)

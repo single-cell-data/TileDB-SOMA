@@ -63,7 +63,7 @@ def test_basic_readback(conftest_context, uri_and_info):
     util_pbmc3k_unprocessed_versions(),
 )
 def test_dataframe_queries(conftest_context, uri_and_info):
-    uri, info = uri_and_info
+    uri, _ = uri_and_info
     with tiledbsoma.Experiment.open(uri, context=conftest_context) as exp:
         qobs = (
             exp.obs.read(
@@ -92,7 +92,7 @@ def test_dataframe_queries(conftest_context, uri_and_info):
     util_pbmc3k_unprocessed_versions(),
 )
 def test_experiment_queries(conftest_context, uri_and_info):
-    uri, info = uri_and_info
+    uri, _ = uri_and_info
     with tiledbsoma.Experiment.open(uri, context=conftest_context) as exp:
         query = tiledbsoma.ExperimentAxisQuery(
             experiment=exp,
@@ -140,7 +140,7 @@ def test_upgrade_experiment_shapes(conftest_context, uri_and_info):
     util_pbmc3k_unprocessed_versions(),
 )
 def test_resize_experiment_too_small(conftest_context, uri_and_info):
-    uri, info = uri_and_info
+    uri, _ = uri_and_info
 
     handle = io.StringIO()
     ok = tiledbsoma.io.resize_experiment(

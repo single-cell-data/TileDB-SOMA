@@ -533,7 +533,7 @@ def split_arrow_array(arr: pa.Array | pa.ChunkedArray, splits: list[int]) -> pa.
     assert np.array_equal(np.unique(splits), splits), "splits not unique and sorted"
     assert len(splits) == 0 or (splits[0] >= 0 and splits[-1] < len(arr)), "splits out of range"
 
-    split_points = [0] + splits + [len(arr)]
+    split_points = [0, *splits, len(arr)]
     arr_splits = [arr[st:sp] for st, sp in pairwise(split_points)]
     return pa.chunked_array(arr_splits, type=arr.type)
 

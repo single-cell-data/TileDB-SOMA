@@ -14,7 +14,7 @@ from typing_extensions import Self
 from . import _tdb_handles
 
 # This package's pybind11 code
-from . import pytiledbsoma as clib  # noqa: E402
+from . import pytiledbsoma as clib
 from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
@@ -44,7 +44,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
     def __init__(
         self,
-        handle: _tdb_handles.SOMAGroupWrapper[Any],  # noqa: ANN401
+        handle: _tdb_handles.SOMAGroupWrapper[Any],
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(handle, **kwargs)

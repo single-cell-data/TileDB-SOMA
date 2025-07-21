@@ -48,7 +48,7 @@ def _unique_ptr(indptr: npt.NDArray) -> npt.NDArray:
 
 def _str_to_int(value: str) -> int:
     if not value.isdigit():
-        raise ValueError("{value} is not an integer.")
+        raise ValueError(f"{value} is not an integer.")
     return int(value)
 
 

@@ -349,7 +349,7 @@ def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
 
 
 def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json: bool = True) -> _JSONFilterList:
-    _convert_filter = {
+    convert_filter_ = {
         "GzipFilter": "GZIP",
         "ZstdFilter": "ZSTD",
         "LZ4Filter": "LZ4",
@@ -370,7 +370,7 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
         "NoOpFilter": "NOOP",
     }
 
-    _convert_option = {
+    convert_option_ = {
         "GZIP": {"level": "COMPRESSION_LEVEL"},
         "ZSTD": {"level": "COMPRESSION_LEVEL"},
         "LZ4": {"level": "COMPRESSION_LEVEL"},
@@ -407,15 +407,15 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
 
     for info in filters:
         if len(info) == 1:
-            filter = _convert_filter[cast("str", info["_type"])]
+            filter = convert_filter_[cast("str", info["_type"])]
         else:
             filter = {}
             for option_name, option_value in info.items():
-                filter_name = _convert_filter[cast("str", info["_type"])]
+                filter_name = convert_filter_[cast("str", info["_type"])]
                 if option_name == "_type":
                     filter["name"] = filter_name
                 else:
-                    filter[_convert_option[filter_name][option_name]] = cast("Union[float, int]", option_value)
+                    filter[convert_option_[filter_name][option_name]] = cast("Union[float, int]", option_value)
         filter_list.append(filter)
     return json.dumps(filter_list) if return_json else filter_list
 

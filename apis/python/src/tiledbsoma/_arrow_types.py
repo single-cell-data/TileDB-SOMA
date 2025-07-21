@@ -141,7 +141,7 @@ def tiledb_type_from_arrow_type(t: pa.DataType, is_indexed_column: bool = False)
         return np.dtype(arrow_type)
 
     if not pa.types.is_primitive(t):
-        raise TypeError(f"Type {str(t)} - unsupported type")
+        raise TypeError(f"Type {t!s} - unsupported type")
     if pa.types.is_timestamp(t):
         raise TypeError("TimeStampType - unsupported type (timezone not supported)")
     if pa.types.is_time32(t):

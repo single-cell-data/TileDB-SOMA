@@ -104,7 +104,7 @@ def test_metadata(soma_object):
     with _factory.open(uri, "r") as second_read:
         assert non_soma_metadata(second_read) == {"foobar": True, "my": "enemies"}
         # We don't want to test the exact metadata format,
-        # just that it includes the key–value pairs.
+        # just that it includes the key-value pairs.
         meta_repr = repr(second_read.metadata)
         # 'True' might get turned into '1', so only check the key.
         assert "'foobar': " in meta_repr
@@ -194,9 +194,9 @@ def non_soma_metadata(obj) -> dict[str, Any]:
         "\x00",
         "\U00000000",  # get's casted to \x00
         "\x10abc",
-        "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",
+        "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",  # noqa: RUF001
         "😀",
-        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",  # noqa: RUF001
         "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎ ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
         np.str_("foo"),
         "a string",
@@ -263,10 +263,10 @@ def test_metadata_marshalling_FAIL(soma_object, bad_value):
     [
         "",
         "\x10abc",
-        "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",
+        "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",  # noqa: RUF001
         "a string",
         "😀",
-        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",  # noqa: RUF001
         "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎ ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
     ],
 )
@@ -283,7 +283,7 @@ def test_metadata_good_key(soma_object, good_key):
         "AA\x00BB",
         "AA\U00000000BB",
         "😀\U00000000",
-        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯\x00 ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯\x00 ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",  # noqa: RUF001
         "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎\x00 ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
     ],
 )
@@ -307,7 +307,7 @@ def test_metadata_bad_key(soma_object, bad_key):
         b"\x00",
         np.bytes_("foo"),
         "😀\U00000000",
-        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯\x00 ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯\x00 ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",  # noqa: RUF001
         "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎\x00 ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
     ],
 )

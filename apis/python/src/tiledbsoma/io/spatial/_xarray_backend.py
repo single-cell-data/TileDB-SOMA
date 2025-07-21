@@ -77,8 +77,8 @@ class DenseNDArrayWrapper:
             """
             if index.step not in (1, None):
                 raise NotImplementedError("Slice steps are not supported.")
-            _index = range(dim_size)[index]  # Convert negative values to positive.
-            return slice(_index.start, _index.stop - 1)
+            index_ = range(dim_size)[index]  # Convert negative values to positive.
+            return slice(index_.start, index_.stop - 1)
 
         key = tuple(
             (update_slice_index(index, dim_size) if isinstance(index, slice) else update_int_index(index, dim_size))

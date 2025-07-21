@@ -61,7 +61,7 @@ if Version(pd.__version__) >= Version("2.0.0"):
         pa.timestamp("us"),
     ]
 
-AxisDomain = Union[None, tuple[Any, Any], list[Any]]
+AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
 
 
@@ -516,7 +516,7 @@ def arrow_table2(
         n_splits = draw(st.integers(min_value=0, max_value=max(0, len(tbl) // 10)))
         if n_splits > 0:
             split_points = draw(splitss(n_splits=n_splits, max_value=len(tbl)))
-            split_points = [0] + split_points + [len(tbl)]
+            split_points = [0, *split_points, len(tbl)]
             tbl = pa.concat_tables([tbl[start:end] for start, end in pairwise(split_points)])
 
     # pad, sometimes
