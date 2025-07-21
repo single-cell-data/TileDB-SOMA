@@ -1,5 +1,7 @@
 import numpy as np
+import pyarrow as pa
 import pytest
+from packaging.version import Version
 
 import tiledbsoma as soma
 
@@ -50,8 +52,13 @@ class TestSparseNDArrayWriteRReadPython(TestReadPythonWriteR):
         """
         with soma.open(self.uri) as sdf:
             arr = sdf.read().coos().concat().to_scipy().todense()
-            assert np.array_equal(arr[0], np.matrix([0, 1, 0, 0, 0]))
-            assert np.array_equal(arr[1], np.matrix([0, 0, 2, 0, 0]))
-            assert np.array_equal(arr[2], np.matrix([0, 0, 0, 0, 0]))
-            assert np.array_equal(arr[3], np.matrix([0, 0, 0, 0, 0]))
-            assert np.array_equal(arr[4], np.matrix([0, 0, 0, 0, 0]))
+
+            # As of Arrow 20, `to_scipy` returns sparray. Previously spmatrix.
+
+            ctor = np.array if Version(pa) < Version("20.0.0") else np.matrix
+
+            assert np.array_equal(arr[0], ctor([0, 1, 0, 0, 0]))
+            assert np.array_equal(arr[1], ctor([0, 0, 2, 0, 0]))
+            assert np.array_equal(arr[2], ctor([0, 0, 0, 0, 0]))
+            assert np.array_equal(arr[3], ctor([0, 0, 0, 0, 0]))
+            assert np.array_equal(arr[4], ctor([0, 0, 0, 0, 0]))
