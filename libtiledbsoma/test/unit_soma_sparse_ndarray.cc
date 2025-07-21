@@ -588,7 +588,7 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
         CHECK(actual_result_num == expected_result_num);
         CHECK_THAT(actual_dim_0, Catch::Matchers::Equals(expected_dim_0));
         CHECK_THAT(actual_dim_1, Catch::Matchers::Equals(expected_dim_1));
-        CHECK_THAT(actual_data, Catch::Matchers::Equals(actual_data));
+        CHECK_THAT(actual_data, Catch::Matchers::Equals(expected_data));
     };
 
     SECTION("Delete all using ranges") {
