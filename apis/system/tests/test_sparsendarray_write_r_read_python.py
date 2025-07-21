@@ -54,7 +54,7 @@ class TestSparseNDArrayWriteRReadPython(TestReadPythonWriteR):
             arr = sdf.read().coos().concat().to_scipy().todense()
 
             # As of Arrow 21, `to_scipy` returns sparray. Previously spmatrix.
-            ctor = np.array if Version(pa.__version__) < Version("21.0.0") else np.matrix
+            ctor = np.array if Version(pa.__version__) >= Version("21.0.0") else np.matrix
 
             assert np.array_equal(arr[0], ctor([0, 1, 0, 0, 0]))
             assert np.array_equal(arr[1], ctor([0, 0, 2, 0, 0]))
