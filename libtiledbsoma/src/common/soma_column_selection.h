@@ -38,11 +38,11 @@ struct SOMASliceSelection {
     SOMASliceSelection(T slice_start, T slice_stop)
         : start{slice_start}
         , stop{slice_stop} {
-        // Using sstream because we don't want to include fmt directly in external header.
-        std::stringstream ss;
-        ss << "Invalid slice [ " << start << ", " << stop
-           << "]. The lower bound must be less than or equal to the upper bound.";
         if (stop < start) {
+            // Using sstream because we don't want to include fmt directly in external header.
+            std::stringstream ss;
+            ss << "Invalid slice [ " << start << ", " << stop
+               << "]. The lower bound must be less than or equal to the upper bound.";
             throw std::invalid_argument(ss.str());
         }
     }
