@@ -18,6 +18,10 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+/**************************************
+ * SOMAQueryCondition
+**************************************/
+
 SOMAQueryCondition::SOMAQueryCondition(const QueryCondition& qc)
     : qc_{qc} {
 }
@@ -34,6 +38,78 @@ SOMACoordQueryCondition::SOMACoordQueryCondition(const SOMAContext& ctx, const s
 
 bool SOMACoordQueryCondition::is_initialized() const {
     return std::any_of(coord_qc_.cbegin(), coord_qc_.cend(), [](auto qc) { return qc.is_initialized(); });
+}
+
+SOMAQueryCondition SOMAQueryCondition::create_from_range(
+    const Context& ctx, const std::string& elem_name, const std::string& start_value, const std::string& stop_value) {
+    if (stop_value < start_value) {
+        throw std::invalid_argument(
+            fmt::format(
+                "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
+                "than or equal to the starting value.",
+                start_value,
+                stop_value,
+                elem_name));
+    }
+    return SOMAQueryCondition(
+        QueryCondition::create(ctx, elem_name, start_value, TILEDB_GE)
+            .combine(QueryCondition::create(ctx, elem_name, stop_value, TILEDB_LE), TILEDB_AND));
+}
+
+SOMAQueryCondition SOMAQueryCondition::create_from_points(
+    const Context& ctx, const std::string& elem_name, std::span<std::string> values) {
+    if (values.empty()) {
+        throw std::invalid_argument(
+            fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", elem_name));
+    }
+    // Using C API because C++ API only supports std::vector, not std::span.
+    uint64_t data_size = 0;
+    for (auto& val : values) {
+        data_size += val.size();
+    }
+    std::vector<uint8_t> data(data_size);
+    std::vector<uint64_t> offsets{};
+    uint64_t curr_offset = 0;
+    for (auto& val : values) {
+        offsets.push_back(curr_offset);
+        memcpy(data.data() + curr_offset, val.data(), val.size());
+        curr_offset += val.size();
+    }
+    tiledb_query_condition_t* qc;
+    ctx.handle_error(tiledb_query_condition_alloc_set_membership(
+        ctx.ptr().get(),
+        elem_name.c_str(),
+        data.data(),
+        data.size(),
+        offsets.data(),
+        offsets.size() * sizeof(uint64_t),
+        TILEDB_IN,
+        &qc));
+    return QueryCondition(ctx, qc);
+}
+
+/**************************************
+ * SOMACoordQueryCondition
+**************************************/
+
+SOMACoordQueryCondition& SOMACoordQueryCondition::add_column_selection(
+    int64_t col_index, SOMAColumnSelection<std::string> selection) {
+    std::visit(
+        [&](auto&& val) {
+            using S = std::decay_t<decltype(val)>;
+            if constexpr (std::is_same_v<S, SOMASliceSelection<std::string>>) {
+                add_coordinate_query_condition(
+                    col_index,
+                    SOMAQueryCondition::create_from_range(*ctx_, dim_names_[col_index], val.start, val.stop));
+
+            } else if constexpr (std::is_same_v<S, SOMAPointSelection<std::string>>) {
+                add_coordinate_query_condition(
+                    col_index, SOMAQueryCondition::create_from_points(*ctx_, dim_names_[col_index], val.points));
+            }
+            // Otherwise monostate: do nothing.
+        },
+        selection);
+    return *this;
 }
 
 SOMAQueryCondition SOMACoordQueryCondition::get_soma_query_condition() const {

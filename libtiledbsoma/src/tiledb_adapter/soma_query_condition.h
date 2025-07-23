@@ -62,14 +62,14 @@ class SOMAQueryCondition {
     SOMAQueryCondition(QueryCondition&& qc);
 
     /**
-     * Create a query condition from a range on an element.
+     * Create a query condition from a slice.
      *
      * @tparam The type of the element the query condition applies to.
      * @param elem_name The name of the element the query condition applies to.
      * @param start_value The start of the range (inclusive).
      * @param stop_value The end of the range (inclusive).
      */
-    template <typename T>
+    template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
     static SOMAQueryCondition create_from_range(
         const Context& ctx, const std::string& elem_name, T start_value, T stop_value) {
         if (stop_value < start_value) {
@@ -87,13 +87,26 @@ class SOMAQueryCondition {
     }
 
     /**
+     * Create a query condition from a slice.
+     *
+     * @param elem_name The name of the element the query condition applies to.
+     * @param start_value The start of the range (inclusive).
+     * @param stop_value The end of the range (inclusive).
+     */
+    static SOMAQueryCondition create_from_range(
+        const Context& ctx,
+        const std::string& elem_name,
+        const std::string& start_value,
+        const std::string& stop_value);
+
+    /**
      * Create a query condition from a series of points on a range.
      *
      * @tparam The type of the element the query condition applies to.
      * @param elem_name The name of the element the query condition applies to.
      * @param values The values of the points
      */
-    template <typename T>
+    template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
     static SOMAQueryCondition create_from_points(
         const Context& ctx, const std::string& elem_name, std::span<T> values) {
         if (values.empty()) {
@@ -118,6 +131,8 @@ class SOMAQueryCondition {
         return QueryCondition(ctx, qc);
     }
 
+    static SOMAQueryCondition create_from_points(
+        const Context& ctx, const std::string& elem_name, std::span<std::string> values);
     /**
      * Return if the query condition is initialized.
      */
@@ -208,6 +223,23 @@ class SOMACoordQueryCondition {
             selection);
         return *this;
     }
+
+    /**
+     * @brief Add a constraint to a string column.
+     *
+     * For a slice constraint: the query condition will select on elements of the TileDB array that 
+     * include coordinates within the selected range for the column (inclusive of end points).
+     *
+     * For a series of points: The query condition will select on elements of the TileDB array that 
+     * include coordinates that equal one of the provided elements for the specified attribute or 
+     * dimension. This method is not recommended for floating-point components.
+     *
+     * For monostate: no constraint is applied.
+     *
+     * @param col_index The index of the column 
+     * @param selection The coordinate selection to apply to the columns.
+     */
+    SOMACoordQueryCondition& add_column_selection(int64_t col_index, SOMAColumnSelection<std::string> selection);
 
     /**
      * Returns `true` if at least one query condition is set.
