@@ -201,7 +201,8 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
     # XXX temporarily override this so we can disable any reshapes (sc-61676).
     # If we allow reshapes, read/write tests fail due to the bug.
     # TODO: remove this code (let base class do its thing) when this bug is fixed.
-    @precondition(HT_TEST_CONFIG["sc-61676_workaround"])
+    @precondition(lambda self: HT_TEST_CONFIG["sc-61676_workaround"])
+    @rule(data=st.data())
     def expand_shape(self, data: st.DataObject) -> None:
         return
 
