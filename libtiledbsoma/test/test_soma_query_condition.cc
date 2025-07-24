@@ -150,13 +150,15 @@ TEST_CASE("Test SOMAQueryCondition on SparseArray", "[SOMAQueryCondition][SOMASp
 
     // Empty region: invalid - no points.
     {
+        std::vector<int64_t> points{};
         CHECK_THROWS_AS(
-            SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", {}), std::invalid_argument);
+            SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", points), std::invalid_argument);
     }
 
     // Empty region: out-of-bounds points.
     {
-        auto qc = SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", {25, 27, 19, 30});
+        std::vector<int64_t> points{25, 27, 19, 30};
+        auto qc = SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", points);
         CHECK(qc.is_initialized());
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
@@ -172,7 +174,8 @@ TEST_CASE("Test SOMAQueryCondition on SparseArray", "[SOMAQueryCondition][SOMASp
 
     // Region [0,11,13] by points.
     {
-        auto qc = SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", {0, 1, 13});
+        std::vector<int64_t> points{0, 1, 13};
+        auto qc = SOMAQueryCondition::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", points);
         CHECK(qc.is_initialized());
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range<int64_t>("soma_dim_0", 0, 1).add_range<int64_t>("soma_dim_0", 13, 13);
@@ -304,40 +307,52 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
     };
 
     // Full region by range.
+    std::pair<int64_t, int64_t> domain0{0, 3};
+    std::pair<int64_t, int64_t> domain1{0, 2};
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
+        qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(0, 3), domain0)
+            .add_column_selection<int64_t>(1, SOMASliceSelection<int64_t>(0, 2), domain1);
         subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
         check_query_condition(qc, subarray, "Read all values by range.");
     }
 
-    // Empty region: invalid range.
+    // Empty region: out-of-bounds range - incorrect domain provided
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
-        Subarray subarray(*ctx->tiledb_ctx(), array);
-        CHECK_THROWS_AS(qc.add_range<int64_t>(0, 3, 2), std::invalid_argument);
-    }
-
-    // Empty region: out-of-bounds range.
-    {
-        SOMACoordQueryCondition qc(*ctx, dim_names);
-        qc.add_range<int64_t>(0, 5, 7);
+        qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(5, 7), std::pair<int64_t, int64_t>(0, 100));
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
 
-    // Empty region: out-of-bounds points.
+    // Error: out-of-bounds range.
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
-        qc.add_points<int64_t>(0, {5, 7, 11, 10});
-        check_empty_query_condition(qc, "Range out of bounds: expect no values.");
+        CHECK_THROWS_AS(
+            qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(5, 7), domain0), std::out_of_range);
+    }
+
+    // Empty region: out-of-bounds points - incorrect domain provided
+    {
+        SOMACoordQueryCondition qc(*ctx, dim_names);
+        std::vector<int64_t> points{5, 7, 11, 10};
+        qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), std::pair<int64_t, int64_t>(0, 100));
+        check_empty_query_condition(qc, "Points out of bounds: expect no values.");
+    }
+
+    // Error: out-of-bounds points.
+    {
+        SOMACoordQueryCondition qc(*ctx, dim_names);
+        std::vector<int64_t> points{5, 7, 11, 10};
+        CHECK_THROWS_AS(
+            qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), domain0), std::out_of_range);
     }
 
     // Region [1:2]x[:] by ranges.
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_range<int64_t>(0, 1, 2);
+        qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(1, 2), {0, 3});
         subarray.add_range<int64_t>(0, 1, 2);
         check_query_condition(qc, subarray, "Select by range on dim 0.");
     }
@@ -346,7 +361,7 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_range<int64_t>(1, 1, 2);
+        qc.add_column_selection<int64_t>(1, SOMASliceSelection<int64_t>(1, 2), {0, 2});
         subarray.add_range<int64_t>(1, 1, 2);
         check_query_condition(qc, subarray, "Select by range on dim 1.");
     }
@@ -355,16 +370,17 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_points<int64_t>(0, {0, 1, 3});
+        std::vector<int64_t> points{0, 1, 3};
+        qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), {0, 3});
         subarray.add_range<int64_t>(0, 0, 1).add_range<int64_t>(0, 3, 3);
         check_query_condition(qc, subarray, "Select by points on dim 0 (ordered).");
     }
-
     // Region [0,1,3]x[:] by points (unordered).
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_points<int64_t>(0, {3, 0, 1});
+        std::vector<int64_t> points{3, 0, 1};
+        qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), {0, 3});
         subarray.add_range<int64_t>(0, 0, 1).add_range<int64_t>(0, 3, 3);
         check_query_condition(qc, subarray, "Select by points on dim 0 (unordered).");
     }
@@ -373,7 +389,12 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_points<int64_t>(0, {3}).add_points<int64_t>(0, {0}).add_points<int64_t>(0, {1});
+        std::vector<int64_t> points1{3};
+        std::vector<int64_t> points2{0};
+        std::vector<int64_t> points3{1};
+        qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points1), {0, 3})
+            .add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points2), {0, 3})
+            .add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points3), {0, 3});
         subarray.add_range<int64_t>(0, 0, 1).add_range<int64_t>(0, 3, 3);
         check_query_condition(qc, subarray, "Select by points on dim 0 (multiple conditions).");
     }
@@ -382,7 +403,8 @@ TEST_CASE("Test SOMACoordQueryCondition on SparseArray", "[SOMACoordQueryConditi
     {
         SOMACoordQueryCondition qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
-        qc.add_points<int64_t>(1, {0, 2});
+        std::vector<int64_t> points{0, 2};
+        qc.add_column_selection<int64_t>(1, SOMAPointSelection<int64_t>(points), {0, 3});
         subarray.add_range<int64_t>(1, 0, 0).add_range<int64_t>(1, 2, 2);
         check_query_condition(qc, subarray, "Select by points on dim 1.");
     }

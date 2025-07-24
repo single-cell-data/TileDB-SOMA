@@ -99,8 +99,7 @@ managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
 
-void SOMASparseNDArray::delete_cells(
-    const std::vector<std::variant<std::monostate, std::pair<int64_t, int64_t>, std::vector<int64_t>>>& coords) {
+void SOMASparseNDArray::delete_cells(const std::vector<SOMAColumnSelection<int64_t>>& coords) {
     if (coords.size() > ndim()) {
         throw std::invalid_argument(
             fmt::format(
@@ -113,64 +112,10 @@ void SOMASparseNDArray::delete_cells(
 
     SOMACoordQueryCondition qc{*ctx_, dimension_names()};
     for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
-        // const auto& coords_pair = coords[dim_index];
-        //const std::vector < i& coord_values = coords_pair->first;
-        //bool is_range = coords_pair->second;
-        const auto& coordinate_values = coords[dim_index];
-
-        std::visit(
-            [&](auto&& coord_vals) {
-                using T = std::decay_t<decltype(coord_vals)>;
-                if constexpr (std::is_same_v<T, std::pair<int64_t, int64_t>>) {
-                    if (coord_vals.second < 0 || coord_vals.first >= array_shape[dim_index]) {
-                        if (coord_vals.second < coord_vals.first) {
-                            // This is normally caught in SOMACoordQueryCondition check, but we need to add here
-                            // as well since it takes priority over non-overlapping range error.
-                            throw std::invalid_argument(
-                                fmt::format(
-                                    "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be "
-                                    "greater than or equal to the starting value.",
-                                    coord_vals.first,
-                                    coord_vals.second,
-                                    get_column(dim_index)->name()));
-                        }
-                        throw std::out_of_range(
-                            fmt::format(
-                                "Non-overlapping range [{}, {}] on column '{}' with length={}. Range must overlap "
-                                "[{}, {}].",
-                                coord_vals.first,
-                                coord_vals.second,
-                                get_column(dim_index)->name(),
-                                array_shape[dim_index],
-                                0,
-                                array_shape[dim_index] - 1));
-                    }
-                    qc.add_range<int64_t>(dim_index, coord_vals.first, coord_vals.second);
-                } else if constexpr (std::is_same_v<T, std::vector<int64_t>>) {
-                    if (coord_vals.empty()) {
-                        // TODO: raise error.
-                    }
-                    for (const auto& val : coord_vals) {
-                        if (val < 0 || val >= array_shape[dim_index]) {
-                            throw std::out_of_range(
-                                fmt::format(
-                                    "Out-of-bounds coordinate {} on column '{}' with length={}. Coordinates must be "
-                                    "inside "
-                                    "range "
-                                    "[{}, {}].",
-                                    val,
-                                    get_column(dim_index)->name(),
-                                    array_shape[dim_index],
-                                    0,
-                                    array_shape[dim_index] - 1));
-                        }
-                    }
-                    qc.add_points<int64_t>(dim_index, coord_vals);
-                }
-                // Otherwise monostate: do nothing.
-            },
-            coordinate_values);
+        qc.add_column_selection<int64_t>(
+            dim_index, coords[dim_index], std::pair<int64_t, int64_t>(0, array_shape[dim_index] - 1));
     }
+
     auto soma_delete_cond = qc.get_soma_query_condition();
     if (!soma_delete_cond.is_initialized()) {
         throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");

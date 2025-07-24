@@ -19,10 +19,13 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
+#include <tiledb/tiledb.h>
 #include <tiledb/tiledb>
-#include <tiledb/tiledb_experimental>
+
+#include "../common/soma_column_selection.h"
 #include "../soma/soma_context.h"
 #include "../utils/common.h"
 #include "../utils/logger.h"
@@ -92,12 +95,27 @@ class SOMAQueryCondition {
      */
     template <typename T>
     static SOMAQueryCondition create_from_points(
-        const Context& ctx, const std::string& elem_name, const std::vector<T>& values) {
+        const Context& ctx, const std::string& elem_name, std::span<T> values) {
         if (values.empty()) {
             throw std::invalid_argument(
                 fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", elem_name));
         }
-        return QueryConditionExperimental::create<T>(ctx, elem_name, values, TILEDB_IN);
+        // Using C API because C++ API only supports std::vector, not std::span.
+        std::vector<uint64_t> offsets(values.size());
+        for (size_t index = 0; index < values.size(); ++index) {
+            offsets[index] = index * sizeof(T);
+        }
+        tiledb_query_condition_t* qc;
+        ctx.handle_error(tiledb_query_condition_alloc_set_membership(
+            ctx.ptr().get(),
+            elem_name.c_str(),
+            values.data(),
+            values.size() * sizeof(T),
+            offsets.data(),
+            offsets.size() * sizeof(uint64_t),
+            TILEDB_IN,
+            &qc));
+        return QueryCondition(ctx, qc);
     }
 
     /**
@@ -132,39 +150,63 @@ class SOMACoordQueryCondition {
     ~SOMACoordQueryCondition() = default;
 
     /**
-     * @brief Add a coordinate range to the query condition.
+     * @brief Add a constraint to a column.
      *
-     * The query condition will only select on elements of the TileDB array that include
-     * coordinates within the selected range for the specified attribute or dimension.
+     * For a slice constraint: the query condition will select on elements of the TileDB array that 
+     * include coordinates within the selected range for the column (inclusive of end points). If a
+     * domain is provided, the slice must intersect the domain.
+     *
+     * For a series of points: The query condition will select on elements of the TileDB array that 
+     * include coordinates that equal one of the provided elements for the specified attribute or 
+     * dimension. This method is not recommended for floating-point components. If a domain is provided,
+     * all points must be inside the domain.
+     *
+     * For monostate: no constraint is applied.
      *
      * @tparam T The type of the column the query condition is applied to.
-     * @param elem_name The name of the TileDB dimension or attribute the query condition is applied to.
-     * @param start_value The first of the range.
-     * @param stop_value The last value of the range.
+     * @param col_index The index of the column 
+     * @param selection The coordinate selection to apply to the columns.
+     * @param domain Optional domain of the column the selection is applied to.
      */
-    template <typename T>
-    SOMACoordQueryCondition& add_range(int64_t dim_index, T start_value, T stop_value) {
-        return add_coordinate_query_condition(
-            dim_index, SOMAQueryCondition::create_from_range<T>(*ctx_, dim_names_[dim_index], start_value, stop_value));
-    }
+    template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
+    SOMACoordQueryCondition& add_column_selection(
+        int64_t col_index, SOMAColumnSelection<T> selection, const std::pair<T, T>& domain) {
+        std::visit(
+            [&](auto&& val) {
+                using S = std::decay_t<decltype(val)>;
+                if constexpr (std::is_same_v<S, SOMASliceSelection<T>>) {
+                    if (!val.has_overlap(domain)) {
+                        throw std::out_of_range(
+                            fmt::format(
+                                "Non-overlapping slice [{}, {}] on column '{}'. Slice must overlap the current "
+                                "column domain [{}, {}].",
+                                val.start,
+                                val.stop,
+                                dim_names_[col_index],
+                                domain.first,
+                                domain.second));
+                    }
+                    add_coordinate_query_condition(
+                        col_index,
+                        SOMAQueryCondition::create_from_range<T>(*ctx_, dim_names_[col_index], val.start, val.stop));
 
-    /**
-     * @brief Add a list of coordinates to the query condition.
-     *
-     * The query condition will only select on elements of the TileDB array that include
-     * coordinates that equal one of the provided elements for the specified attribute or 
-     * dimension. This method is not recommended for floating-point components.
-     *
-     * Updates the query condition so only 
-     * @tparam T The type of the column the query condition is applied to.
-     * @param elem_name The name of the TileDB dimension or attribute the query condition is applied to.
-     * @param values The values the coordinate will select on.
-     *
-     */
-    template <typename T>
-    SOMACoordQueryCondition& add_points(int64_t dim_index, const std::vector<T>& values) {
-        return add_coordinate_query_condition(
-            dim_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[dim_index], values));
+                } else if constexpr (std::is_same_v<S, SOMAPointSelection<T>>) {
+                    if (!val.is_subset(domain)) {
+                        throw std::out_of_range(
+                            fmt::format(
+                                "Out-of-bounds coordinates found on column '{}'. Coordinates must be "
+                                "inside column daomain [{}, {}].",
+                                dim_names_[col_index],
+                                domain.first,
+                                domain.second));
+                    }
+                    add_coordinate_query_condition(
+                        col_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[col_index], val.points));
+                }
+                // Otherwise monostate: do nothing.
+            },
+            selection);
+        return *this;
     }
 
     /**
@@ -182,7 +224,7 @@ class SOMACoordQueryCondition {
      * 
      * Throws an error if no query conditions are set.
      */
-    QueryCondition get_query_condition() const {
+    inline QueryCondition get_query_condition() const {
         return get_soma_query_condition().query_condition();
     }
 

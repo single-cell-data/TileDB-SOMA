@@ -242,6 +242,11 @@ install(FILES
 )
 
 install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/soma_column_selection.h
+  DESTINATION "include/tiledbsoma/common/"
+)
+
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
   DESTINATION "include/tiledbsoma"
 )

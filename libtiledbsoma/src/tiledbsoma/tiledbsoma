@@ -18,6 +18,7 @@
 // that allows exporting symbols in a cross-platform fashion.
 #include "tiledbsoma_export.h"
 
+#include "common/soma_column_selection.h"
 #include "utils/arrow_adapter.h"
 #include "utils/common.h"
 #include "utils/transformer.h"
