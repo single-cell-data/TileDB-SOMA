@@ -259,7 +259,7 @@ def test_change_counts(
 
 
 @pytest.mark.parametrize("separate_ingest", [False, True])
-def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_ingest):
+def test_update_non_null_to_null(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata, separate_ingest):
     uri = tmp_path.as_uri()
 
     # Two ways to test:
@@ -280,6 +280,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
             conftest_pbmc3k_adata,
             measurement_name="RNA",
             uns_keys=[],
+            context=soma_tiledb_context,
         )
 
         conftest_pbmc3k_adata.obs["batch_id"] = "testing"
@@ -295,6 +296,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
             conftest_pbmc3k_adata,
             measurement_name="RNA",
             uns_keys=[],
+            context=soma_tiledb_context,
         )
 
     conftest_pbmc3k_adata.obs["batch_id"] = pd.NA
@@ -303,11 +305,11 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
 
 
-def test_enmr_add_drop_readd(tmp_path, conftest_pbmc3k_adata):
+def test_enmr_add_drop_readd(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata):
     uri = tmp_path.as_posix()
 
     # Add
-    tiledbsoma.io.from_anndata(uri, conftest_pbmc3k_adata, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(uri, conftest_pbmc3k_adata, measurement_name="RNA", context=soma_tiledb_context)
 
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema
