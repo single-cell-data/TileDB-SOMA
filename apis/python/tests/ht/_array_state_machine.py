@@ -102,6 +102,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     ##
 
     @precondition(lambda self: self.is_initialized)
+    @invariant()
     def check_exists(self) -> None:
         assert self._array_exists(self.uri, self.context, None)
 
