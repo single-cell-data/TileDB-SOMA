@@ -97,7 +97,7 @@ jobs:
           CXX: ${{ matrix.cxx }}
 
       - name: Install dependencies
-        run: pip install --prefer-binary pytest typeguard tiledb.cloud
+        run: pip install --prefer-binary pytest typeguard tiledb<=0.34.0 tiledb.cloud
 
       - name: Show package versions
         run: python scripts/show-versions.py
