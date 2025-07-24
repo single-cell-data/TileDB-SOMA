@@ -70,6 +70,7 @@ Suggests:
     SingleCellExperiment (>= 1.20.0),
     SummarizedExperiment (>= 1.28.0),
     testthat (>= 3.0.0),
+    tibble,
     withr
 Config/testthat/edition: 2
 OS_type: unix
