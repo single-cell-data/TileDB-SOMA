@@ -12,6 +12,12 @@
 
 ## Security
 
+# tiledbsoma 1.17.1
+
+## Changed
+
+- Update [TileDB core to 2.28.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1). ([#4077](https://github.com/single-cell-data/TileDB-SOMA/pull/4177))
+
 # tiledbsoma 1.17.0
 
 ## Removed

@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p external
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.0/tiledb-linux-x86_64-2.28.0-4764907.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
       - name: Build and install libtiledbsoma
