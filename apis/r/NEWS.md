@@ -6,6 +6,8 @@
 
 ## Changed
 
+- Update [TileDB core to 2.28.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1). ([#4077](https://github.com/single-cell-data/TileDB-SOMA/pull/4177))
+
 ## Deprecated
 
 - Deprecate removing elements from a collection in write mode. In the future, all new removals will need to be done in delete mode. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
