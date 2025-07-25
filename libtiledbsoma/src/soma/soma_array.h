@@ -21,6 +21,7 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include "../common/soma_column_selection.h"
 #include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "logger_public.h"
@@ -853,6 +854,14 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<SOMAColumn> get_column(std::string_view name) const;
 
     std::shared_ptr<SOMAColumn> get_column(std::size_t index) const;
+
+    /**
+     * Create a query condition from input coordinate selection.
+     *
+     * TODO: Add details before merging.
+     */
+    std::optional<QueryCondition> create_coordinate_query_condition(
+        const std::vector<AnySOMAColumnSelection>& coords) const;
 
    protected:
     static bool _exists(std::string_view uri, std::string_view soma_type, std::shared_ptr<SOMAContext> ctx);
