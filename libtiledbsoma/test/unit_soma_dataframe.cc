@@ -1210,6 +1210,192 @@ TEST_CASE_METHOD(
     }
 }
 
+TEST_CASE("SOMADataFrame: query condition for multi-index dataframe", "[SOMADataFrame][SOMAQueryCondition]") {
+    // Create a dataframe with soma_joinid as the only index column.
+    auto ctx = std::make_shared<SOMAContext>();
+    auto tiledb_ctx = ctx->tiledb_ctx();
+    std::string uri = "mem://test-dataframe-qc-multi-index";
+
+    {
+        INFO("Create the dataframe.");
+        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
+            {helper::DimInfo(
+                 {.name = "soma_joinid",
+                  .tiledb_datatype = TILEDB_INT64,
+                  .dim_max = 3,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A"}),
+             helper::DimInfo(
+                 {.name = "index",
+                  .tiledb_datatype = TILEDB_UINT32,
+                  .dim_max = 2,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A"})},
+            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_INT32})});
+        SOMADataFrame::create(uri, schema, index_columns, ctx);
+    }
+
+    {
+        INFO("Write data to array.");
+        std::vector<int64_t> join{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+        std::vector<uint32_t> index{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
+        std::vector<int32_t> data(12);
+        std::iota(data.begin(), data.end(), 1);
+
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
+        Query query{*ctx->tiledb_ctx(), array};
+        query.set_data_buffer("soma_joinid", join);
+        query.set_data_buffer("index", index);
+        query.set_data_buffer("attr1", data);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        array.close();
+    }
+
+    Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
+    auto df = SOMADataFrame::open(uri, OpenMode::soma_read, ctx);
+    auto check_query_condition =
+        [&](const std::vector<AnySOMAColumnSelection> coords, const Subarray& subarray, const std::string& log_note) {
+            INFO(log_note);
+
+            // Create query condtiion
+            auto qc = df->create_coordinate_query_condition(coords);
+            REQUIRE(qc.has_value());
+
+            // Create a query for the entire array.
+            std::vector<int64_t> expected_joinids(12);
+            std::vector<uint32_t> expected_index(12);
+            std::vector<int32_t> expected_data(12);
+
+            std::vector<int64_t> actual_joinids(12);
+            std::vector<uint32_t> actual_index(12);
+            std::vector<int32_t> actual_data(12);
+
+            // Query with query condition.
+            Query query2(*ctx->tiledb_ctx(), array);
+            query2.set_layout(TILEDB_ROW_MAJOR);
+            query2.set_data_buffer("soma_joinid", actual_joinids);
+            query2.set_data_buffer("index", actual_index);
+            query2.set_data_buffer("attr1", actual_data);
+            Subarray qc_subarray(*ctx->tiledb_ctx(), array);
+            qc_subarray.add_range<int64_t>(0, 0, 3);
+            qc_subarray.add_range<uint32_t>(1, 0, 2);
+            query2.set_subarray(qc_subarray);
+            query2.set_condition(qc.value());
+            query2.submit();
+            REQUIRE(query2.query_status() == tiledb::Query::Status::COMPLETE);
+
+            // Query with subarray.
+            Query query1(*ctx->tiledb_ctx(), array);
+            query1.set_layout(TILEDB_ROW_MAJOR);
+            query1.set_data_buffer("soma_joinid", expected_joinids);
+            query1.set_data_buffer("index", expected_index);
+            query1.set_data_buffer("attr1", expected_data);
+            query1.set_subarray(subarray);
+            query1.submit();
+            REQUIRE(query1.query_status() == tiledb::Query::Status::COMPLETE);
+
+            // Check results.
+            auto expected_result_num = static_cast<int64_t>(query1.result_buffer_elements()["soma_joinid"].second);
+            auto actual_result_num = static_cast<int64_t>(query2.result_buffer_elements()["soma_joinid"].second);
+            CHECK(expected_result_num == actual_result_num);
+            CHECK_THAT(actual_joinids, Catch::Matchers::Equals(expected_joinids));
+            CHECK_THAT(actual_index, Catch::Matchers::Equals(expected_index));
+            CHECK_THAT(actual_data, Catch::Matchers::Equals(expected_data));
+        };
+
+    // Create variable for tests. Using sections will rerun the this test from beginning to end for each section.
+
+    {
+        std::vector<AnySOMAColumnSelection> coords{SOMASliceSelection<int64_t>(0, 3)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 2);
+        check_query_condition(coords, subarray, "Select all by joinid slice");
+    }
+    {
+        SOMAColumnSelection<uint32_t> no_selection{std::monostate()};
+        std::vector<AnySOMAColumnSelection> coords{SOMASliceSelection<int64_t>(0, 3), no_selection};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 2);
+        check_query_condition(coords, subarray, "Select all by index slice with explicit no-select on joinid");
+    }
+
+    {
+        std::vector<int64_t> points{1, 3, 2, 0};
+        std::vector<AnySOMAColumnSelection> coords{SOMAPointSelection<int64_t>(points)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 2);
+        check_query_condition(coords, subarray, "Select all by joinid points");
+    }
+
+    {
+        SOMAColumnSelection<int64_t> no_selection{std::monostate()};
+        std::vector<AnySOMAColumnSelection> coords{no_selection, SOMASliceSelection<uint32_t>(0, 2)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 2);
+        check_query_condition(coords, subarray, "Select all by joinid slice");
+    }
+
+    {
+        SOMAColumnSelection<int64_t> no_selection{std::monostate()};
+        std::vector<uint32_t> points{2, 0};
+        std::vector<AnySOMAColumnSelection> coords{no_selection, SOMAPointSelection<uint32_t>(points)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 0);
+        subarray.add_range<uint32_t>(1, 2, 2);
+        check_query_condition(coords, subarray, "Select all by index points");
+    }
+    {
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 2, 3);
+        subarray.add_range<uint32_t>(1, 0, 2);
+        std::vector<AnySOMAColumnSelection> coords{SOMASliceSelection<int64_t>(2, 10)};
+        check_query_condition(coords, subarray, "Query condition on joinid by slice");
+    }
+    {
+        std::vector<AnySOMAColumnSelection> coords{
+            SOMASliceSelection<int64_t>(0, 3), SOMASliceSelection<uint32_t>(0, 1)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 1);
+        check_query_condition(coords, subarray, "Query condition on index by slice");
+    }
+    {
+        std::vector<AnySOMAColumnSelection> coords{
+            SOMASliceSelection<int64_t>(1, 2), SOMASliceSelection<uint32_t>(0, 1)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 1, 2);
+        subarray.add_range<uint32_t>(1, 0, 1);
+        check_query_condition(coords, subarray, "Query condition slices on multiple columns");
+    }
+    {
+        std::vector<int64_t> join_points{2, 1};
+        std::vector<uint32_t> index_points{2};
+        std::vector<AnySOMAColumnSelection> coords{
+            SOMAPointSelection<int64_t>(join_points), SOMAPointSelection<uint32_t>(index_points)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 1, 2);
+        subarray.add_range<uint32_t>(1, 2, 2);
+        check_query_condition(coords, subarray, "Query condition points on multiple xmcolumns");
+    }
+    {
+        std::vector<uint32_t> index_points{2, 0};
+        std::vector<AnySOMAColumnSelection> coords{
+            SOMASliceSelection<int64_t>(1, 1), SOMAPointSelection<uint32_t>(index_points)};
+        Subarray subarray(*tiledb_ctx, array);
+        subarray.add_range<int64_t>(0, 1, 1);
+        subarray.add_range<uint32_t>(1, 2, 2);
+        subarray.add_range<uint32_t>(1, 0, 0);
+        check_query_condition(coords, subarray, "Query condition mixed selection");
+    }
+}
+
 TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][delete]") {
     // Create a dataframe with soma_joinid as the only index column.
     auto ctx = std::make_shared<SOMAContext>();
@@ -1491,11 +1677,9 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
     {
         INFO("Write data to array.");
-        std::vector<int64_t> join(4);
-        std::vector<uint32_t> index(3);
+        std::vector<int64_t> join{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+        std::vector<uint32_t> index{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
         std::vector<int32_t> data(12);
-        std::iota(join.begin(), join.end(), 0);
-        std::iota(index.begin(), index.end(), 0);
         std::iota(data.begin(), data.end(), 1);
 
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
@@ -1623,11 +1807,11 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
     }
     SECTION("Delete mixed selection") {
         expected_result_num = 9;
-        expected_joinids.assign({0, 0, 0, 1, 1, 2, 2, 3, 3});
-        expected_index.assign({0, 1, 2, 0, 2, 0, 2, 0, 2});
-        expected_data.assign({1, 2, 3, 4, 6, 7, 9, 10, 12});
-        std::vector<uint32_t> index_points{1};
-        delete_coords.assign({SOMASliceSelection<int64_t>(1, 1), SOMAPointSelection<uint32_t>(index_points)});
+        expected_joinids.assign({0, 0, 0, 1, 1, 2, 2, 3, 3, 3});
+        expected_index.assign({0, 1, 2, 0, 2, 0, 2, 0, 1, 2});
+        expected_data.assign({1, 2, 3, 4, 5, 7, 8, 10, 11, 12});
+        std::vector<uint32_t> index_points{2};
+        delete_coords.assign({SOMASliceSelection<int64_t>(1, 2), SOMAPointSelection<uint32_t>(index_points)});
         check_delete("Delete mixed selections");
     }
 }
