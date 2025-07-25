@@ -13,7 +13,6 @@
 
 #include "soma_dataframe.h"
 
-#include "../tiledb_adapter/soma_query_condition.h"
 #include "../utils/logger.h"
 #include "soma_coordinates.h"
 
@@ -256,116 +255,11 @@ std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_maxshape() {
 }
 
 void SOMADataFrame::delete_cells(const std::vector<AnySOMAColumnSelection>& coords) {
-    if (coords.size() > ndim()) {
-        throw std::invalid_argument(
-            fmt::format(
-                "Coordinates for {} columns were provided, but this array only has {} index columns. The number of "
-                "coords provided must be less than or equal to the number of index columns.",
-                coords.size(),
-                ndim()));
-    }
-    auto which_kind = has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain;
-    SOMACoordQueryCondition qc{*ctx_, dimension_names()};
-    for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
-        auto col = get_column(dim_index);
-        switch (col->domain_type().value()) {
-            case TILEDB_UINT8:
-                qc.add_column_selection<uint8_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint8_t>>(coords[dim_index]),
-                    col->domain_slot<uint8_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_UINT16:
-                qc.add_column_selection<uint16_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint16_t>>(coords[dim_index]),
-                    col->domain_slot<uint16_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_UINT32:
-                qc.add_column_selection<uint32_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint32_t>>(coords[dim_index]),
-                    col->domain_slot<uint32_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_UINT64:
-                qc.add_column_selection<uint64_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint64_t>>(coords[dim_index]),
-                    col->domain_slot<uint64_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_INT8:
-                qc.add_column_selection<int8_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int8_t>>(coords[dim_index]),
-                    col->domain_slot<int8_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_INT16:
-                qc.add_column_selection<int16_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int16_t>>(coords[dim_index]),
-                    col->domain_slot<int16_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_INT32:
-                qc.add_column_selection<int32_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int32_t>>(coords[dim_index]),
-                    col->domain_slot<int32_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS:
-            case TILEDB_TIME_HR:
-            case TILEDB_TIME_MIN:
-            case TILEDB_TIME_SEC:
-            case TILEDB_TIME_MS:
-            case TILEDB_TIME_US:
-            case TILEDB_TIME_NS:
-            case TILEDB_TIME_PS:
-            case TILEDB_TIME_FS:
-            case TILEDB_TIME_AS:
-            case TILEDB_INT64:
-                qc.add_column_selection<int64_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int64_t>>(coords[dim_index]),
-                    col->domain_slot<int64_t>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_FLOAT32:
-                qc.add_column_selection<float>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<float>>(coords[dim_index]),
-                    col->domain_slot<float>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_FLOAT64:
-                qc.add_column_selection<double>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<double>>(coords[dim_index]),
-                    col->domain_slot<double>(*ctx_, *arr_, which_kind));
-                break;
-            case TILEDB_STRING_UTF8:
-            case TILEDB_STRING_ASCII:
-                qc.add_column_selection(dim_index, std::get<SOMAColumnSelection<std::string>>(coords[dim_index]));
-                break;
-            default:
-                throw TileDBSOMAError(
-                    fmt::format("Unknown dimension type {}", impl::type_to_str(col->domain_type().value())));
-        }
-    }
-
-    auto soma_delete_cond = qc.get_soma_query_condition();
-    if (!soma_delete_cond.is_initialized()) {
+    auto qc = create_coordinate_query_condition(coords);
+    if (!qc.has_value()) {
         throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
     }
-    delete_cells_impl(soma_delete_cond.query_condition());
+    delete_cells_impl(qc.value());
 }
 
 }  // namespace tiledbsoma
