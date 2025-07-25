@@ -5,12 +5,27 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, Union
 
+import _pytest
 import numpy as np
 import pandas as pd
 import pytest
 from _pytest._code import ExceptionInfo
 from _pytest.logging import LogCaptureFixture
-from _pytest.python_api import E, RaisesContext
+from packaging.version import Version
+from typing_extensions import TypeVar
+
+if Version(_pytest.__version__) < Version("8.4.0"):
+    from _pytest.python_api import RaisesContext
+
+    E = TypeVar("E", bound=BaseException, default=BaseException)
+    MaybeRaisesReturn = Union[RaisesContext[E], ExceptionInfo[E], nullcontext]
+else:
+    from _pytest.raises import RaisesExc
+
+    E = TypeVar("E", bound=BaseException, default=BaseException)
+    MaybeRaisesReturn = Union[RaisesExc[E], ExceptionInfo[E], nullcontext]
+
+
 from anndata import AnnData
 from numpy import array_equal
 from pandas._testing import assert_frame_equal, assert_series_equal
