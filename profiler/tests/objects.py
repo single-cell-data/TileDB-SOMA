@@ -1,14 +1,18 @@
 import tarfile
 import tempfile
+from pathlib import Path
 
 import tiledbsoma
 
+if not Path("../data/simple-testdata").exists():
+    raise RuntimeError("Missing directory '../data/simple-testdata'. Try re-running `make data` from the project root.")
+
 sparse_uri = tempfile.mktemp()
-with tarfile.open("../apis/python/notebooks/data/pbmc3k-sparse.tgz") as handle:
+with tarfile.open("../data/simple-testdata/pbmc3k-sparse.tgz") as handle:
     handle.extractall(sparse_uri)
 
 dense_uri = tempfile.mktemp()
-with tarfile.open("../apis/python/notebooks/data/pbmc3k-dense.tgz") as handle:
+with tarfile.open("../apis/python/data/pbmc3k-dense.tgz") as handle:
     handle.extractall(dense_uri)
 
 # This test is extracted from tutorial_soma_objects.ipynb notebook

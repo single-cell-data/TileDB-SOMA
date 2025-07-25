@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import anndata as ad
 import pytest
 
@@ -17,7 +19,9 @@ class TestAnndataSOMASeurat(TestWritePythonReadR):
         """
         Fixture that will load an h5ad, convert it to SOMA, deploy it to `self.uri` and return a parsed version of it.
         """
-        h5ad_path = "apis/python/testdata/pbmc-small.h5ad"
+        h5ad_path = "data/simple-testdata/pbmc-small.h5ad"
+        if not Path(h5ad_path).exists():
+            raise RuntimeError(f"Missing directory '{h5ad_path}'. Try re-running `make data` from the project root.")
         io.from_h5ad(self.uri, input_path=h5ad_path, measurement_name="RNA")
         return ad.read_h5ad(h5ad_path)
 
