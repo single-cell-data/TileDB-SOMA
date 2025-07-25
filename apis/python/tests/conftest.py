@@ -48,6 +48,8 @@ def soma_tiledb_context(soma_tiledb_config: dict[str, Any] | None) -> tiledbsoma
 @pytest.fixture
 def conftest_pbmc_small_h5ad_path(request) -> Path:
     """Path to a tiny (80x20) h5ad, useful for unit-test / CI runs."""
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc-small.h5ad"
 
 
@@ -84,6 +86,8 @@ def conftest_pbmc_small_exp(conftest_pbmc_small_h5ad_path: Path) -> Experiment:
 @pytest.fixture
 def conftest_pbmc3k_h5ad_path(request) -> Path:
     """Path to a larger (2638x1838) h5ad, which also includes obsm, obsp, and varm arrays."""
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc3k_processed.h5ad"
 
 

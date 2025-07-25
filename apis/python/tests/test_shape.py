@@ -425,6 +425,8 @@ def test_canned_experiments(tmp_path, has_shapes):
     uri = tmp_path.as_posix()
 
     tgz = TESTDATA / "pbmc-exp-without-shapes.tgz" if not has_shapes else TESTDATA / "pbmc-exp-with-shapes.tgz"
+    if not tgz.exists():
+        raise RuntimeError(f"Missing file '{tgz}'. Try running `make data` from the TileDB-SOMA project root.")
 
     with tarfile.open(tgz) as handle:
         if hasattr(tarfile, "data_filter"):
@@ -836,6 +838,8 @@ def test_canned_nonstandard_dataframe_upgrade(tmp_path):
     uri = tmp_path.as_posix()
 
     tgz = TESTDATA / "nonstandard-dataframe-without-shapes.tgz"
+    if not tgz.exists():
+        raise RuntimeError(f"Missing file '{tgz}'. Try running `make data` from the TileDB-SOMA project root.")
 
     with tarfile.open(tgz) as handle:
         if hasattr(tarfile, "data_filter"):
