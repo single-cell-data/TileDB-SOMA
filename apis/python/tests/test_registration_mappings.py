@@ -304,7 +304,7 @@ def test_non_identity_axis_mappings():
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_isolated_anndata_mappings(obs_field_name, var_field_name):
+def test_isolated_anndata_mappings(soma_tiledb_context, obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     rd = tiledbsoma.io.register_anndatas(
         None,
@@ -312,6 +312,7 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
@@ -334,7 +335,7 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_isolated_h5ad_mappings(obs_field_name, var_field_name, tmp_path):
+def test_isolated_h5ad_mappings(soma_tiledb_context, obs_field_name, var_field_name, tmp_path):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name, tmp_path)
     rd = tiledbsoma.io.register_h5ads(
         None,
@@ -342,6 +343,7 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name, tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
     assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
     assert_array_equal(rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data, (2, 1))
