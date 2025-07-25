@@ -63,6 +63,10 @@ def soma_query(uri, condition):
         "n_genes == +480",
         "n_genes >= -1",
         "n_genes > -(+(-1))",
+        # not ops
+        "not n_genes == 480",
+        "not n_genes > 500",
+        "not n_genes < 500",
         # boolean logic
         "percent_mito > 0.02 and n_genes > 700",  # and
         "percent_mito > 0.02 or n_genes > 700",  # or
