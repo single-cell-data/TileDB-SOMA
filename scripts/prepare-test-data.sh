@@ -103,5 +103,7 @@ else
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/subset-soma-04.h5ad
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/x-empty.h5ad
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/x-none.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k-sparse.tgz
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k-dense.tgz
 fi
 echo "   ... finished preparing dataset 'data/$name'."
