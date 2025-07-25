@@ -8,6 +8,9 @@ on:
   # Specify the branch or other ref as required, allowing testing
   # of PRs/branches.
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/python-packaging.yml'
   # Trigger publication to PyPi via new release event.
   release:
     types: [published]
@@ -96,7 +99,7 @@ jobs:
         with:
           xcode-version: '15.4'
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.2
+        uses: pypa/cibuildwheel@v3.1.1
         with:
           package-dir: tiledbsoma.tar.gz
           only: cp${{ matrix.python-version }}-${{ matrix.cibw_build }}
