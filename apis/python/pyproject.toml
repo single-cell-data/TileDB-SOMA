@@ -19,7 +19,7 @@ ignore_errors = true
 
 [tool.ruff]
 fix = true
-preview = true
+preview = true  # enables "beta" rules: https://docs.astral.sh/ruff/preview/
 exclude = ["*.cc"]
 target-version = "py39"
 line-length = 120
@@ -43,6 +43,9 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "ISC",  # flake8-implicit-str-concat
     "LOG",  # flake8-logging
     "PIE",  # flake8-pie
+    "PLC",  # pylint-convention
+    "PLE",  # pylint-error
+    "PLW",  # pylint-warning
     "S",    # flake8-bandit
     "T10",  # flake8-debugger
     "T20",  # flake8-print
@@ -63,6 +66,10 @@ ignore = [
     "S101",     # Use of `assert` detected
     "COM812",   # Ignore recommended by Ruff
     "SIM105",   # contextlib.suppress
+    "PLC0415",  # inport-outside-top-level
+    "PLC2701",  # import-private-name
+    "PLW1514",  # unspecified-encoding
+    "PLW2901",  # redefined-loop-name
 ]
 extend-select = []
 
