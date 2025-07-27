@@ -33,7 +33,7 @@ def get_version_hash(version):
     """Return hash of a tagged TileDB version."""
 
     cmd = "git ls-remote --tags https://github.com/TileDB-Inc/TileDB.git"
-    output = run(cmd, shell=True, capture_output=True).stdout.decode()
+    output = run(cmd, check=False, shell=True, capture_output=True).stdout.decode()
 
     m = re.search(rf"\s(\S+)\s+refs/tags/{version}\s", output)
     if m:
