@@ -53,7 +53,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Check out TileDB-SOMA
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - name: Current commit
+        run: git log -1 --one-line
 
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
@@ -72,23 +78,15 @@ jobs:
         with:
           xcode-version: '15.4'
 
+      - name: Show XCode version
+        run: clang --version
+
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
           cache-dependency-path: ./apis/python/setup.py
-
-      - name: Show XCode version
-        run: clang --version
-
-      - name: Check out TileDB-SOMA
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # ensure we get all tags to inform package version determination
-
-      - name: Log pip dependencies
-        run: pip list
 
       - name: Install tiledbsoma
         run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
@@ -109,6 +107,9 @@ jobs:
             pyarrow==${{matrix.pyarrow}} \
             scanpy==${{matrix.scanpy}} \
             scipy==${{matrix.scipy}}
+
+      - name: Log pip dependencies
+        run: pip list
 
       - name: Show package versions
         run: python scripts/show-versions.py
