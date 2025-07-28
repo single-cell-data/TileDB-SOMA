@@ -44,9 +44,9 @@ from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ht_util import posix_filename
 
 if TYPE_CHECKING:
-    Ex = TypeVar("Ex", covariant=True, default=Any)
+    Ex_co = TypeVar("Ex_co", covariant=True, default=Any)
 else:
-    Ex = TypeVar("Ex", covariant=True)
+    Ex_co = TypeVar("Ex_co", covariant=True)
 
 T = TypeVar("T")
 
@@ -318,14 +318,14 @@ def monomorphic_list(
 
 
 def dictionaries_unique_by(
-    keys: st.SearchStrategy[Ex],
+    keys: st.SearchStrategy[Ex_co],
     values: st.SearchStrategy[T],
     *,
     dict_class: type = dict,
     min_size: int = 0,
     max_size: int | None = None,
-    unique_by: Callable[[Ex], Hashable] | tuple[Callable[[Ex], Hashable], ...] | None = None,
-) -> st.SearchStrategy[dict[Ex, T]]:
+    unique_by: Callable[[Ex_co], Hashable] | tuple[Callable[[Ex_co], Hashable], ...] | None = None,
+) -> st.SearchStrategy[dict[Ex_co, T]]:
     """
     Identical to hypothesis.strategies.dictionaries, except it allows user-configurable
     `unique_by` param, AND has less error checking.

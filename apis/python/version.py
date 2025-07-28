@@ -68,7 +68,7 @@ __license__ = "This file is placed into the public domain."
 __maintainer__ = "Michal Nazarewicz"
 __email__ = "mina86@mina86.com"
 
-__all__ = "getVersion"
+__all__ = ("get_version",)
 
 
 import re

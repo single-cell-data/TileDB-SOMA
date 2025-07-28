@@ -78,8 +78,8 @@ def make_relative_path(uri: str, relative_to: str) -> str:
     p_uri = urllib.parse.urlparse(uri)
     p_relative_to = urllib.parse.urlparse(relative_to)
 
-    uri_scheme = p_uri.scheme if p_uri.scheme != "" else "file"
-    relative_to_scheme = p_relative_to.scheme if p_relative_to.scheme != "" else "file"
+    uri_scheme = p_uri.scheme if p_uri.scheme else "file"
+    relative_to_scheme = p_relative_to.scheme if p_relative_to.scheme else "file"
     if uri_scheme != relative_to_scheme:
         raise ValueError("Unable to make relative path between URIs with different scheme")
 
@@ -104,7 +104,7 @@ def uri_joinpath(base: str, path: str) -> str:
     if len(path) == 0:
         return base
 
-    if p_base.scheme == "" or p_base.scheme == "file":
+    if not p_base.scheme or p_base.scheme == "file":
         # if a file path, just use pathlib.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
     else:

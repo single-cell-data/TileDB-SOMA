@@ -225,7 +225,7 @@ def test_metadata_marshalling_OK(soma_object, test_value):
         else:
             # Since an empty string is transformed to a NULL byte by numpy, passing a NULL byte is treated accordingly.
             if test_value == "\x00":
-                assert val == ""
+                assert not val
             else:
                 assert val == test_value
 

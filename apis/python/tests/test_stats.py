@@ -26,8 +26,8 @@ def test_stats(tmp_path, capsys: pytest.CaptureFixture[str]):
     tiledbsoma.tiledbsoma_stats_dump()
     tiledbsoma.tiledbsoma_stats_disable()
     stdout, stderr = capsys.readouterr()
-    assert stdout != ""
-    assert stderr == ""
+    assert stdout
+    assert not stderr
     print(f"tiledbsoma_stats_dump() = {stdout}")
     tiledbsoma.show_package_versions()
 

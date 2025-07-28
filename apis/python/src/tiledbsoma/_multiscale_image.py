@@ -513,8 +513,7 @@ class MultiscaleImage(
             for val in self._levels:
                 if val.name == level:
                     return val
-            else:
-                raise KeyError(f"No level with name '{level}'")
+            raise KeyError(f"No level with name '{level}'")
 
         # by index
         return self._levels[level]
@@ -640,8 +639,7 @@ class MultiscaleImage(
             for val in self._levels:
                 if val.name == level:
                     return val.shape
-            else:
-                raise KeyError(f"No level with name '{level}'")
+            raise KeyError(f"No level with name '{level}'")
 
         # by index
         return self._levels[level].shape
