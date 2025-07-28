@@ -1437,6 +1437,7 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
     int64_t expected_result_num{0};
     std::vector<int64_t> expected_joinids{};
     std::vector<int32_t> expected_data{};
+    std::optional<QueryCondition> value_filter{std::nullopt};
 
     auto check_delete = [&](const std::string& log_note) {
         INFO(log_note);
@@ -1446,7 +1447,7 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
         {
             INFO("Delete cells from the dataframe.");
             auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
-            df->delete_cells(delete_coords);
+            df->delete_cells(delete_coords, value_filter);
             df->close();
         }
 
@@ -1486,6 +1487,12 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
         CHECK_THROWS_AS(df->delete_cells(delete_coords), std::bad_variant_access);
     }
 
+    SECTION("Error - must have some constraint") {
+        INFO("Check throws if no constraint set.");
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        CHECK_THROWS_AS(df->delete_cells(delete_coords), std::invalid_argument);
+    }
+
     SECTION("Delete all by slice") {
         expected_result_num = 0;
         delete_coords.assign({SOMASliceSelection<int64_t>(-10, 10)});
@@ -1505,6 +1512,25 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
         expected_data.assign({1, 2, 3, 4, 5, 6, 7});
         delete_coords.assign({SOMASliceSelection<int64_t>(7, 10)});
         check_delete("Delete final value with slice");
+    }
+
+    SECTION("Delete with coords and value filter") {
+        expected_result_num = 6;
+        expected_joinids.assign({0, 1, 2, 5, 6, 7});
+        expected_data.assign({1, 2, 3, 6, 7, 8});
+        int32_t max_value{3};
+        delete_coords.assign({SOMASliceSelection<int64_t>(0, 4)});
+        value_filter = QueryCondition::create(*ctx->tiledb_ctx(), "attr1", max_value, TILEDB_GT);
+        check_delete("Delete using coords and value filter");
+    }
+
+    SECTION("Delete using value filter only") {
+        expected_result_num = 4;
+        expected_joinids.assign({0, 1, 2, 3});
+        expected_data.assign({1, 2, 3, 4});
+        int32_t max_value{4};
+        value_filter = QueryCondition::create(*ctx->tiledb_ctx(), "attr1", max_value, TILEDB_GT);
+        check_delete("Delete using value filter only");
     }
 }
 
@@ -1806,9 +1832,9 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
         check_delete("Delete multiple point selections");
     }
     SECTION("Delete mixed selection") {
-        expected_result_num = 9;
+        expected_result_num = 10;
         expected_joinids.assign({0, 0, 0, 1, 1, 2, 2, 3, 3, 3});
-        expected_index.assign({0, 1, 2, 0, 2, 0, 2, 0, 1, 2});
+        expected_index.assign({0, 1, 2, 0, 1, 0, 1, 0, 1, 2});
         expected_data.assign({1, 2, 3, 4, 5, 7, 8, 10, 11, 12});
         std::vector<uint32_t> index_points{2};
         delete_coords.assign({SOMASliceSelection<int64_t>(1, 2), SOMAPointSelection<uint32_t>(index_points)});

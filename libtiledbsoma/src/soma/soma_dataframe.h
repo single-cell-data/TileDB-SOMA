@@ -15,6 +15,7 @@
 #define SOMA_DATAFRAME
 
 #include <filesystem>
+#include <optional>
 
 #include "../common/soma_column_selection.h"
 #include "soma_array.h"
@@ -232,7 +233,9 @@ class SOMADataFrame : public SOMAArray {
      *
      * @param coords A per-dimension vector of coordinates - the intersection of which is the cells to delete.
      */
-    void delete_cells(const std::vector<AnySOMAColumnSelection>& coords);
+    void delete_cells(
+        const std::vector<AnySOMAColumnSelection>& coords,
+        const std::optional<QueryCondition>& value_filter = std::nullopt);
 };
 
 }  // namespace tiledbsoma
