@@ -1,10 +1,5 @@
 exclude: ^doc/source/
 repos:
-  - repo: https://github.com/psf/black
-    rev: "25.1.0"
-    hooks:
-    - id: black
-      args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.10
     hooks:

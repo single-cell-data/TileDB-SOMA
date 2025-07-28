@@ -719,7 +719,8 @@ def arrays_equal(
             pa.compute.equal(
                 combine_chunks(read).dictionary_decode(),
                 combine_chunks(expected).dictionary_decode(),
-            )
+            ),
+            min_count=0,
         )
         if not is_eq:
             note("arrays_equal: dictionary arrays not equal")
