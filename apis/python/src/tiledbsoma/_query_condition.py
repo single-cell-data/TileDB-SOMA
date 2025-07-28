@@ -487,7 +487,7 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_NameConstant(self, node: ast.Constant) -> ast.Constant:
         return node
 
-    def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1) -> ast.Constant:
+    def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1) -> Union[ast.Constant, clib.PyQueryCondition]:
         if isinstance(node.op, ast.Not):
             operand = self.visit(node.operand)
             if not isinstance(operand, clib.PyQueryCondition):
