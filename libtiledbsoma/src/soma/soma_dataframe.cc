@@ -254,12 +254,20 @@ std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_maxshape() {
     return _maybe_soma_joinid_maxshape();
 }
 
-void SOMADataFrame::delete_cells(const std::vector<AnySOMAColumnSelection>& coords) {
-    auto qc = create_coordinate_query_condition(coords);
-    if (!qc.has_value()) {
-        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
+void SOMADataFrame::delete_cells(
+    const std::vector<AnySOMAColumnSelection>& coords, const std::optional<QueryCondition>& value_filter) {
+    auto coord_qc = create_coordinate_query_condition(coords);
+    if (coord_qc.has_value()) {
+        if (value_filter.has_value()) {
+            return delete_cells_impl(coord_qc->combine(value_filter.value(), TILEDB_AND));
+        } else {
+            return delete_cells_impl(coord_qc.value());
+        }
+    } else if (value_filter.has_value()) {
+        return delete_cells_impl(value_filter.value());
     }
-    delete_cells_impl(qc.value());
+    throw std::invalid_argument(
+        "Cannot delete cells. At least one coordinate with values or a value filter must be provided.");
 }
 
 }  // namespace tiledbsoma
