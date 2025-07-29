@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Check out TileDB-SOMA
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
         with:
           fetch-tags: true
 
