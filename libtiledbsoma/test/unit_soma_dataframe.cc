@@ -1552,21 +1552,25 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
         SOMADataFrame::create(uri, schema, index_columns, ctx);
     }
 
+    std::vector<std::string> coords{"apple", "banana", "coconut", "durian", "eggplant", "fig"};
+    uint64_t data_size = 0;
+    for (auto& val : coords) {
+        data_size += val.size();
+    }
+    std::vector<uint64_t> coords_offsets{};
+    std::vector<char> coords_data(data_size);
+    uint64_t curr_offset = 0;
+    for (auto& val : coords) {
+        coords_offsets.push_back(curr_offset);
+        memcpy(coords_data.data() + curr_offset, val.data(), val.size());
+        curr_offset += val.size();
+    }
+
+    std::vector<int64_t> index(6);
+    std::iota(index.begin(), index.end(), 0);
+
     {
         INFO("Write data to array.");
-        std::vector<std::string> coords{"apple", "banana", "coconut", "durian", "eggplant", "fig"};
-        std::string coords_data{""};
-        std::vector<uint64_t> coords_offsets{0};
-        uint64_t offset = 0;
-        for (auto& elem : coords) {
-            coords_data += elem;
-            offset += elem.size();
-            coords_offsets.push_back(offset);
-        }
-
-        std::vector<int64_t> index(6);
-        std::iota(index.begin(), index.end(), 0);
-
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
         Query query{*ctx->tiledb_ctx(), array};
         query.set_data_buffer("label", coords_data);
@@ -1587,7 +1591,7 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
         INFO(log_note);
 
         // Create buffers for expected string labels.
-        std::vector<char> expected_label_data(35);
+        std::vector<char> expected_label_data(data_size);
         std::vector<uint64_t> expected_label_offsets{};
         uint64_t curr_offset = 0;
         for (auto& elem : expected_labels) {
@@ -1598,7 +1602,7 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
         expected_label_offsets.resize(7);
         expected_joinids.resize(6);
 
-        std::vector<char> actual_label_data(35);
+        std::vector<char> actual_label_data(data_size);
         std::vector<uint64_t> actual_label_offsets(7);
         std::vector<int64_t> actual_joinids(6);
 
