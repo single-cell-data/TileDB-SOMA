@@ -198,13 +198,17 @@ TEST_CASE(
 
     // Define input data.
     std::vector<std::string> coords{"apple", "banana", "coconut", "durian", "eggplant", "fig"};
-    std::string coords_data{""};
-    std::vector<uint64_t> coords_offsets{0};
-    uint64_t offset = 0;
-    for (auto& elem : coords) {
-        coords_data += elem;
-        offset += elem.size();
-        coords_offsets.push_back(offset);
+    uint64_t data_size = 0;
+    for (auto& val : coords) {
+        data_size += val.size();
+    }
+    std::vector<uint64_t> coords_offsets{};
+    std::vector<char> coords_data(data_size);
+    uint64_t curr_offset = 0;
+    for (auto& val : coords) {
+        coords_offsets.push_back(curr_offset);
+        memcpy(coords_data.data() + curr_offset, val.data(), val.size());
+        curr_offset += val.size();
     }
 
     std::vector<int64_t> index(6);
@@ -230,11 +234,11 @@ TEST_CASE(
             REQUIRE(qc.is_initialized());
 
             // Create a query for the entire array.
-            std::vector<char> expected_coord_data(35);
+            std::vector<char> expected_coord_data(data_size);
             std::vector<uint64_t> expected_coord_offsets(7);
             std::vector<int64_t> expected_index(6);
 
-            std::vector<char> actual_coord_data(35);
+            std::vector<char> actual_coord_data(data_size);
             std::vector<uint64_t> actual_coord_offsets(7);
             std::vector<int64_t> actual_index(6);
 
