@@ -21,10 +21,16 @@ jobs:
     steps:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v4
+
+    - name: Print current commit
+      run: git log -1 --oneline
+
     - name: Build libTileDB-SOMA
       run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
+
     - name: Run libTileDB-SOMA unittests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:

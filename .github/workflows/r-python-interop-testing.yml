@@ -31,7 +31,10 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # ensure we get all tags to inform package version determination
+          fetch-tags: true
+
+      - name: Print current commit
+        run: git log -1 --oneline
 
       - uses: r-lib/actions/setup-pandoc@v2
 

@@ -49,7 +49,11 @@ jobs:
           - {os: ubuntu-latest, r: 'oldrel-1'}
 
     steps:
+      - name: Checkout TileDB-SOMA
       - uses: actions/checkout@v4
+
+      - name: Print current commit
+        run: git log -1 --oneline
 
       - name: Show matrix OS
         run: echo "matrix.config.os:" ${{ matrix.config.os }}
