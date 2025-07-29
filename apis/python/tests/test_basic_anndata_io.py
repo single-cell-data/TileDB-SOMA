@@ -27,8 +27,10 @@ from ._util import TESTDATA, assert_adata_equal, make_pd_df
 
 
 @pytest.fixture
-def h5ad_file_with_obsm_holes(request):
+def h5ad_file_with_obsm_holes():
     # This has zeroes in an obsm matrix so nnz is not num_rows * num_cols
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc3k-with-obsm-zero.h5ad"
 
 
@@ -36,6 +38,8 @@ def h5ad_file_with_obsm_holes(request):
 def h5ad_file_uns_string_arrays(request):
     # This has uns["louvain_colors"] with dtype.char == "U".
     # It also has uns["more_colors"] in the form '[[...]]', as often occurs in the wild.
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc3k.h5ad"
 
 
@@ -53,12 +57,16 @@ def h5ad_file_categorical_int_nan(request):
     #   s[0] = math.nan
     #   adata.obs["categ_int_nan"] = s
     #   adata.write_h5ad("categorical_int_nan.h5ad")
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "categorical_int_nan.h5ad"
 
 
 @pytest.fixture
 def h5ad_file_X_empty(request):
     """adata.X is a zero-cell sparse matrix"""
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "x-empty.h5ad"
 
 
@@ -68,6 +76,8 @@ def h5ad_file_X_none(request):
     adata.X has Python value None if read in non-backed mode; if read in backed
     mode, adata.X is not present as an attribute of adata.
     """
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "x-none.h5ad"
 
 
@@ -269,6 +279,8 @@ def test_resume_mode(resume_mode_h5ad_file, tmp_path):
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
     anything new
     """
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
 
     output_path1 = (tmp_path / "test_resume_mode_1_").as_posix()
     tiledbsoma.io.from_h5ad(output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
@@ -1414,6 +1426,8 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 def test_soma_file_handling_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(str(TESTDATA / "pbmc-small.h5ad"), context.native_context)
     del context  # https://app.shortcut.com/tiledb-inc/story/65864/
     gc.collect()  # Make sure that context is freed
@@ -1433,6 +1447,8 @@ def test_soma_file_handling_65831_65864():
 
 def test_from_anndata_sketchy_key(tmp_path):
     exp_uri = tmp_path.as_posix()
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     adata = ad.read_h5ad(str(TESTDATA / "pbmc-small.h5ad"))
 
     with pytest.raises(ValueError):

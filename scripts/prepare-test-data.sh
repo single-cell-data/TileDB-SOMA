@@ -79,3 +79,31 @@ else
     tar zxf $name.tgz
 fi
 echo "   ... finished preparing dataset 'data/$name'."
+
+name="simple-testdata"
+echo "-- Preparing dataset 'data/$name' ..."
+if [ -d $name ]; then
+    echo "-- Skipping dataset 'data/$name'; directory 'data/$name' already exists."
+else
+    mkdir $name; cd $name
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/categorical_int_nan.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/nonstandard-dataframe-without-shapes.tgz
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc-exp-with-shapes.tgz
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc-exp-without-shapes.tgz
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k-with-obsm-zero.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc-small-x-csc.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc-small-x-csr.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc-small-x-dense.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc-small.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k_processed.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/subset-soma-01.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/subset-soma-02.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/subset-soma-03.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/subset-soma-04.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/x-empty.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/x-none.h5ad
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k-sparse.tgz
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-07-24/pbmc3k-dense.tgz
+fi
+echo "   ... finished preparing dataset 'data/$name'."

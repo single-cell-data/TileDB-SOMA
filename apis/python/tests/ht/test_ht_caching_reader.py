@@ -17,6 +17,8 @@ from tests._util import TESTDATA
 class CachingReaderStateMachine(RuleBasedStateMachine):
     def __init__(self) -> None:
         super().__init__()
+        if not TESTDATA.exists():
+            raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
         self._fname = TESTDATA / "pbmc3k.h5ad"
 
     @initialize()
