@@ -54,12 +54,12 @@ jobs:
 
     steps:
       - name: Check out TileDB-SOMA
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
         with:
           fetch-tags: true
 
       - name: Current commit
-        run: git log -1 --one-line
+        run: git log -1 --oneline
 
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
