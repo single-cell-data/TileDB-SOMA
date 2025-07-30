@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ._soma_array import SOMAArray
 
 
-class SOMAIndexValueFilter:
+class CoordinateValueFilter:
     _handle: clib.SOMAIndexColumnFilter
     _array: SOMAArray
 

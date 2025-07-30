@@ -28,16 +28,16 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_column_filter(py::module& m) {
-    py::class_<SOMAIndexValueFilter>(m, "SOMAIndexValueFilter")
+    py::class_<CoordinateValueFilter>(m, "CoordinateValueFilter")
         .def(py::init<const SOMAArray&>())
         .def(
             "add_arrow_points", []() {}, "column_index"_a, "points"_a)
-        .def("add_int64_slice", &SOMAIndexValueFilter::<int64_t>add_slice)
+        .def("add_int64_slice", &CoordinateValueFilter::<int64_t>add_slice)
         .def("add_int64_point_selection", &SOMAIndexColumnFilter::<int64_t>add_points)
-        .def("add_point_selection", &SOMAIndexValueFilter::add_points)
-        .def("add_slice", &SOMAIndexValueFilter::add_slice)
-        .def("add_string_slice", &SOMAIndexValueFilter::add_slice)
-        .def("add_string_point_selection", &SOMAIndexValueFilter::add_string_points);
+        .def("add_point_selection", &CoordinateValueFilter::add_points)
+        .def("add_slice", &CoordinateValueFilter::add_slice)
+        .def("add_string_slice", &CoordinateValueFilter::add_slice)
+        .def("add_string_point_selection", &CoordinateValueFilter::add_string_points);
 }
 
 }  // namespace libtiledbsomacpp

@@ -24,6 +24,7 @@
 #include "utils/transformer.h"
 #include "utils/stats.h"
 #include "utils/version.h"
+#include "tiledb_adapter/soma_query_condition.h" // TODO: Change before merging
 #include "soma/enums.h"
 #include "soma/logger_public.h"
 #include "soma/soma_context.h"
