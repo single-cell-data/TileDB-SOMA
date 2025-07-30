@@ -1210,7 +1210,7 @@ TEST_CASE_METHOD(
     }
 }
 
-TEST_CASE("SOMADataFrame: query condition for multi-index dataframe", "[SOMADataFrame][SOMAQueryCondition]") {
+TEST_CASE("SOMADataFrame: query condition for multi-index dataframe", "[SOMADataFrame][SOMAValueFilter]") {
     // Create a dataframe with soma_joinid as the only index column.
     auto ctx = std::make_shared<SOMAContext>();
     auto tiledb_ctx = ctx->tiledb_ctx();

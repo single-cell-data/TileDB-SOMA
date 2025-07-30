@@ -1150,7 +1150,7 @@ std::optional<QueryCondition> SOMAArray::create_coordinate_query_condition(
     }
 
     auto which_kind = has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain;
-    SOMACoordQueryCondition coord_qc{*ctx_, dimension_names()};
+    SOMAIndexValueFilter coord_qc{*ctx_, dimension_names()};
     for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
         auto col = get_column(dim_index);
         switch (col->domain_type().value()) {
