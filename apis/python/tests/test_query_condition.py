@@ -208,6 +208,7 @@ def test_query_condition_reset():
         '"',
         "'",
         "attr(3) > 1attr(b) == 3",
+        "not > a",
     ],
 )
 def test_parsing_error_conditions(malformed_condition):
@@ -234,7 +235,6 @@ def test_parsing_error_conditions(malformed_condition):
         "attr() > 20",
         "n_genes < -val(-1)",
         "louvain in []",
-        "not > a",
     ],
 )
 def test_eval_error_conditions(malformed_condition):
