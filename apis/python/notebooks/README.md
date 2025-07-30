@@ -1,1 +1,1 @@
-If you add notebooks here, please also update the symlinks in `/doc/source/notebooks`.
+See https://cloud.tiledb.com/academy/structure/life-sciences/single-cell/tutorials/ for tutorials on using TileDB-SOMA.
