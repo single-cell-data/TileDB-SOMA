@@ -30,33 +30,33 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAQueryCondition {
+class SOMAValueFilter {
    public:
-    SOMAQueryCondition() = default;
-    SOMAQueryCondition(SOMAQueryCondition&& other) = default;
-    SOMAQueryCondition(const SOMAQueryCondition& other) = default;
-    ~SOMAQueryCondition() = default;
+    SOMAValueFilter() = default;
+    SOMAValueFilter(SOMAValueFilter&& other) = default;
+    SOMAValueFilter(const SOMAValueFilter& other) = default;
+    ~SOMAValueFilter() = default;
 
-    SOMAQueryCondition& operator=(const SOMAQueryCondition& other) = default;
-    SOMAQueryCondition& operator=(SOMAQueryCondition&& other) = default;
+    SOMAValueFilter& operator=(const SOMAValueFilter& other) = default;
+    SOMAValueFilter& operator=(SOMAValueFilter&& other) = default;
 
     /**
-     * Create a SOMAQueryCondition from an initialized TileDB query condition.
+     * Create a SOMAValueFilter from an initialized TileDB query condition.
      *
      * Important: The TileDB QueryCondtion must be initialized.
      *
      * @param qc The initialized TileDB query condition.
      */
-    SOMAQueryCondition(const QueryCondition& qc);
+    SOMAValueFilter(const QueryCondition& qc);
 
     /**
-     * Create a SOMAQueryCondition from an initialized TileDB query condition.
+     * Create a SOMAValueFilter from an initialized TileDB query condition.
      *
      * Important: The TileDB QueryCondtion must be initialized.
      *
      * @param qc The initialized TileDB query condition.
      */
-    SOMAQueryCondition(QueryCondition&& qc);
+    SOMAValueFilter(QueryCondition&& qc);
 
     /**
      * Create a query condition from a slice.
@@ -67,7 +67,7 @@ class SOMAQueryCondition {
      * @param stop_value The end of the range (inclusive).
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
-    static SOMAQueryCondition create_from_range(
+    static SOMAValueFilter create_from_range(
         const Context& ctx, const std::string& column_name, T start_value, T stop_value) {
         if (stop_value < start_value) {
             // Use sstream beacuse we don't want to include fmt directly in external header.
@@ -77,7 +77,7 @@ class SOMAQueryCondition {
                   "than or equal to the starting value.";
             throw std::invalid_argument(ss.str());
         }
-        return SOMAQueryCondition(
+        return SOMAValueFilter(
             QueryCondition::create<T>(ctx, column_name, start_value, TILEDB_GE)
                 .combine(QueryCondition::create<T>(ctx, column_name, stop_value, TILEDB_LE), TILEDB_AND));
     }
@@ -89,7 +89,7 @@ class SOMAQueryCondition {
      * @param start_value The start of the range (inclusive).
      * @param stop_value The end of the range (inclusive).
      */
-    static SOMAQueryCondition create_from_range(
+    static SOMAValueFilter create_from_range(
         const Context& ctx,
         const std::string& column_name,
         const std::string& start_value,
@@ -103,8 +103,7 @@ class SOMAQueryCondition {
      * @param values The values of the points
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
-    static SOMAQueryCondition create_from_points(
-        const Context& ctx, const std::string& column_name, std::span<T> values) {
+    static SOMAValueFilter create_from_points(const Context& ctx, const std::string& column_name, std::span<T> values) {
         if (values.empty()) {
             // Use sstream beacuse we don't want to include fmt directly in external header.
             std::stringstream ss;
@@ -129,7 +128,7 @@ class SOMAQueryCondition {
         return QueryCondition(ctx, qc);
     }
 
-    static SOMAQueryCondition create_from_points(
+    static SOMAValueFilter create_from_points(
         const Context& ctx, const std::string& column_name, std::span<std::string> values);
     /**
      * Return if the query condition is initialized.
@@ -153,14 +152,14 @@ class SOMAQueryCondition {
     std::optional<QueryCondition> qc_;
 };
 
-class SOMACoordQueryCondition {
+class SOMAIndexValueFilter {
    public:
-    SOMACoordQueryCondition() = delete;
-    SOMACoordQueryCondition(const SOMAContext& ctx, const std::vector<std::string>& dim_names);
+    SOMAIndexValueFilter() = delete;
+    SOMAIndexValueFilter(const SOMAContext& ctx, const std::vector<std::string>& dim_names);
 
-    SOMACoordQueryCondition(SOMACoordQueryCondition&& other) = default;
-    SOMACoordQueryCondition(const SOMACoordQueryCondition& other) = default;
-    ~SOMACoordQueryCondition() = default;
+    SOMAIndexValueFilter(SOMAIndexValueFilter&& other) = default;
+    SOMAIndexValueFilter(const SOMAIndexValueFilter& other) = default;
+    ~SOMAIndexValueFilter() = default;
 
     /**
      * @brief Add a constraint to a column.
@@ -182,7 +181,7 @@ class SOMACoordQueryCondition {
      * @param domain Optional domain of the column the selection is applied to.
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
-    SOMACoordQueryCondition& add_column_selection(
+    SOMAIndexValueFilter& add_column_selection(
         int64_t col_index, SOMAColumnSelection<T> selection, const std::pair<T, T>& domain) {
         std::visit(
             [&](auto&& val) {
@@ -198,7 +197,7 @@ class SOMACoordQueryCondition {
                     }
                     add_coordinate_query_condition(
                         col_index,
-                        SOMAQueryCondition::create_from_range<T>(*ctx_, dim_names_[col_index], val.start, val.stop));
+                        SOMAValueFilter::create_from_range<T>(*ctx_, dim_names_[col_index], val.start, val.stop));
 
                 } else if constexpr (std::is_same_v<S, SOMAPointSelection<T>>) {
                     if (!val.is_subset(domain)) {
@@ -210,7 +209,7 @@ class SOMACoordQueryCondition {
                         throw std::out_of_range(ss.str());
                     }
                     add_coordinate_query_condition(
-                        col_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[col_index], val.points));
+                        col_index, SOMAValueFilter::create_from_points<T>(*ctx_, dim_names_[col_index], val.points));
                 }
                 // Otherwise monostate: do nothing.
             },
@@ -233,7 +232,7 @@ class SOMACoordQueryCondition {
      * @param col_index The index of the column 
      * @param selection The coordinate selection to apply to the columns.
      */
-    SOMACoordQueryCondition& add_column_selection(int64_t col_index, SOMAColumnSelection<std::string> selection);
+    SOMAIndexValueFilter& add_column_selection(int64_t col_index, SOMAColumnSelection<std::string> selection);
 
     /**
      * Returns `true` if at least one query condition is set.
@@ -243,7 +242,7 @@ class SOMACoordQueryCondition {
     /**
      * Returns a SOMA query condition that queries for the currently set coordinates.
      */
-    SOMAQueryCondition get_soma_query_condition() const;
+    SOMAValueFilter get_soma_query_condition() const;
 
     /**
      * Returns a TileDB query condition that queries for the currently set coordinates.
@@ -256,7 +255,7 @@ class SOMACoordQueryCondition {
 
    private:
     /**Add a query condition to a coordinate. */
-    SOMACoordQueryCondition& add_coordinate_query_condition(int64_t index, SOMAQueryCondition&& qc);
+    SOMAIndexValueFilter& add_coordinate_query_condition(int64_t index, SOMAValueFilter&& qc);
 
     /** TileDB context required for creating query conditions. */
     std::shared_ptr<Context> ctx_;
@@ -265,7 +264,7 @@ class SOMACoordQueryCondition {
     std::vector<std::string> dim_names_;
 
     /** Query condition for coordinates. */
-    std::vector<SOMAQueryCondition> coord_qc_;
+    std::vector<SOMAValueFilter> coord_qc_;
 };
 
 }  // namespace tiledbsoma

@@ -110,7 +110,7 @@ void SOMASparseNDArray::delete_cells(const std::vector<SOMAColumnSelection<int64
     }
     const auto& array_shape = shape();
 
-    SOMACoordQueryCondition qc{*ctx_, dimension_names()};
+    SOMAIndexValueFilter qc{*ctx_, dimension_names()};
     for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
         qc.add_column_selection<int64_t>(
             dim_index, coords[dim_index], std::pair<int64_t, int64_t>(0, array_shape[dim_index] - 1));
