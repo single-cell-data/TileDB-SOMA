@@ -127,7 +127,7 @@ TEST_CASE("Test SOMAValueFilter on SparseArray", "[SOMAValueFilter][SOMASparseND
 
     // Full region by range.
     {
-        auto qc = SOMAValueFilter::create_from_range<int64_t>(*tiledb_ctx, "soma_dim_0", 0, 15);
+        auto qc = SOMAValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", 0, 15);
         CHECK(qc.is_initialized());
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range<int64_t>("soma_dim_0", 0, 15);
@@ -137,12 +137,12 @@ TEST_CASE("Test SOMAValueFilter on SparseArray", "[SOMAValueFilter][SOMASparseND
     // Error: invalid range.
     {
         CHECK_THROWS_AS(
-            SOMAValueFilter::create_from_range<int64_t>(*tiledb_ctx, "soma_dim_0", 3, 2), std::invalid_argument);
+            SOMAValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", 3, 2), std::invalid_argument);
     }
 
     // Empty region: out-of-bounds range.
     {
-        auto qc = SOMAValueFilter::create_from_range<int64_t>(*tiledb_ctx, "soma_dim_0", 25, 27);
+        auto qc = SOMAValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", 25, 27);
         CHECK(qc.is_initialized());
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
@@ -164,7 +164,7 @@ TEST_CASE("Test SOMAValueFilter on SparseArray", "[SOMAValueFilter][SOMASparseND
 
     // Region [1:2] by ranges.
     {
-        auto qc = SOMAValueFilter::create_from_range<int64_t>(*tiledb_ctx, "soma_dim_0", 1, 2);
+        auto qc = SOMAValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", 1, 2);
         CHECK(qc.is_initialized());
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range<int64_t>("soma_dim_0", 1, 2);
@@ -309,7 +309,7 @@ TEST_CASE(
     };
 
     {
-        auto qc = SOMAValueFilter::create_from_range(*tiledb_ctx, "label", std::string("a"), std::string("z"));
+        auto qc = SOMAValueFilter::create_from_slice(*tiledb_ctx, "label", std::string("a"), std::string("z"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("apple"), std::string("fig"));
         check_query_condition(qc, subarray, "Read all values by range.");
@@ -318,7 +318,7 @@ TEST_CASE(
     {
         INFO("Invalid range: should throw an std::invalid_argument error");
         CHECK_THROWS_AS(
-            SOMAValueFilter::create_from_range(*tiledb_ctx, "label", std::string("fig"), std::string("apple")),
+            SOMAValueFilter::create_from_slice(*tiledb_ctx, "label", std::string("fig"), std::string("apple")),
             std::invalid_argument);
     }
 
@@ -329,7 +329,7 @@ TEST_CASE(
     }
 
     {
-        auto qc = SOMAValueFilter::create_from_range(*tiledb_ctx, "label", std::string("ca"), std::string("fa"));
+        auto qc = SOMAValueFilter::create_from_slice(*tiledb_ctx, "label", std::string("ca"), std::string("fa"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("ca"), std::string("fa"));
         check_query_condition(qc, subarray, "Create by range.");
@@ -346,7 +346,7 @@ TEST_CASE(
     }
 
     {
-        auto qc = SOMAValueFilter::create_from_range(*tiledb_ctx, "label", std::string("g"), std::string("z"));
+        auto qc = SOMAValueFilter::create_from_slice(*tiledb_ctx, "label", std::string("g"), std::string("z"));
         check_empty_query_condition(qc, "Create by range - no values selected.");
     }
 
@@ -362,7 +362,7 @@ TEST_CASE(
  *
  * This is an ideal test to parametrize with rapidtest when we add it to SOMA.
  */
-TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SOMASparseNDArray]") {
+TEST_CASE("Test CoordinateValueFilter on SparseArray", "[CoordinateValueFilter][SOMASparseNDArray]") {
     // Create a TileDB sparse array with 3 integer dimensions.
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://test-query-condition-sparse";
@@ -403,7 +403,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
     auto check_query_condition =
-        [&](const SOMAIndexValueFilter& qc, const Subarray& subarray, const std::string& log_note) {
+        [&](const CoordinateValueFilter& qc, const Subarray& subarray, const std::string& log_note) {
             INFO(log_note);
 
             // Create a query for the entire array.
@@ -434,7 +434,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
             Subarray qc_subarray(*ctx->tiledb_ctx(), array);
             qc_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
             query2.set_subarray(qc_subarray);
-            query2.set_condition(qc.get_query_condition());
+            query2.set_condition(qc.get_value_filter().query_condition());
             query2.submit();
 
             // Check results.
@@ -446,7 +446,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
             CHECK_THAT(actual_data, Catch::Matchers::Equals(expected_data));
         };
 
-    auto check_empty_query_condition = [&](const SOMAIndexValueFilter& qc, const std::string& log_note) {
+    auto check_empty_query_condition = [&](const CoordinateValueFilter& qc, const std::string& log_note) {
         INFO(log_note);
 
         // Create a query for the entire array.
@@ -468,7 +468,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
         Subarray qc_subarray(*ctx->tiledb_ctx(), array);
         qc_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
         query2.set_subarray(qc_subarray);
-        query2.set_condition(qc.get_query_condition());
+        query2.set_condition(qc.get_value_filter().query_condition());
         query2.submit();
 
         // Check results.
@@ -484,7 +484,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
     std::pair<int64_t, int64_t> domain0{0, 3};
     std::pair<int64_t, int64_t> domain1{0, 2};
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(0, 3), domain0)
             .add_column_selection<int64_t>(1, SOMASliceSelection<int64_t>(0, 2), domain1);
@@ -494,21 +494,21 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Empty region: out-of-bounds range - incorrect domain provided
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(5, 7), std::pair<int64_t, int64_t>(0, 100));
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
 
     // Error: out-of-bounds range.
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         CHECK_THROWS_AS(
             qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(5, 7), domain0), std::out_of_range);
     }
 
     // Empty region: out-of-bounds points - incorrect domain provided
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         std::vector<int64_t> points{5, 7, 11, 10};
         qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), std::pair<int64_t, int64_t>(0, 100));
         check_empty_query_condition(qc, "Points out of bounds: expect no values.");
@@ -516,7 +516,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Error: out-of-bounds points.
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         std::vector<int64_t> points{5, 7, 11, 10};
         CHECK_THROWS_AS(
             qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), domain0), std::out_of_range);
@@ -524,7 +524,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Region [1:2]x[:] by ranges.
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         qc.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(1, 2), {0, 3});
         subarray.add_range<int64_t>(0, 1, 2);
@@ -533,7 +533,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Region [:]x[1:2] by ranges.
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         qc.add_column_selection<int64_t>(1, SOMASliceSelection<int64_t>(1, 2), {0, 2});
         subarray.add_range<int64_t>(1, 1, 2);
@@ -542,7 +542,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Region [0,1,3]x[:] by points (ordered).
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         std::vector<int64_t> points{0, 1, 3};
         qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), {0, 3});
@@ -551,7 +551,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
     }
     // Region [0,1,3]x[:] by points (unordered).
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         std::vector<int64_t> points{3, 0, 1};
         qc.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points), {0, 3});
@@ -561,7 +561,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Region [0,1,3]x[:] by points (multiple conditions).
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         std::vector<int64_t> points1{3};
         std::vector<int64_t> points2{0};
@@ -575,7 +575,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 
     // Region [:]x[0,2] by points.
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         Subarray subarray(*ctx->tiledb_ctx(), array);
         std::vector<int64_t> points{0, 2};
         qc.add_column_selection<int64_t>(1, SOMAPointSelection<int64_t>(points), {0, 3});
@@ -585,7 +585,7 @@ TEST_CASE("Test SOMAIndexValueFilter on SparseArray", "[SOMAIndexValueFilter][SO
 }
 
 TEST_CASE(
-    "Test SOMAIndexValueFilter on SOMADataFrame with string index column",
+    "Test CoordinateValueFilter on SOMADataFrame with string index column",
     "[SOMAValueFilter][SOMADataFrame][string-index]") {
     // Create a TileDB sparse array with 1 integer dimensions.
     auto ctx = std::make_shared<SOMAContext>();
@@ -629,7 +629,7 @@ TEST_CASE(
 
     Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
     auto check_query_condition =
-        [&](const SOMAIndexValueFilter& qc, const Subarray& subarray, const std::string& log_note) {
+        [&](const CoordinateValueFilter& qc, const Subarray& subarray, const std::string& log_note) {
             INFO(log_note);
 
             // Check valid query condition.
@@ -663,7 +663,7 @@ TEST_CASE(
             Subarray qc_subarray(*ctx->tiledb_ctx(), array);
             qc_subarray.add_range(0, std::string("a"), std::string("z"));
             query2.set_subarray(qc_subarray);
-            query2.set_condition(qc.get_query_condition());
+            query2.set_condition(qc.get_value_filter().query_condition());
             query2.submit();
             REQUIRE(query2.query_status() == tiledb::Query::Status::COMPLETE);
 
@@ -676,7 +676,7 @@ TEST_CASE(
             CHECK_THAT(actual_index, Catch::Matchers::Equals(expected_index));
         };
 
-    auto check_empty_query_condition = [&](const SOMAIndexValueFilter& qc, const std::string& log_note) {
+    auto check_empty_query_condition = [&](const CoordinateValueFilter& qc, const std::string& log_note) {
         INFO(log_note);
 
         // Check valid query condition.
@@ -700,7 +700,7 @@ TEST_CASE(
         Subarray qc_subarray(*ctx->tiledb_ctx(), array);
         qc_subarray.add_range(0, std::string("a"), std::string("z"));
         query2.set_subarray(qc_subarray);
-        query2.set_condition(qc.get_query_condition());
+        query2.set_condition(qc.get_value_filter().query_condition());
         query2.submit();
         REQUIRE(query2.query_status() == tiledb::Query::Status::COMPLETE);
 
@@ -714,7 +714,7 @@ TEST_CASE(
     std::vector<std::string> dim_names{"label"};
 
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         qc.add_column_selection(0, SOMASliceSelection<std::string>("a", "z"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("apple"), std::string("fig"));
@@ -723,13 +723,13 @@ TEST_CASE(
 
     {
         INFO("Invalid points: no values selected - should throw an std::invalid_argument error");
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         std::vector<std::string> points{};
         CHECK_THROWS_AS(qc.add_column_selection(0, SOMAPointSelection<std::string>(points)), std::invalid_argument);
     }
 
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         qc.add_column_selection(0, SOMASliceSelection<std::string>("ca", "fa"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("ca"), std::string("fa"));
@@ -737,7 +737,7 @@ TEST_CASE(
     }
 
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         std::vector<std::string> points{"fig", "durian", "banana"};
         qc.add_column_selection(0, SOMAPointSelection<std::string>(points));
         Subarray subarray(*tiledb_ctx, array);
@@ -748,13 +748,13 @@ TEST_CASE(
     }
 
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         qc.add_column_selection(0, SOMASliceSelection<std::string>("g", "z"));
         check_empty_query_condition(qc, "Create by range - no values selected.");
     }
 
     {
-        SOMAIndexValueFilter qc(*ctx, dim_names);
+        CoordinateValueFilter qc(*ctx, dim_names);
         std::vector<std::string> points{"kiwi", "pear", "carrot"};
         qc.add_column_selection(0, SOMAPointSelection<std::string>(points));
         check_empty_query_condition(qc, "Create by points - no values selected.");

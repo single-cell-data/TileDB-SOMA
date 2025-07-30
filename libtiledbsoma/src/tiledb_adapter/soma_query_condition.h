@@ -67,7 +67,7 @@ class SOMAValueFilter {
      * @param stop_value The end of the range (inclusive).
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
-    static SOMAValueFilter create_from_range(
+    static SOMAValueFilter create_from_slice(
         const Context& ctx, const std::string& column_name, T start_value, T stop_value) {
         if (stop_value < start_value) {
             // Use sstream beacuse we don't want to include fmt directly in external header.
@@ -89,7 +89,7 @@ class SOMAValueFilter {
      * @param start_value The start of the range (inclusive).
      * @param stop_value The end of the range (inclusive).
      */
-    static SOMAValueFilter create_from_range(
+    static SOMAValueFilter create_from_slice(
         const Context& ctx,
         const std::string& column_name,
         const std::string& start_value,
@@ -152,14 +152,14 @@ class SOMAValueFilter {
     std::optional<QueryCondition> qc_;
 };
 
-class SOMAIndexValueFilter {
+class CoordinateValueFilter {
    public:
-    SOMAIndexValueFilter() = delete;
-    SOMAIndexValueFilter(const SOMAContext& ctx, const std::vector<std::string>& dim_names);
+    CoordinateValueFilter() = delete;
+    CoordinateValueFilter(const SOMAContext& ctx, const std::vector<std::string>& dim_names);
 
-    SOMAIndexValueFilter(SOMAIndexValueFilter&& other) = default;
-    SOMAIndexValueFilter(const SOMAIndexValueFilter& other) = default;
-    ~SOMAIndexValueFilter() = default;
+    CoordinateValueFilter(CoordinateValueFilter&& other) = default;
+    CoordinateValueFilter(const CoordinateValueFilter& other) = default;
+    ~CoordinateValueFilter() = default;
 
     /**
      * @brief Add a constraint to a column.
@@ -181,7 +181,7 @@ class SOMAIndexValueFilter {
      * @param domain Optional domain of the column the selection is applied to.
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
-    SOMAIndexValueFilter& add_column_selection(
+    CoordinateValueFilter& add_column_selection(
         int64_t col_index, SOMAColumnSelection<T> selection, const std::pair<T, T>& domain) {
         std::visit(
             [&](auto&& val) {
@@ -197,7 +197,7 @@ class SOMAIndexValueFilter {
                     }
                     add_coordinate_query_condition(
                         col_index,
-                        SOMAValueFilter::create_from_range<T>(*ctx_, dim_names_[col_index], val.start, val.stop));
+                        SOMAValueFilter::create_from_slice<T>(*ctx_, dim_names_[col_index], val.start, val.stop));
 
                 } else if constexpr (std::is_same_v<S, SOMAPointSelection<T>>) {
                     if (!val.is_subset(domain)) {
@@ -232,7 +232,7 @@ class SOMAIndexValueFilter {
      * @param col_index The index of the column 
      * @param selection The coordinate selection to apply to the columns.
      */
-    SOMAIndexValueFilter& add_column_selection(int64_t col_index, SOMAColumnSelection<std::string> selection);
+    CoordinateValueFilter& add_column_selection(int64_t col_index, SOMAColumnSelection<std::string> selection);
 
     /**
      * Returns `true` if at least one query condition is set.
@@ -242,20 +242,11 @@ class SOMAIndexValueFilter {
     /**
      * Returns a SOMA query condition that queries for the currently set coordinates.
      */
-    SOMAValueFilter get_soma_query_condition() const;
-
-    /**
-     * Returns a TileDB query condition that queries for the currently set coordinates.
-     * 
-     * Throws an error if no query conditions are set.
-     */
-    inline QueryCondition get_query_condition() const {
-        return get_soma_query_condition().query_condition();
-    }
+    SOMAValueFilter get_value_filter() const;
 
    private:
     /**Add a query condition to a coordinate. */
-    SOMAIndexValueFilter& add_coordinate_query_condition(int64_t index, SOMAValueFilter&& qc);
+    CoordinateValueFilter& add_coordinate_query_condition(int64_t index, SOMAValueFilter&& qc);
 
     /** TileDB context required for creating query conditions. */
     std::shared_ptr<Context> ctx_;
