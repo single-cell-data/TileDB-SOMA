@@ -31,17 +31,7 @@ SOMAValueFilter::SOMAValueFilter(QueryCondition&& qc)
     : qc_{qc} {
 }
 
-SOMAIndexValueFilter::SOMAIndexValueFilter(const SOMAContext& ctx, const std::vector<std::string>& dim_names)
-    : ctx_{ctx.tiledb_ctx()}
-    , dim_names_{dim_names}
-    , coord_qc_(dim_names.size()) {
-}
-
-bool SOMAIndexValueFilter::is_initialized() const {
-    return std::any_of(coord_qc_.cbegin(), coord_qc_.cend(), [](auto qc) { return qc.is_initialized(); });
-}
-
-SOMAValueFilter SOMAValueFilter::create_from_range(
+SOMAValueFilter SOMAValueFilter::create_from_slice(
     const Context& ctx, const std::string& column_name, const std::string& start_value, const std::string& stop_value) {
     if (stop_value < start_value) {
         throw std::invalid_argument(
@@ -90,17 +80,27 @@ SOMAValueFilter SOMAValueFilter::create_from_points(
 }
 
 /**************************************
- * SOMAIndexValueFilter
+ * CoordinateValueFilter
 **************************************/
 
-SOMAIndexValueFilter& SOMAIndexValueFilter::add_column_selection(
+CoordinateValueFilter::CoordinateValueFilter(const SOMAContext& ctx, const std::vector<std::string>& dim_names)
+    : ctx_{ctx.tiledb_ctx()}
+    , dim_names_{dim_names}
+    , coord_qc_(dim_names.size()) {
+}
+
+bool CoordinateValueFilter::is_initialized() const {
+    return std::any_of(coord_qc_.cbegin(), coord_qc_.cend(), [](auto qc) { return qc.is_initialized(); });
+}
+
+CoordinateValueFilter& CoordinateValueFilter::add_column_selection(
     int64_t col_index, SOMAColumnSelection<std::string> selection) {
     std::visit(
         [&](auto&& val) {
             using S = std::decay_t<decltype(val)>;
             if constexpr (std::is_same_v<S, SOMASliceSelection<std::string>>) {
                 add_coordinate_query_condition(
-                    col_index, SOMAValueFilter::create_from_range(*ctx_, dim_names_[col_index], val.start, val.stop));
+                    col_index, SOMAValueFilter::create_from_slice(*ctx_, dim_names_[col_index], val.start, val.stop));
 
             } else if constexpr (std::is_same_v<S, SOMAPointSelection<std::string>>) {
                 add_coordinate_query_condition(
@@ -112,7 +112,7 @@ SOMAIndexValueFilter& SOMAIndexValueFilter::add_column_selection(
     return *this;
 }
 
-SOMAValueFilter SOMAIndexValueFilter::get_soma_query_condition() const {
+SOMAValueFilter CoordinateValueFilter::get_value_filter() const {
     return std::reduce(coord_qc_.cbegin(), coord_qc_.cend(), SOMAValueFilter(), [](const auto& qc1, const auto& qc2) {
         if (qc1.is_initialized()) {
             if (qc2.is_initialized()) {
@@ -124,7 +124,7 @@ SOMAValueFilter SOMAIndexValueFilter::get_soma_query_condition() const {
     });
 }
 
-SOMAIndexValueFilter& SOMAIndexValueFilter::add_coordinate_query_condition(int64_t index, SOMAValueFilter&& qc) {
+CoordinateValueFilter& CoordinateValueFilter::add_coordinate_query_condition(int64_t index, SOMAValueFilter&& qc) {
     if (!qc.is_initialized()) {
         // No-op.
         return *this;
