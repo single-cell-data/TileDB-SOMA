@@ -14,6 +14,7 @@
 #include "soma_query_condition.h"
 
 #include <numeric>
+#include "../utils/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -41,7 +42,7 @@ bool SOMACoordQueryCondition::is_initialized() const {
 }
 
 SOMAQueryCondition SOMAQueryCondition::create_from_range(
-    const Context& ctx, const std::string& elem_name, const std::string& start_value, const std::string& stop_value) {
+    const Context& ctx, const std::string& column_name, const std::string& start_value, const std::string& stop_value) {
     if (stop_value < start_value) {
         throw std::invalid_argument(
             fmt::format(
@@ -49,18 +50,18 @@ SOMAQueryCondition SOMAQueryCondition::create_from_range(
                 "than or equal to the starting value.",
                 start_value,
                 stop_value,
-                elem_name));
+                column_name));
     }
     return SOMAQueryCondition(
-        QueryCondition::create(ctx, elem_name, start_value, TILEDB_GE)
-            .combine(QueryCondition::create(ctx, elem_name, stop_value, TILEDB_LE), TILEDB_AND));
+        QueryCondition::create(ctx, column_name, start_value, TILEDB_GE)
+            .combine(QueryCondition::create(ctx, column_name, stop_value, TILEDB_LE), TILEDB_AND));
 }
 
 SOMAQueryCondition SOMAQueryCondition::create_from_points(
-    const Context& ctx, const std::string& elem_name, std::span<std::string> values) {
+    const Context& ctx, const std::string& column_name, std::span<std::string> values) {
     if (values.empty()) {
         throw std::invalid_argument(
-            fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", elem_name));
+            fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", column_name));
     }
     // Using C API because C++ API only supports std::vector, not std::span.
     uint64_t data_size = 0;
@@ -78,7 +79,7 @@ SOMAQueryCondition SOMAQueryCondition::create_from_points(
     tiledb_query_condition_t* qc;
     ctx.handle_error(tiledb_query_condition_alloc_set_membership(
         ctx.ptr().get(),
-        elem_name.c_str(),
+        column_name.c_str(),
         data.data(),
         data.size(),
         offsets.data(),

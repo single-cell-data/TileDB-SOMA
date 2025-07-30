@@ -9,9 +9,6 @@
  * @section DESCRIPTION
  *
  * This file defines helper functions and classes for using query conditions in SOMA.
- *
- * WARNING: Do not include in public facing header: this directly imports the logger
- * for fmt.
  */
 
 #ifndef TILEDBSOMA_TILEDB_ADAPTER_H
@@ -20,6 +17,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <sstream>
 #include <vector>
 
 #include <tiledb/tiledb.h>
@@ -28,7 +26,6 @@
 #include "../common/soma_column_selection.h"
 #include "../soma/soma_context.h"
 #include "../utils/common.h"
-#include "../utils/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -65,37 +62,36 @@ class SOMAQueryCondition {
      * Create a query condition from a slice.
      *
      * @tparam The type of the element the query condition applies to.
-     * @param elem_name The name of the element the query condition applies to.
+     * @param column_name The name of the element the query condition applies to.
      * @param start_value The start of the range (inclusive).
      * @param stop_value The end of the range (inclusive).
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
     static SOMAQueryCondition create_from_range(
-        const Context& ctx, const std::string& elem_name, T start_value, T stop_value) {
+        const Context& ctx, const std::string& column_name, T start_value, T stop_value) {
         if (stop_value < start_value) {
-            throw std::invalid_argument(
-                fmt::format(
-                    "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
-                    "than or equal to the starting value.",
-                    start_value,
-                    stop_value,
-                    elem_name));
+            // Use sstream beacuse we don't want to include fmt directly in external header.
+            std::stringstream ss;
+            ss << "Cannot set range [" << start_value << ", " << stop_value << "] on column '" << column_name
+               << "'. Invalid range: the final value must be greater "
+                  "than or equal to the starting value.";
+            throw std::invalid_argument(ss.str());
         }
         return SOMAQueryCondition(
-            QueryCondition::create<T>(ctx, elem_name, start_value, TILEDB_GE)
-                .combine(QueryCondition::create<T>(ctx, elem_name, stop_value, TILEDB_LE), TILEDB_AND));
+            QueryCondition::create<T>(ctx, column_name, start_value, TILEDB_GE)
+                .combine(QueryCondition::create<T>(ctx, column_name, stop_value, TILEDB_LE), TILEDB_AND));
     }
 
     /**
      * Create a query condition from a slice.
      *
-     * @param elem_name The name of the element the query condition applies to.
+     * @param column_name The name of the element the query condition applies to.
      * @param start_value The start of the range (inclusive).
      * @param stop_value The end of the range (inclusive).
      */
     static SOMAQueryCondition create_from_range(
         const Context& ctx,
-        const std::string& elem_name,
+        const std::string& column_name,
         const std::string& start_value,
         const std::string& stop_value);
 
@@ -103,15 +99,17 @@ class SOMAQueryCondition {
      * Create a query condition from a series of points on a range.
      *
      * @tparam The type of the element the query condition applies to.
-     * @param elem_name The name of the element the query condition applies to.
+     * @param column_name The name of the element the query condition applies to.
      * @param values The values of the points
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
     static SOMAQueryCondition create_from_points(
-        const Context& ctx, const std::string& elem_name, std::span<T> values) {
+        const Context& ctx, const std::string& column_name, std::span<T> values) {
         if (values.empty()) {
-            throw std::invalid_argument(
-                fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", elem_name));
+            // Use sstream beacuse we don't want to include fmt directly in external header.
+            std::stringstream ss;
+            ss << "Cannot set coordinates on column '" << column_name << "'. No coordinates provided.";
+            throw std::invalid_argument(ss.str());
         }
         // Using C API because C++ API only supports std::vector, not std::span.
         std::vector<uint64_t> offsets(values.size());
@@ -121,7 +119,7 @@ class SOMAQueryCondition {
         tiledb_query_condition_t* qc;
         ctx.handle_error(tiledb_query_condition_alloc_set_membership(
             ctx.ptr().get(),
-            elem_name.c_str(),
+            column_name.c_str(),
             values.data(),
             values.size() * sizeof(T),
             offsets.data(),
@@ -132,7 +130,7 @@ class SOMAQueryCondition {
     }
 
     static SOMAQueryCondition create_from_points(
-        const Context& ctx, const std::string& elem_name, std::span<std::string> values);
+        const Context& ctx, const std::string& column_name, std::span<std::string> values);
     /**
      * Return if the query condition is initialized.
      */
@@ -191,15 +189,12 @@ class SOMACoordQueryCondition {
                 using S = std::decay_t<decltype(val)>;
                 if constexpr (std::is_same_v<S, SOMASliceSelection<T>>) {
                     if (!val.has_overlap(domain)) {
-                        throw std::out_of_range(
-                            fmt::format(
-                                "Non-overlapping slice [{}, {}] on column '{}'. Slice must overlap the current "
-                                "column domain [{}, {}].",
-                                val.start,
-                                val.stop,
-                                dim_names_[col_index],
-                                domain.first,
-                                domain.second));
+                        // Use sstream beacuse we don't want to include fmt directly in external header.
+                        std::stringstream ss;
+                        ss << "Non-overlapping slice [" << val.start << ", " << val.stop << "] on column '"
+                           << dim_names_[col_index] << "'. Slice must overlap the current column domain ["
+                           << domain.first << ", " << domain.second << "].";
+                        throw std::out_of_range(ss.str());
                     }
                     add_coordinate_query_condition(
                         col_index,
@@ -207,13 +202,12 @@ class SOMACoordQueryCondition {
 
                 } else if constexpr (std::is_same_v<S, SOMAPointSelection<T>>) {
                     if (!val.is_subset(domain)) {
-                        throw std::out_of_range(
-                            fmt::format(
-                                "Out-of-bounds coordinates found on column '{}'. Coordinates must be "
-                                "inside column daomain [{}, {}].",
-                                dim_names_[col_index],
-                                domain.first,
-                                domain.second));
+                        // Use sstream beacuse we don't want to include fmt directly in external header.
+                        std::stringstream ss;
+                        ss << "Out-of-bounds coordinates found on column '" << dim_names_[col_index]
+                           << "'. Coordinates must be inside column domain [" << domain.first << ", " << domain.second
+                           << "].";
+                        throw std::out_of_range(ss.str());
                     }
                     add_coordinate_query_condition(
                         col_index, SOMAQueryCondition::create_from_points<T>(*ctx_, dim_names_[col_index], val.points));
