@@ -58,7 +58,7 @@ struct SOMASliceSelection {
      *
      * @param interval The interval to check overlap against.
      */
-    bool has_overlap(std::pair<T, T> interval) {
+    bool has_overlap(std::pair<T, T> interval) const {
         return (stop >= interval.first && start <= interval.second);
     }
 
@@ -74,7 +74,7 @@ struct SOMAPointSelection {
     }
 
     /** Returns if the points are strictly contained within the requested interval. */
-    bool is_subset(const std::pair<T, T>& interval) {
+    bool is_subset(const std::pair<T, T>& interval) const {
         /** Can switch to the following for C++23
         return std::any_of(
             points.cbegin(), points.cend(), [&](auto val) { return val < interval.first || val > interval.second; });
