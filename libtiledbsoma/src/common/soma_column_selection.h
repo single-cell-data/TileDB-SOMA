@@ -12,10 +12,11 @@
  *
  */
 
-#ifndef SOMA_COORDINATE_SELECTION_H
-#define SOMA_COORDINATE_SELECTION_H
+#ifndef SOMA_COLUMN_SELECTION_H
+#define SOMA_COLUMN_SELECTION_H
 
 #include <math.h>
+#include <optional>
 #include <span>
 #include <sstream>
 #include <string>
@@ -35,19 +36,19 @@ struct SOMASliceSelection {
      * @param slice_start The first value (inclusive) of the slice.
      * @param slice_stop The last value (inclusive) of the slice.
      */
-    SOMASliceSelection(T slice_start, T slice_stop)
+    SOMASliceSelection(std::optional<T> slice_start, std::optional<T> slice_stop)
         : start{slice_start}
         , stop{slice_stop} {
-        if (stop < start) {
+        if (stop.has_value() && start.has_value() && stop.value() < start.value()) {
             // Using sstream because we don't want to include fmt directly in external header.
             std::stringstream ss;
-            ss << "Invalid slice [ " << start << ", " << stop
+            ss << "Invalid slice [ " << start.value() << ", " << stop.value()
                << "]. The lower bound must be less than or equal to the upper bound.";
             throw std::invalid_argument(ss.str());
         }
     }
 
-    SOMASliceSelection(const std::pair<T, T>& slice)
+    SOMASliceSelection(const std::pair<std::optional<T>, std::optional<T>>& slice)
         : SOMASliceSelection(slice.first, slice.second) {};
 
     /** Returns if the slice overlaps a requested interval. 
@@ -59,17 +60,17 @@ struct SOMASliceSelection {
      * @param interval The interval to check overlap against.
      */
     bool has_overlap(std::pair<T, T> interval) const {
-        return (stop >= interval.first && start <= interval.second);
+        return ((!stop.has_value() || stop >= interval.first) && (!start.has_value() || start <= interval.second));
     }
 
-    T start;
-    T stop;
+    std::optional<T> start;
+    std::optional<T> stop;
 };
 
 template <typename T>
 struct SOMAPointSelection {
    public:
-    SOMAPointSelection(std::span<T> point_data)
+    SOMAPointSelection(std::span<const T> point_data)
         : points{point_data} {
     }
 
@@ -88,7 +89,7 @@ struct SOMAPointSelection {
     }
 
     /** The points to select for. */
-    std::span<T> points;
+    std::span<const T> points;
 };
 
 template <typename T>

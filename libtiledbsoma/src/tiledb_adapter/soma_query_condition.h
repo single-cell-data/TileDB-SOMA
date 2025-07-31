@@ -69,18 +69,19 @@ class SOMAValueFilter {
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
     static SOMAValueFilter create_from_slice(
-        const Context& ctx, const std::string& column_name, T start_value, T stop_value) {
-        if (stop_value < start_value) {
-            // Use sstream beacuse we don't want to include fmt directly in external header.
-            std::stringstream ss;
-            ss << "Cannot set range [" << start_value << ", " << stop_value << "] on column '" << column_name
-               << "'. Invalid range: the final value must be greater "
-                  "than or equal to the starting value.";
-            throw std::invalid_argument(ss.str());
+        const Context& ctx, const std::string& column_name, const SOMASliceSelection<T>& slice) {
+        if (slice.start.has_value() && slice.stop.has_value()) {
+            return SOMAValueFilter(
+                QueryCondition::create<T>(ctx, column_name, slice.start.value(), TILEDB_GE)
+                    .combine(QueryCondition::create<T>(ctx, column_name, slice.stop.value(), TILEDB_LE), TILEDB_AND));
         }
-        return SOMAValueFilter(
-            QueryCondition::create<T>(ctx, column_name, start_value, TILEDB_GE)
-                .combine(QueryCondition::create<T>(ctx, column_name, stop_value, TILEDB_LE), TILEDB_AND));
+        if (slice.start.has_value()) {
+            return SOMAValueFilter(QueryCondition::create<T>(ctx, column_name, slice.start.value(), TILEDB_GE));
+        }
+        if (slice.stop.has_value()) {
+            return SOMAValueFilter(QueryCondition::create<T>(ctx, column_name, slice.stop.value(), TILEDB_LE));
+        }
+        return SOMAValueFilter();
     }
 
     /**
@@ -91,10 +92,7 @@ class SOMAValueFilter {
      * @param stop_value The end of the range (inclusive).
      */
     static SOMAValueFilter create_from_slice(
-        const Context& ctx,
-        const std::string& column_name,
-        const std::string& start_value,
-        const std::string& stop_value);
+        const Context& ctx, const std::string& column_name, const SOMASliceSelection<std::string>& slice);
 
     /**
      * Create a query condition from a series of points on a range.
@@ -104,24 +102,25 @@ class SOMAValueFilter {
      * @param values The values of the points
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
-    static SOMAValueFilter create_from_points(const Context& ctx, const std::string& column_name, std::span<T> values) {
-        if (values.empty()) {
+    static SOMAValueFilter create_from_points(
+        const Context& ctx, const std::string& column_name, SOMAPointSelection<T> values) {
+        if (values.points.empty()) {
             // Use sstream beacuse we don't want to include fmt directly in external header.
             std::stringstream ss;
             ss << "Cannot set coordinates on column '" << column_name << "'. No coordinates provided.";
             throw std::invalid_argument(ss.str());
         }
         // Using C API because C++ API only supports std::vector, not std::span.
-        std::vector<uint64_t> offsets(values.size());
-        for (size_t index = 0; index < values.size(); ++index) {
+        std::vector<uint64_t> offsets(values.points.size());
+        for (size_t index = 0; index < values.points.size(); ++index) {
             offsets[index] = index * sizeof(T);
         }
         tiledb_query_condition_t* qc;
         ctx.handle_error(tiledb_query_condition_alloc_set_membership(
             ctx.ptr().get(),
             column_name.c_str(),
-            values.data(),
-            values.size() * sizeof(T),
+            values.points.data(),
+            values.points.size() * sizeof(T),
             offsets.data(),
             offsets.size() * sizeof(uint64_t),
             TILEDB_IN,
@@ -130,7 +129,7 @@ class SOMAValueFilter {
     }
 
     static SOMAValueFilter create_from_points(
-        const Context& ctx, const std::string& column_name, std::span<std::string> values);
+        const Context& ctx, const std::string& column_name, SOMAPointSelection<std::string> values);
     /**
      * Return if the query condition is initialized.
      */
@@ -183,14 +182,13 @@ class CoordinateValueFilter {
         if (!selection.has_overlap(domain)) {
             // Use sstream beacuse we don't want to include fmt directly in external header.
             std::stringstream ss;
-            ss << "Non-overlapping slice [" << selection.start << ", " << selection.stop << "] on column '"
-               << col->name() << "'. Slice must overlap the current column domain [" << domain.first << ", "
-               << domain.second << "].";
+            ss << "Non-overlapping slice [" << selection.start.value_or(domain.first) << ", "
+               << selection.stop.value_or(domain.second) << "] on column '" << col->name()
+               << "'. Slice must overlap the current column domain [" << domain.first << ", " << domain.second << "].";
             throw std::out_of_range(ss.str());
         }
         add_coordinate_query_condition(
-            col_index,
-            SOMAValueFilter::create_from_slice<T>(*ctx_->tiledb_ctx(), col->name(), selection.start, selection.stop));
+            col_index, SOMAValueFilter::create_from_slice<T>(*ctx_->tiledb_ctx(), col->name(), selection));
 
         return *this;
     }
@@ -219,7 +217,7 @@ class CoordinateValueFilter {
             throw std::out_of_range(ss.str());
         }
         return add_coordinate_query_condition(
-            col_index, SOMAValueFilter::create_from_points<T>(*ctx_->tiledb_ctx(), col->name(), selection.points));
+            col_index, SOMAValueFilter::create_from_points<T>(*ctx_->tiledb_ctx(), col->name(), selection));
     }
 
     /**
@@ -268,8 +266,7 @@ class CoordinateValueFilter {
     inline CoordinateValueFilter& add_slice(int64_t col_index, SOMASliceSelection<std::string>& selection) {
         return add_coordinate_query_condition(
             col_index,
-            SOMAValueFilter::create_from_slice(
-                *ctx_->tiledb_ctx(), index_columns_[col_index]->name(), selection.start, selection.stop));
+            SOMAValueFilter::create_from_slice(*ctx_->tiledb_ctx(), index_columns_[col_index]->name(), selection));
     }
 
     /**
@@ -284,8 +281,7 @@ class CoordinateValueFilter {
     inline CoordinateValueFilter& add_points(int64_t col_index, const SOMAPointSelection<std::string>& selection) {
         return add_coordinate_query_condition(
             col_index,
-            SOMAValueFilter::create_from_points(
-                *ctx_->tiledb_ctx(), index_columns_[col_index]->name(), selection.points));
+            SOMAValueFilter::create_from_points(*ctx_->tiledb_ctx(), index_columns_[col_index]->name(), selection));
     }
 
     /**

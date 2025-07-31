@@ -32,36 +32,36 @@ SOMAValueFilter::SOMAValueFilter(QueryCondition&& qc)
 }
 
 SOMAValueFilter SOMAValueFilter::create_from_slice(
-    const Context& ctx, const std::string& column_name, const std::string& start_value, const std::string& stop_value) {
-    if (stop_value < start_value) {
-        throw std::invalid_argument(
-            fmt::format(
-                "Cannot set range [{}, {}] on column '{}'. Invalid range: the final value must be greater "
-                "than or equal to the starting value.",
-                start_value,
-                stop_value,
-                column_name));
+    const Context& ctx, const std::string& column_name, const SOMASliceSelection<std::string>& slice) {
+    if (slice.start.has_value() && slice.stop.has_value()) {
+        return SOMAValueFilter(
+            QueryCondition::create(ctx, column_name, slice.start.value(), TILEDB_GE)
+                .combine(QueryCondition::create(ctx, column_name, slice.stop.value(), TILEDB_LE), TILEDB_AND));
     }
-    return SOMAValueFilter(
-        QueryCondition::create(ctx, column_name, start_value, TILEDB_GE)
-            .combine(QueryCondition::create(ctx, column_name, stop_value, TILEDB_LE), TILEDB_AND));
+    if (slice.start.has_value()) {
+        return SOMAValueFilter(QueryCondition::create(ctx, column_name, slice.start.value(), TILEDB_GE));
+    }
+    if (slice.stop.has_value()) {
+        return SOMAValueFilter(QueryCondition::create(ctx, column_name, slice.stop.value(), TILEDB_LE));
+    }
+    return SOMAValueFilter();
 }
 
 SOMAValueFilter SOMAValueFilter::create_from_points(
-    const Context& ctx, const std::string& column_name, std::span<std::string> values) {
-    if (values.empty()) {
+    const Context& ctx, const std::string& column_name, SOMAPointSelection<std::string> values) {
+    if (values.points.empty()) {
         throw std::invalid_argument(
             fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", column_name));
     }
     // Using C API because C++ API only supports std::vector, not std::span.
     uint64_t data_size = 0;
-    for (auto& val : values) {
+    for (auto& val : values.points) {
         data_size += val.size();
     }
     std::vector<uint8_t> data(data_size);
     std::vector<uint64_t> offsets{};
     uint64_t curr_offset = 0;
-    for (auto& val : values) {
+    for (auto& val : values.points) {
         offsets.push_back(curr_offset);
         memcpy(data.data() + curr_offset, val.data(), val.size());
         curr_offset += val.size();
