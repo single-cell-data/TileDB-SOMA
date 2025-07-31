@@ -99,12 +99,9 @@ CoordinateValueFilter& CoordinateValueFilter::add_column_selection(
         [&](auto&& val) {
             using S = std::decay_t<decltype(val)>;
             if constexpr (std::is_same_v<S, SOMASliceSelection<std::string>>) {
-                add_coordinate_query_condition(
-                    col_index, SOMAValueFilter::create_from_slice(*ctx_, dim_names_[col_index], val.start, val.stop));
-
+                add_slice(col_index, val);
             } else if constexpr (std::is_same_v<S, SOMAPointSelection<std::string>>) {
-                add_coordinate_query_condition(
-                    col_index, SOMAValueFilter::create_from_points(*ctx_, dim_names_[col_index], val.points));
+                add_points(col_index, val);
             }
             // Otherwise monostate: do nothing.
         },
