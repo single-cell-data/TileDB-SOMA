@@ -71,6 +71,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
+class CoordinateValueFilter;
 
 class SOMAArray : public SOMAObject {
    public:
@@ -199,19 +200,19 @@ class SOMAArray : public SOMAObject {
     void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
+     * Returns a shared pointer of the internal TileDB array.
+     */
+    inline std::shared_ptr<Array> tiledb_array() {
+        return arr_;
+    }
+
+    /**
      * Creates a new ManagedQuery for this array.
      *
      * @param name Name of the array.
      */
     inline ManagedQuery create_managed_query(std::string_view name = "unnamed") const {
         return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
-    }
-
-    /**
-     * Returns a shared pointer of the internal TileDB array.
-     */
-    inline std::shared_ptr<Array> tiledb_array() {
-        return arr_;
     }
 
     /**
@@ -224,6 +225,11 @@ class SOMAArray : public SOMAObject {
         std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const {
         return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
     }
+
+    /**
+     * Creates a new CoordinateValueFilter for this array.
+     */
+    CoordinateValueFilter create_coordinate_value_filter() const;
 
     /**
      * Close the SOMAArray object.
@@ -261,6 +267,13 @@ class SOMAArray : public SOMAObject {
      * @return std::vector<std::string> Name of each dimension.
      */
     std::vector<std::string> dimension_names() const;
+
+    /**
+     * @brief Get the index columns.
+     *
+     * @return A vector of the index columns in order.
+     */
+    std::vector<std::shared_ptr<SOMAColumn>> index_columns() const;
 
     /**
      * @brief Sees if the array has a dimension of the given name.
