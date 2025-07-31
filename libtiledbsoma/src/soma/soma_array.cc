@@ -129,11 +129,12 @@ SOMAArray::SOMAArray(
         default: {  // Only allow read/write when constructing from TileDB.
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(arr_->query_type(), &query_type_str);
-            throw std::invalid_argument(fmt::format(
-                "Internal error: SOMAArray constructor does not accept a "
-                "TileDB array opened in mode '{}'. The array must be opened in "
-                "either read or write mode.",
-                query_type_str));
+            throw std::invalid_argument(
+                fmt::format(
+                    "Internal error: SOMAArray constructor does not accept a "
+                    "TileDB array opened in mode '{}'. The array must be opened in "
+                    "either read or write mode.",
+                    query_type_str));
         }
     }
     fill_metadata_cache(soma_mode_, timestamp_);
@@ -174,11 +175,12 @@ void SOMAArray::fill_columns() {
 
     if (type().value_or("") == "SOMAGeometryDataFrame") {
         if (!has_metadata(TILEDB_SOMA_SCHEMA_KEY)) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray][fill_columns] Missing required metadata key '{}' "
-                "from SOMAGeometryDataFrame '{}'",
-                TILEDB_SOMA_SCHEMA_KEY,
-                uri()));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAArray][fill_columns] Missing required metadata key '{}' "
+                    "from SOMAGeometryDataFrame '{}'",
+                    TILEDB_SOMA_SCHEMA_KEY,
+                    uri()));
         }
     }
 
@@ -195,6 +197,14 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     validate(soma_mode_, timestamp);
     fill_metadata_cache(soma_mode_, timestamp_);
     fill_columns();
+}
+
+CoordinateValueFilter SOMAArray::create_coordinate_value_filter() const {
+    return CoordinateValueFilter(
+        arr_,
+        ctx_,
+        index_columns(),
+        has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain);
 }
 
 void SOMAArray::close() {
@@ -215,6 +225,14 @@ std::vector<std::string> SOMAArray::dimension_names() const {
         result.push_back(column->name());
     }
     return result;
+}
+
+std::vector<std::shared_ptr<SOMAColumn>> SOMAArray::index_columns() const {
+    std::vector<std::shared_ptr<SOMAColumn>> index_columns;
+    std::copy_if(columns_.cbegin(), columns_.cend(), std::back_inserter(index_columns), [](const auto col) {
+        return col->isIndexColumn();
+    });
+    return index_columns;
 }
 
 bool SOMAArray::has_dimension_name(std::string_view name) const {
@@ -335,10 +353,11 @@ Enumeration SOMAArray::get_existing_enumeration_for_column(std::string column_na
     auto attribute = schema_->attribute(column_name);
     auto enumeration_name = AttributeExperimental::get_enumeration_name(*tctx, attribute);
     if (!enumeration_name.has_value()) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
-            "is non-enumerated",
-            column_name));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
+                "is non-enumerated",
+                column_name));
     }
     return ArrayExperimental::get_enumeration(*tctx, *arr_, enumeration_name.value());
 }
@@ -364,10 +383,11 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAArray::get_enumeration_values_for_colum
 
     // Throw if this column is not of dictionary type
     if (column_schema->dictionary == nullptr) {
-        throw TileDBSOMAError(fmt::format(
-            "[get_enumeration_values_for_column] column named '{}' is not of "
-            "dictionary type",
-            column_name));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[get_enumeration_values_for_column] column named '{}' is not of "
+                "dictionary type",
+                column_name));
     }
 
     // Release the pointers within the ArrowSchema*:
@@ -435,8 +455,9 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAArray::get_enumeration_values_for_colum
             break;
 
         default:
-            throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_dtype)));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_dtype)));
     }
 
     return std::pair(output_arrow_array, output_arrow_schema);
@@ -461,10 +482,11 @@ void SOMAArray::extend_enumeration_values(
         auto attribute = schema_->attribute(column_name);
         auto enumeration_name = AttributeExperimental::get_enumeration_name(*tctx, attribute);
         if (!enumeration_name.has_value()) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray::extend_enumeration_values] column_name '{}' is "
-                "non-enumerated",
-                column_name));
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAArray::extend_enumeration_values] column_name '{}' is "
+                    "non-enumerated",
+                    column_name));
         }
         Enumeration core_enum = get_existing_enumeration_for_column(column_name);
 
@@ -750,11 +772,12 @@ void SOMAArray::_set_shape_helper(
 
     size_t array_ndim = static_cast<size_t>(ndim());
     if (newshape.size() != array_ndim) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::resize]: newshape has dimension count {}; array has "
-            "{} ",
-            newshape.size(),
-            array_ndim));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAArray::resize]: newshape has dimension count {}; array has "
+                "{} ",
+                newshape.size(),
+                array_ndim));
     }
 
     size_t idx = 0;
@@ -800,18 +823,20 @@ void SOMAArray::_set_soma_joinid_shape_helper(
         for (const auto& column : columns_ | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
             if (column->name() == SOMA_JOINID) {
                 if (column->domain_type().value() != TILEDB_INT64) {
-                    throw TileDBSOMAError(fmt::format(
-                        "{}: expected soma_joinid to be of type {}; got {}",
-                        function_name_for_messages,
-                        tiledb::impl::type_to_str(TILEDB_INT64),
-                        tiledb::impl::type_to_str(column->domain_type().value())));
+                    throw TileDBSOMAError(
+                        fmt::format(
+                            "{}: expected soma_joinid to be of type {}; got {}",
+                            function_name_for_messages,
+                            tiledb::impl::type_to_str(TILEDB_INT64),
+                            tiledb::impl::type_to_str(column->domain_type().value())));
                 }
 
                 if (column->type() != soma_column_datatype_t::SOMA_COLUMN_DIMENSION) {
-                    throw TileDBSOMAError(fmt::format(
-                        "{}: expected soma_joinid type to be of type "
-                        "SOMA_COLUMN_DIMENSION",
-                        function_name_for_messages));
+                    throw TileDBSOMAError(
+                        fmt::format(
+                            "{}: expected soma_joinid type to be of type "
+                            "SOMA_COLUMN_DIMENSION",
+                            function_name_for_messages));
                 }
 
                 column->set_current_domain_slot(ndrect, std::vector<int64_t>({0, newshape - 1}));
@@ -940,12 +965,13 @@ void SOMAArray::_set_domain_helper(
     }
 
     if (newdomain.second->n_children != static_cast<int64_t>(ndim())) {
-        throw TileDBSOMAError(fmt::format(
-            "{}: requested domain has ndim={} but the dataframe has "
-            "ndim={}",
-            function_name_for_messages,
-            newdomain.second->n_children,
-            ndim()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "{}: requested domain has ndim={} but the dataframe has "
+                "ndim={}",
+                function_name_for_messages,
+                newdomain.second->n_children,
+                ndim()));
     }
 
     if (newdomain.second->n_children != newdomain.first->n_children) {
@@ -1036,11 +1062,12 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_current_do
 
     auto column = get_column(SOMA_JOINID);
     if (column->domain_type().value() != TILEDB_INT64) {
-        throw TileDBSOMAError(fmt::format(
-            "expected {} dim to be {}; got {}",
-            SOMA_JOINID,
-            tiledb::impl::type_to_str(TILEDB_INT64),
-            tiledb::impl::type_to_str(column->domain_type().value())));
+        throw TileDBSOMAError(
+            fmt::format(
+                "expected {} dim to be {}; got {}",
+                SOMA_JOINID,
+                tiledb::impl::type_to_str(TILEDB_INT64),
+                tiledb::impl::type_to_str(column->domain_type().value())));
     }
 
     auto max = column->core_current_domain_slot<int64_t>(*ctx_, *arr_).second + 1;
@@ -1055,11 +1082,12 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
 
     auto column = get_column(SOMA_JOINID);
     if (column->domain_type().value() != TILEDB_INT64) {
-        throw TileDBSOMAError(fmt::format(
-            "expected {} dim to be {}; got {}",
-            SOMA_JOINID,
-            tiledb::impl::type_to_str(TILEDB_INT64),
-            tiledb::impl::type_to_str(column->domain_type().value())));
+        throw TileDBSOMAError(
+            fmt::format(
+                "expected {} dim to be {}; got {}",
+                SOMA_JOINID,
+                tiledb::impl::type_to_str(TILEDB_INT64),
+                tiledb::impl::type_to_str(column->domain_type().value())));
     }
 
     auto max = column->core_domain_slot<int64_t>().second + 1;
@@ -1115,11 +1143,12 @@ std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {
 
 std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::size_t index) const {
     if (index >= columns_.size()) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray] internal coding error: Column index outside of range. "
-            "Requested {}, but {} exist.",
-            index,
-            columns_.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAArray] internal coding error: Column index outside of range. "
+                "Requested {}, but {} exist.",
+                index,
+                columns_.size()));
     }
 
     return columns_[index];
@@ -1128,59 +1157,44 @@ std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::size_t index) const {
 std::optional<QueryCondition> SOMAArray::create_coordinate_query_condition(
     const std::vector<AnySOMAColumnSelection>& coords) const {
     if (coords.size() > ndim()) {
-        throw std::invalid_argument(fmt::format(
-            "Coordinates for {} columns were provided, but this array only has {} index columns. The number of "
-            "coords provided must be less than or equal to the number of index columns.",
-            coords.size(),
-            ndim()));
+        throw std::invalid_argument(
+            fmt::format(
+                "Coordinates for {} columns were provided, but this array only has {} index columns. The number of "
+                "coords provided must be less than or equal to the number of index columns.",
+                coords.size(),
+                ndim()));
     }
-
-    auto which_kind = has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain;
-    CoordinateValueFilter coord_qc{*ctx_, dimension_names()};
+    auto coord_qc = create_coordinate_value_filter();
     for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
         auto col = get_column(dim_index);
         switch (col->domain_type().value()) {
             case TILEDB_UINT8:
                 coord_qc.add_column_selection<uint8_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint8_t>>(coords[dim_index]),
-                    col->domain_slot<uint8_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<uint8_t>>(coords[dim_index]));
                 break;
             case TILEDB_UINT16:
                 coord_qc.add_column_selection<uint16_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint16_t>>(coords[dim_index]),
-                    col->domain_slot<uint16_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<uint16_t>>(coords[dim_index]));
                 break;
             case TILEDB_UINT32:
                 coord_qc.add_column_selection<uint32_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint32_t>>(coords[dim_index]),
-                    col->domain_slot<uint32_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<uint32_t>>(coords[dim_index]));
                 break;
             case TILEDB_UINT64:
                 coord_qc.add_column_selection<uint64_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<uint64_t>>(coords[dim_index]),
-                    col->domain_slot<uint64_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<uint64_t>>(coords[dim_index]));
                 break;
             case TILEDB_INT8:
                 coord_qc.add_column_selection<int8_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int8_t>>(coords[dim_index]),
-                    col->domain_slot<int8_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<int8_t>>(coords[dim_index]));
                 break;
             case TILEDB_INT16:
                 coord_qc.add_column_selection<int16_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int16_t>>(coords[dim_index]),
-                    col->domain_slot<int16_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<int16_t>>(coords[dim_index]));
                 break;
             case TILEDB_INT32:
                 coord_qc.add_column_selection<int32_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int32_t>>(coords[dim_index]),
-                    col->domain_slot<int32_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<int32_t>>(coords[dim_index]));
                 break;
             case TILEDB_DATETIME_YEAR:
             case TILEDB_DATETIME_MONTH:
@@ -1206,21 +1220,15 @@ std::optional<QueryCondition> SOMAArray::create_coordinate_query_condition(
             case TILEDB_TIME_AS:
             case TILEDB_INT64:
                 coord_qc.add_column_selection<int64_t>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<int64_t>>(coords[dim_index]),
-                    col->domain_slot<int64_t>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<int64_t>>(coords[dim_index]));
                 break;
             case TILEDB_FLOAT32:
                 coord_qc.add_column_selection<float>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<float>>(coords[dim_index]),
-                    col->domain_slot<float>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<float>>(coords[dim_index]));
                 break;
             case TILEDB_FLOAT64:
                 coord_qc.add_column_selection<double>(
-                    dim_index,
-                    std::get<SOMAColumnSelection<double>>(coords[dim_index]),
-                    col->domain_slot<double>(*ctx_, *arr_, which_kind));
+                    dim_index, std::get<SOMAColumnSelection<double>>(coords[dim_index]));
                 break;
             case TILEDB_STRING_UTF8:
             case TILEDB_STRING_ASCII:

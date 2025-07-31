@@ -110,13 +110,12 @@ void SOMASparseNDArray::delete_cells(const std::vector<SOMAColumnSelection<int64
     }
     const auto& array_shape = shape();
 
-    CoordinateValueFilter qc{*ctx_, dimension_names()};
+    auto coord_filter = create_coordinate_value_filter();
     for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
-        qc.add_column_selection<int64_t>(
-            dim_index, coords[dim_index], std::pair<int64_t, int64_t>(0, array_shape[dim_index] - 1));
+        coord_filter.add_column_selection<int64_t>(dim_index, coords[dim_index]);
     }
 
-    auto soma_delete_cond = qc.get_value_filter();
+    auto soma_delete_cond = coord_filter.get_value_filter();
     if (!soma_delete_cond.is_initialized()) {
         throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
     }

@@ -83,10 +83,16 @@ SOMAValueFilter SOMAValueFilter::create_from_points(
  * CoordinateValueFilter
 **************************************/
 
-CoordinateValueFilter::CoordinateValueFilter(const SOMAContext& ctx, const std::vector<std::string>& dim_names)
-    : ctx_{ctx.tiledb_ctx()}
-    , dim_names_{dim_names}
-    , coord_qc_(dim_names.size()) {
+CoordinateValueFilter::CoordinateValueFilter(
+    std::shared_ptr<Array> array,
+    std::shared_ptr<SOMAContext> ctx,
+    std::vector<std::shared_ptr<SOMAColumn>> index_columns,
+    Domainish domain_kind)
+    : ctx_{ctx}
+    , array_{array}
+    , index_columns_{index_columns}
+    , domain_kind_{domain_kind}
+    , coord_qc_(index_columns_.size()) {
 }
 
 bool CoordinateValueFilter::is_initialized() const {
