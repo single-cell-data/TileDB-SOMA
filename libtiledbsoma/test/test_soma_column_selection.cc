@@ -52,7 +52,26 @@ TEMPLATE_TEST_CASE(
     CHECK(!slice3.has_overlap({-100, -11}));
     CHECK(!slice3.has_overlap({11, 100}));
 
-    CHECK_THROWS_AS(SOMASliceSelection(10, -10), std::invalid_argument);
+    SOMASliceSelection<TestType> slice4(std::nullopt, std::nullopt);
+    CHECK(!slice4.start.has_value());
+    CHECK(!slice4.stop.has_value());
+    CHECK(slice4.has_overlap({-100, 100}));
+
+    SOMASliceSelection<TestType> slice5(10, std::nullopt);
+    CHECK(slice5.start == 10);
+    CHECK(!slice5.stop.has_value());
+    CHECK(slice5.has_overlap({-100, 100}));
+    CHECK(slice5.has_overlap({50, 100}));
+    CHECK(!slice5.has_overlap({-100, 0}));
+
+    SOMASliceSelection<TestType> slice6(std::nullopt, 10);
+    CHECK(!slice6.start.has_value());
+    CHECK(slice6.stop == 10);
+    CHECK(slice6.has_overlap({-100, 100}));
+    CHECK(slice6.has_overlap({-100, 0}));
+    CHECK(!slice6.has_overlap({50, 100}));
+
+    CHECK_THROWS_AS(SOMASliceSelection<TestType>(10, -10), std::invalid_argument);
 }
 
 TEMPLATE_TEST_CASE(
@@ -89,6 +108,25 @@ TEMPLATE_TEST_CASE(
     CHECK(slice3.has_overlap({4, 10}));
     CHECK(!slice3.has_overlap({0, 7}));
     CHECK(!slice3.has_overlap({9, 100}));
+
+    SOMASliceSelection<TestType> slice4(std::nullopt, std::nullopt);
+    CHECK(!slice4.start.has_value());
+    CHECK(!slice4.stop.has_value());
+    CHECK(slice4.has_overlap({0, 100}));
+
+    SOMASliceSelection<TestType> slice5(10, std::nullopt);
+    CHECK(slice5.start == 10);
+    CHECK(!slice5.stop.has_value());
+    CHECK(slice5.has_overlap({0, 100}));
+    CHECK(slice5.has_overlap({50, 100}));
+    CHECK(!slice5.has_overlap({0, 8}));
+
+    SOMASliceSelection<TestType> slice6(std::nullopt, 10);
+    CHECK(!slice6.start.has_value());
+    CHECK(slice6.stop == 10);
+    CHECK(slice6.has_overlap({0, 100}));
+    CHECK(slice6.has_overlap({0, 8}));
+    CHECK(!slice6.has_overlap({50, 100}));
 
     CHECK_THROWS_AS(SOMASliceSelection<TestType>(10, 0), std::invalid_argument);
 }
