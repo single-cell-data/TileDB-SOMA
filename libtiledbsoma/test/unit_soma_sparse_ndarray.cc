@@ -564,7 +564,11 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
         {
             INFO("Delete cells from the sparse array.");
             auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
-            sparse_array->delete_cells(delete_coords);
+            auto delete_filter = sparse_array->create_coordinate_value_filter();
+            for (size_t index = 0; index < delete_coords.size(); ++index) {
+                delete_filter.add_column_selection<int64_t>(index, delete_coords[index]);
+            }
+            sparse_array->delete_cells(delete_filter);
             sparse_array->close();
         }
 
@@ -733,48 +737,14 @@ TEST_CASE("SOMASparseNDArray: check delete cell exceptions", "[SOMASparseNDArray
     auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
     {
         INFO("Check throws: no coordinates.");
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
-    }
-    {
-        INFO("Check throws: full range less than current domain (dim=0).");
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{SOMASliceSelection<int64_t>(-10, -1)};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
-    }
-    {
-        INFO("Check throws: full range less than current domain (dim=1).");
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{std::monostate(), SOMASliceSelection<int64_t>(-10, -1)};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
-    }
-    {
-        INFO("Check throws: range starts at max value + 1 (dim=0).");
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{SOMASliceSelection<int64_t>(4, 10)};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
-    }
-    {
-        INFO("Check throws: range starts at max value + 1 (dim=1).");
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{SOMASliceSelection<int64_t>(5, 10)};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        auto delete_filter = sparse_array->create_coordinate_value_filter();
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_filter), std::invalid_argument);
     }
     {
         INFO("Check throws: invalid range (no values)");
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{std::monostate()};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::invalid_argument);
-    }
-    {
-        INFO("Check throws: coordinate out-of-bounds (dim=0) ");
-        std::vector<int64_t> points1{1, 100, 2};
-        std::vector<int64_t> points2{1, 3};
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{
-            SOMAPointSelection<int64_t>(points1), SOMAPointSelection<int64_t>(points2)};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
-    }
-    {
-        INFO("Check throws: coordinate out-of-bounds (dim=2)");
-        std::vector<int64_t> points{-1, 1, 4, 2, 11};
-        std::vector<SOMAColumnSelection<int64_t>> delete_coords{
-            SOMASliceSelection<int64_t>(1, 1), std::monostate(), SOMAPointSelection<int64_t>(points)};
-        CHECK_THROWS_AS(sparse_array->delete_cells(delete_coords), std::out_of_range);
+        auto delete_filter = sparse_array->create_coordinate_value_filter();
+        delete_filter.add_column_selection(0, std::monostate());
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_filter), std::invalid_argument);
     }
     sparse_array->close();
 }
