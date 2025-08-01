@@ -31,54 +31,6 @@ SOMAValueFilter::SOMAValueFilter(QueryCondition&& qc)
     : qc_{qc} {
 }
 
-SOMAValueFilter SOMAValueFilter::create_from_slice(
-    const Context& ctx, const std::string& column_name, const SOMASliceSelection<std::string>& slice) {
-    if (slice.start.has_value() && slice.stop.has_value()) {
-        return SOMAValueFilter(
-            QueryCondition::create(ctx, column_name, slice.start.value(), TILEDB_GE)
-                .combine(QueryCondition::create(ctx, column_name, slice.stop.value(), TILEDB_LE), TILEDB_AND));
-    }
-    if (slice.start.has_value()) {
-        return SOMAValueFilter(QueryCondition::create(ctx, column_name, slice.start.value(), TILEDB_GE));
-    }
-    if (slice.stop.has_value()) {
-        return SOMAValueFilter(QueryCondition::create(ctx, column_name, slice.stop.value(), TILEDB_LE));
-    }
-    return SOMAValueFilter();
-}
-
-SOMAValueFilter SOMAValueFilter::create_from_points(
-    const Context& ctx, const std::string& column_name, SOMAPointSelection<std::string> values) {
-    if (values.points.empty()) {
-        throw std::invalid_argument(
-            fmt::format("Cannot set coordinates on column '{}'. No coordinates provided.", column_name));
-    }
-    // Using C API because C++ API only supports std::vector, not std::span.
-    uint64_t data_size = 0;
-    for (auto& val : values.points) {
-        data_size += val.size();
-    }
-    std::vector<uint8_t> data(data_size);
-    std::vector<uint64_t> offsets{};
-    uint64_t curr_offset = 0;
-    for (auto& val : values.points) {
-        offsets.push_back(curr_offset);
-        memcpy(data.data() + curr_offset, val.data(), val.size());
-        curr_offset += val.size();
-    }
-    tiledb_query_condition_t* qc;
-    ctx.handle_error(tiledb_query_condition_alloc_set_membership(
-        ctx.ptr().get(),
-        column_name.c_str(),
-        data.data(),
-        data.size(),
-        offsets.data(),
-        offsets.size() * sizeof(uint64_t),
-        TILEDB_IN,
-        &qc));
-    return QueryCondition(ctx, qc);
-}
-
 /**************************************
  * CoordinateValueFilter
 **************************************/
@@ -97,22 +49,6 @@ CoordinateValueFilter::CoordinateValueFilter(
 
 bool CoordinateValueFilter::is_initialized() const {
     return std::any_of(coord_qc_.cbegin(), coord_qc_.cend(), [](auto qc) { return qc.is_initialized(); });
-}
-
-CoordinateValueFilter& CoordinateValueFilter::add_column_selection(
-    int64_t col_index, SOMAColumnSelection<std::string> selection) {
-    std::visit(
-        [&](auto&& val) {
-            using S = std::decay_t<decltype(val)>;
-            if constexpr (std::is_same_v<S, SOMASliceSelection<std::string>>) {
-                add_slice(col_index, val);
-            } else if constexpr (std::is_same_v<S, SOMAPointSelection<std::string>>) {
-                add_points(col_index, val);
-            }
-            // Otherwise monostate: do nothing.
-        },
-        selection);
-    return *this;
 }
 
 SOMAValueFilter CoordinateValueFilter::get_value_filter() const {
@@ -139,6 +75,17 @@ CoordinateValueFilter& CoordinateValueFilter::add_coordinate_query_condition(int
         coord_qc_[index] = qc;
     }
     return *this;
+}
+
+/**Throws an error if using a string on a non-string column. */
+void CoordinateValueFilter::validate_string_column(std::shared_ptr<SOMAColumn> column) const {
+    if (column->domain_type().value() != TILEDB_STRING_ASCII) {
+        std::stringstream ss;
+        auto tiledb_type = tiledb::impl::type_to_str(column->domain_type().value());
+        ss << "Invalid coordinate on column '" << column->name() << "'. Cannot set string value on column with type "
+           << tiledb_type << ".";
+        throw std::invalid_argument(ss.str());
+    }
 }
 
 }  // namespace tiledbsoma

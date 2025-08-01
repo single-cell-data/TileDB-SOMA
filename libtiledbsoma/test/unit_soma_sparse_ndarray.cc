@@ -743,7 +743,7 @@ TEST_CASE("SOMASparseNDArray: check delete cell exceptions", "[SOMASparseNDArray
     {
         INFO("Check throws: invalid range (no values)");
         auto delete_filter = sparse_array->create_coordinate_value_filter();
-        delete_filter.add_column_selection(0, std::monostate());
+        delete_filter.add_column_selection<int64_t>(0, std::monostate());
         CHECK_THROWS_AS(sparse_array->delete_cells(delete_filter), std::invalid_argument);
     }
     sparse_array->close();

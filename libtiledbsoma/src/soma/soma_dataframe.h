@@ -218,24 +218,6 @@ class SOMADataFrame : public SOMAArray {
      * @return std::optional<int64_t>
      */
     std::optional<int64_t> maybe_soma_joinid_maxshape();
-
-    /**
-     * @brief Delete cells from the array.
-     *
-     * This deletes cells that fall within the intersection of the provided coordinates. The coordinates are specified by
-     * a per-dimension vector. If any coordinates are missing (length < number of dimensions) then the remaining dimensions
-     * are set to be unconstrained. At least one constraint must be set.
-     *
-     * Acceptable ways to index a dimension:
-     * * A slice on the domain. It must be inclusive of the end points.
-     * * A set of points on the domain. All points must be included in the domain.
-     * * A default placeholder (`std::monostate`) - all values are selected (i.e. unconstrained).
-     *
-     * @param coords A per-dimension vector of coordinates - the intersection of which is the cells to delete.
-     */
-    void delete_cells(
-        const std::vector<AnySOMAColumnSelection>& coords,
-        const std::optional<QueryCondition>& value_filter = std::nullopt);
 };
 
 }  // namespace tiledbsoma

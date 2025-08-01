@@ -127,6 +127,20 @@ TEST_CASE("Test CoordinateValueFilter on SparseArray", "[CoordinateValueFilter][
             value_filter.add_column_selection<int64_t>(0, SOMAPointSelection<int64_t>(points)), std::out_of_range);
     }
 
+    {
+        INFO("Error: slice with incorrect type");
+        auto value_filter = soma_array->create_coordinate_value_filter();
+        std::vector<int32_t> points{1, 4, 7};
+        CHECK_THROWS_AS(
+            value_filter.add_points<int32_t>(0, SOMAPointSelection<int32_t>(points)), std::invalid_argument);
+    }
+    {
+        INFO("Error: points with incorrect type");
+        auto value_filter = soma_array->create_coordinate_value_filter();
+        CHECK_THROWS_AS(
+            value_filter.add_column_selection<uint64_t>(0, SOMASliceSelection<uint64_t>(0, 10)), std::invalid_argument);
+    }
+
     // Region [1:2]x[:] by ranges.
     {
         auto value_filter = soma_array->create_coordinate_value_filter();
@@ -321,7 +335,7 @@ TEST_CASE(
 
     {
         auto value_filter = soma_array->create_coordinate_value_filter();
-        value_filter.add_column_selection(0, SOMASliceSelection<std::string>("a", "z"));
+        value_filter.add_column_selection<std::string>(0, SOMASliceSelection<std::string>("a", "z"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("apple"), std::string("fig"));
         check_query_condition(value_filter, subarray, "Read all values by range.");
@@ -332,12 +346,27 @@ TEST_CASE(
         auto value_filter = soma_array->create_coordinate_value_filter();
         std::vector<std::string> points{};
         CHECK_THROWS_AS(
-            value_filter.add_column_selection(0, SOMAPointSelection<std::string>(points)), std::invalid_argument);
+            value_filter.add_column_selection<std::string>(0, SOMAPointSelection<std::string>(points)),
+            std::invalid_argument);
+    }
+    {
+        INFO("Error: slice with incorrect type");
+        auto value_filter = soma_array->create_coordinate_value_filter();
+        std::vector<int32_t> points{1, 4, 7};
+        CHECK_THROWS_AS(
+            value_filter.add_column_selection<int32_t>(0, SOMAPointSelection<int32_t>(points)), std::invalid_argument);
+    }
+    {
+        INFO("Error: points with incorrect type");
+        auto value_filter = soma_array->create_coordinate_value_filter();
+        CHECK_THROWS_AS(
+            value_filter.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(-1.5, std::nullopt)),
+            std::invalid_argument);
     }
 
     {
         auto value_filter = soma_array->create_coordinate_value_filter();
-        value_filter.add_column_selection(0, SOMASliceSelection<std::string>("ca", "fa"));
+        value_filter.add_column_selection<std::string>(0, SOMASliceSelection<std::string>("ca", "fa"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("ca"), std::string("fa"));
         check_query_condition(value_filter, subarray, "Create by range.");
@@ -346,7 +375,7 @@ TEST_CASE(
     {
         auto value_filter = soma_array->create_coordinate_value_filter();
         std::vector<std::string> points{"fig", "durian", "banana"};
-        value_filter.add_column_selection(0, SOMAPointSelection<std::string>(points));
+        value_filter.add_column_selection<std::string>(0, SOMAPointSelection<std::string>(points));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("banana"), std::string("banana"))
             .add_range(0, std::string("durian"), std::string("durian"))
@@ -356,14 +385,14 @@ TEST_CASE(
 
     {
         auto value_filter = soma_array->create_coordinate_value_filter();
-        value_filter.add_column_selection(0, SOMASliceSelection<std::string>("g", "z"));
+        value_filter.add_column_selection<std::string>(0, SOMASliceSelection<std::string>("g", "z"));
         check_empty_query_condition(value_filter, "Create by range - no values selected.");
     }
 
     {
         auto value_filter = soma_array->create_coordinate_value_filter();
         std::vector<std::string> points{"kiwi", "pear", "carrot"};
-        value_filter.add_column_selection(0, SOMAPointSelection<std::string>(points));
+        value_filter.add_column_selection<std::string>(0, SOMAPointSelection<std::string>(points));
         check_empty_query_condition(value_filter, "Create by points - no values selected.");
     }
 }
