@@ -99,27 +99,4 @@ managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
 
-void SOMASparseNDArray::delete_cells(const std::vector<SOMAColumnSelection<int64_t>>& coords) {
-    if (coords.size() > ndim()) {
-        throw std::invalid_argument(
-            fmt::format(
-                "Coordinates for {} columns were provided, but this array only has {} columns. The number of coords "
-                "provided must be less than or equal to the number of columns.",
-                coords.size(),
-                ndim()));
-    }
-    const auto& array_shape = shape();
-
-    auto coord_filter = create_coordinate_value_filter();
-    for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
-        coord_filter.add_column_selection<int64_t>(dim_index, coords[dim_index]);
-    }
-
-    auto soma_delete_cond = coord_filter.get_value_filter();
-    if (!soma_delete_cond.is_initialized()) {
-        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
-    }
-    delete_cells_impl(soma_delete_cond.query_condition());
-}
-
 }  // namespace tiledbsoma

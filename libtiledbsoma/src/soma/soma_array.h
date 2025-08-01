@@ -298,6 +298,21 @@ class SOMAArray : public SOMAObject {
     void consolidate_and_vacuum(std::vector<std::string> modes = {"fragment_meta", "commits"});
 
     /**
+     * @brief Delete cells from the array.
+     *
+     * @param coord_filter Coordinate value filter defining the coordinates to delete.
+     */
+    void delete_cells(const CoordinateValueFilter& coord_filter);
+
+    /**
+     * @brief Delete cells from the array.
+     *
+     * @param coord_filter Coordinate value filter defining the coordinates to delete.
+     * @param value_filter Additional value filter to constrain the delete by.
+     */
+    void delete_cells(const CoordinateValueFilter& coord_filter, const QueryCondition& value_filter);
+
+    /**
      * @brief Get the TileDB ArraySchema. This should eventually
      * be removed in lieu of arrow_schema below.
      *

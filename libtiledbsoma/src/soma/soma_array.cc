@@ -261,6 +261,27 @@ void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
     }
 }
 
+void SOMAArray::delete_cells(const CoordinateValueFilter& coord_filters) {
+    auto combined_filter = coord_filters.get_value_filter();
+    if (!combined_filter.is_initialized()) {
+        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
+    }
+    Query query(*ctx_->tiledb_ctx(), *arr_, TILEDB_DELETE);
+    query.set_condition(combined_filter.query_condition());
+    query.submit();
+}
+
+void SOMAArray::delete_cells(const CoordinateValueFilter& coord_filter, const QueryCondition& value_filter) {
+    Query query(*ctx_->tiledb_ctx(), *arr_, TILEDB_DELETE);
+    auto combined_coord_filter = coord_filter.get_value_filter();
+    if (combined_coord_filter.is_initialized()) {
+        query.set_condition(combined_coord_filter.query_condition().combine(value_filter, TILEDB_AND));
+    } else {
+        query.set_condition(value_filter);
+    }
+    query.submit();
+}
+
 void SOMAArray::set_metadata(
     const std::string& key, tiledb_datatype_t value_type, uint32_t value_num, const void* value, bool force) {
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
