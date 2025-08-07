@@ -137,6 +137,17 @@ class PyQueryCondition {
         return pyqc;
     }
 
+    PyQueryCondition negate() const {
+        try {
+            auto negated_qc = qc_->negate();
+            auto pyqc = PyQueryCondition(nullptr, ctx_.ptr().get());
+            pyqc.qc_ = std::make_shared<QueryCondition>(std::move(negated_qc));
+            return pyqc;
+        } catch (TileDBError& e) {
+            TPY_ERROR_LOC(e.what());
+        }
+    }
+
    private:
     PyQueryCondition(shared_ptr<QueryCondition> qc, tiledb_ctx_t* c_ctx)
         : qc_(qc) {
