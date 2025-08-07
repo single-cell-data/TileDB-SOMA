@@ -13,9 +13,9 @@
 #include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include <ranges>
-#include "../tiledb_adapter/soma_query_condition.h"
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "coordinate_value_filters.h"
 #include "soma_attribute.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
@@ -199,8 +199,8 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     fill_columns();
 }
 
-CoordinateValueFilter SOMAArray::create_coordinate_value_filter() const {
-    return CoordinateValueFilter(
+CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
+    return CoordinateValueFilters(
         arr_,
         ctx_,
         index_columns(),
@@ -261,7 +261,7 @@ void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
     }
 }
 
-void SOMAArray::delete_cells(const CoordinateValueFilter& coord_filters) {
+void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters) {
     auto combined_filter = coord_filters.get_value_filter();
     if (!combined_filter.is_initialized()) {
         throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
@@ -271,7 +271,7 @@ void SOMAArray::delete_cells(const CoordinateValueFilter& coord_filters) {
     query.submit();
 }
 
-void SOMAArray::delete_cells(const CoordinateValueFilter& coord_filter, const QueryCondition& value_filter) {
+void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filter, const QueryCondition& value_filter) {
     Query query(*ctx_->tiledb_ctx(), *arr_, TILEDB_DELETE);
     auto combined_coord_filter = coord_filter.get_value_filter();
     if (combined_coord_filter.is_initialized()) {

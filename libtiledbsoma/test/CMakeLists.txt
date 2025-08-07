@@ -187,7 +187,7 @@ add_executable(test_tiledb_adapter
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
     common.cc
     common.h
-    test_soma_query_condition.cc
+    test_value_filter.cc
 )
 
 if(SPDLOG_LINK_SHARED)

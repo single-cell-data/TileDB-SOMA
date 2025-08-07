@@ -18,7 +18,7 @@
  *
  * This is an ideal test to parametrize with rapidtest when we add it to SOMA.
  */
-TEST_CASE("Test CoordinateValueFilter on SparseArray", "[CoordinateValueFilter][SOMASparseNDArray]") {
+TEST_CASE("Test CoordinateValueFilters on SparseArray", "[CoordinateValueFilters][SOMASparseNDArray]") {
     // Create a TileDB sparse array with 3 integer dimensions.
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://test-query-condition-sparse";
@@ -60,7 +60,7 @@ TEST_CASE("Test CoordinateValueFilter on SparseArray", "[CoordinateValueFilter][
     auto soma_array = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx);
     auto array = *soma_array->tiledb_array();
     auto check_query_condition =
-        [&](const CoordinateValueFilter& value_filter, const Subarray& subarray, const std::string& log_note) {
+        [&](const CoordinateValueFilters& value_filter, const Subarray& subarray, const std::string& log_note) {
             INFO(log_note);
 
             // Create a query for the entire array.
@@ -204,8 +204,8 @@ TEST_CASE("Test CoordinateValueFilter on SparseArray", "[CoordinateValueFilter][
 }
 
 TEST_CASE(
-    "Test CoordinateValueFilter on SOMADataFrame with string index column",
-    "[CoordinateValueFilter][SOMADataFrame][string-index]") {
+    "Test CoordinateValueFilters on SOMADataFrame with string index column",
+    "[CoordinateValueFilters][SOMADataFrame][string-index]") {
     // Create a TileDB sparse array with 1 integer dimensions.
     auto ctx = std::make_shared<SOMAContext>();
     auto tiledb_ctx = ctx->tiledb_ctx();
@@ -249,7 +249,7 @@ TEST_CASE(
     auto soma_array = SOMADataFrame::open(uri, OpenMode::soma_read, ctx);
     auto array = *soma_array->tiledb_array();
     auto check_query_condition =
-        [&](const CoordinateValueFilter& value_filter, const Subarray& subarray, const std::string& log_note) {
+        [&](const CoordinateValueFilters& value_filter, const Subarray& subarray, const std::string& log_note) {
             INFO(log_note);
 
             // Check valid query condition.
@@ -296,7 +296,7 @@ TEST_CASE(
             CHECK_THAT(actual_index, Catch::Matchers::Equals(expected_index));
         };
 
-    auto check_empty_query_condition = [&](const CoordinateValueFilter& value_filter, const std::string& log_note) {
+    auto check_empty_query_condition = [&](const CoordinateValueFilters& value_filter, const std::string& log_note) {
         INFO(log_note);
 
         // Check valid query condition.

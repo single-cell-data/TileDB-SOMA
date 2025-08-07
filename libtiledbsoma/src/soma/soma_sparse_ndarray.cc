@@ -18,7 +18,6 @@
 
 #include "../utils/logger.h"
 #include "soma_coordinates.h"
-#include "tiledb_adapter/soma_query_condition.h"
 
 namespace tiledbsoma {
 using namespace tiledb;

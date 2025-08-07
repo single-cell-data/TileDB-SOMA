@@ -71,7 +71,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
-class CoordinateValueFilter;
+class CoordinateValueFilters;
 
 class SOMAArray : public SOMAObject {
    public:
@@ -227,9 +227,9 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Creates a new CoordinateValueFilter for this array.
+     * Creates a new CoordinateValueFilters for this array.
      */
-    CoordinateValueFilter create_coordinate_value_filter() const;
+    CoordinateValueFilters create_coordinate_value_filter() const;
 
     /**
      * Close the SOMAArray object.
@@ -302,7 +302,7 @@ class SOMAArray : public SOMAObject {
      *
      * @param coord_filter Coordinate value filter defining the coordinates to delete.
      */
-    void delete_cells(const CoordinateValueFilter& coord_filter);
+    void delete_cells(const CoordinateValueFilters& coord_filter);
 
     /**
      * @brief Delete cells from the array.
@@ -310,7 +310,7 @@ class SOMAArray : public SOMAObject {
      * @param coord_filter Coordinate value filter defining the coordinates to delete.
      * @param value_filter Additional value filter to constrain the delete by.
      */
-    void delete_cells(const CoordinateValueFilter& coord_filter, const QueryCondition& value_filter);
+    void delete_cells(const CoordinateValueFilters& coord_filter, const QueryCondition& value_filter);
 
     /**
      * @brief Get the TileDB ArraySchema. This should eventually
