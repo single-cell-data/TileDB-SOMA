@@ -734,6 +734,24 @@ TEST_CASE("SOMASparseNDArray: check delete cell exceptions", "[SOMASparseNDArray
 
     SOMASparseNDArray::create(uri, "i", index_columns, ctx);
 
+    {
+        INFO("Check cannot delete in read mode.");
+        auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx, std::nullopt);
+        auto delete_filters = sparse_array->create_coordinate_value_filter();
+        delete_filters.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(0, 1));
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_filters), TileDBSOMAError);
+        sparse_array->close();
+    }
+
+    {
+        INFO("Check cannot delete in write mode.");
+        auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx, std::nullopt);
+        auto delete_filters = sparse_array->create_coordinate_value_filter();
+        delete_filters.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(0, 1));
+        CHECK_THROWS_AS(sparse_array->delete_cells(delete_filters), TileDBSOMAError);
+        sparse_array->close();
+    }
+
     auto sparse_array = SOMASparseNDArray::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
     {
         INFO("Check throws: no coordinates.");
