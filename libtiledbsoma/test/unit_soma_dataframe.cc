@@ -1291,7 +1291,7 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto delete_filter = df->create_coordinate_value_filter();
-        delete_filter.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(-10, 10));
+        delete_filter.add_slice<int64_t>(0, SliceSelection<int64_t>(-10, 10));
         df->delete_cells(delete_filter);
         df->close();
 
@@ -1305,7 +1305,7 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
         std::vector<int64_t> points{0, 3, 2, 1, 4, 7, 5, 6};
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto delete_filter = df->create_coordinate_value_filter();
-        delete_filter.add_points<int64_t>(0, SOMAPointSelection<int64_t>(points));
+        delete_filter.add_points<int64_t>(0, PointSelection<int64_t>(points));
         df->delete_cells(delete_filter);
         df->close();
 
@@ -1319,7 +1319,7 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto delete_filter = df->create_coordinate_value_filter();
-        delete_filter.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(7, 10));
+        delete_filter.add_slice<int64_t>(0, SliceSelection<int64_t>(7, 10));
         df->delete_cells(delete_filter);
         df->close();
 
@@ -1333,7 +1333,7 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(0, 4));
+        coord_filters.add_slice<int64_t>(0, SliceSelection<int64_t>(0, 4));
         int32_t max_value{3};
         auto value_filter = QueryCondition::create(*ctx->tiledb_ctx(), "attr1", max_value, TILEDB_GT);
         df->delete_cells(coord_filters, value_filter);
@@ -1456,7 +1456,7 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice(0, SOMASliceSelection<std::string>("a", "z"));
+        coord_filters.add_slice(0, SliceSelection<std::string>("a", "z"));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1469,7 +1469,7 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         std::vector<std::string> points{"fig", "banana", "coconut", "durian", "apple", "eggplant"};
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_points(0, SOMAPointSelection<std::string>(points));
+        coord_filters.add_points(0, PointSelection<std::string>(points));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1483,7 +1483,7 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice(0, SOMASliceSelection<std::string>("b", "e"));
+        coord_filters.add_slice(0, SliceSelection<std::string>("b", "e"));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1498,7 +1498,7 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_points(0, SOMAPointSelection<std::string>(points));
+        coord_filters.add_points(0, PointSelection<std::string>(points));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1589,7 +1589,7 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(0, 3));
+        coord_filters.add_slice<int64_t>(0, SliceSelection<int64_t>(0, 3));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1601,7 +1601,7 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_column_selection<int64_t>(0, SOMASliceSelection<int64_t>(0, 3));
+        coord_filters.add_column_selection<int64_t>(0, SliceSelection<int64_t>(0, 3));
         coord_filters.add_column_selection<uint32_t>(1, std::monostate());
         df->delete_cells(coord_filters);
         df->close();
@@ -1615,7 +1615,7 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
         std::vector<int64_t> points{1, 3, 2, 0};
-        coord_filters.add_points<int64_t>(0, SOMAPointSelection<int64_t>(points));
+        coord_filters.add_points<int64_t>(0, PointSelection<int64_t>(points));
         df->delete_cells(coord_filters);
         df->close();
         check_delete("Delete all by joinid points");
@@ -1626,7 +1626,7 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice<uint32_t>(1, SOMASliceSelection<uint32_t>(0, 2));
+        coord_filters.add_slice<uint32_t>(1, SliceSelection<uint32_t>(0, 2));
         df->delete_cells(coord_filters);
         df->close();
         check_delete("Delete all by joinid slice");
@@ -1638,7 +1638,7 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
         std::vector<uint32_t> points{2, 0, 1};
-        coord_filters.add_points<uint32_t>(1, SOMAPointSelection<uint32_t>(points));
+        coord_filters.add_points<uint32_t>(1, PointSelection<uint32_t>(points));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1652,7 +1652,7 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice<int64_t>(0, SOMASliceSelection<int64_t>(2, 10));
+        coord_filters.add_slice<int64_t>(0, SliceSelection<int64_t>(2, 10));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1666,8 +1666,8 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice(0, SOMASliceSelection<int64_t>(2, 10));
-        coord_filters.add_slice(1, SOMASliceSelection<uint32_t>(0, 10));
+        coord_filters.add_slice(0, SliceSelection<int64_t>(2, 10));
+        coord_filters.add_slice(1, SliceSelection<uint32_t>(0, 10));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1681,8 +1681,8 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_slice(1, SOMASliceSelection<uint32_t>(0, 1));
-        coord_filters.add_slice(0, SOMASliceSelection<int64_t>(1, 2));
+        coord_filters.add_slice(1, SliceSelection<uint32_t>(0, 1));
+        coord_filters.add_slice(0, SliceSelection<int64_t>(1, 2));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1698,8 +1698,8 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_points(1, SOMAPointSelection<uint32_t>(index_points));
-        coord_filters.add_points(0, SOMAPointSelection<int64_t>(join_points));
+        coord_filters.add_points(1, PointSelection<uint32_t>(index_points));
+        coord_filters.add_points(0, PointSelection<int64_t>(join_points));
         df->delete_cells(coord_filters);
         df->close();
 
@@ -1714,8 +1714,8 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
         auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
         auto coord_filters = df->create_coordinate_value_filter();
-        coord_filters.add_points(1, SOMAPointSelection<uint32_t>(index_points));
-        coord_filters.add_slice(0, SOMASliceSelection<int64_t>(1, 2));
+        coord_filters.add_points(1, PointSelection<uint32_t>(index_points));
+        coord_filters.add_slice(0, SliceSelection<int64_t>(1, 2));
         df->delete_cells(coord_filters);
         df->close();
 

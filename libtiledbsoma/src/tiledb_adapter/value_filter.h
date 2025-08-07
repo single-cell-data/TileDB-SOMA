@@ -67,7 +67,7 @@ class ValueFilter {
      */
     template <typename T>
     static ValueFilter create_from_slice(
-        const Context& ctx, const std::string& column_name, const SOMASliceSelection<T>& slice) {
+        const Context& ctx, const std::string& column_name, const SliceSelection<T>& slice) {
         if (slice.start.has_value() && slice.stop.has_value()) {
             return ValueFilter(
                 QueryCondition::create(ctx, column_name, slice.start.value(), TILEDB_GE)
@@ -91,7 +91,7 @@ class ValueFilter {
      */
     template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
     static ValueFilter create_from_points(
-        const Context& ctx, const std::string& column_name, SOMAPointSelection<T> values) {
+        const Context& ctx, const std::string& column_name, PointSelection<T> values) {
         if (values.points.empty()) {
             // Use sstream beacuse we don't want to include fmt directly in external header.
             std::stringstream ss;

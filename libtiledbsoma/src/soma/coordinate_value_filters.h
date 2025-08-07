@@ -56,7 +56,7 @@ class CoordinateValueFilters {
      * @param slice The coordinate selection to apply to the columns.
      */
     template <typename T>
-    CoordinateValueFilters& add_slice(int64_t col_index, const SOMASliceSelection<T>& selection) {
+    CoordinateValueFilters& add_slice(int64_t col_index, const SliceSelection<T>& selection) {
         auto col = index_columns_[col_index];
         if constexpr (std::is_same_v<T, std::string>) {
             validate_string_column(col);
@@ -96,7 +96,7 @@ class CoordinateValueFilters {
      * @param points The coordinate selection to apply to the columns.
      */
     template <typename T>
-    CoordinateValueFilters& add_points(int64_t col_index, SOMAPointSelection<T> selection) {
+    CoordinateValueFilters& add_points(int64_t col_index, PointSelection<T> selection) {
         auto col = index_columns_[col_index];
         if constexpr (std::is_same_v<T, std::string>) {
             validate_string_column(col);
@@ -142,9 +142,9 @@ class CoordinateValueFilters {
         std::visit(
             [&](auto&& val) {
                 using S = std::decay_t<decltype(val)>;
-                if constexpr (std::is_same_v<S, SOMASliceSelection<T>>) {
+                if constexpr (std::is_same_v<S, SliceSelection<T>>) {
                     add_slice<T>(col_index, val);
-                } else if constexpr (std::is_same_v<S, SOMAPointSelection<T>>) {
+                } else if constexpr (std::is_same_v<S, PointSelection<T>>) {
                     add_points<T>(col_index, val);
                 }
                 // Otherwise monostate: do nothing.

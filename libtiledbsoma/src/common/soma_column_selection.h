@@ -28,7 +28,7 @@
 namespace tiledbsoma {
 
 template <typename T>
-struct SOMASliceSelection {
+struct SliceSelection {
    public:
     /**
      * Creates a closed slice (includes both end points).
@@ -36,7 +36,7 @@ struct SOMASliceSelection {
      * @param slice_start The first value (inclusive) of the slice.
      * @param slice_stop The last value (inclusive) of the slice.
      */
-    SOMASliceSelection(std::optional<T> slice_start, std::optional<T> slice_stop)
+    SliceSelection(std::optional<T> slice_start, std::optional<T> slice_stop)
         : start{slice_start}
         , stop{slice_stop} {
         if (stop.has_value() && start.has_value() && stop.value() < start.value()) {
@@ -48,8 +48,8 @@ struct SOMASliceSelection {
         }
     }
 
-    SOMASliceSelection(const std::pair<std::optional<T>, std::optional<T>>& slice)
-        : SOMASliceSelection(slice.first, slice.second) {};
+    SliceSelection(const std::pair<std::optional<T>, std::optional<T>>& slice)
+        : SliceSelection(slice.first, slice.second) {};
 
     /** Returns if the slice overlaps a requested interval. 
      *
@@ -68,9 +68,9 @@ struct SOMASliceSelection {
 };
 
 template <typename T>
-struct SOMAPointSelection {
+struct PointSelection {
    public:
-    SOMAPointSelection(std::span<const T> point_data)
+    PointSelection(std::span<const T> point_data)
         : points{point_data} {
     }
 
@@ -93,7 +93,7 @@ struct SOMAPointSelection {
 };
 
 template <typename T>
-using SOMAColumnSelection = std::variant<std::monostate, SOMASliceSelection<T>, SOMAPointSelection<T>>;
+using SOMAColumnSelection = std::variant<std::monostate, SliceSelection<T>, PointSelection<T>>;
 
 }  // namespace tiledbsoma
 

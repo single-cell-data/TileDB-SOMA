@@ -127,8 +127,7 @@ TEST_CASE("Test ValueFilter on SparseArray", "[ValueFilter][SOMASparseNDArray]")
 
     // Full region by range.
     {
-        auto qc = ValueFilter::create_from_slice<int64_t>(
-            *tiledb_ctx, "soma_dim_0", SOMASliceSelection<int64_t>(0, 15));
+        auto qc = ValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", SliceSelection<int64_t>(0, 15));
         CHECK(qc.is_initialized());
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range<int64_t>("soma_dim_0", 0, 15);
@@ -137,8 +136,7 @@ TEST_CASE("Test ValueFilter on SparseArray", "[ValueFilter][SOMASparseNDArray]")
 
     // Empty region: out-of-bounds range.
     {
-        auto qc = ValueFilter::create_from_slice<int64_t>(
-            *tiledb_ctx, "soma_dim_0", SOMASliceSelection<int64_t>(25, 27));
+        auto qc = ValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", SliceSelection<int64_t>(25, 27));
         CHECK(qc.is_initialized());
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
@@ -147,22 +145,21 @@ TEST_CASE("Test ValueFilter on SparseArray", "[ValueFilter][SOMASparseNDArray]")
     {
         std::vector<int64_t> points{};
         CHECK_THROWS_AS(
-            ValueFilter::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", SOMAPointSelection<int64_t>(points)),
+            ValueFilter::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", PointSelection<int64_t>(points)),
             std::invalid_argument);
     }
 
     // Empty region: out-of-bounds points.
     {
         std::vector<int64_t> points{25, 27, 19, 30};
-        auto qc = ValueFilter::create_from_points<int64_t>(
-            *tiledb_ctx, "soma_dim_0", SOMAPointSelection<int64_t>(points));
+        auto qc = ValueFilter::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", PointSelection<int64_t>(points));
         CHECK(qc.is_initialized());
         check_empty_query_condition(qc, "Range out of bounds: expect no values.");
     }
 
     // Region [1:2] by ranges.
     {
-        auto qc = ValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", SOMASliceSelection<int64_t>(1, 2));
+        auto qc = ValueFilter::create_from_slice<int64_t>(*tiledb_ctx, "soma_dim_0", SliceSelection<int64_t>(1, 2));
         CHECK(qc.is_initialized());
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range<int64_t>("soma_dim_0", 1, 2);
@@ -172,8 +169,7 @@ TEST_CASE("Test ValueFilter on SparseArray", "[ValueFilter][SOMASparseNDArray]")
     // Region [0,11,13] by points.
     {
         std::vector<int64_t> points{0, 1, 13};
-        auto qc = ValueFilter::create_from_points<int64_t>(
-            *tiledb_ctx, "soma_dim_0", SOMAPointSelection<int64_t>(points));
+        auto qc = ValueFilter::create_from_points<int64_t>(*tiledb_ctx, "soma_dim_0", PointSelection<int64_t>(points));
         CHECK(qc.is_initialized());
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range<int64_t>("soma_dim_0", 0, 1).add_range<int64_t>("soma_dim_0", 13, 13);
@@ -306,7 +302,7 @@ TEST_CASE("Test ValueFilter on SOMADataFrame with string index column", "[ValueF
     };
 
     {
-        auto qc = ValueFilter::create_from_slice(*tiledb_ctx, "label", SOMASliceSelection<std::string>("a", "z"));
+        auto qc = ValueFilter::create_from_slice(*tiledb_ctx, "label", SliceSelection<std::string>("a", "z"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("apple"), std::string("fig"));
         check_query_condition(qc, subarray, "Read all values by range.");
@@ -315,7 +311,7 @@ TEST_CASE("Test ValueFilter on SOMADataFrame with string index column", "[ValueF
     {
         INFO("Invalid range: should throw an std::invalid_argument error");
         CHECK_THROWS_AS(
-            ValueFilter::create_from_slice(*tiledb_ctx, "label", SOMASliceSelection<std::string>("fig", "apple")),
+            ValueFilter::create_from_slice(*tiledb_ctx, "label", SliceSelection<std::string>("fig", "apple")),
             std::invalid_argument);
     }
 
@@ -323,12 +319,12 @@ TEST_CASE("Test ValueFilter on SOMADataFrame with string index column", "[ValueF
         INFO("Invalid points: no values selected - should throw an std::invalid_argument error");
         std::vector<std::string> points{};
         CHECK_THROWS_AS(
-            ValueFilter::create_from_points(*tiledb_ctx, "label", SOMAPointSelection<std::string>(points)),
+            ValueFilter::create_from_points(*tiledb_ctx, "label", PointSelection<std::string>(points)),
             std::invalid_argument);
     }
 
     {
-        auto qc = ValueFilter::create_from_slice(*tiledb_ctx, "label", SOMASliceSelection<std::string>("ca", "fa"));
+        auto qc = ValueFilter::create_from_slice(*tiledb_ctx, "label", SliceSelection<std::string>("ca", "fa"));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("ca"), std::string("fa"));
         check_query_condition(qc, subarray, "Create by range.");
@@ -336,7 +332,7 @@ TEST_CASE("Test ValueFilter on SOMADataFrame with string index column", "[ValueF
 
     {
         std::vector<std::string> points{"fig", "durian", "banana"};
-        auto qc = ValueFilter::create_from_points(*tiledb_ctx, "label", SOMAPointSelection<std::string>(points));
+        auto qc = ValueFilter::create_from_points(*tiledb_ctx, "label", PointSelection<std::string>(points));
         Subarray subarray(*tiledb_ctx, array);
         subarray.add_range(0, std::string("banana"), std::string("banana"))
             .add_range(0, std::string("durian"), std::string("durian"))
@@ -345,13 +341,13 @@ TEST_CASE("Test ValueFilter on SOMADataFrame with string index column", "[ValueF
     }
 
     {
-        auto qc = ValueFilter::create_from_slice(*tiledb_ctx, "label", SOMASliceSelection<std::string>("g", "z"));
+        auto qc = ValueFilter::create_from_slice(*tiledb_ctx, "label", SliceSelection<std::string>("g", "z"));
         check_empty_query_condition(qc, "Create by range - no values selected.");
     }
 
     {
         std::vector<std::string> points{"kiwi", "pear", "carrot"};
-        auto qc = ValueFilter::create_from_points(*tiledb_ctx, "label", SOMAPointSelection<std::string>(points));
+        auto qc = ValueFilter::create_from_points(*tiledb_ctx, "label", PointSelection<std::string>(points));
         check_empty_query_condition(qc, "Create by points - no values selected.");
     }
 }
