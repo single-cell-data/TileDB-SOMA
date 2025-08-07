@@ -91,7 +91,7 @@ TEST_CASE("Test CoordinateValueFilters on SparseArray", "[CoordinateValueFilters
             Subarray value_filter_subarray(*ctx->tiledb_ctx(), array);
             value_filter_subarray.add_range<int64_t>(0, 0, 3).add_range<int64_t>(1, 0, 2);
             query2.set_subarray(value_filter_subarray);
-            query2.set_condition(value_filter.get_value_filter().query_condition());
+            query2.set_condition(value_filter.combine().query_condition());
             query2.submit();
 
             // Check results.
@@ -283,7 +283,7 @@ TEST_CASE(
             Subarray value_filter_subarray(*ctx->tiledb_ctx(), array);
             value_filter_subarray.add_range(0, std::string("a"), std::string("z"));
             query2.set_subarray(value_filter_subarray);
-            query2.set_condition(value_filter.get_value_filter().query_condition());
+            query2.set_condition(value_filter.combine().query_condition());
             query2.submit();
             REQUIRE(query2.query_status() == tiledb::Query::Status::COMPLETE);
 
@@ -320,7 +320,7 @@ TEST_CASE(
         Subarray value_filter_subarray(*ctx->tiledb_ctx(), array);
         value_filter_subarray.add_range(0, std::string("a"), std::string("z"));
         query2.set_subarray(value_filter_subarray);
-        query2.set_condition(value_filter.get_value_filter().query_condition());
+        query2.set_condition(value_filter.combine().query_condition());
         query2.submit();
         REQUIRE(query2.query_status() == tiledb::Query::Status::COMPLETE);
 

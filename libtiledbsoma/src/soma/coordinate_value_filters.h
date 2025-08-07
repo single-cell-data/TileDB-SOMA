@@ -159,9 +159,9 @@ class CoordinateValueFilters {
     bool is_initialized() const;
 
     /**
-     * Returns a SOMA query condition that queries for the currently set coordinates.
+     * Returns combined `ValueFilter` for the currently set coordinates.
      */
-    ValueFilter get_value_filter() const;
+    ValueFilter combine() const;
 
    private:
     /**Add a query condition to a coordinate. */

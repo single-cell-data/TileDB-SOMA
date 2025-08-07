@@ -36,7 +36,7 @@ bool CoordinateValueFilters::is_initialized() const {
     return std::any_of(coord_qc_.cbegin(), coord_qc_.cend(), [](auto qc) { return qc.is_initialized(); });
 }
 
-ValueFilter CoordinateValueFilters::get_value_filter() const {
+ValueFilter CoordinateValueFilters::combine() const {
     return std::reduce(coord_qc_.cbegin(), coord_qc_.cend(), ValueFilter(), [](const auto& qc1, const auto& qc2) {
         if (qc1.is_initialized()) {
             if (qc2.is_initialized()) {

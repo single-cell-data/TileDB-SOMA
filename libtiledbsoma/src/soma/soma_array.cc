@@ -262,7 +262,7 @@ void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
 }
 
 void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters) {
-    auto combined_filter = coord_filters.get_value_filter();
+    auto combined_filter = coord_filters.combine();
     if (!combined_filter.is_initialized()) {
         throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
     }
@@ -270,7 +270,7 @@ void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters) {
 }
 
 void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters, const QueryCondition& value_filter) {
-    auto combined_coord_filter = coord_filters.get_value_filter();
+    auto combined_coord_filter = coord_filters.combine();
     if (combined_coord_filter.is_initialized()) {
         delete_cells_impl(combined_coord_filter.query_condition().combine(value_filter, TILEDB_AND));
     } else {
