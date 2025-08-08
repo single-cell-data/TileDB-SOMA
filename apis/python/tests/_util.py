@@ -83,7 +83,7 @@ def assert_array_equal(a0, a1):
     assert type(a0) is type(a1)
     if isinstance(a0, np.ndarray):
         assert array_equal(a0, a1)
-    elif isinstance(a0, spmatrix):
+    elif isinstance(a0, (spmatrix, sp.sparray)):
         assert type(a0) is type(a1)
         assert a0.shape == a1.shape
         assert (a0 != a1).nnz == 0

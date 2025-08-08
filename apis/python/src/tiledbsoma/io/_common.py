@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from typing import Mapping, Union
+import os
 
 import h5py
 import numpy as np
@@ -23,7 +24,7 @@ except (AttributeError, ModuleNotFoundError):
 
 from tiledbsoma._types import Metadatum, NPNDArray
 
-SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, CSCDataset, CSRDataset]
+SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, CSCDataset, CSRDataset, sp.csr_array, sp.csc_array]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
 Matrix = Union[DenseMatrix, SparseMatrix]
 
@@ -50,3 +51,6 @@ _UNS_OUTGEST_COLUMN_NAME_1D = "values"
 _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
 
 _TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
+
+
+
