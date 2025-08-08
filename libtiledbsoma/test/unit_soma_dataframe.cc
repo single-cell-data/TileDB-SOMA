@@ -1209,3 +1209,516 @@ TEST_CASE_METHOD(
         }
     }
 }
+
+TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][delete]") {
+    // Create a dataframe with soma_joinid as the only index column.
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://test-deletes-soma-joinid-only";
+
+    {
+        INFO("Create the dataframe.");
+        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
+            {helper::DimInfo(
+                {.name = "soma_joinid",
+                 .tiledb_datatype = TILEDB_INT64,
+                 .dim_max = 7,
+                 .string_lo = "N/A",
+                 .string_hi = "N/A"})},
+            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_INT32})});
+        SOMADataFrame::create(uri, schema, index_columns, ctx);
+    }
+
+    {
+        INFO("Write data to array.");
+        std::vector<int64_t> join(8);
+        std::vector<int32_t> data(8);
+        std::iota(join.begin(), join.end(), 0);
+        std::iota(data.begin(), data.end(), 1);
+
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
+        Query query{*ctx->tiledb_ctx(), array};
+        query.set_layout(TILEDB_GLOBAL_ORDER);
+        query.set_data_buffer("soma_joinid", join);
+        query.set_data_buffer("attr1", data);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        array.close();
+    }
+
+    // Create variable for tests.
+    int64_t expected_result_num{0};
+    std::vector<int64_t> expected_joinids{};
+    std::vector<int32_t> expected_data{};
+
+    auto check_delete = [&](const std::string& log_note) {
+        INFO(log_note);
+        expected_joinids.resize(8, 0);
+        expected_data.resize(8, 0);
+
+        std::vector<int64_t> actual_joinids(8);
+        std::vector<int32_t> actual_data(8);
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
+        Query query{*ctx->tiledb_ctx(), array};
+        Subarray subarray(*ctx->tiledb_ctx(), array);
+        subarray.add_range<int64_t>(0, 0, 7);
+        query.set_layout(TILEDB_GLOBAL_ORDER);
+        query.set_subarray(subarray);
+        query.set_data_buffer("soma_joinid", actual_joinids);
+        query.set_data_buffer("attr1", actual_data);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        array.close();
+
+        auto actual_result_num = static_cast<int64_t>(query.result_buffer_elements()["attr1"].second);
+        CHECK(actual_result_num == expected_result_num);
+        CHECK_THAT(actual_joinids, Catch::Matchers::Equals(expected_joinids));
+        CHECK_THAT(actual_data, Catch::Matchers::Equals(expected_data));
+    };
+
+    SECTION("Error - must have some constraint") {
+        INFO("Check throws if no constraint set.");
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto delete_filter = df->create_coordinate_value_filter();
+        CHECK_THROWS_AS(df->delete_cells(delete_filter), std::invalid_argument);
+        df->close();
+    }
+
+    SECTION("Delete all by slice") {
+        INFO("Delete all by slice");
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto delete_filter = df->create_coordinate_value_filter();
+        delete_filter.add_slice<int64_t>(0, SliceSelection<int64_t>(-10, 10));
+        df->delete_cells(delete_filter);
+        df->close();
+
+        check_delete("Delete all by slice");
+    }
+
+    SECTION("Delete all by points") {
+        INFO("Delete all by points.");
+        expected_result_num = 0;
+
+        std::vector<int64_t> points{0, 3, 2, 1, 4, 7, 5, 6};
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto delete_filter = df->create_coordinate_value_filter();
+        delete_filter.add_points<int64_t>(0, PointSelection<int64_t>(points));
+        df->delete_cells(delete_filter);
+        df->close();
+
+        check_delete("Delete all by points");
+    }
+
+    SECTION("Delete final value with slice") {
+        expected_result_num = 7;
+        expected_joinids.assign({0, 1, 2, 3, 4, 5, 6});
+        expected_data.assign({1, 2, 3, 4, 5, 6, 7});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto delete_filter = df->create_coordinate_value_filter();
+        delete_filter.add_slice<int64_t>(0, SliceSelection<int64_t>(7, 10));
+        df->delete_cells(delete_filter);
+        df->close();
+
+        check_delete("Delete final value with slice");
+    }
+
+    SECTION("Delete with coords and value filter") {
+        expected_result_num = 6;
+        expected_joinids.assign({0, 1, 2, 5, 6, 7});
+        expected_data.assign({1, 2, 3, 6, 7, 8});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice<int64_t>(0, SliceSelection<int64_t>(0, 4));
+        int32_t max_value{3};
+        auto value_filter = QueryCondition::create(*ctx->tiledb_ctx(), "attr1", max_value, TILEDB_GT);
+        df->delete_cells(coord_filters, value_filter);
+        df->close();
+
+        check_delete("Delete using coords and value filter");
+    }
+
+    SECTION("Delete using value filter only") {
+        expected_result_num = 4;
+        expected_joinids.assign({0, 1, 2, 3});
+        expected_data.assign({1, 2, 3, 4});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        int32_t max_value{4};
+        auto value_filter = QueryCondition::create(*ctx->tiledb_ctx(), "attr1", max_value, TILEDB_GT);
+        df->delete_cells(coord_filters, value_filter);
+        df->close();
+
+        check_delete("Delete using value filter only");
+    }
+}
+
+TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame][delete][string-index]") {
+    // Create a dataframe with soma_joinid as the only index column.
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://test-deletes-string-index-only";
+
+    {
+        INFO("Create the dataframe.");
+        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
+            {helper::DimInfo(
+                {.name = "label",
+                 .tiledb_datatype = TILEDB_STRING_ASCII,
+                 .dim_max = 0,
+                 .string_lo = "",
+                 .string_hi = ""})},
+            {helper::AttrInfo({.name = "soma_joinid", .tiledb_datatype = TILEDB_INT64})});
+        SOMADataFrame::create(uri, schema, index_columns, ctx);
+    }
+
+    std::vector<std::string> coords{"apple", "banana", "coconut", "durian", "eggplant", "fig"};
+    uint64_t data_size = 0;
+    for (auto& val : coords) {
+        data_size += val.size();
+    }
+    std::vector<uint64_t> coords_offsets{};
+    std::vector<char> coords_data(data_size);
+    uint64_t curr_offset = 0;
+    for (auto& val : coords) {
+        coords_offsets.push_back(curr_offset);
+        memcpy(coords_data.data() + curr_offset, val.data(), val.size());
+        curr_offset += val.size();
+    }
+
+    std::vector<int64_t> index(6);
+    std::iota(index.begin(), index.end(), 0);
+
+    {
+        INFO("Write data to array.");
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
+        Query query{*ctx->tiledb_ctx(), array};
+        query.set_data_buffer("label", coords_data);
+        query.set_offsets_buffer("label", coords_offsets);
+        query.set_data_buffer("soma_joinid", index);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+    }
+
+    // Create variable for tests.
+    int64_t expected_result_num{0};
+    std::vector<std::string> expected_labels{};
+    std::vector<int64_t> expected_joinids{};
+
+    auto check_delete = [&](const std::string& log_note) {
+        INFO(log_note);
+
+        // Create buffers for expected string labels.
+        std::vector<char> expected_label_data(data_size);
+        std::vector<uint64_t> expected_label_offsets{};
+        uint64_t curr_offset = 0;
+        for (auto& elem : expected_labels) {
+            expected_label_offsets.push_back(curr_offset);
+            memcpy(expected_label_data.data() + curr_offset, elem.data(), elem.size());
+            curr_offset += elem.size();
+        }
+        expected_label_offsets.resize(7);
+        expected_joinids.resize(6);
+
+        std::vector<char> actual_label_data(data_size);
+        std::vector<uint64_t> actual_label_offsets(7);
+        std::vector<int64_t> actual_joinids(6);
+
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
+        Query query{*ctx->tiledb_ctx(), array};
+        Subarray subarray(*ctx->tiledb_ctx(), array);
+        subarray.add_range(0, std::string("a"), std::string("z"));
+        query.set_subarray(subarray);
+        query.set_layout(TILEDB_GLOBAL_ORDER);
+        query.set_data_buffer("label", actual_label_data);
+        query.set_offsets_buffer("label", actual_label_offsets);
+        query.set_data_buffer("soma_joinid", actual_joinids);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        array.close();
+
+        auto actual_result_num = static_cast<int64_t>(query.result_buffer_elements()["soma_joinid"].second);
+        CHECK(actual_result_num == expected_result_num);
+        CHECK_THAT(actual_label_data, Catch::Matchers::Equals(expected_label_data));
+        CHECK_THAT(actual_label_offsets, Catch::Matchers::Equals(expected_label_offsets));
+        CHECK_THAT(actual_joinids, Catch::Matchers::Equals(expected_joinids));
+    };
+
+    SECTION("Delete all by slice") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice(0, SliceSelection<std::string>("a", "z"));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete all by slice");
+    }
+
+    SECTION("Delete all by points") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        std::vector<std::string> points{"fig", "banana", "coconut", "durian", "apple", "eggplant"};
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_points(0, PointSelection<std::string>(points));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete all by points");
+    }
+
+    SECTION("Delete with string slice") {
+        expected_result_num = 3;
+        expected_labels.assign({"apple", "eggplant", "fig"});
+        expected_joinids.assign({0, 4, 5});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice(0, SliceSelection<std::string>("b", "e"));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete with string slice");
+    }
+
+    SECTION("Delete with string points") {
+        expected_result_num = 3;
+        expected_labels.assign({"coconut", "eggplant", "fig"});
+        expected_joinids.assign({2, 4, 5});
+        std::vector<std::string> points{"banana", "durian", "apple"};
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_points(0, PointSelection<std::string>(points));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete with string points");
+    }
+}
+
+TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][delete]") {
+    // Create a dataframe with soma_joinid as the only index column.
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://test-deletes-multi-index";
+
+    {
+        INFO("Create the dataframe.");
+        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
+            {helper::DimInfo(
+                 {.name = "soma_joinid",
+                  .tiledb_datatype = TILEDB_INT64,
+                  .dim_max = 3,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A"}),
+             helper::DimInfo(
+                 {.name = "index",
+                  .tiledb_datatype = TILEDB_UINT32,
+                  .dim_max = 2,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A"})},
+            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_INT32})});
+        SOMADataFrame::create(uri, schema, index_columns, ctx);
+    }
+
+    {
+        INFO("Write data to array.");
+        std::vector<int64_t> join{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+        std::vector<uint32_t> index{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
+        std::vector<int32_t> data(12);
+        std::iota(data.begin(), data.end(), 1);
+
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
+        Query query{*ctx->tiledb_ctx(), array};
+        query.set_data_buffer("soma_joinid", join);
+        query.set_data_buffer("index", index);
+        query.set_data_buffer("attr1", data);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        array.close();
+    }
+
+    // Create variable for tests. Using sections will rerun the this test from beginning to end for each section.
+    int64_t expected_result_num{0};
+    std::vector<int64_t> expected_joinids{};
+    std::vector<uint32_t> expected_index{};
+    std::vector<int32_t> expected_data{};
+
+    auto check_delete = [&](const std::string& log_note) {
+        INFO(log_note);
+        expected_joinids.resize(12, 0);
+        expected_index.resize(12, 0);
+        expected_data.resize(12, 0);
+
+        std::vector<int64_t> actual_joinids(12);
+        std::vector<uint32_t> actual_index(12);
+        std::vector<int32_t> actual_data(12);
+        Array array{*ctx->tiledb_ctx(), uri, TILEDB_READ};
+        Query query{*ctx->tiledb_ctx(), array};
+        Subarray subarray(*ctx->tiledb_ctx(), array);
+        subarray.add_range<int64_t>(0, 0, 3);
+        subarray.add_range<uint32_t>(1, 0, 2);
+        query.set_subarray(subarray);
+        query.set_data_buffer("soma_joinid", actual_joinids);
+        query.set_data_buffer("index", actual_index);
+        query.set_data_buffer("attr1", actual_data);
+        query.submit();
+        query.finalize();
+        REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
+        array.close();
+
+        auto actual_result_num = static_cast<int64_t>(query.result_buffer_elements()["attr1"].second);
+        CHECK(actual_result_num == expected_result_num);
+        CHECK_THAT(actual_joinids, Catch::Matchers::Equals(expected_joinids));
+        CHECK_THAT(actual_index, Catch::Matchers::Equals(expected_index));
+        CHECK_THAT(actual_data, Catch::Matchers::Equals(expected_data));
+    };
+
+    SECTION("Delete all by joinid slice") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice<int64_t>(0, SliceSelection<int64_t>(0, 3));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete all by joinid slice");
+    }
+
+    SECTION("Delete all by joinid slice and monostate") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_column_selection<int64_t>(0, SliceSelection<int64_t>(0, 3));
+        coord_filters.add_column_selection<uint32_t>(1, std::monostate());
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete all by joinid slice and monostate");
+    }
+
+    SECTION("Delete all by joinid points") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        std::vector<int64_t> points{1, 3, 2, 0};
+        coord_filters.add_points<int64_t>(0, PointSelection<int64_t>(points));
+        df->delete_cells(coord_filters);
+        df->close();
+        check_delete("Delete all by joinid points");
+    }
+
+    SECTION("Delete all by index slice") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice<uint32_t>(1, SliceSelection<uint32_t>(0, 2));
+        df->delete_cells(coord_filters);
+        df->close();
+        check_delete("Delete all by joinid slice");
+    }
+
+    SECTION("Delete all by index points") {
+        expected_result_num = 0;
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        std::vector<uint32_t> points{2, 0, 1};
+        coord_filters.add_points<uint32_t>(1, PointSelection<uint32_t>(points));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete all by joinid slice");
+    }
+    SECTION("Delete by joinid slice") {
+        expected_result_num = 6;
+        expected_joinids.assign({0, 0, 0, 1, 1, 1});
+        expected_index.assign({0, 1, 2, 0, 1, 2});
+        expected_data.assign({1, 2, 3, 4, 5, 6});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice<int64_t>(0, SliceSelection<int64_t>(2, 10));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete by joinid slice");
+    }
+    SECTION("Delete by joinid slice and all indices") {
+        expected_result_num = 6;
+        expected_joinids.assign({0, 0, 0, 1, 1, 1});
+        expected_index.assign({0, 1, 2, 0, 1, 2});
+        expected_data.assign({1, 2, 3, 4, 5, 6});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice(0, SliceSelection<int64_t>(2, 10));
+        coord_filters.add_slice(1, SliceSelection<uint32_t>(0, 10));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete by joinid slice");
+    }
+    SECTION("Delete multiple slice selections") {
+        expected_result_num = 8;
+        expected_joinids.assign({0, 0, 0, 1, 2, 3, 3, 3});
+        expected_index.assign({0, 1, 2, 2, 2, 0, 1, 2});
+        expected_data.assign({1, 2, 3, 6, 9, 10, 11, 12});
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_slice(1, SliceSelection<uint32_t>(0, 1));
+        coord_filters.add_slice(0, SliceSelection<int64_t>(1, 2));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete multiple slice selections");
+    }
+    SECTION("Delete multiple point selections") {
+        expected_result_num = 10;
+        expected_joinids.assign({0, 0, 0, 1, 1, 2, 2, 3, 3, 3});
+        expected_index.assign({0, 1, 2, 0, 1, 0, 1, 0, 1, 2});
+        expected_data.assign({1, 2, 3, 4, 5, 7, 8, 10, 11, 12});
+        std::vector<int64_t> join_points{2, 1};
+        std::vector<uint32_t> index_points{2};
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_points(1, PointSelection<uint32_t>(index_points));
+        coord_filters.add_points(0, PointSelection<int64_t>(join_points));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete multiple point selections");
+    }
+    SECTION("Delete mixed selection") {
+        expected_result_num = 10;
+        expected_joinids.assign({0, 0, 0, 1, 1, 2, 2, 3, 3, 3});
+        expected_index.assign({0, 1, 2, 0, 1, 0, 1, 0, 1, 2});
+        expected_data.assign({1, 2, 3, 4, 5, 7, 8, 10, 11, 12});
+        std::vector<uint32_t> index_points{2};
+
+        auto df = SOMADataFrame::open(uri, OpenMode::soma_delete, ctx, std::nullopt);
+        auto coord_filters = df->create_coordinate_value_filter();
+        coord_filters.add_points(1, PointSelection<uint32_t>(index_points));
+        coord_filters.add_slice(0, SliceSelection<int64_t>(1, 2));
+        df->delete_cells(coord_filters);
+        df->close();
+
+        check_delete("Delete mixed selections");
+    }
+}

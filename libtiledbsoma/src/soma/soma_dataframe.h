@@ -15,7 +15,9 @@
 #define SOMA_DATAFRAME
 
 #include <filesystem>
+#include <optional>
 
+#include "../common/soma_column_selection.h"
 #include "soma_array.h"
 
 namespace tiledbsoma {

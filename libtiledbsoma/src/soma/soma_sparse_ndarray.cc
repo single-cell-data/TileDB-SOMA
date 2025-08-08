@@ -18,7 +18,6 @@
 
 #include "../utils/logger.h"
 #include "soma_coordinates.h"
-#include "tiledb_adapter/soma_query_condition.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -97,30 +96,6 @@ std::string_view SOMASparseNDArray::soma_data_type() {
 
 managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
-}
-
-void SOMASparseNDArray::delete_cells(const std::vector<SOMAColumnSelection<int64_t>>& coords) {
-    if (coords.size() > ndim()) {
-        throw std::invalid_argument(
-            fmt::format(
-                "Coordinates for {} columns were provided, but this array only has {} columns. The number of coords "
-                "provided must be less than or equal to the number of columns.",
-                coords.size(),
-                ndim()));
-    }
-    const auto& array_shape = shape();
-
-    SOMACoordQueryCondition qc{*ctx_, dimension_names()};
-    for (size_t dim_index{0}; dim_index < coords.size(); ++dim_index) {
-        qc.add_column_selection<int64_t>(
-            dim_index, coords[dim_index], std::pair<int64_t, int64_t>(0, array_shape[dim_index] - 1));
-    }
-
-    auto soma_delete_cond = qc.get_soma_query_condition();
-    if (!soma_delete_cond.is_initialized()) {
-        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
-    }
-    delete_cells_impl(soma_delete_cond.query_condition());
 }
 
 }  // namespace tiledbsoma
