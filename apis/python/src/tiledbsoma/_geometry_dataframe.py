@@ -305,9 +305,19 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
     ) -> None:
-        del coords
-        del value_filter
-        del platform_config
+        """Deletes cells at the specified coordinates.
+
+        Note: Deleting cells with an enumeration value does not effect the possible enumerations.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+            value_filter:
+                An optional [value filter] to apply to the results.
+                Defaults to no filter.
+        """
         raise NotImplementedError("Support for deleting cells from a geometry dataframe is not yet implemented.")
 
     def read(

@@ -231,6 +231,18 @@ void load_soma_dataframe(py::module& m) {
             "function_name_for_messages"_a)
 
         .def(
+            "delete_cells",
+            [](SOMADataFrame& df,
+               const CoordinateValueFilter& coord_filter,
+               const std::optional<QueryCondition> value_filter) {
+                if (value_filter.has_value()) {
+                    df.delete_cells(coord_filter, value_filter.value());
+                } else {
+                    df.delete_cells(coord_filter);
+                }
+            })
+
+        .def(
             "upgrade_soma_joinid_shape",
             [](SOMADataFrame& sdf, int64_t newshape, std::string function_name_for_messages) {
                 try {

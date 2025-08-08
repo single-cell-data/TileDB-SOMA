@@ -21,6 +21,7 @@ from . import _util
 from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
+from ._coordinate_selection import CoordinateValueFilters
 from ._dask.util import SOMADaskConfig
 from ._exception import SOMAError, map_exception_for_create
 from ._managed_query import ManagedQuery
@@ -29,7 +30,7 @@ from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple, OpenTimestamp
 from ._util import from_clib_result_order
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
 if TYPE_CHECKING:
     try:
@@ -206,6 +207,22 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         self._verify_open_for_reading()
         return cast("SparseNDArrayWrapper", self._handle).nnz
+
+    def delete_cells(self, coords: options.SparseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
+        """Deletes cells at the specified coordinates in a :class:`SparseNDArray`.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+        """
+        if isinstance(platform_config, (TileDBCreateOptions, TileDBWriteOptions)):
+            raise TypeError(
+                f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
+            )
+        coord_filter = CoordinateValueFilters.create(self, coords)
+        self._handle._handle.delete_cells(coord_filter)
 
     def read(
         self,
