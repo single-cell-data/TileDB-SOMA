@@ -99,3 +99,47 @@ R classes additionally enter a defunct stage, in which an error is thrown and th
 - `NEWS.md` must clearly indicate the defunct status and any guidance on migration.
 
 At next major release after the defunct status, the affected R classes must be removed.
+
+## Exceptions and Error Message Style Guide
+
+### General Guidelines for Error Messages
+
+Exception type:
+
+- Use a specific of an error type as possible.
+- For generic SOMA specific errors, use TileDB-SOMA error types (e.g. `TileDBSOMAError` in C++).
+
+Content and tone:
+
+- Use simple and plain language. Clearly state the problem.
+- Provide context for the user’s situation and the action they were attempting.
+- Make the message as short as possible while still providing all necessary information.
+- For user caused error: provide clear guidance on how to solve the problem when possible. Suggest specific actions.
+- For internal errors: provide the details a developer would need to find and understand the error.
+- Use a friendly tone. Avoid blaming the user or using negative words.
+
+Grammar and structure:
+
+- Use complete sentences with normal punctuation and capitalization.
+- Add single quotes around user provided strings (for example, column names, URIs). This helps make the message readable if the name is empty or has spaces in it.
+- Do not add punctuation around code (for example class names).
+
+Code Location:
+
+- Do not include the name of the class or method where the code was thrown in the error message. In general, you should provide enough detail that the error is uniquely identifiable.
+- Mark internal errors (”us” errors) as internal by beginning the error message with “Internal error.”
+- Do provide enough information that it is clear where and how an error occurred.
+
+### C++ Error Handling
+
+- In external-facing headers, use `sstream` to convert relevant data into a user-readable string, otherwise use `fmt::format` to convert relevant data into a user-readable string.
+
+### Python Error Handling
+
+- Use f-strings to convert relevant data into a user-readable string.
+  - To print just the name of a type use `type(object).__name__`.
+- For PyBind11, follow the general C++ error guidance. For more PyBind-specific information see the [PyBind11 webpage](https://pybind11.readthedocs.io/en/stable/advanced/exceptions.html).
+
+### R API
+
+TODO
