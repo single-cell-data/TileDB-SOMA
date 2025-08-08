@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from typing import Mapping, Union
-import os
 
 import h5py
 import numpy as np
@@ -51,6 +50,3 @@ _UNS_OUTGEST_COLUMN_NAME_1D = "values"
 _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
 
 _TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
-
-
-
