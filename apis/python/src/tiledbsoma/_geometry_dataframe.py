@@ -298,6 +298,18 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         # if is it in read open mode, then it is a GeometryDataFrameWrapper
         return cast("GeometryDataFrameWrapper", self._handle).count
 
+    def delete_cells(
+        self,
+        coords: options.SparseNDCoords,
+        *,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
+    ) -> None:
+        del coords
+        del value_filter
+        del platform_config
+        raise NotImplementedError("Support for deleting cells from a geometry dataframe is not yet implemented.")
+
     def read(
         self,
         coords: options.SparseDFCoords = (),
