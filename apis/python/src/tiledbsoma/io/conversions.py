@@ -22,7 +22,7 @@ from tiledbsoma._types import NPNDArray, PDSeries
 from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
-_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
+_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, sp.sparray, PDSeries)
 _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
 COLUMN_DECAT_THRESHOLD = 32767
@@ -183,7 +183,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:  # noqa: ARG001
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent,
     e.g., float16 -> float32.
     """
-    if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(x.dtype, pd.CategoricalDtype):
+    if isinstance(x, (np.ndarray, sp.spmatrix, sp.sparray)) or not isinstance(x.dtype, pd.CategoricalDtype):
         target_dtype = _to_tiledb_supported_dtype(x.dtype)
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 

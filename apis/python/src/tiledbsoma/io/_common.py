@@ -23,7 +23,7 @@ except (AttributeError, ModuleNotFoundError):
 
 from tiledbsoma._types import Metadatum, NPNDArray
 
-SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, CSCDataset, CSRDataset]
+SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, CSCDataset, CSRDataset, sp.csr_array, sp.csc_array]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
 Matrix = Union[DenseMatrix, SparseMatrix]
 
