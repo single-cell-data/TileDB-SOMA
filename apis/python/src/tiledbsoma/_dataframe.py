@@ -24,7 +24,9 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
+from ._coordinate_selection import CoordinateValueFilters
 from ._exception import SOMAError, map_exception_for_create
+from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
@@ -38,10 +40,7 @@ from ._types import (
 )
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[tuple[Any, Any], list[Any], None]
@@ -688,6 +687,38 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
+
+    def delete_cells(
+        self,
+        coords: options.SparseNDCoords,
+        *,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
+    ) -> None:
+        """Deletes cells at the specified coordinates.
+
+        Note: Deleting cells with an enumeration value does not effect the possible enumerations.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+            value_filter:
+                An optional [value filter] to apply to the results.
+                Defaults to no filter.
+        """
+        if isinstance(platform_config, (TileDBCreateOptions, TileDBWriteOptions)):
+            raise TypeError(
+                f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
+            )
+        coord_filter = CoordinateValueFilters.create(self, coords)
+        if value_filter is None:
+            self._handle._handle.delete_cells(coord_filter._handle, None)
+            return
+        qc = QueryCondition(value_filter)
+        qc.init_query_condition(self.schema, [])
+        self._handle._handle.delete_cells(coord_filter._handle, qc.c_obj)
 
     def read(
         self,

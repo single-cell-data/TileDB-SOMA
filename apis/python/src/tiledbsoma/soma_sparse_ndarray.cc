@@ -85,6 +85,7 @@ void load_soma_sparse_ndarray(py::module& m) {
         .def_static("exists", &SOMASparseNDArray::exists)
 
         .def_property_readonly("shape", &SOMASparseNDArray::shape)
-        .def_property_readonly("maxshape", &SOMASparseNDArray::maxshape);
+        .def_property_readonly("maxshape", &SOMASparseNDArray::maxshape)
+        .def("delete_cells", py::overload_cast<const CoordinateValueFilters&>(&SOMASparseNDArray::delete_cells));
 }
 }  // namespace libtiledbsomacpp
