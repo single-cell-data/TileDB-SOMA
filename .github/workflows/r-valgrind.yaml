@@ -26,7 +26,7 @@ jobs:
         run: apt update -qq && apt upgrade --yes && apt install --yes --no-install-recommends valgrind cmake git
 
       - name: Package Dependencies
-        run: cd apis/r && R -q -e 'remotes::install_deps(".", dependencies=TRUE, upgrade=FALSE)'
+        run: cd apis/r && R -q -e 'remotes::install_deps(".", dependencies=TRUE)'
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
