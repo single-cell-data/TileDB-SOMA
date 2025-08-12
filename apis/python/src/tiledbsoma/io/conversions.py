@@ -244,7 +244,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         # extension dtype.
         #
         # Note: with
-        #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
+        #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))  # noqa: ERA001
         # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
         # as `pd.StringDtype()` but rather as `object`.
         #
@@ -252,17 +252,17 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         # from_pandas, and categoricals.
         #
         # * If you do this:
-        #     pd.Series(["a", "b", "c", "d"], dtype=pd.CategoricalDtype())
+        #     pd.Series(["a", "b", "c", "d"], dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of string with no nulls -- as desired.
         # * If you do this:
-        #     pd.Series(["a", "b", None, "d"], dtype=pd.CategoricalDtype())
+        #     pd.Series(["a", "b", None, "d"], dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   or
-        #     pd.Series(["a", "b", np.nan, "d"], dtype=pd.CategoricalDtype())
+        #     pd.Series(["a", "b", np.nan, "d"], dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of string, with some nulls -- as desired
         # * If you do this:
-        #     pd.Series([None] * 4, dtype=pd.CategoricalDtype())
+        #     pd.Series([None] * 4, dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   or
-        #     pd.Series([np.nan] * 4, dtype=pd.CategoricalDtype())
+        #     pd.Series([np.nan] * 4, dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of double -- with NaN values -- not as desired.
         if df[key].isnull().all():
             if df[key].dtype.name == "object":

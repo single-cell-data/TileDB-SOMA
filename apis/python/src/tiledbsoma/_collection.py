@@ -129,9 +129,9 @@ class CollectionBase(
 
     # Overloads to allow type inference to work when doing:
     #
-    #     some_coll.add_new_collection("key")  # -> Collection
+    #     some_coll.add_new_collection("key")  # -> Collection  # noqa: ERA001
     # and
-    #     some_coll.add_new_collection("key", Experiment)  # -> Experiment
+    #     some_coll.add_new_collection("key", Experiment)  # -> Experiment  # noqa: ERA001
     #
     # These are only used in type inference to provide better type-checking and
     # autocompletion etc. in static analysis, not at runtime.
