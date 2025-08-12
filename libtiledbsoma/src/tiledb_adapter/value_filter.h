@@ -89,7 +89,7 @@ class ValueFilter {
      * @param column_name The name of the element the query condition applies to.
      * @param values The values of the points
      */
-    template <typename T, typename = std::enable_if<!std::is_same_v<T, std::string>>>
+    template <typename T>
     static ValueFilter create_from_points(
         const Context& ctx, const std::string& column_name, PointSelection<T> values) {
         if (values.points.empty()) {
