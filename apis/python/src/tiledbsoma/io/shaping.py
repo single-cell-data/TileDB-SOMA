@@ -1034,22 +1034,23 @@ def _leaf_visitor_get_shapes(
     return retval
 
 
-# Expected input is like
-# {
-#   "obs": { "status": true },
-#   "ms": {
-#     "RNA": {
-#       "var": { "status": true },
-#       "X": {
-#         "data": { "status": true }
-#       }
-#     }
-#   }
-# }
 def _check_statuses(dikt: dict[str, Any]) -> bool:
     """This reduces the pass/fail statuses for all leaf nodes in a treewalk
     over the experiment down to a single pass/fail. It returns True
     only when all leaves have status=True, else False.
+
+    Expected input is like:
+    {
+        "obs": { "status": true },
+        "ms": {
+            "RNA": {
+                "var": { "status": true },
+                "X": {
+                    "data": { "status": true }
+                }
+            }
+        }
+    }
     """
     if "status" in dikt:
         ok = dikt["status"]

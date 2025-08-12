@@ -292,7 +292,7 @@ def to_anndata(
     anndata_layers_futures = {}
 
     # Let them use
-    #   extra_X_layer_names=exp.ms["RNA"].X.keys()
+    #   extra_X_layer_names=exp.ms["RNA"].X.keys()  # noqa: ERA001
     # while avoiding
     #   TypeError: 'ABCMeta' object is not subscriptable
     if isinstance(extra_X_layer_names, KeysView):
