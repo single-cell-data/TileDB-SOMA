@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import gc
 
 import tiledbsoma
 
@@ -53,6 +54,10 @@ def test_to_anndata(soma_tiledb_context, version, name_and_expected_shape):
                 assert adata.obsp[key].shape == (expected_nobs, expected_nobs)
 
             assert adata.varm["PCs"].shape == (expected_nvar, 50)
+        
+        del adata
+        gc.collect()
+
 
 
 @pytest.mark.parametrize(
