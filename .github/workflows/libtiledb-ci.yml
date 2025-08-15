@@ -26,6 +26,8 @@ jobs:
 
     - name: Run libTileDB-SOMA unittests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
+      env:
+        TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
