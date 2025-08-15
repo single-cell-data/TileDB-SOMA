@@ -68,19 +68,6 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: cat /proc/cpuinfo
 
-      - name: MacOS CPU info
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: sysctl -a | grep cpu
-
-      - name: Select XCode version
-        if: startsWith(matrix.os, 'macos')
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '16.0'
-
-      - name: Show XCode version
-        run: clang --version
-
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
