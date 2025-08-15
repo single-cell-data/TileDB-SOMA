@@ -12,10 +12,6 @@ on:
       - '!docker/**'
       - '!docs/**'
       - '!LICENSE'
-  push:
-    branches:
-      - main
-      - 'release-*'
   workflow_dispatch:
 
 name: test-coverage.yaml
