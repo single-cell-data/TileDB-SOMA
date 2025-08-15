@@ -1,24 +1,16 @@
 name: TileDB-SOMA Python CI (Minimal)
 
 # This workflow calls ./python-ci-single.yml on a limited subset of the
-# {os} x {python version} matrix. It runs for all branches, in contrast to
-# ./python-ci-full.yml, which exhausts the matrix but only for main & releases,
-# since that's CI-resource-intensive.
-#
-# To test the full matrix on a working branch, invoke ./python-ci-full.yml from
-#   https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-ci-full.yml
+# {os} x {python version} matrix.
 on:
   pull_request:
     branches:
       - main
       - "release-*"
     paths:
-      - "**"
+      - "libtiledbsoma/**"
+      - "apis/python/**"
       - "!**.md"
-      - "!apis/r/**"
-      - "!docker/**"
-      - "!docs/**"
-      - "!.github/**"
       - ".github/workflows/python-ci-minimal.yml"
       - ".github/workflows/python-ci-single.yml"
   workflow_dispatch:
