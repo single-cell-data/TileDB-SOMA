@@ -17,7 +17,7 @@ on:
 
 jobs:
   codecov:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v4
