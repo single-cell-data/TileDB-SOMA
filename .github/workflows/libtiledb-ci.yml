@@ -2,13 +2,9 @@ name: libTileDB-SOMA CodeCov
 
 on:
   pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "docker/**"
-      - ".pre-commit-config.yaml"
-      - ".github/workflows/**"
-      - "!.github/workflows/libtiledb-ci.yml"
+    paths:
+      - "libtiledbsoma/**"
+      - ".github/workflows/libtiledb-ci.yml"
   push:
     branches:
       - main

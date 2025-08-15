@@ -2,13 +2,9 @@ name: libtiledbsoma ASAN
 
 on:
   pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "docker/**"
-      - ".pre-commit-config.yaml"
-      - ".github/workflows/**"
-      - "!.github/workflows/libtiledbsoma-asan-ci.yml"
+    paths:
+      - "libtiledbsoma/**"
+      - ".github/workflows/libtiledbsoma-asan-ci.yml"
   push:
     branches:
       - main
