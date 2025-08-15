@@ -188,6 +188,94 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     assert sdf.index_column_names == ("myfloat",)
 
 
+@pytest.mark.parametrize(
+    "delete_coords,value_filter,expected_index",
+    [
+        pytest.param((slice(0, 7),), None, [], id="delete all with exact slice"),
+        pytest.param((slice(-10, 10),), None, [], id="delete all with large slice"),
+        pytest.param((np.arange(8).tolist(),), None, [], id="delete all with points"),
+        pytest.param(((2, 6, 3),), None, [0, 1, 4, 5, 7], id="delete with point selection"),
+        pytest.param(((0, 7),), None, np.arange(1, 7).tolist(), id="delete end points"),
+        pytest.param(tuple(), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="value filter only"),
+        pytest.param((slice(1, 3),), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="slice and value filter"),
+        pytest.param(((1, 3, 2, 7, 4),), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="points and value filter"),
+        pytest.param(((1, 6, 3),), "string_data == 'two'", np.arange(8).tolist(), id="no values deleted"),
+    ],
+)
+def test_dataframe_1d_delete_cells(tmp_path, delete_coords, value_filter, expected_index):
+    schema = pa.schema([
+        pa.field("soma_joinid", pa.int64(), nullable=False),
+        pa.field("string_data", pa.large_string()),
+    ])
+    with soma.DataFrame.create(
+        str(tmp_path), schema=pa.schema({"soma_joinid": pa.int64(), "string_data": pa.large_string()}), domain=[[0, 7]]
+    ) as soma_df:
+        joinid_data = np.arange(8)
+        string_data = ["zero", "one", "two", "three", "four", "five", "six", "seven"]
+        data = pa.Table.from_pydict(
+            {
+                "soma_joinid": pa.array(joinid_data, type=pa.int64()),
+                "string_data": pa.array(string_data, type=pa.large_string()),
+            },
+            schema=schema,
+        )
+        soma_df.write(data)
+
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:  # TODO: delete
+        df = soma_df.read(value_filter=value_filter).concat().to_pandas()  # TODO: delete
+        print(df)  # TODO: delete
+
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells(delete_coords, value_filter=value_filter)
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([joinid_data[index] for index in expected_index], type=pa.int64()),
+            "string_data": pa.array([string_data[index] for index in expected_index], type=pa.large_string()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+
+def test_dataframe_delete_cells_exceptions(tmp_path):
+    schema = pa.schema([
+        pa.field("soma_joinid", pa.int64(), nullable=False),
+        pa.field("string_data", pa.large_string()),
+    ])
+    with soma.DataFrame.create(
+        str(tmp_path), schema=pa.schema({"soma_joinid": pa.int64(), "string_data": pa.large_string()}), domain=[[0, 7]]
+    ) as soma_df:
+        data = pa.Table.from_pydict(
+            {
+                "soma_joinid": pa.array(np.arange(8), type=pa.int64()),
+                "string_data": pa.array(
+                    ["one", "two", "three", "four", "five", "six", "seven", "eight"], type=pa.large_string()
+                ),
+            },
+            schema=schema,
+        )
+        soma_df.write(data)
+    with soma.DataFrame.open(str(tmp_path), mode="w") as soma_df:
+        assert soma_df.mode == "w"
+        with pytest.raises(soma.SOMAError):
+            soma_df.delete_cells((slice(1, 4),))
+
+    with soma.DataFrame.open(str(tmp_path), mode="r") as soma_df:
+        assert soma_df.mode == "r"
+        with pytest.raises(soma.SOMAError):
+            soma_df.delete_cells((slice(1, 4),))
+
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        with pytest.raises(IndexError):
+            soma_df.delete_cells((slice(10, 20),))
+        with pytest.raises(IndexError):
+            soma_df.delete_cells(((1, 20, 5, 3),))
+        with pytest.raises(ValueError):
+            soma_df.delete_cells(tuple())
+
+
 def test_dataframe_with_enumeration(tmp_path):
     schema = pa.schema(
         [
