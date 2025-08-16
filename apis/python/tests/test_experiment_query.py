@@ -566,6 +566,9 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
             == soma_experiment.ms["RNA"].varm["quux"].read((var_slice, range(N_FEATURES))).tables().concat()
         )
 
+    del query
+    gc.collect()
+
 
 @pytest.mark.parametrize("n_obs,n_vars,obsm_layer_names,varm_layer_names", [(1001, 99, ["foo"], ["bar"])])
 def test_experiment_query_to_anndata_obsm_varm(soma_experiment):

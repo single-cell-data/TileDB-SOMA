@@ -76,7 +76,7 @@ jobs:
         if: startsWith(inputs.os, 'macos')
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "15.4"
+          xcode-version: "16.0"
 
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
