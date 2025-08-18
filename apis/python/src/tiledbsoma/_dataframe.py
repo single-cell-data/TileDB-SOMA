@@ -880,7 +880,11 @@ def _canonicalize_schema(
                 f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}",
             )
         dtype = schema.field(index_column_name).type
-        if not pa.types.is_dictionary(dtype) and dtype not in [
+        if pa.types.is_dictionary(dtype):
+            raise TypeError(
+                f"Cannot set index column '{index_column_name}' to an enumeration. Index columns do not support enumerations."
+            )
+        if dtype not in [
             pa.int8(),
             pa.uint8(),
             pa.int16(),
@@ -900,7 +904,9 @@ def _canonicalize_schema(
             pa.timestamp("us"),
             pa.timestamp("ns"),
         ]:
-            raise TypeError(f"Unsupported index type {schema.field(index_column_name).type}")
+            raise TypeError(
+                f"Unsupported index type {schema.field(index_column_name).type} on index column '{index_column_name}'."
+            )
 
     return schema
 

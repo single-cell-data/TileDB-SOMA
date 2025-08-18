@@ -4,6 +4,7 @@ Test join-id registrations for ingesting multiple AnnData objects into a single 
 
 from __future__ import annotations
 
+import gc
 import math
 from contextlib import nullcontext
 from typing import Sequence
@@ -1541,6 +1542,9 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, v
         measurement_name="RNA",
         registration_mapping=rd,
     )
+
+    del adata
+    gc.collect()
 
     with tiledbsoma.Experiment.open(uri, context=soma_tiledb_context) as exp:
         assert "RNA" in exp.ms

@@ -21,6 +21,7 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include "../common/soma_column_selection.h"
 #include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "logger_public.h"
@@ -70,6 +71,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
+class CoordinateValueFilters;
 
 class SOMAArray : public SOMAObject {
    public:
@@ -198,19 +200,19 @@ class SOMAArray : public SOMAObject {
     void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
+     * Returns a shared pointer of the internal TileDB array.
+     */
+    inline std::shared_ptr<Array> tiledb_array() {
+        return arr_;
+    }
+
+    /**
      * Creates a new ManagedQuery for this array.
      *
      * @param name Name of the array.
      */
     inline ManagedQuery create_managed_query(std::string_view name = "unnamed") const {
         return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
-    }
-
-    /**
-     * Returns a shared pointer of the internal TileDB array.
-     */
-    inline std::shared_ptr<Array> tiledb_array() {
-        return arr_;
     }
 
     /**
@@ -223,6 +225,11 @@ class SOMAArray : public SOMAObject {
         std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const {
         return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
     }
+
+    /**
+     * Creates a new CoordinateValueFilters for this array.
+     */
+    CoordinateValueFilters create_coordinate_value_filter() const;
 
     /**
      * Close the SOMAArray object.
@@ -262,6 +269,13 @@ class SOMAArray : public SOMAObject {
     std::vector<std::string> dimension_names() const;
 
     /**
+     * @brief Get the index columns.
+     *
+     * @return A vector of the index columns in order.
+     */
+    std::vector<std::shared_ptr<SOMAColumn>> index_columns() const;
+
+    /**
      * @brief Sees if the array has a dimension of the given name.
      *
      * @return bool
@@ -282,6 +296,21 @@ class SOMAArray : public SOMAObject {
      * and commits
      */
     void consolidate_and_vacuum(std::vector<std::string> modes = {"fragment_meta", "commits"});
+
+    /**
+     * @brief Delete cells from the array.
+     *
+     * @param coord_filter Coordinate value filter defining the coordinates to delete.
+     */
+    void delete_cells(const CoordinateValueFilters& coord_filters);
+
+    /**
+     * @brief Delete cells from the array.
+     *
+     * @param coord_filter Coordinate value filter defining the coordinates to delete.
+     * @param value_filter Additional value filter to constrain the delete by.
+     */
+    void delete_cells(const CoordinateValueFilters& coord_filters, const QueryCondition& value_filter);
 
     /**
      * @brief Get the TileDB ArraySchema. This should eventually
