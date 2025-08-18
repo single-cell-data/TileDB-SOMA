@@ -383,12 +383,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         # thing, TileDBSOMAError for another.
         for column_name in column_names:
             # We could check:
-            #   if column_name not in self.schema.names: ...
+            #   if column_name not in self.schema.names ...
             # but pyarrow already raises KeyError. We could
             # do that check anyway and provide a really clear
             # error message, but fortunately (not all libraries do this)
             # their error message is sufficiently clear:
-            #   KeyError: 'Column nonesuch does not exist in schema'
+            #   KeyError: 'Column nonesuch does not exist in schema'  # noqa: ERA001
             field = self.schema.field(column_name)
             if not isinstance(field.type, pa.DictionaryType):
                 raise KeyError(f"column name '{column_name}' is not of dictionary type")

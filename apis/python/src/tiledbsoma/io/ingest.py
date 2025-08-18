@@ -1449,9 +1449,9 @@ def _write_dataframe_impl(
 
     else:
         # We could (and used to) do:
-        #   if exists:
+        #   if exists
         #     open
-        #   else:
+        #   else
         #     create
         # However, for remote object stores, that's two round-trip requests
         # to the server, whether the dataframe exists or not. Instead we
@@ -1571,7 +1571,7 @@ def _create_from_matrix(
             # A SparseNDArray must be appendable in soma.io.
 
             # Instead of
-            #   shape = tuple(int(e) for e in matrix.shape)
+            #   shape = tuple(int(e) for e in matrix.shape)  # noqa: ERA001
             # we consult the registration mapping. This is important
             # in the case when multiple H5ADs/AnnDatas are being
             # ingested to an experiment which doesn't pre-exist.
@@ -2213,10 +2213,6 @@ def _find_sparse_chunk_size_non_backed(
             break
         sum_nnz = candidate_sum_nnz
         chunk_size += 1
-        # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
-        # logging.logger.trace(
-        #     f"non-backed: index={index} chunk_size={chunk_size} sum_nnz={sum_nnz} goal_nnz={goal_chunk_nnz}"
-        # )
     return chunk_size
 
 
@@ -2233,7 +2229,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
         return int(total // matrix.shape[axis])
 
     # This takes about as long but uses more RAM:
-    #   total_nnz = matrix[:, :].nnz
+    #   total_nnz = matrix[:, :].nnz  # noqa: ERA001
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
     coords: list[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
@@ -2543,10 +2539,6 @@ def _write_matrix_to_sparseNDArray(
         max_tries = 20
         while chunk_coo.nnz > tiledb_create_options.goal_chunk_nnz:
             num_tries += 1
-            # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
-            # logging.logger.trace(
-            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_options.goal_chunk_nnz}"
-            # )
             if num_tries > max_tries:
                 raise SOMAError(
                     f"Unable to accommodate goal_chunk_nnz {goal_chunk_nnz}. "
