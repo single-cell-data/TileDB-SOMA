@@ -15,6 +15,7 @@
 #include <ranges>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "coordinate_value_filters.h"
 #include "soma_attribute.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
@@ -198,6 +199,14 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     fill_columns();
 }
 
+CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
+    return CoordinateValueFilters(
+        arr_,
+        ctx_,
+        index_columns(),
+        has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain);
+}
+
 void SOMAArray::close() {
     if (arr_->query_type() == TILEDB_WRITE) {
         meta_cache_arr_->close();
@@ -216,6 +225,14 @@ std::vector<std::string> SOMAArray::dimension_names() const {
         result.push_back(column->name());
     }
     return result;
+}
+
+std::vector<std::shared_ptr<SOMAColumn>> SOMAArray::index_columns() const {
+    std::vector<std::shared_ptr<SOMAColumn>> index_columns;
+    std::copy_if(columns_.cbegin(), columns_.cend(), std::back_inserter(index_columns), [](const auto col) {
+        return col->isIndexColumn();
+    });
+    return index_columns;
 }
 
 bool SOMAArray::has_dimension_name(std::string_view name) const {
@@ -241,6 +258,23 @@ void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
         cfg["sm.consolidation.mode"] = mode;
         Array::consolidate(Context(cfg), uri_);
         Array::vacuum(Context(cfg), uri_);
+    }
+}
+
+void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters) {
+    auto combined_filter = coord_filters.combine();
+    if (!combined_filter.is_initialized()) {
+        throw std::invalid_argument("Cannot delete cells. At least one coordinate with values must be provided.");
+    }
+    delete_cells_impl(combined_filter.query_condition());
+}
+
+void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters, const QueryCondition& value_filter) {
+    auto combined_coord_filter = coord_filters.combine();
+    if (combined_coord_filter.is_initialized()) {
+        delete_cells_impl(combined_coord_filter.query_condition().combine(value_filter, TILEDB_AND));
+    } else {
+        delete_cells_impl(value_filter);
     }
 }
 
@@ -1079,6 +1113,13 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
 }
 
 void SOMAArray::delete_cells_impl(const QueryCondition& delete_cond) {
+    if (soma_mode_ != OpenMode::soma_delete) {
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot delete cells in '{}' mode. To delete cells, reopen in 'delete' mode.",
+                open_mode_to_string(soma_mode_)));
+    }
+
     Query query(*ctx_->tiledb_ctx(), *arr_, TILEDB_DELETE);
     query.set_condition(delete_cond);
     query.submit();
