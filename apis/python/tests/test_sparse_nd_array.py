@@ -1992,3 +1992,82 @@ def test_fragments_in_writes_2d(tmp_path, dtype):
         df = A.read().tables().concat().to_pandas()
 
     np.testing.assert_array_equal(df, expected_df)
+
+
+@pytest.mark.parametrize(
+    "delete_coords,expected_index",
+    [
+        pytest.param((slice(0, 8),), [], id="delete all with slice on dim0"),
+        pytest.param((slice(None, None), slice(0, 4)), [], id="delete all with slice on dim1"),
+        pytest.param((slice(None, None), slice(1, 2)), [0, 3, 4, 7, 8, 11, 12, 15], id="delete slice on dim1"),
+        pytest.param((slice(1, 2),), [0, 1, 2, 3, 12, 13, 14, 15], id="delete points on dim0"),
+        pytest.param(
+            (slice(1, 2), slice(None, None)), [0, 1, 2, 3, 12, 13, 14, 15], id="delete points on dim0, all of dim1"
+        ),
+        pytest.param((slice(1, 10), np.array((3, 0, 2))), [0, 1, 2, 3, 5, 9, 13], id="delete by slice and numpy array"),
+        pytest.param(
+            (slice(1, 10), pa.array((3, 0, 2), type=pa.int64())),
+            [0, 1, 2, 3, 5, 9, 13],
+            id="delete by slice and pyarrow array",
+        ),
+    ],
+)
+def test_sparse_2d_delete_cells(tmp_path, delete_coords, expected_index):
+    data = np.arange(16, dtype=np.int32)
+    dim0_data, dim1_data = np.meshgrid(np.arange(4, dtype=np.int64), np.arange(4, dtype=np.int64), indexing="ij")
+    dim0_data = dim0_data.flatten()
+    dim1_data = dim1_data.flatten()
+    with soma.SparseNDArray.create(str(tmp_path), type=pa.int32(), shape=(4, 4)) as array:
+        array.write(
+            pa.Table.from_pydict(
+                {
+                    "soma_dim_0": pa.array(dim0_data, type=pa.int64()),
+                    "soma_dim_1": pa.array(dim1_data, type=pa.int64()),
+                    "soma_data": pa.array(data, type=pa.int32()),
+                },
+            )
+        )
+
+    with soma.SparseNDArray.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells(delete_coords)
+    with soma.SparseNDArray.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").tables().concat()
+
+    expected_table = pa.Table.from_pydict(
+        {
+            "soma_dim_0": pa.array([dim0_data[index] for index in expected_index], type=pa.int64()),
+            "soma_dim_1": pa.array([dim1_data[index] for index in expected_index], type=pa.int64()),
+            "soma_data": pa.array([data[index] for index in expected_index], type=pa.int32()),
+        },
+        schema=pa.schema([
+            pa.field("soma_dim_0", pa.int64(), nullable=False),
+            pa.field("soma_dim_1", pa.int64(), nullable=False),
+            pa.field("soma_data", pa.int32(), nullable=False),
+        ]),
+    )
+    assert actual_table == expected_table
+
+
+def test_delete_cells_exceptions(tmp_path):
+    with soma.SparseNDArray.create(str(tmp_path), type=pa.int32(), shape=(4, 4)) as array:
+        assert array.shape == (4, 4)
+
+    with soma.SparseNDArray.open(str(tmp_path), mode="w") as array:
+        assert array.mode == "w"
+        with pytest.raises(soma.SOMAError):
+            array.delete_cells((slice(1, 4),))
+
+    with soma.SparseNDArray.open(str(tmp_path), mode="r") as array:
+        assert array.mode == "r"
+        with pytest.raises(soma.SOMAError):
+            array.delete_cells((slice(1, 4),))
+
+    with soma.SparseNDArray.open(str(tmp_path), mode="d") as array:
+        with pytest.raises(IndexError):
+            array.delete_cells((slice(10, 20),))
+        with pytest.raises(IndexError):
+            array.delete_cells((slice(None, None), (1, 20, 5, 3)))
+        with pytest.raises(ValueError):
+            array.delete_cells(tuple())
+        with pytest.raises(soma.SOMAError):
+            array.delete_cells((pa.array((1.3, 2.0), type=pa.float64()),))

@@ -222,7 +222,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )
         coord_filter = CoordinateValueFilters.create(self, coords)
-        self._handle._handle.delete_cells(coord_filter)
+        self._handle._handle.delete_cells(coord_filter._handle)
 
     def read(
         self,
