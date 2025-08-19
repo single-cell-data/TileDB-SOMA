@@ -56,9 +56,8 @@ class CoordinateValueFilters:
             raise NotImplementedError("Support for adding a selection to a geometry column is not yet implemented.")
 
         if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-            # self._handle.add_arrow_points(column_index, coord)
-            # return
-            raise NotImplementedError  # TODO
+            self._handle.add_arrow_points(column_index, coord)
+            return
 
         if isinstance(coord, slice):
             if coord.step is not None and coord.step != 1:
@@ -93,16 +92,17 @@ class CoordinateValueFilters:
             self._handle.add_points_string(column_index, coord)
             return
 
-        if pa.types.is_timestamp(dim.type):
-            raise NotImplementedError  # TODO
-
         if isinstance(coord, (Sequence, np.ndarray)):
             if isinstance(coord, np.ndarray) and coord.ndim != 1:
                 raise ValueError(
                     f"Cannot set points on column index={column_index}. Can only use 1D numpy arrays, but got an array with {coord.ndim}."
                 )
+            if pa.types.is_timestamp(dim.type):
+                values = np.array(coord).astype(np.int64)
+                self._handle.add_points_int64(column_index, values)
+                return
             add_points_function = getattr(self._handle, f"add_points_{dim.type}")
             add_points_function(column_index, coord)
             return
 
-        raise TypeError  # TODO: Add error message
+        raise TypeError(f"Cannot add coordinate with type '{type(coord)}' to column {column_index}.")

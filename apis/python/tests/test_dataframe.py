@@ -194,7 +194,9 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
         pytest.param((slice(0, 7),), None, [], id="delete all with exact slice"),
         pytest.param((slice(-10, 10),), None, [], id="delete all with large slice"),
         pytest.param((np.arange(8).tolist(),), None, [], id="delete all with points"),
-        pytest.param(((2, 6, 3),), None, [0, 1, 4, 5, 7], id="delete with point selection"),
+        pytest.param(((2, 6, 3),), None, [0, 1, 4, 5, 7], id="delete with tuple"),
+        pytest.param((np.array((2, 6, 3), dtype=np.int64),), None, [0, 1, 4, 5, 7], id="delete with numpy array"),
+        pytest.param((pa.array((2, 6, 3), type=pa.int64()),), None, [0, 1, 4, 5, 7], id="delete with pyarrow"),
         pytest.param(((0, 7),), None, np.arange(1, 7).tolist(), id="delete end points"),
         pytest.param(tuple(), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="value filter only"),
         pytest.param((slice(1, 3),), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="slice and value filter"),
@@ -220,10 +222,6 @@ def test_dataframe_1d_delete_cells(tmp_path, delete_coords, value_filter, expect
             schema=schema,
         )
         soma_df.write(data)
-
-    with soma.DataFrame.open(str(tmp_path)) as soma_df:  # TODO: delete
-        df = soma_df.read(value_filter=value_filter).concat().to_pandas()  # TODO: delete
-        print(df)  # TODO: delete
 
     with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
         soma_df.delete_cells(delete_coords, value_filter=value_filter)
@@ -274,6 +272,8 @@ def test_dataframe_delete_cells_exceptions(tmp_path):
             soma_df.delete_cells(((1, 20, 5, 3),))
         with pytest.raises(ValueError):
             soma_df.delete_cells(tuple())
+        with pytest.raises(ValueError):
+            soma_df.delete_cells((slice(3, 1),))
 
 
 def test_dataframe_with_enumeration(tmp_path):
