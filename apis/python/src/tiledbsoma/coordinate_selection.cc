@@ -120,7 +120,9 @@ void load_coordinate_selection(py::module& m) {
         .def("add_slice_uint16", add_slice<uint16_t>)
         .def("add_slice_uint32", add_slice<uint32_t>)
         .def("add_slice_uint64", add_slice<uint64_t>)
-        .def("add_slice_uint64", add_slice<std::string>)
+        .def("add_slice_float", add_slice<float_t>)
+        .def("add_slice_double", add_slice<double_t>)
+        .def("add_slice_string", add_slice<std::string>)
         .def("add_points_int8", add_points<int8_t>)
         .def("add_points_int16", add_points<int16_t>)
         .def("add_points_int32", add_points<int32_t>)
@@ -129,7 +131,9 @@ void load_coordinate_selection(py::module& m) {
         .def("add_points_uint16", add_points<uint16_t>)
         .def("add_points_uint32", add_points<uint32_t>)
         .def("add_points_uint64", add_points<uint64_t>)
-        .def("add_points_uint64", add_points<std::string>);
+        .def("add_points_float", add_points<float_t>)
+        .def("add_points_double", add_points<double_t>)
+        .def("add_points_string", add_points<std::string>);
 }
 
 }  // namespace libtiledbsomacpp

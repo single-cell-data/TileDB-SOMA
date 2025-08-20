@@ -760,3 +760,79 @@ def test_fragments_in_writes(tmp_path, dtype):
     with soma.open(uri) as A:
         df = A.read().concat().to_pandas()
         np.testing.assert_array_equal(df, expected_df)
+
+
+@pytest.mark.parametrize(
+    "delete_coords,value_filter,expected_index",
+    [
+        pytest.param((slice(-10, 10),), None, [], id="delete all with slice on x"),
+        pytest.param(
+            (slice(None, None), slice(None, None), slice(0, 24)), None, [], id="delete all with slice on soma_joinid"
+        ),
+        pytest.param((slice(None, None), (0, -2, -1, 2)), None, [3, 8, 13, 18, 23], id="delete by points on y"),
+        pytest.param((slice(None, 1),), None, np.arange(20, 25), id="delete by slice on x"),
+        pytest.param((slice(None, None),), "soma_joinid < 11", np.arange(11, 25), id="delete by value_filter only"),
+    ],
+)
+def test_delete_cells(tmp_path, delete_coords, value_filter, expected_index):
+    uri = str(tmp_path)
+    join_data = np.arange(25, dtype=np.int64)
+    x_data, y_data = np.meshgrid(np.arange(-2, 3, dtype=np.int64), np.arange(-2, 3, dtype=np.int64), indexing="ij")
+    x_data = x_data.flatten()
+    y_data = y_data.flatten()
+    with soma.PointCloudDataFrame.create(
+        uri, schema=pa.schema([("x", pa.int64()), ("y", pa.int64())]), domain=[[-2, 2], [-2, 2], [0, 24]]
+    ) as point_cloud:
+        data = pa.Table.from_pydict({"soma_joinid": join_data, "x": x_data, "y": y_data})
+        point_cloud.write(data)
+
+    with soma.PointCloudDataFrame.open(uri, mode="d") as points:
+        points.delete_cells(delete_coords, value_filter=value_filter)
+
+    with soma.PointCloudDataFrame.open(uri) as points:
+        actual_table = points.read(result_order="row-major").concat()
+
+    expected_table = pa.Table.from_pydict(
+        {
+            "x": pa.array([x_data[index] for index in expected_index], type=pa.int64()),
+            "y": pa.array([y_data[index] for index in expected_index], type=pa.int64()),
+            "soma_joinid": pa.array([join_data[index] for index in expected_index], type=pa.int64()),
+        },
+        schema=pa.schema([
+            pa.field("x", pa.int64(), nullable=False),
+            pa.field("y", pa.int64(), nullable=False),
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+        ]),
+    )
+    assert actual_table == expected_table
+
+
+def test_delete_cells_exceptions(tmp_path):
+    with soma.PointCloudDataFrame.create(
+        str(tmp_path),
+        coordinate_space=("x", "y", "z"),
+        schema=pa.schema({"x": pa.float64(), "y": pa.float64(), "z": pa.float64()}),
+        domain=[[-100, 100], [-100, 100], [-100, 100], [0, 1000]],
+    ) as points:
+        points.close()
+    with soma.PointCloudDataFrame.open(str(tmp_path), mode="w") as points:
+        assert points.mode == "w"
+        with pytest.raises(soma.SOMAError):
+            points.delete_cells((slice(1, 4),))
+
+    with soma.PointCloudDataFrame.open(str(tmp_path), mode="r") as points:
+        assert points.mode == "r"
+        with pytest.raises(soma.SOMAError):
+            points.delete_cells((slice(1, 4),))
+
+    with soma.PointCloudDataFrame.open(str(tmp_path), mode="d") as points:
+        with pytest.raises(IndexError):
+            points.delete_cells((slice(-1000, -900),))
+        with pytest.raises(IndexError):
+            points.delete_cells((slice(None, None), (10_000, 80, 900)))
+        with pytest.raises(ValueError):
+            points.delete_cells(tuple())
+        with pytest.raises(ValueError):
+            points.delete_cells((slice(3, 1),))
+        with pytest.raises(TypeError):
+            points.delete_cells((("one", "five"),))

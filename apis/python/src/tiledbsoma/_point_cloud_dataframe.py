@@ -284,7 +284,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseNDCoords,
+        coords: options.SparseDFCoords,
         *,
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
@@ -307,8 +307,12 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )
         coord_filter = CoordinateValueFilters.create(self, coords)
-        qc = None if value_filter is None else QueryCondition(value_filter)
-        self._handle._handle.delete_cells(coord_filter._handle, qc)
+        qc_handle = None
+        if value_filter is not None:
+            qc = QueryCondition(value_filter)
+            qc.init_query_condition(self.schema, [])
+            qc_handle = qc.c_obj
+        self._handle._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,
