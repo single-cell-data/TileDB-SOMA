@@ -249,6 +249,24 @@ def test_delete_cells_joinid_with_string_column(tmp_path, delete_coords, value_f
         pytest.param(pa.uint32(), [[0, 7]], np.arange(8), id="uint32"),
         pytest.param(pa.uint64(), [[0, 7]], np.arange(8), id="uint64"),
         pytest.param(
+            pa.timestamp("s"),
+            [[np.datetime64("2020", "s"), np.datetime64("2020") + np.timedelta64(7, "s")]],
+            np.arange(np.datetime64("2020"), np.datetime64("2020") + np.timedelta64(8, "s"), np.timedelta64(1, "s")),
+            id="seconds",
+        ),
+        pytest.param(
+            pa.timestamp("ms"),
+            [[np.datetime64("2020", "ms"), np.datetime64("2020") + np.timedelta64(7, "ms")]],
+            np.arange(np.datetime64("2020"), np.datetime64("2020") + np.timedelta64(8, "ms"), np.timedelta64(1, "ms")),
+            id="milliseconds",
+        ),
+        pytest.param(
+            pa.timestamp("us"),
+            [[np.datetime64("2020", "us"), np.datetime64("2020") + np.timedelta64(7, "us")]],
+            np.arange(np.datetime64("2020"), np.datetime64("2020") + np.timedelta64(8, "us"), np.timedelta64(1, "us")),
+            id="microseconds",
+        ),
+        pytest.param(
             pa.large_string(),
             None,
             ["apple", "banana", "coconut", "durian", "eggplant", "fig", "guava", "honeydew"],
