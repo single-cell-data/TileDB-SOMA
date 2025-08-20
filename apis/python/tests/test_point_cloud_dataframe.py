@@ -807,6 +807,60 @@ def test_delete_cells(tmp_path, delete_coords, value_filter, expected_index):
     assert actual_table == expected_table
 
 
+@pytest.mark.parametrize(
+    "index_type,delete_coords,value_filter,expected_index",
+    [
+        pytest.param(pa.float32(), (slice(-1.0, 0.0),), None, np.arange(15, 25), id="delete slice float"),
+        pytest.param(pa.float64(), (slice(-1, 0),), None, np.arange(15, 25), id="delete slice double"),
+        pytest.param(
+            pa.float32(),
+            ((-1, 1, 0),),
+            None,
+            np.hstack((np.arange(5, 10), np.arange(15, 20))),
+            id="delete points float",
+        ),
+        pytest.param(
+            pa.float64(),
+            ((-1, 1, 0),),
+            None,
+            np.hstack((np.arange(5, 10), np.arange(15, 20))),
+            id="delete points double",
+        ),
+    ],
+)
+def test_delete_cells_floating_point(tmp_path, index_type, delete_coords, value_filter, expected_index):
+    uri = str(tmp_path)
+    join_data = np.arange(25, dtype=np.int64)
+    x_data, y_data = np.meshgrid(np.linspace(-1, 1, num=5), np.linspace(-1, 1, num=5), indexing="ij")
+    x_data = x_data.flatten()
+    y_data = y_data.flatten()
+    with soma.PointCloudDataFrame.create(
+        uri, schema=pa.schema([("x", index_type), ("y", index_type)]), domain=[[-1, 1], [-1, 1], [0, 24]]
+    ) as point_cloud:
+        data = pa.Table.from_pydict({"soma_joinid": join_data, "x": x_data, "y": y_data})
+        point_cloud.write(data)
+
+    with soma.PointCloudDataFrame.open(uri, mode="d") as points:
+        points.delete_cells(delete_coords, value_filter=value_filter)
+
+    with soma.PointCloudDataFrame.open(uri) as points:
+        actual_table = points.read(result_order="row-major").concat()
+
+    expected_table = pa.Table.from_pydict(
+        {
+            "x": pa.array([x_data[index] for index in expected_index], type=index_type),
+            "y": pa.array([y_data[index] for index in expected_index], type=index_type),
+            "soma_joinid": pa.array([join_data[index] for index in expected_index], type=pa.int64()),
+        },
+        schema=pa.schema([
+            pa.field("x", index_type, nullable=False),
+            pa.field("y", index_type, nullable=False),
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+        ]),
+    )
+    assert actual_table == expected_table
+
+
 def test_delete_cells_exceptions(tmp_path):
     with soma.PointCloudDataFrame.create(
         str(tmp_path),
