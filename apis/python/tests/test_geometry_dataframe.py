@@ -109,3 +109,14 @@ def test_geometry_basic_spatial_read(tmp_path):
         assert shapely.from_wkb(result["soma_geometry"].to_numpy()[0]) == shapely.Polygon(
             [(0, 0), (0, 1), (1, 0), (0, 0)],
         )
+
+
+def test_delete_cells_not_implemented(tmp_path):
+    uri = tmp_path.as_uri()
+    with soma.GeometryDataFrame.create(uri, schema=pa.schema([("quality", pa.float32())])) as geom:
+        geom.close()
+
+    with soma.GeometryDataFrame.open(uri, mode="d") as geom:
+        assert geom.mode == "d"
+        with pytest.raises(NotImplementedError):
+            geom.delete_cells((slice(None, None),))
