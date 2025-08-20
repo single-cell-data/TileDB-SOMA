@@ -204,7 +204,7 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
         pytest.param(((1, 6, 3),), "string_data == 'two'", np.arange(8).tolist(), id="no values deleted"),
     ],
 )
-def test_dataframe_1d_delete_cells(tmp_path, delete_coords, value_filter, expected_index):
+def test_delete_cells_joinid_with_string_column(tmp_path, delete_coords, value_filter, expected_index):
     schema = pa.schema([
         pa.field("soma_joinid", pa.int64(), nullable=False),
         pa.field("string_data", pa.large_string()),
@@ -237,7 +237,75 @@ def test_dataframe_1d_delete_cells(tmp_path, delete_coords, value_filter, expect
     assert actual_table == expected_table
 
 
-def test_dataframe_delete_cells_exceptions(tmp_path):
+@pytest.mark.parametrize(
+    "index_type,domain,index_data",
+    [
+        pytest.param(pa.int8(), [[-4, 3]], np.arange(-4, 4), id="int8"),
+        pytest.param(pa.int16(), [[-4, 3]], np.arange(-4, 4), id="int16"),
+        pytest.param(pa.int32(), [[-4, 3]], np.arange(-4, 4), id="int32"),
+        pytest.param(pa.int64(), [[-4, 3]], np.arange(-4, 4), id="int64"),
+        pytest.param(pa.uint8(), [[0, 7]], np.arange(8), id="uint8"),
+        pytest.param(pa.uint16(), [[0, 7]], np.arange(8), id="uint16"),
+        pytest.param(pa.uint32(), [[0, 7]], np.arange(8), id="uint32"),
+        pytest.param(pa.uint64(), [[0, 7]], np.arange(8), id="uint64"),
+        pytest.param(
+            pa.large_string(),
+            None,
+            ["apple", "banana", "coconut", "durian", "eggplant", "fig", "guava", "honeydew"],
+            id="string",
+        ),
+    ],
+)
+def test_delete_cells_1d_all_dim_types(tmp_path, index_type, index_data, domain):
+    joinid_data = np.arange(8)
+    schema = pa.schema([
+        pa.field("index_column", index_type, nullable=False),
+        pa.field("soma_joinid", pa.int64(), nullable=False),
+    ])
+    with soma.DataFrame.create(str(tmp_path), schema=schema, index_column_names=("index_column",), domain=domain) as df:
+        data = pa.Table.from_pydict(
+            {
+                "index_column": pa.array(index_data, type=index_type),
+                "soma_joinid": pa.array(joinid_data, type=pa.int64()),
+            },
+            schema=schema,
+        )
+        df.write(data)
+
+    # Delete slice
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells((slice(index_data[0], index_data[3]),))
+
+    # Check data
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "index_column": pa.array(index_data[4:], type=index_type),
+            "soma_joinid": pa.array(joinid_data[4:], type=pa.int64()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+    # Delete additional points
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells(((index_data[7], index_data[6]),))
+
+    # Check data
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "index_column": pa.array(index_data[4:6], type=index_type),
+            "soma_joinid": pa.array(joinid_data[4:6], type=pa.int64()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+
+def test_delete_cells_exceptions(tmp_path):
     schema = pa.schema([
         pa.field("soma_joinid", pa.int64(), nullable=False),
         pa.field("string_data", pa.large_string()),
