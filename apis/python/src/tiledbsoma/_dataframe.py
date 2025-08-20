@@ -690,7 +690,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseNDCoords,
+        coords: options.SparseDFCoords,
         *,
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
@@ -713,12 +713,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )
         coord_filter = CoordinateValueFilters.create(self, coords)
-        if value_filter is None:
-            self._handle._handle.delete_cells(coord_filter._handle, None)
-            return
-        qc = QueryCondition(value_filter)
-        qc.init_query_condition(self.schema, [])
-        self._handle._handle.delete_cells(coord_filter._handle, qc.c_obj)
+        qc_handle = None
+        if value_filter is not None:
+            qc = QueryCondition(value_filter)
+            qc.init_query_condition(self.schema, [])
+            qc_handle = qc.c_obj
+        self._handle._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,
