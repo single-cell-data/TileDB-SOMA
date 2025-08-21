@@ -215,7 +215,7 @@ class TileDBDeleteOptions:
     """Tuning options used when deleting cells in SOMA arrays."""
 
     @classmethod
-    def from_platform_condif(
+    def from_platform_config(
         cls, platform_config: options.PlatformConfig | "TileDBDeleteOptions" | None = None
     ) -> Self:
         """Create the class from a value passed in ``platform_config``."""
