@@ -24,7 +24,9 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
+from ._coordinate_selection import CoordinateValueFilters
 from ._exception import SOMAError, map_exception_for_create
+from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
@@ -38,10 +40,7 @@ from ._types import (
 )
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[tuple[Any, Any], list[Any], None]
@@ -688,6 +687,46 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
+
+    def delete_cells(
+        self,
+        coords: options.SparseDFCoords = (),
+        *,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
+    ) -> None:
+        """Deletes cells at the specified coordinates.
+
+        Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
+        the cells that match both constraints will be removed.
+
+        For example, to delete values from the ``obs`` dataframe with ``soma_joinid<=1000`` where ``n_genes > 1000``
+        and ``n_counts < 2000``:
+            >>> with tiledbsoma.DataFrame(obs_uri, mode="d") as obs_df:
+            ...     obs_df.delete_cells((slice(None, 1000),), value_filter="n_genes > 1000 and n_counts < 2000")
+
+        Note: Deleting cells does not change the size of the current domain or possible enumeration values.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+            value_filter:
+                An optional [value filter] to apply to the results.
+                Defaults to no filter.
+        """
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
+            raise TypeError(
+                f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
+            )
+        coord_filter = CoordinateValueFilters.create(self, coords)
+        qc_handle = None
+        if value_filter is not None:
+            qc = QueryCondition(value_filter)
+            qc.init_query_condition(self.schema, [])
+            qc_handle = qc.c_obj
+        self._handle._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,

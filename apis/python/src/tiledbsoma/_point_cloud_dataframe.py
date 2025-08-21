@@ -20,6 +20,7 @@ from ._constants import (
     SOMA_JOINID,
     SPATIAL_DISCLAIMER,
 )
+from ._coordinate_selection import CoordinateValueFilters
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
@@ -28,6 +29,7 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
+from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
@@ -37,12 +39,8 @@ from ._spatial_util import (
 )
 from ._tdb_handles import PointCloudDataFrameWrapper
 from ._types import OpenTimestamp
-from .options import SOMATileDBContext
+from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
 
 _UNBATCHED = options.BatchSize()
 
@@ -283,6 +281,55 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
         return cast("PointCloudDataFrameWrapper", self._handle).count
+
+    def delete_cells(
+        self,
+        coords: options.SparseDFCoords = (),
+        *,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
+    ) -> None:
+        """Deletes cells at the specified coordinates.
+
+        Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
+        the cells that match both constraints will be removed.
+
+        Examples:
+        * Delete all values not in a tissue:
+            >>> with tiledbsoma.PointCloudDataFrame(loc_uri, mode="d") as loc:
+            ...     loc.delete_cells(value_filter="in_tissue == 0")
+
+        * Delete a sequence of ``soma_joinid`` values from a two-dimensional point cloud:
+            >>> with tiledbsoma.PointCloudDataFrame(loc_uri, mode="d") as loc:
+            ...     loc.delete_cells((slice(None, None), slice(None, None), (12001, 12003, 12004, 12007)))
+
+        * Delete points from region ``x > 3000, y > 3000`` and ``array_row == 1"
+            >>> with tiledbsoma.PointCloudDataFrame(loc_uri, mode="d") as loc:
+            ...     loc.delete_cells((slice(3000, None), slice(3000, None)), value_filter="array_row == 1")
+
+
+        Note: Deleting cells does not change the current domain or possible enumeration values.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+            value_filter:
+                An optional [value filter] to apply to the results.
+                Defaults to no filter.
+        """
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
+            raise TypeError(
+                f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
+            )
+        coord_filter = CoordinateValueFilters.create(self, coords)
+        qc_handle = None
+        if value_filter is not None:
+            qc = QueryCondition(value_filter)
+            qc.init_query_condition(self.schema, [])
+            qc_handle = qc.c_obj
+        self._handle._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,

@@ -183,7 +183,7 @@ from ._point_cloud_dataframe import PointCloudDataFrame
 from ._query import ExperimentAxisQuery
 from ._scene import Scene
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
-from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
+from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .pytiledbsoma import (
     tiledbsoma_stats_disable,
     tiledbsoma_stats_dump,
@@ -227,6 +227,7 @@ __all__ = [
     "SparseNDArray",
     "SparseNDArrayRead",
     "TileDBCreateOptions",
+    "TileDBDeleteOptions",
     "TileDBWriteOptions",
     "UniformScaleTransform",
     "get_SOMA_version",

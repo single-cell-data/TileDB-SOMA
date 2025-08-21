@@ -210,6 +210,19 @@ class TileDBWriteOptions:
 _T = TypeVar("_T")
 
 
+@attrs_.define(frozen=True, kw_only=True, slots=True)
+class TileDBDeleteOptions:
+    """Tuning options used when deleting cells in SOMA arrays."""
+
+    @classmethod
+    def from_platform_config(
+        cls, platform_config: options.PlatformConfig | "TileDBDeleteOptions" | None = None
+    ) -> Self:
+        """Create the class from a value passed in ``platform_config``."""
+        del platform_config
+        return cls()
+
+
 def _dig_platform_config(input: object, typ: type[_T], full_path: tuple[str, ...]) -> dict[str, object] | _T:
     """Looks for an object of the given type in dictionaries.
 
