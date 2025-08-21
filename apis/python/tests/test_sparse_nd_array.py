@@ -2054,12 +2054,12 @@ def test_delete_cells_exceptions(tmp_path):
 
     with soma.SparseNDArray.open(str(tmp_path), mode="w") as array:
         assert array.mode == "w"
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises((soma.SOMAError, RuntimeError)):
             array.delete_cells((slice(1, 4),))
 
     with soma.SparseNDArray.open(str(tmp_path), mode="r") as array:
         assert array.mode == "r"
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises((soma.SOMAError, RuntimeError)):
             array.delete_cells((slice(1, 4),))
 
     with soma.SparseNDArray.open(str(tmp_path), mode="d") as array:

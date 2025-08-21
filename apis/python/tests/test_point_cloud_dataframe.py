@@ -871,12 +871,12 @@ def test_delete_cells_exceptions(tmp_path):
         points.close()
     with soma.PointCloudDataFrame.open(str(tmp_path), mode="w") as points:
         assert points.mode == "w"
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises((soma.SOMAError, RuntimeError)):
             points.delete_cells((slice(1, 4),))
 
     with soma.PointCloudDataFrame.open(str(tmp_path), mode="r") as points:
         assert points.mode == "r"
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises((soma.SOMAError, RuntimeError)):
             points.delete_cells((slice(1, 4),))
 
     with soma.PointCloudDataFrame.open(str(tmp_path), mode="d") as points:

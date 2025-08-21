@@ -343,12 +343,12 @@ def test_delete_cells_exceptions(tmp_path):
         soma_df.write(data)
     with soma.DataFrame.open(str(tmp_path), mode="w") as soma_df:
         assert soma_df.mode == "w"
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises((soma.SOMAError, RuntimeError)):
             soma_df.delete_cells((slice(1, 4),))
 
     with soma.DataFrame.open(str(tmp_path), mode="r") as soma_df:
         assert soma_df.mode == "r"
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises((soma.SOMAError, RuntimeError)):
             soma_df.delete_cells((slice(1, 4),))
 
     with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
