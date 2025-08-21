@@ -284,14 +284,31 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseDFCoords,
+        coords: options.SparseDFCoords = (),
         *,
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
     ) -> None:
         """Deletes cells at the specified coordinates.
 
-        Note: Deleting cells with an enumeration value does not effect the possible enumerations.
+        Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
+        the cells that match both constraints will be removed.
+
+        Examples:
+        * Delete all values not in a tissue:
+            >>> with tiledbsoma.PointCloudDataFrame(loc_uri, mode="d") as loc:
+            ...     loc.delete_cells(value_filter="in_tissue == 0")
+
+        * Delete a sequence of ``soma_joinid`` values from a two-dimensional point cloud:
+            >>> with tiledbsoma.PointCloudDataFrame(loc_uri, mode="d") as loc:
+            ...     loc.delete_cells((slice(None, None), slice(None, None), (12001, 12003, 12004, 12007)))
+
+        * Delete points from region ``x > 3000, y > 3000`` and ``array_row == 1"
+            >>> with tiledbsoma.PointCloudDataFrame(loc_uri, mode="d") as loc:
+            ...     loc.delete_cells((slice(3000, None), slice(3000, None)), value_filter="array_row == 1")
+
+
+        Note: Deleting cells does not change the current domain or possible enumeration values.
 
         Args:
             coords:
@@ -302,7 +319,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 An optional [value filter] to apply to the results.
                 Defaults to no filter.
         """
-        if isinstance(platform_config, (TileDBCreateOptions, TileDBWriteOptions)):
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
             raise TypeError(
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )

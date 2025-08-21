@@ -300,14 +300,12 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseNDCoords,
+        coords: options.SparseDFCoords,
         *,
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
     ) -> None:
         """Deletes cells at the specified coordinates.
-
-        Note: Deleting cells with an enumeration value does not effect the possible enumerations.
 
         Args:
             coords:

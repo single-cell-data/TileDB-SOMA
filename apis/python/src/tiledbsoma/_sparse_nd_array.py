@@ -211,13 +211,19 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     def delete_cells(self, coords: options.SparseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
         """Deletes cells at the specified coordinates in a :class:`SparseNDArray`.
 
+        Note: Deleting cells does not change the shape of the :class:`SparseNDArray`.
+
+        Example deleting cells for ``soma_dim_1 >= 10000``:
+            >>> with tiledbsoma.SparseNDArray(count_matrix_uri, mode="d") as X:
+            ...     X.delete_cells(((slice(None, None), slice(10000, None)), value_filter="n_genes > 1000 and n_counts < 2000")
+
         Args:
             coords:
                 A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
                 `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
                 defining the region to read.
         """
-        if isinstance(platform_config, (TileDBCreateOptions, TileDBWriteOptions)):
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
             raise TypeError(
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )

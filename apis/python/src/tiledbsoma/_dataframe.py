@@ -690,14 +690,22 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseDFCoords,
+        coords: options.SparseDFCoords = (),
         *,
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
     ) -> None:
         """Deletes cells at the specified coordinates.
 
-        Note: Deleting cells with an enumeration value does not effect the possible enumerations.
+        Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
+        the cells that match both constraints will be removed.
+
+        For example, to delete values from the ``obs`` dataframe with ``soma_joinid<=1000`` where ``n_genes > 1000``
+        and ``n_counts < 2000``:
+            >>> with tiledbsoma.DataFrame(obs_uri, mode="d") as obs_df:
+            ...     obs_df.delete_cells((slice(None, 1000),), value_filter="n_genes > 1000 and n_counts < 2000")
+
+        Note: Deleting cells does not change the size of the current domain or possible enumeration values.
 
         Args:
             coords:
@@ -708,7 +716,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 An optional [value filter] to apply to the results.
                 Defaults to no filter.
         """
-        if isinstance(platform_config, (TileDBCreateOptions, TileDBWriteOptions)):
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
             raise TypeError(
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )
