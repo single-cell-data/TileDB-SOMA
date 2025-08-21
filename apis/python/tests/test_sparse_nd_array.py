@@ -2006,13 +2006,23 @@ def test_fragments_in_writes_2d(tmp_path, dtype):
         ),
         pytest.param((slice(1, 10), np.array((3, 0, 2))), [0, 1, 2, 3, 5, 9, 13], id="delete by slice and numpy array"),
         pytest.param(
+            (slice(1, 10), pa.array([3, 2, 0])),
+            [0, 1, 2, 3, 5, 9, 13],
+            id="delete by slice and pyarrow array",
+        ),
+        pytest.param(
+            (slice(1, 10), pa.chunked_array([[3, 0], [0, 2]])),
+            [0, 1, 2, 3, 5, 9, 13],
+            id="delete by slice and chunked pyarrow array",
+        ),
+        pytest.param(
             (slice(1, 10), pa.array((3, 0, 2), type=pa.int64())),
             [0, 1, 2, 3, 5, 9, 13],
             id="delete by slice and pyarrow array",
         ),
     ],
 )
-def test_sparse_2d_delete_cells(tmp_path, delete_coords, expected_index):
+def test_delete_cells_2d(tmp_path, delete_coords, expected_index):
     data = np.arange(16, dtype=np.int32)
     dim0_data, dim1_data = np.meshgrid(np.arange(4, dtype=np.int64), np.arange(4, dtype=np.int64), indexing="ij")
     dim0_data = dim0_data.flatten()
@@ -2042,6 +2052,37 @@ def test_sparse_2d_delete_cells(tmp_path, delete_coords, expected_index):
         schema=pa.schema([
             pa.field("soma_dim_0", pa.int64(), nullable=False),
             pa.field("soma_dim_1", pa.int64(), nullable=False),
+            pa.field("soma_data", pa.int32(), nullable=False),
+        ]),
+    )
+    assert actual_table == expected_table
+
+
+def test_delete_cells_pyarrow_with_offset(tmp_path):
+    data = np.arange(16, dtype=np.int32)
+    dim0_data = np.arange(16, dtype=np.int64)
+    with soma.SparseNDArray.create(str(tmp_path), type=pa.int32(), shape=(16,)) as array:
+        array.write(
+            pa.Table.from_pydict({
+                "soma_dim_0": pa.array(dim0_data, type=pa.int64()),
+                "soma_data": pa.array(data, type=pa.int32()),
+            })
+        )
+
+    full_array = pa.array(dim0_data, type=pa.int64())
+    with soma.SparseNDArray.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells((full_array[8:],))
+
+    with soma.SparseNDArray.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").tables().concat()
+
+    expected_table = pa.Table.from_pydict(
+        {
+            "soma_dim_0": pa.array(np.arange(8, dtype=np.int64), type=pa.int64()),
+            "soma_data": pa.array(np.arange(8, dtype=np.int32), type=pa.int32()),
+        },
+        schema=pa.schema([
+            pa.field("soma_dim_0", pa.int64(), nullable=False),
             pa.field("soma_data", pa.int32(), nullable=False),
         ]),
     )

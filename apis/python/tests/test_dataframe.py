@@ -197,6 +197,18 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
         pytest.param(((2, 6, 3),), None, [0, 1, 4, 5, 7], id="delete with tuple"),
         pytest.param((np.array((2, 6, 3), dtype=np.int64),), None, [0, 1, 4, 5, 7], id="delete with numpy array"),
         pytest.param((pa.array((2, 6, 3), type=pa.int64()),), None, [0, 1, 4, 5, 7], id="delete with pyarrow"),
+        pytest.param(
+            (pa.chunked_array([[2, 3], [6, 4]], type=pa.int64()),),
+            None,
+            [0, 1, 5, 7],
+            id="delete with chunked pyarrow array",
+        ),
+        pytest.param(
+            (pa.chunked_array([[2, 3], [6, 3]], type=pa.int64()),),
+            None,
+            [0, 1, 4, 5, 7],
+            id="delete with overlapping chunked pyarrow array",
+        ),
         pytest.param(((0, 7),), None, np.arange(1, 7).tolist(), id="delete end points"),
         pytest.param(tuple(), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="value filter only"),
         pytest.param((slice(1, 3),), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="slice and value filter"),
@@ -306,9 +318,10 @@ def test_delete_cells_1d_all_dim_types(tmp_path, index_type, index_data, domain)
     )
     assert actual_table == expected_table
 
-    # Delete additional points
+    # Delete points with slice of a pyarrow array (for checking offsets)
+    full_array = pa.array(index_data, type=index_type)
     with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
-        soma_df.delete_cells(((index_data[7], index_data[6]),))
+        soma_df.delete_cells((full_array[6:8],))
 
     # Check data
     with soma.DataFrame.open(str(tmp_path)) as soma_df:
@@ -317,6 +330,23 @@ def test_delete_cells_1d_all_dim_types(tmp_path, index_type, index_data, domain)
         {
             "index_column": pa.array(index_data[4:6], type=index_type),
             "soma_joinid": pa.array(joinid_data[4:6], type=pa.int64()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+    # Delete another point with a sequence
+    full_array = pa.array(index_data, type=index_type)
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells(([index_data[5]],))
+
+    # Check data
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "index_column": pa.array(index_data[4:5], type=index_type),
+            "soma_joinid": pa.array(joinid_data[4:5], type=pa.int64()),
         },
         schema=schema,
     )

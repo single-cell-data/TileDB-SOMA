@@ -770,6 +770,12 @@ def test_fragments_in_writes(tmp_path, dtype):
             (slice(None, None), slice(None, None), slice(0, 24)), None, [], id="delete all with slice on soma_joinid"
         ),
         pytest.param((slice(None, None), (0, -2, -1, 2)), None, [3, 8, 13, 18, 23], id="delete by points on y"),
+        pytest.param(
+            (slice(None, None), pa.chunked_array([[0, -2], [-1, 2]])),
+            None,
+            [3, 8, 13, 18, 23],
+            id="delete by points on y with chunked array",
+        ),
         pytest.param((slice(None, 1),), None, np.arange(20, 25), id="delete by slice on x"),
         pytest.param((slice(None, None),), "soma_joinid < 11", np.arange(11, 25), id="delete by value_filter only"),
     ],
