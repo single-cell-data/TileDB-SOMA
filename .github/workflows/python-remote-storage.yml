@@ -6,21 +6,16 @@ on:
       - main
       - 'release-*'
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'apis/r/**'
-      - 'docker/**'
-      - 'docs/**'
-      - '.github/**'
-      - '!.github/workflows/python-remote-storage.yml'
+    paths:
+      - "libtiledbsoma/**"
+      - "apis/python/**"
+      - "!**.md"
+      - '.github/workflows/python-remote-storage.yml'
   workflow_dispatch:
 
 env:
-  # Don't name this "TILEDB_REST_TOKEN" since that will map into a core
-  # env/config override, as if config key "rest.token" had been set.  One of the
-  # purposes of this CI is to run tests where all config is passed via context
-  # arguments and none via environment variables, in order to flush out
-  # callsites within the code which aren't passing context as they should.
+  # Don't name this "TILEDB_REST_TOKEN" since that will map into a core env/config override. This
+  # test should verify all config options are being properly passed with just config/context.
   TILEDB_REST_UNITTEST_TOKEN: ${{ secrets.TILEDB_REST_UNITTEST_TOKEN}}
 
 jobs:
@@ -29,15 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # This could be run on MacOS too, but, we have enough OS redundancy,
-          # and MacOS-runner availability is a more tightly constrained resource
-          # in GitHub Actions as of 2025-02-06.
           - name: linux
             os: ubuntu-24.04
-            # TO DO: also on 3.12. But 3.9 is higher-pri, until we drop support
-            # for it. (Note our main CI run tests across a broader set of Python
-            # versions.)
-            python_version: 3.9
+            python_version: 3.9 # Should match TileDB-Cloud version
             cc: gcc-13
             cxx: g++-13
 

@@ -4,35 +4,6 @@
 name: TileDB-SOMA Python CI (Packaging)
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - '.github/workflows/python-ci-packaging.yml'
-      - 'apis/python/MANIFEST.in'
-      - 'apis/python/pyproject.toml'
-      - 'apis/python/setup.py'
-      - 'apis/python/version.py'
-      - 'apis/python/src/tiledbsoma/__init__.py'
-      - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
-      - 'libtiledbsoma/cmake/inputs/tiledbsoma.pc.in'
-      - 'libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake'
-      - 'libtiledbsoma/cmake/Modules/TileDBCommon.cmake'
-      - 'libtiledbsoma/cmake/Superbuild.cmake'
-      - 'libtiledbsoma/CMakeLists.txt'
-  pull_request:
-    paths:
-      - '.github/workflows/python-ci-packaging.yml'
-      - 'apis/python/MANIFEST.in'
-      - 'apis/python/pyproject.toml'
-      - 'apis/python/setup.py'
-      - 'apis/python/version.py'
-      - 'apis/python/src/tiledbsoma/__init__.py'
-      - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
-      - 'libtiledbsoma/cmake/inputs/tiledbsoma.pc.in'
-      - 'libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake'
-      - 'libtiledbsoma/cmake/Modules/TileDBCommon.cmake'
-      - 'libtiledbsoma/cmake/Superbuild.cmake'
-      - 'libtiledbsoma/CMakeLists.txt'
   workflow_dispatch:
 
 jobs:
@@ -299,9 +270,8 @@ jobs:
           cmake --build build-libtiledbsoma -j 2
           cmake --build build-libtiledbsoma --target install-libtiledbsoma
           ls external/lib/
-      # Delete all cmake executables from the runner. This will ensure that
-      # tiledbsoma-py has to use the cli flags to find the external
-      # libtiledbsoma.so and not build it from source by shelling out to cmake
+      # Delete all cmake executables from the runner. This will ensure that tiledbsoma-py has to use
+      # the cli flags to find the external libtiledbsoma.so and not build it from source.
       - name: Delete cmake
         run: |
           echo before
@@ -344,25 +314,15 @@ jobs:
       - name: Runtime test
         run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
 
-  # Build a wheel from a source tarball (confirms all required files are
-  # distributed in the sdist). This is in preparation for the official building of
-  # the PyPI wheels in python-packaging.yml.
+  # Build a wheel from a source tarball (confirms all required files are distributed in the sdist).
+  # This is in preparation for the official building of the PyPI wheels in python-packaging.yml.
   # https://github.com/single-cell-data/TileDB-SOMA/pull/2506
-  #
   #
   #  Differences to python-packaging.yml:
   #
-  #  * Uses transparent python commands instead of the opaque action
-  #    `pypa/cibuildwheel`, and therefore easier to debug
-  #  * Only builds two wheels total (python 3.11 on Ubuntu and macOS), so it is
-  #    much faster. It's not creating the wheels for distribution, but instead just
-  #    providing a quick check that all the required files are distributed in the
-  #    source tarball
-  #  * Runs whenever an installation-related file is modified instead of only
-  #    after a release
+  #  * Easier debugging: uses transparent python commands instead of the opaque action `pypa/cibuildwheel`.
+  #  * Faster: only builds two wheels total (python 3.11 on Ubuntu and macOS).
   #
-  # In summary, the goal is to identify any potential problems with building
-  # the PyPI wheels when a PR is submitted, and not at release time.
   sdist:
     runs-on: ${{ matrix.os }}
     name: "Wheel from sdist (${{ matrix.os }})"

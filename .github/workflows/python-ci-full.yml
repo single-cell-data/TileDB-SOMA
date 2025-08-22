@@ -1,8 +1,7 @@
 name: TileDB-SOMA Python CI (Full)
 
 # This workflow calls ./python-ci-single.yml on the full {os} x {python version}
-# matrix. Since that's CI-resource-intensive, it runs only for main branch and
-# releases.
+# matrix.
 on:
   push:
     branches:
@@ -10,9 +9,6 @@ on:
       - 'release-*'
   release:
     types: [published]
-  # You can also invoke this workflow manually from
-  #   https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-ci-full.yml
-  # to test a working branch on the full matrix.
   workflow_dispatch:
 
 jobs:
