@@ -4,15 +4,11 @@
 on:
   pull_request:
     paths:
-      - '**'
+      - 'libtiledbsoma/**'
+      - 'apis/**'
       - '!**.md'
-      - '!.github/**'
       - '.github/workflows/R-CMD-check.yaml'
-      - '!.pre-commit-config.yaml'
-      - '!apis/python/**'
-      - '!docker/**'
-      - '!docs/**'
-      - '!LICENSE'
+      - '.github/actions/setup-r/**'
   push:
     branches:
       - main
