@@ -18,9 +18,6 @@ jobs:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v4
 
-    - name: Print current commit
-      run: git log -1 --oneline
-
     - name: Build libTileDB-SOMA
       run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
 

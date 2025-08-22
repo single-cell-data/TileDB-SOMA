@@ -50,9 +50,6 @@ jobs:
         with:
           fetch-tags: true
 
-      - name: Current commit
-        run: git log -1 --oneline
-
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
 
