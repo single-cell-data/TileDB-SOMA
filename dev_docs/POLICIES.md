@@ -104,41 +104,41 @@ At next major release after the defunct status, the affected R classes must be r
 
 ### General Guidelines for Error Messages
 
-Exception type:
+**Exception type:**
 
-- Use a specific of an error type as possible.
+- Use the most specific error type possible.
 - For generic SOMA specific errors, use TileDB-SOMA error types (e.g. `TileDBSOMAError` in C++).
 
-Content and tone:
+**Content and tone:**
 
 - Use simple and plain language. Clearly state the problem.
 - Provide context for the user’s situation and the action they were attempting.
 - Make the message as short as possible while still providing all necessary information.
-- For user caused error: provide clear guidance on how to solve the problem when possible. Suggest specific actions.
-- For internal errors: provide the details a developer would need to find and understand the error.
-- Use a friendly tone. Avoid blaming the user or using negative words.
+- For user-caused errors, provide clear guidance on how to solve the problem when possible. Suggest specific actions the user can take.
+- For internal errors, provide details a developer would need to diagnose the issue.
+- Use a friendly and non-judgmental tone. Avoid blaming the user or using words with negative connotations.
 
-Grammar and structure:
+**Grammar and structure:**
 
-- Use complete sentences with normal punctuation and capitalization.
-- Add single quotes around user provided strings (for example, column names, URIs). This helps make the message readable if the name is empty or has spaces in it.
-- Do not add punctuation around code (for example class names).
+- Use complete sentences with standard punctuation and capitalization.
+- Add single quotes around user provided strings (e.g., column names, URIs). This improves readability if the name is empty or contains spaces.
+- Do not add punctuation around code (e.g., class names).
 
-Code Location:
+**Code location:**
 
-- Do not include the name of the class or method where the code was thrown in the error message. In general, you should provide enough detail that the error is uniquely identifiable.
-- Mark internal errors (”us” errors) as internal by beginning the error message with “Internal error.”
-- Do provide enough information that it is clear where and how an error occurred.
+- Do not include class or method names in the error message. In general, you should provide enough detail that the error is uniquely identifiable.
+- Mark internal errors (”us” errors) as internal by beginning the error message with the prefix `“Internal error: ”`.
+- Provide enough information that it is clear where and how an error occurred.
 
 ### C++ Error Handling
 
-- In external-facing headers, use `sstream` to convert relevant data into a user-readable string, otherwise use `fmt::format` to convert relevant data into a user-readable string.
+- Use `fmt::format` to convert relevant data into a user-readable string unless in `*.cc` files. For headers, use `sstream` to prevent leaking `fmt` as an external dependency.
 
 ### Python Error Handling
 
-- Use f-strings to convert relevant data into a user-readable string.
-  - To print just the name of a type use `type(object).__name__`.
-- For PyBind11, follow the general C++ error guidance. For more PyBind-specific information see the [PyBind11 webpage](https://pybind11.readthedocs.io/en/stable/advanced/exceptions.html).
+- Use f-strings to include relevant data into a user-readable string.
+  - To print the name of a type only, use `type(object).__name__`.
+- For PyBind11, follow the general C++ error guidance. For more PyBind-specific information, visit the [PyBind11 documentation](https://pybind11.readthedocs.io/en/stable/advanced/exceptions.html).
 
 ### R API
 
