@@ -21,12 +21,30 @@
 namespace tiledbsoma {
 
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
-    const Context& ctx, const Array& array, const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
+    const Context& ctx,
+    const Array& array,
+    std::map<std::string, tiledbsoma::MetadataValue>& metadata,
+    std::string_view uri) {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
     nlohmann::json soma_schema_columns = nlohmann::json::array();
 
-    if (metadata.contains(TILEDB_SOMA_SCHEMA_KEY)) {
+    std::string soma_type{""};
+    if (metadata.count(SOMA_OBJECT_TYPE_KEY) != 0) {
+        auto soma_object_type = metadata[SOMA_OBJECT_TYPE_KEY];
+        const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(soma_object_type));
+        uint32_t length = get<MetadataInfo::num>(soma_object_type);
+        soma_type = std::string(dtype, length);
+    }
+    if (soma_type == "SOMAGeometryDataFrame") {
+        if (metadata.count(TILEDB_SOMA_SCHEMA_KEY) == 0) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMAArray][fill_columns] Missing required metadata key '{}' "
+                    "from SOMAGeometryDataFrame '{}'",
+                    TILEDB_SOMA_SCHEMA_KEY,
+                    uri));
+        }
         auto soma_schema_extension_raw = metadata.at(TILEDB_SOMA_SCHEMA_KEY);
         auto data = static_cast<const char*>(std::get<2>(soma_schema_extension_raw));
         auto soma_schema_extension = data != nullptr ? nlohmann::json::parse(

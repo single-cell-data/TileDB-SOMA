@@ -23,6 +23,59 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+//==================================================================
+// helper functions
+//==================================================================
+
+tiledb_query_type_t get_tiledb_mode(OpenMode mode) {
+    switch (mode) {
+        case OpenMode::soma_read:
+            return TILEDB_READ;
+        case OpenMode::soma_write:
+            return TILEDB_WRITE;
+        case OpenMode::soma_delete:
+            return TILEDB_DELETE;
+        default:
+            throw TileDBSOMAError("Internal error: Unrecognized OpenMode.");
+    }
+}
+
+std::shared_ptr<Array> open_tiledb_array(
+    tiledb_query_type_t tiledb_mode,
+    const std::string& uri,
+    const Context& ctx,
+    std::optional<TimestampRange> timestamp,
+    bool load_enumerations = true) {
+    try {
+        LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri));
+        auto temporal_policy = timestamp ? TemporalPolicy(TimestampStartEnd, timestamp->first, timestamp->second) :
+                                           TemporalPolicy();
+        auto array = std::make_shared<Array>(ctx, std::string(uri), tiledb_mode, temporal_policy);
+        if (load_enumerations) {
+            LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
+            ArrayExperimental::load_all_enumerations(ctx, *(array.get()));
+        }
+        return array;
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(fmt::format("Error opening array: '{}'\n  {}", uri, e.what()));
+    }
+}
+
+std::map<std::string, MetadataValue> create_metadata_cache(Array& array) {
+    std::map<std::string, MetadataValue> metadata_cache;
+    for (uint64_t idx = 0; idx < array.metadata_num(); ++idx) {
+        std::string key;
+        tiledb_datatype_t value_type;
+        uint32_t value_num;
+        const void* value;
+        array.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
+        MetadataValue mdval(value_type, value_num, value);
+        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+        metadata_cache.insert(mdpair);
+    }
+    return metadata_cache;
+}
+
 //===================================================================
 //= public static
 //===================================================================
@@ -103,20 +156,23 @@ SOMAArray::SOMAArray(
     OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
     : uri_(util::rstrip_uri(uri))
     , ctx_(ctx)
+    , arr_(open_tiledb_array(get_tiledb_mode(mode), uri_, *ctx_->tiledb_ctx(), timestamp))
+    , meta_cache_arr_{(mode == OpenMode::soma_read) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
+    , metadata_{create_metadata_cache(*meta_cache_arr_)}
+    , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
-    , soma_mode_(mode) {
-    validate(soma_mode_, timestamp_);
-    fill_metadata_cache(soma_mode_, timestamp_);
-    fill_columns();
+    , soma_mode_(mode)
+    , schema_(std::make_shared<ArraySchema>(arr_->schema())) {
 }
 
 SOMAArray::SOMAArray(
     std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Array> arr, std::optional<TimestampRange> timestamp)
-    // Ensure protected attributes initalized first in a consistent ordering
     : uri_(util::rstrip_uri(arr->uri()))
     , ctx_(ctx)
     , arr_(arr)
-    // Initialize private attributes next to control the order of destruction
+    , meta_cache_arr_{(arr_->query_type() == TILEDB_READ) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
+    , metadata_{create_metadata_cache(*meta_cache_arr_)}
+    , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     switch (arr_->query_type()) {
@@ -137,54 +193,6 @@ SOMAArray::SOMAArray(
                     query_type_str));
         }
     }
-    fill_metadata_cache(soma_mode_, timestamp_);
-    fill_columns();
-}
-
-void SOMAArray::fill_metadata_cache(OpenMode mode, std::optional<TimestampRange> timestamp) {
-    if (mode == OpenMode::soma_read) {
-        meta_cache_arr_ = arr_;
-    } else {  // Need to create a metadata cache array for all non-read modes.
-        if (timestamp) {
-            meta_cache_arr_ = std::make_shared<Array>(
-                *ctx_->tiledb_ctx(),
-                uri_,
-                TILEDB_READ,
-                TemporalPolicy(TimestampStartEnd, timestamp->first, timestamp->second));
-        } else {
-            meta_cache_arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-        }
-    }
-    metadata_.clear();
-
-    for (uint64_t idx = 0; idx < meta_cache_arr_->metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        meta_cache_arr_->get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-        MetadataValue mdval(value_type, value_num, value);
-        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-        metadata_.insert(mdpair);
-    }
-}
-
-void SOMAArray::fill_columns() {
-    // Clear columns in case of reopen
-    columns_.clear();
-
-    if (type().value_or("") == "SOMAGeometryDataFrame") {
-        if (!has_metadata(TILEDB_SOMA_SCHEMA_KEY)) {
-            throw TileDBSOMAError(
-                fmt::format(
-                    "[SOMAArray][fill_columns] Missing required metadata key '{}' "
-                    "from SOMAGeometryDataFrame '{}'",
-                    TILEDB_SOMA_SCHEMA_KEY,
-                    uri()));
-        }
-    }
-
-    columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_);
 }
 
 const std::string SOMAArray::uri() const {
@@ -194,9 +202,13 @@ const std::string SOMAArray::uri() const {
 void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
     soma_mode_ = mode;
-    validate(soma_mode_, timestamp);
-    fill_metadata_cache(soma_mode_, timestamp_);
-    fill_columns();
+    arr_ = open_tiledb_array(get_tiledb_mode(soma_mode_), uri_, *ctx_->tiledb_ctx(), timestamp);
+    meta_cache_arr_ = (mode == OpenMode::soma_read) ?
+                          arr_ :
+                          open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp);
+    metadata_ = create_metadata_cache(*meta_cache_arr_);
+    columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_);
+    schema_ = std::make_shared<ArraySchema>(arr_->schema());
 }
 
 CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
@@ -208,10 +220,8 @@ CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
 }
 
 void SOMAArray::close() {
-    if (arr_->query_type() == TILEDB_WRITE) {
-        meta_cache_arr_->close();
-    }
     arr_->close();
+    meta_cache_arr_->close();
     metadata_.clear();
 }
 
@@ -324,41 +334,6 @@ bool SOMAArray::has_metadata(const std::string& key) {
 
 uint64_t SOMAArray::metadata_num() const {
     return metadata_.size();
-}
-
-void SOMAArray::validate(OpenMode mode, std::optional<TimestampRange> timestamp) {
-    tiledb_query_type_t tiledb_mode{};
-    switch (mode) {
-        case OpenMode::soma_read: {
-            tiledb_mode = TILEDB_READ;
-        } break;
-        case OpenMode::soma_write: {
-            tiledb_mode = TILEDB_WRITE;
-        } break;
-        case OpenMode::soma_delete: {
-            tiledb_mode = TILEDB_DELETE;
-        } break;
-        default:
-            throw TileDBSOMAError("Internal error: Unrecognized OpenMode.");
-    }
-
-    try {
-        LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
-        if (timestamp) {
-            arr_ = std::make_shared<Array>(
-                *ctx_->tiledb_ctx(),
-                uri_,
-                tiledb_mode,
-                TemporalPolicy(TimestampStartEnd, timestamp->first, timestamp->second));
-        } else {
-            arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, tiledb_mode);
-        }
-        LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
-        ArrayExperimental::load_all_enumerations(*ctx_->tiledb_ctx(), *(arr_.get()));
-        schema_ = std::make_shared<ArraySchema>(arr_->schema());
-    } catch (const std::exception& e) {
-        throw TileDBSOMAError(fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
-    }
 }
 
 std::optional<TimestampRange> SOMAArray::timestamp() {

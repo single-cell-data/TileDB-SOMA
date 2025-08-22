@@ -40,7 +40,10 @@ class SOMAColumn {
     //===================================================================
 
     static std::vector<std::shared_ptr<SOMAColumn>> deserialize(
-        const Context& ctx, const Array& array, const std::map<std::string, tiledbsoma::MetadataValue>& metadata);
+        const Context& ctx,
+        const Array& array,
+        std::map<std::string, tiledbsoma::MetadataValue>& metadata,
+        std::string_view uri);
 
     //===================================================================
     //= public non-static
