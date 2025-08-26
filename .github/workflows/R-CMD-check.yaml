@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - 'libtiledbsoma/**'
-      - 'apis/**'
+      - 'apis/r/**'
       - '!**.md'
       - '.github/workflows/R-CMD-check.yaml'
       - '.github/actions/setup-r/**'
