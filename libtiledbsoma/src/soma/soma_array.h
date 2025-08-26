@@ -457,11 +457,6 @@ class SOMAArray : public SOMAObject {
     uint64_t metadata_num() const;
 
     /**
-     * Validates input parameters before opening array.
-     */
-    void validate(OpenMode mode, std::optional<TimestampRange> timestamp);
-
-    /**
      * Return optional timestamp pair SOMAArray was opened with.
      */
     std::optional<TimestampRange> timestamp();
@@ -1117,16 +1112,17 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache(OpenMode mode, std::optional<TimestampRange> timestamp);
-
-    void fill_columns();
-
     /**
      * Convenience function for creating an ArraySchemaEvolution object
      * referencing this array's context pointer, along with its open-at
      * timestamp (if any).
      */
     ArraySchemaEvolution _make_se();
+
+    // Array associated with metadata_. If open mode is not "read", then a second
+    // array is opened. Otherwise, this is a reference to `arr_`. This needs to be
+    // kept open to make metadata value pointer in the metadata cache accessible.
+    std::shared_ptr<Array> meta_cache_arr_;
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
@@ -1145,12 +1141,6 @@ class SOMAArray : public SOMAObject {
     // directly in those cases. Here, we store a copy of the schema so that it
     // can be accessed in any mode
     std::shared_ptr<ArraySchema> schema_;
-
-    // Array associated with metadata_. Metadata values need to be
-    // accessible in write mode as well. We need to keep this read-mode
-    // array alive in order for the metadata value pointers in the cache to
-    // be accessible
-    std::shared_ptr<Array> meta_cache_arr_;
 };
 
 }  // namespace tiledbsoma
