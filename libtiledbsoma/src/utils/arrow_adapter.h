@@ -1231,11 +1231,6 @@ class ArrowAdapter {
     static Dimension _create_dim(
         tiledb_datatype_t type, std::string name, const void* buff, std::shared_ptr<Context> ctx);
 
-    template <typename T>
-    static Dimension _create_dim_aux(std::shared_ptr<Context> ctx, std::string name, T* b) {
-        return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
-    }
-
     static FilterList _create_filter_list(std::string filters, std::shared_ptr<Context> ctx);
 
     static FilterList _create_filter_list(json filters, std::shared_ptr<Context> ctx);

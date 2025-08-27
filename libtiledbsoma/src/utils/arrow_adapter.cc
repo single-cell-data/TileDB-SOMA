@@ -27,6 +27,21 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
+/**************************
+ * Internal helper methods
+ **************************/
+
+template <typename T>
+Dimension create_dim_aux(std::shared_ptr<Context> ctx, std::string name, const void* buffer) {
+    auto b = static_cast<const T*>(buffer);
+    LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
+    return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
+}
+
+/**************************
+ * External API
+ **************************/
+
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     std::string name_for_log(schema->name == nullptr ? "anonymous" : schema->name);
     if (schema->name != nullptr)
@@ -657,70 +672,30 @@ Dimension ArrowAdapter::_create_dim(
     switch (type) {
         case TILEDB_STRING_ASCII:
             return Dimension::create(*ctx, name, type, nullptr, nullptr);
+        case TILEDB_INT8:
+            return create_dim_aux<int8_t>(ctx, name, buff);
+        case TILEDB_UINT8:
+            return create_dim_aux<uint8_t>(ctx, name, buff);
+        case TILEDB_INT16:
+            return create_dim_aux<int16_t>(ctx, name, buff);
+        case TILEDB_UINT16:
+            return create_dim_aux<uint16_t>(ctx, name, buff);
+        case TILEDB_INT32:
+            return create_dim_aux<int32_t>(ctx, name, buff);
+        case TILEDB_UINT32:
+            return create_dim_aux<uint32_t>(ctx, name, buff);
+        case TILEDB_INT64:
+            return create_dim_aux<int64_t>(ctx, name, buff);
+        case TILEDB_UINT64:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
-        case TILEDB_DATETIME_NS: {
-            // Sadly we cannot put this in the centralized _create_dim_aux
-            // in the header file. That's because we need utils/logger.h
-            // -- which is a _fixed_ relative path from _this_ .cc file
-            // but a _varying_ relative path from all the places that
-            // #include arrow_adapter.h. Hence the code duplication in
-            // logging statements. :(
-            uint64_t* b = (uint64_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return Dimension::create(*ctx, name, type, b, b + 2);
-        }
-        case TILEDB_INT8: {
-            int8_t* b = (int8_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int8_t*)buff);
-        }
-        case TILEDB_UINT8: {
-            uint8_t* b = (uint8_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint8_t*)buff);
-        }
-        case TILEDB_INT16: {
-            int16_t* b = (int16_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int16_t*)buff);
-        }
-        case TILEDB_UINT16: {
-            uint16_t* b = (uint16_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint16_t*)buff);
-        }
-        case TILEDB_INT32: {
-            int32_t* b = (int32_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int32_t*)buff);
-        }
-        case TILEDB_UINT32: {
-            uint32_t* b = (uint32_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint32_t*)buff);
-        }
-        case TILEDB_INT64: {
-            int64_t* b = (int64_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int64_t*)buff);
-        }
-        case TILEDB_UINT64: {
-            uint64_t* b = (uint64_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint64_t*)buff);
-        }
-        case TILEDB_FLOAT32: {
-            float* b = (float*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (float*)buff);
-        }
-        case TILEDB_FLOAT64: {
-            double* b = (double*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (double*)buff);
-        }
+        case TILEDB_DATETIME_NS:
+            return create_dim_aux<uint64_t>(ctx, name, buff);
+        case TILEDB_FLOAT32:
+            return create_dim_aux<float>(ctx, name, buff);
+        case TILEDB_FLOAT64:
+            return create_dim_aux<double>(ctx, name, buff);
         default:
             throw TileDBSOMAError(
                 fmt::format("ArrowAdapter: Unsupported TileDB dimension: {} ", tiledb::impl::type_to_str(type)));
