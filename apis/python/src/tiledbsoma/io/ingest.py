@@ -178,50 +178,35 @@ def register_h5ads(
     use_multiprocessing: bool = False,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
-    """Register H5AD files to extend an existing SOMA Experiment.
+    """Register H5AD files to extend an existing SOMA ``Experiment``.
 
-    This function is the mandatory preparation step for appending one or more H5AD files to an existing SOMA Experiment.
-    It analyzes ``obs``/``var`` identifiers and schema elements across all inputs and the target ``Experiment`` to
-    compute a global ``ExperimentAmbientLabelMapping``. This "registration map" is required for appending new data via
-    :func:`from_anndata` or :func:`from_h5ad`. See ``from_h5ad`` and ``from_anndata`` for details.
+    This is the required first step before calling :func:`from_h5ad` or :func:`from_anndata` with ``append=True``. It
+    inspects all input H5ADs (and the target ``Experiment``, if ``experiment_uri`` is not ``None``) to produce a global
+    :class:`ExperimentAmbientLabelMapping` that describes how ``obs`` and ``var`` identifiers and schema elements map to
+    the target ``Experiment``.
 
-    Important Considerations for Append Mode
-    =========================================
+    Supported Workflows:
+        This function and the subsequent append workflow are designed for two primary scenarios:
 
-    Supported Workflows
-    -------------------
+        1. Concatenating multiple datasets where ``obs`` and ``var`` schemas are consistent across all inputs and the target ``Experiment``.
+        2. Adding a new ``Measurement`` for observations that *already exist* in the ``Experiment``.
 
-    This function and the subsequent append workflow are designed for two primary scenarios:
+    Schema Evolution:
+        The append workflow does not automatically evolve the schema of the ``obs`` DataFrame. If inputs contain columns
+        in ``obs`` not present in the existing ``Experiment.obs`` they will not be added. If your append operation
+        requires adding new ``obs`` columns, use :func:`update_obs()` *before* creating the registration map.
 
-    1.  Concatenating multiple datasets where ``obs`` and ``var`` schemas are consistent across all inputs and the
-        target ``Experiment``.
-    2.  Adding a new ``Measurement`` for observations that *already exist* in the ``Experiment``.
+    Duplicate obs IDs:
+        By default obs IDs (from ``obs_field_name``) across all inputs and the  existing ``Experiment`` must be globally
+        unique. If any duplicates are found, a ``SOMAError`` is raised to prevent unintentionally overwriting existing
+        data, which is non-deterministic in multi-writer scenarios. Set ``allow_duplicate_obs_ids=True`` only when
+        adding a *new Measurement* for an existing set of observations (i.e., no new obs IDs).
 
-    The append workflow does NOT automatically evolve the schema of the ``obs`` DataFrame. Specifically, it does not add
-    new columns to the existing ``obs`` DataFrame if they are present in the input AnnDatas but not in the target
-    ``Experiment``.
-
-    If your append operation requires adding new ``obs`` columns, you must first add them to the existing ``obs``
-    DataFrame manually using ``tiledbsoma.io.update_obs()`` *before* running the creating the registration map. Failing
-    to do so will result in a ``SOMAError`` during the data write step (e.g., ``"Column name not found:
-    [new_column_name]"``).
-
-    Duplicates Handling
-    -------------------
-
-    The registration process will raise an error if any `obs` IDs (from `obs_field_name`)
-    are duplicated across the combination of all inputs and the target SOMA Experiment.
-    You can set `allow_duplicate_obs_ids=True` to bypass this check if you are adding a
-    new ``Measurement`` to existing observations.
-
-    Multiprocessing Support
-    -----------------------
-
-    If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
-    to register each H5AD in parallel. In cases with many files, this can produce a performance
-    benefit. Regardless of ``use_multiprocessing``, H5ADs will be registered concurrently -- you
-    can control the concurrency using the ``soma.compute_concurrency_level`` configuration
-    parameter in the ``context`` argument.
+    Concurrency:
+        If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing to register each
+        H5AD in parallel. In cases with many files, this can produce a performance benefit. Regardless of
+        ``use_multiprocessing``, H5ADs will be registered concurrently -- you can control the concurrency using the
+        ``soma.compute_concurrency_level`` configuration parameter in the ``context`` argument.
     """
     if isinstance(h5ad_file_names, str):
         h5ad_file_names = [h5ad_file_names]
@@ -396,6 +381,7 @@ def from_h5ad(
           .. code-block:: python
 
               import tiledbsoma.io
+
               rd = tiledbsoma.io.register_h5ads(
                   experiment_uri,
                   h5ad_file_names,
@@ -431,6 +417,7 @@ def from_h5ad(
               with soma.open(uri, 'w') as exp:
                   exp.metadata.update({"aaa": "BBB"})
                   exp.obs.metadata.update({"ccc": 123})
+
 
     Returns:
         The URI of the newly created experiment.
