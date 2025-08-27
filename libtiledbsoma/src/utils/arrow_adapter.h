@@ -438,26 +438,6 @@ class ArrowAdapter {
         PlatformConfig platform_config = PlatformConfig());
 
     /**
-     * @brief Get a TileDB dimension from an Arrow schema.
-     *
-     * @remarks This is a list variation which expects a schemaand a data array
-     * to describe a list instead of a simple columns. Used especialy with
-     * nested domains where it is described by a struct and each nested
-     * dimension is described by a list.
-     *
-     * @return std::pair<Dimension, bool> The TileDB dimension.
-     */
-    static Dimension tiledb_dimension_from_arrow_schema_ext(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* schema,
-        ArrowArray* array,
-        std::string soma_type,
-        std::string_view type_metadata,
-        std::string prefix = std::string(),
-        std::string suffix = std::string(),
-        PlatformConfig platform_config = PlatformConfig());
-
-    /**
      * @brief Get a TileDB attribute with its enumeration from an Arrow schema.
      *
      * @return std::pair<Attribute, std::optional<Enumeration>>

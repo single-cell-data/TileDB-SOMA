@@ -986,55 +986,6 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     return dim;
 }
 
-Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
-    std::shared_ptr<Context> ctx,
-    ArrowSchema* schema,
-    ArrowArray* array,
-    std::string soma_type,
-    std::string_view type_metadata,
-    std::string prefix,
-    std::string suffix,
-    PlatformConfig platform_config) {
-    if (strcmp(schema->format, "+l") != 0) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "[tiledb_dimension_from_arrow_schema_ext] Schema "
-                "should be of type list."));
-    }
-
-    if (schema->n_children != 1) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "[tiledb_dimension_from_arrow_schema_ext] Schema "
-                "should have exactly 1 child"));
-    }
-
-    auto type = ArrowAdapter::to_tiledb_format(schema->children[0]->format, type_metadata);
-
-    if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
-        type = TILEDB_STRING_ASCII;
-    }
-
-    auto col_name = prefix + std::string(schema->name) + suffix;
-
-    FilterList filter_list = ArrowAdapter::_create_dim_filter_list(col_name, platform_config, soma_type, ctx);
-
-    if (array->length != 5) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "ArrowAdapter: unexpected length {} != 5 for name "
-                "'{}'",
-                array->length,
-                col_name));
-    }
-
-    const void* buff = array->children[0]->buffers[1];
-    auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
-    dim.set_filter_list(filter_list);
-
-    return dim;
-}
-
 std::pair<Attribute, std::optional<Enumeration>> ArrowAdapter::tiledb_attribute_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     ArrowSchema* arrow_schema,
