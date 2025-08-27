@@ -31,7 +31,38 @@ SUPPORTED_ARROW_TYPES = [
     (pa.binary(), pa.large_binary()),
     (pa.large_string(),) * 2,
     (pa.large_binary(),) * 2,
-    (pa.dictionary(pa.int32(), pa.string()),) * 2,
+    *[
+        (pa.dictionary(index_type, value_type, ordered=ordered),) * 2
+        for index_type in (pa.int8(), pa.int16(), pa.int32(), pa.int64())
+        for value_type in (
+            pa.bool_(),
+            pa.int8(),
+            pa.int16(),
+            pa.int32(),
+            pa.int64(),
+            pa.float32(),
+            pa.float64(),
+            pa.large_string(),
+            pa.large_binary(),
+        )
+        for ordered in (True, False)
+    ],
+    *[
+        (
+            pa.dictionary(index_type, pa.string(), ordered=ordered),
+            pa.dictionary(index_type, pa.large_string(), ordered=ordered),
+        )
+        for index_type in (pa.int8(), pa.int16(), pa.int32(), pa.int64())
+        for ordered in (True, False)
+    ],
+    *[
+        (
+            pa.dictionary(index_type, pa.binary(), ordered=ordered),
+            pa.dictionary(index_type, pa.large_binary(), ordered=ordered),
+        )
+        for index_type in (pa.int8(), pa.int16(), pa.int32(), pa.int64())
+        for ordered in (True, False)
+    ],
 ]
 
 
