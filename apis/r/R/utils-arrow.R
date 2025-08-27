@@ -319,6 +319,8 @@ check_arrow_data_types <- function(from, to) {
   compatible <- if (is_string(from) && is_string(to)) {
     TRUE
   } else {
+    print(from$ToString())
+    print(to$ToString())
     from$Equals(to)
   }
 
