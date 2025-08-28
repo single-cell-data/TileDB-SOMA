@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - \[[#4137](https://github.com/single-cell-data/TileDB-SOMA/pull/4137)\] [python][BREAKING] Add user-specified obs/var index column to `ExperimentAxisQuery.to_anndata`. This change will also set the index columns based upon metadata hints, following the conventions of `tiledbsoma.io`. See the docstrings for more details. Prior to this change, the index dtype would be set to `string` in all cases - this change removes the forced cast, and leaves the column type as-is.
 - \[[#4177](https://github.com/single-cell-data/TileDB-SOMA/pull/4177)\] Update [TileDB core to 2.28.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1).
 - Update TileDB version to https://github.com/single-cell-data/TileDB-SOMA/pull/4177
+- \[[#4209](https://github.com/single-cell-data/TileDB-SOMA/pull/4209)\] DataFrame columns of dictionary type, with a `large_string` or `large_binary` value type, were incorrectly reported as an Arrow `string`. They are now correctly reported as dictionary-typed fields with a value type of `large_string` and `large_binary`, respectively. NB: all string/binary types are automatically up-cast to their large variant in tiledbsoma.
 
 ### Deprecated
 

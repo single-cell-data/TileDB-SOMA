@@ -3084,11 +3084,11 @@ def test_enum_schema_report(tmp_path):
 
         f = sdf.schema.field("str_cat")
         assert f.type.index_type == pa.int8()
-        assert f.type.value_type == pa.string()
+        assert f.type.value_type == pa.large_string()
 
         f = sdf.schema.field("byte_cat")
         assert f.type.index_type == pa.int8()
-        assert f.type.value_type == pa.binary()
+        assert f.type.value_type == pa.large_binary()
 
 
 def test_nullable(tmp_path):

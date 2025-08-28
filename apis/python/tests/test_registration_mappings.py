@@ -1599,7 +1599,7 @@ def test_prepare_experiment(tmp_path) -> None:
     with tiledbsoma.open(soma_uri) as E:
         assert pa.types.is_dictionary(E.obs.schema.field("A").type)
         assert pa.types.is_dictionary(E.obs.schema.field("B").type)
-        assert E.obs.schema.field("A").type.value_type == pa.string()
+        assert E.obs.schema.field("A").type.value_type == pa.large_string()
         assert E.obs.schema.field("B").type.value_type == pa.bool_()
 
     # register

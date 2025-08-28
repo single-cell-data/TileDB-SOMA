@@ -720,8 +720,8 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         assert getter("empty_extension_partial").nullable
 
         # https://github.com/single-cell-data/TileDB-SOMA/issues/3685.
-        assert getter("nan_categorical_all").type.value_type == pa.string()
-        assert getter("none_categorical_all").type.value_type == pa.string()
+        assert getter("nan_categorical_all").type.value_type == pa.large_string()
+        assert getter("none_categorical_all").type.value_type == pa.large_string()
 
         # For every column in the data frame ensure that `isnullable` reflects
         # he null-ness of the Pandas data frame

@@ -479,11 +479,7 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
 
     if (enmr_name.has_value()) {
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_CHAR) {
-            dict->format = strdup("z");
-        } else {
-            dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type(), false).data());
-        }
+        dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type()).data());
         dict->name = strdup(enmr->name().c_str());
         dict->metadata = nullptr;
         if (enmr->ordered()) {
