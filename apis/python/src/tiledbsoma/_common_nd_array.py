@@ -144,6 +144,21 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         return self._handle.tiledbsoma_has_upgraded_shape
 
+    @property
+    def type(self) -> pa.DataType:
+        """Returns the data type of the array's soma_data attribute.
+
+        This is a read-only property that provides direct access to the Arrow data type
+        of the array's data, equivalent to ``self.schema.field("soma_data").type``.
+
+        Lifecycle:
+            Maturing.
+
+        Returns:
+            The Arrow data type of the array's data.
+        """
+        return self.schema.field("soma_data").type
+
     @classmethod
     def _dim_capacity_and_extent(
         cls,
