@@ -63,6 +63,7 @@ def test_sparse_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_typ
     for d in range(len(shape)):
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
+    assert a.type == element_type
     assert not a.schema.field("soma_data").nullable
 
     # Check with open binding
