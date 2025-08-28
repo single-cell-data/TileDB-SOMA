@@ -359,14 +359,6 @@ class ArrowAdapter {
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
         std::shared_ptr<ColumnBuffer> column);
 
-    /**
-     * @brief Create a an ArrowSchema from TileDB Schema
-     *
-     * @return ArrowSchema
-     */
-    static managed_unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
-        std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
-
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
      * @return ArrowSchema
