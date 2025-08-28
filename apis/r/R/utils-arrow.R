@@ -313,15 +313,13 @@ check_arrow_data_types <- function(from, to) {
   )
 
   is_string <- function(x) {
-    x$ToString() %in% c("string", "large_string")
+    if (inherits(x, what = "DictionaryType")) {
+      return(inherits(x$value_type, what = c("Utf8", "LargeUtf8")))
+    }
+    return(inherits(x, what = c("Utf8", "LargeUtf8")))
   }
 
-  is_dict_of_string <- function(x) {
-    startsWith(x$ToString(), "dictionary<values=large_string,") ||
-      startsWith(x$ToString(), "dictionary<values=string,")
-  }
-
-  compatible <- if ((is_string(from) && is_string(to)) || (is_dict_of_string(from) && is_dict_of_string(to))) {
+  compatible <- if (is_string(from) && is_string(to)) {
     TRUE
   } else {
     from$Equals(to)
