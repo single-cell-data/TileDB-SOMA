@@ -316,11 +316,14 @@ check_arrow_data_types <- function(from, to) {
     x$ToString() %in% c("string", "large_string")
   }
 
-  compatible <- if (is_string(from) && is_string(to)) {
+  is_dict_of_string <- function(x) {
+    startsWith(x$ToString(), "dictionary<values=large_string,") ||
+      startsWith(x$ToString(), "dictionary<values=string,")
+  }
+
+  compatible <- if ((is_string(from) && is_string(to)) || (is_dict_of_string(from) && is_dict_of_string(to))) {
     TRUE
   } else {
-    print(from$ToString())
-    print(to$ToString())
     from$Equals(to)
   }
 
