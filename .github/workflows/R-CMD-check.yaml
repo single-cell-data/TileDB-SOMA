@@ -4,15 +4,11 @@
 on:
   pull_request:
     paths:
-      - '**'
+      - 'libtiledbsoma/**'
+      - 'apis/r/**'
       - '!**.md'
-      - '!.github/**'
       - '.github/workflows/R-CMD-check.yaml'
-      - '!.pre-commit-config.yaml'
-      - '!apis/python/**'
-      - '!docker/**'
-      - '!docs/**'
-      - '!LICENSE'
+      - '.github/actions/setup-r/**'
   push:
     branches:
       - main
@@ -51,9 +47,6 @@ jobs:
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
-
-      - name: Print current commit
-        run: git log -1 --oneline
 
       - name: Show matrix OS
         run: echo "matrix.config.os:" ${{ matrix.config.os }}
