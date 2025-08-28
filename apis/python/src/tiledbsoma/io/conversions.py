@@ -105,7 +105,7 @@ def _prepare_df_for_ingest(df: pd.DataFrame, id_column_name: str | None) -> str 
 
     original_index_name = None
     if use_existing_index:
-        original_index_name = df.index.name
+        original_index_name = str(df.index.name) if df.index.name is not None else None
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
