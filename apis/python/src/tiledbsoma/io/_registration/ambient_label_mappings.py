@@ -640,7 +640,7 @@ class AnnDataAxisMetadata:
                 return pd.Index([])
             if len(indices) == 1:
                 return indices[0]
-            return cast("pd.Index[Any]", indices[0].append(indices[1:]))  # type: ignore[no-untyped-call]
+            return indices[0].append(indices[1:])
 
         return cls(
             field_name=ams[0].field_name,
@@ -670,9 +670,7 @@ class AnnDataAxisMetadata:
 
             if not ordered:
                 return pd.CategoricalDtype(
-                    enums[0]
-                    .categories.append([e.categories for e in enums[1:]])  # type: ignore[no-untyped-call]
-                    .drop_duplicates(),
+                    enums[0].categories.append([e.categories for e in enums[1:]]).drop_duplicates(),
                     ordered=False,
                 )
 
@@ -697,9 +695,9 @@ class AnnDataAxisMetadata:
 def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index:
     """Given an AnnData obs/var, extract the index for the user-selected join column."""
     if field_name in df:
-        return cast("pd.Index[Any]", pd.Index(df[field_name]))
+        return pd.Index(df[field_name])  # type: ignore[no-any-return]
     if df.index.name in (field_name, "index", None):
-        return cast("pd.Index[Any]", df.index)
+        return df.index
     raise ValueError(f"Could not find field name {field_name} in dataframe.")
 
 
