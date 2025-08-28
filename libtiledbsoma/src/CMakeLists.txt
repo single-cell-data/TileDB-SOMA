@@ -55,6 +55,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/value_filter.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/platform_config.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
@@ -255,6 +256,7 @@ install(FILES
 
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/value_filter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/platform_config.h
   DESTINATION "include/tiledbsoma/tiledb_adapter"
 )
 

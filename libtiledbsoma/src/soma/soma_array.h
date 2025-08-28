@@ -22,6 +22,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 #include "../common/soma_column_selection.h"
+#include "../tiledb_adapter/platform_config.h"
 #include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "logger_public.h"
@@ -353,8 +354,8 @@ class SOMAArray : public SOMAObject {
      *
      * @return PlatformSchemaConfig
      */
-    PlatformSchemaConfig schema_config_options() const {
-        return ArrowAdapter::platform_schema_config_from_tiledb(*schema_);
+    inline PlatformSchemaConfig schema_config_options() const {
+        return utils::platform_schema_config_from_tiledb(*schema_);
     }
 
     /**
@@ -364,8 +365,8 @@ class SOMAArray : public SOMAObject {
      *
      * @return PlatformConfig
      */
-    PlatformConfig config_options_from_schema() const {
-        return ArrowAdapter::platform_config_from_tiledb_schema(*schema_);
+    inline PlatformConfig config_options_from_schema() const {
+        return utils::platform_config_from_tiledb_schema(*schema_);
     }
 
     /**
