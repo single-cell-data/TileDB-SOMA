@@ -35,9 +35,6 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
-      - name: Print current commit
-        run: git log -1 --oneline
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -83,10 +80,7 @@ jobs:
         with:
           fetch-tags: true # ensure we get all tags to inform package version determination
 
-      - name: Print current commit
-        run: git log -1 --oneline
-
-      - name: Set Up Test Data
+      - name: Set up test data
         run: make data
 
       - name: Set up Python ${{ inputs.python_version }}
@@ -95,15 +89,6 @@ jobs:
           python-version: ${{ inputs.python_version }}
           cache: pip
           cache-dependency-path: ./apis/python/setup.py
-
-      # Experiment for macOS CI false negatives ...
-      #    - name: Cache native libraries
-      #      uses: actions/cache@v4
-      #      with:
-      #        path: |
-      #          build
-      #          dist
-      #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
       - name: Install tiledbsoma
         run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
@@ -119,11 +104,6 @@ jobs:
 
       - name: Log pip dependencies
         run: pip list
-
-      - name: Run libtiledbsoma unit tests
-        run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
-        env:
-          TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
 
       - name: Run pytests for Python
         shell: bash
