@@ -520,6 +520,14 @@ Dimension ArrowAdapter::_create_dim(
     switch (type) {
         case TILEDB_STRING_ASCII:
             return Dimension::create(*ctx, name, type, nullptr, nullptr);
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS: {
+            uint64_t* b = (uint64_t*)buff;
+            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
+            return Dimension::create(*ctx, name, type, b, b + 2);
+        }
         case TILEDB_INT8:
             return create_dim_aux<int8_t>(ctx, name, buff);
         case TILEDB_UINT8:
@@ -535,10 +543,6 @@ Dimension ArrowAdapter::_create_dim(
         case TILEDB_INT64:
             return create_dim_aux<int64_t>(ctx, name, buff);
         case TILEDB_UINT64:
-        case TILEDB_DATETIME_SEC:
-        case TILEDB_DATETIME_MS:
-        case TILEDB_DATETIME_US:
-        case TILEDB_DATETIME_NS:
             return create_dim_aux<uint64_t>(ctx, name, buff);
         case TILEDB_FLOAT32:
             return create_dim_aux<float>(ctx, name, buff);
