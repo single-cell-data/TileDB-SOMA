@@ -38,6 +38,90 @@ Dimension create_dim_aux(std::shared_ptr<Context> ctx, std::string name, const v
     return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
 }
 
+std::string_view to_arrow_readable(std::string_view arrow_dtype) {
+    std::map<std::string_view, std::string_view> _to_arrow_readable = {
+        {"n", "null"},
+        {"b", "boolean"},
+        {"c", "int8"},
+        {"C", "uint8"},
+        {"s", "int16"},
+        {"S", "uint16"},
+        {"i", "int32"},
+        {"I", "uint32"},
+        {"l", "int64"},
+        {"L", "uint64"},
+        {"e", "float16"},
+        {"f", "float32"},
+        {"g", "float64"},
+        {"z", "binary"},
+        {"Z", "large binary"},
+        {"vz", "binary view"},
+        {"u", "utf-8 string"},
+        {"U", "large utf-8 string"},
+        {"vu", "utf-8 view"},
+        {"tdD", "date32 [days]"},
+        {"tdm", "date64 [milliseconds]"},
+        {"tts", "time32 [seconds]"},
+        {"ttm", "time32 [milliseconds]"},
+        {"ttu", "time64 [microseconds]"},
+        {"ttn", "time64 [nanoseconds]"},
+        {"tDs", "duration [seconds]"},
+        {"tDm", "duration [milliseconds]"},
+        {"tDu", "duration [microseconds]"},
+        {"tDn", "duration [nanoseconds]"},
+        {"tiM", "interval [months]"},
+        {"tiD", "interval [days, time]"},
+        {"tin", "interval [month, day, nanoseconds]"},
+        {"+l", "list"},
+        {"+L", "large list"},
+        {"+vl", "list-view"},
+        {"+vL", "large list-view"},
+        {"+s", "struct"},
+        {"+m", "map"},
+        {"+r", "run-end encoded"}};
+
+    auto it = _to_arrow_readable.find(arrow_dtype);
+    return it != _to_arrow_readable.end() ? it->second :
+                                            "unknown Arrow type [see "
+                                            "https://arrow.apache.org/docs/format/"
+                                            "CDataInterface.html#data-type-description-format-strings]";
+}
+
+enum ArrowType to_nanoarrow_type(std::string_view arrow_dtype) {
+    std::map<std::string_view, enum ArrowType> _to_nanoarrow_type_map = {
+        {"i", NANOARROW_TYPE_INT32},        {"c", NANOARROW_TYPE_INT8},         {"C", NANOARROW_TYPE_UINT8},
+        {"s", NANOARROW_TYPE_INT16},        {"S", NANOARROW_TYPE_UINT16},       {"I", NANOARROW_TYPE_UINT32},
+        {"l", NANOARROW_TYPE_INT64},        {"L", NANOARROW_TYPE_UINT64},       {"f", NANOARROW_TYPE_FLOAT},
+        {"g", NANOARROW_TYPE_DOUBLE},       {"u", NANOARROW_TYPE_STRING},       {"U", NANOARROW_TYPE_LARGE_STRING},
+        {"b", NANOARROW_TYPE_BOOL},         {"tss:", NANOARROW_TYPE_TIMESTAMP}, {"tsm:", NANOARROW_TYPE_TIMESTAMP},
+        {"tsn:", NANOARROW_TYPE_TIMESTAMP}, {"tsu:", NANOARROW_TYPE_TIMESTAMP}, {"tdD", NANOARROW_TYPE_TIMESTAMP},
+        {"z", NANOARROW_TYPE_BINARY},       {"Z", NANOARROW_TYPE_LARGE_BINARY},
+    };
+
+    try {
+        return _to_nanoarrow_type_map.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(
+            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
+    }
+}
+
+std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view arrow_dtype) {
+    std::map<std::string_view, std::pair<enum ArrowType, enum ArrowTimeUnit>> _to_nanoarrow_time = {
+        {"tss:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_SECOND}},
+        {"tsm:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MILLI}},
+        {"tsu:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MICRO}},
+        {"tsn:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_NANO}},
+    };
+
+    try {
+        return _to_nanoarrow_time.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(
+            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
+    }
+}
+
 /**************************
  * External API
  **************************/
@@ -976,90 +1060,6 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype, s
         throw std::out_of_range(
             fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
     }
-}
-
-enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view arrow_dtype) {
-    std::map<std::string_view, enum ArrowType> _to_nanoarrow_type_map = {
-        {"i", NANOARROW_TYPE_INT32},        {"c", NANOARROW_TYPE_INT8},         {"C", NANOARROW_TYPE_UINT8},
-        {"s", NANOARROW_TYPE_INT16},        {"S", NANOARROW_TYPE_UINT16},       {"I", NANOARROW_TYPE_UINT32},
-        {"l", NANOARROW_TYPE_INT64},        {"L", NANOARROW_TYPE_UINT64},       {"f", NANOARROW_TYPE_FLOAT},
-        {"g", NANOARROW_TYPE_DOUBLE},       {"u", NANOARROW_TYPE_STRING},       {"U", NANOARROW_TYPE_LARGE_STRING},
-        {"b", NANOARROW_TYPE_BOOL},         {"tss:", NANOARROW_TYPE_TIMESTAMP}, {"tsm:", NANOARROW_TYPE_TIMESTAMP},
-        {"tsn:", NANOARROW_TYPE_TIMESTAMP}, {"tsu:", NANOARROW_TYPE_TIMESTAMP}, {"tdD", NANOARROW_TYPE_TIMESTAMP},
-        {"z", NANOARROW_TYPE_BINARY},       {"Z", NANOARROW_TYPE_LARGE_BINARY},
-    };
-
-    try {
-        return _to_nanoarrow_type_map.at(arrow_dtype);
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range(
-            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
-    }
-}
-
-std::pair<enum ArrowType, enum ArrowTimeUnit> ArrowAdapter::to_nanoarrow_time(std::string_view arrow_dtype) {
-    std::map<std::string_view, std::pair<enum ArrowType, enum ArrowTimeUnit>> _to_nanoarrow_time = {
-        {"tss:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_SECOND}},
-        {"tsm:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MILLI}},
-        {"tsu:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MICRO}},
-        {"tsn:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_NANO}},
-    };
-
-    try {
-        return _to_nanoarrow_time.at(arrow_dtype);
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range(
-            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
-    }
-}
-
-std::string_view ArrowAdapter::to_arrow_readable(std::string_view arrow_dtype) {
-    std::map<std::string_view, std::string_view> _to_arrow_readable = {
-        {"n", "null"},
-        {"b", "boolean"},
-        {"c", "int8"},
-        {"C", "uint8"},
-        {"s", "int16"},
-        {"S", "uint16"},
-        {"i", "int32"},
-        {"I", "uint32"},
-        {"l", "int64"},
-        {"L", "uint64"},
-        {"e", "float16"},
-        {"f", "float32"},
-        {"g", "float64"},
-        {"z", "binary"},
-        {"Z", "large binary"},
-        {"vz", "binary view"},
-        {"u", "utf-8 string"},
-        {"U", "large utf-8 string"},
-        {"vu", "utf-8 view"},
-        {"tdD", "date32 [days]"},
-        {"tdm", "date64 [milliseconds]"},
-        {"tts", "time32 [seconds]"},
-        {"ttm", "time32 [milliseconds]"},
-        {"ttu", "time64 [microseconds]"},
-        {"ttn", "time64 [nanoseconds]"},
-        {"tDs", "duration [seconds]"},
-        {"tDm", "duration [milliseconds]"},
-        {"tDu", "duration [microseconds]"},
-        {"tDn", "duration [nanoseconds]"},
-        {"tiM", "interval [months]"},
-        {"tiD", "interval [days, time]"},
-        {"tin", "interval [month, day, nanoseconds]"},
-        {"+l", "list"},
-        {"+L", "large list"},
-        {"+vl", "list-view"},
-        {"+vL", "large list-view"},
-        {"+s", "struct"},
-        {"+m", "map"},
-        {"+r", "run-end encoded"}};
-
-    auto it = _to_arrow_readable.find(arrow_dtype);
-    return it != _to_arrow_readable.end() ? it->second :
-                                            "unknown Arrow type [see "
-                                            "https://arrow.apache.org/docs/format/"
-                                            "CDataInterface.html#data-type-description-format-strings]";
 }
 
 managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
