@@ -263,7 +263,7 @@ def _append_if_supported(
 def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
     """Generate a list of candidate arrays for an obs axis delete."""
     arr: AnySOMAObject
-    candidates: list[_ArrayDelMd] = [_ArrayDelMd(obj=exp.obs, name="obs", join_on=(SOMA_JOINID,))]
+    candidates: list[_ArrayDelMd] = []
     if "obs_spatial_presence" in exp:
         candidates.append(
             _ArrayDelMd(obj=exp.obs_spatial_presence, name="obs_spatial_presence", join_on=(SOMA_JOINID,))
@@ -284,6 +284,7 @@ def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
                 for key2, arr in sc.obsl.items():
                     _append_if_supported(candidates, arr, f"spatial[{key}].obsl[{key2}]", ("soma_joinid",))
 
+    candidates.append(_ArrayDelMd(obj=exp.obs, name="obs", join_on=(SOMA_JOINID,)))
     return candidates
 
 
@@ -293,9 +294,7 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
     if ms_name not in exp.ms:
         raise ValueError(f"Measurement name {ms_name} does not exist in the experiment")
 
-    candidates: list[_ArrayDelMd] = [
-        _ArrayDelMd(obj=exp.ms[ms_name].var, name=f"ms[{ms_name}].var", join_on=(SOMA_JOINID,)),
-    ]
+    candidates: list[_ArrayDelMd] = []
     if "var_spatial_presence" in exp.ms[ms_name]:
         candidates.append(
             _ArrayDelMd(
@@ -319,6 +318,9 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
                 for key2, arr in sc.varl[ms_name].items():
                     _append_if_supported(candidates, arr, f"spatial[{key}].varl[{key2}]", ("soma_joinid",))
 
+    candidates.append(
+        _ArrayDelMd(obj=exp.ms[ms_name].var, name=f"ms[{ms_name}].var", join_on=(SOMA_JOINID,)),
+    )
     return candidates
 
 
