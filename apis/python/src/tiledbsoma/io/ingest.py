@@ -1449,7 +1449,7 @@ def update_var(
 ) -> None:
     """Replace the entire ``var`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
-    Analogous to `update_obs`, but replaces the ``var`` DataFrame within a specific :class:`Measurement`. See :func:`update_obs` for details.
+    Analogous to ``update_obs``, but replaces the ``var`` DataFrame within a specific :class:`Measurement`. See :func:`update_obs` for details.
 
     Args:
         exp: :class:`Experiment` opened for write.
