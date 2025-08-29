@@ -30,15 +30,6 @@ from .options import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBDeleteOptions
 
 
-@attrs.define(frozen=True)
-class _ArrayDelMd:
-    """Private helper class for axis deletes."""
-
-    obj: DataFrame | SparseNDArray | PointCloudDataFrame | GeometryDataFrame
-    name: str  # human-readable name
-    join_on: tuple[str, ...]
-
-
 class Experiment(
     CollectionBase[AnySOMAObject],
     experiment.Experiment[
@@ -236,6 +227,15 @@ class Experiment(
         _delete_cells(candidates, joinids, platform_config=platform_config)
 
 
+@attrs.define(frozen=True)
+class _ArrayDelMd:
+    """Private helper class for axis deletes."""
+
+    obj: DataFrame | SparseNDArray | PointCloudDataFrame | GeometryDataFrame
+    name: str  # human-readable name
+    join_on: tuple[str, ...]
+
+
 def _append_if_supported(
     candidates: list[_ArrayDelMd], obj: AnySOMAObject, name: str, join_on: tuple[str, ...]
 ) -> None:
@@ -260,6 +260,7 @@ def _append_if_supported(
 
 
 def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
+    """Generate a list of candidate arrays for an obs axis delete."""
     arr: AnySOMAObject
     candidates: list[_ArrayDelMd] = [_ArrayDelMd(obj=exp.obs, name="obs", join_on=(SOMA_JOINID,))]
     if "obs_spatial_presence" in exp:
@@ -286,6 +287,7 @@ def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
 
 
 def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDelMd]:
+    """Generate a list of candidate arrays for a var axis delete."""
     arr: AnySOMAObject
     if ms_name not in exp.ms:
         raise ValueError(f"Measurement name {ms_name} does not exist in the experiment")
