@@ -1425,6 +1425,9 @@ def update_obs(
         platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
         default_index_name: Name to assign the index column if unnamed (or named ``"index"``) in ``new_data``.
 
+    See Also:
+        - :func:`update_var` for updating a specific :class:`Measurement`'s ``var`` DataFrame.
+
     Lifecycle:
         Maturing.
     """
@@ -1458,6 +1461,9 @@ def update_var(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
         default_index_name: Name to assign the index column if unnamed (or named ``"index"``) in ``new_data``.
+
+    See Also:
+        - :func:`update_obs` for updating the ``Experiment.obs`` DataFrame.
 
     Lifecycle:
         Maturing.
