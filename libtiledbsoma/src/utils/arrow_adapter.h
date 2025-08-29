@@ -19,36 +19,11 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include "../tiledb_adapter/platform_config.h"
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
-
-// A general developer note: in several places we have
-//
-//     template <typename T>
-//     static sometype foo(T arg) {
-//         if (std::is_same_v<T, std::string>) {
-//             throw std::runtime_error(...);
-//         }
-//         }D...
-//     }
-//
-//     static sometype foo_string(std::string arg) { ... }
-//
-// -- with explicit `_string` suffix -- rather than
-//
-//     template <typename T>
-//     static sometype foo(T arg) ...
-//
-//     template <>
-//     static sometype foo(std::string arg) ...
-//
-// We're aware of the former but we've found it a bit fiddly across systems and
-// compiler versions -- namely, with the latter we find it tricky to always
-// avoid the <typename T> variant being templated with std::string. It's simple,
-// explicit, and robust to go the `_string` suffix route, and it's friendlier to
-// current and future maintainers of this code.
 
 #include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
@@ -93,241 +68,6 @@ managed_unique_ptr<T> make_managed_unique(Args&&... args) {
 
 using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
 
-struct PlatformConfig {
-   public:
-    /* Set the ZstdFilter's level for DataFrame dims */
-    int32_t dataframe_dim_zstd_level = 3;
-
-    /* Set the ZstdFilter's level for SparseNDArray dims */
-    int32_t sparse_nd_array_dim_zstd_level = 3;
-
-    /* Set the ZstdFilter's level for DenseNDArray dims */
-    int32_t dense_nd_array_dim_zstd_level = 3;
-
-    /* Set whether to write the X data chunked */
-    bool write_X_chunked = true;
-
-    /* Set the goal chunk nnz */
-    uint64_t goal_chunk_nnz = 100000000;
-
-    /* Server-side parameter to set the cap nbytes */
-    uint64_t remote_cap_nbytes = 2400000000;
-
-    /* Set the tile capcity for sparse arrays */
-    uint64_t capacity = 100000;
-
-    /**
-     * Available filters with associated options are
-     * [
-     *     {
-     *         "name": "GZIP", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "ZSTD", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "LZ4", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "BZIP2", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "RLE", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "DELTA",
-     *         "COMPRESSION_LEVEL": (int32_t),
-     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
-     *     },
-     *     {
-     *         "name": "DOUBLE_DELTA",
-     *         "COMPRESSION_LEVEL": (int32_t),
-     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
-     *     },
-     *     {
-     *         "name": "BIT_WIDTH_REDUCTION",
-     *         "BIT_WIDTH_MAX_WINDOW": (uint32_t)
-     *     },
-     *     {
-     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW":
-     * (uint32_t),
-     *     },
-     *     {
-     *         "name": "DICTIONARY_ENCODING", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "SCALE_FLOAT",
-     *         "SCALE_FLOAT_FACTOR": (double),
-     *         "SCALE_FLOAT_OFFSET": (double),
-     *         "SCALE_FLOAT_BYTEWIDTH": (uint64_t),
-     *     },
-     *     {
-     *         "name": "WEBP",
-     *         "WEBP_INPUT_FORMAT": (uint8_t),
-     *         "WEBP_QUALITY": (float),
-     *         "WEBP_LOSSLESS": (uint8_t),
-     *     },
-     *     "CHECKSUM_MD5",
-     *     "CHECKSUM_SHA256",
-     *     "XOR",
-     *     "BITSHUFFLE",
-     *     "BYTESHUFFLE",
-     *     "NOOP"
-     * ]
-     *
-     */
-    std::string offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
-
-    /* Set the validity filters. */
-    std::string validity_filters = "";
-
-    /* Set whether the TileDB Array allows duplicate values */
-    bool allows_duplicates = false;
-
-    /* Set the tile order as "row", "row-major", "col", or "col-major" */
-    std::optional<std::string> tile_order = std::nullopt;
-
-    /* Set the cell order as "hilbert", "row", "row-major", "col", or
-     * "col-major"
-     */
-    std::optional<std::string> cell_order = std::nullopt;
-
-    /* Set the filters for attributes.
-     *
-     * Example:
-     * {
-     *     "attr_name": {
-     *          "filters": ["XOR", {"name": "GZIP", "COMPRESSION_LEVEL": 3}]
-     *     }
-     * }
-     *
-     */
-    std::string attrs = "";
-
-    /* Set the filters and tiles for dimensions.
-     *
-     * Example:
-     * {
-     *     "dim_name": {"filters": ["NoOpFilter"], "tile": 8}
-     * }
-     *
-     */
-
-    std::string dims = "";
-
-    /* Set whether the array should be consolidated and vacuumed after writing
-     */
-    bool consolidate_and_vacuum = false;
-};
-
-/** TileDB specific configuration options that can be read back from a single
- * TileDB ArraySchema.
- */
-struct PlatformSchemaConfig {
-   public:
-    /* Set whether the TileDB Array allows duplicate values */
-    bool allows_duplicates = false;
-
-    /* Set the tile order as "row", "row-major", "col", or "col-major" */
-    std::optional<std::string> tile_order = std::nullopt;
-
-    /* Set the cell order as "hilbert", "row", "row-major", "col", or
-     * "col-major"
-     */
-    std::optional<std::string> cell_order = std::nullopt;
-
-    /* Set the tile capcity for sparse arrays */
-    uint64_t capacity = 100000;
-
-    /**
-     * Available filters with associated options are
-     * [
-     *     {
-     *         "name": "GZIP", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "ZSTD", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "LZ4", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "BZIP2", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "RLE", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "DELTA",
-     *         "COMPRESSION_LEVEL": (int32_t),
-     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
-     *     },
-     *     {
-     *         "name": "DOUBLE_DELTA",
-     *         "COMPRESSION_LEVEL": (int32_t),
-     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
-     *     },
-     *     {
-     *         "name": "BIT_WIDTH_REDUCTION",
-     *         "BIT_WIDTH_MAX_WINDOW": (uint32_t)
-     *     },
-     *     {
-     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW":
-     * (uint32_t),
-     *     },
-     *     {
-     *         "name": "DICTIONARY_ENCODING", "COMPRESSION_LEVEL": (int32_t)
-     *     },
-     *     {
-     *         "name": "SCALE_FLOAT",
-     *         "SCALE_FLOAT_FACTOR": (double),
-     *         "SCALE_FLOAT_OFFSET": (double),
-     *         "SCALE_FLOAT_BYTEWIDTH": (uint64_t),
-     *     },
-     *     {
-     *         "name": "WEBP",
-     *         "WEBP_INPUT_FORMAT": (uint8_t),
-     *         "WEBP_QUALITY": (float),
-     *         "WEBP_LOSSLESS": (uint8_t),
-     *     },
-     *     "CHECKSUM_MD5",
-     *     "CHECKSUM_SHA256",
-     *     "XOR",
-     *     "BITSHUFFLE",
-     *     "BYTESHUFFLE",
-     *     "NOOP"
-     * ]
-     *
-     */
-    std::string offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
-
-    /* Set the validity filters. */
-    std::string validity_filters = "";
-
-    /* Set the filters for attributes.
-     *
-     * Example:
-     * {
-     *     "attr_name": {
-     *          "filters": ["XOR", {"name": "GZIP", "COMPRESSION_LEVEL": 3}]
-     *     }
-     * }
-     *
-     */
-    std::string attrs = "";
-
-    /* Set the filters and tiles for dimensions.
-     *
-     * Example:
-     * {
-     *     "dim_name": {"filters": ["NoOpFilter"], "tile": 8}
-     * }
-     *
-     */
-
-    std::string dims = "";
-};
-
 /**
  * This is our application-specific wrapper around nanoarrow.
  *
@@ -359,14 +99,6 @@ class ArrowAdapter {
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
         std::shared_ptr<ColumnBuffer> column);
 
-    /**
-     * @brief Create a an ArrowSchema from TileDB Schema
-     *
-     * @return ArrowSchema
-     */
-    static managed_unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
-        std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
-
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
      * @return ArrowSchema
@@ -380,21 +112,6 @@ class ArrowAdapter {
      */
     static ArrowSchema* arrow_schema_from_tiledb_attribute(
         const Attribute& attribute, const Context& ctx, const Array& tiledb_array);
-
-    /**
-     * @brief Get members of the TileDB Schema in the form of a
-     * PlatformSchemaConfig
-     *
-     * @return PlatformSchemaConfig
-     */
-    static PlatformSchemaConfig platform_schema_config_from_tiledb(ArraySchema tiledb_schema);
-
-    /**
-     * @brief Get members of the TileDB Schema in the form of a PlatformConfig
-     *
-     * @return PlatformConfig
-     */
-    static PlatformConfig platform_config_from_tiledb_schema(ArraySchema tiledb_schema);
 
     /**
      * @brief Create a TileDB ArraySchema from ArrowSchema and additional JSON
@@ -428,26 +145,6 @@ class ArrowAdapter {
      * @return std::pair<Dimension, bool> The TileDB dimension.
      */
     static Dimension tiledb_dimension_from_arrow_schema(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* schema,
-        ArrowArray* array,
-        std::string soma_type,
-        std::string_view type_metadata,
-        std::string prefix = std::string(),
-        std::string suffix = std::string(),
-        PlatformConfig platform_config = PlatformConfig());
-
-    /**
-     * @brief Get a TileDB dimension from an Arrow schema.
-     *
-     * @remarks This is a list variation which expects a schemaand a data array
-     * to describe a list instead of a simple columns. Used especialy with
-     * nested domains where it is described by a struct and each nested
-     * dimension is described by a list.
-     *
-     * @return std::pair<Dimension, bool> The TileDB dimension.
-     */
-    static Dimension tiledb_dimension_from_arrow_schema_ext(
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
         ArrowArray* array,
@@ -494,10 +191,6 @@ class ArrowAdapter {
      * @return std::string_view Arrow format string.
      */
     static tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype, std::string_view arrow_dtype_metadata = {});
-
-    static enum ArrowType to_nanoarrow_type(std::string_view arrow_dtype);
-    static std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view arrow_dtype);
-    static std::string_view to_arrow_readable(std::string_view arrow_dtype);
 
     /**
      * @brief This is a keystroke-saver.
@@ -1251,11 +944,6 @@ class ArrowAdapter {
     static Dimension _create_dim(
         tiledb_datatype_t type, std::string name, const void* buff, std::shared_ptr<Context> ctx);
 
-    template <typename T>
-    static Dimension _create_dim_aux(std::shared_ptr<Context> ctx, std::string name, T* b) {
-        return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
-    }
-
     static FilterList _create_filter_list(std::string filters, std::shared_ptr<Context> ctx);
 
     static FilterList _create_filter_list(json filters, std::shared_ptr<Context> ctx);
@@ -1274,12 +962,6 @@ class ArrowAdapter {
     static void _set_filter_option(Filter filter, std::string option_name, json value);
 
     static tiledb_layout_t _get_order(std::string order);
-
-    static json _get_attrs_filter_list_json(const ArraySchema& tiledb_schema);
-
-    static json _get_dims_list_json(const ArraySchema& tiledb_schema);
-
-    static json _get_filter_list_json(FilterList filter_list);
 
     // Throws if the array and the schema don't have the same
     // recursive child-counts.
