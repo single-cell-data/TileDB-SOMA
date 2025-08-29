@@ -268,7 +268,7 @@ def register_anndatas(
     context: SOMATileDBContext | None = None,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
-    """Register AnnData objects to extend an existing SOMA Experiment.
+    """Register ``AnnData`` objects to extend an existing SOMA ``Experiment``.
 
     See :func:`register_h5ads()` for details.
     """
