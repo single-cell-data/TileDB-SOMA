@@ -167,7 +167,7 @@ def test_experiment_var_axis_delete_from_pbmc3k(
                 assert exp.ms[ms_name].X[arr_name].nnz == orig_exp.ms[ms_name].X[arr_name].nnz
 
 
-@pytest.mark.spatial
+@pytest.mark.spatialdata
 def test_experiment_obs_axis_delete_spatial(soma_spatial_experiment, soma_tiledb_context) -> None:  # noqa: F811
     with soma.open(soma_spatial_experiment.uri, mode="d", context=soma_tiledb_context) as exp:
         exp.obs_axis_delete(value_filter="soma_joinid >= 33")
