@@ -1,6 +1,7 @@
 import pathlib
 import shutil
 
+import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
@@ -182,8 +183,61 @@ def test_experiment_obs_axis_delete_spatial(soma_spatial_experiment, soma_tiledb
             assert (arr.read().concat().to_pandas()["soma_joinid"] < 33).all()
 
 
-"""Other test TODO:
-1. make an experiment with all slots, and make sure we delete from them (mock delete_cells)
-2. check that we catch dense arrays and error out
-3. check that we ignore weird stuff
-"""
+@pytest.mark.parametrize(
+    "slot,make_shape",
+    [
+        ("obsm", lambda exp_shape: (exp_shape[0], 10, 2)),
+        ("obsp", lambda exp_shape: (exp_shape[0], exp_shape[0])),
+        ("X", lambda exp_shape: exp_shape),
+    ],
+)
+def test_obs_axis_delete_catches_dense_arrays(tmp_path, soma_tiledb_context, slot, make_shape) -> None:
+    # start with a test dataset, modify and confirm expected error occurs
+
+    # Make a copy of the Experiment as to not write over the original
+    exp_path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.15.7" / "pbmc3k_processed"
+    uri = (tmp_path / exp_path.name).as_posix()
+    shutil.copytree(exp_path, uri)
+
+    ms_name = "RNA"
+    with soma.open(uri, context=soma_tiledb_context, mode="r") as exp:
+        n_obs, n_vars = exp.obs.count, exp.ms[ms_name].var.count
+
+    with soma.open(uri, context=soma_tiledb_context, mode="w") as exp:
+        slot_collection = (
+            exp.ms[ms_name].add_new_collection(slot) if slot not in exp.ms[ms_name] else exp.ms[ms_name][slot]
+        )
+        slot_collection.add_new_dense_ndarray("test", type=pa.float32(), shape=make_shape((n_obs, n_vars)))
+
+    with soma.open(uri, context=soma_tiledb_context, mode="d") as exp, pytest.raises(soma.SOMAError):
+        exp.obs_axis_delete(coords=(slice(0, 10),))
+
+
+@pytest.mark.parametrize(
+    "slot,make_shape",
+    [
+        ("varm", lambda exp_shape: (exp_shape[0], 10, 2)),
+        ("varp", lambda exp_shape: (exp_shape[0], exp_shape[0])),
+        ("X", lambda exp_shape: exp_shape),
+    ],
+)
+def test_var_axis_delete_catches_dense_arrays(tmp_path, soma_tiledb_context, slot, make_shape) -> None:
+    # start with a test dataset, modify and confirm expected error occurs
+
+    # Make a copy of the Experiment as to not write over the original
+    exp_path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / "1.15.7" / "pbmc3k_processed"
+    uri = (tmp_path / exp_path.name).as_posix()
+    shutil.copytree(exp_path, uri)
+
+    ms_name = "RNA"
+    with soma.open(uri, context=soma_tiledb_context, mode="r") as exp:
+        n_obs, n_vars = exp.obs.count, exp.ms[ms_name].var.count
+
+    with soma.open(uri, context=soma_tiledb_context, mode="w") as exp:
+        slot_collection = (
+            exp.ms[ms_name].add_new_collection(slot) if slot not in exp.ms[ms_name] else exp.ms[ms_name][slot]
+        )
+        slot_collection.add_new_dense_ndarray("test", type=pa.float32(), shape=make_shape((n_obs, n_vars)))
+
+    with soma.open(uri, context=soma_tiledb_context, mode="d") as exp, pytest.raises(soma.SOMAError, match=slot):
+        exp.var_axis_delete(ms_name, coords=(slice(0, 10),))

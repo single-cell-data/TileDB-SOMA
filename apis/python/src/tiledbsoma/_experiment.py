@@ -18,6 +18,7 @@ from ._collection import Collection, CollectionBase
 from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
+from ._exception import SOMAError
 from ._geometry_dataframe import GeometryDataFrame
 from ._indexer import IntIndexer
 from ._measurement import Measurement
@@ -252,7 +253,7 @@ def _append_if_supported(
     in question to be ignored silently.
     """
     if isinstance(obj, DenseNDArray):
-        raise ValueError(f"Delete operation not permitted on dense array: {name}")
+        raise SOMAError(f"Delete operation not permitted on dense array: {name}")
     if isinstance(obj, (DataFrame, SparseNDArray, GeometryDataFrame, PointCloudDataFrame)) and all(
         obj.schema.get_field_index(col) >= 0 for col in join_on
     ):
