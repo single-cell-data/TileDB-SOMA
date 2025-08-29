@@ -26,6 +26,7 @@ from ._query import ExperimentAxisQuery
 from ._scene import Scene
 from ._soma_object import AnySOMAObject
 from ._sparse_nd_array import SparseNDArray
+from .options import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBDeleteOptions
 
 
@@ -170,16 +171,10 @@ class Experiment(
             )
 
         # query
-        with DataFrame.open(self.obs.uri, context=self.context) as obs:
-            obs_joinids = (
-                obs.read(coords, value_filter=value_filter, column_names=["soma_joinid"])
-                .concat()
-                .column("soma_joinid")
-                .combine_chunks()
-            )
+        joinids = _query_joinids(self.obs.uri, coords, value_filter, self.context)
 
         # delete
-        _delete_cells(candidates, obs_joinids, platform_config=platform_config)
+        _delete_cells(candidates, joinids, platform_config=platform_config)
 
     def var_axis_delete(
         self,
@@ -235,16 +230,10 @@ class Experiment(
             )
 
         # query
-        with DataFrame.open(self.ms[measurement_name].var.uri, context=self.context) as obs:
-            obs_joinids = (
-                obs.read(coords, value_filter=value_filter, column_names=["soma_joinid"])
-                .concat()
-                .column("soma_joinid")
-                .combine_chunks()
-            )
+        joinids = _query_joinids(self.ms[measurement_name].var.uri, coords, value_filter, self.context)
 
         # delete
-        _delete_cells(candidates, obs_joinids, platform_config=platform_config)
+        _delete_cells(candidates, joinids, platform_config=platform_config)
 
 
 def _append_if_supported(
@@ -330,12 +319,27 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
     return candidates
 
 
+def _query_joinids(
+    uri: str, coords: options.SparseDFCoords, value_filter: str | None, context: SOMATileDBContext
+) -> pa.Int64Array:
+    with DataFrame.open(uri, context=context) as df:
+        return (
+            df.read(coords, value_filter=value_filter, column_names=["soma_joinid"])
+            .concat()
+            .column("soma_joinid")
+            .combine_chunks()
+        )
+
+
 def _delete_cells(
-    candidates: list[_ArrayDelMd], obs_joinids: pa.Int64Array, platform_config: TileDBDeleteOptions | None = None
+    candidates: list[_ArrayDelMd], joinids: pa.Int64Array, platform_config: TileDBDeleteOptions | None = None
 ) -> None:
+    if not len(joinids):
+        return
+
     for arr_md in candidates:
         for join_on in arr_md.join_on:
             dim_idx = arr_md.obj.schema.get_field_index(join_on)
             coords = [slice(None)] * (dim_idx + 1)
-            coords[dim_idx] = obs_joinids
+            coords[dim_idx] = joinids
             arr_md.obj.delete_cells(tuple(coords), platform_config=platform_config)
