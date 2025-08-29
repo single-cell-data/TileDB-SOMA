@@ -1408,24 +1408,21 @@ def update_obs(
     DataFrame represents the desired final state for the ``obs`` SOMA DataFrame. The operation implicitly relies on row
     order for alignment.
 
-    **Details:**
-    * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``obs`` will be added. Columns present
-        in the existing ``obs`` but absent from ``new_data`` will be dropped.
-    * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows
-        and order as the existing ``obs`` DataFrame. It does *not* perform a join based on user-defined cell IDs or
-        other index columns.
+    Details:
+        * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``obs`` will be added. Columns present in the existing ``obs`` but absent from ``new_data`` will be dropped.
+        * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows and order as the existing ``obs`` DataFrame. It does *not* perform a join based on user-defined cell IDs or other index columns.
 
-    To avoid data misalignment, the following workflow is recommended:
+    Supported Workflows:
+        To avoid data misalignment, the following workflow is recommended:
 
-    1. Read the *entire* existing  ``obs`` DataFrame into memory.
-    2. Perform all desired modifications (updating values, adding/dropping columns)
-       on this DataFrame, preserving the original row order.
-    3. Pass the fully modified DataFrame to ``update_obs``'s ``new_data`` argument.
+        1. Read the *entire* existing  ``obs`` DataFrame into memory.
+        2. Perform all desired modifications (updating values, adding/dropping columns) on this DataFrame, preserving the original row order.
+        3. Pass the fully modified DataFrame to ``update_obs``'s ``new_data`` argument.
 
-    Args:
-        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must be opened for write.
-        new_data: A pandas DataFrame containing the final desired data for the `obs` SOMA DataFrame.
-        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+    Parameters:
+        exp: The :class:`Experiment` whose ``obs`` is to be updated. Must be opened for write.
+        new_data: A :class:`pandas.DataFrame` containing the final desired data for the ``obs`` SOMA DataFrame.
+        context (SOMATileDBContext | None): Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to update this array, provided in the form
             ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
