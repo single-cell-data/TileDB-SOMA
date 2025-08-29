@@ -1447,25 +1447,9 @@ def update_var(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
-    """Replaces the entire ``var`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
+    """Replace the entire ``var`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
-    This function is designed to perform a full replacement of the ``var`` DataFrame. It assumes the input ``new_data``
-    DataFrame represents the desired final state for the ``var`` SOMA DataFrame. The operation implicitly relies on row
-    order for alignment.
-
-    **Details:**
-    * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``var`` will be added. Columns present
-        in the existing ``var`` but absent from ``new_data`` will be dropped.
-    * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows
-        and order as the existing ``var`` DataFrame. It does *not* perform a join based on user-defined cell IDs or
-        other index columns.
-
-    To avoid data misalignment, the following workflow is recommended:
-
-    1. Read the *entire* existing  ``var`` DataFrame into memory.
-    2. Perform all desired modifications (updating values, adding/dropping columns)
-       on this DataFrame, preserving the original row order.
-    3. Pass the fully modified DataFrame to ``update_var``'s ``new_data`` argument.
+    Analogous to `update_obs`, but replaces the ``var`` DataFrame within a specific :class:`Measurement`. See :func:`update_obs` for details.
 
     Args:
         exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must be opened for write.
