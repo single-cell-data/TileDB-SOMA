@@ -1402,7 +1402,7 @@ def update_obs(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "obs_id",
 ) -> None:
-    """Replaces the entire ``obs`` DataFrame with the contents of a new pandas DataFrame.
+    """Replaces the entire ``obs`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
     This function is designed to perform a full replacement of the ``obs`` DataFrame. It assumes the input ``new_data``
     DataFrame represents the desired final state for the ``obs`` SOMA DataFrame. The operation implicitly relies on row
@@ -1455,7 +1455,7 @@ def update_var(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
-    """Replaces the entire ``var`` DataFrame with the contents of a new pandas DataFrame.
+    """Replaces the entire ``var`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
     This function is designed to perform a full replacement of the ``var`` DataFrame. It assumes the input ``new_data``
     DataFrame represents the desired final state for the ``var`` SOMA DataFrame. The operation implicitly relies on row
