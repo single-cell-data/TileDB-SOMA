@@ -1419,8 +1419,8 @@ def update_obs(
         3. Pass the modified DataFrame as ``new_data``.
 
     Args:
-        exp: `Experiment` opened for write.
-        new_data: A `pandas.DataFrame` containing the final desired data for the existing ``obs`` DataFrame (row order must match current data).
+        exp: :class:`Experiment` opened for write.
+        new_data: A :class:`pandas.DataFrame` containing the final desired data for the existing ``obs`` DataFrame.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
         default_index_name: Name to assign the index column if unnamed (or named ``"index"``) in ``new_data``.
@@ -1452,18 +1452,12 @@ def update_var(
     Analogous to `update_obs`, but replaces the ``var`` DataFrame within a specific :class:`Measurement`. See :func:`update_obs` for details.
 
     Args:
-        exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must be opened for write.
-        new_data: A pandas DataFrame containing the final desired data for the `var` SOMA DataFrame.
+        exp: :class:`Experiment` opened for write.
+        new_data: A ``pandas.DataFrame`` containing the final desired data for the ``Measurement``'s ``var``.
+        measurement_name: Key in ``exp.ms`` identifying the ``Measurement`` whose ``var`` will be replaced.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
-
-        platform_config: Platform-specific options used to update this array, provided in the form
-            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
-
-        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
-            or has name ``"index"``.
-
-    Returns:
-        None
+        platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
+        default_index_name: Name to assign the index column if unnamed (or named ``"index"``) in ``new_data``.
 
     Lifecycle:
         Maturing.
