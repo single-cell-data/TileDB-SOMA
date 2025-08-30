@@ -259,6 +259,60 @@ struct PlatformSchemaConfig {
     std::string dims = "";
 };
 
+template <typename T>
+class DimensionConfigAdapter {
+   public:
+    /**
+    * Constructor using Arrow buffer from API.
+    *
+    * Buffer store the following values.
+    * 0: max domain lower bound
+    * 1: max domain upper bound
+    * 2: tile extent
+    * 3: current domain lower bound
+    * 4: current domain upper bound
+    *
+    * @parm buffer Buffer storing configuration paramters.
+    *
+    */
+    DimensionConfigAdapter(const T* buffer)
+        : current_domain_{buffer[3], buffer[4]}
+        , max_domain_{buffer[0], buffer[1]}
+        , tile_extent_{buffer[2]} {
+    }
+
+    DimensionConfigAdapter(std::array<T, 2> current_domain, std::array<T, 2> max_domain, T tile_extent)
+        : current_domain_{current_domain}
+        , max_domain_{max_domain}
+        , tile_extent_{tile_extent} {
+    }
+
+    std::array<T, 2> max_domain() const {
+        return max_domain_;
+    }
+
+    std::array<T, 2> current_domain() const {
+    }
+
+    Dimension create_dimension(const Context& ctx, std::string name, const FilterList& filter_list) const {
+        auto dim = Dimension::create(ctx, name, max_domain_, tile_extent_);
+        dim.set_filter_list(filter_list);
+        return dim;
+    }
+
+    Dimension create_dimension(
+        const Context& ctx, std::string name, tiledb_datatype_t datatype, const FilterList& filter_list) const {
+        auto dim = Dimension::create(ctx, name, datatype, max_domain_.data(), &tile_extent_);
+        dim.set_filter_list(filter_list);
+        return dim;
+    }
+
+   private:
+    std::array<T, 2> current_domain_;
+    std::array<T, 2> max_domain_;
+    T tile_extent_;
+};
+
 namespace utils {
 
 ArraySchema create_base_tiledb_schema(
