@@ -51,16 +51,32 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
     auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx);
-    REQUIRE(snda->uri() == uri);
-    REQUIRE(snda->ctx() == ctx);
-    REQUIRE(snda->type() == "SOMASparseNDArray");
-    REQUIRE(snda->is_sparse() == true);
-    REQUIRE(snda->soma_data_type() == attr_arrow_format);
+    CHECK(snda->uri() == uri);
+    CHECK(snda->ctx() == ctx);
+    CHECK(snda->ndim() == 1);
+    CHECK(snda->type() == "SOMASparseNDArray");
+    CHECK(snda->is_sparse() == true);
+    CHECK(snda->soma_data_type() == attr_arrow_format);
+
     auto schema = snda->tiledb_schema();
+    CHECK(schema->array_type() == TILEDB_SPARSE);
+    // TODO: Check capacity, tile/cell order, etc.
+
+    CHECK(schema->attribute_num() == 1);
     REQUIRE(schema->has_attribute(attr_name));
-    REQUIRE(schema->array_type() == TILEDB_SPARSE);
-    REQUIRE(schema->domain().has_dimension(dim_name));
-    REQUIRE(snda->ndim() == 1);
+    auto attr = schema->attribute(attr_name);
+    CHECK(attr.type() == TILEDB_INT32);
+
+    auto domain = schema->domain();
+    CHECK(domain.ndim() == 1);
+    REQUIRE(domain.has_dimension(dim_name));
+    auto dim = domain.dimension(dim_name);
+    REQUIRE(dim.type() == TILEDB_INT64);
+    auto dim_domain = dim.domain<int64_t>();
+    CHECK(dim_domain.first == 0);
+    CHECK(dim_domain.second == 2147483646);
+    CHECK(dim.tile_extent<int64_t>() == 1);
+
     REQUIRE(snda->nnz() == 0);
 
     auto expect = std::vector<int64_t>({shape});
