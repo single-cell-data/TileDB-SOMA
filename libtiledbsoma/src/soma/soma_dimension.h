@@ -46,7 +46,28 @@ class SOMADimension : public SOMAColumn {
         ArrowArray* array,
         const std::string& soma_type,
         std::string_view type_metadata,
-        PlatformConfig platform_config);
+        const PlatformConfig& platform_config);
+
+    template <typename T>
+    static std::shared_ptr<SOMADimension> create(
+        std::shared_ptr<Context> ctx,
+        const std::string& name,
+        const std::string& soma_type,
+        const DimensionConfigAdapter<T>& dim_config,
+        const PlatformConfig& platform_config,
+        std::optional<tiledb_datatype_t> datatype = std::nullopt) {
+        FilterList filter_list = utils::create_dim_filter_list(name, platform_config, soma_type, ctx);
+        auto dim = datatype.has_value() ? dim_config.create_dimension(*ctx, name, datatype.value(), filter_list) :
+                                          dim_config.create_dimension(*ctx, name, filter_list);
+        return std::make_shared<SOMADimension>(SOMADimension(dim));
+    }
+
+    static std::shared_ptr<SOMADimension> create(
+        std::shared_ptr<Context> ctx,
+        const std::string& name,
+        const std::string& soma_type,
+        tiledb_datatype_t tiledb_type,
+        const PlatformConfig& platform_config);
 
     SOMADimension(Dimension dimension)
         : dimension(dimension) {
