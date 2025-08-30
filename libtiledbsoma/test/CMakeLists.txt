@@ -37,6 +37,7 @@ add_executable(unit_soma
     unit_soma_coordinates.cc
     test_indexer.cc
     test_coordinate_value_filter.cc
+    test_platform_config.cc
     test_soma_object_basics.cc
     test_soma_column_selection.cc
 # TODO: uncomment when thread_pool is enabled
