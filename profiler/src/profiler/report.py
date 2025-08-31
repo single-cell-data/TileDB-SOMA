@@ -4,7 +4,6 @@ import argparse
 import re
 from collections import OrderedDict
 from sys import stderr
-from typing import Union
 
 import attr
 import matplotlib.pyplot as plt
@@ -13,7 +12,7 @@ import pandas as pd
 from .data import FileBasedProfileDB, ProfileData
 
 
-def collect_tiledb_stats(data: ProfileData) -> dict[str, Union[int, float]]:
+def collect_tiledb_stats(data: ProfileData) -> dict[str, int | float]:
     """Extract all TileDB stats as dictionary"""
     result = {}
     tiledb_stats = data.tiledb_stats
@@ -37,11 +36,11 @@ def collect_tiledb_stats(data: ProfileData) -> dict[str, Union[int, float]]:
     return result
 
 
-def extract_tiledb_data(data: ProfileData, metric: str) -> Union[int, float, None]:
+def extract_tiledb_data(data: ProfileData, metric: str) -> int | float | None:
     """Read the tile DB stats from a profile stored data
     Parse it and extract the expected metric
     """
-    tiledb_stats = getattr(data, str("tiledb_stats"))
+    tiledb_stats = getattr(data, "tiledb_stats")
     lines = tiledb_stats.split("\n")
     for _idx, line in enumerate(lines):
         perf_match = re.match(rf"\s+\"{metric}\": (\d+\.\d+)\s*,", line)
@@ -55,7 +54,7 @@ def extract_tiledb_data(data: ProfileData, metric: str) -> Union[int, float, Non
     return None
 
 
-def extract_context_data(data: ProfileData, metric: str) -> Union[int, float, None]:
+def extract_context_data(data: ProfileData, metric: str) -> int | float | None:
     """Read the context data from a profile stored data and return the expected metric"""
     context = data.context
     if metric in context:

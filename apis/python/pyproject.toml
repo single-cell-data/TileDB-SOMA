@@ -26,6 +26,17 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [  # see https://docs.astral.sh/ruff/rules/
+
+    # consider
+    # A
+    # TC
+    # PTH
+    # FLY
+    # NPY
+    # PD
+    # PERF
+    # UP
+
     "ANN",  # flake8-annotations
     "ARG",  # flake8-unused-arguments
     "B",    # flake8-bugbear
@@ -59,6 +70,7 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "TID",  # flake8-tidy-imports
     "W",    # pycodestyle warnings
     "YTT",  # flake8-2020
+    "UP",   # pyupgrade
 ]
 ignore = [
     "E501",     # line too long

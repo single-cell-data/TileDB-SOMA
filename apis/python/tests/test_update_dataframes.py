@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Generator
 
 import numpy as np
 import pandas as pd

@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any, Final
 
 import attrs
 import pyarrow as pa
@@ -19,7 +20,7 @@ from somacore import (
     ScaleTransform,
     options,
 )
-from typing_extensions import Final, Self
+from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib

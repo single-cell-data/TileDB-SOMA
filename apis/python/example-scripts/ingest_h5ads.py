@@ -61,9 +61,10 @@ import logging.config
 import multiprocessing
 import os
 import sys
+from collections.abc import Iterable, Iterator
 from concurrent.futures import Executor, Future, ProcessPoolExecutor
 from itertools import repeat
-from typing import Any, Callable, Iterable, Iterator, TypeVar
+from typing import Any, Callable, TypeVar
 
 import anndata as ad
 

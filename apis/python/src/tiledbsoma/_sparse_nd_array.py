@@ -6,7 +6,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, cast
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pyarrow as pa
@@ -238,7 +239,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: options.ReadPartitions | None = None,
         platform_config: PlatformConfig | None = None,
-    ) -> "SparseNDArrayRead":
+    ) -> SparseNDArrayRead:
         """Reads a user-defined slice of the :class:`SparseNDArray`.
 
         Args:
@@ -469,7 +470,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
     def dask_array(
         self,
         **config: Unpack[SOMADaskConfig],
-    ) -> "da.Array":
+    ) -> da.Array:
         """Load a TileDB-SOMA X layer as a Dask array.
 
         The returned Array is effectively read-only; writes to it will not be persisted back to the

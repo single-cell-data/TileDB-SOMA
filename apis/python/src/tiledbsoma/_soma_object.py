@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import datetime
+from collections.abc import MutableMapping
 from contextlib import ExitStack
-from typing import Any, Generic, MutableMapping, TypeVar
+from typing import Any, Generic, TypeVar
 
 import somacore
 from somacore import options

@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import pathlib
 import sys
-from contextlib import contextmanager
-from typing import ContextManager, Iterator
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, contextmanager
 from unittest import mock
 
 import anndata as ad
@@ -84,7 +84,7 @@ class _FSPathWrapper(pathlib.Path):
 
     else:
 
-        def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
+        def __new__(cls, _obj: object, path: Path) -> _FSPathWrapper:
             return super().__new__(cls, path)
 
         # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
@@ -103,7 +103,7 @@ class _FSPathWrapper(pathlib.Path):
 
 
 # @typeguard_ignore
-def _hack_patch_anndata() -> ContextManager[object]:
+def _hack_patch_anndata() -> AbstractContextManager[object]:
     """Part Two of the ``_FSPathWrapper`` trick."""
 
     @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]

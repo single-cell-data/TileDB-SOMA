@@ -8,7 +8,7 @@ import struct
 import time
 import warnings
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -1946,7 +1946,7 @@ def test_index_types(tmp_path, make_dataframe):
     sdf.write(make_dataframe[0])
 
 
-def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], domain: List[Any]):
+def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], domain: list[Any]):
     """
     Creates a variably-indexed DataFrame for use in tests below.
     """

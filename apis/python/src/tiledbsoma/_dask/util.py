@@ -6,10 +6,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from functools import cache
 from typing import (
     Any,
-    Sequence,
     TypedDict,
     Union,
 )

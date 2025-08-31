@@ -99,7 +99,7 @@ class FileBasedProfileDB(ProfileDB):
         result = ""
         if os.path.exists(self.path):
             for command_hash in glob.glob(self.path + "/*"):
-                with open(os.path.join(command_hash, "command.txt"), "r") as f:
+                with open(os.path.join(command_hash, "command.txt")) as f:
                     command = f.read()
                 n_runs = len(glob.glob(os.path.join(command_hash, "*.json")))
                 result += f'[{command_hash.split("/")[-1]}] "{command}": {n_runs} runs\n'
@@ -112,7 +112,7 @@ class FileBasedProfileDB(ProfileDB):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), key)
         result = []
         for filename in glob.glob(f"{self.path}/{key}/*.json"):
-            with open(filename, "r") as file:
+            with open(filename) as file:
                 result.append(ProfileData(**json.load(file)))
         return result
 

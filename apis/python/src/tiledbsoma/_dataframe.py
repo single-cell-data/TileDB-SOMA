@@ -7,10 +7,10 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Sequence
 from typing import (
     Any,
     Literal,
-    Sequence,
     Union,
     cast,
 )
@@ -151,7 +151,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
-    ) -> "DataFrame":
+    ) -> DataFrame:
         """Creates the data structure on disk/S3/cloud.
 
         Args:
@@ -914,7 +914,7 @@ def _canonicalize_schema(
                 f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"',
             )
         if index_column_name not in schema_names_set:
-            schema_names_string = "{}".format(list(schema_names_set))
+            schema_names_string = f"{list(schema_names_set)}"
             raise ValueError(
                 f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}",
             )

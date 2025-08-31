@@ -11,12 +11,11 @@ Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is suppo
 from __future__ import annotations
 
 import json
+from collections.abc import KeysView, Sequence
 from concurrent.futures import Future
 from typing import (
     TYPE_CHECKING,
     Any,
-    KeysView,
-    Sequence,
     Union,
     cast,
 )
@@ -132,7 +131,7 @@ def _extract_X_key(
     nobs: int,
     nvar: int,
     dask: SOMADaskConfig | None = None,
-) -> Union[Future[Matrix], "da.Array"]:
+) -> Future[Matrix] | da.Array:
     """Helper function for to_anndata."""
     if X_layer_name not in measurement.X:
         raise ValueError(f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}")
@@ -318,7 +317,7 @@ def to_anndata(
     # * We could use **kwargs -- but that would bork the online help docs.
     # * Our consolation: check if the layer name is the _default_,
     #   and the experiment doesn't have it.
-    anndata_X_future: Future[Matrix] | "da.Array" | None = None
+    anndata_X_future: Future[Matrix] | da.Array | None = None
 
     if X_layer_name == MISSING:
         if "data" in measurement.X:

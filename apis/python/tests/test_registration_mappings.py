@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import gc
 import math
+from collections.abc import Sequence
 from contextlib import nullcontext
-from typing import Sequence
 
 import anndata as ad
 import numpy as np
@@ -190,7 +190,7 @@ def create_soma_canned(which: int, obs_field_name, var_field_name, tmp_path):
 @pytest.fixture
 def anndata_larger():
     return _create_anndata(
-        obs_ids=["id_%08d" % e for e in range(1000)],
+        obs_ids=["id_%08d" % e for e in range(1000)],  # noqa: UP031
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
         X_value_base=0,
         obs_field_name="cell_id",
@@ -1254,8 +1254,8 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
     by tiledbsoma.io, and another which could be inferred to int16.  Then
     ensures the dataframes are appendable regardless of which one was written
     first."""
-    obs_ids_a = [("a_%08d" % e) for e in range(nobs_a)]
-    obs_ids_b = [("b_%08d" % e) for e in range(nobs_b)]
+    obs_ids_a = [("a_%08d" % e) for e in range(nobs_a)]  # noqa: UP031
+    obs_ids_b = [("b_%08d" % e) for e in range(nobs_b)]  # noqa: UP031
     var_ids = ["W", "X", "Y", "Z"]
     obs_field_name = "cell_id"
     var_field_name = "gene_id"

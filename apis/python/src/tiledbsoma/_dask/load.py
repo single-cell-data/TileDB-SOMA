@@ -112,7 +112,7 @@ def load_daskarray(
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
     platform_config: PlatformConfig | None = None,
-) -> "da.Array":
+) -> da.Array:
     """Load a TileDB-SOMA X layer as a Dask array."""
     import dask.array as da
 

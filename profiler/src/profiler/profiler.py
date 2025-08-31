@@ -103,7 +103,7 @@ def read_tiledb_stats_output() -> dict[str, Any]:
     if not os.path.isfile(TILEDB_STATS_FILE_PATH):
         return {}
 
-    with open(TILEDB_STATS_FILE_PATH, "r") as f:
+    with open(TILEDB_STATS_FILE_PATH) as f:
         print("TileDB stats found", file=stderr)
         return json.load(f)
 

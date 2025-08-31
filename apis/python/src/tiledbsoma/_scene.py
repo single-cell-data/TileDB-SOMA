@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, ClassVar, Sequence, TypeVar, Union
+from collections.abc import Sequence
+from typing import Any, ClassVar, TypeVar, Union
 
 import somacore
 from somacore import (

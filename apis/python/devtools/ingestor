@@ -16,7 +16,6 @@ import argparse
 import json
 import os
 import sys
-from typing import Optional
 
 from somacore import options
 
@@ -245,8 +244,8 @@ def ingest_one(
     output_path: str,
     ingest_mode: str,
     context: SOMATileDBContext,
-    platform_config: Optional[options.PlatformConfig],
-    use_relative_uri: Optional[bool],
+    platform_config: options.PlatformConfig | None,
+    use_relative_uri: bool | None,
     write_soco: bool,
     soco_dir: str,
     measurement_name: str,

@@ -6,7 +6,8 @@
 
 from __future__ import annotations
 
-from typing import Mapping, Union
+from collections.abc import Mapping
+from typing import Union
 
 import h5py
 import numpy as np
