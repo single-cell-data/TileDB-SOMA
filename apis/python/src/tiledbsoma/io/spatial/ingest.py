@@ -827,7 +827,7 @@ def _write_visium_spots(
         .assign(spot_diameter_fullres=np.double(spot_diameter))
     )
     obs_df = obs_data.to_pandas()
-    df = pd.merge(obs_df, df, how="inner", on=id_column_name)
+    df = obs_df.merge(df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
     domain = (

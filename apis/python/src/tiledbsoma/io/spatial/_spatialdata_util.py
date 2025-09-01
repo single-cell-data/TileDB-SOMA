@@ -534,8 +534,7 @@ def _spatial_to_spatialdata(
             )
             if not region_df.empty:
                 try:
-                    adata.obs = pd.merge(
-                        adata.obs,
+                    adata.obs = adata.obs.merge(
                         region_df,
                         how="left",
                         on=obs_id_name,
