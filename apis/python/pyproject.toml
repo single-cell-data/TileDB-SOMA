@@ -32,7 +32,6 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     # TC
     # PTH
     # FLY
-    # PERF
 
     "ANN",  # flake8-annotations
     "ARG",  # flake8-unused-arguments
@@ -53,6 +52,7 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "LOG",  # flake8-logging
     "NPY",  # numpy-specific rules
     "PD",   # pandas-vet
+    "PERF", # perflint
     "PIE",  # flake8-pie
     "PLC",  # pylint-convention
     "PLE",  # pylint-error

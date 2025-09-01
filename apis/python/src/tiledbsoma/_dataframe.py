@@ -566,9 +566,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
         full_schema = self.schema
-        dim_schema_list = []
-        for dim_name in dim_names:
-            dim_schema_list.append(full_schema.field(dim_name))
+        dim_schema_list = [full_schema.field(dim_name) for dim_name in dim_names]
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.

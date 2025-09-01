@@ -806,7 +806,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
                         set_metadata(key, np.array([val]))
                 if mod is _DictMod.DELETED:
                     self.owner._handle.delete_metadata(key)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:  # noqa: BLE001, PERF203
                 # This should be done with Exception Groups
                 errors.append(e)
 
@@ -815,9 +815,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
         self._mods.clear()
 
         if errors:
-            details = []
-            for error in errors:
-                details.append(repr(error))
+            details = [repr(error) for error in errors]
 
             error_msg_details = "\n".join(details)
 
