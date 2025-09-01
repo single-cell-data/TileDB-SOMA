@@ -27,10 +27,9 @@ line-length = 120
 [tool.ruff.lint]
 select = [  # see https://docs.astral.sh/ruff/rules/
 
-    # consider
+    # consider adding:
     # A
     # TC
-    # PTH
 
     "ANN",  # flake8-annotations
     "ARG",  # flake8-unused-arguments
@@ -57,6 +56,7 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "PLC",  # pylint-convention
     "PLE",  # pylint-error
     "PLW",  # pylint-warning
+    "PTH",  # flake8-use-pathlib
     "S",    # flake8-bandit
     "T10",  # flake8-debugger
     "T20",  # flake8-print
@@ -89,7 +89,7 @@ extend-select = []
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
 # Over time, we should enforce these rules more broadly.
-"!apis/python/src/**.py" = ["ANN", "ARG", "BLE", "C4", "CPY", "D", "ERA", "B", "INP", "S", "T20", "NPY002"]
+"!apis/python/src/**.py" = ["ANN", "ARG", "BLE", "C4", "CPY", "D", "ERA", "B", "INP", "S", "T20", "NPY002", "PTH"]
 
 # Ignore in notebooks
 "apis/python/**/*.ipynb" = ["COM"]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -100,7 +100,7 @@ def build_profile_data(stderr_: str, stdout_: str, prof1: str | None, prof2: str
 
 
 def read_tiledb_stats_output() -> dict[str, Any]:
-    if not os.path.isfile(TILEDB_STATS_FILE_PATH):
+    if not pathlib.Path(TILEDB_STATS_FILE_PATH).is_file():
         return {}
 
     with open(TILEDB_STATS_FILE_PATH) as f:

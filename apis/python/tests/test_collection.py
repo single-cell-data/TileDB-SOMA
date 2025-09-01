@@ -651,7 +651,7 @@ def test_keys_with_sanitized_uris(tmp_path, key, sanitized_key):
 def test_parallel_getitem(tmp_path) -> None:
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04/1.16.1/pbmc3k_processed"
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )

@@ -5,6 +5,7 @@ import glob
 import hashlib
 import json
 import os
+import pathlib
 import uuid
 from abc import ABC, abstractmethod
 from typing import Any
@@ -92,12 +93,12 @@ class FileBasedProfileDB(ProfileDB):
 
     def __init__(self, path: str = DEFAULT_PROFILE_DB_PATH):
         self.path = path
-        if not os.path.exists(self.path):
+        if not pathlib.Path(self.path).exists():
             os.mkdir(self.path)
 
     def __str__(self):
         result = ""
-        if os.path.exists(self.path):
+        if pathlib.Path(self.path).exists():
             for command_hash in glob.glob(self.path + "/*"):
                 with open(os.path.join(command_hash, "command.txt")) as f:
                     command = f.read()
@@ -108,7 +109,7 @@ class FileBasedProfileDB(ProfileDB):
 
     def find(self, command) -> list[ProfileData]:
         key = _command_key(command)
-        if not os.path.exists(f"{self.path}/{key}"):
+        if not pathlib.Path(f"{self.path}/{key}").exists():
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), key)
         result = []
         for filename in glob.glob(f"{self.path}/{key}/*.json"):
@@ -121,7 +122,7 @@ class FileBasedProfileDB(ProfileDB):
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
         filename = f"{self.path}/{key}/command.txt"
 
-        if not os.path.exists(filename):
+        if not pathlib.Path(filename).exists():
             with open(filename, "w") as f:
                 f.write(data.command.strip())
         key2 = data.timestamp
@@ -207,8 +208,8 @@ class S3ProfileDB(ProfileDB):
 
         with open(filename, "w") as fp:
             fp.write(data.command.strip())
-        self.s3.upload_file(os.path.abspath(str(fp.name)), self.bucket_name, s3_command_key)
-        os.unlink(filename)
+        self.s3.upload_file(pathlib.Path(str(fp.name)).resolve(), self.bucket_name, s3_command_key)
+        pathlib.Path(filename).unlink()
 
         key2 = data.timestamp
         data_key = f"{key}/{key2}.json"
@@ -216,8 +217,8 @@ class S3ProfileDB(ProfileDB):
 
         with open(filename, "w") as fp:
             json.dump(attr.asdict(data), fp)
-        self.s3.upload_file(os.path.abspath(str(fp.name)), self.bucket_name, data_key)
-        os.unlink(filename)
+        self.s3.upload_file(pathlib.Path(str(fp.name)).resolve(), self.bucket_name, data_key)
+        pathlib.Path(filename).unlink()
 
         return data_key
 

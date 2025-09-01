@@ -69,15 +69,16 @@ __email__ = "mina86@mina86.com"
 __all__ = ("get_version",)
 
 
+import pathlib
 import re
 import shlex
 import sys
 from datetime import date
-from os.path import basename, dirname, join, relpath
+from os.path import join, relpath
 from subprocess import DEVNULL, CalledProcessError, check_output
 
 GIT_RELPATH = "apis/python/version.py"
-RELEASE_VERSION_FILE = join(dirname(__file__), "RELEASE-VERSION")
+RELEASE_VERSION_FILE = join(pathlib.Path(__file__).parent, "RELEASE-VERSION")
 
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
@@ -256,7 +257,7 @@ def get_version():
         version = release_version
     if not version:
         version = generate_cal_version()
-        err(f"No {basename(RELEASE_VERSION_FILE)} or Git version found, using calver {version}")
+        err(f"No {pathlib.Path(RELEASE_VERSION_FILE).name} or Git version found, using calver {version}")
     if version != release_version:
         write_release_version(version)
     return version

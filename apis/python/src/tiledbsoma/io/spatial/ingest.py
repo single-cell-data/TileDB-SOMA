@@ -380,7 +380,7 @@ def from_visium(
 
     # Get JSON scale factors.
     # -- Get the spot diameters from teh scale factors file.
-    with open(input_paths.scale_factors, encoding="utf-8") as scale_factors_json:
+    with open(input_paths.scale_factors, encoding="utf-8") as scale_factors_json:  # noqa: PTH123
         scale_factors = json.load(scale_factors_json)
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 

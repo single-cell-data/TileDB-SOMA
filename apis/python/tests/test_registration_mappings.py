@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import gc
 import math
+import pathlib
 from collections.abc import Sequence
 from contextlib import nullcontext
 
@@ -1505,14 +1506,13 @@ def test_registration_lists_and_tuples(tmp_path, soma_tiledb_context):
 def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, version_and_shaped):
     version, _ = version_and_shaped
 
-    import os
     import shutil
 
     from ._util import ROOT_DATA_DIR
 
     original_data_uri = str(ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / "pbmc3k_unprocessed")
 
-    if not os.path.isdir(original_data_uri):
+    if not pathlib.Path(original_data_uri).is_dir():
         raise RuntimeError(
             f"Missing '{original_data_uri}' directory. Try running `make data` "
             "from the TileDB-SOMA project root directory.",

@@ -2,7 +2,6 @@ import contextlib
 import datetime
 import json
 import math
-import os
 import shutil
 import struct
 import time
@@ -574,7 +573,7 @@ def test_get_enumeration_values_historical(version, name):
 
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
@@ -622,7 +621,7 @@ def test_get_enumeration_values_historical(version, name):
 def test_extend_enumeration_values_historical(tmp_path, version):
     original_data_uri = str(ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / "pbmc3k_processed")
 
-    if not os.path.isdir(original_data_uri):
+    if not Path(original_data_uri).is_dir():
         raise RuntimeError(
             f"Missing '{original_data_uri}' directory. Try running `make data` "
             "from the TileDB-SOMA project root directory.",
