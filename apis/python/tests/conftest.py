@@ -30,11 +30,15 @@ def soma_tiledb_config() -> dict[str, Any] | None:
 
     is_CI = os.getenv("CI", "false") == "true"
     if is_CI:
+        # default concurrency is cpu_count. Halve to reduce per-worker memory use
+        n_cpus = max(1, (os.cpu_count() or 1) // 2)
         tiledb_config = {
             "sm.mem.total_budget": 1 * 1024**3,
             "sm.memory_budget": 512 * 1024**2,
             "sm.memory_budget_var": 512 * 1024**2,
             "soma.init_buffer_bytes": 128 * 1024**2,
+            "sm.compute_concurrency_level": n_cpus,
+            "sm.io_concurrency_level": n_cpus,
         }
     return tiledb_config
 
