@@ -14,6 +14,9 @@
 #include "platform_config.h"
 #include "nlohmann/json.hpp"
 
+#include "../utils/common.h"
+#include "../utils/logger.h"
+
 using json = nlohmann::json;
 
 namespace tiledbsoma::utils {
@@ -112,6 +115,154 @@ json get_dims_list_json(const tiledb::ArraySchema& tiledb_schema) {
         dims_as_json.emplace(dim.name(), dim_info);
     }
     return dims_as_json;
+}
+
+void set_filter_option(Filter filter, std::string option_name, json value) {
+    if (option_name == "name") {
+        return;
+    }
+
+    std::map<std::string, tiledb_filter_option_t> convert_option = {
+        {"COMPRESSION_LEVEL", TILEDB_COMPRESSION_LEVEL},
+        {"BIT_WIDTH_MAX_WINDOW", TILEDB_BIT_WIDTH_MAX_WINDOW},
+        {"POSITIVE_DELTA_MAX_WINDOW", TILEDB_POSITIVE_DELTA_MAX_WINDOW},
+        {"SCALE_FLOAT_BYTEWIDTH", TILEDB_SCALE_FLOAT_BYTEWIDTH},
+        {"SCALE_FLOAT_FACTOR", TILEDB_SCALE_FLOAT_FACTOR},
+        {"SCALE_FLOAT_OFFSET", TILEDB_SCALE_FLOAT_OFFSET},
+        {"WEBP_INPUT_FORMAT", TILEDB_WEBP_INPUT_FORMAT},
+        {"WEBP_QUALITY", TILEDB_WEBP_QUALITY},
+        {"WEBP_LOSSLESS", TILEDB_WEBP_LOSSLESS},
+        {"COMPRESSION_REINTERPRET_DATATYPE", TILEDB_COMPRESSION_REINTERPRET_DATATYPE},
+    };
+
+    auto option = convert_option[option_name];
+    switch (option) {
+        case TILEDB_COMPRESSION_LEVEL:
+            filter.set_option(option, value.get<int32_t>());
+            break;
+        case TILEDB_BIT_WIDTH_MAX_WINDOW:
+        case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
+            filter.set_option(option, value.get<uint32_t>());
+            break;
+        case TILEDB_SCALE_FLOAT_BYTEWIDTH:
+            filter.set_option(option, value.get<uint64_t>());
+            break;
+        case TILEDB_SCALE_FLOAT_FACTOR:
+        case TILEDB_SCALE_FLOAT_OFFSET:
+            filter.set_option(option, value.get<double>());
+            break;
+        case TILEDB_WEBP_QUALITY:
+            filter.set_option(option, value.get<float>());
+            break;
+        case TILEDB_WEBP_INPUT_FORMAT:
+        case TILEDB_WEBP_LOSSLESS:
+        case TILEDB_COMPRESSION_REINTERPRET_DATATYPE:
+            filter.set_option(option, value.get<uint8_t>());
+            break;
+        default:
+            throw TileDBSOMAError(fmt::format("Invalid option {} passed to filter", option_name));
+    }
+}
+
+void append_to_filter_list(FilterList filter_list, json value, std::shared_ptr<Context> ctx) {
+    std::map<std::string, tiledb_filter_type_t> convert_filter = {
+        {"GZIP", TILEDB_FILTER_GZIP},
+        {"ZSTD", TILEDB_FILTER_ZSTD},
+        {"LZ4", TILEDB_FILTER_LZ4},
+        {"BZIP2", TILEDB_FILTER_BZIP2},
+        {"RLE", TILEDB_FILTER_RLE},
+        {"DELTA", TILEDB_FILTER_DELTA},
+        {"DOUBLE_DELTA", TILEDB_FILTER_DOUBLE_DELTA},
+        {"BIT_WIDTH_REDUCTION", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
+        {"BITSHUFFLE", TILEDB_FILTER_BITSHUFFLE},
+        {"BYTESHUFFLE", TILEDB_FILTER_BYTESHUFFLE},
+        {"POSITIVE_DELTA", TILEDB_FILTER_POSITIVE_DELTA},
+        {"CHECKSUM_MD5", TILEDB_FILTER_CHECKSUM_MD5},
+        {"CHECKSUM_SHA256", TILEDB_FILTER_CHECKSUM_SHA256},
+        {"DICTIONARY_ENCODING", TILEDB_FILTER_DICTIONARY},
+        {"SCALE_FLOAT", TILEDB_FILTER_SCALE_FLOAT},
+        {"XOR", TILEDB_FILTER_XOR},
+        {"WEBP", TILEDB_FILTER_WEBP},
+        {"NOOP", TILEDB_FILTER_NONE},
+        {"NONE", TILEDB_FILTER_NONE},
+    };
+
+    try {
+        if (value.is_string()) {
+            filter_list.add_filter(Filter(*ctx, convert_filter.at(value)));
+        } else {
+            Filter filter(*ctx, convert_filter.at(value["name"]));
+            for (auto& [key, value] : value.items()) {
+                set_filter_option(filter, key, value);
+            }
+            filter_list.add_filter(filter);
+        }
+    } catch (std::out_of_range& e) {
+        throw TileDBSOMAError(fmt::format("Invalid filter {} passed to PlatformConfig", std::string(value)));
+    }
+}
+
+FilterList create_filter_list(json filters, std::shared_ptr<Context> ctx) {
+    FilterList filter_list(*ctx);
+
+    for (auto filter : filters) {
+        append_to_filter_list(filter_list, filter, ctx);
+    }
+
+    return filter_list;
+}
+
+FilterList create_filter_list(std::string filters, std::shared_ptr<Context> ctx) {
+    return create_filter_list(json::parse(filters), ctx);
+}
+
+FilterList create_attr_filter_list(std::string name, PlatformConfig platform_config, std::shared_ptr<Context> ctx) {
+    FilterList filter_list(*ctx);
+
+    if (platform_config.attrs.empty()) {
+        filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_ZSTD));
+    } else {
+        json attr_options = json::parse(platform_config.attrs);
+        if (attr_options.find(name) != attr_options.end() &&
+            attr_options[name].find("filters") != attr_options[name].end()) {
+            filter_list = create_filter_list(attr_options[name]["filters"], ctx);
+        } else {
+            filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_ZSTD));
+        }
+    }
+
+    return filter_list;
+}
+
+Filter get_zstd_default(PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx) {
+    Filter zstd_filter(*ctx, TILEDB_FILTER_ZSTD);
+    if (soma_type == "SOMADataFrame") {
+        zstd_filter.set_option(TILEDB_COMPRESSION_LEVEL, platform_config.dataframe_dim_zstd_level);
+    } else if (soma_type == "SOMASparseNDArray") {
+        zstd_filter.set_option(TILEDB_COMPRESSION_LEVEL, platform_config.sparse_nd_array_dim_zstd_level);
+    } else if (soma_type == "SOMADenseNDArray") {
+        zstd_filter.set_option(TILEDB_COMPRESSION_LEVEL, platform_config.dense_nd_array_dim_zstd_level);
+    }
+    return zstd_filter;
+}
+
+FilterList create_dim_filter_list(
+    std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx) {
+    FilterList filter_list(*ctx);
+
+    if (platform_config.dims.empty()) {
+        filter_list.add_filter(get_zstd_default(platform_config, soma_type, ctx));
+    } else {
+        json dim_options = json::parse(platform_config.dims);
+        if (dim_options.find(name) != dim_options.end() &&
+            dim_options[name].find("filters") != dim_options[name].end()) {
+            filter_list = create_filter_list(dim_options[name]["filters"], ctx);
+        } else {
+            filter_list.add_filter(get_zstd_default(platform_config, soma_type, ctx));
+        }
+    }
+
+    return filter_list;
 }
 
 PlatformConfig platform_config_from_tiledb_schema(tiledb::ArraySchema tiledb_schema) {
