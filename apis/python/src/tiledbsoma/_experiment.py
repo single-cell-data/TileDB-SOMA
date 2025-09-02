@@ -119,10 +119,12 @@ class Experiment(
         """Delete observations (obs axis elements only) from all predefined sub-objects within an Experiment.
 
         This operation affects all Measurements within an Experiment. Deleted observations are specified:
-        - by `obs` DataFrame soma_joinid: a sequence of soma_joinid or a slice
-        - or, by `obs` DataFrame value filter / query condition
+
+        - by ``obs`` DataFrame soma_joinid: a sequence of soma_joinid or a slice
+        - or, by ``obs`` DataFrame value filter / query condition
 
         Sub-objects affected by this operation:
+
         - exp.obs - delete matching DataFrame elements by soma_joinid
         - exp.obs_spatial_presence - delete matching DataFrame elements by soma_joinid
         - exp.ms[*].X[*] - delete matching SparseNDMatrix values, joining on the soma_dim_0 dimension
@@ -130,19 +132,23 @@ class Experiment(
         - exp.ms[*].obsp[*] - delete matching SparseNDMatrix values, joining on the soma_dim_0 and soma_dim_1 dimension
         - exp.spatial[*].obsl[*] - delete matching DataFrame elements, joining on the soma_joinid dimension
 
-        The following sub-objects are unaffected by this operation:exp.ms[*].var , exp.ms[*].varm[*], exp.ms[*].varp[*]
-        and any user-defined arrays within the collection.
+        The following sub-objects are unaffected by this operation:
+
+        - exp.ms[*].var
+        - exp.ms[*].varm[*]
+        - exp.ms[*].varp[*]
+        - any user-defined arrays within the collection
 
         If any affected sub-objects are of type DenseNDArray (dense TileDB array), the entire operation results in an error.
 
         Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
-        the cells that match both constraints will be removed.
+        the observations that match both constraints will be removed.
 
         For example, to delete observations where ``n_genes > 1000`` and ``n_counts < 2000``:
             >>> with tiledbsoma.Experiment.open(experiment_uri, mode="d") as exp:
             ...     exp.obs_axis_delete(value_filter="n_genes > 1000 and n_counts < 2000")
 
-        Note: Deleting cells does not change the size of the current domain or possible enumeration values.
+        Note: Deleting observations does not change the size of the current domain or possible enumeration values.
 
         Args:
             coords:
@@ -176,13 +182,15 @@ class Experiment(
         value_filter: str | None = None,
         platform_config: options.PlatformConfig | None = None,
     ) -> None:
-        """Delete features (var axis elements only) from all predefined sub-objects within a single user-specified Measurement.
+        """Delete variables (``var`` axis elements only) from all predefined sub-objects within a single user-specified Measurement.
 
         Deleted features are specified:
-        - by `var` DataFrame joinid: a sequence of joinid or a slice
-        - by `var` DataFrame value filter / query condition
+
+        - by ``var`` DataFrame joinid: a sequence of joinid or a slice
+        - by ``var`` DataFrame value filter / query condition
 
         Sub-objects affected by this operation, given a named Measurement (ms_name):
+
         - exp.ms[*ms_name*].var - delete matching DataFrame elements
         - exp.ms[*ms_name*].var_spatial_presence - delete matching DataFrame elements, joining on the soma_joinid dimension
         - exp.ms[*ms_name*].X[*] - delete matching SparseNDMatrix values, joining on the soma_dim_1 dimension
@@ -190,18 +198,21 @@ class Experiment(
         - exp.ms[*ms_name*].varp[*] - delete matching SparseNDMatrix values, joining on the soma_dim_0 and soma_dim_1 dimensions
         - exp.spatial[*].varl[*ms_name*][*] - delete matching PointCloudDataFrame/GeometryDataFrame elements, joining on the soma_joinid dimension
 
-        The following Measurement sub-objects are unaffected by this operation: exp.ms[*ms_name*].obsm[*] , exp.ms[*ms_name*].obsp[*] ,
+        The following Measurement sub-objects are unaffected by this operation:
+
+        - exp.ms[*ms_name*].obsm[*]
+        - exp.ms[*ms_name*].obsp[*]
 
         If any affected sub-objects are a DenseNDArray (dense TileDB array), the entire operation results in an error.
 
         Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
-        the cells that match both constraints will be removed.
+        the variables that match both constraints will be removed.
 
         For example, to delete observations where ``feature_biotype == 'gene'``:
             >>> with tiledbsoma.Experiment.open(experiment_uri, mode="d") as exp:
             ...     exp.var_axis_delete(value_filter="feature_biotype == 'gene'")
 
-        Note: Deleting cells does not change the size of the current domain or possible enumeration values.
+        Note: Deleting variables does not change the size of the current domain or possible enumeration values.
 
         Args:
             coords:
@@ -240,9 +251,12 @@ class _ArrayDelMd:
 def _append_if_supported(
     candidates: list[_ArrayDelMd], obj: AnySOMAObject, name: str, join_on: tuple[str, ...]
 ) -> None:
-    """Append the candidate array to the final selection list if:
+    """Private method.
+
+    Append the candidate array to the final selection list if:
+
     - not a dense array
-    - one of the supported types
+    - is one of the supported types
     - contains the expected join-on column.
 
     Primary goal here is to be graceful when the user has added ad hoc or otherwise
@@ -254,7 +268,9 @@ def _append_if_supported(
     """
     if isinstance(obj, DenseNDArray):
         raise SOMAError(f"Delete operation not permitted on dense array: {name}")
-    if isinstance(obj, (DataFrame, SparseNDArray, GeometryDataFrame, PointCloudDataFrame)) and all(
+    if isinstance(obj, GeometryDataFrame):
+        raise NotImplementedError(f"Delete operation not permitted on GeometryDataFrame: {name}")
+    if isinstance(obj, (DataFrame, SparseNDArray, PointCloudDataFrame)) and all(
         obj.schema.get_field_index(col) >= 0 for col in join_on
     ):
         candidates.append(_ArrayDelMd(obj=obj, name=name, join_on=join_on))
