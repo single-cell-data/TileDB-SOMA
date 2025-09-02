@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import gc
 import json
-import os
+import pathlib
 import re
 from concurrent import futures
 from contextlib import nullcontext
@@ -890,7 +890,7 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
@@ -959,7 +959,7 @@ def test_annotation_matrix_slots(
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )

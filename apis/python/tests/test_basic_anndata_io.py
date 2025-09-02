@@ -1029,8 +1029,8 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
     # White-box-test this, which we leverage inside tiledbsoma.io
     assert json.loads("null") is None
 
-    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
-    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]  # noqa: UP031
+    var_ids = ["gene_%08d" % (j) for j in range(nvar)]  # noqa: UP031
 
     cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
     obs = pd.DataFrame(
@@ -1100,8 +1100,8 @@ def test_outgest_X_layers(tmp_path):
     xocc = 0.3
     measurement_name = "meas"
 
-    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
-    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]  # noqa: UP031
+    var_ids = ["gene_%08d" % (j) for j in range(nvar)]  # noqa: UP031
 
     cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
     obs = pd.DataFrame(

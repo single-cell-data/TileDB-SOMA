@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 try:
     import spatialdata as sd

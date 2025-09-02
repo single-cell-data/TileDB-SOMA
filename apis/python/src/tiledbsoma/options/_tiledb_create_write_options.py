@@ -4,11 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from typing import (
     Any,
-    Iterable,
-    Mapping,
-    Sequence,
     TypedDict,
     TypeVar,
     Union,
@@ -128,7 +126,7 @@ class TileDBCreateOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: options.PlatformConfig | "TileDBCreateOptions" | None = None,
+        platform_config: options.PlatformConfig | TileDBCreateOptions | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -187,7 +185,7 @@ class TileDBWriteOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: options.PlatformConfig | "TileDBWriteOptions" | None = None,
+        platform_config: options.PlatformConfig | TileDBWriteOptions | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -215,9 +213,7 @@ class TileDBDeleteOptions:
     """Tuning options used when deleting cells in SOMA arrays."""
 
     @classmethod
-    def from_platform_config(
-        cls, platform_config: options.PlatformConfig | "TileDBDeleteOptions" | None = None
-    ) -> Self:
+    def from_platform_config(cls, platform_config: options.PlatformConfig | TileDBDeleteOptions | None = None) -> Self:
         """Create the class from a value passed in ``platform_config``."""
         del platform_config
         return cls()

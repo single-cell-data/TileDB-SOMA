@@ -6,7 +6,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Mapping, Sequence, cast
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, cast
 
 import attrs
 import numpy as np

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import hypothesis.extra.numpy as ht_np
 import numpy as np

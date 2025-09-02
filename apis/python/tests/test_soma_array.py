@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import pathlib
 
 import pyarrow as pa
 import pytest
@@ -9,7 +10,7 @@ import tiledbsoma.pytiledbsoma as clib
 
 VERBOSE = False
 
-TEST_DIR = os.path.dirname(__file__)
+TEST_DIR = pathlib.Path(__file__).parent
 SOMA_URI = f"{TEST_DIR}/../../../data/soco/pbmc3k_processed"
 
 if VERBOSE:

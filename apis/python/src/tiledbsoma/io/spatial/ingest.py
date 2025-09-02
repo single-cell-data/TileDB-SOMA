@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import json
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, TypeVar
+from typing import TypeVar
 
 import attrs
 import numpy as np
@@ -379,7 +380,7 @@ def from_visium(
 
     # Get JSON scale factors.
     # -- Get the spot diameters from teh scale factors file.
-    with open(input_paths.scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
+    with open(input_paths.scale_factors, encoding="utf-8") as scale_factors_json:  # noqa: PTH123
         scale_factors = json.load(scale_factors_json)
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
@@ -826,7 +827,7 @@ def _write_visium_spots(
         .assign(spot_diameter_fullres=np.double(spot_diameter))
     )
     obs_df = obs_data.to_pandas()
-    df = pd.merge(obs_df, df, how="inner", on=id_column_name)
+    df = obs_df.merge(df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
     domain = (

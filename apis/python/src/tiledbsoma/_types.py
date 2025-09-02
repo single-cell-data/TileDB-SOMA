@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Any, Sequence, Union, get_args
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Union, get_args
 
 import numpy as np
 import numpy.typing as npt

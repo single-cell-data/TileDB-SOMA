@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import os
+import pathlib
 import re
 import sys
 import urllib.error
@@ -106,18 +107,18 @@ def main(args):
     print(f"New hash {new_hash}")
 
     # update cmake version
-    filepath = f"{os.path.dirname(__file__)}/../libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake"
+    filepath = f"{pathlib.Path(__file__).parent}/../libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake"
     update_version(filepath, new_version, new_hash)
 
     # update R version
-    filepath = f"{os.path.dirname(__file__)}/../apis/r/tools/get_tarball.R"
+    filepath = f"{pathlib.Path(__file__).parent}/../apis/r/tools/get_tarball.R"
     update_version(filepath, new_version, new_hash, update_sha=False)
 
     # update CI version
-    filepath = f"{os.path.dirname(__file__)}/../.github/workflows/python-ci-packaging.yml"
+    filepath = f"{pathlib.Path(__file__).parent}/../.github/workflows/python-ci-packaging.yml"
     update_version(filepath, new_version, new_hash)
 
-    filepath = f"{os.path.dirname(__file__)}/../.github/workflows/libtiledbsoma-asan-ci.yml"
+    filepath = f"{pathlib.Path(__file__).parent}/../.github/workflows/libtiledbsoma-asan-ci.yml"
     update_version(filepath, new_version, new_hash)
 
 

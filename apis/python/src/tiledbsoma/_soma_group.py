@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from threading import Lock
-from typing import Any, Callable, Generic, Iterable, Iterator, TypeVar, cast
+from typing import Any, Callable, Generic, TypeVar, cast
 
 import attrs
 from somacore import options
@@ -204,7 +205,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         self._close_stack.enter_context(child)
         return child
 
-    def _new_child_uri(self, *, key: str, user_uri: str | None) -> "_ChildURI":
+    def _new_child_uri(self, *, key: str, user_uri: str | None) -> _ChildURI:
         maybe_relative_uri = user_uri or sanitize_key(key)
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.

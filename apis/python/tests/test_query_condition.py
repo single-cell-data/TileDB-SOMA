@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import pathlib
 
 import pytest
 
@@ -11,7 +12,7 @@ from tiledbsoma._query_condition import QueryCondition
 
 VERBOSE = False
 
-TEST_DIR = os.path.dirname(__file__)
+TEST_DIR = pathlib.Path(__file__).parent
 SOMA_URI = f"{TEST_DIR}/../../../data/soco/pbmc3k_processed"
 
 if VERBOSE:

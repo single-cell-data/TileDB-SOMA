@@ -69,7 +69,7 @@ def assert_uns_equal(uns0, uns1):
                 assert v0 == v1, f"{v0} != {v1}"
             else:
                 raise ValueError(f"Unsupported type: {type(v0)}")
-        except AssertionError:
+        except AssertionError:  # noqa: PERF203
             raise AssertionError(f"assert_uns_equal: key {k} mismatched")
 
 

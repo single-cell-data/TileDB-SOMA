@@ -31,9 +31,9 @@ def util_make_uri(
         return (creation_uri, readback_uri)
 
     uri = f"/tmp/tiledbsoma-cloud-test/{dirname}/{basename}"
-    if os.path.exists(uri):
+    if pathlib.Path(uri).exists():
         shutil.rmtree(uri)
-    pathlib.Path(os.path.dirname(uri)).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(pathlib.Path(uri).parent).mkdir(parents=True, exist_ok=True)
     # Please leave this comment in place.
     print()
     print("USING LOCAL URI", uri)

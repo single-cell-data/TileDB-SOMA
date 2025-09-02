@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import somacore
@@ -223,7 +224,7 @@ def to_spatialdata_image(
     scene_id: str,
     scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
-) -> "DataArray":
+) -> DataArray:
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
 
@@ -294,7 +295,7 @@ def to_spatialdata_multiscale_image(
     scene_id: str,
     scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
-) -> "DataTree":
+) -> DataTree:
     """Export a MultiscaleImage to a DataTree.
 
     Args:
@@ -533,8 +534,7 @@ def _spatial_to_spatialdata(
             )
             if not region_df.empty:
                 try:
-                    adata.obs = pd.merge(
-                        adata.obs,
+                    adata.obs = adata.obs.merge(
                         region_df,
                         how="left",
                         on=obs_id_name,

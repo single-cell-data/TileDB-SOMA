@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import collections.abc
 import math
-from typing import Any, Literal, Sequence, Union, cast
+from collections.abc import Sequence
+from typing import Any, Literal, Union, cast
 
 import numpy as np
 import numpy.typing as npt

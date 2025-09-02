@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import Sequence, cast
+from collections.abc import Sequence
+from typing import cast
 
 import pyarrow as pa
 import somacore

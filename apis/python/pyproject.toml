@@ -26,6 +26,7 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [  # see https://docs.astral.sh/ruff/rules/
+    # consider adding:  A (flake8-builtins) and TC (flake8-type-checking)
     "ANN",  # flake8-annotations
     "ARG",  # flake8-unused-arguments
     "B",    # flake8-bugbear
@@ -38,15 +39,20 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "ERA",  # eradicate
     "F",    # Pyflakes
     "FA",   # flake8-future-annotations
+    "FLY",  # flynt
     "I",    # isort
     "ICN",  # flake8-import-conventions
     "INP",  # flake8-no-pep420
     "ISC",  # flake8-implicit-str-concat
     "LOG",  # flake8-logging
+    "NPY",  # numpy-specific rules
+    "PD",   # pandas-vet
+    "PERF", # perflint
     "PIE",  # flake8-pie
     "PLC",  # pylint-convention
     "PLE",  # pylint-error
     "PLW",  # pylint-warning
+    "PTH",  # flake8-use-pathlib
     "S",    # flake8-bandit
     "T10",  # flake8-debugger
     "T20",  # flake8-print
@@ -59,6 +65,7 @@ select = [  # see https://docs.astral.sh/ruff/rules/
     "TID",  # flake8-tidy-imports
     "W",    # pycodestyle warnings
     "YTT",  # flake8-2020
+    "UP",   # pyupgrade
 ]
 ignore = [
     "E501",     # line too long
@@ -71,13 +78,14 @@ ignore = [
     "PLC2701",  # import-private-name
     "PLW1514",  # unspecified-encoding
     "PLW2901",  # redefined-loop-name
+    "PD002",    # pandas-use-of-inplace-argument
 ]
 extend-select = []
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
 # Over time, we should enforce these rules more broadly.
-"!apis/python/src/**.py" = ["ANN", "ARG", "BLE", "C4", "CPY", "D", "ERA", "B", "INP", "S", "T20"]
+"!apis/python/src/**.py" = ["ANN", "ARG", "BLE", "C4", "CPY", "D", "ERA", "B", "INP", "S", "T20", "NPY002", "PTH"]
 
 # Ignore in notebooks
 "apis/python/**/*.ipynb" = ["COM"]
