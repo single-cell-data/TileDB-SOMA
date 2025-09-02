@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import dask.array as da
 import numpy as np

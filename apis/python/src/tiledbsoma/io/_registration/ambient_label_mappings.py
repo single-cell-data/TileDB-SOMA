@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Iterable, Sequence, cast
+from typing import Any, Callable, cast
 
 import anndata as ad
 import attrs

@@ -1056,7 +1056,7 @@ def _check_statuses(dikt: dict[str, Any]) -> bool:
         ok = dikt["status"]
         assert isinstance(ok, bool)
         return ok
-    for _key, value in dikt.items():
+    for value in dikt.values():
         assert isinstance(value, dict)
         if not _check_statuses(value):
             return False

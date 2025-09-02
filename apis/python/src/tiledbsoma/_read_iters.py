@@ -7,9 +7,10 @@
 from __future__ import annotations
 
 import abc
+from collections.abc import Iterator, Sequence
 from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 import numpy as np
 import numpy.typing as npt

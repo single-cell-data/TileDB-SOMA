@@ -8,8 +8,9 @@ import datetime
 import functools
 import threading
 import time
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Literal, Mapping, Optional, Union, cast
+from typing import Any, Literal, Optional, Union, cast
 
 from somacore import ContextBase
 from typing_extensions import Self
@@ -56,7 +57,7 @@ def _default_config(override: ConfigMap) -> ConfigDict:
     return cfg
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _default_global_native_context() -> clib.SOMAContext:
     """Lazily builds a default SOMAContext with the default config."""
     return clib.SOMAContext({k: str(v) for k, v in _default_config({}).items()})

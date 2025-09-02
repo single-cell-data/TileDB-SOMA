@@ -60,10 +60,12 @@ import logging
 import logging.config
 import multiprocessing
 import os
+import pathlib
 import sys
+from collections.abc import Iterable, Iterator
 from concurrent.futures import Executor, Future, ProcessPoolExecutor
 from itertools import repeat
-from typing import Any, Callable, Iterable, Iterator, TypeVar
+from typing import Any, Callable, TypeVar
 
 import anndata as ad
 
@@ -399,7 +401,7 @@ def get_h5ad_paths(h5ad_directory_path: str) -> list[str]:
     return [
         os.path.join(h5ad_directory_path, fn)
         for fn in os.listdir(h5ad_directory_path)
-        if fn.endswith(".h5ad") and os.path.isfile(os.path.join(h5ad_directory_path, fn))
+        if fn.endswith(".h5ad") and pathlib.Path(os.path.join(h5ad_directory_path, fn)).is_file()
     ]
 
 

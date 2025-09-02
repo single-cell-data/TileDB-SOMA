@@ -16,6 +16,7 @@
 import argparse
 import logging
 import os
+import pathlib
 import sys
 
 import tiledbsoma
@@ -78,7 +79,7 @@ def main():
         # Strip trailing slashes so basename will behave correctly
         input_path = args.paths[0].rstrip("/")
         # Example 'tiledb-data/pbmc3k_processed' -> 'anndata-readcbak/pbmc3k_processed.h5ad'
-        output_path = os.path.join(outdir, os.path.basename(input_path) + ".h5ad")
+        output_path = os.path.join(outdir, pathlib.Path(input_path).name + ".h5ad")
     elif len(args.paths) == 2:
         input_path = args.paths[0]
         output_path = args.paths[1]
@@ -88,7 +89,7 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if tiledbsoma._util.is_local_path(outdir) and not os.path.exists(outdir):
+    if tiledbsoma._util.is_local_path(outdir) and not pathlib.Path(outdir).exists():
         os.mkdir(outdir)
 
     if args.debug:

@@ -145,7 +145,7 @@ class CollectionBase(
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
         **kwargs: Any,  # noqa: ANN401
-    ) -> "Collection[AnySOMAObject]": ...
+    ) -> Collection[AnySOMAObject]: ...
 
     @overload
     def add_new_collection(

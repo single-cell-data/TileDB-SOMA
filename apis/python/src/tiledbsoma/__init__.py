@@ -98,6 +98,7 @@ Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 
 import ctypes
 import os
+import pathlib
 import sys
 
 # Load native libraries. On wheel builds, we may have a shared library
@@ -116,8 +117,8 @@ except ImportError:
 
     try:
         # Try loading the bundled native library.
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, libtiledb_name), mode=ctypes.RTLD_GLOBAL)
+        lib_dir = pathlib.Path(pathlib.Path(__file__).resolve()).parent
+        ctypes.CDLL(os.path.join(lib_dir, libtiledb_name), mode=ctypes.RTLD_GLOBAL)  # noqa: PTH118
     except OSError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledb_name, mode=ctypes.RTLD_GLOBAL)
@@ -131,8 +132,8 @@ except ImportError:
 
     try:
         # Try loading the bundled native library.
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, libtiledbsoma_name))
+        lib_dir = pathlib.Path(pathlib.Path(__file__).resolve()).parent
+        ctypes.CDLL(os.path.join(lib_dir, libtiledbsoma_name))  # noqa: PTH118
     except OSError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)

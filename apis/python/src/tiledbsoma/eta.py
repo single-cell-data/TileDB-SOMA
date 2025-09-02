@@ -69,7 +69,7 @@ class Tracker:
             return "%.2f hours" % (seconds / 3600)
         if seconds >= 60:
             return "%.2f minutes" % (seconds / 60)
-        return "%.2f seconds" % (seconds)
+        return f"{seconds:.2f} seconds"
 
     def __str__(self) -> str:
         """User-friendly string."""

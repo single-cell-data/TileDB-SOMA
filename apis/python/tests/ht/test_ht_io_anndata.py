@@ -8,15 +8,13 @@ import math
 import operator
 import string
 from collections import OrderedDict
-from collections.abc import Mapping
+from collections.abc import Hashable, Mapping, Sequence
 from datetime import timedelta
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Hashable,
     Literal,
-    Sequence,
     TypeVar,
     get_args,
 )
@@ -187,7 +185,7 @@ else:
 def matrixes(
     draw: st.DrawFn,
     shape: tuple[int, int] | st.SearchStrategy[tuple[int, ...]],
-    formats: "MatrixFormats" | None = None,
+    formats: MatrixFormats | None = None,
 ) -> sp.csr_matrix | sp.csc_matrix | np.ndarray | np.ma.MaskedArray:
     """Random 2D array in a variety of formats supported by AnnData."""
 
@@ -280,7 +278,7 @@ def matrix_shapes(
 def map_of_matrixes(
     draw: st.DrawFn,
     shape_prelude: tuple[int, ...],
-    formats: "MatrixFormats" | None = None,
+    formats: MatrixFormats | None = None,
 ) -> dict[str, np.ndarray | sp.sparray | sp.spmatrix | np.ma.MaskedArray]:
     def key_unique_by(i: str) -> str:
         return i[0].lower() if HT_TEST_CONFIG["sc-63402_workaround"] else i[0]

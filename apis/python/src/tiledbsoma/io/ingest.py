@@ -17,15 +17,13 @@ import multiprocessing
 import os
 import time
 import warnings
+from collections.abc import Iterable, Mapping, Sequence
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import partial
 from itertools import repeat
 from typing import (
     Any,
-    Iterable,
     Literal,
-    Mapping,
-    Sequence,
     TypedDict,
     TypeVar,
     cast,
@@ -2095,7 +2093,7 @@ def _write_matrix_to_denseNDArray(
         chunk_percent = min(100, 100 * (i2 - 1) / nrow)
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),
+            "START  chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),  # noqa: UP031
         )
 
         chunk = matrix[i:i2, :] if matrix.ndim == 2 else matrix[i:i2]
@@ -2109,8 +2107,8 @@ def _write_matrix_to_denseNDArray(
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
-                    "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),
+                    "... %7.3f%% done" % chunk_percent,  # noqa: UP031
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),  # noqa: UP031
                 )
                 i = i2
                 continue
@@ -2127,8 +2125,8 @@ def _write_matrix_to_denseNDArray(
 
         if chunk_percent < 100:
             logging.log_io(
-                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" % (chunk_seconds, chunk_percent, eta_seconds),
+                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),  # noqa: UP031
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" % (chunk_seconds, chunk_percent, eta_seconds),  # noqa: UP031
             )
 
         i = i2
@@ -2567,8 +2565,8 @@ def _write_matrix_to_sparseNDArray(
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
-                    "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+                    "... %7.3f%% done" % chunk_percent,  # noqa: UP031
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"  # noqa: UP031
                     % (
                         i,
                         i2 - 1,
@@ -2584,7 +2582,7 @@ def _write_matrix_to_sparseNDArray(
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"  # noqa: UP031
             % (
                 i,
                 i2 - 1,
@@ -2604,8 +2602,8 @@ def _write_matrix_to_sparseNDArray(
 
         if chunk_percent < 100:
             logging.log_io(
-                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" % (chunk_seconds, chunk_percent, eta_seconds),
+                f"... {chunk_percent:7.3f}% done, ETA {eta_seconds}",
+                f"FINISH chunk in {chunk_seconds:.3f} seconds, {chunk_percent:7.3f}% done, ETA {eta_seconds}",
             )
 
         i = i2

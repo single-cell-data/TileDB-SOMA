@@ -264,7 +264,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         #   or
         #     pd.Series([np.nan] * 4, dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of double -- with NaN values -- not as desired.
-        if df[key].isnull().all():
+        if df[key].isna().all():
             if df[key].dtype.name == "object":
                 df[key] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
             elif df[key].dtype.name == "category":
@@ -283,10 +283,10 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         column = df[key]
         if isinstance(column.dtype, pd.CategoricalDtype):
             if hasattr(column.values, "categories"):
-                categories = column.values.categories
+                categories = column.values.categories  # noqa: PD011
 
             if hasattr(column.values, "ordered"):
-                ordered = bool(column.values.ordered)
+                ordered = bool(column.values.ordered)  # noqa: PD011
 
             df[key] = pd.Categorical(values=column, categories=categories, ordered=ordered)
 

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Generic, Sequence, TypeVar, Union
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar, Union
 
 import attrs
 import numpy as np

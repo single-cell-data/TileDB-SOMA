@@ -9,13 +9,13 @@ import json
 import pathlib
 import time
 import urllib.parse
+from collections.abc import Mapping
 from concurrent.futures import Future
 from itertools import zip_longest
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import (
     TYPE_CHECKING,
     Any,
-    Mapping,
     TypeVar,
     Union,
     cast,
@@ -57,7 +57,7 @@ def format_elapsed(start_stamp: float, message: str) -> str:
 
     Used for annotating elapsed time of a task.
     """
-    return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
+    return f"{message} TIME {time.time() - start_stamp:.3f} seconds"
 
 
 def is_local_path(path: str) -> bool:

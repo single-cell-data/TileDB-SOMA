@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from concurrent import futures
-from typing import Iterator, TypeVar
+from typing import TypeVar
 
 _T = TypeVar("_T")
 

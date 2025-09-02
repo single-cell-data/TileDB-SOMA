@@ -9,6 +9,7 @@ from __future__ import annotations
 import enum
 import json
 import warnings
+from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
 from typing import (
@@ -17,7 +18,6 @@ from typing import (
     Callable,
     Literal,
     Protocol,
-    Sequence,
     TypeVar,
 )
 
@@ -98,7 +98,7 @@ class AxisIndexer(query.AxisIndexer):
     Lifecycle: maturing
     """
 
-    query: "ExperimentAxisQuery"
+    query: ExperimentAxisQuery
     _index_factory: IndexFactory
     _cached_obs: IndexLike | None = None
     _cached_var: IndexLike | None = None
@@ -165,7 +165,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
     def __init__(
         self,
-        experiment: "Experiment",
+        experiment: Experiment,
         measurement_name: str,
         *,
         obs_query: AxisQuery | None = None,
