@@ -15,7 +15,6 @@ from somacore import experiment, options, query
 
 from . import _tdb_handles
 from ._collection import Collection, CollectionBase
-from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError
@@ -246,6 +245,7 @@ class _ArrayDelMd:
     obj: DataFrame | SparseNDArray | PointCloudDataFrame | GeometryDataFrame
     name: str  # human-readable name
     join_on: tuple[str, ...]
+    joinid_max: tuple[int, ...]
 
 
 def _append_if_supported(
@@ -270,10 +270,19 @@ def _append_if_supported(
         raise SOMAError(f"Delete operation not permitted on dense array: {name}")
     if isinstance(obj, GeometryDataFrame):
         raise NotImplementedError(f"Delete operation not permitted on GeometryDataFrame: {name}")
-    if isinstance(obj, (DataFrame, SparseNDArray, PointCloudDataFrame)) and all(
-        obj.schema.get_field_index(col) >= 0 for col in join_on
-    ):
-        candidates.append(_ArrayDelMd(obj=obj, name=name, join_on=join_on))
+
+    if not isinstance(obj, (DataFrame, SparseNDArray, PointCloudDataFrame)):
+        return
+    if not all(obj.schema.get_field_index(col_name) >= 0 for col_name in join_on):
+        return
+
+    if isinstance(obj, SparseNDArray):
+        joinid_max = [obj.shape[int(col_name.removeprefix("soma_dim_"))] - 1 for col_name in join_on]
+    else:
+        # dataframe-esque
+        joinid_max = [obj.domain[obj.index_column_names.index(col_name)][1] for col_name in join_on]
+
+    candidates.append(_ArrayDelMd(obj=obj, name=name, join_on=join_on, joinid_max=tuple(joinid_max)))
 
 
 def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
@@ -281,9 +290,7 @@ def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
     arr: AnySOMAObject
     candidates: list[_ArrayDelMd] = []
     if "obs_spatial_presence" in exp:
-        candidates.append(
-            _ArrayDelMd(obj=exp.obs_spatial_presence, name="obs_spatial_presence", join_on=(SOMA_JOINID,))
-        )
+        _append_if_supported(candidates, exp.obs_spatial_presence, "obs_spatial_presence", ("soma_joinid",))
     for ms_name, ms in exp.ms.items():
         if "X" in ms:
             for key, arr in ms.X.items():
@@ -295,12 +302,12 @@ def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
             for key, arr in ms.obsp.items():
                 _append_if_supported(candidates, arr, f"ms[{ms_name}].obsp[{key}]", ("soma_dim_0", "soma_dim_1"))
     if "spatial" in exp:
-        for key, sc in exp.spatial.items():
+        for scene_name, sc in exp.spatial.items():
             if "obsl" in sc:
-                for key2, arr in sc.obsl.items():
-                    _append_if_supported(candidates, arr, f"spatial[{key}].obsl[{key2}]", ("soma_joinid",))
+                for key, arr in sc.obsl.items():
+                    _append_if_supported(candidates, arr, f"spatial[{scene_name}].obsl[{key}]", ("soma_joinid",))
 
-    candidates.append(_ArrayDelMd(obj=exp.obs, name="obs", join_on=(SOMA_JOINID,)))
+    _append_if_supported(candidates, exp.obs, "obs", ("soma_joinid",))
     return candidates
 
 
@@ -312,12 +319,8 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
 
     candidates: list[_ArrayDelMd] = []
     if "var_spatial_presence" in exp.ms[ms_name]:
-        candidates.append(
-            _ArrayDelMd(
-                obj=exp.ms[ms_name].var_spatial_presence,
-                name=f"ms[{ms_name}].var_spatial_presence",
-                join_on=(SOMA_JOINID,),
-            )
+        _append_if_supported(
+            candidates, exp.ms[ms_name].var_spatial_presence, f"ms[{ms_name}].var_spatial_presence", ("soma_joinid",)
         )
     if "X" in exp.ms[ms_name]:
         for key, arr in exp.ms[ms_name].X.items():
@@ -329,14 +332,14 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
         for key, arr in exp.ms[ms_name].varp.items():
             _append_if_supported(candidates, arr, f"ms[{ms_name}].varp[{key}]", ("soma_dim_0", "soma_dim_1"))
     if "spatial" in exp:
-        for key, sc in exp.spatial.items():
+        for scene_name, sc in exp.spatial.items():
             if ("varl" in sc) and (ms_name in sc.varl):
-                for key2, arr in sc.varl[ms_name].items():
-                    _append_if_supported(candidates, arr, f"spatial[{key}].varl[{key2}]", ("soma_joinid",))
+                for key, arr in sc.varl[ms_name].items():
+                    _append_if_supported(
+                        candidates, arr, f"spatial[{scene_name}].varl[{ms_name}][{key}]", ("soma_joinid",)
+                    )
 
-    candidates.append(
-        _ArrayDelMd(obj=exp.ms[ms_name].var, name=f"ms[{ms_name}].var", join_on=(SOMA_JOINID,)),
-    )
+    _append_if_supported(candidates, exp.ms[ms_name].var, f"ms[{ms_name}].var", ("soma_joinid",))
     return candidates
 
 
@@ -359,8 +362,10 @@ def _delete_cells(
         return
 
     for arr_md in candidates:
-        for join_on in arr_md.join_on:
+        for join_on, joinid_max in zip(arr_md.join_on, arr_md.joinid_max):
             dim_idx = arr_md.obj.schema.get_field_index(join_on)
             coords = [slice(None)] * (dim_idx + 1)
-            coords[dim_idx] = joinids
+            coords[dim_idx] = pa.compute.filter(joinids, pa.compute.less_equal(joinids, joinid_max))
+
+            # Delete each join_on dimension separately, as we have no outer join
             arr_md.obj.delete_cells(tuple(coords), platform_config=platform_config)

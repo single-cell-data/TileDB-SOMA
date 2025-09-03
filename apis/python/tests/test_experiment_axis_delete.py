@@ -81,10 +81,6 @@ def test_experiment_obs_axis_delete_from_pbmc3k(
         assert "spatial" not in exp
 
 
-# var_id, n_cells
-# len  1837
-
-
 @pytest.mark.parametrize(
     "experiment_path",
     [
@@ -168,12 +164,22 @@ def test_experiment_var_axis_delete_from_pbmc3k(
 
 
 @pytest.mark.spatialdata
-def test_experiment_obs_axis_delete_spatial(soma_spatial_experiment, soma_tiledb_context) -> None:  # noqa: F811
-    with soma.open(soma_spatial_experiment.uri, mode="d", context=soma_tiledb_context) as exp:
+def test_experiment_obs_axis_delete_spatial(soma_spatial_experiment, soma_tiledb_context, tmp_path) -> None:  # noqa: F811
+    # Make a copy of the Experiment as to not write over the original
+    exp_path = pathlib.PosixPath(soma_spatial_experiment.uri.removeprefix("file://"))
+    uri = (tmp_path / exp_path.name).as_posix()
+    shutil.copytree(exp_path.as_posix(), uri)
+
+    ms_name = "RNA"
+    with soma.open(uri, mode="r", context=soma_tiledb_context) as exp:
+        original_var_joinids = exp.ms[ms_name].var.read(column_names=["soma_joinid"]).concat().column("soma_joinid")
+
+    with soma.open(uri, mode="d", context=soma_tiledb_context) as exp:
         exp.obs_axis_delete(value_filter="soma_joinid >= 33")
 
     exp.reopen(mode="r")
     assert (exp.obs.read().concat().to_pandas()["soma_joinid"] < 33).all()
+    assert exp.ms[ms_name].var.read(column_names=["soma_joinid"]).concat().column("soma_joinid") == original_var_joinids
     assert (exp.obs_spatial_presence.read().concat().to_pandas()["soma_joinid"] < 33).all()
     for ms in exp.ms.values():
         for arr in ms.X.values():
@@ -181,6 +187,41 @@ def test_experiment_obs_axis_delete_spatial(soma_spatial_experiment, soma_tiledb
     for sc in exp.spatial.values():
         for arr in sc.obsl.values():
             assert (arr.read().concat().to_pandas()["soma_joinid"] < 33).all()
+
+
+@pytest.mark.spatialdata
+def test_experiment_var_axis_delete_spatial(soma_spatial_experiment, soma_tiledb_context, tmp_path) -> None:  # noqa: F811
+    # Make a copy of the Experiment as to not write over the original
+    exp_path = pathlib.PosixPath(soma_spatial_experiment.uri.removeprefix("file://"))
+    uri = (tmp_path / exp_path.name).as_posix()
+    shutil.copytree(exp_path.as_posix(), uri)
+
+    ms_name = "RNA"
+    with soma.open(uri, mode="r", context=soma_tiledb_context) as exp:
+        original_obs_joinids = exp.obs.read(column_names=["soma_joinid"]).concat().column("soma_joinid")
+        original_var_joinids = exp.ms[ms_name].var.read(column_names=["soma_joinid"]).concat().column("soma_joinid")
+
+    with soma.open(uri, mode="d", context=soma_tiledb_context) as exp:
+        exp.var_axis_delete(measurement_name="RNA", value_filter="soma_joinid >= 33")
+
+    exp.reopen(mode="r")
+    assert exp.obs.read(column_names=["soma_joinid"]).concat().column("soma_joinid") == original_obs_joinids
+    assert (exp.ms[ms_name].var.read().concat().to_pandas()["soma_joinid"] < 33).all()
+    assert exp.obs_spatial_presence.read().concat().column("soma_joinid") == original_obs_joinids
+    for ms_key, ms_val in exp.ms.items():
+        if ms_key == ms_name:
+            assert (ms_val.var_spatial_presence.read().concat().to_pandas()["soma_joinid"] < 33).all()
+
+        else:
+            assert (ms_val.var_spatial_presence.read()).concat().to_pandas()["soma_joinid"] == original_var_joinids
+
+    for arr in exp.ms[ms_name].X.values():
+        assert (arr.read().tables().concat().to_pandas()["soma_dim_1"] < 33).all()
+    for sc in exp.spatial.values():
+        for sc_ms_name, sc_ms_df in sc.varl.items():
+            if sc_ms_name == ms_name:
+                for arr in sc_ms_df.values():
+                    assert (arr.read().concat().to_pandas()["soma_joinid"] < 33).all()
 
 
 @pytest.mark.parametrize(
