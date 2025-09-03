@@ -944,23 +944,6 @@ class ArrowAdapter {
     static Dimension _create_dim(
         tiledb_datatype_t type, std::string name, const void* buff, std::shared_ptr<Context> ctx);
 
-    static FilterList _create_filter_list(std::string filters, std::shared_ptr<Context> ctx);
-
-    static FilterList _create_filter_list(json filters, std::shared_ptr<Context> ctx);
-
-    static FilterList _create_attr_filter_list(
-        std::string name, PlatformConfig platform_config, std::shared_ptr<Context> ctx);
-
-    static FilterList _create_dim_filter_list(
-        std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
-
-    static Filter _get_zstd_default(
-        PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
-
-    static void _append_to_filter_list(FilterList filter_list, json filter, std::shared_ptr<Context> ctx);
-
-    static void _set_filter_option(Filter filter, std::string option_name, json value);
-
     static tiledb_layout_t _get_order(std::string order);
 
     // Throws if the array and the schema don't have the same

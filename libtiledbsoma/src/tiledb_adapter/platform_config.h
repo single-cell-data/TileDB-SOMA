@@ -22,6 +22,8 @@
 
 namespace tiledbsoma {
 
+using namespace tiledb;
+
 struct PlatformConfig {
    public:
     /* Set the ZstdFilter's level for DataFrame dims */
@@ -260,19 +262,50 @@ struct PlatformSchemaConfig {
 namespace utils {
 
 /**
-* @brief Get members of the TileDB Schema in the form of a
-* PlatformSchemaConfig
-*
-* @return PlatformSchemaConfig
-*/
-PlatformSchemaConfig platform_schema_config_from_tiledb(tiledb::ArraySchema tiledb_schema);
+ * Create a TileDB filter list from JSON serialized in a string.
+ *
+ * @param filters A json description of filters serialized to a string.
+ * @param ctx TileDB context.
+ * @return FilterList
+ */
+FilterList create_filter_list(std::string filters, std::shared_ptr<Context> ctx);
 
 /**
-* @brief Get members of the TileDB Schema in the form of a PlatformConfig
+ * Create a TileDB filter list from JSON serialized in a string.
+ *
+ * @param name The name of the TileDB attribute.
+ * @param platform_config A platform config object for the array the will contain the attribute.
+ * @param ctx TileDB context.
+ * @return FilterList
+ */
+FilterList create_attr_filter_list(std::string name, PlatformConfig platform_config, std::shared_ptr<Context> ctx);
+
+/**
+ * Create a TileDB filter list from JSON serialized in a string.
+ *
+ * @param name The name of the TileDB dimension.
+ * @param soma_type The type of the SOMA object that will be created.
+ * @param platform_config A platform config object for the array the will contain the attribute.
+ * @param ctx TileDB context.
+ */
+FilterList create_dim_filter_list(
+    std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
+
+/**
+* Get members of the TileDB Schema in the form of a PlatformSchemaConfig.
 *
+* @param tiledb_schema The TileDB Schema to convert to a PlatformSchemaConfig.
+* @return PlatformSchemaConfig
+*/
+PlatformSchemaConfig platform_schema_config_from_tiledb(ArraySchema tiledb_schema);
+
+/**
+* Get members of the TileDB Schema in the form of a PlatformConfig.
+*
+* @param tiledb_schema The TileDB Schema to convert to a PlatformConfig.
 * @return PlatformConfig
 */
-PlatformConfig platform_config_from_tiledb_schema(tiledb::ArraySchema tiledb_schema);
+PlatformConfig platform_config_from_tiledb_schema(ArraySchema tiledb_schema);
 
 }  // namespace utils
 
