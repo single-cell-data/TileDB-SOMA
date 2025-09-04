@@ -815,7 +815,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        auto dcoltype = to_arrow_format(enmr->type(), false).data();
+        auto dcoltype = to_arrow_format(enmr->type()).data();
         auto dnatype = to_nanoarrow_type(dcoltype);
 
         if (dnatype == NANOARROW_TYPE_TIMESTAMP) {
@@ -1233,17 +1233,13 @@ size_t ArrowAdapter::_set_var_dictionary_buffers(Enumeration& enumeration, const
 
     size_t count = offsets_size / sizeof(uint64_t);
 
-    std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), count);
-
-    uint32_t* small_offsets = static_cast<uint32_t*>(malloc((count + 1) * sizeof(uint32_t)));
     buffers[2] = malloc(data_size);
-
     std::memcpy(const_cast<void*>(buffers[2]), data, data_size);
-    for (size_t i = 0; i < count; ++i) {
-        small_offsets[i] = static_cast<uint32_t>(offsets_v[i]);
-    }
-    small_offsets[count] = static_cast<uint32_t>(data_size);
-    buffers[1] = small_offsets;
+
+    auto large_offsets = static_cast<uint64_t*>(malloc((count + 1) * sizeof(uint64_t)));
+    std::memcpy(static_cast<void*>(large_offsets), offsets, offsets_size);
+    large_offsets[count] = data_size;
+    buffers[1] = large_offsets;
 
     return count;
 }
