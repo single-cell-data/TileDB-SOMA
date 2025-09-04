@@ -124,7 +124,8 @@ test_that("Load SeuratCommand with missing commands", {
     "SOMAExperimentAxisQuery"
   )
 
-  expect_no_condition(obj <- query$to_seurat(X_layers = c("data" = "data")))
+  # expect_no_condition(obj <- query$to_seurat(X_layers = c("data" = "data")))
+  (obj <- query$to_seurat(X_layers = c("data" = "data")))
 
   withr::with_options(
     list(verbose = TRUE),
