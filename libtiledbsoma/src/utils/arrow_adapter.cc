@@ -400,28 +400,6 @@ Dimension ArrowAdapter::_create_dim(
     }
 }
 
-tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
-    std::transform(order.begin(), order.end(), order.begin(), [](unsigned char c) { return std::tolower(c); });
-
-    std::map<std::string, tiledb_layout_t> convert_order = {
-        {"row-major", TILEDB_ROW_MAJOR},
-        {"row_major", TILEDB_ROW_MAJOR},
-        {"row", TILEDB_ROW_MAJOR},
-        {"col-major", TILEDB_COL_MAJOR},
-        {"col_major", TILEDB_COL_MAJOR},
-        {"column-major", TILEDB_COL_MAJOR},
-        {"col", TILEDB_COL_MAJOR},
-        {"hilbert", TILEDB_HILBERT},
-        {"unordered", TILEDB_UNORDERED},
-    };
-
-    try {
-        return convert_order[order];
-    } catch (const std::out_of_range& e) {
-        throw TileDBSOMAError(fmt::format("Invalid order {} passed to PlatformConfig", order));
-    }
-}
-
 std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     const managed_unique_ptr<ArrowSchema>& arrow_schema,
@@ -431,40 +409,10 @@ std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_s
     bool is_sparse,
     PlatformConfig platform_config,
     std::optional<std::pair<int64_t, int64_t>> timestamp_range) {
+    auto schema = utils::create_base_tiledb_schema(ctx, platform_config, is_sparse, timestamp_range);
+
     auto& index_column_array = index_column_info.first;
     auto& index_column_schema = index_column_info.second;
-
-    tiledb_array_schema_t* c_schema;
-    if (timestamp_range.has_value() && timestamp_range.value().first != 0) {
-        ctx->handle_error(tiledb_array_schema_alloc_at_timestamp(
-            ctx->ptr().get(), is_sparse ? TILEDB_SPARSE : TILEDB_DENSE, timestamp_range.value().first, &c_schema));
-    } else {
-        ctx->handle_error(
-            tiledb_array_schema_alloc(ctx->ptr().get(), is_sparse ? TILEDB_SPARSE : TILEDB_DENSE, &c_schema));
-    }
-    ArraySchema schema(*ctx, c_schema);
-
-    Domain domain(*ctx);
-
-    schema.set_capacity(platform_config.capacity);
-
-    if (!platform_config.offsets_filters.empty()) {
-        schema.set_offsets_filter_list(utils::create_filter_list(platform_config.offsets_filters, ctx));
-    }
-
-    if (!platform_config.validity_filters.empty()) {
-        schema.set_validity_filter_list(utils::create_filter_list(platform_config.validity_filters, ctx));
-    }
-
-    schema.set_allows_dups(platform_config.allows_duplicates);
-
-    if (platform_config.tile_order) {
-        schema.set_tile_order(ArrowAdapter::_get_order(*platform_config.tile_order));
-    }
-
-    if (platform_config.cell_order) {
-        schema.set_cell_order(ArrowAdapter::_get_order(*platform_config.cell_order));
-    }
 
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
@@ -524,6 +472,7 @@ std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_s
     soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
     soma_schema_extension["version"] = TILEDB_SOMA_SCHEMA_VERSION;
 
+    Domain domain(*ctx);
     // Unit tests expect dimension order should match the index column schema
     // and NOT the Arrow schema
     // We generate the additional schema metadata here to ensure that the

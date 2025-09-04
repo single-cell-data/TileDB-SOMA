@@ -261,6 +261,12 @@ struct PlatformSchemaConfig {
 
 namespace utils {
 
+ArraySchema create_base_tiledb_schema(
+    std::shared_ptr<Context> ctx,
+    const PlatformConfig& platform_config,
+    bool is_sparse,
+    std::optional<std::pair<int64_t, int64_t>> timestamp_range = std::nullopt);
+
 /**
  * Create a TileDB filter list from JSON serialized in a string.
  *
