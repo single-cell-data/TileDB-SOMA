@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - \[[#4139](https://github.com/single-cell-data/tiledb-soma/pull/4139)\] [python] ExperimentAxisQuery.to_anndata would export obsm/varm as float32, regardless of the underlying SOMA data type. With this fix, the exported matrix will have the same data type as the original data.
 - \[[#4147](https://github.com/single-cell-data/TileDB-SOMA/pull/4147)\] [python] Fix a race condition in SOMA collection caching which would result in redundant object opens.
+- \[[#4223](https://github.com/single-cell-data/TileDB-SOMA/pull/4223)\] [python] Fix race condition in H5AD reading in the `tiledbsoma.io` module.
 
 ### Security
 
