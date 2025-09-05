@@ -118,7 +118,7 @@ def main(args):
     filepath = f"{pathlib.Path(__file__).parent}/../.github/workflows/python-ci-packaging.yml"
     update_version(filepath, new_version, new_hash)
 
-    filepath = f"{pathlib.Path(__file__).parent}/../.github/workflows/libtiledbsoma-asan-ci.yml"
+    filepath = f"{pathlib.Path(__file__).parent}/../.github/workflows/test-cpp.yml"
     update_version(filepath, new_version, new_hash)
 
 
