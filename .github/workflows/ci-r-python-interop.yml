@@ -50,8 +50,8 @@ jobs:
       # is crucial for anyone doing releases of TileDB-SOMA.
       #
       # Please edit both files in the same way:
-      # * r-ci.yml
-      # * r-python-interop-testing.yml
+      # * test-r.yml
+      # * ci-r-python-interop.yml
       #
       # Do not remove these comments until such time as we have eliminated our dependency on
       # the TileDB-R package.
