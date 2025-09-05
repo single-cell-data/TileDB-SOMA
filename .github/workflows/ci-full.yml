@@ -59,7 +59,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     uses: ./.github/workflows/test-cpp.yml
     with:
-      os: ${{ matrix.config.os }}
-      run_asan: ${{ matrix.os == "ubuntu-latest" }}
-      report_codecov: $${{ matrix.os == "ubuntu-latest" }}
+      os: ${{ matrix.os }}
+      run_asan: ${{ matrix.os == 'ubuntu-latest' }}
+      report_codecov: $${{ matrix.os == 'ubuntu-latest' }}
     secrets: inherit
