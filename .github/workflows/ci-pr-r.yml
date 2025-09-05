@@ -18,7 +18,7 @@ on:
 jobs:
   r-tests:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         config:
           - {os: macos-latest, r: 'release'}

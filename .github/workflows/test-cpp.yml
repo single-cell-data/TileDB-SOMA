@@ -1,19 +1,45 @@
-name: libtiledbsoma ASAN
+# Reusable workflow that runs Python tests.
+# About reusable workflows: https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
+
+name: TileDB-SOMA Python CI
 
 on:
-  pull_request:
-    paths:
-      - "libtiledbsoma/**"
-      - ".github/workflows/libtiledbsoma-asan-ci.yml"
-  push:
-    branches:
-      - main
-      - 'release-*'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      run_asan:
+        required: true
+        type: bool
+      report_codecov:
+        required: true
+        type: boolean
 
 jobs:
+  ctest:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Build libtiledbsoma
+        run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
+
+      - name: Run C++ tests
+        run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
+
+     - name: Upload coverage to Codecov
+       uses: codecov/codecov-action@v5
+       with:
+         flags: libtiledbsoma
+         gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
+         token: ${{ secrets.CODECOV_TOKEN }}
+
+
   asan:
-    runs-on: ubuntu-24.04
+    if: ${{ inputs.run_asan }}
+    runs-on: ${{ inputs.os }}
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4

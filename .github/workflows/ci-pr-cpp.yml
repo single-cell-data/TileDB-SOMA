@@ -1,0 +1,22 @@
+name: libTileDB-SOMA CodeCov
+
+on:
+  pull_request:
+    paths:
+      - "libtiledbsoma/**"
+      - ".github/workflows/ci-pr-cpp.yml"
+      - ".github/workflows/test-cpp.yml"
+  workflow_dispatch:
+
+jobs:
+  cpp-tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/test-cpp.yml
+    with:
+      os: ${{ matrix.config.os }}
+      run_asan: ${{ matrix.os == "ubuntu-latest" }}
+      report_codecov: $${{ matrix.os == "ubuntu-latest" }}
+    secrets: inherit
