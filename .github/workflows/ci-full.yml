@@ -1,25 +1,26 @@
-name: TileDB-SOMA Python CI (Full)
+# Run full CI for Python, R, and C++
+name: TileDB-SOMA CI (full)
 
-# This workflow calls ./python-ci-single.yml on the full {os} x {python version}
-# matrix.
 on:
   push:
     branches:
       - main
       - 'release-*'
+  pull_request:
+    paths:
+      - '.github/workflows/ci-full.yml'
+      - '.github/workflows/test-python.yml'
+      - '.github/workflows/test-r.yml'
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
-  build:
+  python-tests:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: decide on Windows CI coverage
         os: [ubuntu-24.04, macos-latest]
-        # os: [ubuntu-24.04, macos-latest, windows-2019]
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/1849
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         include:
           - os: ubuntu-24.04
@@ -28,7 +29,7 @@ jobs:
           - os: macos-latest
             cc: clang
             cxx: clang++
-    uses: ./.github/workflows/python-ci-single.yml
+    uses: ./.github/workflows/test-python.yml
     with:
       os: ${{ matrix.os }}
       python_version: ${{ matrix.python-version }}
@@ -36,4 +37,20 @@ jobs:
       cxx: ${{ matrix.cxx }}
       report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11' }}
       run_lint: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11' }}
+    secrets: inherit
+
+  r-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'oldrel-1'}
+    uses: ./.github/workflows/test-r.yml
+    with:
+      os: ${{ matrix.config.os }}
+      r: ${{ matrix.config.r }}
+      http-user-agent: ${{ http-user-agent }}
     secrets: inherit

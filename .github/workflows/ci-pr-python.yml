@@ -1,7 +1,5 @@
-name: TileDB-SOMA Python CI (Minimal)
+name: TileDB-SOMA Python CI (Pull-request)
 
-# This workflow calls ./python-ci-single.yml on a limited subset of the
-# {os} x {python version} matrix.
 on:
   pull_request:
     branches:
@@ -11,8 +9,8 @@ on:
       - "libtiledbsoma/**"
       - "apis/python/**"
       - "!**.md"
-      - ".github/workflows/python-ci-minimal.yml"
-      - ".github/workflows/python-ci-single.yml"
+      - ".github/workflows/ci-pr-python.yml"
+      - ".github/workflows/test-python.yml"
   workflow_dispatch:
 
 jobs:
@@ -30,12 +28,12 @@ jobs:
           - os: macos-latest
             cc: clang
             cxx: clang++
-    uses: ./.github/workflows/python-ci-single.yml
+    uses: ./.github/workflows/test-python.yml
     with:
       os: ${{ matrix.os }}
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
-      report_codecov: ${{ matrix.python-version == '3.12' }}
+      report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.12' }}
       run_lint: ${{ matrix.python-version == '3.12' }}
     secrets: inherit
