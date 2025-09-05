@@ -1,4 +1,5 @@
-import os
+import gc
+import pathlib
 
 import pytest
 
@@ -19,7 +20,7 @@ def test_to_anndata(soma_tiledb_context, version, name_and_expected_shape):
     name, expected_shape = name_and_expected_shape
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
@@ -54,6 +55,9 @@ def test_to_anndata(soma_tiledb_context, version, name_and_expected_shape):
 
             assert adata.varm["PCs"].shape == (expected_nvar, 50)
 
+        del adata
+        gc.collect()
+
 
 @pytest.mark.parametrize(
     "version_and_upgraded",
@@ -73,7 +77,7 @@ def test_get_experiment_shapes(version_and_upgraded):
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )

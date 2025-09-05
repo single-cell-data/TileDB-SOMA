@@ -952,23 +952,13 @@ class ManagedQuery {
         }
         std::vector<IndexType> original_indexes(idxbuf, idxbuf + index_array->length);
 
-        // Shift the dictionary indexes to match the on-disk extended
-        // enumerations
-        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
-        std::unordered_map<ValueType, IndexType> enmr_map;
-        IndexType idx = 0;
-        for (const auto& enmr_value : enmr_vec) {
-            enmr_map.insert(std::make_pair(enmr_value, idx));
-            ++idx;
-        }
-
         std::vector<IndexType> shifted_indexes(original_indexes.size());
         for (size_t i = 0; i < original_indexes.size(); i++) {
             IndexType oi = original_indexes[i];
             if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
-                shifted_indexes[i] = enmr_map[enum_values_in_write[oi]];
+                shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi]).value();
             }
         }
 
@@ -1018,20 +1008,13 @@ class ManagedQuery {
 
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
-        auto enmr_vec = extended_enmr.as_vector<ValueType>();
-        std::unordered_map<ValueType, IndexType> enmr_map;
-        IndexType idx = 0;
-        for (const auto& enmr_value : enmr_vec) {
-            enmr_map[enmr_value] = idx++;
-        }
-
         std::vector<IndexType> shifted_indexes(original_indexes.size());
         for (size_t i = 0; i < original_indexes.size(); i++) {
             IndexType oi = original_indexes[i];
             if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
-                shifted_indexes[i] = enmr_map[enum_values_in_write[oi]];
+                shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi]).value();
             }
         }
 

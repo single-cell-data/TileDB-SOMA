@@ -6,21 +6,16 @@ on:
       - main
       - 'release-*'
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'apis/r/**'
-      - 'docker/**'
-      - 'docs/**'
-      - '.github/**'
-      - '!.github/workflows/python-remote-storage.yml'
+    paths:
+      - "libtiledbsoma/**"
+      - "apis/python/**"
+      - "!**.md"
+      - '.github/workflows/python-remote-storage.yml'
   workflow_dispatch:
 
 env:
-  # Don't name this "TILEDB_REST_TOKEN" since that will map into a core
-  # env/config override, as if config key "rest.token" had been set.  One of the
-  # purposes of this CI is to run tests where all config is passed via context
-  # arguments and none via environment variables, in order to flush out
-  # callsites within the code which aren't passing context as they should.
+  # Don't name this "TILEDB_REST_TOKEN" since that will map into a core env/config override. This
+  # test should verify all config options are being properly passed with just config/context.
   TILEDB_REST_UNITTEST_TOKEN: ${{ secrets.TILEDB_REST_UNITTEST_TOKEN}}
 
 jobs:
@@ -29,15 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # This could be run on MacOS too, but, we have enough OS redundancy,
-          # and MacOS-runner availability is a more tightly constrained resource
-          # in GitHub Actions as of 2025-02-06.
           - name: linux
             os: ubuntu-24.04
-            # TO DO: also on 3.12. But 3.9 is higher-pri, until we drop support
-            # for it. (Note our main CI run tests across a broader set of Python
-            # versions.)
-            python_version: 3.9
+            python_version: 3.9 # Should match TileDB-Cloud version
             cc: gcc-13
             cxx: g++-13
 
@@ -53,25 +42,12 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: cat /proc/cpuinfo
 
-      - name: MacOS CPU info
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: sysctl -a | grep cpu
-
-      - name: Select XCode version
-        if: startsWith(matrix.os, 'macos')
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.4'
-
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
           cache-dependency-path: ./apis/python/setup.py
-
-      - name: Show XCode version
-        run: clang --version
 
       - name: Check out TileDB-SOMA
         uses: actions/checkout@v4
@@ -94,10 +70,11 @@ jobs:
         #
         env:
           CC: ${{ matrix.cc }}
+
           CXX: ${{ matrix.cxx }}
 
       - name: Install dependencies
-        run: pip install --prefer-binary pytest typeguard tiledb.cloud
+        run: pip install --prefer-binary pytest typeguard 'tiledb<=0.34.0' tiledb.cloud
 
       - name: Show package versions
         run: python scripts/show-versions.py

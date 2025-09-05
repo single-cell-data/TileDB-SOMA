@@ -45,7 +45,7 @@ def context(concurrency: int | None) -> soma.SOMATileDBContext:
     return soma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
 
 
-def assert_eq(sp: sparse.spmatrix, cm: fastercsx.CompressedMatrix) -> bool:
+def assert_eq(sp: sparse.spmatrix | sparse.sparray, cm: fastercsx.CompressedMatrix) -> bool:
     sp_csx = sp.tocsr() if cm.format == "csr" else sp.tocsc()
 
     assert cm.data.shape == sp_csx.data.shape

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <tiledb/tiledb>
+#include "../tiledb_adapter/platform_config.h"
 #include "soma_column.h"
 
 namespace tiledbsoma {

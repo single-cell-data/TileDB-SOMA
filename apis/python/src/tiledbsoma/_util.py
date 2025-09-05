@@ -9,13 +9,13 @@ import json
 import pathlib
 import time
 import urllib.parse
+from collections.abc import Mapping
 from concurrent.futures import Future
 from itertools import zip_longest
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import (
     TYPE_CHECKING,
     Any,
-    Mapping,
     TypeVar,
     Union,
     cast,
@@ -57,7 +57,7 @@ def format_elapsed(start_stamp: float, message: str) -> str:
 
     Used for annotating elapsed time of a task.
     """
-    return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
+    return f"{message} TIME {time.time() - start_stamp:.3f} seconds"
 
 
 def is_local_path(path: str) -> bool:
@@ -78,8 +78,8 @@ def make_relative_path(uri: str, relative_to: str) -> str:
     p_uri = urllib.parse.urlparse(uri)
     p_relative_to = urllib.parse.urlparse(relative_to)
 
-    uri_scheme = p_uri.scheme if p_uri.scheme != "" else "file"
-    relative_to_scheme = p_relative_to.scheme if p_relative_to.scheme != "" else "file"
+    uri_scheme = p_uri.scheme if p_uri.scheme else "file"
+    relative_to_scheme = p_relative_to.scheme if p_relative_to.scheme else "file"
     if uri_scheme != relative_to_scheme:
         raise ValueError("Unable to make relative path between URIs with different scheme")
 
@@ -104,7 +104,7 @@ def uri_joinpath(base: str, path: str) -> str:
     if len(path) == 0:
         return base
 
-    if p_base.scheme == "" or p_base.scheme == "file":
+    if not p_base.scheme or p_base.scheme == "file":
         # if a file path, just use pathlib.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
     else:
@@ -349,7 +349,7 @@ def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
 
 
 def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json: bool = True) -> _JSONFilterList:
-    _convert_filter = {
+    convert_filter_ = {
         "GzipFilter": "GZIP",
         "ZstdFilter": "ZSTD",
         "LZ4Filter": "LZ4",
@@ -370,7 +370,7 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
         "NoOpFilter": "NOOP",
     }
 
-    _convert_option = {
+    convert_option_ = {
         "GZIP": {"level": "COMPRESSION_LEVEL"},
         "ZSTD": {"level": "COMPRESSION_LEVEL"},
         "LZ4": {"level": "COMPRESSION_LEVEL"},
@@ -407,15 +407,15 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
 
     for info in filters:
         if len(info) == 1:
-            filter = _convert_filter[cast("str", info["_type"])]
+            filter = convert_filter_[cast("str", info["_type"])]
         else:
             filter = {}
             for option_name, option_value in info.items():
-                filter_name = _convert_filter[cast("str", info["_type"])]
+                filter_name = convert_filter_[cast("str", info["_type"])]
                 if option_name == "_type":
                     filter["name"] = filter_name
                 else:
-                    filter[_convert_option[filter_name][option_name]] = cast("Union[float, int]", option_value)
+                    filter[convert_option_[filter_name][option_name]] = cast("Union[float, int]", option_value)
         filter_list.append(filter)
     return json.dumps(filter_list) if return_json else filter_list
 

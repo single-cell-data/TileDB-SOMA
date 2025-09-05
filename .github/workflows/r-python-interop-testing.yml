@@ -3,15 +3,11 @@ name: TileDB-SOMA R-Python interop testing
 on:
   pull_request:
     paths:
-      - '**'
-      - '!.github/**'
+      - 'libtiledbsoma/**'
+      - 'apis/**'
+      - '!**.md'
       - '.github/workflows/r-python-interop-testing.yml'
-      - '!docker/**'
-    # TODO: leave this enabled for pre-merge signal for now. At some point we may want to go back to
-    # only having this signal post-merge.
-    #  - "apis/python/**"
-    #  - "apis/r/**"
-    #  - "apis/system/**"
+      - '.github/actions/setup-r/**'
   push:
     branches:
       - main
@@ -31,30 +27,14 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # ensure we get all tags to inform package version determination
+          fetch-tags: true
 
-      - uses: r-lib/actions/setup-pandoc@v2
+      - name: Set Up Test Data
+        run: make data
 
-      - uses: r-lib/actions/setup-r@v2
+      - uses: ./.github/actions/setup-r
         with:
-          use-public-rspm: true
-          extra-repositories: https://tiledb-inc.r-universe.dev
-
-      - name: P3M Bioconductor
-        run: |
-          cat(
-            'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n',
-            'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")\n',
-            sep = '',
-            file = '~/.Rprofile',
-            append = TRUE
-          )
-        shell: Rscript {0}
-
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          working-directory: 'apis/r/'
-          cache-version: 3
+          os: ${{ matrix.os }}
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .

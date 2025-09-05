@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from threading import Lock
-from typing import Any, Callable, Generic, Iterable, Iterator, TypeVar, cast
+from typing import Any, Callable, Generic, TypeVar, cast
 
 import attrs
 from somacore import options
@@ -14,7 +15,7 @@ from typing_extensions import Self
 from . import _tdb_handles
 
 # This package's pybind11 code
-from . import pytiledbsoma as clib  # noqa: E402
+from . import pytiledbsoma as clib
 from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
@@ -44,7 +45,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
     def __init__(
         self,
-        handle: _tdb_handles.SOMAGroupWrapper[Any],  # noqa: ANN401
+        handle: _tdb_handles.SOMAGroupWrapper[Any],
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(handle, **kwargs)
@@ -204,7 +205,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         self._close_stack.enter_context(child)
         return child
 
-    def _new_child_uri(self, *, key: str, user_uri: str | None) -> "_ChildURI":
+    def _new_child_uri(self, *, key: str, user_uri: str | None) -> _ChildURI:
         maybe_relative_uri = user_uri or sanitize_key(key)
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.

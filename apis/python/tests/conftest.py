@@ -30,11 +30,15 @@ def soma_tiledb_config() -> dict[str, Any] | None:
 
     is_CI = os.getenv("CI", "false") == "true"
     if is_CI:
+        # default concurrency is cpu_count. Halve to reduce per-worker memory use
+        n_cpus = max(1, (os.cpu_count() or 1) // 2)
         tiledb_config = {
             "sm.mem.total_budget": 1 * 1024**3,
             "sm.memory_budget": 512 * 1024**2,
             "sm.memory_budget_var": 512 * 1024**2,
             "soma.init_buffer_bytes": 128 * 1024**2,
+            "sm.compute_concurrency_level": n_cpus,
+            "sm.io_concurrency_level": n_cpus,
         }
     return tiledb_config
 
@@ -48,6 +52,8 @@ def soma_tiledb_context(soma_tiledb_config: dict[str, Any] | None) -> tiledbsoma
 @pytest.fixture
 def conftest_pbmc_small_h5ad_path(request) -> Path:
     """Path to a tiny (80x20) h5ad, useful for unit-test / CI runs."""
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc-small.h5ad"
 
 
@@ -84,6 +90,8 @@ def conftest_pbmc_small_exp(conftest_pbmc_small_h5ad_path: Path) -> Experiment:
 @pytest.fixture
 def conftest_pbmc3k_h5ad_path(request) -> Path:
     """Path to a larger (2638x1838) h5ad, which also includes obsm, obsp, and varm arrays."""
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc3k_processed.h5ad"
 
 

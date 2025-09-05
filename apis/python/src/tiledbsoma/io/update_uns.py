@@ -187,7 +187,7 @@ def _update_uns_dict(
         elif isinstance(v, pd.DataFrame):
             if can_write(k, v, cur):
                 with _write_dataframe(
-                    df_uri=join(coll.uri, k),
+                    df_uri=join(coll.uri, k),  # noqa: PTH118
                     df=v.copy(),  # `_write_dataframe` modifies the `pd.DataFrame` it's passed
                     id_column_name=default_index_name,
                     ingestion_params=ingest_platform_ctx["ingestion_params"],

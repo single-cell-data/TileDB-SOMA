@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any, Final
 
 import attrs
 import pyarrow as pa
@@ -19,7 +20,7 @@ from somacore import (
     ScaleTransform,
     options,
 )
-from typing_extensions import Final, Self
+from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib
@@ -209,7 +210,7 @@ class MultiscaleImage(
             datatype=type,
         )
 
-        _image_meta_str = image_meta.to_json()
+        image_meta_str_ = image_meta.to_json()
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAMultiscaleImage.create(
@@ -220,7 +221,7 @@ class MultiscaleImage(
                 timestamp=(0, timestamp_ms),
             )
             handle = _tdb_handles.MultiscaleImageWrapper.open(uri, "w", context, tiledb_timestamp)
-            handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = _image_meta_str
+            handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
             multiscale = cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -279,7 +280,7 @@ class MultiscaleImage(
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
-        self._levels.sort(key=lambda level: tuple(-val for val in level.shape) + (level.name,))
+        self._levels.sort(key=lambda level: (*tuple(-val for val in level.shape), level.name))
 
     @_funcs.forwards_kwargs_to(DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp"))
     def add_new_level(
@@ -327,7 +328,7 @@ class MultiscaleImage(
         props = _LevelProperties(name=key, shape=shape)  # type: ignore[arg-type]
         for index, other in enumerate(self._levels):
             # Note: Name is unique, so guaranteed to be strict ordering.
-            if tuple(-val for val in props.shape) + (props.name,) < tuple(-val for val in other.shape) + (other.name,):
+            if (*tuple(-val for val in props.shape), props.name) < (*tuple(-val for val in other.shape), other.name):
                 self._levels.insert(index, props)
                 break
         else:
@@ -479,7 +480,7 @@ class MultiscaleImage(
             assert isinstance(region_transform, ScaleTransform)
 
         # Convert coordinates to new coordinate system.
-        coords, data_region, inv_transform = process_image_region(
+        coords, _, inv_transform = process_image_region(
             region,
             region_transform,
             channel_coords,
@@ -513,8 +514,7 @@ class MultiscaleImage(
             for val in self._levels:
                 if val.name == level:
                     return val
-            else:
-                raise KeyError("No level with name '{level}'")
+            raise KeyError(f"No level with name '{level}'")
 
         # by index
         return self._levels[level]
@@ -640,8 +640,7 @@ class MultiscaleImage(
             for val in self._levels:
                 if val.name == level:
                     return val.shape
-            else:
-                raise KeyError("No level with name '{level}'")
+            raise KeyError(f"No level with name '{level}'")
 
         # by index
         return self._levels[level].shape

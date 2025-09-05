@@ -22,7 +22,7 @@ from tiledbsoma._types import NPNDArray, PDSeries
 from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
-_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
+_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, sp.sparray, PDSeries)
 _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
 COLUMN_DECAT_THRESHOLD = 32767
@@ -39,7 +39,7 @@ See also https://github.com/single-cell-data/TileDB-SOMA/pull/3415.
 # JSON string or `null`. SOMA DataFrames are always given a `soma_joinid` index, but
 # we want to be able to outgest a `pd.DataFrame` that is identical to the one we
 # ingested, so we store an "original index name" in the DataFrame's metadata.
-OriginalIndexMetadata = Union[None, str]
+OriginalIndexMetadata = Union[str, None]
 
 
 def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
@@ -48,7 +48,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
     This is easier on the eyes, easier to convert from/to JSON for distributed logging,
     and easier to do del-key on.
     """
-    _EQUIVALENCES = {
+    EQUIVALENCES_ = {
         "large_string": "string",
         "large_binary": "binary",
     }
@@ -62,7 +62,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
         if pa.types.is_dictionary(arrow_type):
             arrow_type = arrow_type.index_type
         str_type = str(arrow_type)
-        return _EQUIVALENCES.get(str_type, str_type)
+        return EQUIVALENCES_.get(str_type, str_type)
 
     # Stringify types skipping the soma_joinid field (it is specific to SOMA data
     # and does not exist in AnnData/H5AD).
@@ -105,7 +105,7 @@ def _prepare_df_for_ingest(df: pd.DataFrame, id_column_name: str | None) -> str 
 
     original_index_name = None
     if use_existing_index:
-        original_index_name = df.index.name
+        original_index_name = str(df.index.name) if df.index.name is not None else None
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
@@ -183,7 +183,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:  # noqa: ARG001
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent,
     e.g., float16 -> float32.
     """
-    if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(x.dtype, pd.CategoricalDtype):
+    if isinstance(x, (np.ndarray, sp.spmatrix, sp.sparray)) or not isinstance(x.dtype, pd.CategoricalDtype):
         target_dtype = _to_tiledb_supported_dtype(x.dtype)
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 
@@ -244,7 +244,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         # extension dtype.
         #
         # Note: with
-        #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
+        #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))  # noqa: ERA001
         # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
         # as `pd.StringDtype()` but rather as `object`.
         #
@@ -252,19 +252,19 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         # from_pandas, and categoricals.
         #
         # * If you do this:
-        #     pd.Series(["a", "b", "c", "d"], dtype=pd.CategoricalDtype())
+        #     pd.Series(["a", "b", "c", "d"], dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of string with no nulls -- as desired.
         # * If you do this:
-        #     pd.Series(["a", "b", None, "d"], dtype=pd.CategoricalDtype())
+        #     pd.Series(["a", "b", None, "d"], dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   or
-        #     pd.Series(["a", "b", np.nan, "d"], dtype=pd.CategoricalDtype())
+        #     pd.Series(["a", "b", np.nan, "d"], dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of string, with some nulls -- as desired
         # * If you do this:
-        #     pd.Series([None] * 4, dtype=pd.CategoricalDtype())
+        #     pd.Series([None] * 4, dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   or
-        #     pd.Series([np.nan] * 4, dtype=pd.CategoricalDtype())
+        #     pd.Series([np.nan] * 4, dtype=pd.CategoricalDtype())  # noqa: ERA001
         #   then you get Pandas categorical of double -- with NaN values -- not as desired.
-        if df[key].isnull().all():
+        if df[key].isna().all():
             if df[key].dtype.name == "object":
                 df[key] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
             elif df[key].dtype.name == "category":
@@ -283,10 +283,10 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
         column = df[key]
         if isinstance(column.dtype, pd.CategoricalDtype):
             if hasattr(column.values, "categories"):
-                categories = column.values.categories
+                categories = column.values.categories  # noqa: PD011
 
             if hasattr(column.values, "ordered"):
-                ordered = bool(column.values.ordered)
+                ordered = bool(column.values.ordered)  # noqa: PD011
 
             df[key] = pd.Categorical(values=column, categories=categories, ordered=ordered)
 

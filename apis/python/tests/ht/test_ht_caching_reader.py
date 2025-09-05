@@ -17,6 +17,8 @@ from tests._util import TESTDATA
 class CachingReaderStateMachine(RuleBasedStateMachine):
     def __init__(self) -> None:
         super().__init__()
+        if not TESTDATA.exists():
+            raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
         self._fname = TESTDATA / "pbmc3k.h5ad"
 
     @initialize()
@@ -36,15 +38,15 @@ class CachingReaderStateMachine(RuleBasedStateMachine):
 
         super().teardown()
 
-    @invariant()
     @precondition(lambda self: self.raw is not None and self._closed)
+    @invariant()
     def check_closed_state(self) -> None:
         """Invariants that should be true when we have a file handle (in any state)"""
         assert self.raw is not None and self.cached is not None
         assert self.raw.closed == self.cached.closed
 
-    @invariant()
     @precondition(lambda self: self.raw is not None and not self._closed)
+    @invariant()
     def check_open_state(self) -> None:
         """Invariants that should be true if we have an open handle"""
         assert self.raw is not None and not self._closed

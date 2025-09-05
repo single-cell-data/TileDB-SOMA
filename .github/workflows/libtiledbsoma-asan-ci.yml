@@ -2,13 +2,9 @@ name: libtiledbsoma ASAN
 
 on:
   pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "docker/**"
-      - ".pre-commit-config.yaml"
-      - ".github/workflows/**"
-      - "!.github/workflows/libtiledbsoma-asan-ci.yml"
+    paths:
+      - "libtiledbsoma/**"
+      - ".github/workflows/libtiledbsoma-asan-ci.yml"
   push:
     branches:
       - main
@@ -21,13 +17,15 @@ jobs:
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
+
       - name: Install pre-built libtiledb
         run: |
           mkdir -p external
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.0/tiledb-linux-x86_64-2.28.0-4764907.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
+
       - name: Build and install libtiledbsoma
         run: |
           cmake -S libtiledbsoma -B build \
@@ -40,5 +38,6 @@ jobs:
             -D FORCE_BUILD_TILEDB=OFF
           cmake --build build -j 2
           ls external/lib/
+
       - name: Run C++ unittests
         run:  ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure

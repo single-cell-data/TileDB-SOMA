@@ -166,7 +166,7 @@ def test_sparse_nd_array_basics(
 
         (ok, msg) = snda.resize(new_shape, check_only=True)
         assert ok
-        assert msg == ""
+        assert not msg
 
         too_small = tuple(e - 1 for e in new_shape)
         (ok, msg) = snda.resize(too_small, check_only=True)
@@ -298,7 +298,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
                 sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
         else:
             assert ok
-            assert msg == ""
+            assert not msg
             sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
 
     with tiledbsoma.DataFrame.open(uri) as sdf:
@@ -370,7 +370,7 @@ def test_domain_mods(tmp_path):
         newdomain = [[0, 3], None, [20, 50], [0.0, 6.0]]
         ok, msg = sdf.change_domain(newdomain, check_only=True)
         assert ok
-        assert msg == ""
+        assert not msg
 
     # Shrink
     with tiledbsoma.DataFrame.open(uri, "w") as sdf:
@@ -408,7 +408,7 @@ def test_domain_mods(tmp_path):
         newdomain = [[0, 9], None, [0, 100], [-10.0, 10.0]]
         ok, msg = sdf.change_domain(newdomain, check_only=True)
         assert ok
-        assert msg == ""
+        assert not msg
         sdf.change_domain(newdomain)
 
     # Check for success
@@ -425,6 +425,8 @@ def test_canned_experiments(tmp_path, has_shapes):
     uri = tmp_path.as_posix()
 
     tgz = TESTDATA / "pbmc-exp-without-shapes.tgz" if not has_shapes else TESTDATA / "pbmc-exp-with-shapes.tgz"
+    if not tgz.exists():
+        raise RuntimeError(f"Missing file '{tgz}'. Try running `make data` from the TileDB-SOMA project root.")
 
     with tarfile.open(tgz) as handle:
         if hasattr(tarfile, "data_filter"):
@@ -512,7 +514,7 @@ def test_canned_experiments(tmp_path, has_shapes):
             assert "dataframe already has a domain" in msg
         else:
             assert ok
-            assert msg == ""
+            assert not msg
 
         with pytest.raises(ValueError):
             exp.obs.tiledbsoma_upgrade_domain([[0, 1, 2]], check_only=True)
@@ -836,6 +838,8 @@ def test_canned_nonstandard_dataframe_upgrade(tmp_path):
     uri = tmp_path.as_posix()
 
     tgz = TESTDATA / "nonstandard-dataframe-without-shapes.tgz"
+    if not tgz.exists():
+        raise RuntimeError(f"Missing file '{tgz}'. Try running `make data` from the TileDB-SOMA project root.")
 
     with tarfile.open(tgz) as handle:
         if hasattr(tarfile, "data_filter"):
@@ -883,7 +887,7 @@ def test_canned_nonstandard_dataframe_upgrade(tmp_path):
         assert sdf.maxdomain == ((0, 2147483646), (-2147483648, 2147481598), ("", ""))
 
     with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-        ok, msg = sdf.tiledbsoma_upgrade_soma_joinid_shape(1, check_only=True)
+        _ = sdf.tiledbsoma_upgrade_soma_joinid_shape(1, check_only=True)
 
         sdf.tiledbsoma_upgrade_soma_joinid_shape(100)
 

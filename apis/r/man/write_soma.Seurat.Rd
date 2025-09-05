@@ -69,12 +69,67 @@ individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 Expression matrices are transposed (cells as rows) prior to writing. All
 other slots, including results from extended assays (eg. \code{SCTAssay},
 \code{ChromatinAssay}) are lost.
+
+\subsection{Performance Considerations}{
+Ingestion of very large dense layers, such as \code{scale.data}, can be
+memory intensive. For better performance, users can remove these layers
+prior to ingestion and regenerate them after export, or ingest them
+separately as dense arrays for those who need to persist the exact matrix
+
+\preformatted{
+# Using SeuratObject v5 syntax on a v3 `Assay`
+# Cache the layer for separate ingestion, skip if planning to regenerate
+mat <- object[["ASSAY"]]$scale.data
+
+# Remove the `scale.data` layer
+object[["ASSAY"]]$scale.data <- NULL
+
+# Ingest the smaller object
+uri <- write_soma(object, "/path/to/soma")
+
+# Ingest the `scale.data` layer densely; needed only if persistence
+# of the data is paramount
+# Pad the `scale.data` layer so that its soma join IDs match the experiment
+padded <- matrix(
+  data = vector("numeric", length = prod(dim(object[["ASSAY"]]))),
+  nrow = nrow(object[["ASSAY"]]),
+  ncol = ncol(object[["ASSAY"]])
+)
+rowidx <- match(rownames(mat), rownames(object[["ASSAY"]]))
+colidx <- match(colnames(mat), colnames(object[["ASSAY"]]))
+padded[rowidx, colidx] <- mat
+
+# Use `write_soma()` to ingest densely and register it within the `uns`
+# collection; this may need to be created manually if the original
+# object does not contain command logs
+exp <- SOMAExperimentOpen(uri, "WRITE")
+if (!match("uns", exp$names(), nomatch = 0L)) {
+  # For `tiledb://` URIs, set the URI for the new collection manually rather
+  # than relying on `file.path()`
+  uns <- SOMACollectionCreate(file.path(exp$uri, "uns"))
+  exp$add_new_collection(uns, "uns")
+}
+arr <- write_soma(
+  padded,
+  "scale_data",
+  soma_parent = exp$get("uns"),
+  sparse = FALSE,
+  key = "scale_data"
+)
+arr$close()
+exp$close()
+}
+Please note that dense arrays cannot be read in using the
+\code{\link{SOMAExperimentAxisQuery}} mechanism; use
+\code{\link{SOMADenseNDArray}$read_dense_matrix}, remembering to transpose
+before adding back to a \code{Seurat} object
+}
 }
 
 \section{Writing v5 \code{Assays}}{
 
 \pkg{Seurat} v5 \code{\link[SeuratObject:Assay5]{Assays}s} are written
-out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
+out as individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 \itemize{
 \item the layer matrices are written out as
 \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the

@@ -28,13 +28,13 @@ fully supported in SOMA DataFrame non-indexed columns.
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
 
-_ARROW_TO_TDB_ATTR: dict[Any, Union[str, TypeError]] = {
+_ARROW_TO_TDB_ATTR: dict[Any, str | TypeError] = {
     pa.string(): "U1",
     pa.large_string(): "U1",
     pa.binary(): "bytes",
@@ -94,7 +94,7 @@ _CARROW_TO_PYARROW: dict[pa.DataType, str] = {
 
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
-_ARROW_TO_TDB_DIM: dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
+_ARROW_TO_TDB_DIM: dict[Any, str | TypeError] = _ARROW_TO_TDB_ATTR.copy()
 """Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 Any type system differences from the base-case Attr should be added here.
 """
@@ -141,7 +141,7 @@ def tiledb_type_from_arrow_type(t: pa.DataType, is_indexed_column: bool = False)
         return np.dtype(arrow_type)
 
     if not pa.types.is_primitive(t):
-        raise TypeError(f"Type {str(t)} - unsupported type")
+        raise TypeError(f"Type {t!s} - unsupported type")
     if pa.types.is_timestamp(t):
         raise TypeError("TimeStampType - unsupported type (timezone not supported)")
     if pa.types.is_time32(t):

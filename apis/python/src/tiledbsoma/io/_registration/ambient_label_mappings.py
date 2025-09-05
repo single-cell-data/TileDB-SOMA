@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Iterable, Sequence, cast
+from typing import Any, Callable, cast
 
 import anndata as ad
 import attrs
@@ -34,7 +35,7 @@ ColumnName: TypeAlias = str
 
 
 @attrs.define(kw_only=True, frozen=True)
-class AxisAmbientLabelMapping:
+class AxisAmbientLabelMapping:  # noqa: PLW1641
     """For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
     class tracks the mapping of input-data ``obs`` or ``var`` ID-column name (barcode ID, gene
     symbol) to SOMA join IDs for SOMA experiment ``obs`` or ``var``, as well as any dictionary/enumeration
@@ -242,7 +243,7 @@ class ExperimentAmbientLabelMapping:
 
         # The class is a frozen `attrs` instance, to protect from user modification of the data.
         # This is the "blessed" way for an implementation to modify itself (per attrs docs).
-        object.__setattr__(self, "prepared", True)
+        object.__setattr__(self, "prepared", True)  # noqa: PLC2801
 
     @staticmethod
     def _load_axes_metadata_from_anndatas(
@@ -640,7 +641,7 @@ class AnnDataAxisMetadata:
                 return pd.Index([])
             if len(indices) == 1:
                 return indices[0]
-            return cast("pd.Index[Any]", indices[0].append(indices[1:]))  # type: ignore[no-untyped-call]
+            return indices[0].append(indices[1:])
 
         return cls(
             field_name=ams[0].field_name,
@@ -670,9 +671,7 @@ class AnnDataAxisMetadata:
 
             if not ordered:
                 return pd.CategoricalDtype(
-                    enums[0]
-                    .categories.append([e.categories for e in enums[1:]])  # type: ignore[no-untyped-call]
-                    .drop_duplicates(),
+                    enums[0].categories.append([e.categories for e in enums[1:]]).drop_duplicates(),
                     ordered=False,
                 )
 
@@ -697,9 +696,9 @@ class AnnDataAxisMetadata:
 def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index:
     """Given an AnnData obs/var, extract the index for the user-selected join column."""
     if field_name in df:
-        return cast("pd.Index[Any]", pd.Index(df[field_name]))
+        return pd.Index(df[field_name])  # type: ignore[no-any-return]
     if df.index.name in (field_name, "index", None):
-        return cast("pd.Index[Any]", df.index)
+        return df.index
     raise ValueError(f"Could not find field name {field_name} in dataframe.")
 
 

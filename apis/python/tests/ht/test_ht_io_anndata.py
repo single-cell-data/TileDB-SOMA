@@ -8,15 +8,13 @@ import math
 import operator
 import string
 from collections import OrderedDict
-from collections.abc import Mapping
+from collections.abc import Hashable, Mapping, Sequence
 from datetime import timedelta
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Hashable,
     Literal,
-    Sequence,
     TypeVar,
     get_args,
 )
@@ -44,9 +42,9 @@ from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ht_util import posix_filename
 
 if TYPE_CHECKING:
-    Ex = TypeVar("Ex", covariant=True, default=Any)
+    Ex_co = TypeVar("Ex_co", covariant=True, default=Any)
 else:
-    Ex = TypeVar("Ex", covariant=True)
+    Ex_co = TypeVar("Ex_co", covariant=True)
 
 T = TypeVar("T")
 
@@ -187,7 +185,7 @@ else:
 def matrixes(
     draw: st.DrawFn,
     shape: tuple[int, int] | st.SearchStrategy[tuple[int, ...]],
-    formats: "MatrixFormats" | None = None,
+    formats: MatrixFormats | None = None,
 ) -> sp.csr_matrix | sp.csc_matrix | np.ndarray | np.ma.MaskedArray:
     """Random 2D array in a variety of formats supported by AnnData."""
 
@@ -280,7 +278,7 @@ def matrix_shapes(
 def map_of_matrixes(
     draw: st.DrawFn,
     shape_prelude: tuple[int, ...],
-    formats: "MatrixFormats" | None = None,
+    formats: MatrixFormats | None = None,
 ) -> dict[str, np.ndarray | sp.sparray | sp.spmatrix | np.ma.MaskedArray]:
     def key_unique_by(i: str) -> str:
         return i[0].lower() if HT_TEST_CONFIG["sc-63402_workaround"] else i[0]
@@ -318,14 +316,14 @@ def monomorphic_list(
 
 
 def dictionaries_unique_by(
-    keys: st.SearchStrategy[Ex],
+    keys: st.SearchStrategy[Ex_co],
     values: st.SearchStrategy[T],
     *,
     dict_class: type = dict,
     min_size: int = 0,
     max_size: int | None = None,
-    unique_by: Callable[[Ex], Hashable] | tuple[Callable[[Ex], Hashable], ...] | None = None,
-) -> st.SearchStrategy[dict[Ex, T]]:
+    unique_by: Callable[[Ex_co], Hashable] | tuple[Callable[[Ex_co], Hashable], ...] | None = None,
+) -> st.SearchStrategy[dict[Ex_co, T]]:
     """
     Identical to hypothesis.strategies.dictionaries, except it allows user-configurable
     `unique_by` param, AND has less error checking.

@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import somacore
@@ -134,7 +135,7 @@ def to_spatialdata_points(
     """
     # Get the axis names for the spatial data shapes.
     orig_axis_names = points.coordinate_space.axis_names
-    new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
+    _, points_dim_map = _convert_axis_names(orig_axis_names)
 
     # Create the SpatialData transform from the points to the Scene (inverse of the
     # transform SOMA stores).
@@ -190,7 +191,7 @@ def to_spatialdata_shapes(
 
     # Get the axis names for the spatial data shapes.
     orig_axis_names = points.coordinate_space.axis_names
-    new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
+    _, points_dim_map = _convert_axis_names(orig_axis_names)
 
     # Create the SpatialData transform from the points to the Scene (inverse of the
     # transform SOMA stores).
@@ -223,7 +224,7 @@ def to_spatialdata_image(
     scene_id: str,
     scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
-) -> "DataArray":
+) -> DataArray:
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
 
@@ -294,7 +295,7 @@ def to_spatialdata_multiscale_image(
     scene_id: str,
     scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
-) -> "DataTree":
+) -> DataTree:
     """Export a MultiscaleImage to a DataTree.
 
     Args:
@@ -354,9 +355,12 @@ def to_spatialdata_multiscale_image(
             # First level transform is always the identity, so just directly use
             # inv_transform. For remaining transformations,
             # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
-            spatial_data_transformations = (sd_inv_transform,) + tuple(
-                sd.transformations.Sequence([scale_transform, sd_inv_transform])
-                for scale_transform in sd_scale_transforms
+            spatial_data_transformations = (
+                sd_inv_transform,
+                *tuple(
+                    sd.transformations.Sequence([scale_transform, sd_inv_transform])
+                    for scale_transform in sd_scale_transforms
+                ),
             )
 
     # Create a sequence of resolution level.
@@ -530,8 +534,7 @@ def _spatial_to_spatialdata(
             )
             if not region_df.empty:
                 try:
-                    adata.obs = pd.merge(
-                        adata.obs,
+                    adata.obs = adata.obs.merge(
                         region_df,
                         how="left",
                         on=obs_id_name,

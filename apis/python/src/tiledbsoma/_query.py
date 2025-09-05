@@ -9,6 +9,7 @@ from __future__ import annotations
 import enum
 import json
 import warnings
+from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
 from typing import (
@@ -17,7 +18,6 @@ from typing import (
     Callable,
     Literal,
     Protocol,
-    Sequence,
     TypeVar,
 )
 
@@ -98,7 +98,7 @@ class AxisIndexer(query.AxisIndexer):
     Lifecycle: maturing
     """
 
-    query: "ExperimentAxisQuery"
+    query: ExperimentAxisQuery
     _index_factory: IndexFactory
     _cached_obs: IndexLike | None = None
     _cached_var: IndexLike | None = None
@@ -165,7 +165,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
     def __init__(
         self,
-        experiment: "Experiment",
+        experiment: Experiment,
         measurement_name: str,
         *,
         obs_query: AxisQuery | None = None,
@@ -465,7 +465,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         tp = self._threadpool
         x_collection = self._ms.X
-        all_x_names = [X_name] + list(X_layers)
+        all_x_names = [X_name, *list(X_layers)]
         all_x_arrays: dict[str, SparseNDArray] = {}
         for _xname in all_x_names:
             if not isinstance(_xname, str) or not _xname:
@@ -672,7 +672,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             # If we want to fill the join ID cache, ensure that we query the
             # soma_joinid column so that it is included in the results.
             # We'll filter it out later.
-            query_columns = ["soma_joinid"] + list(column_names)
+            query_columns = ["soma_joinid", *list(column_names)]
             added_soma_joinid_to_columns = True
 
         # Do the actual query.

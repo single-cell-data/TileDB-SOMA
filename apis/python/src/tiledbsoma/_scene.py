@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, TypeVar, Union
+from collections.abc import Sequence
+from typing import Any, ClassVar, TypeVar, Union
 
 import somacore
 from somacore import (
@@ -57,7 +58,7 @@ class Scene(
     __slots__ = ("_coord_space",)
     _wrapper_type = _tdb_handles.SceneWrapper
 
-    _subclass_constrained_soma_types = {
+    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "img": ("SOMACollection",),
         "obsl": ("SOMACollection",),
         "varl": ("SOMACollection",),

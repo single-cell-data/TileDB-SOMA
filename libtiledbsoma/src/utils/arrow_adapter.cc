@@ -27,6 +27,105 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
+/**************************
+ * Internal helper methods
+ **************************/
+
+template <typename T>
+Dimension create_dim_aux(std::shared_ptr<Context> ctx, std::string name, const void* buffer) {
+    auto b = static_cast<const T*>(buffer);
+    LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
+    return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
+}
+
+std::string_view to_arrow_readable(std::string_view arrow_dtype) {
+    std::map<std::string_view, std::string_view> _to_arrow_readable = {
+        {"n", "null"},
+        {"b", "boolean"},
+        {"c", "int8"},
+        {"C", "uint8"},
+        {"s", "int16"},
+        {"S", "uint16"},
+        {"i", "int32"},
+        {"I", "uint32"},
+        {"l", "int64"},
+        {"L", "uint64"},
+        {"e", "float16"},
+        {"f", "float32"},
+        {"g", "float64"},
+        {"z", "binary"},
+        {"Z", "large binary"},
+        {"vz", "binary view"},
+        {"u", "utf-8 string"},
+        {"U", "large utf-8 string"},
+        {"vu", "utf-8 view"},
+        {"tdD", "date32 [days]"},
+        {"tdm", "date64 [milliseconds]"},
+        {"tts", "time32 [seconds]"},
+        {"ttm", "time32 [milliseconds]"},
+        {"ttu", "time64 [microseconds]"},
+        {"ttn", "time64 [nanoseconds]"},
+        {"tDs", "duration [seconds]"},
+        {"tDm", "duration [milliseconds]"},
+        {"tDu", "duration [microseconds]"},
+        {"tDn", "duration [nanoseconds]"},
+        {"tiM", "interval [months]"},
+        {"tiD", "interval [days, time]"},
+        {"tin", "interval [month, day, nanoseconds]"},
+        {"+l", "list"},
+        {"+L", "large list"},
+        {"+vl", "list-view"},
+        {"+vL", "large list-view"},
+        {"+s", "struct"},
+        {"+m", "map"},
+        {"+r", "run-end encoded"}};
+
+    auto it = _to_arrow_readable.find(arrow_dtype);
+    return it != _to_arrow_readable.end() ? it->second :
+                                            "unknown Arrow type [see "
+                                            "https://arrow.apache.org/docs/format/"
+                                            "CDataInterface.html#data-type-description-format-strings]";
+}
+
+enum ArrowType to_nanoarrow_type(std::string_view arrow_dtype) {
+    std::map<std::string_view, enum ArrowType> _to_nanoarrow_type_map = {
+        {"i", NANOARROW_TYPE_INT32},        {"c", NANOARROW_TYPE_INT8},         {"C", NANOARROW_TYPE_UINT8},
+        {"s", NANOARROW_TYPE_INT16},        {"S", NANOARROW_TYPE_UINT16},       {"I", NANOARROW_TYPE_UINT32},
+        {"l", NANOARROW_TYPE_INT64},        {"L", NANOARROW_TYPE_UINT64},       {"f", NANOARROW_TYPE_FLOAT},
+        {"g", NANOARROW_TYPE_DOUBLE},       {"u", NANOARROW_TYPE_STRING},       {"U", NANOARROW_TYPE_LARGE_STRING},
+        {"b", NANOARROW_TYPE_BOOL},         {"tss:", NANOARROW_TYPE_TIMESTAMP}, {"tsm:", NANOARROW_TYPE_TIMESTAMP},
+        {"tsn:", NANOARROW_TYPE_TIMESTAMP}, {"tsu:", NANOARROW_TYPE_TIMESTAMP}, {"tdD", NANOARROW_TYPE_TIMESTAMP},
+        {"z", NANOARROW_TYPE_BINARY},       {"Z", NANOARROW_TYPE_LARGE_BINARY},
+    };
+
+    try {
+        return _to_nanoarrow_type_map.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(
+            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
+    }
+}
+
+std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view arrow_dtype) {
+    std::map<std::string_view, std::pair<enum ArrowType, enum ArrowTimeUnit>> _to_nanoarrow_time = {
+        {"tss:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_SECOND}},
+        {"tsm:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MILLI}},
+        {"tsu:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MICRO}},
+        {"tsn:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_NANO}},
+    };
+
+    try {
+        return _to_nanoarrow_time.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(
+            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
+    }
+}
+
+/**************************
+ * External API
+ **************************/
+
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     std::string name_for_log(schema->name == nullptr ? "anonymous" : schema->name);
     if (schema->name != nullptr)
@@ -171,242 +270,6 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     LOG_TRACE(fmt::format("[ArrowAdapter] release_array done"));
 }
 
-PlatformConfig ArrowAdapter::platform_config_from_tiledb_schema(ArraySchema tiledb_schema) {
-    std::map<tiledb_layout_t, std::string> layout_as_string{
-        {TILEDB_ROW_MAJOR, "row-major"},
-        {TILEDB_COL_MAJOR, "column-major"},
-        {TILEDB_HILBERT, "hilbert"},
-        {TILEDB_UNORDERED, "unordered"},
-    };
-
-    PlatformConfig platform_config;
-    platform_config.capacity = tiledb_schema.capacity();
-    platform_config.allows_duplicates = tiledb_schema.allows_dups();
-    platform_config.tile_order = layout_as_string[tiledb_schema.tile_order()];
-    platform_config.cell_order = layout_as_string[tiledb_schema.cell_order()];
-    platform_config.offsets_filters = ArrowAdapter::_get_filter_list_json(tiledb_schema.offsets_filter_list()).dump();
-    platform_config.validity_filters = ArrowAdapter::_get_filter_list_json(tiledb_schema.validity_filter_list()).dump();
-    platform_config.attrs = ArrowAdapter::_get_attrs_filter_list_json(tiledb_schema).dump();
-    platform_config.dims = ArrowAdapter::_get_dims_list_json(tiledb_schema).dump();
-
-    return platform_config;
-}
-
-PlatformSchemaConfig ArrowAdapter::platform_schema_config_from_tiledb(ArraySchema tiledb_schema) {
-    std::map<tiledb_layout_t, std::string> layout_as_string{
-        {TILEDB_ROW_MAJOR, "row-major"},
-        {TILEDB_COL_MAJOR, "column-major"},
-        {TILEDB_HILBERT, "hilbert"},
-        {TILEDB_UNORDERED, "unordered"},
-    };
-
-    PlatformSchemaConfig platform_config;
-    platform_config.capacity = tiledb_schema.capacity();
-    platform_config.allows_duplicates = tiledb_schema.allows_dups();
-    platform_config.tile_order = layout_as_string[tiledb_schema.tile_order()];
-    platform_config.cell_order = layout_as_string[tiledb_schema.cell_order()];
-    platform_config.offsets_filters = ArrowAdapter::_get_filter_list_json(tiledb_schema.offsets_filter_list()).dump();
-    platform_config.validity_filters = ArrowAdapter::_get_filter_list_json(tiledb_schema.validity_filter_list()).dump();
-    platform_config.attrs = ArrowAdapter::_get_attrs_filter_list_json(tiledb_schema).dump();
-    platform_config.dims = ArrowAdapter::_get_dims_list_json(tiledb_schema).dump();
-
-    return platform_config;
-}
-
-json ArrowAdapter::_get_attrs_filter_list_json(const ArraySchema& tiledb_schema) {
-    json attrs_filter_list_as_json;
-    for (const auto& attr : tiledb_schema.attributes()) {
-        json attr_info = {{"filters", _get_filter_list_json(attr.second.filter_list())}};
-        attrs_filter_list_as_json.emplace(attr.first, attr_info);
-    }
-    return attrs_filter_list_as_json;
-}
-
-json ArrowAdapter::_get_dims_list_json(const ArraySchema& tiledb_schema) {
-    json dims_as_json;
-    for (const auto& dim : tiledb_schema.domain().dimensions()) {
-        json dim_info = {{"tile", dim.tile_extent_to_str()}, {"filters", _get_filter_list_json(dim.filter_list())}};
-        dims_as_json.emplace(dim.name(), dim_info);
-    }
-    return dims_as_json;
-}
-
-json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {
-    std::map<tiledb_filter_option_t, std::string> option_as_string = {
-        {TILEDB_COMPRESSION_LEVEL, "COMPRESSION_LEVEL"},
-        {TILEDB_BIT_WIDTH_MAX_WINDOW, "BIT_WIDTH_MAX_WINDOW"},
-        {TILEDB_POSITIVE_DELTA_MAX_WINDOW, "POSITIVE_DELTA_MAX_WINDOW"},
-        {TILEDB_SCALE_FLOAT_BYTEWIDTH, "SCALE_FLOAT_BYTEWIDTH"},
-        {TILEDB_SCALE_FLOAT_FACTOR, "SCALE_FLOAT_FACTOR"},
-        {TILEDB_SCALE_FLOAT_OFFSET, "SCALE_FLOAT_OFFSET"},
-        {TILEDB_WEBP_INPUT_FORMAT, "WEBP_INPUT_FORMAT"},
-        {TILEDB_WEBP_QUALITY, "WEBP_QUALITY"},
-        {TILEDB_WEBP_LOSSLESS, "WEBP_LOSSLESS"},
-        {TILEDB_COMPRESSION_REINTERPRET_DATATYPE, "COMPRESSION_REINTERPRET_DATATYPE"},
-    };
-
-    json filter_list_as_json = {};
-    for (uint32_t i = 0; i < filter_list.nfilters(); ++i) {
-        json filter_as_json = {};
-
-        auto filter = filter_list.filter(i);
-        filter_as_json.emplace("name", Filter::to_str(filter.filter_type()));
-
-        switch (filter.filter_type()) {
-            case TILEDB_FILTER_GZIP:
-            case TILEDB_FILTER_ZSTD:
-            case TILEDB_FILTER_LZ4:
-            case TILEDB_FILTER_BZIP2:
-            case TILEDB_FILTER_RLE:
-            case TILEDB_FILTER_DICTIONARY:
-                filter_as_json.emplace("COMPRESSION_LEVEL", filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL));
-                break;
-
-            case TILEDB_FILTER_DELTA:
-            case TILEDB_FILTER_DOUBLE_DELTA:
-                filter_as_json.emplace("COMPRESSION_LEVEL", filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL));
-                filter_as_json.emplace(
-                    "COMPRESSION_REINTERPRET_DATATYPE",
-                    filter.get_option<uint8_t>(TILEDB_COMPRESSION_REINTERPRET_DATATYPE));
-                break;
-
-            case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
-                filter_as_json.emplace(
-                    "BIT_WIDTH_MAX_WINDOW", filter.get_option<uint32_t>(TILEDB_BIT_WIDTH_MAX_WINDOW));
-                break;
-
-            case TILEDB_FILTER_POSITIVE_DELTA:
-                filter_as_json.emplace(
-                    "POSITIVE_DELTA_MAX_WINDOW", filter.get_option<uint32_t>(TILEDB_POSITIVE_DELTA_MAX_WINDOW));
-                break;
-
-            case TILEDB_FILTER_SCALE_FLOAT:
-                filter_as_json.emplace("SCALE_FLOAT_FACTOR", filter.get_option<double>(TILEDB_SCALE_FLOAT_FACTOR));
-                filter_as_json.emplace("SCALE_FLOAT_OFFSET", filter.get_option<double>(TILEDB_SCALE_FLOAT_OFFSET));
-                filter_as_json.emplace(
-                    "SCALE_FLOAT_BYTEWIDTH", filter.get_option<uint64_t>(TILEDB_SCALE_FLOAT_BYTEWIDTH));
-                break;
-
-            case TILEDB_FILTER_WEBP:
-                filter_as_json.emplace("WEBP_INPUT_FORMAT", filter.get_option<uint8_t>(TILEDB_WEBP_INPUT_FORMAT));
-                filter_as_json.emplace("WEBP_QUALITY", filter.get_option<float>(TILEDB_WEBP_QUALITY));
-                filter_as_json.emplace("WEBP_LOSSLESS", filter.get_option<uint8_t>(TILEDB_WEBP_LOSSLESS));
-                break;
-
-            case TILEDB_FILTER_CHECKSUM_MD5:
-            case TILEDB_FILTER_CHECKSUM_SHA256:
-            case TILEDB_FILTER_XOR:
-            case TILEDB_FILTER_BITSHUFFLE:
-            case TILEDB_FILTER_BYTESHUFFLE:
-            case TILEDB_FILTER_DEPRECATED:
-            case TILEDB_FILTER_NONE:
-                // These filters have no options and are left empty
-                // intentionally
-                break;
-        }
-        filter_list_as_json.emplace_back(filter_as_json);
-    }
-    return filter_list_as_json;
-}
-
-managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
-    std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
-    auto tiledb_schema = tiledb_array->schema();
-    auto ndim = tiledb_schema.domain().ndim();
-    auto nattr = tiledb_schema.attribute_num();
-
-    managed_unique_ptr<ArrowSchema> arrow_schema = make_managed_unique<ArrowSchema>();
-    arrow_schema->format = strdup("+s");
-    arrow_schema->name = strdup("parent");
-    arrow_schema->metadata = nullptr;
-    arrow_schema->flags = 0;
-    arrow_schema->n_children = ndim + nattr;
-    arrow_schema->dictionary = nullptr;
-    arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->private_data = nullptr;
-
-    arrow_schema->children = (ArrowSchema**)malloc(arrow_schema->n_children * sizeof(ArrowSchema*));
-    LOG_DEBUG(fmt::format("[ArrowAdapter] arrow_schema_from_tiledb_array n_children {}", arrow_schema->n_children));
-
-    ArrowSchema* child = nullptr;
-
-    for (uint32_t i = 0; i < ndim; ++i) {
-        auto dim = tiledb_schema.domain().dimension(i);
-        child = arrow_schema->children[i] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        child->format = strdup(ArrowAdapter::to_arrow_format(dim.type()).data());
-        child->name = strdup(dim.name().c_str());
-        child->metadata = nullptr;
-        child->flags = 0;
-        child->n_children = 0;
-        child->children = nullptr;
-        child->dictionary = nullptr;
-        child->release = &ArrowAdapter::release_schema;
-        child->private_data = nullptr;
-        LOG_TRACE(
-            fmt::format(
-                "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} format {} "
-                "name {}",
-                i,
-                child->format,
-                child->name));
-    }
-
-    for (uint32_t i = 0; i < nattr; ++i) {
-        auto attr = tiledb_schema.attribute(i);
-        child = arrow_schema->children[ndim + i] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        child->format = strdup(ArrowAdapter::to_arrow_format(attr.type()).data());
-        child->name = strdup(attr.name().c_str());
-        child->metadata = nullptr;
-        child->flags = 0;
-        if (attr.nullable()) {
-            child->flags |= ARROW_FLAG_NULLABLE;
-        } else {
-            child->flags &= ~ARROW_FLAG_NULLABLE;
-        }
-        child->n_children = 0;
-        child->children = nullptr;
-        child->dictionary = nullptr;
-        child->release = &ArrowAdapter::release_schema;
-        child->private_data = nullptr;
-
-        LOG_TRACE(
-            fmt::format(
-                "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} format {} "
-                "name {}",
-                i,
-                child->format,
-                child->name));
-
-        auto enmr_name = AttributeExperimental::get_enumeration_name(*ctx, attr);
-        if (enmr_name.has_value()) {
-            auto enmr = ArrayExperimental::get_enumeration(*ctx, *tiledb_array, enmr_name.value());
-            auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-            dict->format = strdup(ArrowAdapter::to_arrow_format(enmr.type(), false).data());
-            if (enmr.type() == TILEDB_STRING_ASCII || enmr.type() == TILEDB_CHAR) {
-                dict->format = strdup("z");
-            } else {
-                dict->format = strdup(ArrowAdapter::to_arrow_format(enmr.type(), false).data());
-            }
-            dict->name = strdup(enmr.name().c_str());
-            dict->metadata = nullptr;
-            if (enmr.ordered()) {
-                child->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
-            } else {
-                child->flags &= ~ARROW_FLAG_DICTIONARY_ORDERED;
-            }
-            dict->n_children = 0;
-            dict->children = nullptr;
-            dict->dictionary = nullptr;
-            dict->release = &ArrowAdapter::release_schema;
-            dict->private_data = nullptr;
-            child->dictionary = dict;
-        }
-        child->release = &ArrowAdapter::release_schema;
-    }
-
-    return arrow_schema;
-}
-
 ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(const Dimension& dimension) {
     // Accessing dimension attributes may throw.
     // To avoid leaking memory we need to access the before allocating any
@@ -479,11 +342,7 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
 
     if (enmr_name.has_value()) {
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_CHAR) {
-            dict->format = strdup("z");
-        } else {
-            dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type(), false).data());
-        }
+        dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type()).data());
         dict->name = strdup(enmr->name().c_str());
         dict->metadata = nullptr;
         if (enmr->ordered()) {
@@ -502,156 +361,6 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
     return arrow_schema;
 }
 
-FilterList ArrowAdapter::_create_filter_list(std::string filters, std::shared_ptr<Context> ctx) {
-    return ArrowAdapter::_create_filter_list(json::parse(filters), ctx);
-}
-
-FilterList ArrowAdapter::_create_filter_list(json filters, std::shared_ptr<Context> ctx) {
-    FilterList filter_list(*ctx);
-
-    for (auto filter : filters) {
-        ArrowAdapter::_append_to_filter_list(filter_list, filter, ctx);
-    }
-
-    return filter_list;
-}
-
-FilterList ArrowAdapter::_create_attr_filter_list(
-    std::string name, PlatformConfig platform_config, std::shared_ptr<Context> ctx) {
-    FilterList filter_list(*ctx);
-
-    if (platform_config.attrs.empty()) {
-        filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_ZSTD));
-    } else {
-        json attr_options = json::parse(platform_config.attrs);
-        if (attr_options.find(name) != attr_options.end() &&
-            attr_options[name].find("filters") != attr_options[name].end()) {
-            filter_list = ArrowAdapter::_create_filter_list(attr_options[name]["filters"], ctx);
-        } else {
-            filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_ZSTD));
-        }
-    }
-
-    return filter_list;
-}
-
-FilterList ArrowAdapter::_create_dim_filter_list(
-    std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx) {
-    FilterList filter_list(*ctx);
-
-    if (platform_config.dims.empty()) {
-        filter_list.add_filter(ArrowAdapter::_get_zstd_default(platform_config, soma_type, ctx));
-    } else {
-        json dim_options = json::parse(platform_config.dims);
-        if (dim_options.find(name) != dim_options.end() &&
-            dim_options[name].find("filters") != dim_options[name].end()) {
-            filter_list = ArrowAdapter::_create_filter_list(dim_options[name]["filters"], ctx);
-        } else {
-            filter_list.add_filter(ArrowAdapter::_get_zstd_default(platform_config, soma_type, ctx));
-        }
-    }
-
-    return filter_list;
-}
-
-Filter ArrowAdapter::_get_zstd_default(
-    PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx) {
-    Filter zstd_filter(*ctx, TILEDB_FILTER_ZSTD);
-    if (soma_type == "SOMADataFrame") {
-        zstd_filter.set_option(TILEDB_COMPRESSION_LEVEL, platform_config.dataframe_dim_zstd_level);
-    } else if (soma_type == "SOMASparseNDArray") {
-        zstd_filter.set_option(TILEDB_COMPRESSION_LEVEL, platform_config.sparse_nd_array_dim_zstd_level);
-    } else if (soma_type == "SOMADenseNDArray") {
-        zstd_filter.set_option(TILEDB_COMPRESSION_LEVEL, platform_config.dense_nd_array_dim_zstd_level);
-    }
-    return zstd_filter;
-}
-
-void ArrowAdapter::_append_to_filter_list(FilterList filter_list, json value, std::shared_ptr<Context> ctx) {
-    std::map<std::string, tiledb_filter_type_t> convert_filter = {
-        {"GZIP", TILEDB_FILTER_GZIP},
-        {"ZSTD", TILEDB_FILTER_ZSTD},
-        {"LZ4", TILEDB_FILTER_LZ4},
-        {"BZIP2", TILEDB_FILTER_BZIP2},
-        {"RLE", TILEDB_FILTER_RLE},
-        {"DELTA", TILEDB_FILTER_DELTA},
-        {"DOUBLE_DELTA", TILEDB_FILTER_DOUBLE_DELTA},
-        {"BIT_WIDTH_REDUCTION", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
-        {"BITSHUFFLE", TILEDB_FILTER_BITSHUFFLE},
-        {"BYTESHUFFLE", TILEDB_FILTER_BYTESHUFFLE},
-        {"POSITIVE_DELTA", TILEDB_FILTER_POSITIVE_DELTA},
-        {"CHECKSUM_MD5", TILEDB_FILTER_CHECKSUM_MD5},
-        {"CHECKSUM_SHA256", TILEDB_FILTER_CHECKSUM_SHA256},
-        {"DICTIONARY_ENCODING", TILEDB_FILTER_DICTIONARY},
-        {"SCALE_FLOAT", TILEDB_FILTER_SCALE_FLOAT},
-        {"XOR", TILEDB_FILTER_XOR},
-        {"WEBP", TILEDB_FILTER_WEBP},
-        {"NOOP", TILEDB_FILTER_NONE},
-        {"NONE", TILEDB_FILTER_NONE},
-    };
-
-    try {
-        if (value.is_string()) {
-            filter_list.add_filter(Filter(*ctx, convert_filter.at(value)));
-        } else {
-            Filter filter(*ctx, convert_filter.at(value["name"]));
-            for (auto& [key, value] : value.items()) {
-                ArrowAdapter::_set_filter_option(filter, key, value);
-            }
-            filter_list.add_filter(filter);
-        }
-    } catch (std::out_of_range& e) {
-        throw TileDBSOMAError(fmt::format("Invalid filter {} passed to PlatformConfig", std::string(value)));
-    }
-}
-
-void ArrowAdapter::_set_filter_option(Filter filter, std::string option_name, json value) {
-    if (option_name == "name") {
-        return;
-    }
-
-    std::map<std::string, tiledb_filter_option_t> convert_option = {
-        {"COMPRESSION_LEVEL", TILEDB_COMPRESSION_LEVEL},
-        {"BIT_WIDTH_MAX_WINDOW", TILEDB_BIT_WIDTH_MAX_WINDOW},
-        {"POSITIVE_DELTA_MAX_WINDOW", TILEDB_POSITIVE_DELTA_MAX_WINDOW},
-        {"SCALE_FLOAT_BYTEWIDTH", TILEDB_SCALE_FLOAT_BYTEWIDTH},
-        {"SCALE_FLOAT_FACTOR", TILEDB_SCALE_FLOAT_FACTOR},
-        {"SCALE_FLOAT_OFFSET", TILEDB_SCALE_FLOAT_OFFSET},
-        {"WEBP_INPUT_FORMAT", TILEDB_WEBP_INPUT_FORMAT},
-        {"WEBP_QUALITY", TILEDB_WEBP_QUALITY},
-        {"WEBP_LOSSLESS", TILEDB_WEBP_LOSSLESS},
-        {"COMPRESSION_REINTERPRET_DATATYPE", TILEDB_COMPRESSION_REINTERPRET_DATATYPE},
-    };
-
-    auto option = convert_option[option_name];
-    switch (option) {
-        case TILEDB_COMPRESSION_LEVEL:
-            filter.set_option(option, value.get<int32_t>());
-            break;
-        case TILEDB_BIT_WIDTH_MAX_WINDOW:
-        case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
-            filter.set_option(option, value.get<uint32_t>());
-            break;
-        case TILEDB_SCALE_FLOAT_BYTEWIDTH:
-            filter.set_option(option, value.get<uint64_t>());
-            break;
-        case TILEDB_SCALE_FLOAT_FACTOR:
-        case TILEDB_SCALE_FLOAT_OFFSET:
-            filter.set_option(option, value.get<double>());
-            break;
-        case TILEDB_WEBP_QUALITY:
-            filter.set_option(option, value.get<float>());
-            break;
-        case TILEDB_WEBP_INPUT_FORMAT:
-        case TILEDB_WEBP_LOSSLESS:
-        case TILEDB_COMPRESSION_REINTERPRET_DATATYPE:
-            filter.set_option(option, value.get<uint8_t>());
-            break;
-        default:
-            throw TileDBSOMAError(fmt::format("Invalid option {} passed to filter", option_name));
-    }
-}
-
 Dimension ArrowAdapter::_create_dim(
     tiledb_datatype_t type, std::string name, const void* buff, std::shared_ptr<Context> ctx) {
     switch (type) {
@@ -661,91 +370,33 @@ Dimension ArrowAdapter::_create_dim(
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS: {
-            // Sadly we cannot put this in the centralized _create_dim_aux
-            // in the header file. That's because we need utils/logger.h
-            // -- which is a _fixed_ relative path from _this_ .cc file
-            // but a _varying_ relative path from all the places that
-            // #include arrow_adapter.h. Hence the code duplication in
-            // logging statements. :(
             uint64_t* b = (uint64_t*)buff;
             LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
             return Dimension::create(*ctx, name, type, b, b + 2);
         }
-        case TILEDB_INT8: {
-            int8_t* b = (int8_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int8_t*)buff);
-        }
-        case TILEDB_UINT8: {
-            uint8_t* b = (uint8_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint8_t*)buff);
-        }
-        case TILEDB_INT16: {
-            int16_t* b = (int16_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int16_t*)buff);
-        }
-        case TILEDB_UINT16: {
-            uint16_t* b = (uint16_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint16_t*)buff);
-        }
-        case TILEDB_INT32: {
-            int32_t* b = (int32_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int32_t*)buff);
-        }
-        case TILEDB_UINT32: {
-            uint32_t* b = (uint32_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint32_t*)buff);
-        }
-        case TILEDB_INT64: {
-            int64_t* b = (int64_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (int64_t*)buff);
-        }
-        case TILEDB_UINT64: {
-            uint64_t* b = (uint64_t*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (uint64_t*)buff);
-        }
-        case TILEDB_FLOAT32: {
-            float* b = (float*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (float*)buff);
-        }
-        case TILEDB_FLOAT64: {
-            double* b = (double*)buff;
-            LOG_DEBUG(fmt::format("_create_dim name={} b={} b1={} b2={}", name, b[0], b[1], b[2]));
-            return ArrowAdapter::_create_dim_aux(ctx, name, (double*)buff);
-        }
+        case TILEDB_INT8:
+            return create_dim_aux<int8_t>(ctx, name, buff);
+        case TILEDB_UINT8:
+            return create_dim_aux<uint8_t>(ctx, name, buff);
+        case TILEDB_INT16:
+            return create_dim_aux<int16_t>(ctx, name, buff);
+        case TILEDB_UINT16:
+            return create_dim_aux<uint16_t>(ctx, name, buff);
+        case TILEDB_INT32:
+            return create_dim_aux<int32_t>(ctx, name, buff);
+        case TILEDB_UINT32:
+            return create_dim_aux<uint32_t>(ctx, name, buff);
+        case TILEDB_INT64:
+            return create_dim_aux<int64_t>(ctx, name, buff);
+        case TILEDB_UINT64:
+            return create_dim_aux<uint64_t>(ctx, name, buff);
+        case TILEDB_FLOAT32:
+            return create_dim_aux<float>(ctx, name, buff);
+        case TILEDB_FLOAT64:
+            return create_dim_aux<double>(ctx, name, buff);
         default:
             throw TileDBSOMAError(
                 fmt::format("ArrowAdapter: Unsupported TileDB dimension: {} ", tiledb::impl::type_to_str(type)));
-    }
-}
-
-tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
-    std::transform(order.begin(), order.end(), order.begin(), [](unsigned char c) { return std::tolower(c); });
-
-    std::map<std::string, tiledb_layout_t> convert_order = {
-        {"row-major", TILEDB_ROW_MAJOR},
-        {"row_major", TILEDB_ROW_MAJOR},
-        {"row", TILEDB_ROW_MAJOR},
-        {"col-major", TILEDB_COL_MAJOR},
-        {"col_major", TILEDB_COL_MAJOR},
-        {"column-major", TILEDB_COL_MAJOR},
-        {"col", TILEDB_COL_MAJOR},
-        {"hilbert", TILEDB_HILBERT},
-        {"unordered", TILEDB_UNORDERED},
-    };
-
-    try {
-        return convert_order[order];
-    } catch (const std::out_of_range& e) {
-        throw TileDBSOMAError(fmt::format("Invalid order {} passed to PlatformConfig", order));
     }
 }
 
@@ -758,40 +409,10 @@ std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_s
     bool is_sparse,
     PlatformConfig platform_config,
     std::optional<std::pair<int64_t, int64_t>> timestamp_range) {
+    auto schema = utils::create_base_tiledb_schema(ctx, platform_config, is_sparse, timestamp_range);
+
     auto& index_column_array = index_column_info.first;
     auto& index_column_schema = index_column_info.second;
-
-    tiledb_array_schema_t* c_schema;
-    if (timestamp_range.has_value() && timestamp_range.value().first != 0) {
-        ctx->handle_error(tiledb_array_schema_alloc_at_timestamp(
-            ctx->ptr().get(), is_sparse ? TILEDB_SPARSE : TILEDB_DENSE, timestamp_range.value().first, &c_schema));
-    } else {
-        ctx->handle_error(
-            tiledb_array_schema_alloc(ctx->ptr().get(), is_sparse ? TILEDB_SPARSE : TILEDB_DENSE, &c_schema));
-    }
-    ArraySchema schema(*ctx, c_schema);
-
-    Domain domain(*ctx);
-
-    schema.set_capacity(platform_config.capacity);
-
-    if (!platform_config.offsets_filters.empty()) {
-        schema.set_offsets_filter_list(ArrowAdapter::_create_filter_list(platform_config.offsets_filters, ctx));
-    }
-
-    if (!platform_config.validity_filters.empty()) {
-        schema.set_validity_filter_list(ArrowAdapter::_create_filter_list(platform_config.validity_filters, ctx));
-    }
-
-    schema.set_allows_dups(platform_config.allows_duplicates);
-
-    if (platform_config.tile_order) {
-        schema.set_tile_order(ArrowAdapter::_get_order(*platform_config.tile_order));
-    }
-
-    if (platform_config.cell_order) {
-        schema.set_cell_order(ArrowAdapter::_get_order(*platform_config.cell_order));
-    }
 
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
@@ -851,6 +472,7 @@ std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_s
     soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
     soma_schema_extension["version"] = TILEDB_SOMA_SCHEMA_VERSION;
 
+    Domain domain(*ctx);
     // Unit tests expect dimension order should match the index column schema
     // and NOT the Arrow schema
     // We generate the additional schema metadata here to ensure that the
@@ -968,7 +590,7 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
 
     auto col_name = prefix + std::string(schema->name) + suffix;
 
-    FilterList filter_list = ArrowAdapter::_create_dim_filter_list(col_name, platform_config, soma_type, ctx);
+    FilterList filter_list = utils::create_dim_filter_list(col_name, platform_config, soma_type, ctx);
 
     if (array->length != 5) {
         throw TileDBSOMAError(
@@ -986,55 +608,6 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     return dim;
 }
 
-Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
-    std::shared_ptr<Context> ctx,
-    ArrowSchema* schema,
-    ArrowArray* array,
-    std::string soma_type,
-    std::string_view type_metadata,
-    std::string prefix,
-    std::string suffix,
-    PlatformConfig platform_config) {
-    if (strcmp(schema->format, "+l") != 0) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "[tiledb_dimension_from_arrow_schema_ext] Schema "
-                "should be of type list."));
-    }
-
-    if (schema->n_children != 1) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "[tiledb_dimension_from_arrow_schema_ext] Schema "
-                "should have exactly 1 child"));
-    }
-
-    auto type = ArrowAdapter::to_tiledb_format(schema->children[0]->format, type_metadata);
-
-    if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
-        type = TILEDB_STRING_ASCII;
-    }
-
-    auto col_name = prefix + std::string(schema->name) + suffix;
-
-    FilterList filter_list = ArrowAdapter::_create_dim_filter_list(col_name, platform_config, soma_type, ctx);
-
-    if (array->length != 5) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "ArrowAdapter: unexpected length {} != 5 for name "
-                "'{}'",
-                array->length,
-                col_name));
-    }
-
-    const void* buff = array->children[0]->buffers[1];
-    auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
-    dim.set_filter_list(filter_list);
-
-    return dim;
-}
-
 std::pair<Attribute, std::optional<Enumeration>> ArrowAdapter::tiledb_attribute_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     ArrowSchema* arrow_schema,
@@ -1044,7 +617,7 @@ std::pair<Attribute, std::optional<Enumeration>> ArrowAdapter::tiledb_attribute_
 
     Attribute attr(*ctx, arrow_schema->name, type);
 
-    FilterList filter_list = ArrowAdapter::_create_attr_filter_list(arrow_schema->name, platform_config, ctx);
+    FilterList filter_list = utils::create_attr_filter_list(arrow_schema->name, platform_config, ctx);
     attr.set_filter_list(filter_list);
 
     if (arrow_schema->flags & ARROW_FLAG_NULLABLE) {
@@ -1286,90 +859,6 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype, s
         throw std::out_of_range(
             fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
     }
-}
-
-enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view arrow_dtype) {
-    std::map<std::string_view, enum ArrowType> _to_nanoarrow_type_map = {
-        {"i", NANOARROW_TYPE_INT32},        {"c", NANOARROW_TYPE_INT8},         {"C", NANOARROW_TYPE_UINT8},
-        {"s", NANOARROW_TYPE_INT16},        {"S", NANOARROW_TYPE_UINT16},       {"I", NANOARROW_TYPE_UINT32},
-        {"l", NANOARROW_TYPE_INT64},        {"L", NANOARROW_TYPE_UINT64},       {"f", NANOARROW_TYPE_FLOAT},
-        {"g", NANOARROW_TYPE_DOUBLE},       {"u", NANOARROW_TYPE_STRING},       {"U", NANOARROW_TYPE_LARGE_STRING},
-        {"b", NANOARROW_TYPE_BOOL},         {"tss:", NANOARROW_TYPE_TIMESTAMP}, {"tsm:", NANOARROW_TYPE_TIMESTAMP},
-        {"tsn:", NANOARROW_TYPE_TIMESTAMP}, {"tsu:", NANOARROW_TYPE_TIMESTAMP}, {"tdD", NANOARROW_TYPE_TIMESTAMP},
-        {"z", NANOARROW_TYPE_BINARY},       {"Z", NANOARROW_TYPE_LARGE_BINARY},
-    };
-
-    try {
-        return _to_nanoarrow_type_map.at(arrow_dtype);
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range(
-            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
-    }
-}
-
-std::pair<enum ArrowType, enum ArrowTimeUnit> ArrowAdapter::to_nanoarrow_time(std::string_view arrow_dtype) {
-    std::map<std::string_view, std::pair<enum ArrowType, enum ArrowTimeUnit>> _to_nanoarrow_time = {
-        {"tss:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_SECOND}},
-        {"tsm:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MILLI}},
-        {"tsu:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MICRO}},
-        {"tsn:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_NANO}},
-    };
-
-    try {
-        return _to_nanoarrow_time.at(arrow_dtype);
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range(
-            fmt::format("ArrowAdapter: Unsupported Arrow type: {} ({})", arrow_dtype, to_arrow_readable(arrow_dtype)));
-    }
-}
-
-std::string_view ArrowAdapter::to_arrow_readable(std::string_view arrow_dtype) {
-    std::map<std::string_view, std::string_view> _to_arrow_readable = {
-        {"n", "null"},
-        {"b", "boolean"},
-        {"c", "int8"},
-        {"C", "uint8"},
-        {"s", "int16"},
-        {"S", "uint16"},
-        {"i", "int32"},
-        {"I", "uint32"},
-        {"l", "int64"},
-        {"L", "uint64"},
-        {"e", "float16"},
-        {"f", "float32"},
-        {"g", "float64"},
-        {"z", "binary"},
-        {"Z", "large binary"},
-        {"vz", "binary view"},
-        {"u", "utf-8 string"},
-        {"U", "large utf-8 string"},
-        {"vu", "utf-8 view"},
-        {"tdD", "date32 [days]"},
-        {"tdm", "date64 [milliseconds]"},
-        {"tts", "time32 [seconds]"},
-        {"ttm", "time32 [milliseconds]"},
-        {"ttu", "time64 [microseconds]"},
-        {"ttn", "time64 [nanoseconds]"},
-        {"tDs", "duration [seconds]"},
-        {"tDm", "duration [milliseconds]"},
-        {"tDu", "duration [microseconds]"},
-        {"tDn", "duration [nanoseconds]"},
-        {"tiM", "interval [months]"},
-        {"tiD", "interval [days, time]"},
-        {"tin", "interval [month, day, nanoseconds]"},
-        {"+l", "list"},
-        {"+L", "large list"},
-        {"+vl", "list-view"},
-        {"+vL", "large list-view"},
-        {"+s", "struct"},
-        {"+m", "map"},
-        {"+r", "run-end encoded"}};
-
-    auto it = _to_arrow_readable.find(arrow_dtype);
-    return it != _to_arrow_readable.end() ? it->second :
-                                            "unknown Arrow type [see "
-                                            "https://arrow.apache.org/docs/format/"
-                                            "CDataInterface.html#data-type-description-format-strings]";
 }
 
 managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(

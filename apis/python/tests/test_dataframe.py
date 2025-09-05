@@ -2,13 +2,12 @@ import contextlib
 import datetime
 import json
 import math
-import os
 import shutil
 import struct
 import time
 import warnings
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -186,6 +185,210 @@ def test_dataframe(tmp_path, arrow_schema):
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("myfloat",))
     assert sdf.index_column_names == ("myfloat",)
+
+
+@pytest.mark.parametrize(
+    "delete_coords,value_filter,expected_index",
+    [
+        pytest.param((slice(0, 7),), None, [], id="delete all with exact slice"),
+        pytest.param((slice(-10, 10),), None, [], id="delete all with large slice"),
+        pytest.param((np.arange(8).tolist(),), None, [], id="delete all with points"),
+        pytest.param(((2, 6, 3),), None, [0, 1, 4, 5, 7], id="delete with tuple"),
+        pytest.param((np.array((2, 6, 3), dtype=np.int64),), None, [0, 1, 4, 5, 7], id="delete with numpy array"),
+        pytest.param((pa.array((2, 6, 3), type=pa.int64()),), None, [0, 1, 4, 5, 7], id="delete with pyarrow"),
+        pytest.param(
+            (pa.chunked_array([[2, 3], [6, 4]], type=pa.int64()),),
+            None,
+            [0, 1, 5, 7],
+            id="delete with chunked pyarrow array",
+        ),
+        pytest.param(
+            (pa.chunked_array([[2, 3], [6, 3]], type=pa.int64()),),
+            None,
+            [0, 1, 4, 5, 7],
+            id="delete with overlapping chunked pyarrow array",
+        ),
+        pytest.param(((0, 7),), None, np.arange(1, 7).tolist(), id="delete end points"),
+        pytest.param(tuple(), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="value filter only"),
+        pytest.param((slice(1, 3),), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="slice and value filter"),
+        pytest.param(((1, 3, 2, 7, 4),), "string_data == 'two'", [0, 1, 3, 4, 5, 6, 7], id="points and value filter"),
+        pytest.param(((1, 6, 3),), "string_data == 'two'", np.arange(8).tolist(), id="no values deleted"),
+    ],
+)
+def test_delete_cells_joinid_with_string_column(tmp_path, delete_coords, value_filter, expected_index):
+    schema = pa.schema([
+        pa.field("soma_joinid", pa.int64(), nullable=False),
+        pa.field("string_data", pa.large_string()),
+    ])
+    with soma.DataFrame.create(
+        str(tmp_path), schema=pa.schema({"soma_joinid": pa.int64(), "string_data": pa.large_string()}), domain=[[0, 7]]
+    ) as soma_df:
+        joinid_data = np.arange(8)
+        string_data = ["zero", "one", "two", "three", "four", "five", "six", "seven"]
+        data = pa.Table.from_pydict(
+            {
+                "soma_joinid": pa.array(joinid_data, type=pa.int64()),
+                "string_data": pa.array(string_data, type=pa.large_string()),
+            },
+            schema=schema,
+        )
+        soma_df.write(data)
+
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells(delete_coords, value_filter=value_filter)
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([joinid_data[index] for index in expected_index], type=pa.int64()),
+            "string_data": pa.array([string_data[index] for index in expected_index], type=pa.large_string()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+
+@pytest.mark.parametrize(
+    "index_type,domain,index_data",
+    [
+        pytest.param(pa.int8(), [[-4, 3]], np.arange(-4, 4), id="int8"),
+        pytest.param(pa.int16(), [[-4, 3]], np.arange(-4, 4), id="int16"),
+        pytest.param(pa.int32(), [[-4, 3]], np.arange(-4, 4), id="int32"),
+        pytest.param(pa.int64(), [[-4, 3]], np.arange(-4, 4), id="int64"),
+        pytest.param(pa.uint8(), [[0, 7]], np.arange(8), id="uint8"),
+        pytest.param(pa.uint16(), [[0, 7]], np.arange(8), id="uint16"),
+        pytest.param(pa.uint32(), [[0, 7]], np.arange(8), id="uint32"),
+        pytest.param(pa.uint64(), [[0, 7]], np.arange(8), id="uint64"),
+        pytest.param(
+            pa.timestamp("s"),
+            [[np.datetime64("2020", "s"), np.datetime64("2020") + np.timedelta64(7, "s")]],
+            np.arange(np.datetime64("2020"), np.datetime64("2020") + np.timedelta64(8, "s"), np.timedelta64(1, "s")),
+            id="seconds",
+        ),
+        pytest.param(
+            pa.timestamp("ms"),
+            [[np.datetime64("2020", "ms"), np.datetime64("2020") + np.timedelta64(7, "ms")]],
+            np.arange(np.datetime64("2020"), np.datetime64("2020") + np.timedelta64(8, "ms"), np.timedelta64(1, "ms")),
+            id="milliseconds",
+        ),
+        pytest.param(
+            pa.timestamp("us"),
+            [[np.datetime64("2020", "us"), np.datetime64("2020") + np.timedelta64(7, "us")]],
+            np.arange(np.datetime64("2020"), np.datetime64("2020") + np.timedelta64(8, "us"), np.timedelta64(1, "us")),
+            id="microseconds",
+        ),
+        pytest.param(
+            pa.large_string(),
+            None,
+            ["apple", "banana", "coconut", "durian", "eggplant", "fig", "guava", "honeydew"],
+            id="string",
+        ),
+    ],
+)
+def test_delete_cells_1d_all_dim_types(tmp_path, index_type, index_data, domain):
+    joinid_data = np.arange(8)
+    schema = pa.schema([
+        pa.field("index_column", index_type, nullable=False),
+        pa.field("soma_joinid", pa.int64(), nullable=False),
+    ])
+    with soma.DataFrame.create(str(tmp_path), schema=schema, index_column_names=("index_column",), domain=domain) as df:
+        data = pa.Table.from_pydict(
+            {
+                "index_column": pa.array(index_data, type=index_type),
+                "soma_joinid": pa.array(joinid_data, type=pa.int64()),
+            },
+            schema=schema,
+        )
+        df.write(data)
+
+    # Delete slice
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells((slice(index_data[0], index_data[3]),))
+
+    # Check data
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "index_column": pa.array(index_data[4:], type=index_type),
+            "soma_joinid": pa.array(joinid_data[4:], type=pa.int64()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+    # Delete points with slice of a pyarrow array (for checking offsets)
+    full_array = pa.array(index_data, type=index_type)
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells((full_array[6:8],))
+
+    # Check data
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "index_column": pa.array(index_data[4:6], type=index_type),
+            "soma_joinid": pa.array(joinid_data[4:6], type=pa.int64()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+    # Delete another point with a sequence
+    full_array = pa.array(index_data, type=index_type)
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        soma_df.delete_cells(([index_data[5]],))
+
+    # Check data
+    with soma.DataFrame.open(str(tmp_path)) as soma_df:
+        actual_table = soma_df.read(result_order="row-major").concat()
+    expected_table = pa.Table.from_pydict(
+        {
+            "index_column": pa.array(index_data[4:5], type=index_type),
+            "soma_joinid": pa.array(joinid_data[4:5], type=pa.int64()),
+        },
+        schema=schema,
+    )
+    assert actual_table == expected_table
+
+
+def test_delete_cells_exceptions(tmp_path):
+    schema = pa.schema([
+        pa.field("soma_joinid", pa.int64(), nullable=False),
+        pa.field("string_data", pa.large_string()),
+    ])
+    with soma.DataFrame.create(
+        str(tmp_path), schema=pa.schema({"soma_joinid": pa.int64(), "string_data": pa.large_string()}), domain=[[0, 7]]
+    ) as soma_df:
+        data = pa.Table.from_pydict(
+            {
+                "soma_joinid": pa.array(np.arange(8), type=pa.int64()),
+                "string_data": pa.array(
+                    ["one", "two", "three", "four", "five", "six", "seven", "eight"], type=pa.large_string()
+                ),
+            },
+            schema=schema,
+        )
+        soma_df.write(data)
+    with soma.DataFrame.open(str(tmp_path), mode="w") as soma_df:
+        assert soma_df.mode == "w"
+        with pytest.raises((soma.SOMAError, RuntimeError)):
+            soma_df.delete_cells((slice(1, 4),))
+
+    with soma.DataFrame.open(str(tmp_path), mode="r") as soma_df:
+        assert soma_df.mode == "r"
+        with pytest.raises((soma.SOMAError, RuntimeError)):
+            soma_df.delete_cells((slice(1, 4),))
+
+    with soma.DataFrame.open(str(tmp_path), mode="d") as soma_df:
+        with pytest.raises(IndexError):
+            soma_df.delete_cells((slice(10, 20),))
+        with pytest.raises(IndexError):
+            soma_df.delete_cells(((1, 20, 5, 3),))
+        with pytest.raises(ValueError):
+            soma_df.delete_cells(tuple())
+        with pytest.raises(ValueError):
+            soma_df.delete_cells((slice(3, 1),))
 
 
 def test_dataframe_with_enumeration(tmp_path):
@@ -370,7 +573,7 @@ def test_get_enumeration_values_historical(version, name):
 
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
@@ -418,7 +621,7 @@ def test_get_enumeration_values_historical(version, name):
 def test_extend_enumeration_values_historical(tmp_path, version):
     original_data_uri = str(ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / "pbmc3k_processed")
 
-    if not os.path.isdir(original_data_uri):
+    if not Path(original_data_uri).is_dir():
         raise RuntimeError(
             f"Missing '{original_data_uri}' directory. Try running `make data` "
             "from the TileDB-SOMA project root directory.",
@@ -1742,7 +1945,7 @@ def test_index_types(tmp_path, make_dataframe):
     sdf.write(make_dataframe[0])
 
 
-def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], domain: List[Any]):
+def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], domain: list[Any]):
     """
     Creates a variably-indexed DataFrame for use in tests below.
     """
@@ -2126,7 +2329,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], dom
 def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
 
-    schema, sdf, n_data = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"], io["domain"])
+    _, sdf, _ = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"], io["domain"])
     with soma.DataFrame.open(uri=sdf.uri) as sdf:
         assert list(sdf.index_column_names) == io["index_column_names"]
 
@@ -2880,11 +3083,11 @@ def test_enum_schema_report(tmp_path):
 
         f = sdf.schema.field("str_cat")
         assert f.type.index_type == pa.int8()
-        assert f.type.value_type == pa.string()
+        assert f.type.value_type == pa.large_string()
 
         f = sdf.schema.field("byte_cat")
         assert f.type.index_type == pa.int8()
-        assert f.type.value_type == pa.binary()
+        assert f.type.value_type == pa.large_binary()
 
 
 def test_nullable(tmp_path):

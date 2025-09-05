@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Any, Sequence, Union, get_args
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
@@ -58,7 +59,7 @@ INGEST_MODES = get_args(IngestMode)  # for run-time checks
 
 # Internal version of ``IngestMode`` that includes "update"; see ``IngestionParams``.
 _IngestMode = Union[IngestMode, Literal["update"]]
-_INGEST_MODES = INGEST_MODES + ("update",)
+_INGEST_MODES = (*INGEST_MODES, "update")
 
 
 OpenTimestamp = Union[int, datetime.datetime]

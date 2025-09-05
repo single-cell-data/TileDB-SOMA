@@ -21,6 +21,8 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include "../common/soma_column_selection.h"
+#include "../tiledb_adapter/platform_config.h"
 #include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "logger_public.h"
@@ -70,6 +72,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
+class CoordinateValueFilters;
 
 class SOMAArray : public SOMAObject {
    public:
@@ -198,19 +201,19 @@ class SOMAArray : public SOMAObject {
     void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
+     * Returns a shared pointer of the internal TileDB array.
+     */
+    inline std::shared_ptr<Array> tiledb_array() {
+        return arr_;
+    }
+
+    /**
      * Creates a new ManagedQuery for this array.
      *
      * @param name Name of the array.
      */
     inline ManagedQuery create_managed_query(std::string_view name = "unnamed") const {
         return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
-    }
-
-    /**
-     * Returns a shared pointer of the internal TileDB array.
-     */
-    inline std::shared_ptr<Array> tiledb_array() {
-        return arr_;
     }
 
     /**
@@ -223,6 +226,11 @@ class SOMAArray : public SOMAObject {
         std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const {
         return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
     }
+
+    /**
+     * Creates a new CoordinateValueFilters for this array.
+     */
+    CoordinateValueFilters create_coordinate_value_filter() const;
 
     /**
      * Close the SOMAArray object.
@@ -262,6 +270,13 @@ class SOMAArray : public SOMAObject {
     std::vector<std::string> dimension_names() const;
 
     /**
+     * @brief Get the index columns.
+     *
+     * @return A vector of the index columns in order.
+     */
+    std::vector<std::shared_ptr<SOMAColumn>> index_columns() const;
+
+    /**
      * @brief Sees if the array has a dimension of the given name.
      *
      * @return bool
@@ -282,6 +297,21 @@ class SOMAArray : public SOMAObject {
      * and commits
      */
     void consolidate_and_vacuum(std::vector<std::string> modes = {"fragment_meta", "commits"});
+
+    /**
+     * @brief Delete cells from the array.
+     *
+     * @param coord_filter Coordinate value filter defining the coordinates to delete.
+     */
+    void delete_cells(const CoordinateValueFilters& coord_filters);
+
+    /**
+     * @brief Delete cells from the array.
+     *
+     * @param coord_filter Coordinate value filter defining the coordinates to delete.
+     * @param value_filter Additional value filter to constrain the delete by.
+     */
+    void delete_cells(const CoordinateValueFilters& coord_filters, const QueryCondition& value_filter);
 
     /**
      * @brief Get the TileDB ArraySchema. This should eventually
@@ -324,8 +354,8 @@ class SOMAArray : public SOMAObject {
      *
      * @return PlatformSchemaConfig
      */
-    PlatformSchemaConfig schema_config_options() const {
-        return ArrowAdapter::platform_schema_config_from_tiledb(*schema_);
+    inline PlatformSchemaConfig schema_config_options() const {
+        return utils::platform_schema_config_from_tiledb(*schema_);
     }
 
     /**
@@ -335,8 +365,8 @@ class SOMAArray : public SOMAObject {
      *
      * @return PlatformConfig
      */
-    PlatformConfig config_options_from_schema() const {
-        return ArrowAdapter::platform_config_from_tiledb_schema(*schema_);
+    inline PlatformConfig config_options_from_schema() const {
+        return utils::platform_config_from_tiledb_schema(*schema_);
     }
 
     /**
@@ -426,11 +456,6 @@ class SOMAArray : public SOMAObject {
      * be opened in READ mode, otherwise the function will error out.
      */
     uint64_t metadata_num() const;
-
-    /**
-     * Validates input parameters before opening array.
-     */
-    void validate(OpenMode mode, std::optional<TimestampRange> timestamp);
 
     /**
      * Return optional timestamp pair SOMAArray was opened with.
@@ -1088,16 +1113,17 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache(OpenMode mode, std::optional<TimestampRange> timestamp);
-
-    void fill_columns();
-
     /**
      * Convenience function for creating an ArraySchemaEvolution object
      * referencing this array's context pointer, along with its open-at
      * timestamp (if any).
      */
     ArraySchemaEvolution _make_se();
+
+    // Array associated with metadata_. If open mode is not "read", then a second
+    // array is opened. Otherwise, this is a reference to `arr_`. This needs to be
+    // kept open to make metadata value pointer in the metadata cache accessible.
+    std::shared_ptr<Array> meta_cache_arr_;
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
@@ -1116,12 +1142,6 @@ class SOMAArray : public SOMAObject {
     // directly in those cases. Here, we store a copy of the schema so that it
     // can be accessed in any mode
     std::shared_ptr<ArraySchema> schema_;
-
-    // Array associated with metadata_. Metadata values need to be
-    // accessible in write mode as well. We need to keep this read-mode
-    // array alive in order for the metadata value pointers in the cache to
-    // be accessible
-    std::shared_ptr<Array> meta_cache_arr_;
 };
 
 }  // namespace tiledbsoma

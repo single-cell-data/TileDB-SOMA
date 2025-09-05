@@ -5,11 +5,12 @@
 """TileDB-SOMA configuration options."""
 
 from ._soma_tiledb_context import ConfigDict, SOMATileDBContext
-from ._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+from ._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
 __all__ = [
-    "SOMATileDBContext",
     "ConfigDict",
+    "SOMATileDBContext",
     "TileDBCreateOptions",
+    "TileDBDeleteOptions",
     "TileDBWriteOptions",
 ]

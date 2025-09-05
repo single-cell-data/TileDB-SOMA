@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import gc
 import json
-import os
+import pathlib
 import re
 from concurrent import futures
 from contextlib import nullcontext
@@ -566,6 +566,9 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
             == soma_experiment.ms["RNA"].varm["quux"].read((var_slice, range(N_FEATURES))).tables().concat()
         )
 
+    del query
+    gc.collect()
+
 
 @pytest.mark.parametrize("n_obs,n_vars,obsm_layer_names,varm_layer_names", [(1001, 99, ["foo"], ["bar"])])
 def test_experiment_query_to_anndata_obsm_varm(soma_experiment):
@@ -591,8 +594,8 @@ def test_experiment_query_to_anndata_obsp_varp(soma_experiment):
         ad = query.to_anndata("raw", obsp_layers=["foo"], varp_layers=["bar"])
         assert set(ad.obsp.keys()) == {"foo"}
         obsp = ad.obsp["foo"]
-        assert isinstance(obsp, sparse.spmatrix)
-        assert sparse.isspmatrix_csr(obsp)
+        assert isinstance(obsp, (sparse.spmatrix, sparse.sparray))
+        assert hasattr(obsp, "format") and obsp.format == "csr"
         assert obsp.shape == (query.n_obs, query.n_obs)
 
         assert (query.obsp("foo").coos().concat().to_scipy() != obsp).nnz == 0
@@ -600,8 +603,8 @@ def test_experiment_query_to_anndata_obsp_varp(soma_experiment):
 
         assert set(ad.varp.keys()) == {"bar"}
         varp = ad.varp["bar"]
-        assert isinstance(varp, sparse.spmatrix)
-        assert sparse.isspmatrix_csr(varp)
+        assert isinstance(varp, (sparse.spmatrix, sparse.sparray))
+        assert hasattr(varp, "format") and varp.format == "csr"
         assert varp.shape == (query.n_vars, query.n_vars)
         assert (query.varp("bar").coos().concat().to_scipy() != varp).nnz == 0
         assert np.array_equal(query.varp("bar").coos().concat().to_scipy().todense(), varp.todense())
@@ -887,7 +890,7 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
@@ -911,30 +914,30 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
 
         obs = query.obs().concat()
         assert len(obs) == obs_count
+        obs_index_name = expected_index_name(
+            obs.to_pandas(),
+            exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "obs_id",
+        )
+        del obs
+        gc.collect()
 
         var = query.var().concat()
         assert len(var) == var_count
+        var_index_name = expected_index_name(
+            var.to_pandas(),
+            exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
+            "var_id",
+        )
+        del var
+        gc.collect()
 
         adata = query.to_anndata("data")
         assert adata.n_obs == obs_count
         assert adata.n_vars == var_count
         assert adata.X.shape == (obs_count, var_count)
-        assert adata.obs.index.name == expected_index_name(
-            obs.to_pandas(),
-            exp.obs.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
-            "obs_id",
-        )
-        assert adata.var.index.name == expected_index_name(
-            var.to_pandas(),
-            exp.ms["RNA"].var.metadata.get(SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, None),
-            "var_id",
-        )
-        del adata, obs, var
-        gc.collect()
-
-        adata = query.to_anndata("data", obs_id_name="soma_joinid", var_id_name="soma_joinid")
-        assert adata.obs.index.name == "soma_joinid"
-        assert adata.var.index.name == "soma_joinid"
+        assert adata.obs.index.name == obs_index_name
+        assert adata.var.index.name == var_index_name
         del adata
         gc.collect()
 
@@ -942,8 +945,7 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
         assert adata.obs.index.name == "obs_id"
         assert adata.var.index.name == "var_id"
         del adata
-
-    gc.collect()
+        gc.collect()
 
 
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
@@ -957,7 +959,7 @@ def test_annotation_matrix_slots(
     name = "pbmc3k_processed"
     path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
-    if not os.path.isdir(uri):
+    if not pathlib.Path(uri).is_dir():
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )

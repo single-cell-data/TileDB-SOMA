@@ -108,7 +108,7 @@ def get_libtiledbsoma_library_name():
 def find_libtiledbsoma_full_path_on_linux(lib_name):
     # https://stackoverflow.com/questions/35682600/get-absolute-path-of-shared-library-in-python
     class LINKMAP(ctypes.Structure):
-        _fields_ = [("l_addr", ctypes.c_void_p), ("l_name", ctypes.c_char_p)]
+        _fields_ = [("l_addr", ctypes.c_void_p), ("l_name", ctypes.c_char_p)]  # noqa: RUF012
 
     libdl = ctypes.CDLL(lib_name)
     dlinfo = libdl.dlinfo
@@ -248,8 +248,8 @@ if platform.machine() == "x86_64":
     CXX_FLAGS.append("-mavx2")
 
 if os.name != "nt":
-    CXX_FLAGS.append(f"-Wl,-rpath,{str(tiledbsoma_dir / 'lib')}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{str(tiledb_dir / 'lib')}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib'!s}")
 
 if sys.platform == "darwin":
     CXX_FLAGS.append("-mmacosx-version-min=11.0")
@@ -264,10 +264,10 @@ if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(tiledbsoma_dir / "lib64"))
     LIB_DIRS.append(str(tiledb_dir / "lib" / "x86_64-linux-gnu"))
     LIB_DIRS.append(str(tiledb_dir / "lib64"))
-    CXX_FLAGS.append(f"-Wl,-rpath,{str(tiledbsoma_dir / 'lib' / 'x86_64-linux-gnu')}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{str(tiledbsoma_dir / 'lib64')}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{str(tiledb_dir / 'lib' / 'x86_64-linux-gnu')}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{str(tiledb_dir / 'lib64')}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib' / 'x86_64-linux-gnu'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib64'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib' / 'x86_64-linux-gnu'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib64'!s}")
 
 # ----------------------------------------------------------------
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
@@ -324,6 +324,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_sparse_ndarray.cc",
                 "src/tiledbsoma/soma_group.cc",
                 "src/tiledbsoma/soma_collection.cc",
+                "src/tiledbsoma/coordinate_selection.cc",
                 "src/tiledbsoma/managed_query.cc",
                 "src/tiledbsoma/transformer.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
@@ -332,7 +333,7 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20"] + CXX_FLAGS,
+            extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20", *CXX_FLAGS],
             language="c++",
         ),
     ],

@@ -108,9 +108,9 @@ from .ambient_label_mappings import (
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
 __all__ = (
-    "AxisIDMapping",
     "AxisAmbientLabelMapping",
-    "ExperimentIDMapping",
+    "AxisIDMapping",
     "ExperimentAmbientLabelMapping",
+    "ExperimentIDMapping",
     "get_dataframe_values",
 )

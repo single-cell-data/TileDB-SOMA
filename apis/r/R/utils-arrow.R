@@ -46,58 +46,6 @@ as.logical.Scalar <- \(x, ...) as.logical(x$as_vector(), ...)
 #' List of all arrow types: https://github.com/apache/arrow/blob/90aac16761b7dbf5fe931bc8837cad5116939270/r/R/type.R#L700
 #' @noRd
 
-tiledb_type_from_arrow_type <- function(x, is_dim) {
-  stopifnot(is_arrow_data_type(x))
-  retval <- switch(x$name,
-    int8 = "INT8",
-    int16 = "INT16",
-    int32 = "INT32",
-    int64 = "INT64",
-    uint8 = "UINT8",
-    uint16 = "UINT16",
-    uint32 = "UINT32",
-    uint64 = "UINT64",
-    float32 = "FLOAT32",
-    float = "FLOAT32",
-    float64 = "FLOAT64",
-    # based on tiledb::r_to_tiledb_type()
-    double = "FLOAT64",
-    boolean = "BOOL",
-    bool = "BOOL",
-    # large_string = "large_string",
-    # binary = "binary",
-    # large_binary = "large_binary",
-    # fixed_size_binary = "fixed_size_binary",
-    utf8 = "UTF8",
-    string = "UTF8",
-    large_utf8 = "UTF8",
-    # based on what TileDB supports
-    date32 = "DATETIME_DAY",
-    # date64 = "date64",
-    # time32 = "time32",
-    # time64 = "time64",
-    # null = "null",
-    # based on what TileDB supports with a default msec res.
-    timestamp = "DATETIME_MS",
-    # decimal128 = "decimal128",
-    # decimal256 = "decimal256",
-    # struct = "struct",
-    # list_of = "list",
-    # list = "list",
-    # large_list_of = "large_list",
-    # large_list = "large_list",
-    # fixed_size_list_of = "fixed_size_list",
-    # fixed_size_list = "fixed_size_list",
-    # map_of = "map",
-    # duration = "duration",
-    dictionary = tiledb_type_from_arrow_type(x$index_type, is_dim = is_dim),
-    stop("Unsupported Arrow data type: ", x$name, call. = FALSE)
-  )
-  if (is_dim && retval == "UTF8") {
-    retval <- "ASCII"
-  }
-  retval
-}
 
 arrow_type_from_tiledb_type <- function(x) {
   stopifnot(is.character(x))
@@ -260,35 +208,6 @@ arrow_type_unsigned_range <- function(x) {
   range
 }
 
-#' Create a TileDB attribute from an Arrow field
-#' @return a [`tiledb::tiledb_attr-class`]
-#' @noRd
-tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
-  stopifnot(
-    is_arrow_field(field),
-    inherits(tiledb_create_options, "TileDBCreateOptions")
-  )
-
-  # Default zstd filter to use if none is specified in platform config
-  default_zstd_filter <- list(
-    name = "ZSTD",
-    COMPRESSION_LEVEL = tiledb_create_options$dataframe_dim_zstd_level()
-  )
-
-  field_type <- tiledb_type_from_arrow_type(field$type, is_dim = FALSE)
-  tiledb::tiledb_attr(
-    name = field$name,
-    type = field_type,
-    nullable = field$nullable,
-    ncells = if (field_type == "ASCII" || field_type == "UTF8") NA_integer_ else 1L,
-    filter_list = tiledb::tiledb_filter_list(
-      tiledb_create_options$attr_filters(
-        attr_name = field$name,
-        default = list(default_zstd_filter)
-      )
-    )
-  )
-}
 
 #' Validate external pointer to ArrowArray which is embedded in a nanoarrow S3 type
 #' @noRd
@@ -313,7 +232,10 @@ check_arrow_data_types <- function(from, to) {
   )
 
   is_string <- function(x) {
-    x$ToString() %in% c("string", "large_string")
+    if (inherits(x, what = "DictionaryType")) {
+      return(inherits(x$value_type, what = c("Utf8", "LargeUtf8")))
+    }
+    return(inherits(x, what = c("Utf8", "LargeUtf8")))
   }
 
   compatible <- if (is_string(from) && is_string(to)) {

@@ -16,6 +16,7 @@
 
 #include <tiledb/tiledb>
 
+#include "../tiledb_adapter/platform_config.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"
 

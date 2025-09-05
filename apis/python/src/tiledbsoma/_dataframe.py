@@ -7,10 +7,10 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Sequence
 from typing import (
     Any,
     Literal,
-    Sequence,
     Union,
     cast,
 )
@@ -24,7 +24,9 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
+from ._coordinate_selection import CoordinateValueFilters
 from ._exception import SOMAError, map_exception_for_create
+from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
@@ -38,13 +40,10 @@ from ._types import (
 )
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
 _UNBATCHED = options.BatchSize()
-AxisDomain = Union[None, tuple[Any, Any], list[Any]]
+AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
 
 
@@ -152,7 +151,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
-    ) -> "DataFrame":
+    ) -> DataFrame:
         """Creates the data structure on disk/S3/cloud.
 
         Args:
@@ -383,12 +382,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         # thing, TileDBSOMAError for another.
         for column_name in column_names:
             # We could check:
-            #   if column_name not in self.schema.names: ...
+            #   if column_name not in self.schema.names ...
             # but pyarrow already raises KeyError. We could
             # do that check anyway and provide a really clear
             # error message, but fortunately (not all libraries do this)
             # their error message is sufficiently clear:
-            #   KeyError: 'Column nonesuch does not exist in schema'
+            #   KeyError: 'Column nonesuch does not exist in schema'  # noqa: ERA001
             field = self.schema.field(column_name)
             if not isinstance(field.type, pa.DictionaryType):
                 raise KeyError(f"column name '{column_name}' is not of dictionary type")
@@ -567,9 +566,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
         full_schema = self.schema
-        dim_schema_list = []
-        for dim_name in dim_names:
-            dim_schema_list.append(full_schema.field(dim_name))
+        dim_schema_list = [full_schema.field(dim_name) for dim_name in dim_names]
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
@@ -688,6 +685,46 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
+
+    def delete_cells(
+        self,
+        coords: options.SparseDFCoords = (),
+        *,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
+    ) -> None:
+        """Deletes cells at the specified coordinates.
+
+        Either ``coords`` or ``value_filter`` must be provided. When both ``coords`` and ``value_filter`` are provided,
+        the cells that match both constraints will be removed.
+
+        For example, to delete values from the ``obs`` dataframe with ``soma_joinid<=1000`` where ``n_genes > 1000``
+        and ``n_counts < 2000``:
+            >>> with tiledbsoma.DataFrame(obs_uri, mode="d") as obs_df:
+            ...     obs_df.delete_cells((slice(None, 1000),), value_filter="n_genes > 1000 and n_counts < 2000")
+
+        Note: Deleting cells does not change the size of the current domain or possible enumeration values.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+            value_filter:
+                An optional [value filter] to apply to the results.
+                Defaults to no filter.
+        """
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
+            raise TypeError(
+                f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
+            )
+        coord_filter = CoordinateValueFilters.create(self, coords)
+        qc_handle = None
+        if value_filter is not None:
+            qc = QueryCondition(value_filter)
+            qc.init_query_condition(self.schema, [])
+            qc_handle = qc.c_obj
+        self._handle._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,
@@ -875,12 +912,16 @@ def _canonicalize_schema(
                 f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"',
             )
         if index_column_name not in schema_names_set:
-            schema_names_string = "{}".format(list(schema_names_set))
+            schema_names_string = f"{list(schema_names_set)}"
             raise ValueError(
                 f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}",
             )
         dtype = schema.field(index_column_name).type
-        if not pa.types.is_dictionary(dtype) and dtype not in [
+        if pa.types.is_dictionary(dtype):
+            raise TypeError(
+                f"Cannot set index column '{index_column_name}' to an enumeration. Index columns do not support enumerations."
+            )
+        if dtype not in [
             pa.int8(),
             pa.uint8(),
             pa.int16(),
@@ -900,7 +941,9 @@ def _canonicalize_schema(
             pa.timestamp("us"),
             pa.timestamp("ns"),
         ]:
-            raise TypeError(f"Unsupported index type {schema.field(index_column_name).type}")
+            raise TypeError(
+                f"Unsupported index type {schema.field(index_column_name).type} on index column '{index_column_name}'."
+            )
 
     return schema
 
@@ -911,7 +954,7 @@ def _fill_out_slot_soma_domain(
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,  # noqa: ANN401
-) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:  # noqa: ANN401
+) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:
     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
@@ -1110,10 +1153,10 @@ def _find_extent_for_domain(
 # extent exceeds max value representable by domain type. Reduce domain max
 # by 1 tile extent to allow for expansion.
 def _revise_domain_for_extent(
-    domain: tuple[Any, Any],  # noqa: ANN401
+    domain: tuple[Any, Any],
     extent: Any,  # noqa: ANN401
     saturated_range: bool | tuple[bool, ...],
-) -> tuple[Any, Any]:  # noqa: ANN401
+) -> tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
         domain = cast("tuple[Any, Any]", (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1])))
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import pathlib
 
 import pytest
 
@@ -11,7 +12,7 @@ from tiledbsoma._query_condition import QueryCondition
 
 VERBOSE = False
 
-TEST_DIR = os.path.dirname(__file__)
+TEST_DIR = pathlib.Path(__file__).parent
 SOMA_URI = f"{TEST_DIR}/../../../data/soco/pbmc3k_processed"
 
 if VERBOSE:
@@ -63,6 +64,10 @@ def soma_query(uri, condition):
         "n_genes == +480",
         "n_genes >= -1",
         "n_genes > -(+(-1))",
+        # not ops
+        "not n_genes == 480",
+        "not n_genes > 500",
+        "not n_genes < 500",
         # boolean logic
         "percent_mito > 0.02 and n_genes > 700",  # and
         "percent_mito > 0.02 or n_genes > 700",  # or
@@ -204,6 +209,7 @@ def test_query_condition_reset():
         '"',
         "'",
         "attr(3) > 1attr(b) == 3",
+        "not > a",
     ],
 )
 def test_parsing_error_conditions(malformed_condition):

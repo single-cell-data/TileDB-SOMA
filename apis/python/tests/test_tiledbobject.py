@@ -105,15 +105,15 @@ def _make_object(name, uri):
 def test_tiledbobject_exists_cross_types(tmp_path, name1, name2):
     if name1 == name2:
         uri1 = (tmp_path / name1).as_posix()
-        (cls1, obj1) = _make_object(name1, uri1)
+        (cls1, _) = _make_object(name1, uri1)
         assert cls1.exists(uri1)
 
     else:
         uri1 = (tmp_path / name1).as_posix()
         uri2 = (tmp_path / name2).as_posix()
 
-        (cls1, obj1) = _make_object(name1, uri1)
-        (cls2, obj2) = _make_object(name2, uri2)
+        (cls1, _) = _make_object(name1, uri1)
+        (cls2, _) = _make_object(name2, uri2)
 
         assert not cls1.exists(uri2)
         assert not cls2.exists(uri1)

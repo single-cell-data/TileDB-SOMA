@@ -39,6 +39,7 @@ def test_dense_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_type
     for d in range(len(shape)):
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
+    assert a.type == element_type
     assert not a.schema.field("soma_data").nullable
 
     # Ensure read mode uses clib object
@@ -621,3 +622,13 @@ def test_use_same_slicing_semantics_61815(tmp_path):
 
     with soma.open(uri, mode="r") as A:
         assert np.array_equal(A.read(coords), subarray)
+
+
+def test_delete_cells_exception(tmp_path):
+    with soma.DenseNDArray.create(str(tmp_path), type=pa.float64(), shape=(100, 100)) as array:
+        array.close()
+
+    with soma.DenseNDArray.open(str(tmp_path), mode="d") as array:
+        assert array.mode == "d"
+        with pytest.raises(NotImplementedError):
+            array.delete_cells((slice(0, 10),))

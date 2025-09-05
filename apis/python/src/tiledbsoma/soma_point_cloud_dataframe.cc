@@ -119,6 +119,17 @@ void load_soma_point_cloud_dataframe(py::module& m) {
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>())
 
+        .def(
+            "delete_cells",
+            [](SOMAPointCloudDataFrame& df,
+               const CoordinateValueFilters& coord_filter,
+               std::optional<PyQueryCondition> value_filter) {
+                if (value_filter.has_value()) {
+                    return df.delete_cells(coord_filter, *value_filter->ptr());
+                }
+                return df.delete_cells(coord_filter);
+            })
+
         .def_static("exists", &SOMAPointCloudDataFrame::exists)
         .def_property_readonly("index_column_names", &SOMAPointCloudDataFrame::index_column_names)
         .def_property_readonly("count", &SOMAPointCloudDataFrame::count, py::call_guard<py::gil_scoped_release>());

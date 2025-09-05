@@ -6,7 +6,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, cast
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pyarrow as pa
@@ -21,6 +22,7 @@ from . import _util
 from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
+from ._coordinate_selection import CoordinateValueFilters
 from ._dask.util import SOMADaskConfig
 from ._exception import SOMAError, map_exception_for_create
 from ._managed_query import ManagedQuery
@@ -29,7 +31,7 @@ from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple, OpenTimestamp
 from ._util import from_clib_result_order
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
 if TYPE_CHECKING:
     try:
@@ -207,6 +209,28 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         self._verify_open_for_reading()
         return cast("SparseNDArrayWrapper", self._handle).nnz
 
+    def delete_cells(self, coords: options.SparseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
+        """Deletes cells at the specified coordinates in a :class:`SparseNDArray`.
+
+        Note: Deleting cells does not change the shape of the :class:`SparseNDArray`.
+
+        Example deleting cells for ``soma_dim_1 >= 10000``:
+            >>> with tiledbsoma.SparseNDArray(count_matrix_uri, mode="d") as X:
+            ...     X.delete_cells(((slice(None, None), slice(10000, None)), value_filter="n_genes > 1000 and n_counts < 2000")
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+        """
+        if platform_config is not None and not isinstance(platform_config, TileDBDeleteOptions):
+            raise TypeError(
+                f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
+            )
+        coord_filter = CoordinateValueFilters.create(self, coords)
+        self._handle._handle.delete_cells(coord_filter._handle)
+
     def read(
         self,
         coords: options.SparseNDCoords = (),
@@ -215,7 +239,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: options.ReadPartitions | None = None,
         platform_config: PlatformConfig | None = None,
-    ) -> "SparseNDArrayRead":
+    ) -> SparseNDArrayRead:
         """Reads a user-defined slice of the :class:`SparseNDArray`.
 
         Args:
@@ -446,7 +470,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
     def dask_array(
         self,
         **config: Unpack[SOMADaskConfig],
-    ) -> "da.Array":
+    ) -> da.Array:
         """Load a TileDB-SOMA X layer as a Dask array.
 
         The returned Array is effectively read-only; writes to it will not be persisted back to the

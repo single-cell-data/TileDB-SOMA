@@ -4,9 +4,11 @@ Test join-id registrations for ingesting multiple AnnData objects into a single 
 
 from __future__ import annotations
 
+import gc
 import math
+import pathlib
+from collections.abc import Sequence
 from contextlib import nullcontext
-from typing import Sequence
 
 import anndata as ad
 import numpy as np
@@ -189,7 +191,7 @@ def create_soma_canned(which: int, obs_field_name, var_field_name, tmp_path):
 @pytest.fixture
 def anndata_larger():
     return _create_anndata(
-        obs_ids=["id_%08d" % e for e in range(1000)],
+        obs_ids=["id_%08d" % e for e in range(1000)],  # noqa: UP031
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
         X_value_base=0,
         obs_field_name="cell_id",
@@ -198,9 +200,9 @@ def anndata_larger():
 
 
 @pytest.fixture()
-def soma_larger(anndata_larger, tmp_path):
+def soma_larger(anndata_larger, tmp_path, soma_tiledb_context):
     uri = (tmp_path / "soma-larger").as_posix()
-    tiledbsoma.io.from_anndata(uri, anndata_larger, "measname")
+    tiledbsoma.io.from_anndata(uri, anndata_larger, "measname", context=soma_tiledb_context)
     return uri
 
 
@@ -304,7 +306,7 @@ def test_non_identity_axis_mappings():
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_isolated_anndata_mappings(obs_field_name, var_field_name):
+def test_isolated_anndata_mappings(soma_tiledb_context, obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     rd = tiledbsoma.io.register_anndatas(
         None,
@@ -312,6 +314,7 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
@@ -334,7 +337,7 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_isolated_h5ad_mappings(obs_field_name, var_field_name, tmp_path):
+def test_isolated_h5ad_mappings(soma_tiledb_context, obs_field_name, var_field_name, tmp_path):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name, tmp_path)
     rd = tiledbsoma.io.register_h5ads(
         None,
@@ -342,6 +345,7 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name, tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
     assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
     assert_array_equal(rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data, (2, 1))
@@ -917,16 +921,20 @@ def test_append_items_with_experiment(obs_field_name, var_field_name, tmp_path):
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("use_same_cells", [True, False])
-def test_append_with_disjoint_measurements(tmp_path, obs_field_name, var_field_name, use_same_cells):
+def test_append_with_disjoint_measurements(
+    tmp_path, obs_field_name, var_field_name, use_same_cells, soma_tiledb_context
+):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     anndata4 = create_anndata_canned(4, obs_field_name, var_field_name)
     soma_uri = tmp_path.as_posix()
 
-    tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="one")
+    tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="one", context=soma_tiledb_context)
 
     anndata2 = anndata1 if use_same_cells else anndata4
 
-    tiledbsoma.io.from_anndata(soma_uri, anndata2, measurement_name="two", ingest_mode="schema_only")
+    tiledbsoma.io.from_anndata(
+        soma_uri, anndata2, measurement_name="two", ingest_mode="schema_only", context=soma_tiledb_context
+    )
 
     original = anndata2.copy()
 
@@ -937,15 +945,13 @@ def test_append_with_disjoint_measurements(tmp_path, obs_field_name, var_field_n
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         allow_duplicate_obs_ids=use_same_cells,
+        context=soma_tiledb_context,
     )
 
     rd.prepare_experiment(soma_uri)
 
     tiledbsoma.io.from_anndata(
-        soma_uri,
-        anndata2,
-        measurement_name="two",
-        registration_mapping=rd,
+        soma_uri, anndata2, measurement_name="two", registration_mapping=rd, context=soma_tiledb_context
     )
 
     assert_adata_equal(original, anndata2)
@@ -1186,12 +1192,12 @@ def test_ealm_expose():
     assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
 
 
-def test_append_registration_with_nonexistent_storage(tmp_path):
+def test_append_registration_with_nonexistent_storage(tmp_path, soma_tiledb_context):
     anndata1 = create_anndata_canned(1, "obs_id", "var_id")
     anndata2 = create_anndata_canned(2, "obs_id", "var_id")
     soma_uri = tmp_path.as_posix()
 
-    tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="RNA", context=soma_tiledb_context)
 
     with pytest.raises(tiledbsoma.DoesNotExistError):
         tiledbsoma.io.register_anndatas(
@@ -1200,6 +1206,7 @@ def test_append_registration_with_nonexistent_storage(tmp_path):
             measurement_name="RNA",
             obs_field_name="obs_id",
             var_field_name="var_id",
+            context=soma_tiledb_context,
         )
 
 
@@ -1214,10 +1221,7 @@ def test_append_registration_with_nonexistent_storage(tmp_path):
     ],
 )
 def test_append_with_nonunique_field_values(
-    tmp_path,
-    obs_field_name,
-    var_field_name,
-    dataset_ids_and_exc,
+    tmp_path, obs_field_name, var_field_name, dataset_ids_and_exc, soma_tiledb_context
 ):
     """Verifies that we do a proactive check for uniqueness of obs/var registration-field values"""
     ida = 1
@@ -1230,7 +1234,7 @@ def test_append_with_nonunique_field_values(
         anndatab = create_anndata_canned(idb, obs_field_name, var_field_name)
     soma_uri = tmp_path.as_posix()
 
-    tiledbsoma.io.from_anndata(soma_uri, anndataa, measurement_name=measurement_name)
+    tiledbsoma.io.from_anndata(soma_uri, anndataa, measurement_name=measurement_name, context=soma_tiledb_context)
 
     ctx = pytest.raises(exc) if exc else nullcontext()
     with ctx:
@@ -1240,19 +1244,20 @@ def test_append_with_nonunique_field_values(
             measurement_name=measurement_name,
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            context=soma_tiledb_context,
         )
 
 
 @pytest.mark.parametrize("all_at_once", [False, True])
 @pytest.mark.parametrize("nobs_a", [50, 300])
 @pytest.mark.parametrize("nobs_b", [60, 400])
-def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
+def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b, soma_tiledb_context):
     """Creates an obs column whose bit width might naively be inferred to be int8
     by tiledbsoma.io, and another which could be inferred to int16.  Then
     ensures the dataframes are appendable regardless of which one was written
     first."""
-    obs_ids_a = [("a_%08d" % e) for e in range(nobs_a)]
-    obs_ids_b = [("b_%08d" % e) for e in range(nobs_b)]
+    obs_ids_a = [("a_%08d" % e) for e in range(nobs_a)]  # noqa: UP031
+    obs_ids_b = [("b_%08d" % e) for e in range(nobs_b)]  # noqa: UP031
     var_ids = ["W", "X", "Y", "Z"]
     obs_field_name = "cell_id"
     var_field_name = "gene_id"
@@ -1291,14 +1296,18 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         assert rd.get_obs_shape() == nobs_a + nobs_b
         assert rd.get_var_shapes() == {"meas": 4, "raw": 0}
 
-        tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd)
+        tiledbsoma.io.from_anndata(
+            soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd, context=soma_tiledb_context
+        )
 
         rd.prepare_experiment(soma_uri)
 
-        tiledbsoma.io.from_anndata(soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd)
+        tiledbsoma.io.from_anndata(
+            soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd, context=soma_tiledb_context
+        )
 
     else:
-        tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name=measurement_name)
+        tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name=measurement_name, context=soma_tiledb_context)
 
         rd = tiledbsoma.io.register_anndatas(
             soma_uri,
@@ -1306,6 +1315,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             measurement_name=measurement_name,
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            context=soma_tiledb_context,
         )
 
         assert rd.get_obs_shape() == nobs_a + nobs_b
@@ -1313,7 +1323,9 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
 
         rd.prepare_experiment(soma_uri)
 
-        tiledbsoma.io.from_anndata(soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd)
+        tiledbsoma.io.from_anndata(
+            soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd, context=soma_tiledb_context
+        )
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         obs = exp.obs.read().concat()
@@ -1361,10 +1373,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
     adata_protein.var.index.name = "second_adata_var_index"
 
     tiledbsoma.io.from_anndata(
-        experiment_uri=uri,
-        anndata=adata_rna,
-        measurement_name="RNA",
-        uns_keys=[],
+        experiment_uri=uri, anndata=adata_rna, measurement_name="RNA", uns_keys=[], context=soma_tiledb_context
     )
 
     with tiledbsoma.Experiment.open(uri) as exp:
@@ -1377,6 +1386,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
         measurement_name="protein",
         uns_keys=[],
         ingest_mode="schema_only",
+        context=soma_tiledb_context,
     )
 
     # Register the second anndata object in the protein measurement
@@ -1387,6 +1397,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
         obs_field_name=adata_protein.obs.index.name,
         var_field_name=adata_protein.var.index.name,
         allow_duplicate_obs_ids=True,
+        context=soma_tiledb_context,
     )
 
     assert rd.get_obs_shape() == 2638
@@ -1400,6 +1411,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
         measurement_name="protein",
         registration_mapping=rd,
         uns_keys=[],
+        context=soma_tiledb_context,
     )
 
     with tiledbsoma.Experiment.open(uri, context=soma_tiledb_context) as exp:
@@ -1412,7 +1424,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
         assert exp.ms["protein"].var.count == len(adata_protein.var)
 
 
-def test_registration_lists_and_tuples(tmp_path):
+def test_registration_lists_and_tuples(tmp_path, soma_tiledb_context):
     obs_field_name = "cell_id"
     var_field_name = "gene_id"
 
@@ -1426,6 +1438,7 @@ def test_registration_lists_and_tuples(tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     rd2 = tiledbsoma.io.register_anndatas(
@@ -1434,6 +1447,7 @@ def test_registration_lists_and_tuples(tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     rd3 = tiledbsoma.io.register_anndatas(
@@ -1442,6 +1456,7 @@ def test_registration_lists_and_tuples(tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
     assert rd1 == rd2
     assert rd2 == rd3
@@ -1452,6 +1467,7 @@ def test_registration_lists_and_tuples(tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     rd5 = tiledbsoma.io.register_h5ads(
@@ -1460,6 +1476,7 @@ def test_registration_lists_and_tuples(tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     rd6 = tiledbsoma.io.register_h5ads(
@@ -1468,6 +1485,7 @@ def test_registration_lists_and_tuples(tmp_path):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     assert rd4 == rd5
@@ -1486,16 +1504,15 @@ def test_registration_lists_and_tuples(tmp_path):
     ],
 )
 def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, version_and_shaped):
-    version, shaped = version_and_shaped
+    version, _ = version_and_shaped
 
-    import os
     import shutil
 
     from ._util import ROOT_DATA_DIR
 
     original_data_uri = str(ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / "pbmc3k_unprocessed")
 
-    if not os.path.isdir(original_data_uri):
+    if not pathlib.Path(original_data_uri).is_dir():
         raise RuntimeError(
             f"Missing '{original_data_uri}' directory. Try running `make data` "
             "from the TileDB-SOMA project root directory.",
@@ -1528,6 +1545,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, v
         measurement_name="RNA",
         obs_field_name="obs_id",
         var_field_name="var_id",
+        context=soma_tiledb_context,
     )
 
     assert rd.get_obs_shape() == 5400
@@ -1538,7 +1556,11 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, v
         anndata=adata,
         measurement_name="RNA",
         registration_mapping=rd,
+        context=soma_tiledb_context,
     )
+
+    del adata
+    gc.collect()
 
     with tiledbsoma.Experiment.open(uri, context=soma_tiledb_context) as exp:
         assert "RNA" in exp.ms
@@ -1549,7 +1571,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, v
         assert "new_ident" in obs["orig.ident"].cat.categories
 
 
-def test_prepare_experiment(tmp_path) -> None:
+def test_prepare_experiment(tmp_path, soma_tiledb_context) -> None:
     soma_uri = tmp_path.as_posix()
     adatas = [
         ad.AnnData(
@@ -1588,12 +1610,14 @@ def test_prepare_experiment(tmp_path) -> None:
     ]
 
     # create experiment
-    tiledbsoma.io.from_anndata(soma_uri, adatas[0], measurement_name="RNA", ingest_mode="schema_only")
+    tiledbsoma.io.from_anndata(
+        soma_uri, adatas[0], measurement_name="RNA", ingest_mode="schema_only", context=soma_tiledb_context
+    )
 
     with tiledbsoma.open(soma_uri) as E:
         assert pa.types.is_dictionary(E.obs.schema.field("A").type)
         assert pa.types.is_dictionary(E.obs.schema.field("B").type)
-        assert E.obs.schema.field("A").type.value_type == pa.string()
+        assert E.obs.schema.field("A").type.value_type == pa.large_string()
         assert E.obs.schema.field("B").type.value_type == pa.bool_()
 
     # register
@@ -1694,7 +1718,7 @@ def test_subset_from(tmp_path) -> None:
         )
 
 
-def test_field_name(tmp_path):
+def test_field_name(tmp_path, soma_tiledb_context):
     soma_uri = tmp_path.as_posix()
 
     ms_name = "RNA"
@@ -1720,6 +1744,7 @@ def test_field_name(tmp_path):
         ingest_mode="schema_only",
         obs_id_name=obs_field_name,
         var_id_name=var_field_name,
+        context=soma_tiledb_context,
     )
 
     rd = tiledbsoma.io.register_anndatas(
@@ -1740,14 +1765,15 @@ def test_field_name(tmp_path):
             registration_mapping=rd.subset_for_anndata(adata),
             obs_id_name=obs_field_name,
             var_id_name=var_field_name,
+            context=soma_tiledb_context,
         )
 
-    with tiledbsoma.Experiment.open(soma_uri) as exp:
+    with tiledbsoma.Experiment.open(soma_uri, context=soma_tiledb_context) as exp:
         assert exp.obs.count == sum(adata.n_obs for adata in anndatas)
         assert exp.ms[ms_name].var.count == pd.concat(adata.var[var_field_name] for adata in anndatas).nunique()
 
 
-def test_allow_duplicate_obs_ids_catches_dups(tmp_path):
+def test_allow_duplicate_obs_ids_catches_dups(tmp_path, soma_tiledb_context):
     obs_field_name = "obs_id"
     var_field_name = "var_id"
     ms_name = "RNA"
@@ -1760,6 +1786,7 @@ def test_allow_duplicate_obs_ids_catches_dups(tmp_path):
         adata1,
         measurement_name=ms_name,
         ingest_mode="schema_only",
+        context=soma_tiledb_context,
     )
     with pytest.raises(tiledbsoma.SOMAError):
         tiledbsoma.io.register_anndatas(
@@ -1768,6 +1795,7 @@ def test_allow_duplicate_obs_ids_catches_dups(tmp_path):
             measurement_name=ms_name,
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            context=soma_tiledb_context,
         )
 
     # catch dup between existing SOMA and AnnData
@@ -1779,10 +1807,11 @@ def test_allow_duplicate_obs_ids_catches_dups(tmp_path):
             measurement_name=ms_name,
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            context=soma_tiledb_context,
         )
 
 
-def test_empty_measurement_SOMA_184(tmp_path):
+def test_empty_measurement_SOMA_184(tmp_path, soma_tiledb_context):
     """Verify that prepare_experiment correctly handles empty Measurements."""
 
     exp_uri = tmp_path.as_posix()
@@ -1798,6 +1827,7 @@ def test_empty_measurement_SOMA_184(tmp_path):
         anndata=adata,
         measurement_name="RNA",
         ingest_mode="schema_only",
+        context=soma_tiledb_context,
     )
 
     # sim a new anndata
@@ -1817,6 +1847,7 @@ def test_empty_measurement_SOMA_184(tmp_path):
         measurement_name="prot",
         obs_field_name="obs_id",
         var_field_name="var_id",
+        context=soma_tiledb_context,
     )
 
     reg.prepare_experiment(exp_uri)
@@ -1828,9 +1859,10 @@ def test_empty_measurement_SOMA_184(tmp_path):
         obs_id_name="obs_id",
         var_id_name="var_id",
         registration_mapping=reg,
+        context=soma_tiledb_context,
     )
 
-    with tiledbsoma.Experiment.open(exp_uri, "r") as exp:
+    with tiledbsoma.Experiment.open(exp_uri, "r", context=soma_tiledb_context) as exp:
         assert exp.ms["RNA"].var.count == 0
         assert exp.ms["prot"].var.count == 20
         assert exp.obs.count == 100

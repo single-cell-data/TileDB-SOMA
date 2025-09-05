@@ -2,13 +2,9 @@ name: libTileDB-SOMA CodeCov
 
 on:
   pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "docker/**"
-      - ".pre-commit-config.yaml"
-      - ".github/workflows/**"
-      - "!.github/workflows/libtiledb-ci.yml"
+    paths:
+      - "libtiledbsoma/**"
+      - ".github/workflows/libtiledb-ci.yml"
   push:
     branches:
       - main
@@ -17,14 +13,19 @@ on:
 
 jobs:
   codecov:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v4
+
     - name: Build libTileDB-SOMA
       run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
+
     - name: Run libTileDB-SOMA unittests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
+      env:
+        TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:

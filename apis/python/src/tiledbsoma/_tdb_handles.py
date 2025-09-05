@@ -12,13 +12,10 @@ from __future__ import annotations
 import abc
 import enum
 import warnings
+from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from typing import (
     Any,
     Generic,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    Sequence,
     TypeVar,
     Union,
     cast,
@@ -40,7 +37,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
-AxisDomain = Union[None, tuple[Any, Any], list[Any]]
+AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
 
 RawHandle = Union[
@@ -80,11 +77,11 @@ def open_handle_wrapper(
     context: SOMATileDBContext,
     timestamp: OpenTimestamp | None,
     clib_type: str | None = None,
-) -> "Wrapper[RawHandle]":
+) -> Wrapper[RawHandle]:
     """Determine whether the URI is an array or group, and open it."""
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    _type_to_class = {
+    type_to_class_ = {
         "somadataframe": DataFrameWrapper,
         "somapointclouddataframe": PointCloudDataFrameWrapper,
         "somageometrydataframe": GeometryDataFrameWrapper,
@@ -112,12 +109,12 @@ def open_handle_wrapper(
                 raise DoesNotExistError(tdbe) from tdbe
             raise
         try:
-            return _type_to_class[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
+            return type_to_class_[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
         except KeyError:
             raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 
     try:
-        return _type_to_class[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
+        return type_to_class_[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
     except KeyError:
         raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 
@@ -220,7 +217,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         This is passed a raw TileDB object opened in read mode, since writers
         will need to retrieve data from the backing store on setup.
         """
-        # non–attrs-managed field
+        # non-attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
@@ -292,7 +289,7 @@ class GroupEntry:
     wrapper_type: type[AnyWrapper]
 
     @classmethod
-    def from_soma_group_entry(cls, obj: tuple[str, str]) -> "GroupEntry":
+    def from_soma_group_entry(cls, obj: tuple[str, str]) -> GroupEntry:
         uri, type = obj[0], obj[1]
         if type == "SOMAArray":
             return GroupEntry(uri, SOMAArrayWrapper)
@@ -332,7 +329,7 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
         }
 
     @property
-    def meta(self) -> "MetadataWrapper":
+    def meta(self) -> MetadataWrapper:
         return self.metadata
 
     def members(self) -> dict[str, tuple[str, str]]:
@@ -398,7 +395,7 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         This is passed a raw TileDB object opened in read mode, since writers
         will need to retrieve data from the backing store on setup.
         """
-        # non–attrs-managed field
+        # non-attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
@@ -415,7 +412,7 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         return self._handle.config_options_from_schema()
 
     @property
-    def meta(self) -> "MetadataWrapper":
+    def meta(self) -> MetadataWrapper:
         return self.metadata
 
     @property
@@ -718,11 +715,11 @@ class _DictMod(enum.Enum):
     """The key was originally PRESENT but has been deleted."""
 
     @classmethod
-    def start_state(cls, dct: Mapping[Any, Any], key: Any) -> "_DictMod":  # noqa: ANN401
+    def start_state(cls, dct: Mapping[Any, Any], key: Any) -> _DictMod:  # noqa: ANN401
         """Returns the starting state for a DictMod given the key of dct."""
         return cls.PRESENT if key in dct else cls.ABSENT
 
-    def next_state(self, action: Literal["set", "del"]) -> "_DictMod":
+    def next_state(self, action: Literal["set", "del"]) -> _DictMod:
         """Determines the next state of an entry given the action."""
         return {
             _DictMod.ABSENT: {
@@ -757,7 +754,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
 
     owner: Wrapper[RawHandle]
     cache: dict[str, Any]
-    _mods: dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
+    _mods: dict[str, _DictMod] = attrs.field(init=False, factory=dict)
     """Tracks the modifications we have made to cache entries."""
 
     def __len__(self) -> int:
@@ -809,7 +806,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
                         set_metadata(key, np.array([val]))
                 if mod is _DictMod.DELETED:
                     self.owner._handle.delete_metadata(key)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:  # noqa: BLE001, PERF203
                 # This should be done with Exception Groups
                 errors.append(e)
 
@@ -818,9 +815,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
         self._mods.clear()
 
         if errors:
-            details = []
-            for error in errors:
-                details.append(repr(error))
+            details = [repr(error) for error in errors]
 
             error_msg_details = "\n".join(details)
 

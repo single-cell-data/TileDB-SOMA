@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import pathlib
 import sys
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import ContextManager, Iterator
-from unittest import mock
 
 import anndata as ad
 import pyarrow as pa
@@ -41,7 +40,9 @@ _pa_type_to_str_fmt = {
 
 
 @contextmanager
-def read_h5ad(input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | None = None) -> Iterator[ad.AnnData]:
+def read_h5ad(
+    input_path: Path | str, *, mode: str | None = "r", ctx: SOMATileDBContext | None = None
+) -> Iterator[ad.AnnData]:
     """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
     ctx = ctx or SOMATileDBContext()
     input_handle = CachingReader(
@@ -50,13 +51,12 @@ def read_h5ad(input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | Non
         cache_block_size=8 * 1024**2,
     )
     try:
-        with _hack_patch_anndata():
-            anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
-            yield anndata
+        adata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
+        yield adata
     finally:
         # This prevents a race condition with the REPL cleanup in ipython. See sc-65863
-        if anndata.file:
-            anndata.file.close()
+        if "adata" in locals() and adata.file:
+            adata.file.close()
         input_handle.close()
 
 
@@ -84,7 +84,7 @@ class _FSPathWrapper(pathlib.Path):
 
     else:
 
-        def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
+        def __new__(cls, _obj: object, path: Path) -> _FSPathWrapper:
             return super().__new__(cls, path)
 
         # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
@@ -102,18 +102,30 @@ class _FSPathWrapper(pathlib.Path):
         return getattr(self._obj, name)
 
 
-# @typeguard_ignore
-def _hack_patch_anndata() -> ContextManager[object]:
-    """Part Two of the ``_FSPathWrapper`` trick."""
+def _monkey_patch_anndata() -> None:
+    """Monkey patch the AnnData backed file manager to allow our path-like
+    wrapper class in addition to a str|Path.
 
-    @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]
+    As this is a global change whenever tiledbsoma is imported, take
+    care to preserve original AnnData setter behavior in cases unrelated
+    to the above use.
+    """
+    original_setter = file_backing.AnnDataFileManager.filename.fset
+    original_getter = file_backing.AnnDataFileManager.filename.fget
+
     def filename(
         self: file_backing.AnnDataFileManager,
         filename: Path | _FSPathWrapper | None,
     ) -> None:
-        self._filename = filename
+        if isinstance(filename, _FSPathWrapper):
+            self._filename = filename
+        else:
+            original_setter(self, filename)
 
-    return mock.patch.object(file_backing.AnnDataFileManager, "filename", filename)
+    file_backing.AnnDataFileManager.filename = property(original_getter, filename)
+
+
+_monkey_patch_anndata()
 
 
 def get_arrow_str_format(pa_type: pa.DataType) -> str:

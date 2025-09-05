@@ -4,11 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from typing import (
     Any,
-    Iterable,
-    Mapping,
-    Sequence,
     TypedDict,
     TypeVar,
     Union,
@@ -23,10 +21,6 @@ from typing_extensions import Self
 # within TileDBCreateOptions.
 DEFAULT_TILE_EXTENT = 2048
 DEFAULT_CELL_ORDER = DEFAULT_TILE_ORDER = "row-major"
-# TODO: pending further work on
-#  https://github.com/single-cell-data/TileDB-SOMA/issues/27
-# DEFAULT_X_CAPACITY = 100000
-# DEFAULT_MAX_THREAD_POOL_WORKERS = 8
 
 _DictFilterSpec = Mapping[str, object]
 """A format for specifying TileDB dimension/attribute filters and arguments.
@@ -132,7 +126,7 @@ class TileDBCreateOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: options.PlatformConfig | "TileDBCreateOptions" | None = None,
+        platform_config: options.PlatformConfig | TileDBCreateOptions | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -191,7 +185,7 @@ class TileDBWriteOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: options.PlatformConfig | "TileDBWriteOptions" | None = None,
+        platform_config: options.PlatformConfig | TileDBWriteOptions | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -212,6 +206,17 @@ class TileDBWriteOptions:
 
 
 _T = TypeVar("_T")
+
+
+@attrs_.define(frozen=True, kw_only=True, slots=True)
+class TileDBDeleteOptions:
+    """Tuning options used when deleting cells in SOMA arrays."""
+
+    @classmethod
+    def from_platform_config(cls, platform_config: options.PlatformConfig | TileDBDeleteOptions | None = None) -> Self:
+        """Create the class from a value passed in ``platform_config``."""
+        del platform_config
+        return cls()
 
 
 def _dig_platform_config(input: object, typ: type[_T], full_path: tuple[str, ...]) -> dict[str, object] | _T:

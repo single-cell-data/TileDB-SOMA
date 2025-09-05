@@ -5,7 +5,8 @@ from __future__ import annotations
 import pathlib
 import re
 from abc import ABCMeta, abstractmethod
-from typing import Any, Generic, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 import pandas as pd

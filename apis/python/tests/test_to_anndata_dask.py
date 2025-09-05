@@ -38,7 +38,7 @@ def test_dask_load_csr(
     )
     n_blocks = (X.shape[0] + obs_chunk_size - 1) // obs_chunk_size
     assert X.blocks.shape == (n_blocks, 1)
-    blocks = [X.blocks[(i, 0)].compute() for i in range(n_blocks)]
+    blocks = [X.blocks[i, 0].compute() for i in range(n_blocks)]
     csr = vstack(blocks)
     X = X.compute()
     assert X.shape == (80, 20)
@@ -61,7 +61,7 @@ def test_dask_load_csc(
     )
     n_blocks = (X.shape[1] + var_chunk_size - 1) // var_chunk_size
     assert X.blocks.shape == (1, n_blocks)
-    blocks = [X.blocks[(0, i)].compute() for i in range(n_blocks)]
+    blocks = [X.blocks[0, i].compute() for i in range(n_blocks)]
     csc = hstack(blocks)
     X = X.compute()
     assert X.shape == (80, 20)

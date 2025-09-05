@@ -390,7 +390,7 @@ def _treewalk(
     uri: str,
     *,
     node_name: str | None = None,
-    leaf_visitor: Callable[..., dict[str, Any]],  # noqa: ANN401
+    leaf_visitor: Callable[..., dict[str, Any]],
     **kwargs: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
     """Apply visitor function to the ``Experiment`` elements.
@@ -777,7 +777,7 @@ def _leaf_visitor_resize(
             new_soma_joinid_shape = _get_new_var_shape(nvars=nvars, ms_name=ms_name)
 
         else:
-            raise tiledbsoma.SOMAError("experiment resize: internal error: dataframe node name '{node_name}'")
+            raise tiledbsoma.SOMAError(f"experiment resize: internal error: dataframe node name '{node_name}'")
 
         _print_leaf_node_banner(
             uri=item.uri,
@@ -1034,28 +1034,29 @@ def _leaf_visitor_get_shapes(
     return retval
 
 
-# Expected input is like
-# {
-#   "obs": { "status": true },
-#   "ms": {
-#     "RNA": {
-#       "var": { "status": true },
-#       "X": {
-#         "data": { "status": true }
-#       }
-#     }
-#   }
-# }
 def _check_statuses(dikt: dict[str, Any]) -> bool:
     """This reduces the pass/fail statuses for all leaf nodes in a treewalk
     over the experiment down to a single pass/fail. It returns True
     only when all leaves have status=True, else False.
+
+    Expected input is like:
+    {
+        "obs": { "status": true },
+        "ms": {
+            "RNA": {
+                "var": { "status": true },
+                "X": {
+                    "data": { "status": true }
+                }
+            }
+        }
+    }
     """
     if "status" in dikt:
         ok = dikt["status"]
         assert isinstance(ok, bool)
         return ok
-    for _key, value in dikt.items():
+    for value in dikt.values():
         assert isinstance(value, dict)
         if not _check_statuses(value):
             return False

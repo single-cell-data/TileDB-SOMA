@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Generator
 
 import numpy as np
 import pandas as pd
@@ -186,7 +186,7 @@ def test_add(experiment_path, new_obs, new_var):
     assert o2.field("is_g1").type == pa.bool_()
     assert o2.field("seq").type == pa.int32()
     # tiledbsoma.io upgrades int8 and int16 to int32 for appendability
-    assert o2.field("parity").type == pa.dictionary(index_type=pa.int32(), value_type=pa.string(), ordered=False)
+    assert o2.field("parity").type == pa.dictionary(index_type=pa.int32(), value_type=pa.large_string(), ordered=False)
     assert obs["parity"][0] == "even"
     assert obs["parity"][1] == "odd"
     assert v2.field("vst.mean.sq").type == pa.float64()
@@ -259,7 +259,7 @@ def test_change_counts(
 
 
 @pytest.mark.parametrize("separate_ingest", [False, True])
-def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_ingest):
+def test_update_non_null_to_null(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata, separate_ingest):
     uri = tmp_path.as_uri()
 
     # Two ways to test:
@@ -280,6 +280,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
             conftest_pbmc3k_adata,
             measurement_name="RNA",
             uns_keys=[],
+            context=soma_tiledb_context,
         )
 
         conftest_pbmc3k_adata.obs["batch_id"] = "testing"
@@ -295,6 +296,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
             conftest_pbmc3k_adata,
             measurement_name="RNA",
             uns_keys=[],
+            context=soma_tiledb_context,
         )
 
     conftest_pbmc3k_adata.obs["batch_id"] = pd.NA
@@ -303,11 +305,11 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
 
 
-def test_enmr_add_drop_readd(tmp_path, conftest_pbmc3k_adata):
+def test_enmr_add_drop_readd(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata):
     uri = tmp_path.as_posix()
 
     # Add
-    tiledbsoma.io.from_anndata(uri, conftest_pbmc3k_adata, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(uri, conftest_pbmc3k_adata, measurement_name="RNA", context=soma_tiledb_context)
 
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema

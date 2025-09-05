@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import os
+import pathlib
 
-TEST_DIR = os.path.dirname(__file__)
+TEST_DIR = pathlib.Path(__file__).parent
 SOMA_URI = f"{TEST_DIR}/../../../data/soco/pbmc3k_processed"
 
-if not os.path.exists(SOMA_URI):
+if not pathlib.Path(SOMA_URI).exists():
     raise RuntimeError("Please run `make data` in the repo base directory")

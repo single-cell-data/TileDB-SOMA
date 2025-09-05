@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -100,10 +100,10 @@ def build_profile_data(stderr_: str, stdout_: str, prof1: str | None, prof2: str
 
 
 def read_tiledb_stats_output() -> dict[str, Any]:
-    if not os.path.isfile(TILEDB_STATS_FILE_PATH):
+    if not pathlib.Path(TILEDB_STATS_FILE_PATH).is_file():
         return {}
 
-    with open(TILEDB_STATS_FILE_PATH, "r") as f:
+    with open(TILEDB_STATS_FILE_PATH) as f:
         print("TileDB stats found", file=stderr)
         return json.load(f)
 
@@ -156,7 +156,7 @@ def main():
     print(f"Command to be run: {args.command}", file=stderr)
     # Run the command, using `time -v` to get detailed memory and time"""
     p = subprocess.Popen(
-        [args.gtime_cmd, "--format", GNU_TIME_FORMAT] + args.command.split(" "),
+        [args.gtime_cmd, "--format", GNU_TIME_FORMAT, *args.command.split(" ")],
         stdout=PIPE,
         stderr=PIPE,
     )

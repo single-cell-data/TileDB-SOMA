@@ -98,6 +98,7 @@ Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 
 import ctypes
 import os
+import pathlib
 import sys
 
 # Load native libraries. On wheel builds, we may have a shared library
@@ -116,8 +117,8 @@ except ImportError:
 
     try:
         # Try loading the bundled native library.
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, libtiledb_name), mode=ctypes.RTLD_GLOBAL)
+        lib_dir = pathlib.Path(pathlib.Path(__file__).resolve()).parent
+        ctypes.CDLL(os.path.join(lib_dir, libtiledb_name), mode=ctypes.RTLD_GLOBAL)  # noqa: PTH118
     except OSError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledb_name, mode=ctypes.RTLD_GLOBAL)
@@ -131,13 +132,13 @@ except ImportError:
 
     try:
         # Try loading the bundled native library.
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, libtiledbsoma_name))
+        lib_dir = pathlib.Path(pathlib.Path(__file__).resolve()).parent
+        ctypes.CDLL(os.path.join(lib_dir, libtiledbsoma_name))  # noqa: PTH118
     except OSError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)
 
-# ruff: noqa: F401 (allow unused imports)
+
 from somacore import (
     AffineTransform,
     Axis,
@@ -154,7 +155,6 @@ from somacore.options import ResultOrder
 # _before_ imports, but, ruff will tell us that imports need to be
 # at the top of the file:
 #
-# ruff: noqa: E402
 from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
@@ -184,7 +184,7 @@ from ._point_cloud_dataframe import PointCloudDataFrame
 from ._query import ExperimentAxisQuery
 from ._scene import Scene
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
-from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
+from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .pytiledbsoma import (
     tiledbsoma_stats_disable,
     tiledbsoma_stats_dump,
@@ -200,8 +200,9 @@ _verify_expected_tiledb_version()
 __version__ = get_implementation_version()
 
 __all__ = [
-    "AlreadyExistsError",
+    "SOMA_JOINID",
     "AffineTransform",
+    "AlreadyExistsError",
     "Axis",
     "AxisColumnNames",
     "AxisQuery",
@@ -213,35 +214,35 @@ __all__ = [
     "Experiment",
     "ExperimentAxisQuery",
     "GeometryDataFrame",
-    "get_implementation_version",
-    "get_implementation",
-    "get_libtiledbsoma_core_version",
-    "get_SOMA_version",
-    "get_storage_engine",
     "IdentityTransform",
     "IntIndexer",
     "Measurement",
     "MultiscaleImage",
     "NotCreateableError",
-    "open",
     "PointCloudDataFrame",
     "ResultOrder",
-    "ScaleTransform",
-    "Scene",
-    "show_package_versions",
-    "SOMA_JOINID",
     "SOMAError",
     "SOMATileDBContext",
+    "ScaleTransform",
+    "Scene",
     "SparseNDArray",
     "SparseNDArrayRead",
     "TileDBCreateOptions",
+    "TileDBDeleteOptions",
     "TileDBWriteOptions",
+    "UniformScaleTransform",
+    "get_SOMA_version",
+    "get_implementation",
+    "get_implementation_version",
+    "get_libtiledbsoma_core_version",
+    "get_storage_engine",
+    "open",
+    "show_package_versions",
     "tiledbsoma_build_index",
+    "tiledbsoma_stats_as_py",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
-    "tiledbsoma_stats_reset",
-    "tiledbsoma_stats_as_py",
     "tiledbsoma_stats_json",
-    "UniformScaleTransform",
+    "tiledbsoma_stats_reset",
 ]

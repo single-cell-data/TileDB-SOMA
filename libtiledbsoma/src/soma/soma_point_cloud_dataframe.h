@@ -16,6 +16,7 @@
 
 #include <filesystem>
 
+#include "../tiledb_adapter/platform_config.h"
 #include "soma_array.h"
 #include "soma_coordinates.h"
 

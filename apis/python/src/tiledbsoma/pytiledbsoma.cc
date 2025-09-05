@@ -33,6 +33,7 @@ void load_soma_vfs(py::module&);
 void load_managed_query(py::module&);
 void load_soma_column(py::module&);
 void load_transformers(py::module&);
+void load_coordinate_selection(py::module&);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
     py::register_exception<TileDBSOMAError>(m, "SOMAError");
@@ -193,6 +194,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_soma_group(m);
     load_soma_collection(m);
     load_query_condition(m);
+    load_coordinate_selection(m);
     load_reindexer(m);
     load_soma_vfs(m);
     load_managed_query(m);

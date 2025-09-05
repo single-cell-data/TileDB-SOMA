@@ -178,10 +178,10 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_NotEq(self, node):  # noqa: ANN001, ANN202, ARG002
         return clib.TILEDB_NE
 
-    def visit_In(self, node):  # noqa: ANN001, ANN202, ARG002
+    def visit_In(self, node):  # noqa: ANN001, ANN202
         return node
 
-    def visit_NotIn(self, node):  # noqa: ANN001, ANN202, ARG002
+    def visit_NotIn(self, node):  # noqa: ANN001, ANN202
         return node
 
     def visit_Is(self, node):  # noqa: ANN001, ANN202, ARG002
@@ -190,10 +190,10 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_IsNot(self, node):  # noqa: ANN001, ANN202, ARG002
         raise SOMAError("the `is not` operator is not supported")
 
-    def visit_List(self, node):  # noqa: ANN001, ANN202, ARG002
+    def visit_List(self, node):  # noqa: ANN001, ANN202
         return list(node.elts)
 
-    def visit_Attribute(self, node) -> clib.PyQueryCondition:  # noqa: ANN001, ANN202, ARG002
+    def visit_Attribute(self, node) -> clib.PyQueryCondition:  # noqa: ANN001
         raise SOMAError(
             f"Unhandled dot operator in {ast.dump(node)} -- if your attribute name "
             'has a dot in it, e.g. `orig.ident`, please wrap it with `attr("...")`, '
@@ -487,7 +487,12 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_NameConstant(self, node: ast.Constant) -> ast.Constant:
         return node
 
-    def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1) -> ast.Constant:
+    def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1) -> ast.Constant | clib.PyQueryCondition:
+        if isinstance(node.op, ast.Not):
+            operand = self.visit(node.operand)
+            if not isinstance(operand, clib.PyQueryCondition):
+                raise SOMAError(f"`not` can only be applied to a query condition, got {type(operand)}")
+            return operand.negate()
         if isinstance(node.op, ast.UAdd):
             sign *= 1
         elif isinstance(node.op, ast.USub):

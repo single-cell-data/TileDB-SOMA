@@ -19,7 +19,6 @@ add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
     common.cc
     common.h
-    test_soma_object_basics.cc
     unit_geometry_roundtrip.cc
     unit_arrow_adapter.cc
     unit_column_buffer.cc
@@ -37,7 +36,9 @@ add_executable(unit_soma
     unit_soma_multiscale_image.cc
     unit_soma_coordinates.cc
     test_indexer.cc
+    test_coordinate_value_filter.cc
     test_soma_object_basics.cc
+    test_soma_column_selection.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )
@@ -186,7 +187,7 @@ add_executable(test_tiledb_adapter
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
     common.cc
     common.h
-    test_soma_query_condition.cc
+    test_value_filter.cc
 )
 
 if(SPDLOG_LINK_SHARED)

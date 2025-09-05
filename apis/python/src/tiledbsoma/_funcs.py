@@ -5,10 +5,10 @@
 """Utilities and decorators around modifying functions."""
 
 import inspect
+from collections.abc import Collection
 from typing import (
     Any,
     Callable,
-    Collection,
     TypeVar,
 )
 
@@ -69,9 +69,9 @@ def forwards_kwargs_to(dst: Callable[..., Any], *, exclude: Collection[str] = ()
                         merged.append(dst_param)
                     elif _can_be_kwarg(dst_param) and dst_param.name not in claimed_names:
                         # In this case:
-                        #     def internal(a, b): ...
+                        #     def internal(a, b): ...  # noqa: ERA001
                         #     @forwards_kwargs_to(internal)
-                        #     def public(b, **kwargs): ...
+                        #     def public(b, **kwargs): ...  # noqa: ERA001
                         # `b` cannot be forwarded to `internal`, so we skip it.
                         # ...however, `a` can.
                         merged.append(dst_param.replace(kind=inspect.Parameter.KEYWORD_ONLY))

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import pyarrow as pa
@@ -161,6 +161,21 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
+
+    def delete_cells(
+        self, coords: options.DenseNDCoords, *, platform_config: options.PlatformConfig | None = None
+    ) -> None:
+        """Deletes cells at the specified coordinates. Not supported on dense arrays.
+
+        Not supported on DenseNDArray.
+
+        Args:
+            coords:
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
+                defining the region to read.
+        """
+        raise NotImplementedError("Support for deleting cells is not implemented on dense arrays.")
 
     def read(
         self,

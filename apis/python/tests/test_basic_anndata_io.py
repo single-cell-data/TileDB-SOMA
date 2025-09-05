@@ -27,8 +27,10 @@ from ._util import TESTDATA, assert_adata_equal, make_pd_df
 
 
 @pytest.fixture
-def h5ad_file_with_obsm_holes(request):
+def h5ad_file_with_obsm_holes():
     # This has zeroes in an obsm matrix so nnz is not num_rows * num_cols
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc3k-with-obsm-zero.h5ad"
 
 
@@ -36,6 +38,8 @@ def h5ad_file_with_obsm_holes(request):
 def h5ad_file_uns_string_arrays(request):
     # This has uns["louvain_colors"] with dtype.char == "U".
     # It also has uns["more_colors"] in the form '[[...]]', as often occurs in the wild.
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "pbmc3k.h5ad"
 
 
@@ -53,12 +57,16 @@ def h5ad_file_categorical_int_nan(request):
     #   s[0] = math.nan
     #   adata.obs["categ_int_nan"] = s
     #   adata.write_h5ad("categorical_int_nan.h5ad")
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "categorical_int_nan.h5ad"
 
 
 @pytest.fixture
 def h5ad_file_X_empty(request):
     """adata.X is a zero-cell sparse matrix"""
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "x-empty.h5ad"
 
 
@@ -68,6 +76,8 @@ def h5ad_file_X_none(request):
     adata.X has Python value None if read in non-backed mode; if read in backed
     mode, adata.X is not present as an attribute of adata.
     """
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     return TESTDATA / "x-none.h5ad"
 
 
@@ -124,14 +134,14 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
 
         # Check obs
         obs = exp.obs.read().concat().to_pandas()
-        assert sorted(obs.columns.to_list()) == sorted(orig.obs_keys() + ["soma_joinid", "obs_id"])
+        assert sorted(obs.columns.to_list()) == sorted([*orig.obs_keys(), "soma_joinid", "obs_id"])
         assert exp.obs.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
         else:
             assert sorted(obs["obs_id"]) == []
         # Convenience accessor
-        assert sorted(exp.obs.keys()) == sorted(list(orig.obs.keys()) + ["soma_joinid", "obs_id"])
+        assert sorted(exp.obs.keys()) == sorted([*list(orig.obs.keys()), "soma_joinid", "obs_id"])
 
         # Check ms
         assert exp.ms.metadata.get(metakey) == "SOMACollection"
@@ -139,14 +149,14 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
 
         # Check var
         var = exp.ms["RNA"].var.read().concat().to_pandas()
-        assert sorted(var.columns.to_list()) == sorted(orig.var_keys() + ["soma_joinid", "var_id"])
+        assert sorted(var.columns.to_list()) == sorted([*orig.var_keys(), "soma_joinid", "var_id"])
         assert exp.ms["RNA"].var.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(var["var_id"]) == sorted(list(orig.var_names))
         else:
             assert sorted(var["var_id"]) == []
         # Convenience accessor
-        assert sorted(exp.ms["RNA"].var.keys()) == sorted(list(orig.var.keys()) + ["soma_joinid", "var_id"])
+        assert sorted(exp.ms["RNA"].var.keys()) == sorted([*list(orig.var.keys()), "soma_joinid", "var_id"])
 
         # Check Xs
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
@@ -269,6 +279,8 @@ def test_resume_mode(resume_mode_h5ad_file, tmp_path):
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
     anything new
     """
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
 
     output_path1 = (tmp_path / "test_resume_mode_1_").as_posix()
     tiledbsoma.io.from_h5ad(output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
@@ -447,7 +459,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"])
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted([*list(conftest_pbmc_small.obsm.keys()), "X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
@@ -563,14 +575,14 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path, "w") as exp:
         add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"])
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted([*list(conftest_pbmc_small.obsm.keys()), "X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         # It's nonsense biologically to add this to varp, but as a fake-test unit-test case, we can
         # use varp to test adding to a not-yet-existing collection.
         add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(list(conftest_pbmc_small.varp.keys()) + ["X_pcb"])
+        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted([*list(conftest_pbmc_small.varp.keys()), "X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
@@ -708,8 +720,8 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         assert getter("empty_extension_partial").nullable
 
         # https://github.com/single-cell-data/TileDB-SOMA/issues/3685.
-        assert getter("nan_categorical_all").type.value_type == pa.string()
-        assert getter("none_categorical_all").type.value_type == pa.string()
+        assert getter("nan_categorical_all").type.value_type == pa.large_string()
+        assert getter("none_categorical_all").type.value_type == pa.large_string()
 
         # For every column in the data frame ensure that `isnullable` reflects
         # he null-ness of the Pandas data frame
@@ -870,15 +882,15 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         assert var_id_name in exp.ms["RNA"].var.keys()  # noqa: SIM118
 
         if indexify_obs:
-            expected_obs_keys = ["soma_joinid", obs_id_name] + adata.obs_keys()
+            expected_obs_keys = ["soma_joinid", obs_id_name, *adata.obs_keys()]
         else:
-            expected_obs_keys = ["soma_joinid"] + adata.obs_keys()
+            expected_obs_keys = ["soma_joinid", *adata.obs_keys()]
         assert list(exp.obs.keys()) == expected_obs_keys
 
         if indexify_var:
-            expected_var_keys = ["soma_joinid", var_id_name] + adata.var_keys()
+            expected_var_keys = ["soma_joinid", var_id_name, *adata.var_keys()]
         else:
-            expected_var_keys = ["soma_joinid"] + adata.var_keys()
+            expected_var_keys = ["soma_joinid", *adata.var_keys()]
         assert list(exp.ms["RNA"].var.keys()) == expected_var_keys
 
         # Implicitly, a check for no-throw
@@ -1017,8 +1029,8 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
     # White-box-test this, which we leverage inside tiledbsoma.io
     assert json.loads("null") is None
 
-    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
-    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]  # noqa: UP031
+    var_ids = ["gene_%08d" % (j) for j in range(nvar)]  # noqa: UP031
 
     cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
     obs = pd.DataFrame(
@@ -1088,8 +1100,8 @@ def test_outgest_X_layers(tmp_path):
     xocc = 0.3
     measurement_name = "meas"
 
-    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
-    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]  # noqa: UP031
+    var_ids = ["gene_%08d" % (j) for j in range(nvar)]  # noqa: UP031
 
     cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
     obs = pd.DataFrame(
@@ -1414,6 +1426,8 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 def test_soma_file_handling_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(str(TESTDATA / "pbmc-small.h5ad"), context.native_context)
     del context  # https://app.shortcut.com/tiledb-inc/story/65864/
     gc.collect()  # Make sure that context is freed
@@ -1433,6 +1447,8 @@ def test_soma_file_handling_65831_65864():
 
 def test_from_anndata_sketchy_key(tmp_path):
     exp_uri = tmp_path.as_posix()
+    if not TESTDATA.exists():
+        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     adata = ad.read_h5ad(str(TESTDATA / "pbmc-small.h5ad"))
 
     with pytest.raises(ValueError):
@@ -1441,3 +1457,28 @@ def test_from_anndata_sketchy_key(tmp_path):
     tiledbsoma.io.from_anndata(exp_uri, adata, "../..")
     with tiledbsoma.Experiment.open(exp_uri) as E:
         assert E["ms"]["../.."].uri == f"file://{exp_uri}/ms/..%2F.."
+
+
+@pytest.mark.parametrize("backed", [None, "r"])
+def test_anndata_with_monkeypatch(conftest_pbmc_small_h5ad_path, backed):
+    """Confirm that the monkeypatch did not interfere with normal AnnData behavior"""
+    adata = ad.read_h5ad(conftest_pbmc_small_h5ad_path, backed=backed)
+    assert adata.shape == (80, 20)
+
+    adata = ad.read_h5ad(conftest_pbmc_small_h5ad_path.as_posix(), backed=backed)
+    assert adata.shape == (80, 20)
+
+    adata = ad.read_h5ad(str(conftest_pbmc_small_h5ad_path), backed=backed)
+    assert adata.shape == (80, 20)
+
+
+@pytest.mark.parametrize("backed", [None, "r"])
+def test_io_util_read_h5ad(conftest_pbmc_small_h5ad_path, backed):
+    with tiledbsoma.io._util.read_h5ad(conftest_pbmc_small_h5ad_path, mode=backed) as adata:
+        assert adata.shape == (80, 20)
+
+    with tiledbsoma.io._util.read_h5ad(f"file://{conftest_pbmc_small_h5ad_path!s}", mode=backed) as adata:
+        assert adata.shape == (80, 20)
+
+    with tiledbsoma.io._util.read_h5ad(str(conftest_pbmc_small_h5ad_path), mode=backed) as adata:
+        assert adata.shape == (80, 20)

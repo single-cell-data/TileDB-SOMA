@@ -32,7 +32,7 @@ else:
 from anndata import AnnData
 from numpy import array_equal
 from pandas._testing import assert_frame_equal, assert_series_equal
-from scipy.sparse import spmatrix
+from scipy.sparse import sparray, spmatrix
 from somacore import (
     AffineTransform,
     AxisQuery,
@@ -69,7 +69,7 @@ def assert_uns_equal(uns0, uns1):
                 assert v0 == v1, f"{v0} != {v1}"
             else:
                 raise ValueError(f"Unsupported type: {type(v0)}")
-        except AssertionError:
+        except AssertionError:  # noqa: PERF203
             raise AssertionError(f"assert_uns_equal: key {k} mismatched")
 
 
@@ -83,7 +83,7 @@ def assert_array_equal(a0, a1):
     assert type(a0) is type(a1)
     if isinstance(a0, np.ndarray):
         assert array_equal(a0, a1)
-    elif isinstance(a0, spmatrix):
+    elif isinstance(a0, (spmatrix, sparray)):
         assert type(a0) is type(a1)
         assert a0.shape == a1.shape
         assert (a0 != a1).nnz == 0
@@ -151,8 +151,8 @@ def make_pd_df(index_str: str | None = None, **cols) -> pd.DataFrame:
 HERE = Path(__file__).parent
 PY_ROOT = HERE.parent
 PROJECT_ROOT = PY_ROOT.parent.parent
-TESTDATA = PY_ROOT / "testdata"
 ROOT_DATA_DIR = PROJECT_ROOT / "data"
+TESTDATA = PROJECT_ROOT / "data" / "simple-testdata"
 
 
 @contextmanager
@@ -247,4 +247,4 @@ def create_basic_object(soma_type, uri, **kwargs) -> tiledbsoma.SOMAObject:
         kwargs.setdefault("level_shape", (3, 64, 128))
         return tiledbsoma.MultiscaleImage.create(uri, **kwargs)
 
-    raise "Internal error: Unexepcted soma type '{soma_type}'."
+    raise f"Internal error: Unexepcted soma type '{soma_type}'."

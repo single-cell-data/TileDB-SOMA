@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import hypothesis.extra.numpy as ht_np
 import numpy as np
@@ -533,7 +534,7 @@ def split_arrow_array(arr: pa.Array | pa.ChunkedArray, splits: list[int]) -> pa.
     assert np.array_equal(np.unique(splits), splits), "splits not unique and sorted"
     assert len(splits) == 0 or (splits[0] >= 0 and splits[-1] < len(arr)), "splits out of range"
 
-    split_points = [0] + splits + [len(arr)]
+    split_points = [0, *splits, len(arr)]
     arr_splits = [arr[st:sp] for st, sp in pairwise(split_points)]
     return pa.chunked_array(arr_splits, type=arr.type)
 
@@ -666,6 +667,7 @@ def arrays_equal(read: pa.ChunkedArray, expected: pa.ChunkedArray, *, equal_nan:
                 combine_chunks(read).dictionary_decode(),
                 combine_chunks(expected).dictionary_decode(),
             ),
+            min_count=0,
         )
         if not is_eq:
             note("arrays_equal: dictionary arrays not equal")

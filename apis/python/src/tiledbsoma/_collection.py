@@ -129,9 +129,9 @@ class CollectionBase(
 
     # Overloads to allow type inference to work when doing:
     #
-    #     some_coll.add_new_collection("key")  # -> Collection
+    #     some_coll.add_new_collection("key")  # -> Collection  # noqa: ERA001
     # and
-    #     some_coll.add_new_collection("key", Experiment)  # -> Experiment
+    #     some_coll.add_new_collection("key", Experiment)  # -> Experiment  # noqa: ERA001
     #
     # These are only used in type inference to provide better type-checking and
     # autocompletion etc. in static analysis, not at runtime.
@@ -145,7 +145,7 @@ class CollectionBase(
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
         **kwargs: Any,  # noqa: ANN401
-    ) -> "Collection[AnySOMAObject]": ...
+    ) -> Collection[AnySOMAObject]: ...
 
     @overload
     def add_new_collection(
@@ -165,7 +165,7 @@ class CollectionBase(
         *,
         uri: str | None = None,
         platform_config: options.PlatformConfig | None = None,
-        **kwargs: Any,  # noqa: ANN401
+        **kwargs: Any,
     ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 
