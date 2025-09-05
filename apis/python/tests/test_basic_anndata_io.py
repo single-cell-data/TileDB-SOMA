@@ -1457,3 +1457,28 @@ def test_from_anndata_sketchy_key(tmp_path):
     tiledbsoma.io.from_anndata(exp_uri, adata, "../..")
     with tiledbsoma.Experiment.open(exp_uri) as E:
         assert E["ms"]["../.."].uri == f"file://{exp_uri}/ms/..%2F.."
+
+
+@pytest.mark.parametrize("backed", [None, "r"])
+def test_anndata_with_monkeypatch(conftest_pbmc_small_h5ad_path, backed):
+    """Confirm that the monkeypatch did not interfere with normal AnnData behavior"""
+    adata = ad.read_h5ad(conftest_pbmc_small_h5ad_path, backed=backed)
+    assert adata.shape == (80, 20)
+
+    adata = ad.read_h5ad(conftest_pbmc_small_h5ad_path.as_posix(), backed=backed)
+    assert adata.shape == (80, 20)
+
+    adata = ad.read_h5ad(str(conftest_pbmc_small_h5ad_path), backed=backed)
+    assert adata.shape == (80, 20)
+
+
+@pytest.mark.parametrize("backed", [None, "r"])
+def test_io_util_read_h5ad(conftest_pbmc_small_h5ad_path, backed):
+    with tiledbsoma.io._util.read_h5ad(conftest_pbmc_small_h5ad_path, mode=backed) as adata:
+        assert adata.shape == (80, 20)
+
+    with tiledbsoma.io._util.read_h5ad(f"file://{conftest_pbmc_small_h5ad_path!s}", mode=backed) as adata:
+        assert adata.shape == (80, 20)
+
+    with tiledbsoma.io._util.read_h5ad(str(conftest_pbmc_small_h5ad_path), mode=backed) as adata:
+        assert adata.shape == (80, 20)

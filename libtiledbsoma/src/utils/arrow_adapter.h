@@ -944,8 +944,6 @@ class ArrowAdapter {
     static Dimension _create_dim(
         tiledb_datatype_t type, std::string name, const void* buff, std::shared_ptr<Context> ctx);
 
-    static tiledb_layout_t _get_order(std::string order);
-
     // Throws if the array and the schema don't have the same
     // recursive child-counts.
     static void _check_shapes(ArrowArray* arrow_array, ArrowSchema* arrow_schema);
