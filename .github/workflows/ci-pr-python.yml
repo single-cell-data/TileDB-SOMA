@@ -35,5 +35,4 @@ jobs:
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
       report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.12' }}
-      run_lint: ${{ matrix.python-version == '3.12' }}
     secrets: inherit

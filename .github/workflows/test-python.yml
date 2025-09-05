@@ -21,38 +21,8 @@ on:
       report_codecov:
         required: true
         type: boolean
-      run_lint:
-        required: false
-        type: boolean
-        default: false
 
 jobs:
-  lint:
-    if: inputs.run_lint
-    runs-on: ${{ inputs.os }}
-    steps:
-      - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ inputs.python_version }}
-
-      - name: Restore pre-commit cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml', '.pre-commit-config.yaml') }}
-
-      - name: Install pre-commit
-        run: pip -v install pre-commit
-
-      - name: Log pip dependencies
-        run: pip list
-
-      - name: Run pre-commit hooks on all files
-        run: pre-commit run -a -v
 
   pytest:
     runs-on: ${{ inputs.os }}
