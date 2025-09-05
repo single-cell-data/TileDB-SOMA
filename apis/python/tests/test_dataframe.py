@@ -3699,12 +3699,13 @@ def test_append_enumerations_at_timestamp_2879(tmp_path):
 
     uri = tmp_path.as_posix()
     asch = pa.schema([("foo", pa.dictionary(pa.int8(), pa.large_string()))])
-    soma.DataFrame.create(uri, schema=asch, tiledb_timestamp=1, domain=[(0, 4)])
+    with soma.DataFrame.create(uri, schema=asch, tiledb_timestamp=1, domain=[(0, 4)]) as sdf:
+        arr_schema = sdf.schema
 
     pydict1 = {}
     pydict1["soma_joinid"] = [0, 1, 2]
     pydict1["foo"] = pd.Series(["a", "b", "a"], dtype="category")
-    rb1 = pa.Table.from_pydict(pydict1)
+    rb1 = pa.Table.from_pydict(pydict1, schema=arr_schema)
 
     with soma.DataFrame.open(uri, "w", tiledb_timestamp=2) as sdf:
         sdf.write(rb1)
@@ -3712,11 +3713,14 @@ def test_append_enumerations_at_timestamp_2879(tmp_path):
     pydict2 = {}
     pydict2["soma_joinid"] = [3, 4]
     pydict2["foo"] = pd.Series(["b", "b"], dtype="category")
-    rb2 = pa.Table.from_pydict(pydict2)
+    rb2 = pa.Table.from_pydict(pydict2, schema=arr_schema)
 
-    rb3 = pa.Table.from_pandas(
-        pd.concat([rb1.to_pandas(), rb2.to_pandas()], ignore_index=True),
-        schema=rb1.schema,
+    rb3 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pd.concat([rb1["soma_joinid"].to_pandas(), rb2["soma_joinid"].to_pandas()]),
+            "foo": pd.concat([rb1["foo"].to_pandas(), rb2["foo"].to_pandas()]).astype("category"),
+        },
+        schema=arr_schema,
     )
 
     with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
