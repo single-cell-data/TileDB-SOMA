@@ -170,7 +170,7 @@ SEXP soma_array_reader(
         auto buf = sr_data->get()->at(names[i]);
 
         // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
+        auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
 
         // memcpy((void*) sch->children[i], pp.second.get(),
         // sizeof(ArrowSchema)); memcpy((void*) arr->children[i],
