@@ -2,9 +2,6 @@ name: TileDB-SOMA Python CI (Pull-request)
 
 on:
   pull_request:
-    branches:
-      - main
-      - "release-*"
     paths:
       - "libtiledbsoma/**"
       - "apis/python/**"
