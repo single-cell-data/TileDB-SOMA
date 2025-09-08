@@ -89,9 +89,13 @@ class SOMADimension : public SOMAColumn {
     }
 
     std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
-        const SOMAContext& ctx, Array& array, enum Domainish kind) const override;
+        const SOMAContext& ctx,
+        Array& array,
+        enum Domainish kind,
+        bool downcast_dict_of_large_var = false) const override;
 
-    ArrowSchema* arrow_schema_slot(const SOMAContext& ctx, Array& array) const override;
+    ArrowSchema* arrow_schema_slot(
+        const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var = false) const override;
 
     void serialize(nlohmann::json&) const override;
 

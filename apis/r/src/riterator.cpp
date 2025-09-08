@@ -242,7 +242,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         auto buf = mq_data->get()->at(names[i]);
 
         // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
+        auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
 
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);

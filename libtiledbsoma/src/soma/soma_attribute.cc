@@ -135,7 +135,7 @@ std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
-    const SOMAContext&, Array&, enum Domainish) const {
+    const SOMAContext&, Array&, enum Domainish, bool) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][arrow_domain_slot] Column with name {} is not an "
@@ -143,8 +143,10 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
             name()));
 }
 
-ArrowSchema* SOMAAttribute::arrow_schema_slot(const SOMAContext& ctx, Array& array) const {
-    return ArrowAdapter::arrow_schema_from_tiledb_attribute(attribute, *ctx.tiledb_ctx(), array);
+ArrowSchema* SOMAAttribute::arrow_schema_slot(
+    const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var) const {
+    return ArrowAdapter::arrow_schema_from_tiledb_attribute(
+        attribute, *ctx.tiledb_ctx(), array, downcast_dict_of_large_var);
 }
 
 void SOMAAttribute::serialize(nlohmann::json& columns_schema) const {

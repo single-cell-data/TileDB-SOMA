@@ -299,7 +299,7 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(const Dimension& d
 }
 
 ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
-    const Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
+    const Attribute& attribute, const Context& ctx, const Array& tiledb_array, bool downcast_dict_of_large_var) {
     // Accessing dimension attributes may throw.
     // To avoid leaking memory we need to access the before allocating any
     // memory so we are able to free any allocated memory of the caller without
@@ -342,7 +342,15 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
 
     if (enmr_name.has_value()) {
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type()).data());
+        if (downcast_dict_of_large_var) {
+            if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_CHAR) {
+                dict->format = strdup("z");
+            } else {
+                dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type(), false).data());
+            }
+        } else {
+            dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type()).data());
+        }
         dict->name = strdup(enmr->name().c_str());
         dict->metadata = nullptr;
         if (enmr->ordered()) {
@@ -658,7 +666,7 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 }
 
 std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
-    std::shared_ptr<ColumnBuffer> column) {
+    std::shared_ptr<ColumnBuffer> column, bool downcast_dict_of_large_var) {
     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
     auto sch = schema.get();
@@ -764,7 +772,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        auto dcoltype = to_arrow_format(enmr->type(), false).data();
+        auto dcoltype = to_arrow_format(enmr->type(), !downcast_dict_of_large_var).data();
         auto dnatype = to_nanoarrow_type(dcoltype);
 
         if (dnatype == NANOARROW_TYPE_TIMESTAMP) {
@@ -788,7 +796,8 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
         // the owner of new buffers should be responsible for clean-up.
         if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
             enmr->type() == TILEDB_BLOB) {
-            dict_arr->length = _set_var_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
+            dict_arr->length = _set_var_dictionary_buffers(
+                enmr.value(), enmr->context(), dict_arr->buffers, downcast_dict_of_large_var);
         } else if (enmr->type() == TILEDB_BOOL) {
             dict_arr->length = _set_bool_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
         } else {
@@ -1170,7 +1179,8 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
     return schema_new;
 }
 
-size_t ArrowAdapter::_set_var_dictionary_buffers(Enumeration& enumeration, const Context& ctx, const void** buffers) {
+size_t ArrowAdapter::_set_var_dictionary_buffers(
+    Enumeration& enumeration, const Context& ctx, const void** buffers, bool downcast_dict_of_large_var) {
     const void* data;
     uint64_t data_size;
 
@@ -1182,18 +1192,24 @@ size_t ArrowAdapter::_set_var_dictionary_buffers(Enumeration& enumeration, const
 
     size_t count = offsets_size / sizeof(uint64_t);
 
-    std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), count);
+    if (downcast_dict_of_large_var) {
+        std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), count);
 
-    uint32_t* small_offsets = static_cast<uint32_t*>(malloc((count + 1) * sizeof(uint32_t)));
-    buffers[2] = malloc(data_size);
-
-    std::memcpy(const_cast<void*>(buffers[2]), data, data_size);
-    for (size_t i = 0; i < count; ++i) {
-        small_offsets[i] = static_cast<uint32_t>(offsets_v[i]);
+        uint32_t* small_offsets = static_cast<uint32_t*>(malloc((count + 1) * sizeof(uint32_t)));
+        for (size_t i = 0; i < count; ++i) {
+            small_offsets[i] = static_cast<uint32_t>(offsets_v[i]);
+        }
+        small_offsets[count] = static_cast<uint32_t>(data_size);
+        buffers[1] = small_offsets;
+    } else {
+        auto large_offsets = static_cast<uint64_t*>(malloc((count + 1) * sizeof(uint64_t)));
+        std::memcpy(static_cast<void*>(large_offsets), offsets, offsets_size);
+        large_offsets[count] = data_size;
+        buffers[1] = large_offsets;
     }
-    small_offsets[count] = static_cast<uint32_t>(data_size);
-    buffers[1] = small_offsets;
 
+    buffers[2] = malloc(data_size);
+    std::memcpy(const_cast<void*>(buffers[2]), data, data_size);
     return count;
 }
 

@@ -328,20 +328,20 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    managed_unique_ptr<ArrowSchema> arrow_schema() const {
+    managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const {
         auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
 
         for (size_t i = 0; i < columns_.size(); ++i) {
-            schema->children[i] = columns_[i]->arrow_schema_slot(*ctx_, *arr_);
+            schema->children[i] = columns_[i]->arrow_schema_slot(*ctx_, *arr_, downcast_dict_of_large_var);
         }
 
         return schema;
     }
 
-    ArrowSchema* arrow_schema_for_column(std::string column_name) const {
+    ArrowSchema* arrow_schema_for_column(std::string column_name, bool downcast_dict_of_large_var = false) const {
         for (size_t i = 0; i < columns_.size(); ++i) {
             if (columns_[i]->name() == column_name) {
-                return columns_[i]->arrow_schema_slot(*ctx_, *arr_);
+                return columns_[i]->arrow_schema_slot(*ctx_, *arr_, downcast_dict_of_large_var);
             }
         }
         throw TileDBSOMAError("[arrow_schema_for_column] column name '" + column_name + "' not present in schema");

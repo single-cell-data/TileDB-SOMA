@@ -789,7 +789,7 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
-    const SOMAContext& ctx, Array& array, enum Domainish kind) const {
+    const SOMAContext& ctx, Array& array, enum Domainish kind, bool downcast_dict_of_large_var) const {
     ArrowArray* arrow_array;
 
     switch (domain_type().value()) {
@@ -859,10 +859,10 @@ std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
                     tiledb::impl::type_to_str(domain_type().value())));
     }
 
-    return std::make_pair(arrow_array, arrow_schema_slot(ctx, array));
+    return std::make_pair(arrow_array, arrow_schema_slot(ctx, array, downcast_dict_of_large_var));
 }
 
-ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, Array&) const {
+ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, Array&, bool) const {
     return ArrowAdapter::arrow_schema_from_tiledb_dimension(dimension);
 }
 

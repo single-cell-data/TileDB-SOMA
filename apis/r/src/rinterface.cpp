@@ -170,7 +170,7 @@ SEXP soma_array_reader(
         auto buf = sr_data->get()->at(names[i]);
 
         // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
+        auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
 
         // memcpy((void*) sch->children[i], pp.second.get(),
         // sizeof(ArrowSchema)); memcpy((void*) arr->children[i],
@@ -368,7 +368,7 @@ Rcpp::CharacterVector c_attrnames(const std::string& uri, Rcpp::XPtr<somactx_wra
 // [[Rcpp::export]]
 SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
+    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema(true);
     sr->close();
 
     auto schemaxp = nanoarrow_schema_owning_xptr();

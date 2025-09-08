@@ -1,3 +1,4 @@
+import gc
 import pathlib
 import shutil
 
@@ -61,6 +62,8 @@ def test_experiment_obs_axis_delete_from_pbmc3k(
     # Do the delete
     with soma.Experiment.open(uri, mode="d", context=soma_tiledb_context) as exp:
         exp.obs_axis_delete(coords, value_filter=value_filter)
+
+    gc.collect()
 
     # Verify the result
     with soma.Experiment.open(uri, mode="r", context=soma_tiledb_context) as exp:
