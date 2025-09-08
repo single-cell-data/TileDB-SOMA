@@ -6,7 +6,11 @@ test_that("Iterated Interface from SOMAArrayReader", {
   library(bit64)
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
+  tgzfile <- system.file(
+    "raw-data",
+    "soco-pbmc3k.tar.gz",
+    package = "pbmc3k.tiledb"
+  )
   untar(tarfile = tgzfile, exdir = tdir)
 
   uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
@@ -52,12 +56,15 @@ test_that("Iterated Interface from SOMAArrayReader", {
   rm(sr)
   gc()
 
-  sr <- mq_setup(uri,
+  sr <- mq_setup(
+    uri,
     ctxxp = somactx,
-    dim_range = list(soma_dim_1 = cbind(
-      bit64::as.integer64(1),
-      bit64::as.integer64(2)
-    ))
+    dim_range = list(
+      soma_dim_1 = cbind(
+        bit64::as.integer64(1),
+        bit64::as.integer64(2)
+      )
+    )
   )
   expect_true(inherits(sr, "externalptr"))
 
@@ -91,7 +98,11 @@ test_that("Iterated Interface from SOMA Classes", {
   skip_if_not_installed("pbmc3k.tiledb") # a Suggests: pre-package 3k PBMC data
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
+  tgzfile <- system.file(
+    "raw-data",
+    "soco-pbmc3k.tar.gz",
+    package = "pbmc3k.tiledb"
+  )
   untar(tarfile = tgzfile, exdir = tdir)
   uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "raw", "X", "data")
 
@@ -105,13 +116,15 @@ test_that("Iterated Interface from SOMA Classes", {
   somactx <- soma_context(c(soma.init_buffer_bytes = as.character(16777216)))
 
   for (tc in test_cases) {
-    sdf <- switch(tc,
+    sdf <- switch(
+      tc,
       data.frame = SOMADataFrameOpen(uri),
       sparse = SOMASparseNDArrayOpen(uri)
     )
     expect_true(inherits(sdf, "SOMAArrayBase"))
 
-    iterator <- switch(tc,
+    iterator <- switch(
+      tc,
       data.frame = sdf$read(),
       sparse = sdf$read()$tables()
     )
@@ -131,7 +144,8 @@ test_that("Iterated Interface from SOMA Classes", {
     gc()
 
     # Test $read_next()
-    iterator <- switch(tc,
+    iterator <- switch(
+      tc,
       data.frame = sdf$read(),
       sparse = sdf$read()$tables()
     )
@@ -167,7 +181,11 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
   # skip_if(Sys.getenv("CI", "") != "")         # breaks only in CI so skipping
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
+  tgzfile <- system.file(
+    "raw-data",
+    "soco-pbmc3k.tar.gz",
+    package = "pbmc3k.tiledb"
+  )
   untar(tarfile = tgzfile, exdir = tdir)
   uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "raw", "X", "data")
 
@@ -201,7 +219,10 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
   expect_warning(iterator$read_next()) # returns NULL with warning
   ## -- expect_equal(nnzTotal, Matrix::nnzero(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
   ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
-  expect_equal(nnzTotal, length(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x))
+  expect_equal(
+    nnzTotal,
+    length(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x)
+  )
   expect_equal(nnzTotal, 2238732)
 
   rm(snda)

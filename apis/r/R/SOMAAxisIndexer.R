@@ -6,9 +6,9 @@
 #' [`arrow::null()`].
 #' @keywords internal
 #' @export
-SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
+SOMAAxisIndexer <- R6::R6Class(
+  "SOMAAxisIndexer",
   public = list(
-
     #' @description Create a new `SOMAAxisIndexer` object.
     #' @param query The [`SOMAExperimentAxisQuery`] object to build indices for.
     initialize = function(query) {
@@ -56,8 +56,11 @@ SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
     },
     .validate_coords = function(coords) {
       stopifnot(
-        "'coords' must be a numeric vector or arrow Array" =
-          is.numeric(coords) || is_arrow_array(coords) || is_arrow_chunked_array(coords)
+        "'coords' must be a numeric vector or arrow Array" = is.numeric(
+          coords
+        ) ||
+          is_arrow_array(coords) ||
+          is_arrow_chunked_array(coords)
       )
       coords
     }

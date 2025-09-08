@@ -24,13 +24,13 @@ pbmc3k.final <- UpdateSeuratObject(pbmc3k.final)
 data_dir <- normalizePath(file.path("inst", "extdata"))
 
 soma_exp_name <- "soma-dataframe-pbmc3k-processed"
-soma_exp_uri  <- file.path(tempdir(), soma_exp_name)
+soma_exp_uri <- file.path(tempdir(), soma_exp_name)
 
 # Create the SOMAExperiment
 write_soma(pbmc3k.final, uri = soma_exp_uri)
 
 soma_obs_name <- "soma-dataframe-pbmc3k-processed-obs"
-soma_obs_uri <- paste(soma_exp_uri, "obs", sep="/")
+soma_obs_uri <- paste(soma_exp_uri, "obs", sep = "/")
 tar_file <- file.path(data_dir, paste0(soma_obs_name, ".tar.gz"))
 
 # Create tar.gz file containing the SOMAExperiment

@@ -19,7 +19,10 @@ test_that("SOMADataFrame shape", {
 
   # Check the test configs themselves to make sure someone (ahem, me)
   # didn't edit one without forgetting to edit the other
-  expect_equal(length(index_column_name_choices), length(domain_at_create_choices))
+  expect_equal(
+    length(index_column_name_choices),
+    length(domain_at_create_choices)
+  )
 
   for (i in seq_along(index_column_name_choices)) {
     index_column_names <- index_column_name_choices[[i]]
@@ -27,7 +30,9 @@ test_that("SOMADataFrame shape", {
     uri <- withr::local_tempdir("soma-dataframe-shape")
 
     # Create
-    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+    if (dir.exists(uri)) {
+      unlink(uri, recursive = TRUE)
+    }
 
     domain_for_create <- domain_at_create_choices[[i]]
 
@@ -225,7 +230,6 @@ test_that("SOMADataFrame shape", {
 
     rm(tbl1)
 
-
     rm(sdf, tbl0)
 
     gc()
@@ -272,7 +276,9 @@ test_that("SOMADataFrame shape", {
     uri,
     schema = asch,
     index_column_names = "soma_joinid",
-    domain = list(soma_joinid = list(bit64::as.integer64(0L), bit64::as.integer64(99L)))
+    domain = list(
+      soma_joinid = list(bit64::as.integer64(0L), bit64::as.integer64(99L))
+    )
   ))
   expect_error(SOMADataFrameCreate(
     uri,
@@ -316,119 +322,118 @@ test_that("SOMADataFrame shape", {
 test_that("SOMADataFrame domain mods", {
   uri <- withr::local_tempdir("soma-dataframe-domain-mods")
 
-   schema = arrow::schema(
-     arrow::field("soma_joinid", arrow::int64()),
-     arrow::field("mystring", arrow::string()),
-     arrow::field("myint", arrow::int16()),
-     arrow::field("myfloat", arrow::float32()),
-     arrow::field("mybool", arrow::bool()) # not supported as an index type
-   )
+  schema = arrow::schema(
+    arrow::field("soma_joinid", arrow::int64()),
+    arrow::field("mystring", arrow::string()),
+    arrow::field("myint", arrow::int16()),
+    arrow::field("myfloat", arrow::float32()),
+    arrow::field("mybool", arrow::bool()) # not supported as an index type
+  )
 
-   index_column_names <- c("soma_joinid", "mystring", "myint", "myfloat")
+  index_column_names <- c("soma_joinid", "mystring", "myint", "myfloat")
 
-    domain_for_create <- list(
-        soma_joinid = c(0, 3),
-        mystring = NULL,
-        myint = c(20, 50),
-        myfloat = c(0.0, 6.0)
-    )
+  domain_for_create <- list(
+    soma_joinid = c(0, 3),
+    mystring = NULL,
+    myint = c(20, 50),
+    myfloat = c(0.0, 6.0)
+  )
 
-    table <- arrow::arrow_table(
-      soma_joinid = 0L:3L,
-      mystring = c("a", "b", "a", "b"),
-      myint = c(20, 30, 40, 50),
-      myfloat = c(1.0, 2.5, 4.0, 5.5),
-      mybool = c(TRUE, FALSE, TRUE, TRUE),
-      schema = schema
-    )
+  table <- arrow::arrow_table(
+    soma_joinid = 0L:3L,
+    mystring = c("a", "b", "a", "b"),
+    myint = c(20, 30, 40, 50),
+    myfloat = c(1.0, 2.5, 4.0, 5.5),
+    mybool = c(TRUE, FALSE, TRUE, TRUE),
+    schema = schema
+  )
 
-    sdf <- SOMADataFrameCreate(
-      uri,
-      schema=schema,
-      index_column_names=index_column_names,
-      domain=domain_for_create
-    )
-    sdf$write(table)
-    sdf$close()
+  sdf <- SOMADataFrameCreate(
+    uri,
+    schema = schema,
+    index_column_names = index_column_names,
+    domain = domain_for_create
+  )
+  sdf$write(table)
+  sdf$close()
 
-    sdf <- SOMADataFrameOpen(uri, "WRITE")
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
 
-    # Check "expand" to same
-    new_domain <- list(
-        soma_joinid = c(0, 3),
-        mystring = NULL,
-        myint = c(20, 50),
-        myfloat = c(0.0, 6.0)
-    )
+  # Check "expand" to same
+  new_domain <- list(
+    soma_joinid = c(0, 3),
+    mystring = NULL,
+    myint = c(20, 50),
+    myfloat = c(0.0, 6.0)
+  )
 
-    # -- first check dry run
-    expect_no_condition(sdf$change_domain(domain_for_create, check_only = TRUE))
-    sdf$close()
+  # -- first check dry run
+  expect_no_condition(sdf$change_domain(domain_for_create, check_only = TRUE))
+  sdf$close()
 
-    check <- list(
-      soma_joinid = c(0, 3),
-      mystring = c("", ""), # this is how it reads back
-      myint = c(20, 50),
-      myfloat = c(0.0, 6.0)
-    )
-    expect_equal(sdf$domain(), check)
-    sdf$close()
+  check <- list(
+    soma_joinid = c(0, 3),
+    mystring = c("", ""), # this is how it reads back
+    myint = c(20, 50),
+    myfloat = c(0.0, 6.0)
+  )
+  expect_equal(sdf$domain(), check)
+  sdf$close()
 
-    sdf <- SOMADataFrameOpen(uri, "WRITE")
-    expect_no_condition(sdf$change_domain(new_domain))
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
+  expect_no_condition(sdf$change_domain(new_domain))
 
-    # Shrink
-    new_domain <- list(
-        soma_joinid = c(0, 2),
-        mystring = NULL,
-        myint = c(20, 50),
-        myfloat = c(0.0, 6.0)
-    )
-    expect_error(sdf$change_domain(new_domain))
+  # Shrink
+  new_domain <- list(
+    soma_joinid = c(0, 2),
+    mystring = NULL,
+    myint = c(20, 50),
+    myfloat = c(0.0, 6.0)
+  )
+  expect_error(sdf$change_domain(new_domain))
 
-    new_domain <- list(
-        soma_joinid = c(0, 3),
-        mystring = NULL,
-        myint = c(20, 40),
-        myfloat = c(0.0, 6.0)
-    )
-    expect_error(sdf$change_domain(new_domain))
+  new_domain <- list(
+    soma_joinid = c(0, 3),
+    mystring = NULL,
+    myint = c(20, 40),
+    myfloat = c(0.0, 6.0)
+  )
+  expect_error(sdf$change_domain(new_domain))
 
-    new_domain <- list(
-        soma_joinid = c(0, 3),
-        mystring = NULL,
-        myint = c(20, 50),
-        myfloat = c(2.0, 6.0)
-    )
-    expect_error(sdf$change_domain(new_domain))
+  new_domain <- list(
+    soma_joinid = c(0, 3),
+    mystring = NULL,
+    myint = c(20, 50),
+    myfloat = c(2.0, 6.0)
+  )
+  expect_error(sdf$change_domain(new_domain))
 
-    # String domain cannot be specified
-    new_domain <- list(
-        soma_joinid = c(0, 3),
-        mystring = c("a", "z"),
-        myint = c(20, 50),
-        myfloat = c(0.0, 6.0)
-    )
-    expect_error(sdf$change_domain(new_domain))
+  # String domain cannot be specified
+  new_domain <- list(
+    soma_joinid = c(0, 3),
+    mystring = c("a", "z"),
+    myint = c(20, 50),
+    myfloat = c(0.0, 6.0)
+  )
+  expect_error(sdf$change_domain(new_domain))
 
-    # All clear
+  # All clear
 
-    # String domain cannot be specified
-    new_domain <- list(
-        soma_joinid = c(0, 8),
-        mystring = c("", ""),
-        myint = c(20, 50),
-        myfloat = c(0.0, 10.0)
-    )
-    expect_no_condition(sdf$change_domain(new_domain))
-    sdf$close()
+  # String domain cannot be specified
+  new_domain <- list(
+    soma_joinid = c(0, 8),
+    mystring = c("", ""),
+    myint = c(20, 50),
+    myfloat = c(0.0, 10.0)
+  )
+  expect_no_condition(sdf$change_domain(new_domain))
+  sdf$close()
 
-    # Check for success
-    sdf <- SOMADataFrameOpen(uri, "READ")
-    dom <- sdf$domain()
-    expect_equal(sdf$domain(), new_domain)
-    sdf$close()
-
+  # Check for success
+  sdf <- SOMADataFrameOpen(uri, "READ")
+  dom <- sdf$domain()
+  expect_equal(sdf$domain(), new_domain)
+  sdf$close()
 })
 
 test_that("SOMASparseNDArray shape", {
@@ -438,7 +443,9 @@ test_that("SOMASparseNDArray shape", {
   element_type_choices <- list(arrow::float32(), arrow::int16())
   arg_shape <- c(100, 200)
   for (element_type in element_type_choices) {
-    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+    if (dir.exists(uri)) {
+      unlink(uri, recursive = TRUE)
+    }
     ndarray <- SOMASparseNDArrayCreate(uri, element_type, shape = arg_shape)
     ndarray$close()
 
@@ -473,7 +480,10 @@ test_that("SOMASparseNDArray shape", {
     coords <- list(bit64::as.integer64(c(1, 2)), bit64::as.integer64(c(3, 4)))
     expect_no_error(x <- ndarray$read(coords = coords)$tables()$concat())
 
-    coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
+    coords <- list(
+      bit64::as.integer64(c(101, 202)),
+      bit64::as.integer64(c(3, 4))
+    )
     expect_error(x <- ndarray$read(coords = coords)$tables()$concat())
 
     ndarray$close()
@@ -505,7 +515,10 @@ test_that("SOMASparseNDArray shape", {
     ndarray$close()
 
     ndarray <- SOMASparseNDArrayOpen(uri)
-    coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
+    coords <- list(
+      bit64::as.integer64(c(101, 202)),
+      bit64::as.integer64(c(3, 4))
+    )
     expect_no_error(x <- ndarray$read(coords = coords)$tables()$concat())
     ndarray$close()
 
@@ -523,7 +536,9 @@ test_that("SOMADenseNDArray shape", {
   element_type_choices <- list(arrow::float32(), arrow::int16())
   arg_shape <- c(100, 200)
   for (element_type in element_type_choices) {
-    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+    if (dir.exists(uri)) {
+      unlink(uri, recursive = TRUE)
+    }
     ndarray <- SOMADenseNDArrayCreate(uri, element_type, shape = arg_shape)
     ndarray$close()
 
@@ -556,7 +571,10 @@ test_that("SOMADenseNDArray shape", {
     coords <- list(bit64::as.integer64(c(1, 2)), bit64::as.integer64(c(3, 4)))
     expect_no_error(ndarray$read_arrow_table(coords = coords))
 
-    coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
+    coords <- list(
+      bit64::as.integer64(c(101, 202)),
+      bit64::as.integer64(c(3, 4))
+    )
     expect_error(ndarray$read(coords = coords)$tables()$concat())
 
     ndarray$close()
@@ -575,7 +593,9 @@ test_that("SOMADenseNDArray shape", {
 
     # Test resize up, dry run
     new_shape <- c(501, 601)
-    expect_no_error(reason_string <- ndarray$resize(new_shape, check_only = TRUE))
+    expect_no_error(
+      reason_string <- ndarray$resize(new_shape, check_only = TRUE)
+    )
     expect_equal(reason_string, "")
 
     # Test resize up, for real
@@ -589,7 +609,10 @@ test_that("SOMADenseNDArray shape", {
     ndarray$close()
 
     ndarray <- SOMADenseNDArrayOpen(uri)
-    coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
+    coords <- list(
+      bit64::as.integer64(c(101, 202)),
+      bit64::as.integer64(c(3, 4))
+    )
     expect_no_condition(x <- ndarray$read_dense_matrix(coords = coords))
     ndarray$close()
 

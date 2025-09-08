@@ -19,7 +19,6 @@ SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
   inherit = SOMAArrayBase,
   public = list(
-
     #' @description Create a SOMA data frame (lifecycle: maturing).\cr
     #' \cr
     #' \strong{Note}: \code{$create()} is considered internal and should not be
@@ -64,7 +63,10 @@ SOMADataFrame <- R6::R6Class(
       ))
       if (!"tiledbsoma" %in% envs) {
         stop(
-          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          paste(
+            strwrap(private$.internal_use_only("create", "collection")),
+            collapse = '\n'
+          ),
           call. = FALSE
         )
       }
@@ -72,33 +74,44 @@ SOMADataFrame <- R6::R6Class(
       schema <- private$validate_schema(schema, index_column_names)
 
       stopifnot(
-        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
-          ( # Check that `domain` is a list of length `length(index_column_names)`
+        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(
+          domain
+        ) ||
+          (
+            # Check that `domain` is a list of length `length(index_column_names)`
             # where all values are named after `index_column_names`
             # and all values are `NULL` or a two-length atomic non-factor vector
             rlang::is_list(domain, n = length(index_column_names)) &&
               identical(sort(names(domain)), sort(index_column_names)) &&
               all(vapply_lgl(
                 domain,
-                function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+                function(x) {
+                  is.null(x) ||
+                    (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+                }
               ))
           )
       )
 
       attr_column_names <- setdiff(schema$names, index_column_names)
       stopifnot(
-        "At least one non-index column must be defined in the schema" =
-          length(attr_column_names) > 0
+        "At least one non-index column must be defined in the schema" = length(
+          attr_column_names
+        ) >
+          0
       )
 
       if ("soma_joinid" %in% index_column_names && !is.null(domain)) {
         lower_bound <- domain[["soma_joinid"]][1]
         upper_bound <- domain[["soma_joinid"]][2]
         stopifnot(
-          "The lower bound for soma_joinid domain must be >= 0" = lower_bound >= 0,
-          "The upper bound for soma_joinid domain must be >= 0" = upper_bound >= 0,
-          "The upper bound for soma_joinid domain must be >= the lower bound" = upper_bound >= lower_bound
-          )
+          "The lower bound for soma_joinid domain must be >= 0" = lower_bound >=
+            0,
+          "The upper bound for soma_joinid domain must be >= 0" = upper_bound >=
+            0,
+          "The upper bound for soma_joinid domain must be >= the lower bound" = upper_bound >=
+            lower_bound
+        )
       }
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
@@ -138,7 +151,9 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
+      spdl::debug(
+        "[SOMADataFrame$create] about to call write_object_type_metadata"
+      )
       self$open("WRITE")
       private$write_object_type_metadata()
       self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
@@ -169,12 +184,16 @@ SOMADataFrame <- R6::R6Class(
         values$ColumnNames()
       }
       stopifnot(
-        "'values' must be an Arrow Table or RecordBatch" =
-          (is_arrow_table(values) || is_arrow_record_batch(values)),
-        "All columns in 'values' must be defined in the schema" =
-          all(col_names %in% schema_names),
-        "All schema fields must be present in 'values'" =
-          all(schema_names %in% col_names)
+        "'values' must be an Arrow Table or RecordBatch" = (is_arrow_table(
+          values
+        ) ||
+          is_arrow_record_batch(values)),
+        "All columns in 'values' must be defined in the schema" = all(
+          col_names %in% schema_names
+        ),
+        "All schema fields must be present in 'values'" = all(
+          schema_names %in% col_names
+        )
       )
 
       ## we transfer to the arrow table via a pair of array and schema pointers
@@ -237,17 +256,27 @@ SOMADataFrame <- R6::R6Class(
 
       stopifnot(
         ## check columns
-        "'column_names' must only contain valid dimension or attribute columns" =
-          is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
+        "'column_names' must only contain valid dimension or attribute columns" = is.null(
+          column_names
+        ) ||
+          all(column_names %in% c(self$dimnames(), self$attrnames()))
       )
 
-      coords <- validate_read_coords(coords, dimnames = self$dimnames(), schema = self$schema())
+      coords <- validate_read_coords(
+        coords,
+        dimnames = self$dimnames(),
+        schema = self$schema()
+      )
 
       if (!is.null(value_filter)) {
         value_filter <- validate_read_value_filter(value_filter)
         parsed <- do.call(
           what = parse_query_condition,
-          args = list(expr = value_filter, schema = self$schema(), somactx = private$.soma_context)
+          args = list(
+            expr = value_filter,
+            schema = self$schema(),
+            somactx = private$.soma_context
+          )
         )
         value_filter <- parsed@ptr
       }
@@ -299,8 +328,11 @@ SOMADataFrame <- R6::R6Class(
     update = function(values, row_index_name = NULL) {
       private$.check_open_for_write()
       stopifnot(
-        "'values' must be a data.frame, Arrow Table or RecordBatch" =
-          is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)
+        "'values' must be a data.frame, Arrow Table or RecordBatch" = is.data.frame(
+          values
+        ) ||
+          is_arrow_table(values) ||
+          is_arrow_record_batch(values)
       )
 
       # Leave state unmodified
@@ -311,10 +343,11 @@ SOMADataFrame <- R6::R6Class(
       if (is.data.frame(values)) {
         if (!is.null(row_index_name)) {
           stopifnot(
-            "'row_index_name' must be NULL or a scalar character vector" =
-              is_scalar_character(row_index_name),
-            "'row_index_name' conflicts with an existing column name" =
-              !row_index_name %in% colnames(values)
+            "'row_index_name' must be NULL or a scalar character vector" = is_scalar_character(
+              row_index_name
+            ),
+            "'row_index_name' conflicts with an existing column name" = !row_index_name %in%
+              colnames(values)
           )
           values[[row_index_name]] <- rownames(values)
         }
@@ -330,8 +363,11 @@ SOMADataFrame <- R6::R6Class(
       if (length(joinids) != nrow(values)) {
         stop(
           "Number of rows in 'values' must match number of rows in array:\n",
-          "  - Number of rows in array: ", length(joinids), "\n",
-          "  - Number of rows in 'values': ", nrow(values),
+          "  - Number of rows in array: ",
+          length(joinids),
+          "\n",
+          "  - Number of rows in 'values': ",
+          nrow(values),
           call. = FALSE
         )
       }
@@ -366,10 +402,13 @@ SOMADataFrame <- R6::R6Class(
       drop_cols_for_clib <- drop_cols
       add_cols_types_for_clib <-
         add_cols_enum_value_types_for_clib <-
-        add_cols_enum_ordered_for_clib <- vector("list", length = length(add_cols))
+          add_cols_enum_ordered_for_clib <- vector(
+            "list",
+            length = length(add_cols)
+          )
       names(add_cols_types_for_clib) <-
         names(add_cols_enum_value_types_for_clib) <-
-        names(add_cols_enum_ordered_for_clib) <- add_cols
+          names(add_cols_enum_ordered_for_clib) <- add_cols
 
       # Add columns
       for (add_col in add_cols) {
@@ -378,20 +417,31 @@ SOMADataFrame <- R6::R6Class(
         if (inherits(col_type, "DictionaryType")) {
           spdl::debug(
             "[SOMADataFrame update]: adding enum column '{}' index type '{}' value type '{}' ordered {}",
-            add_col, col_type$index_type$name, col_type$value_type$name, col_type$ordered
+            add_col,
+            col_type$index_type$name,
+            col_type$value_type$name,
+            col_type$ordered
           )
 
           add_cols_types_for_clib[[add_col]] <- col_type$index_type$name
-          add_cols_enum_value_types_for_clib[[add_col]] <- col_type$value_type$name
+          add_cols_enum_value_types_for_clib[[
+            add_col
+          ]] <- col_type$value_type$name
           add_cols_enum_ordered_for_clib[[add_col]] <- col_type$ordered
         } else {
-          spdl::debug("[SOMADataFrame update]: adding column '{}' type '{}'", add_col, col_type$name)
+          spdl::debug(
+            "[SOMADataFrame update]: adding column '{}' type '{}'",
+            add_col,
+            col_type$name
+          )
 
           add_cols_types_for_clib[[add_col]] <- col_type$name
         }
       }
 
-      if (length(drop_cols_for_clib) > 0 || length(add_cols_types_for_clib) > 0) {
+      if (
+        length(drop_cols_for_clib) > 0 || length(add_cols_types_for_clib) > 0
+      ) {
         c_update_dataframe_schema(
           self$uri,
           private$.soma_context,
@@ -427,7 +477,8 @@ SOMADataFrame <- R6::R6Class(
     #'
     levels = function(column_names = NULL, simplify = TRUE) {
       stopifnot(
-        "'simplify' must be TRUE or FALSE" = isTRUE(simplify) || isFALSE(simplify)
+        "'simplify' must be TRUE or FALSE" = isTRUE(simplify) ||
+          isFALSE(simplify)
       )
       enums <- c_attributes_enumerated(self$uri, private$.soma_context)
       if (!any(enums)) {
@@ -542,12 +593,22 @@ SOMADataFrame <- R6::R6Class(
     #' @return Invisibly returns \code{NULL}
     #'
     tiledbsoma_resize_soma_joinid_shape = function(new_shape) {
-      stopifnot("'new_shape' must be an integer" = rlang::is_integerish(new_shape, n = 1) ||
-        (bit64::is.integer64(new_shape) && length(new_shape) == 1))
+      stopifnot(
+        "'new_shape' must be an integer" = rlang::is_integerish(
+          new_shape,
+          n = 1
+        ) ||
+          (bit64::is.integer64(new_shape) && length(new_shape) == 1)
+      )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
       invisible(
         resize_soma_joinid_shape(
-          self$uri, new_shape, .name_of_function(), private$.soma_context))
+          self$uri,
+          new_shape,
+          .name_of_function(),
+          private$.soma_context
+        )
+      )
     },
 
     #' @description Allows you to set the domain of a \code{SOMADataFrame},
@@ -568,7 +629,8 @@ SOMADataFrame <- R6::R6Class(
       # done in libtiledbsoma
 
       pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
-        new_domain, "tiledbsoma_upgrade_domain"
+        new_domain,
+        "tiledbsoma_upgrade_domain"
       )
 
       reason_string <- upgrade_or_change_domain(
@@ -610,17 +672,18 @@ SOMADataFrame <- R6::R6Class(
       # done in libtiledbsoma
 
       pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
-        new_domain, tiledbsoma_upgrade_domain
+        new_domain,
+        tiledbsoma_upgrade_domain
       )
 
       reason_string <- upgrade_or_change_domain(
-          self$uri,
-          TRUE,
-          pyarrow_domain_table$array,
-          pyarrow_domain_table$schema,
-          .name_of_function(),
-          check_only,
-          private$.soma_context
+        self$uri,
+        TRUE,
+        pyarrow_domain_table$array,
+        pyarrow_domain_table$schema,
+        .name_of_function(),
+        check_only,
+        private$.soma_context
       )
 
       if (isTRUE(check_only)) {
@@ -633,7 +696,6 @@ SOMADataFrame <- R6::R6Class(
     }
   ),
   private = list(
-
     # @description Validate schema (lifecycle: maturing)
     # Handle default column additions (eg, soma_joinid) and error checking on
     # required columns
@@ -641,22 +703,29 @@ SOMADataFrame <- R6::R6Class(
     # required columns.
     validate_schema = function(schema, index_column_names) {
       stopifnot(
-        "'schema' must be a valid Arrow schema" =
-          is_arrow_schema(schema),
-        "'index_column_names' must be a non-empty character vector" =
-          is.character(index_column_names) && length(index_column_names) > 0,
-        "All 'index_column_names' must be defined in the 'schema'" =
-          assert_subset(index_column_names, schema$names, "indexed field"),
-        "Column names must not start with reserved prefix 'soma_'" =
-          all(!startsWith(setdiff(schema$names, "soma_joinid"), "soma_")) ||
+        "'schema' must be a valid Arrow schema" = is_arrow_schema(schema),
+        "'index_column_names' must be a non-empty character vector" = is.character(
+          index_column_names
+        ) &&
+          length(index_column_names) > 0,
+        "All 'index_column_names' must be defined in the 'schema'" = assert_subset(
+          index_column_names,
+          schema$names,
+          "indexed field"
+        ),
+        "Column names must not start with reserved prefix 'soma_'" = all(
+          !startsWith(setdiff(schema$names, "soma_joinid"), "soma_")
+        ) ||
           isTRUE(getOption("tiledbsoma.write_soma.internal", default = FALSE))
       )
 
       # Add soma_joinid column if not present
       if ("soma_joinid" %in% schema$names) {
         stopifnot(
-          "soma_joinid field must be of type Arrow int64" =
-            schema$GetFieldByName("soma_joinid")$type == arrow::int64()
+          "soma_joinid field must be of type Arrow int64" = schema$GetFieldByName(
+            "soma_joinid"
+          )$type ==
+            arrow::int64()
         )
       } else {
         schema <- schema$AddField(
@@ -678,12 +747,16 @@ SOMADataFrame <- R6::R6Class(
 
       # Check user-provided domain against dataframe domain.
       stopifnot(
-        "new_domain must be a named list, with values being 2-element vectors or NULL, with names the same as the dataframe's index-column names" =
-        rlang::is_list(new_domain, n = length(dimnames)) &&
+        "new_domain must be a named list, with values being 2-element vectors or NULL, with names the same as the dataframe's index-column names" = rlang::is_list(
+          new_domain,
+          n = length(dimnames)
+        ) &&
           identical(sort(names(new_domain)), sort(dimnames)) &&
           all(vapply_lgl(
             new_domain,
-            function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+            function(x) {
+              is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+            }
           ))
       )
 
@@ -703,21 +776,28 @@ SOMADataFrame <- R6::R6Class(
         # * So we let them say `NULL` rather than `c("", "")`.
         # * But R list semantics are `mylist[[key]] <- NULL` results in nothing
         #   being set at that key.
-        if (is.null(new_domain[[dimname]]) && full_schema[[dimname]]$type$ToString() %in% c("string", "large_string", "utf8", "large_utf8")) {
+        if (
+          is.null(new_domain[[dimname]]) &&
+            full_schema[[dimname]]$type$ToString() %in%
+              c("string", "large_string", "utf8", "large_utf8")
+        ) {
           ordered_new_domain[[dimname]] <- c("", "")
         } else {
           ordered_new_domain[[dimname]] <- new_domain[[dimname]]
         }
       }
 
-      pyarrow_table <- arrow::arrow_table(as.data.frame(ordered_new_domain), schema=dim_schema)
+      pyarrow_table <- arrow::arrow_table(
+        as.data.frame(ordered_new_domain),
+        schema = dim_schema
+      )
 
       # We transfer to the arrow table via a pair of array and schema pointers
       dnaap <- nanoarrow::nanoarrow_allocate_array()
       dnasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(pyarrow_table)$export_to_c(dnaap, dnasp)
 
-      return(list(array=dnaap, schema=dnasp))
+      return(list(array = dnaap, schema = dnasp))
     }
   )
 )

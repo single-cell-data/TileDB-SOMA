@@ -83,9 +83,16 @@ create_and_populate_var <- function(
   )
 
   dname <- dirname(uri)
-  if (!dir.exists(dname)) dir.create(dname)
+  if (!dir.exists(dname)) {
+    dir.create(dname)
+  }
 
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = "soma_joinid", domain = domain)
+  sdf <- SOMADataFrameCreate(
+    uri,
+    tbl$schema,
+    index_column_names = "soma_joinid",
+    domain = domain
+  )
   sdf$write(tbl)
 
   if (is.null(mode)) {
@@ -157,12 +164,20 @@ create_and_populate_experiment <- function(
 ) {
   stopifnot(
     "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
-      (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),
+      (rlang::is_integerish(obsm_layers) &&
+        rlang::is_named(obsm_layers) &&
+        all(obsm_layers > 0L)),
     "'varm_layers' must be a named integer vector" = is.null(varm_layers) ||
-      (rlang::is_integerish(varm_layers) && rlang::is_named(varm_layers) && all(varm_layers > 0L)),
-    "'obsp_layer_names' must be a character vector" = is.null(obsp_layer_names) ||
+      (rlang::is_integerish(varm_layers) &&
+        rlang::is_named(varm_layers) &&
+        all(varm_layers > 0L)),
+    "'obsp_layer_names' must be a character vector" = is.null(
+      obsp_layer_names
+    ) ||
       (is.character(obsp_layer_names) && all(nzchar(obsp_layer_names))),
-    "'varp_layer_names' must be a character vector" = is.null(varp_layer_names) ||
+    "'varp_layer_names' must be a character vector" = is.null(
+      varp_layer_names
+    ) ||
       (is.character(varp_layer_names) && all(nzchar(varp_layer_names)))
   )
 
@@ -322,18 +337,27 @@ create_and_populate_ragged_experiment <- function(
   mode = NULL,
   seed = NA_integer_
 ) {
-
   stopifnot(
     "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
-      (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),
+      (rlang::is_integerish(obsm_layers) &&
+        rlang::is_named(obsm_layers) &&
+        all(obsm_layers > 0L)),
     "'varm_layers' must be a named integer vector" = is.null(varm_layers) ||
-      (rlang::is_integerish(varm_layers) && rlang::is_named(varm_layers) && all(varm_layers > 0L)),
-    "'obsp_layer_names' must be a character vector" = is.null(obsp_layer_names) ||
+      (rlang::is_integerish(varm_layers) &&
+        rlang::is_named(varm_layers) &&
+        all(varm_layers > 0L)),
+    "'obsp_layer_names' must be a character vector" = is.null(
+      obsp_layer_names
+    ) ||
       (is.character(obsp_layer_names) && all(nzchar(obsp_layer_names))),
-    "'varp_layer_names' must be a character vector" = is.null(varp_layer_names) ||
+    "'varp_layer_names' must be a character vector" = is.null(
+      varp_layer_names
+    ) ||
       (is.character(varp_layer_names) && all(nzchar(varp_layer_names))),
     "'mode' must be 'READ' or 'WRITE'" = is.null(mode) ||
-      (is.character(mode) && length(mode == 1L) && mode %in% c('READ', 'WRITE')),
+      (is.character(mode) &&
+        length(mode == 1L) &&
+        mode %in% c('READ', 'WRITE')),
     "'seed' must be a single integer value" = is.null(seed) ||
       (is.integer(seed) && length(seed) == 1L)
   )
@@ -527,7 +551,7 @@ create_and_populate_32bit_sparse_nd_array <- function(uri) {
   arr <- SOMASparseNDArrayCreate(
     uri = uri,
     type = arrow::int32(),
-    shape = rep_len(2 ^ 31, length.out = 2L)
+    shape = rep_len(2^31, length.out = 2L)
   )
   on.exit(arr$close(), add = TRUE, after = FALSE)
 

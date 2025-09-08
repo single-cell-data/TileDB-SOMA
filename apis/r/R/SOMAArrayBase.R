@@ -14,7 +14,6 @@ SOMAArrayBase <- R6::R6Class(
   classname = "SOMAArrayBase",
   inherit = SOMAObject,
   public = list(
-
     #' @description Open the SOMA object for read or write.\cr
     #' \cr
     #' \strong{Note}: \code{open()} is considered internal and should not be
@@ -32,13 +31,21 @@ SOMAArrayBase <- R6::R6Class(
         FUN.VALUE = character(1L)
       ))
       if (sys.parent()) {
-        if (inherits(environment(sys.function(sys.parent()))$self, what = "SOMAObject")) {
+        if (
+          inherits(
+            environment(sys.function(sys.parent()))$self,
+            what = "SOMAObject"
+          )
+        ) {
           envs <- union(envs, "tiledbsoma")
         }
       }
       if (!"tiledbsoma" %in% envs) {
         stop(
-          paste(strwrap(private$.internal_use_only("open", "collection")), collapse = '\n'),
+          paste(
+            strwrap(private$.internal_use_only("open", "collection")),
+            collapse = '\n'
+          ),
           call. = FALSE
         )
       }
@@ -92,7 +99,11 @@ SOMAArrayBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     close = function() {
-      spdl::debug("[SOMAArrayBase$close] Closing {} '{}'", self$class(), self$uri)
+      spdl::debug(
+        "[SOMAArrayBase$close] Closing {} '{}'",
+        self$class(),
+        self$uri
+      )
       private$.mode <- NULL
       if (inherits(private$.tiledb_array, "tiledb_array")) {
         tiledb::tiledb_array_close(private$.tiledb_array)
@@ -216,7 +227,9 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    maxshape = \() bit64::as.integer64(maxshape(self$uri, private$.soma_context)),
+    maxshape = \() {
+      bit64::as.integer64(maxshape(self$uri, private$.soma_context))
+    },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, which are the smallest and largest values written on that

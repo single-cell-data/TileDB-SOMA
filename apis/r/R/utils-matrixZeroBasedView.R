@@ -21,8 +21,14 @@ matrixZeroBasedView <- R6::R6Class(
     #' @param x A matrix.
     #'
     initialize = function(x) {
-      if (!inherits(x, "matrix") && !inherits(x, "sparseMatrix") && !inherits(one_based_matrix, "Matrix")) {
-        stop("Matrix object must inherit class matrix or Matrix::sparseMatrix or Matrix::Matrix")
+      if (
+        !inherits(x, "matrix") &&
+          !inherits(x, "sparseMatrix") &&
+          !inherits(one_based_matrix, "Matrix")
+      ) {
+        stop(
+          "Matrix object must inherit class matrix or Matrix::sparseMatrix or Matrix::Matrix"
+        )
       }
       if (length(dim(x)) != 2) {
         stop("Only two-dimensional matrices are supported")
@@ -40,7 +46,7 @@ matrixZeroBasedView <- R6::R6Class(
     take = function(i = NULL, j = NULL) {
       x <- NULL
       if (is.null(i) && is.null(j)) {
-        x <- private$one_based_matrix[, , drop = FALSE]
+        x <- private$one_based_matrix[,, drop = FALSE]
       } else if (is.null(i)) {
         x <- private$one_based_matrix[, j + 1, drop = FALSE]
       } else if (is.null(j)) {
@@ -95,9 +101,13 @@ matrixZeroBasedView <- R6::R6Class(
     #'
     sum = function(x) {
       if (!inherits(x, "matrixZeroBasedView")) {
-        stop("Only arithmetic sum with another 'matrixZeroBasedView` is supported")
+        stop(
+          "Only arithmetic sum with another 'matrixZeroBasedView` is supported"
+        )
       }
-      matrixZeroBasedView$new(private$one_based_matrix + x$get_one_based_matrix())
+      matrixZeroBasedView$new(
+        private$one_based_matrix + x$get_one_based_matrix()
+      )
     },
 
     #' @description print.

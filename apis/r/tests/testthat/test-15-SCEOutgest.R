@@ -67,9 +67,16 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_identical(rownames(umap), colnames(obj))
   expect_identical(colnames(umap), paste0("UMAP", seq_len(n_umaps)))
   expect_identical(SingleCellExperiment::colPairNames(obj), "connectivities")
-  expect_s4_class(SingleCellExperiment::colPair(obj, "connectivities"), "SelfHits")
   expect_s4_class(
-    graph <- SingleCellExperiment::colPair(obj, "connectivities", asSparse = TRUE),
+    SingleCellExperiment::colPair(obj, "connectivities"),
+    "SelfHits"
+  )
+  expect_s4_class(
+    graph <- SingleCellExperiment::colPair(
+      obj,
+      "connectivities",
+      asSparse = TRUE
+    ),
     "dgCMatrix"
   )
   expect_identical(dim(graph), c(n_obs, n_obs))
@@ -81,10 +88,12 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   )
   expect_identical(dim(net), c(n_var, n_var))
   # Test named
-  expect_warning(obj <- query$to_single_cell_experiment(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_warning(
+    obj <- query$to_single_cell_experiment(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_s4_class(obj, "SingleCellExperiment")
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
@@ -93,7 +102,9 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   )
   expect_identical(
     colnames(obj),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), "RNA")
   expect_identical(
@@ -104,7 +115,8 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))
   ))
   expect_true(all(
-    setdiff(query$obs_df$attrnames(), "string_column") %in% names(SingleCellExperiment::colData(obj))
+    setdiff(query$obs_df$attrnames(), "string_column") %in%
+      names(SingleCellExperiment::colData(obj))
   ))
   for (slot in SummarizedExperiment::assayNames(obj)) {
     expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), "dgTMatrix")
@@ -129,25 +141,37 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_identical(SummarizedExperiment::assayNames(obj), "logcounts")
   expect_s4_class(SummarizedExperiment::assay(obj, "logcounts"), "dgTMatrix")
   expect_error(SummarizedExperiment::assay(obj, "counts"))
-  expect_warning(obj <- query$to_single_cell_experiment(c(matrix = "logcounts")))
+  expect_warning(
+    obj <- query$to_single_cell_experiment(c(matrix = "logcounts"))
+  )
   expect_identical(SummarizedExperiment::assayNames(obj), "matrix")
   expect_s4_class(SummarizedExperiment::assay(obj, "matrix"), "dgTMatrix")
   # Test suppress reductions
-  expect_no_condition(obj <- query$to_single_cell_experiment(obsm_layers = FALSE))
+  expect_no_condition(
+    obj <- query$to_single_cell_experiment(obsm_layers = FALSE)
+  )
   expect_length(SingleCellExperiment::reducedDimNames(obj), 0L)
   expect_no_condition(obj <- query$to_single_cell_experiment(obsm_layers = NA))
   expect_length(SingleCellExperiment::reducedDimNames(obj), 0L)
-  expect_no_condition(obj <- query$to_single_cell_experiment(obsm_layers = c(UMAP = "X_umap")))
+  expect_no_condition(
+    obj <- query$to_single_cell_experiment(obsm_layers = c(UMAP = "X_umap"))
+  )
   expect_identical(SingleCellExperiment::reducedDimNames(obj), "UMAP")
   expect_error(SingleCellExperiment::reducedDim(obj, "PCA"))
   # # Test suppress graphs
   expect_no_condition(
-    obj <- query$to_single_cell_experiment(obsm_layers = FALSE, obsp_layers = FALSE)
+    obj <- query$to_single_cell_experiment(
+      obsm_layers = FALSE,
+      obsp_layers = FALSE
+    )
   )
   expect_length(SingleCellExperiment::colPairNames(obj), 0L)
   # Test suppress cell-level meta data
   expect_no_condition(
-    obj <- query$to_single_cell_experiment(obsm_layers = FALSE, obs_column_names = FALSE)
+    obj <- query$to_single_cell_experiment(
+      obsm_layers = FALSE,
+      obs_column_names = FALSE
+    )
   )
   expect_false(any(
     query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))
@@ -161,7 +185,9 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_error(query$to_single_cell_experiment(obs_index = FALSE))
   expect_error(query$to_single_cell_experiment(obs_index = NA_character_))
   expect_error(query$to_single_cell_experiment(obs_index = 1))
-  expect_error(query$to_single_cell_experiment(obs_index = c("string_column", "int_column")))
+  expect_error(query$to_single_cell_experiment(
+    obs_index = c("string_column", "int_column")
+  ))
   expect_error(query$to_single_cell_experiment(obs_index = "tomato"))
   # Test `var_index` assertions
   expect_error(query$to_single_cell_experiment(var_index = FALSE))
@@ -171,29 +197,43 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_error(query$to_single_cell_experiment(var_index = "tomato"))
   # Test `obs_column_names` assertions
   expect_error(query$to_single_cell_experiment(obs_column_names = 1L))
-  expect_error(query$to_single_cell_experiment(obs_column_names = c(
-    NA_character_,
-    NA_character_
-  )))
-  expect_error(query$to_single_cell_experiment(obs_column_names = c(TRUE, FALSE)))
+  expect_error(query$to_single_cell_experiment(
+    obs_column_names = c(
+      NA_character_,
+      NA_character_
+    )
+  ))
+  expect_error(query$to_single_cell_experiment(
+    obs_column_names = c(TRUE, FALSE)
+  ))
   expect_error(query$to_single_cell_experiment(obs_column_names = "tomato"))
   # Test `var_column_names` assertions
   expect_error(query$to_single_cell_experiment(var_column_names = 1L))
-  expect_error(query$to_single_cell_experiment(var_column_names = c(
-    NA_character_,
-    NA_character_
-  )))
-  expect_error(query$to_single_cell_experiment(var_column_names = c(TRUE, FALSE)))
+  expect_error(query$to_single_cell_experiment(
+    var_column_names = c(
+      NA_character_,
+      NA_character_
+    )
+  ))
+  expect_error(query$to_single_cell_experiment(
+    var_column_names = c(TRUE, FALSE)
+  ))
   expect_error(query$to_single_cell_experiment(var_column_names = "tomato"))
   # Test `obsm_layers` assertions
   expect_error(query$to_single_cell_experiment(obsm_layers = 1L))
   expect_error(query$to_single_cell_experiment(obsm_layers = "tomato"))
   # Test `obsp_layers` assertions
   expect_error(query$to_single_cell_experiment(obsp_layers = 1L))
-  expect_error(query$to_single_cell_experiment(obsm_layers = FALSE, obsp_layers = "tomato"))
+  expect_error(query$to_single_cell_experiment(
+    obsm_layers = FALSE,
+    obsp_layers = "tomato"
+  ))
   # Test `varp_layers` assertions
   expect_error(query$to_single_cell_experiment(obsp_layers = 1L))
-  expect_error(query$to_single_cell_experiment(obsm_layers = FALSE, obsp_layers = "tomato"))
+  expect_error(query$to_single_cell_experiment(
+    obsm_layers = FALSE,
+    obsp_layers = "tomato"
+  ))
 })
 
 test_that("Load SCE object with dropped levels", {
@@ -222,7 +262,10 @@ test_that("Load SCE object with dropped levels", {
   )
 
   # Expect both levels to be present in `grp`, even though only one value is
-  expect_s4_class(sce <- query$to_single_cell_experiment(), "SingleCellExperiment")
+  expect_s4_class(
+    sce <- query$to_single_cell_experiment(),
+    "SingleCellExperiment"
+  )
   expect_in("grp", names(SingleCellExperiment::colData(sce)))
   expect_s3_class(obs <- SingleCellExperiment::colData(sce)$grp, "factor")
   expect_identical(levels(obs), c("lvl1", "lvl2"))
@@ -307,7 +350,12 @@ test_that("Load SCE object from sliced ExperimentQuery", {
   expect_identical(SingleCellExperiment::colPairNames(obj), "connectivities")
   expect_identical(SingleCellExperiment::rowPairNames(obj), "network")
   # Test named
-  expect_no_condition(obj <- query$to_single_cell_experiment(obs_index = "string_column", var_index = "quux"))
+  expect_no_condition(
+    obj <- query$to_single_cell_experiment(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_s4_class(obj, "SingleCellExperiment")
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
@@ -316,7 +364,9 @@ test_that("Load SCE object from sliced ExperimentQuery", {
   )
   expect_identical(
     colnames(obj),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), "RNA")
   expect_identical(
@@ -396,7 +446,10 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   expect_identical(SingleCellExperiment::rowPairNames(obj), "network")
   # Test named
   expect_no_condition(
-    obj <- query$to_single_cell_experiment(obs_index = "string_column", var_index = "quux")
+    obj <- query$to_single_cell_experiment(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
   )
   expect_s4_class(obj, "SingleCellExperiment")
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
@@ -406,7 +459,9 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   )
   expect_identical(
     colnames(obj),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), "RNA")
   expect_identical(

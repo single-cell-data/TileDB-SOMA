@@ -45,7 +45,8 @@ test_that("matrix outgest with all results", {
     collection = "obsp",
     layer_name = "RNA_snn",
     obs_index = "obs_id"
-  ) |> as("CsparseMatrix")
+  ) |>
+    as("CsparseMatrix")
   expect_identical(snn1, snn2)
 
   # Assay data
@@ -123,7 +124,8 @@ test_that("matrix outgest with filtered results", {
     collection = "obsp",
     layer_name = "RNA_snn",
     obs_index = "obs_id"
-  ) |> as("CsparseMatrix")
+  ) |>
+    as("CsparseMatrix")
   expect_identical(snn2, snn1)
 
   # Assay data
@@ -160,7 +162,11 @@ test_that("matrix outgest assertions", {
   )
 
   expect_error(
-    query$to_sparse_matrix(collection = "X", layer_name = "counts", obs_index = "int_column"),
+    query$to_sparse_matrix(
+      collection = "X",
+      layer_name = "counts",
+      obs_index = "int_column"
+    ),
     "The following column does not exist: int_column"
   )
 
@@ -334,12 +340,24 @@ test_that("matrix outgest with implicitly-stored axes", {
   # Read in matrices
   expect_s4_class(X_read <- query$to_sparse_matrix("X", "counts"), "dgTMatrix")
   expect_identical(dim(X_read), dim(X_counts))
-  expect_s4_class(obsm_read <- query$to_sparse_matrix("obsm", m_key), "dgTMatrix")
+  expect_s4_class(
+    obsm_read <- query$to_sparse_matrix("obsm", m_key),
+    "dgTMatrix"
+  )
   expect_identical(dim(obsm_read), dim(obsm))
-  expect_s4_class(varm_read <- query$to_sparse_matrix("varm", m_key), "dgTMatrix")
+  expect_s4_class(
+    varm_read <- query$to_sparse_matrix("varm", m_key),
+    "dgTMatrix"
+  )
   expect_identical(dim(varm_read), dim(varm))
-  expect_s4_class(obsp_read <- query$to_sparse_matrix("obsp", p_key), "dgTMatrix")
+  expect_s4_class(
+    obsp_read <- query$to_sparse_matrix("obsp", p_key),
+    "dgTMatrix"
+  )
   expect_identical(dim(obsp_read), dim(obsp))
-  expect_s4_class(varp_read <- query$to_sparse_matrix("varp", p_key), "dgTMatrix")
+  expect_s4_class(
+    varp_read <- query$to_sparse_matrix("varp", p_key),
+    "dgTMatrix"
+  )
   expect_identical(dim(varp_read), dim(varp))
 })

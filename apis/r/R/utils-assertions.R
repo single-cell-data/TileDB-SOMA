@@ -1,11 +1,7 @@
-
 #' Check if object is empty
 #' @noRd
 is_empty <- function(x) {
-  switch(class(x)[1],
-    "data.frame" = nrow(x) == 0,
-    length(x) == 0
-  )
+  switch(class(x)[1], "data.frame" = nrow(x) == 0, length(x) == 0)
 }
 
 #' Check if a vector is named
@@ -98,12 +94,15 @@ assert_subset <- function(x, y, type = "value") {
   stopifnot((is.atomic(x) || is.null(x)) && (is.atomic(y) || is.null(y)))
   missing <- !x %in% y
   if (any(missing)) {
-    stop(sprintf(
-      "The following %s%s not exist: %s",
-      type,
-      ifelse(length(missing) == 1, " does", "s do"),
-      glue::glue_collapse(x[missing], sep = ", ", last = " and ")
-    ), call. = FALSE)
+    stop(
+      sprintf(
+        "The following %s%s not exist: %s",
+        type,
+        ifelse(length(missing) == 1, " does", "s do"),
+        glue::glue_collapse(x[missing], sep = ", ", last = " and ")
+      ),
+      call. = FALSE
+    )
   }
   TRUE
 }
@@ -129,20 +128,25 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
   }
 
   # If coords is a vector, wrap it in a list
-  if (is.atomic(coords)) coords <- list(coords)
+  if (is.atomic(coords)) {
+    coords <- list(coords)
+  }
 
   # List of multiple coordinate vectors must be named
   if (length(coords) > 1) {
     stopifnot(
-      "'coords' must be a named list to query multiple dimensions" =
-        is_named_list(coords)
+      "'coords' must be a named list to query multiple dimensions" = is_named_list(
+        coords
+      )
     )
   }
 
   # TODO: vector type should be validated by array dimension type
   stopifnot(
-    "'coords' must be a list of numeric vectors" =
-      all(vapply_lgl(coords, is.numeric))
+    "'coords' must be a list of numeric vectors" = all(vapply_lgl(
+      coords,
+      is.numeric
+    ))
   )
 
   if (is.null(dimnames)) {
@@ -158,8 +162,9 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
     #
     stopifnot(
       "'dimnames' must be a character vector" = is.character(dimnames),
-      "names of 'coords' must correspond to dimension names" =
-        all(names(coords) %in% dimnames)
+      "names of 'coords' must correspond to dimension names" = all(
+        names(coords) %in% dimnames
+      )
     )
 
     # Apply dimension name to unnamed list containing single coordinate vector
@@ -193,8 +198,8 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
 #' @noRd
 validate_read_value_filter <- function(value_filter) {
   stopifnot(
-    "'value_filter' must be a scalar character" =
-      is.null(value_filter) || is_scalar_character(value_filter)
+    "'value_filter' must be a scalar character" = is.null(value_filter) ||
+      is_scalar_character(value_filter)
   )
   value_filter
 }

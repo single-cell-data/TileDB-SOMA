@@ -25,7 +25,9 @@ test_that("returns all coordinates by default", {
   expect_true(is(query$obs(), "TableReadIter"))
   expect_true(is(query$var(), "TableReadIter"))
   expect_true(query$obs()$concat()$Equals(experiment$obs$read()$concat()))
-  expect_true(query$var()$concat()$Equals(experiment$ms$get("RNA")$var$read()$concat()))
+  expect_true(query$var()$concat()$Equals(experiment$ms$get(
+    "RNA"
+  )$var$read()$concat()))
 
   # obs/var joinids
   expect_equal(
@@ -34,7 +36,9 @@ test_that("returns all coordinates by default", {
   )
   expect_equal(
     query$var_joinids(),
-    arrow::concat_arrays(experiment$ms$get("RNA")$var$read()$concat()$soma_joinid)
+    arrow::concat_arrays(
+      experiment$ms$get("RNA")$var$read()$concat()$soma_joinid
+    )
   )
 
   expect_equal(query$n_obs, n_obs)
@@ -43,7 +47,10 @@ test_that("returns all coordinates by default", {
   # X
   expect_error(query$X(), "Must specify an X layer name")
   expect_error(query$X(c("a", "b")), "Must specify a single X layer name")
-  expect_error(query$X("int_column"), "The following layer does not exist: int_column")
+  expect_error(
+    query$X("int_column"),
+    "The following layer does not exist: int_column"
+  )
 
   expect_true(is(query$X("counts"), "SOMASparseNDArrayRead"))
   expect_true(
@@ -83,7 +90,10 @@ test_that("querying by dimension coordinates", {
   expect_true(query$n_obs == diff(range(obs_slice)) + 1)
   expect_true(query$n_vars == diff(range(var_slice)) + 1)
 
-  expect_equal(query$obs()$concat()$soma_joinid$as_vector(), as.integer(obs_slice))
+  expect_equal(
+    query$obs()$concat()$soma_joinid$as_vector(),
+    as.integer(obs_slice)
+  )
   expect_equal(query$var_joinids()$as_vector(), as.integer(var_slice))
 
   expect_equal(
@@ -203,7 +213,9 @@ test_that("query by value filters with enums", {
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = SOMAAxisQuery$new(value_filter = "enum == 'green' || enum == 'purple'")
+    obs_query = SOMAAxisQuery$new(
+      value_filter = "enum == 'green' || enum == 'purple'"
+    )
   )
   expect_equal(query$n_obs, sum(as.vector(obs_tbl$enum$as_vector()) == "green"))
   obs_df <- as.data.frame(query$obs()$concat())
@@ -308,11 +320,13 @@ test_that("querying by both coordinates and value filters", {
 
   # Determine expected results
   obs_df <- experiment$obs$read()$concat()$to_data_frame()
-  obs_hits <- obs_df$soma_joinid %in% as.integer(obs_slice) &
+  obs_hits <- obs_df$soma_joinid %in%
+    as.integer(obs_slice) &
     obs_df$string_column %in% obs_label_values
 
   var_df <- experiment$ms$get("RNA")$var$read()$concat()$to_data_frame()
-  var_hits <- var_df$soma_joinid %in% as.integer(var_slice) &
+  var_hits <- var_df$soma_joinid %in%
+    as.integer(var_slice) &
     var_df$quux %in% var_label_values
 
   expect_equivalent(query$obs()$concat()$to_data_frame(), obs_df[obs_hits, ])

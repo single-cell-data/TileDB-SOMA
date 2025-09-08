@@ -29,7 +29,11 @@ test_that("IntIndexer mechanics", {
     .match(lookups, keys)
   )
   keys <- bit64::as.integer64(c(-10000, -200000, 1000, 3000, 1, 2))
-  lookups <- bit64::as.integer64(unlist(replicate(n = 4L, c(-1L, 1:5), simplify = FALSE)))
+  lookups <- bit64::as.integer64(unlist(replicate(
+    n = 4L,
+    c(-1L, 1:5),
+    simplify = FALSE
+  )))
   expect_no_condition(indexer <- IntIndexer$new(keys))
   expect_equal(
     indexer$get_indexer(lookups),

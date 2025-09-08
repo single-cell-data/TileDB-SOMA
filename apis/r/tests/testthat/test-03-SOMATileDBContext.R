@@ -26,10 +26,16 @@ test_that("SOMATileDBContext SOMA mechanics", {
   expect_false(ctx$get("member_uris_are_relative"))
   expect_error(ctx$setv(member_uris_are_relative = 1L))
   expect_error(ctx <- SOMATileDBContext$new(c(member_uris_are_relative = 1L)))
-  expect_no_condition(ctx <- SOMATileDBContext$new(c(member_uris_are_relative = TRUE)))
+  expect_no_condition(
+    ctx <- SOMATileDBContext$new(c(member_uris_are_relative = TRUE))
+  )
   expect_true(ctx$get("member_uris_are_relative"))
-  expect_error(ctx <- SOMATileDBContext$new(list(member_uris_are_relative = 1L)))
-  expect_no_condition(ctx <- SOMATileDBContext$new(list(member_uris_are_relative = TRUE)))
+  expect_error(
+    ctx <- SOMATileDBContext$new(list(member_uris_are_relative = 1L))
+  )
+  expect_no_condition(
+    ctx <- SOMATileDBContext$new(list(member_uris_are_relative = TRUE))
+  )
   expect_true(ctx$get("member_uris_are_relative"))
   expect_no_condition(ctx$set("a", 1L))
   expect_equal(ctx$get("a"), 1L)
@@ -53,7 +59,10 @@ test_that("SOMATileDBContext TileDB mechanics", {
   expect_no_condition(ctx <- SOMATileDBContext$new(list(a = "1")))
   expect_no_condition(ctx <- SOMATileDBContext$new(c(a = "1", b = "2")))
   expect_length(ctx, length(tiledb_names) + 2L)
-  expect_equal(ctx$.__enclos_env__$private$.tiledb_ctx_names()[1:2], c("a", "b"))
+  expect_equal(
+    ctx$.__enclos_env__$private$.tiledb_ctx_names()[1:2],
+    c("a", "b")
+  )
   expect_equal(unname(ctx$get("b")), "2")
   expect_no_condition(ctx$set("b", 42L))
   expect_type(ctx$get("b"), "character")
@@ -64,23 +73,33 @@ test_that("SOMATileDBContext SOMA + TileDB mechanics", {
   skip_if(!extended_tests())
   ctx <- SOMATileDBContext$new()
   tiledb_names <- ctx$.__enclos_env__$private$.tiledb_ctx_names()
-  expect_error(ctx <- SOMATileDBContext$new(c(
-    a = "1",
-    member_uris_are_relative = TRUE
-  )))
-  expect_no_condition(ctx <- SOMATileDBContext$new(list(
-    a = "1",
-    member_uris_are_relative = TRUE
-  )))
+  expect_error(
+    ctx <- SOMATileDBContext$new(c(
+      a = "1",
+      member_uris_are_relative = TRUE
+    ))
+  )
+  expect_no_condition(
+    ctx <- SOMATileDBContext$new(list(
+      a = "1",
+      member_uris_are_relative = TRUE
+    ))
+  )
   expect_length(ctx, length(tiledb_names) + 2L)
   expect_equal(ctx$.__enclos_env__$private$.tiledb_ctx_names()[1L], "a")
-  expect_false("member_uris_are_relative" %in% ctx$.__enclos_env__$private$.tiledb_ctx_names())
+  expect_false(
+    "member_uris_are_relative" %in%
+      ctx$.__enclos_env__$private$.tiledb_ctx_names()
+  )
   expect_equal(head(ctx$keys(), 2L), c("member_uris_are_relative", "a"))
   expect_equal(unname(ctx$get("a")), "1")
   expect_equal(unname(ctx$get("member_uris_are_relative")), TRUE)
   expect_no_condition(ctx$set("b", 42L))
   expect_length(ctx, length(tiledb_names) + 3L)
-  expect_length(ctx, length(ctx$.__enclos_env__$private$.tiledb_ctx_names()) + 2L)
+  expect_length(
+    ctx,
+    length(ctx$.__enclos_env__$private$.tiledb_ctx_names()) + 2L
+  )
   expect_type(ctx$get("b"), "integer")
   expect_equal(head(ctx$keys(), 3L), c("member_uris_are_relative", "b", "a"))
   expect_s4_class(context <- ctx$to_tiledb_context(), "tiledb_ctx")

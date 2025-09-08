@@ -93,10 +93,7 @@ pad_matrix.matrix <- function(x, rowidx, colidx, shape, sparse = FALSE, ...) {
     Matrix::sparseMatrix(
       i = integer(),
       j = integer(),
-      x = switch(EXPR = type,
-        logical = logical(),
-        numeric()
-      ),
+      x = switch(EXPR = type, logical = logical(), numeric()),
       dims = shape,
       repr = "T"
     )

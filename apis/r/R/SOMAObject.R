@@ -104,7 +104,10 @@ SOMAObject <- R6::R6Class(
       # Set the timestamp
       if (!is.null(tiledb_timestamp)) {
         stopifnot(
-          "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
+          "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(
+            tiledb_timestamp,
+            "POSIXct"
+          ) &&
             length(tiledb_timestamp) == 1L &&
             !is.na(tiledb_timestamp)
         )
@@ -161,8 +164,12 @@ SOMAObject <- R6::R6Class(
     reopen = function(mode, tiledb_timestamp = NULL) {
       mode <- match.arg(mode, choices = c("READ", "WRITE", "DELETE"))
       stopifnot(
-        "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
-          (inherits(tiledb_timestamp, what = "POSIXct") && length(tiledb_timestamp) == 1L && !is.na(tiledb_timestamp))
+        "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(
+          tiledb_timestamp
+        ) ||
+          (inherits(tiledb_timestamp, what = "POSIXct") &&
+            length(tiledb_timestamp) == 1L &&
+            !is.na(tiledb_timestamp))
       )
       self$close()
       private$.tiledb_timestamp <- tiledb_timestamp
@@ -184,7 +191,10 @@ SOMAObject <- R6::R6Class(
       } else {
         stop("Unknown object type", call. = FALSE)
       }
-      return(get_tiledb_object_type(self$uri, ctxxp = private$.soma_context) %in% expected_type)
+      return(
+        get_tiledb_object_type(self$uri, ctxxp = private$.soma_context) %in%
+          expected_type
+      )
     },
 
     #' @description Retrieve metadata. (lifecycle: maturing)
@@ -263,7 +273,6 @@ SOMAObject <- R6::R6Class(
       )
       return(invisible(self))
     }
-
   ),
   active = list(
     #' @field platform_config Platform configuration
@@ -330,7 +339,6 @@ SOMAObject <- R6::R6Class(
     }
   ),
   private = list(
-
     # @field .platform_config ...
     #
     .platform_config = NULL,
@@ -370,24 +378,28 @@ SOMAObject <- R6::R6Class(
     # @description Create a message saying that a method is for
     # internal use only
     #
-    .internal_use_only = \(method, type = c("array", "collection")) sprintf(
-      fmt = "Use of the '%s()' method is for internal use only; consider using a factory method such as '%s()' instead",
-      method,
+    .internal_use_only = \(method, type = c("array", "collection")) {
       sprintf(
-        fmt = "%s%s",
-        switch(type, collection = "SOMACollection", "SOMADataFrame"),
-        switch(method, create = "Create", "Open")
+        fmt = "Use of the '%s()' method is for internal use only; consider using a factory method such as '%s()' instead",
+        method,
+        sprintf(
+          fmt = "%s%s",
+          switch(type, collection = "SOMACollection", "SOMADataFrame"),
+          switch(method, create = "Create", "Open")
+        )
       )
-    ),
+    },
 
     # @description Throw an error saying a field is read-only
     #
-    .read_only_error = \(field) stop(
-      "Field ",
-      sQuote(field),
-      " is read-only",
-      call. = FALSE
-    ),
+    .read_only_error = \(field) {
+      stop(
+        "Field ",
+        sQuote(field),
+        " is read-only",
+        call. = FALSE
+      )
+    },
 
     # @description Check that the object is open for reading
     #
@@ -408,7 +420,7 @@ SOMAObject <- R6::R6Class(
     },
 
     # @desciption Check that the object is open for delete
-    .check_open_for_delete = function () {
+    .check_open_for_delete = function() {
       if (self$mode() != "DELETE") {
         stop("Item must be open for delete: ", self$uri, call. = FALSE)
       }
@@ -428,7 +440,11 @@ SOMAObject <- R6::R6Class(
     #
     .check_open = function() {
       if (!self$is_open()) {
-        stop("Item must be open for read, write, or, delete: ", self$uri, call. = FALSE)
+        stop(
+          "Item must be open for read, write, or, delete: ",
+          self$uri,
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
@@ -462,7 +478,8 @@ SOMAObject <- R6::R6Class(
         uri = self$uri,
         is_array = inherits(self, "SOMAArrayBase"),
         ctxxp = private$.soma_context
-      ) %||% list()
+      ) %||%
+        list()
 
       # Allow method chaining
       return(invisible(self))

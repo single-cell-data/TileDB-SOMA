@@ -31,7 +31,6 @@ SOMASparseNDArray <- R6::R6Class(
   classname = "SOMASparseNDArray",
   inherit = SOMANDArrayBase,
   public = list(
-
     #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}.
     #'
     #' @param coords Optional \code{list} of integer vectors, one for each
@@ -78,10 +77,14 @@ SOMASparseNDArray <- R6::R6Class(
     write = function(values, bbox = NULL) {
       stopifnot(
         "'values' must be a matrix" = is_matrix(values),
-        "'bbox' must contain two entries" = is.null(bbox) || length(bbox) == length(dim(values)),
-        "'bbox' must be a vector of two integers or a list with each entry containg two integers" = is.null(bbox) ||
+        "'bbox' must contain two entries" = is.null(bbox) ||
+          length(bbox) == length(dim(values)),
+        "'bbox' must be a vector of two integers or a list with each entry containg two integers" = is.null(
+          bbox
+        ) ||
           .is_integerish(bbox) ||
-          (is.list(bbox) && all(vapply_lgl(bbox, function(x, n) length(x) == 2L)))
+          (is.list(bbox) &&
+            all(vapply_lgl(bbox, function(x, n) length(x) == 2L)))
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
       values <- as(values, Class = "TsparseMatrix")
@@ -106,15 +109,16 @@ SOMASparseNDArray <- R6::R6Class(
         simplify = FALSE,
         USE.NAMES = TRUE
       )
-      bbox <- bbox %||% stats::setNames(
-        lapply(
-          X = dim(x = values) - 1L,
-          FUN = function(x) {
-            bit64::as.integer64(c(0L, x))
-          }
-        ),
-        nm = dnames
-      )
+      bbox <- bbox %||%
+        stats::setNames(
+          lapply(
+            X = dim(x = values) - 1L,
+            FUN = function(x) {
+              bit64::as.integer64(c(0L, x))
+            }
+          ),
+          nm = dnames
+        )
       if (is.null(names(bbox))) {
         names(bbox) <- dnames
       }
@@ -187,7 +191,10 @@ SOMASparseNDArray <- R6::R6Class(
       for (i in seq_along(bbox)) {
         bbox_flat[[index]] <- bbox[[i]][1L]
         bbox_flat[[index + 1L]] <- bbox[[i]][2L]
-        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c("_lower", "_upper"))
+        names(bbox_flat)[index:(index + 1L)] <- paste0(
+          names(bbox)[i],
+          c("_lower", "_upper")
+        )
         index <- index + 2L
       }
       self$set_metadata(bbox_flat)
@@ -223,21 +230,32 @@ SOMASparseNDArray <- R6::R6Class(
       attrn <- self$attrnames()
 
       stopifnot(
-        "'values' must be a data frame or Arrow Table" = is.data.frame(values) ||
+        "'values' must be a data frame or Arrow Table" = is.data.frame(
+          values
+        ) ||
           inherits(values, what = "Table"),
-        "'values' must have one column for each dimension and the data" = ncol(values) == length(dnames) + 1L,
-        "'values' must be named with the dimension and attribute labels" = is.null(names(values)) ||
+        "'values' must have one column for each dimension and the data" = ncol(
+          values
+        ) ==
+          length(dnames) + 1L,
+        "'values' must be named with the dimension and attribute labels" = is.null(names(
+          values
+        )) ||
           identical(names(values), c(dnames, attrn))
       )
 
       # Arrow Tables cannot have NULL names, so this only applies to dataframes
       if (is.null(names(values))) {
-        spdl::warn("[SOMASparseNDArray$.write_coordinates] no names on input data frame, assuming <dimensions[...], data> order")
+        spdl::warn(
+          "[SOMASparseNDArray$.write_coordinates] no names on input data frame, assuming <dimensions[...], data> order"
+        )
         names(values) <- c(dnames, attrn)
       }
 
       # Check dimensions
-      spdl::debug("[SOMASparseNDArray$.write_coordinates] checking dimension values")
+      spdl::debug(
+        "[SOMASparseNDArray$.write_coordinates] checking dimension values"
+      )
       for (i in seq_along(dnames)) {
         dn <- dnames[i]
         offending <- sprintf("(offending column: '%s')", dn)
@@ -248,7 +266,10 @@ SOMASparseNDArray <- R6::R6Class(
           stop("Dimension columns cannot contain negative values ", offending)
         }
         if (as.logical(max(values[[dn]]) >= as.numeric(self$shape()[i]))) {
-          stop("Dimension columns cannot exceed the shape of the array ", offending)
+          stop(
+            "Dimension columns cannot exceed the shape of the array ",
+            offending
+          )
         }
       }
 
@@ -270,7 +291,10 @@ SOMASparseNDArray <- R6::R6Class(
       } else {
         values[[attrn]]$type
       }
-      if ((vrt <- r_type_from_arrow_type(vt)) != (rt <- r_type_from_arrow_type(private$.type))) {
+      if (
+        (vrt <- r_type_from_arrow_type(vt)) !=
+          (rt <- r_type_from_arrow_type(private$.type))
+      ) {
         stop("The data column must be of type '", rt, "', got '", vrt, "'")
       }
 
@@ -311,8 +335,10 @@ SOMASparseNDArray <- R6::R6Class(
         out$extent <- min(out$capacity, create_options$dim_tile(name))
       } else {
         stopifnot(
-          "'shape' must be a positive scalar integer" =
-            rlang::is_scalar_integerish(shape) && shape > 0
+          "'shape' must be a positive scalar integer" = rlang::is_scalar_integerish(
+            shape
+          ) &&
+            shape > 0
         )
         out$capacity <- shape
         out$extent <- min(shape, create_options$dim_tile(name))

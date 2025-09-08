@@ -25,7 +25,13 @@
 #'
 #' @inherit write_soma_objects examples
 #'
-write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL) {
+write_soma <- function(
+  x,
+  uri,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+) {
   UseMethod(generic = "write_soma", object = x)
 }
 
@@ -167,7 +173,9 @@ write_soma.data.frame <- function(
     "'x' must have at lease one row and one column" = dim(x) > 0L,
     "'df_index' must be a single character value" = is.null(df_index) ||
       (is_scalar_character(df_index) && nzchar(df_index)),
-    "'index_column_names' must be a character vector" = is.character(index_column_names),
+    "'index_column_names' must be a character vector" = is.character(
+      index_column_names
+    ),
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
@@ -504,8 +512,14 @@ write_soma.TsparseMatrix <- function(
   relative = TRUE
 ) {
   stopifnot(
-    "'x' must be a general sparse matrix" = inherits(x = x, what = "generalMatrix"),
-    "'x' must not be a pattern matrix" = !inherits(x = x, what = "nsparseMatrix"),
+    "'x' must be a general sparse matrix" = inherits(
+      x = x,
+      what = "generalMatrix"
+    ),
+    "'x' must not be a pattern matrix" = !inherits(
+      x = x,
+      what = "nsparseMatrix"
+    ),
     "'type' must be an Arrow type" = is.null(type) ||
       (R6::is.R6(type) && inherits(x = type, what = "DataType")),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose),
@@ -634,10 +648,7 @@ write_soma.TsparseMatrix <- function(
     "'prefix' must be a single character value" = is_scalar_character(prefix)
   )
   axis <- match.arg(axis, choices = c("obs", "var", "index"))
-  default <- switch(EXPR = axis,
-    index = "index",
-    paste0(axis, "_id")
-  )
+  default <- switch(EXPR = axis, index = "index", paste0(axis, "_id"))
   index <- ""
   i <- 1L
   while (!nzchar(index) || index %in% names(x)) {
@@ -681,9 +692,16 @@ write_soma.TsparseMatrix <- function(
 
 .register_soma_object <- function(x, soma_parent, key, relative = TRUE) {
   stopifnot(
-    "'x' must be a SOMA object" = inherits(x, c("SOMAArrayBase", "SOMACollectionBase")),
-    "'soma_parent' must be a SOMA collection" = inherits(soma_parent, "SOMACollectionBase"),
-    "'key' must be a single character value" = is_scalar_character(key) && nzchar(key),
+    "'x' must be a SOMA object" = inherits(
+      x,
+      c("SOMAArrayBase", "SOMACollectionBase")
+    ),
+    "'soma_parent' must be a SOMA collection" = inherits(
+      soma_parent,
+      "SOMACollectionBase"
+    ),
+    "'key' must be a single character value" = is_scalar_character(key) &&
+      nzchar(key),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
   xmode <- x$mode()
@@ -716,10 +734,7 @@ write_soma.TsparseMatrix <- function(
   soma_parent$set(
     x,
     name = key,
-    relative = switch(uri_scheme(x$uri) %||% "",
-      tiledb = FALSE,
-      relative
-    )
+    relative = switch(uri_scheme(x$uri) %||% "", tiledb = FALSE, relative)
   )
   return(invisible(NULL))
 }

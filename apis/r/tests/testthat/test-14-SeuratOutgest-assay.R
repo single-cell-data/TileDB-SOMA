@@ -29,7 +29,10 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_equal(SeuratObject::Key(assay), "rna_")
   expect_equal(names(assay[[]]), query$var_df$attrnames())
   expect_equal(rownames(assay), paste0("feature", seq_len(n_var) - 1L))
-  expect_equal(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
+  expect_equal(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
   expect_equal(colnames(assay), paste0("cell", seq_len(n_obs) - 1L))
   expect_equal(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
 
@@ -48,9 +51,12 @@ test_that("Load assay from ExperimentQuery mechanics", {
   )
 
   # Test adding `scale.data`
-  expect_no_condition(sd <- query$to_seurat_assay(c(
-    data = "logcounts", scale.data = "counts"
-  )))
+  expect_no_condition(
+    sd <- query$to_seurat_assay(c(
+      data = "logcounts",
+      scale.data = "counts"
+    ))
+  )
   expect_s4_class(scaled <- SeuratObject::GetAssayData(sd, "scale.data"), NA)
   expect_true(is.matrix(scaled))
   expect_equal(dim(scaled), c(n_var, n_obs))
@@ -62,13 +68,17 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_equal(dim(nomf2[[]]), c(n_var, 0L))
 
   # Test using cell and feature names
-  expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_no_condition(
+    named <- query$to_seurat_assay(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(
     rownames(named),
@@ -97,22 +107,28 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_assay(obs_index = FALSE))
   expect_error(query$to_seurat_assay(obs_index = NA_character_))
   expect_error(query$to_seurat_assay(obs_index = 1))
-  expect_error(query$to_seurat_assay(obs_index = c("string_column", "int_column")))
+  expect_error(query$to_seurat_assay(
+    obs_index = c("string_column", "int_column")
+  ))
   expect_error(query$to_seurat_assay(obs_index = "tomato"))
 
   # Test `var_index` assertions
   expect_error(query$to_seurat_assay(var_index = FALSE))
   expect_error(query$to_seurat_assay(var_index = NA_character_))
   expect_error(query$to_seurat_assay(var_index = 1))
-  expect_error(query$to_seurat_assay(var_index = c("string_column", "int_column")))
+  expect_error(query$to_seurat_assay(
+    var_index = c("string_column", "int_column")
+  ))
   expect_error(query$to_seurat_assay(var_index = "tomato"))
 
   # Test `var_column_names` assertions
   expect_error(query$to_seurat_assay(var_column_names = 1L))
-  expect_error(query$to_seurat_assay(var_column_names = c(
-    NA_character_,
-    NA_character_
-  )))
+  expect_error(query$to_seurat_assay(
+    var_column_names = c(
+      NA_character_,
+      NA_character_
+    )
+  ))
   expect_error(query$to_seurat_assay(var_column_names = c(TRUE, FALSE)))
   expect_error(query$to_seurat_assay(var_column_names = "tomato"))
 })
@@ -197,7 +213,10 @@ test_that("Load assay with SeuratObject v5 returns v3 assays", {
   expect_equal(SeuratObject::Key(assay), "rna_")
   expect_equal(names(assay[[]]), query$var_df$attrnames())
   expect_equal(rownames(assay), paste0("feature", seq_len(n_var) - 1L))
-  expect_equal(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
+  expect_equal(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
   expect_equal(colnames(assay), paste0("cell", seq_len(n_obs) - 1L))
   expect_equal(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
 })
@@ -235,37 +254,50 @@ test_that("Load v5 assay", {
   expect_equal(SeuratObject::Key(assay), "rna_")
   expect_equal(names(assay[[]]), query$var_df$attrnames())
   expect_equal(rownames(assay), paste0("feature", seq_len(n_var) - 1L))
-  expect_equal(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
+  expect_equal(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
   expect_equal(colnames(assay), paste0("cell", seq_len(n_obs) - 1L))
   expect_equal(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
 
   # Test no counts
-  expect_no_condition(nocounts <- query$to_seurat_assay("logcounts", version = "v5"))
+  expect_no_condition(
+    nocounts <- query$to_seurat_assay("logcounts", version = "v5")
+  )
   expect_false("counts" %in% SeuratObject::Layers(nocounts))
 
   # Test modifying feature-level meta data
-  expect_no_condition(nomf <- query$to_seurat_assay(
-    "counts",
-    var_column_names = FALSE,
-    version = "v5"
-  ))
+  expect_no_condition(
+    nomf <- query$to_seurat_assay(
+      "counts",
+      var_column_names = FALSE,
+      version = "v5"
+    )
+  )
   expect_equal(dim(nomf[[]]), c(n_var, 0L))
-  expect_no_condition(nomf2 <- query$to_seurat_assay(
-    "counts",
-    var_column_names = NA,
-    version = "v5"
-  ))
+  expect_no_condition(
+    nomf2 <- query$to_seurat_assay(
+      "counts",
+      var_column_names = NA,
+      version = "v5"
+    )
+  )
   expect_equal(dim(nomf2[[]]), c(n_var, 0L))
 
   # Test using cell and feature names
-  expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = "string_column",
-    var_index = "quux",
-    version = "v5"
-  ))
+  expect_no_condition(
+    named <- query$to_seurat_assay(
+      obs_index = "string_column",
+      var_index = "quux",
+      version = "v5"
+    )
+  )
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(
     rownames(named),
@@ -305,7 +337,10 @@ test_that("Load v5 ragged assay", {
   nd <- rev(nd[nd > 0L])
   nd <- rep_len(nd, length.out = length(layers))
   for (i in seq_along(layers)) {
-    expect_s4_class(mat <- SeuratObject::LayerData(assay, layers[i]), "dgTMatrix")
+    expect_s4_class(
+      mat <- SeuratObject::LayerData(assay, layers[i]),
+      "dgTMatrix"
+    )
     expect_equal(dim(mat), ceiling(c(n_var, n_obs) * nd[i]), info = layers[i])
   }
 })
@@ -337,21 +372,31 @@ test_that("Load assay from sliced ExperimentQuery", {
   expect_no_condition(assay <- query$to_seurat_assay())
   expect_s4_class(assay, "Assay")
   expect_identical(dim(assay), c(length(var_slice), length(obs_slice)))
-  expect_identical(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(assay),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_no_condition(
+    named <- query$to_seurat_assay(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_identical(
     rownames(named),
     query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
 })
 
@@ -383,23 +428,33 @@ test_that("Load v5 assay from sliced ExperimentQuery", {
   assay <- query$to_seurat_assay("counts", version = "v5")
   expect_s4_class(assay, "Assay5")
   expect_equal(dim(assay), c(length(var_slice), length(obs_slice)))
-  expect_identical(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(assay),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_assay(
-    "counts",
-    obs_index = "string_column",
-    var_index = "quux",
-    version = "v5"
-  ))
+  expect_no_condition(
+    named <- query$to_seurat_assay(
+      "counts",
+      obs_index = "string_column",
+      var_index = "quux",
+      version = "v5"
+    )
+  )
   expect_identical(
     rownames(named),
     query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
 })
 
@@ -485,14 +540,22 @@ test_that("Load assay from indexed ExperimentQuery", {
     dim(assay),
     c(length(var_label_values), length(obs_label_values))
   )
-  expect_identical(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(assay),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_no_condition(
+    named <- query$to_seurat_assay(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_identical(
     rownames(named),
     query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
@@ -500,7 +563,9 @@ test_that("Load assay from indexed ExperimentQuery", {
   expect_identical(rownames(named), var_label_values)
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
 })
@@ -543,16 +608,24 @@ test_that("Load v5 assay from indexed ExperimentQuery", {
     dim(assay),
     c(length(var_label_values), length(obs_label_values))
   )
-  expect_identical(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(assay),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(assay),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_assay(
-    "counts",
-    obs_index = "string_column",
-    var_index = "quux",
-    version = "v5"
-  ))
+  expect_no_condition(
+    named <- query$to_seurat_assay(
+      "counts",
+      obs_index = "string_column",
+      var_index = "quux",
+      version = "v5"
+    )
+  )
   expect_identical(
     rownames(named),
     query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
@@ -560,7 +633,9 @@ test_that("Load v5 assay from indexed ExperimentQuery", {
   expect_identical(rownames(named), var_label_values)
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
 })

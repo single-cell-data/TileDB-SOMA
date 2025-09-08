@@ -31,7 +31,9 @@ is_arrow_schema <- function(x) {
 }
 
 is_arrow_dictionary <- function(x) {
-  is_arrow_object(x) && inherits(x, "Field") && inherits(x$type, "DictionaryType")
+  is_arrow_object(x) &&
+    inherits(x, "Field") &&
+    inherits(x$type, "DictionaryType")
 }
 
 #' @method as.logical Scalar
@@ -46,10 +48,10 @@ as.logical.Scalar <- \(x, ...) as.logical(x$as_vector(), ...)
 #' List of all arrow types: https://github.com/apache/arrow/blob/90aac16761b7dbf5fe931bc8837cad5116939270/r/R/type.R#L700
 #' @noRd
 
-
 arrow_type_from_tiledb_type <- function(x) {
   stopifnot(is.character(x))
-  switch(x,
+  switch(
+    x,
     INT8 = arrow::int8(),
     INT16 = arrow::int16(),
     INT32 = arrow::int32(),
@@ -168,7 +170,8 @@ r_type_from_arrow_type.DataType <- function(x) {
 arrow_type_range <- function(x) {
   stopifnot(is_arrow_data_type(x))
 
-  switch(x$name,
+  switch(
+    x$name,
     int8 = c(-128L, 127L),
     int16 = c(-32768L, 32767L),
     int32 = c(-2147483647L, 2147483647L),
@@ -196,7 +199,8 @@ arrow_type_range <- function(x) {
 #' @noRd
 arrow_type_unsigned_range <- function(x) {
   range <- arrow_type_range(x)
-  range[1] <- switch(x$name,
+  range[1] <- switch(
+    x$name,
     int8 = 0L,
     int16 = 0L,
     int32 = 0L,
@@ -228,7 +232,8 @@ check_arrow_pointers <- function(arrlst) {
 #' @noRd
 check_arrow_data_types <- function(from, to) {
   stopifnot(
-    "'from' and 'to' must both be Arrow DataTypes" = is_arrow_data_type(from) && is_arrow_data_type(to)
+    "'from' and 'to' must both be Arrow DataTypes" = is_arrow_data_type(from) &&
+      is_arrow_data_type(to)
   )
 
   is_string <- function(x) {
@@ -257,9 +262,14 @@ check_arrow_data_types <- function(from, to) {
 #' @noRd
 check_arrow_schema_data_types <- function(from, to) {
   stopifnot(
-    "'from' and 'to' must both be Arrow Schemas" = is_arrow_schema(from) && is_arrow_schema(to),
-    "'from' and 'to' must have the same number of fields" = length(from) == length(to),
-    "'from' and 'to' must have the same field names" = identical(sort(names(from)), sort(names(to)))
+    "'from' and 'to' must both be Arrow Schemas" = is_arrow_schema(from) &&
+      is_arrow_schema(to),
+    "'from' and 'to' must have the same number of fields" = length(from) ==
+      length(to),
+    "'from' and 'to' must have the same field names" = identical(
+      sort(names(from)),
+      sort(names(to))
+    )
   )
 
   fields <- names(from)
@@ -322,20 +332,30 @@ get_domain_and_extent_dataframe <- function(
     "First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
     "Second argument must be character" = is.character(ind_col_names),
     "Second argument cannot be empty vector" = length(ind_col_names) > 0,
-    "Second argument index names must be columns in first argument" =
-      all(is.finite(match(ind_col_names, names(tbl_schema)))),
-    "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions")
+    "Second argument index names must be columns in first argument" = all(is.finite(match(
+      ind_col_names,
+      names(tbl_schema)
+    ))),
+    "Third argument must be options wrapper" = inherits(
+      tdco,
+      "TileDBCreateOptions"
+    )
   )
   stopifnot(
-    "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
-      ( # Check that `domain` is a list of length `length(ind_col_names)`
+    "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(
+      domain
+    ) ||
+      (
+        # Check that `domain` is a list of length `length(ind_col_names)`
         # where all values are named after `ind_col_names`
         # and all values are `NULL` or a two-length atomic non-factor vector
         rlang::is_list(domain, n = length(ind_col_names)) &&
           identical(sort(names(domain)), sort(ind_col_names)) &&
           all(vapply_lgl(
             domain,
-            function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+            function(x) {
+              is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+            }
           ))
       )
   )
@@ -386,14 +406,19 @@ get_domain_and_extent_dataframe <- function(
     }
     # Core supports no domain specification for variable-length dims, which
     # includes string/binary dims.
-    if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
+    if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) {
+      ind_ext <- NA
+    }
 
     # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
     if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
       aa <- if (is.null(requested_slot)) {
         arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
       } else {
-        arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
+        arrow::arrow_array(
+          c("", "", "", requested_slot[[1]], requested_slot[[2]]),
+          ind_col_type
+        )
       }
     } else {
       # If they wanted (0, 99) then extent must be at most 100.
@@ -414,7 +439,10 @@ get_domain_and_extent_dataframe <- function(
           ind_ext <- dom_span
         }
       }
-      aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
+      aa <- arrow::arrow_array(
+        c(ind_max_dom, ind_ext, ind_cur_dom),
+        ind_col_type
+      )
     }
 
     aa
@@ -428,7 +456,10 @@ get_domain_and_extent_dataframe <- function(
 #' a column per dimension for the given (incoming) arrow schema of a Table
 #' @noRd
 get_domain_and_extent_array <- function(shape, is_sparse) {
-  stopifnot("First argument must be vector of positive values" = is.vector(shape) && all(shape > 0))
+  stopifnot(
+    "First argument must be vector of positive values" = is.vector(shape) &&
+      all(shape > 0)
+  )
   indvec <- seq_len(length(shape)) - 1 # sequence 0, ..., length()-1
   rl <- sapply(indvec, \(ind) {
     ind_col <- sprintf("soma_dim_%d", ind)

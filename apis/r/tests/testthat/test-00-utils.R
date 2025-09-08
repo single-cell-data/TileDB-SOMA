@@ -37,12 +37,18 @@ test_that("validate read coords with dimension names", {
 
   # list of named coordinates must match provided dimension names
   expect_error(
-    validate_read_coords(list(int_column = 1:10, float_column = 1:10), c("int_column", "string_column")),
+    validate_read_coords(
+      list(int_column = 1:10, float_column = 1:10),
+      c("int_column", "string_column")
+    ),
     "names of 'coords' must correspond to dimension names"
   )
 
   expect_error(
-    validate_read_coords(list(int_column = 1:10, float_column = 1:10), c("int_column")),
+    validate_read_coords(
+      list(int_column = 1:10, float_column = 1:10),
+      c("int_column")
+    ),
     "names of 'coords' must correspond to dimension names"
   )
 })
@@ -110,7 +116,11 @@ test_that("is_integerish: integer64", {
     )
     expect_false(
       .is_integerish(bit64::integer64(length = n), n = n + 1L),
-      label = sprintf(".is_integerish(integer64(length = %i), n = %i)", n, n + 1L)
+      label = sprintf(
+        ".is_integerish(integer64(length = %i), n = %i)",
+        n,
+        n + 1L
+      )
     )
   }
 

@@ -12,7 +12,10 @@ test_that("SOMAAxisQuery", {
   expect_null(query$value_filter)
   expect_equal(query$coords, list(int_column = 1L:2L))
 
-  query <- SOMAAxisQuery$new(value_filter = "int_column", coords = list(int_column = 1L:2L))
+  query <- SOMAAxisQuery$new(
+    value_filter = "int_column",
+    coords = list(int_column = 1L:2L)
+  )
   expect_equal(query$value_filter, "int_column")
   expect_equal(query$coords, list(int_column = 1L:2L))
 
@@ -23,7 +26,6 @@ test_that("SOMAAxisQuery", {
   # Unnamed list is valid for a single set of coordinates
   query <- SOMAAxisQuery$new(coords = list(1L:2L))
   expect_equal(query$coords, list(1L:2L))
-
 
   # Expected failures
   expect_error(
@@ -48,7 +50,12 @@ test_that("SOMAAxisQuery", {
   expt <- load_dataset("soma-exp-pbmc-small")
   intq <- SOMAAxisQuery$new(coords = 1:2) # int as : operator creates ints
   numq <- SOMAAxisQuery$new(coords = c(1, 2)) # numeric
-  expt_query <- SOMAExperimentAxisQuery$new(expt, "RNA", var_query = intq, obs_query = numq)
+  expt_query <- SOMAExperimentAxisQuery$new(
+    expt,
+    "RNA",
+    var_query = intq,
+    obs_query = numq
+  )
   op <- getOption("arrow.int64_downcast")
   options("arrow.int64_downcast" = FALSE) # else it becomes int
   expect_true(inherits(expt_query$var_joinids()$as_vector(), "integer64"))

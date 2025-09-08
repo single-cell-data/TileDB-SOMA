@@ -4,7 +4,11 @@ test_that("Blockwise iterator for arrow tables", {
   # see https://ghrr.github.io/drat/
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
+  tgzfile <- system.file(
+    "raw-data",
+    "soco-pbmc3k.tar.gz",
+    package = "pbmc3k.tiledb"
+  )
   untar(tarfile = tgzfile, exdir = tdir)
 
   uri <- file.path(tdir, "soco", "pbmc3k_processed")
@@ -27,7 +31,10 @@ test_that("Blockwise iterator for arrow tables", {
   expect_s3_class(it <- bi$tables(), "BlockwiseTableReadIter")
   expect_false(it$read_complete())
 
-  for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+  for (i in seq.int(
+    1L,
+    ceiling(it$coords_axis$length() / it$coords_axis$stride)
+  )) {
     at <- it$read_next()
     expect_s3_class(at, "ArrowTabular")
   }
@@ -46,7 +53,10 @@ test_that("Blockwise iterator for arrow tables", {
 
 test_that("Table blockwise iterator: re-indexed", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION("c"))
+  skip_if_not_installed(
+    "SeuratObject",
+    minimum_version = .MINIMUM_SEURAT_VERSION("c")
+  )
 
   obj <- get_data("pbmc_small", package = "SeuratObject")
   obj <- suppressWarnings(SeuratObject::UpdateSeuratObject(obj))
@@ -85,7 +95,10 @@ test_that("Table blockwise iterator: re-indexed", {
   expect_error(it$concat(), class = "notConcatenatableError")
   expect_length(it$axes_to_reindex, 0L)
 
-  for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+  for (i in seq.int(
+    1L,
+    ceiling(it$coords_axis$length() / it$coords_axis$stride)
+  )) {
     at <- it$read_next()
     expect_true(R6::is.R6(at))
     expect_s3_class(at, "Table")
@@ -112,7 +125,10 @@ test_that("Table blockwise iterator: re-indexed", {
   expect_error(it$concat(), class = "notConcatenatableError")
   expect_length(it$axes_to_reindex, it$array$ndim() - 1L)
 
-  for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+  for (i in seq.int(
+    1L,
+    ceiling(it$coords_axis$length() / it$coords_axis$stride)
+  )) {
     at <- it$read_next()
     expect_true(R6::is.R6(at))
     expect_s3_class(at, "Table")
@@ -128,7 +144,11 @@ test_that("Blockwise iterator for sparse matrices", {
   # see https://ghrr.github.io/drat/
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
+  tgzfile <- system.file(
+    "raw-data",
+    "soco-pbmc3k.tar.gz",
+    package = "pbmc3k.tiledb"
+  )
   untar(tarfile = tgzfile, exdir = tdir)
 
   uri <- file.path(tdir, "soco", "pbmc3k_processed")
@@ -155,7 +175,10 @@ test_that("Blockwise iterator for sparse matrices", {
   expect_false(it$reindexable)
   expect_false(it$read_complete())
 
-  for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+  for (i in seq.int(
+    1L,
+    ceiling(it$coords_axis$length() / it$coords_axis$stride)
+  )) {
     at <- it$read_next()
     expect_s4_class(at, "dgTMatrix")
   }
@@ -173,7 +196,10 @@ test_that("Blockwise iterator for sparse matrices", {
 
 test_that("Sparse matrix blockwise iterator: re-indexed", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION("c"))
+  skip_if_not_installed(
+    "SeuratObject",
+    minimum_version = .MINIMUM_SEURAT_VERSION("c")
+  )
 
   obj <- get_data("pbmc_small", package = "SeuratObject")
   obj <- suppressWarnings(SeuratObject::UpdateSeuratObject(obj))
@@ -215,7 +241,10 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
   expect_error(it$concat(), class = "notConcatenatableError")
   expect_length(it$axes_to_reindex, 0L)
 
-  for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+  for (i in seq.int(
+    1L,
+    ceiling(it$coords_axis$length() / it$coords_axis$stride)
+  )) {
     mat <- it$read_next()
     expect_s4_class(mat, "TsparseMatrix")
     dims <- c(
@@ -246,7 +275,10 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
   expect_error(it$concat(), class = "notConcatenatableError")
   expect_length(it$axes_to_reindex, it$array$ndim() - 1L)
 
-  for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+  for (i in seq.int(
+    1L,
+    ceiling(it$coords_axis$length() / it$coords_axis$stride)
+  )) {
     mat <- it$read_next()
     expect_s4_class(mat, "TsparseMatrix")
     dims <- c(
@@ -279,7 +311,10 @@ test_that("Blockwise iterate through full array", {
   n_chunks <- 8L
   # Stride across `obs`
   obs_stride <- n_obs %/% n_chunks
-  it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(axis = 0L, size = obs_stride)$sparse_matrix()
+  it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(
+    axis = 0L,
+    size = obs_stride
+  )$sparse_matrix()
   expect_false(it$read_complete())
   i <- 1L
   while (!it$read_complete()) {
@@ -287,9 +322,17 @@ test_that("Blockwise iterate through full array", {
     mat <- it$read_next()
     expect_s4_class(mat, "dgTMatrix")
     expect_identical(ncol(mat), n_var)
-    nobs <- ifelse(it$read_complete(), yes = n_obs %% obs_stride, no = obs_stride)
+    nobs <- ifelse(
+      it$read_complete(),
+      yes = n_obs %% obs_stride,
+      no = obs_stride
+    )
     expect_identical(nrow(mat), nobs, expected.label = nobs)
-    ncoords <- ifelse(it$read_complete(), yes = n_obs %% n_chunks, no = obs_stride)
+    ncoords <- ifelse(
+      it$read_complete(),
+      yes = n_obs %% n_chunks,
+      no = obs_stride
+    )
     expect_identical(
       length(attr(mat, "coords")$soma_dim_0),
       ncoords,
@@ -300,15 +343,26 @@ test_that("Blockwise iterate through full array", {
 
   # Stride across `var`
   var_stride <- n_var %/% n_chunks
-  it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(axis = 1L, size = var_stride)$sparse_matrix()
+  it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(
+    axis = 1L,
+    size = var_stride
+  )$sparse_matrix()
   expect_false(it$read_complete())
   while (!it$read_complete()) {
     mat <- it$read_next()
     expect_s4_class(mat, "dgTMatrix")
-    nvar <- ifelse(it$read_complete(), yes = n_var %% var_stride, no = var_stride)
+    nvar <- ifelse(
+      it$read_complete(),
+      yes = n_var %% var_stride,
+      no = var_stride
+    )
     expect_identical(ncol(mat), nvar, expected.label = nvar)
     expect_identical(nrow(mat), n_obs)
-    ncoords <- ifelse(it$read_complete(), yes = n_var %% n_chunks, no = var_stride)
+    ncoords <- ifelse(
+      it$read_complete(),
+      yes = n_var %% n_chunks,
+      no = var_stride
+    )
     expect_identical(
       length(attr(mat, "coords")$soma_dim_1),
       ncoords,

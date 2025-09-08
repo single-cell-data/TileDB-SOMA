@@ -6,7 +6,9 @@ is_remote_uri <- function(x) {
 # constructing remote S3 or TileDB URIs
 file_path <- function(..., fsep = .Platform$file.sep) {
   paths <- list(...)
-  if (is_remote_uri(paths[[1]])) fsep <- "/"
+  if (is_remote_uri(paths[[1]])) {
+    fsep <- "/"
+  }
   file.path(..., fsep = fsep)
 }
 
@@ -40,8 +42,10 @@ uri_scheme_remove <- function(uri) {
 #'
 make_uri_relative <- function(uri, relative_to) {
   stopifnot(
-    "'uri' and 'relative_to' must be scalar character vectors" =
-      is_scalar_character(uri) && is_scalar_character(relative_to)
+    "'uri' and 'relative_to' must be scalar character vectors" = is_scalar_character(
+      uri
+    ) &&
+      is_scalar_character(relative_to)
   )
 
   uri_scheme <- uri_scheme(uri)

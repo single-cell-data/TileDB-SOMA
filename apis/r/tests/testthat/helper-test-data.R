@@ -9,7 +9,12 @@ get_data <- function(x, package = NULL) {
   return(e[[x]])
 }
 
-create_sparse_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1, repr = "T") {
+create_sparse_matrix_with_int_dims <- function(
+  nrows = 10,
+  ncols = 5,
+  seed = 1,
+  repr = "T"
+) {
   set.seed(seed)
   Matrix::rsparsematrix(
     nrow = nrows,
@@ -20,7 +25,12 @@ create_sparse_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1, 
   )
 }
 
-create_sparse_matrix_with_string_dims <- function(nrows = 10, ncols = 5, seed = 1, repr = "T") {
+create_sparse_matrix_with_string_dims <- function(
+  nrows = 10,
+  ncols = 5,
+  seed = 1,
+  repr = "T"
+) {
   smat <- create_sparse_matrix_with_int_dims(nrows, ncols, seed, repr)
   dimnames(smat) <- list(
     paste0("i", seq_len(nrows)),

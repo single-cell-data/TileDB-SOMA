@@ -7,7 +7,9 @@ test_that("Basic mechanics", {
     SOMADataFrameCreate(uri, asch, index_column_names = "qux"),
     "The following indexed field does not exist: qux"
   )
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
 
   sdf <- SOMADataFrameCreate(
     uri,
@@ -34,10 +36,42 @@ test_that("Basic mechanics", {
     soma_joinid = 1L:36L,
     float_column = 1.1:36.1,
     string_column = c(
-      "á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
-      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
-      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
-      "ź", "Ž", "Ż"
+      "á",
+      "ą",
+      "ã",
+      "à",
+      "å",
+      "ä",
+      "æ",
+      "ç",
+      "ć",
+      "Ç",
+      "í",
+      "ë",
+      "é",
+      "è",
+      "ê",
+      "ł",
+      "Ł",
+      "ñ",
+      "ń",
+      "ó",
+      "ô",
+      "ò",
+      "ö",
+      "ø",
+      "Ø",
+      "ř",
+      "š",
+      "ś",
+      "ş",
+      "Š",
+      "ú",
+      "ü",
+      "ý",
+      "ź",
+      "Ž",
+      "Ż"
     ),
     schema = asch
   )
@@ -77,10 +111,42 @@ test_that("Basic mechanics", {
     soma_joinid = 1L:36L,
     float_column = 1.1:36.1,
     string_column = c(
-      "á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
-      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
-      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
-      "ź", "Ž", "Ż"
+      "á",
+      "ą",
+      "ã",
+      "à",
+      "å",
+      "ä",
+      "æ",
+      "ç",
+      "ć",
+      "Ç",
+      "í",
+      "ë",
+      "é",
+      "è",
+      "ê",
+      "ł",
+      "Ł",
+      "ñ",
+      "ń",
+      "ó",
+      "ô",
+      "ò",
+      "ö",
+      "ø",
+      "Ø",
+      "ř",
+      "š",
+      "ś",
+      "ş",
+      "Š",
+      "ú",
+      "ü",
+      "ý",
+      "ź",
+      "Ž",
+      "Ż"
     ),
     schema = asch
   )
@@ -136,13 +202,17 @@ test_that("Basic mechanics with default index_column_names", {
     regexp = "The following indexed field does not exist: qux"
   )
 
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
 
-  expect_no_condition(sdf <- SOMADataFrameCreate(
-    uri,
-    schema = asch,
-    domain = list(soma_joinid = c(0, 99))
-  ))
+  expect_no_condition(
+    sdf <- SOMADataFrameCreate(
+      uri,
+      schema = asch,
+      domain = list(soma_joinid = c(0, 99))
+    )
+  )
   expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
@@ -164,10 +234,42 @@ test_that("Basic mechanics with default index_column_names", {
     int_column = 1L:36L,
     float_column = 1.1:36.1,
     string_column = c(
-      "á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
-      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
-      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
-      "ź", "Ž", "Ż"
+      "á",
+      "ą",
+      "ã",
+      "à",
+      "å",
+      "ä",
+      "æ",
+      "ç",
+      "ć",
+      "Ç",
+      "í",
+      "ë",
+      "é",
+      "è",
+      "ê",
+      "ł",
+      "Ł",
+      "ñ",
+      "ń",
+      "ó",
+      "ô",
+      "ò",
+      "ö",
+      "ø",
+      "Ø",
+      "ř",
+      "š",
+      "ś",
+      "ş",
+      "Š",
+      "ú",
+      "ü",
+      "ý",
+      "ź",
+      "Ž",
+      "Ż"
     ),
     schema = asch
   )
@@ -192,10 +294,10 @@ test_that("soma_joinid domain lower bound must be zero", {
   index_column_names <- c("soma_joinid")
 
   asch <- arrow::schema(
-      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
-      arrow::field("mystring", arrow::large_utf8(), nullable = FALSE),
-      arrow::field("myint", arrow::int32(), nullable = FALSE),
-      arrow::field("myfloat", arrow::float32(), nullable = FALSE)
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+    arrow::field("mystring", arrow::large_utf8(), nullable = FALSE),
+    arrow::field("myint", arrow::int32(), nullable = FALSE),
+    arrow::field("myfloat", arrow::float32(), nullable = FALSE)
   )
 
   expect_error(
@@ -203,7 +305,7 @@ test_that("soma_joinid domain lower bound must be zero", {
       uri,
       asch,
       index_column_names = index_column_names,
-      domain = list(soma_joinid=c(3, 2))
+      domain = list(soma_joinid = c(3, 2))
     )
   )
 
@@ -212,7 +314,7 @@ test_that("soma_joinid domain lower bound must be zero", {
       uri,
       asch,
       index_column_names = index_column_names,
-      domain = list(soma_joinid=c(0, -1))
+      domain = list(soma_joinid = c(0, -1))
     )
   )
 
@@ -221,7 +323,7 @@ test_that("soma_joinid domain lower bound must be zero", {
       uri,
       asch,
       index_column_names = index_column_names,
-      domain = list(soma_joinid=c(-1, 0))
+      domain = list(soma_joinid = c(-1, 0))
     )
   )
 
@@ -230,7 +332,7 @@ test_that("soma_joinid domain lower bound must be zero", {
       uri,
       asch,
       index_column_names = index_column_names,
-      domain = list(soma_joinid=c(2, 99))
+      domain = list(soma_joinid = c(2, 99))
     )
   )
 
@@ -266,10 +368,42 @@ test_that("creation with all supported dimension data types", {
     int = 1L:36L,
     int64 = bit64::as.integer64(1L:36L),
     string = c(
-      "á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
-      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
-      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
-      "ź", "Ž", "Ż"
+      "á",
+      "ą",
+      "ã",
+      "à",
+      "å",
+      "ä",
+      "æ",
+      "ç",
+      "ć",
+      "Ç",
+      "í",
+      "ë",
+      "é",
+      "è",
+      "ê",
+      "ł",
+      "Ł",
+      "ñ",
+      "ń",
+      "ó",
+      "ô",
+      "ò",
+      "ö",
+      "ø",
+      "Ø",
+      "ř",
+      "š",
+      "ś",
+      "ş",
+      "Š",
+      "ú",
+      "ü",
+      "ý",
+      "ź",
+      "Ž",
+      "Ż"
     ),
     schema = sch
   )
@@ -277,7 +411,12 @@ test_that("creation with all supported dimension data types", {
   for (dtype in tbl0$ColumnNames()) {
     uri <- tempfile(pattern = paste0("soma-dataframe-", dtype))
     expect_silent(
-      sdf <- SOMADataFrameCreate(uri, tbl0$schema, index_column_names = dtype, domain = domains[dtype])
+      sdf <- SOMADataFrameCreate(
+        uri,
+        tbl0$schema,
+        index_column_names = dtype,
+        domain = domains[dtype]
+      )
     )
     expect_true(sdf$exists())
     sdf$close()
@@ -294,10 +433,21 @@ test_that("int64 values are stored correctly", {
     arrow::field("int_column", arrow::int32(), nullable = FALSE),
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
 
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column", domain = list(int_column = c(1, 10)))
-  tbl0 <- arrow::arrow_table(int_column = 1L:10L, soma_joinid = 1L:10L, schema = asch)
+  sdf <- SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = "int_column",
+    domain = list(int_column = c(1, 10))
+  )
+  tbl0 <- arrow::arrow_table(
+    int_column = 1L:10L,
+    soma_joinid = 1L:10L,
+    schema = asch
+  )
 
   orig_downcast_value <- getOption("arrow.int64_downcast")
 
@@ -329,7 +479,9 @@ test_that("creation with ordered factors", {
   )
   tbl <- arrow::as_arrow_table(df)
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   expect_no_condition(
     sdf <- SOMADataFrameCreate(
       uri = uri,
@@ -383,11 +535,17 @@ test_that("explicit casting of ordered factors to regular factors", {
     bool = rep_len(c(TRUE, FALSE), length.out = n),
     ord = ordered(rep_len(c("g1", "g2", "g3"), length.out = n))
   )
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   tbl <- arrow::as_arrow_table(df)
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
   expect_no_condition(
-    sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema, domain = list(soma_joinid = c(0, n - 1L)))
+    sdf <- SOMADataFrameCreate(
+      uri = uri,
+      schema = tbl$schema,
+      domain = list(soma_joinid = c(0, n - 1L))
+    )
   )
   expect_no_condition(sdf$write(values = tbl))
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
@@ -459,7 +617,9 @@ test_that("soma_joinid is added on creation", {
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
@@ -506,29 +666,45 @@ test_that("platform_config is respected", {
   cfg$set("tiledb", "create", "cell_order", "ROW_MAJOR")
   cfg$set("tiledb", "create", "offsets_filters", list("RLE"))
   cfg$set("tiledb", "create", "validity_filters", list("RLE", "NONE"))
-  cfg$set("tiledb", "create", "dims", list(
-    soma_joinid = list(
-      filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 8), "NONE")
-      # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
-      # At present we get:
-      #
-      #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
-      #   max value representable by domain type
-      #
-      # tile = 999
+  cfg$set(
+    "tiledb",
+    "create",
+    "dims",
+    list(
+      soma_joinid = list(
+        filters = list(
+          "RLE",
+          list(name = "ZSTD", COMPRESSION_LEVEL = 8),
+          "NONE"
+        )
+        # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
+        # At present we get:
+        #
+        #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
+        #   max value representable by domain type
+        #
+        # tile = 999
+      )
     )
-  ))
-  cfg$set("tiledb", "create", "attrs", list(
-    i32 = list(
-      filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
-    ),
-    f64 = list(
-      filters = list()
+  )
+  cfg$set(
+    "tiledb",
+    "create",
+    "attrs",
+    list(
+      i32 = list(
+        filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
+      ),
+      f64 = list(
+        filters = list()
+      )
     )
-  ))
+  )
 
   # Create the SOMADataFrame
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = asch,
@@ -549,7 +725,6 @@ test_that("platform_config is respected", {
     c_cell_order(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
     "ROW_MAJOR"
   )
-
 
   expect_length(
     coord_filters <- c_schema_filters(
@@ -607,7 +782,9 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMADataFrame
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = asch,
@@ -666,7 +843,9 @@ test_that("SOMADataFrame timestamped ops", {
     arrow::field("valint", arrow::int32(), nullable = FALSE),
     arrow::field("valdbl", arrow::float64(), nullable = FALSE)
   )
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = sch,
@@ -708,7 +887,8 @@ test_that("SOMADataFrame timestamped ops", {
     uri = uri,
     tiledb_timestamp = t10 + 0.5 * as.numeric(t20 - t10)
   )
-  expect_equal(# read between t10 and t20 sees only first write
+  expect_equal(
+    # read between t10 and t20 sees only first write
     as.data.frame(sdf$read()$concat()),
     d1
   )
@@ -718,7 +898,9 @@ test_that("SOMADataFrame timestamped ops", {
 test_that("SOMADataFrame can be updated", {
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
   sdf$close()
 
@@ -848,7 +1030,6 @@ test_that("SOMADataFrame can be updated", {
   )
   tbl0 <- tbl1
 
-
   # Error on incompatible schema updates
   tbl0$string_column <- tbl0$string_column$cast(target_type = arrow::int32()) # string to int
   expect_error(
@@ -870,7 +1051,9 @@ test_that("SOMADataFrame can be updated", {
 test_that("SOMADataFrame can be updated from a data frame", {
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
   # Retrieve the table from disk
@@ -885,15 +1068,24 @@ test_that("SOMADataFrame can be updated from a data frame", {
 
   # Update to drop 'float_column' from the array and retrieve string_column values from row names
   expect_silent(
-    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "string_column")
+    SOMADataFrameOpen(uri, "WRITE")$update(
+      df0,
+      row_index_name = "string_column"
+    )
   )
 
   df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
-  expect_setequal(colnames(df1), c("int_column", "soma_joinid", "string_column"))
+  expect_setequal(
+    colnames(df1),
+    c("int_column", "soma_joinid", "string_column")
+  )
 
   # Error if row_index_name conflicts with an existing column name
   expect_error(
-    SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "int_column"),
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(
+      df0,
+      row_index_name = "int_column"
+    ),
     "'row_index_name' conflicts with an existing column name"
   )
 })
@@ -914,7 +1106,9 @@ test_that("missing levels in enums", {
   expect_true(any(is.na(df$enum)))
 
   # Create SOMADataFrame w/ missing enum levels
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
   tbl <- arrow::as_arrow_table(df)
   sdf <- SOMADataFrameCreate(
     uri,
@@ -1036,7 +1230,11 @@ test_that("factor levels cannot extend beyond index limit", {
       obs = factor(paste0("elem", seq_len(65)))
     )
     tbl <- arrow::as_arrow_table(df, schema = sch)
-    expect_silent(SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 999)))$write(tbl)$close())
+    expect_silent(SOMADataFrameCreate(
+      uri,
+      sch,
+      domain = list(soma_joinid = c(0, 999))
+    )$write(tbl)$close())
 
     df2 <- data.frame(
       soma_joinid = bit64::as.integer64(65 + seq_len(65)),
@@ -1044,9 +1242,11 @@ test_that("factor levels cannot extend beyond index limit", {
     )
     tbl2 <- arrow::as_arrow_table(df2, schema = sch)
 
-    if (tp == "INT8") { # error: we cannot write 130 factor levels into an int8
+    if (tp == "INT8") {
+      # error: we cannot write 130 factor levels into an int8
       expect_error(SOMADataFrameOpen(uri, mode = "WRITE")$write(tbl2)$close())
-    } else { # success: we can write 130 factor levels into an *unsigned* int8
+    } else {
+      # success: we can write 130 factor levels into an *unsigned* int8
       expect_silent(SOMADataFrameOpen(uri, mode = "WRITE")$write(tbl2)$close())
     }
   }

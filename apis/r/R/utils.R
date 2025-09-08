@@ -1,4 +1,3 @@
-
 string_collapse <- function(x, sep = ", ") {
   return(glue::glue_collapse(x, sep = sep, width = getOption("width", Inf)))
 }
@@ -72,7 +71,10 @@ uns_hint <- function(type = c("1d", "2d")) {
 .err_to_warn <- function(err) {
   warning(warningCondition(
     message = conditionMessage(err),
-    class = setdiff(class(err), c("warning", "simpleError", "error", "condition")),
+    class = setdiff(
+      class(err),
+      c("warning", "simpleError", "error", "condition")
+    ),
     call = conditionCall(err)
   ))
 }
@@ -90,11 +92,13 @@ uns_hint <- function(type = c("1d", "2d")) {
     "$",
     collapse = "|"
   )
-  return(if (all(grepl(double, x))) {
-    as.numeric(x)
-  } else {
-    x
-  })
+  return(
+    if (all(grepl(double, x))) {
+      as.numeric(x)
+    } else {
+      x
+    }
+  )
 }
 
 #' Is an Object Integerish
@@ -132,20 +136,21 @@ uns_hint <- function(type = c("1d", "2d")) {
   } else {
     TRUE
   }
-  res <- res && if (!is.null(x = finite)) {
-    stopifnot(isTRUE(x = finite) || isFALSE(x = finite))
-    # In `rlang::is_integerish()`,
-    # `finite = TRUE`: all values are finite
-    # `finite = FALSE`: at least one value is infinite
-    # `bit64::is.infinite()` returns FALSE for NA
-    ifelse(
-      test = finite,
-      yes = all(is.finite(x = x)),
-      no = any(is.infinite(x = x) | is.na(x = x))
-    )
-  } else {
-    TRUE
-  }
+  res <- res &&
+    if (!is.null(x = finite)) {
+      stopifnot(isTRUE(x = finite) || isFALSE(x = finite))
+      # In `rlang::is_integerish()`,
+      # `finite = TRUE`: all values are finite
+      # `finite = FALSE`: at least one value is infinite
+      # `bit64::is.infinite()` returns FALSE for NA
+      ifelse(
+        test = finite,
+        yes = all(is.finite(x = x)),
+        no = any(is.infinite(x = x) | is.na(x = x))
+      )
+    } else {
+      TRUE
+    }
   return(res)
 }
 
@@ -177,7 +182,10 @@ uns_hint <- function(type = c("1d", "2d")) {
   if (isTRUE(x = cond)) {
     warning(warningCondition(
       message = conditionMessage(w),
-      class = setdiff(class(w), c("warning", "simpleError", "error", "condition")),
+      class = setdiff(
+        class(w),
+        c("warning", "simpleError", "error", "condition")
+      ),
       call = conditionCall(w)
     ))
   } else {
@@ -222,7 +230,8 @@ uns_hint <- function(type = c("1d", "2d")) {
     return(hint)
   }
   stopifnot(
-    "'type' must be a non-empty character" = is.character(type) && all(nzchar(type))
+    "'type' must be a non-empty character" = is.character(type) &&
+      all(nzchar(type))
   )
   def <- if (length(type) > 1L) {
     paste0('[', paste(dQuote(type, FALSE), collapse = ','), ']')
@@ -250,17 +259,21 @@ uns_hint <- function(type = c("1d", "2d")) {
           invert = TRUE
         )
       ),
-      FUN = function(x) ifelse(
-        test = grepl(pattern = '^data\\.frame', x = x),
-        yes = paste(strsplit(x, split = '\\.')[[1L]][1:2], collapse = '.'),
-        no = strsplit(x, split = '\\.')[[1L]][1L]
-      ),
+      FUN = function(x) {
+        ifelse(
+          test = grepl(pattern = '^data\\.frame', x = x),
+          yes = paste(strsplit(x, split = '\\.')[[1L]][1:2], collapse = '.'),
+          no = strsplit(x, split = '\\.')[[1L]][1L]
+        )
+      },
       USE.NAMES = FALSE
     )
     def <- switch(
       EXPR = def@package,
       methods = {
-        def <- if ('oldClass' %in% names(def@contains) || def@className %in% btypes) {
+        def <- if (
+          'oldClass' %in% names(def@contains) || def@className %in% btypes
+        ) {
           as.character(def@className)
         } else {
           sprintf('%s:%s', def@package, def@className)
@@ -306,7 +319,9 @@ uns_hint <- function(type = c("1d", "2d")) {
 #'
 .read_soma_joinids.SOMADataFrame <- function(x, ...) {
   x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
-  return(x$read(column_names = "soma_joinid")$concat()$GetColumnByName("soma_joinid")$as_vector())
+  return(x$read(column_names = "soma_joinid")$concat()$GetColumnByName(
+    "soma_joinid"
+  )$as_vector())
 }
 
 #' @param axis Which dimension to read (zero-based)
@@ -398,7 +413,7 @@ SOMA_ENCODING_VERSION <- "1.1.0"
   # * Even then there can be a second component returned like 'c(1)'
   #   -- hence the [[1]]
   # * Then remove the 'obj$' from 'obj$foo'
-  name <- as.character(sys.call(sys.parent(n=1)))[[1]]
+  name <- as.character(sys.call(sys.parent(n = 1)))[[1]]
   name <- sub('.*\\$', replacement = '', x = name)
   return(name)
 }

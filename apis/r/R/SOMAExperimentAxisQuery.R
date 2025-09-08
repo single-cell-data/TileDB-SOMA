@@ -1,4 +1,3 @@
-
 #' `SOMAExperiment` Axis Query
 #' @description Perform an axis-based query against a [`SOMAExperiment`].
 #'
@@ -35,13 +34,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_query = NULL
     ) {
       stopifnot(
-        "experiment must be a SOMAExperiment" =
-          inherits(experiment, "SOMAExperiment"),
+        "experiment must be a SOMAExperiment" = inherits(
+          experiment,
+          "SOMAExperiment"
+        ),
         "SOMAExperiment does not exist" = experiment$exists(),
-        "Must specify a single measurement to query" =
-          is_scalar_character(measurement_name),
-        "Measurement does not exist in the experiment" =
-          measurement_name %in% experiment$ms$names(),
+        "Must specify a single measurement to query" = is_scalar_character(
+          measurement_name
+        ),
+        "Measurement does not exist in the experiment" = measurement_name %in%
+          experiment$ms$names(),
         is.null(obs_query) || inherits(obs_query, "SOMAAxisQuery"),
         is.null(var_query) || inherits(var_query, "SOMAAxisQuery")
       )
@@ -97,8 +99,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
       x_layer <- self$ms$X$get(layer_name)
       stopifnot(
-        "X layer must be a SOMASparseNDArray" =
-          inherits(x_layer, "SOMASparseNDArray")
+        "X layer must be a SOMASparseNDArray" = inherits(
+          x_layer,
+          "SOMASparseNDArray"
+        )
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
@@ -132,21 +136,27 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       stopifnot(
         "Must specify an obsm layer name" = !missing(layer_name),
-        "Must specify a single obsm layer name" = is_scalar_character(layer_name),
+        "Must specify a single obsm layer name" = is_scalar_character(
+          layer_name
+        ),
         assert_subset(layer_name, layers, "layer")
       )
 
       obsm_layer <- self$ms$obsm$get(layer_name)
       stopifnot(
-        "obsm layer must be a SOMASparseNDArray" =
-          inherits(obsm_layer, "SOMASparseNDArray")
+        "obsm layer must be a SOMASparseNDArray" = inherits(
+          obsm_layer,
+          "SOMASparseNDArray"
+        )
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
-      return(obsm_layer$read(coords = list(
-        self$obs_joinids()$as_vector(),
-        seq.int(0L, as.integer(obsm_layer$shape()[2L]) - 1L)
-      )))
+      return(obsm_layer$read(
+        coords = list(
+          self$obs_joinids()$as_vector(),
+          seq.int(0L, as.integer(obsm_layer$shape()[2L]) - 1L)
+        )
+      ))
     },
 
     #' @description Retrieves a `varm` layer as a
@@ -167,21 +177,27 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       stopifnot(
         "Must specify an varm layer name" = !missing(layer_name),
-        "Must specify a single varm layer name" = is_scalar_character(layer_name),
+        "Must specify a single varm layer name" = is_scalar_character(
+          layer_name
+        ),
         assert_subset(layer_name, layers, "layer")
       )
 
       varm_layer <- self$ms$varm$get(layer_name)
       stopifnot(
-        "varm layer must be a SOMASparseNDArray" =
-          inherits(varm_layer, "SOMASparseNDArray")
+        "varm layer must be a SOMASparseNDArray" = inherits(
+          varm_layer,
+          "SOMASparseNDArray"
+        )
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
-      return(varm_layer$read(coords = list(
-        self$var_joinids()$as_vector(),
-        seq.int(0L, as.integer(varm_layer$shape()[2L]) - 1L)
-      )))
+      return(varm_layer$read(
+        coords = list(
+          self$var_joinids()$as_vector(),
+          seq.int(0L, as.integer(varm_layer$shape()[2L]) - 1L)
+        )
+      ))
     },
 
     #' @description Retrieves an `obsp` layer as a
@@ -202,14 +218,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       stopifnot(
         "Must specify an obsp layer name" = !missing(layer_name),
-        "Must specify a single obsp layer name" = is_scalar_character(layer_name),
+        "Must specify a single obsp layer name" = is_scalar_character(
+          layer_name
+        ),
         assert_subset(layer_name, layers, "layer")
       )
 
       obsp_layer <- self$ms$obsp$get(layer_name)
       stopifnot(
-        "obsp layer must be a SOMASparseNDArray" =
-          inherits(obsp_layer, "SOMASparseNDArray")
+        "obsp layer must be a SOMASparseNDArray" = inherits(
+          obsp_layer,
+          "SOMASparseNDArray"
+        )
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
@@ -235,14 +255,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       stopifnot(
         "Must specify an varp layer name" = !missing(layer_name),
-        "Must specify a single varp layer name" = is_scalar_character(layer_name),
+        "Must specify a single varp layer name" = is_scalar_character(
+          layer_name
+        ),
         assert_subset(layer_name, layers, "layer")
       )
 
       varp_layer <- self$ms$varp$get(layer_name)
       stopifnot(
-        "varp layer must be a SOMASparseNDArray" =
-          inherits(varp_layer, "SOMASparseNDArray")
+        "varp layer must be a SOMASparseNDArray" = inherits(
+          varp_layer,
+          "SOMASparseNDArray"
+        )
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
@@ -264,14 +288,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_column_names = NULL
     ) {
       stopifnot(
-        "'X_layers' must be a character vector" =
-          is.null(X_layers) || is.character(X_layers),
+        "'X_layers' must be a character vector" = is.null(X_layers) ||
+          is.character(X_layers),
         assert_subset(X_layers, self$ms$X$names(), "layer"),
-        "'obs_column_names' must be a character vector" =
-          is.null(obs_column_names) || is.character(obs_column_names),
+        "'obs_column_names' must be a character vector" = is.null(
+          obs_column_names
+        ) ||
+          is.character(obs_column_names),
         assert_subset(obs_column_names, self$obs_df$colnames(), "column"),
-        "'var_column_names' must be a character vector" =
-          is.null(var_column_names) || is.character(var_column_names),
+        "'var_column_names' must be a character vector" = is.null(
+          var_column_names
+        ) ||
+          is.character(var_column_names),
         assert_subset(var_column_names, self$var_df$colnames(), "column")
       )
 
@@ -283,8 +311,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         f = function(layer_name) {
           x_layer <- x_collection$get(layer_name)
           stopifnot(
-            "X layer must be a SOMASparseNDArray" =
-              inherits(x_layer, "SOMASparseNDArray")
+            "X layer must be a SOMASparseNDArray" = inherits(
+              x_layer,
+              "SOMASparseNDArray"
+            )
           )
           x_layer
         },
@@ -296,14 +326,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_ft <- self$var(var_column_names)$concat()
 
       x_matrices <- lapply(x_arrays, function(x_array) {
-        x_array$read(coords = list(
-          self$obs_joinids()$as_vector(),
-          self$var_joinids()$as_vector()
-        ))$tables()$concat()
+        x_array$read(
+          coords = list(
+            self$obs_joinids()$as_vector(),
+            self$var_joinids()$as_vector()
+          )
+        )$tables()$concat()
       })
 
       SOMAAxisQueryResult$new(
-        obs = obs_ft, var = var_ft, X_layers = x_matrices
+        obs = obs_ft,
+        var = var_ft,
+        X_layers = x_matrices
       )
     },
 
@@ -356,11 +390,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         ),
         "Must specify a single layer name" = is_scalar_character(layer_name),
         assert_subset(layer_name, self$ms[[collection]]$names(), "layer"),
-        "Must specify a single obs index" =
-          is.null(obs_index) || is_scalar_character(obs_index),
+        "Must specify a single obs index" = is.null(obs_index) ||
+          is_scalar_character(obs_index),
         assert_subset(obs_index, self$obs_df$colnames(), "column"),
-        "Must specify a single var index" =
-          is.null(var_index) || is_scalar_character(var_index),
+        "Must specify a single var index" = is.null(var_index) ||
+          is_scalar_character(var_index),
         assert_subset(var_index, self$var_df$colnames(), "column")
       )
 
@@ -370,7 +404,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         if (collection %in% c("varm", "varp")) {
           spdl::warn("The obs_index is ignored for {} collections", collection)
         } else {
-          obs_labels <- self$obs(column_names = obs_index)$concat()[[1]]$as_vector()
+          obs_labels <- self$obs(column_names = obs_index)$concat()[[
+            1
+          ]]$as_vector()
         }
         stopifnot(
           "All obs_index values must be unique" = anyDuplicated(obs_labels) == 0
@@ -381,7 +417,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         if (collection %in% c("obsm", "obsp")) {
           spdl::warn("The var_index is ignored for {} collections", collection)
         } else {
-          var_labels <- self$var(column_names = var_index)$concat()[[1]]$as_vector()
+          var_labels <- self$var(column_names = var_index)$concat()[[
+            1
+          ]]$as_vector()
         }
         stopifnot(
           "All var_index values must be unique" = anyDuplicated(var_labels) == 0
@@ -389,7 +427,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
 
       # Construct coordinates
-      coords <- switch(collection,
+      coords <- switch(
+        collection,
         X = list(
           soma_dim_0 = self$obs_joinids(),
           soma_dim_1 = self$var_joinids()
@@ -424,7 +463,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         for (i in seq_along(ldims)) {
           ldim <- ldims[i]
           if (is.null(coords[[ldim]])) {
-            coords[[ldim]] <- seq_len(as.numeric(layer$non_empty_domain(index1 = TRUE, max_only = TRUE)[i]))
+            coords[[ldim]] <- seq_len(as.numeric(layer$non_empty_domain(
+              index1 = TRUE,
+              max_only = TRUE
+            )[i]))
           }
         }
         mat <- matrix(
@@ -457,7 +499,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # the same shape as the original array, which is not we want. To create
       # a matrix containing only values in the query result we need to
       # reindex the coordinates.
-      mat_coords <- switch(collection,
+      mat_coords <- switch(
+        collection,
         X = list(
           i = self$indexer$by_obs(tbl$soma_dim_0),
           j = self$indexer$by_var(tbl$soma_dim_1)
@@ -481,7 +524,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
 
       # Construct the dimension names
-      dim_names <- switch(collection,
+      dim_names <- switch(
+        collection,
         X = list(obs_labels, var_labels),
         obsm = {
           soma_dim_1 <- range(tbl$soma_dim_1$as_vector())
@@ -564,14 +608,19 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       stopifnot(
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
-        "'obs_column_names' must be a character vector" = is.null(obs_column_names) ||
+        "'obs_column_names' must be a character vector" = is.null(
+          obs_column_names
+        ) ||
           is.character(obs_column_names) ||
           is_scalar_logical(obs_column_names),
         "'obsm_layers' must be a character vector" = is.null(obsm_layers) ||
           is.character(obsm_layers) ||
           is_scalar_logical(obsm_layers),
-        "'varm_layers' must be a named character vector" = is.null(varm_layers) ||
-          (is.character(varm_layers) && is_named(varm_layers, allow_empty = FALSE)) ||
+        "'varm_layers' must be a named character vector" = is.null(
+          varm_layers
+        ) ||
+          (is.character(varm_layers) &&
+            is_named(varm_layers, allow_empty = FALSE)) ||
           is_scalar_logical(varm_layers),
         "'obsp_layers' must be a character vector" = is.null(obsp_layers) ||
           is.character(obsp_layers) ||
@@ -613,10 +662,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (isTRUE(obs_column_names)) {
         obs_column_names <- NULL
       }
-      obs_column_names <- obs_column_names %||% setdiff(
-        x = self$obs_df$attrnames(),
-        y = obs_index
-      )
+      obs_column_names <- obs_column_names %||%
+        setdiff(
+          x = self$obs_df$attrnames(),
+          y = obs_index
+        )
       if (!(isFALSE(obs_column_names) || rlang::is_na(obs_column_names))) {
         obs <- private$.load_df(
           "obs",
@@ -655,7 +705,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           varm_layers <- FALSE
         }
         if (!isFALSE(varm_layers)) {
-          names(ms_load) <- ms_embed[.anndata_to_seurat_reduc(ms_load, "loadings")]
+          names(ms_load) <- ms_embed[.anndata_to_seurat_reduc(
+            ms_load,
+            "loadings"
+          )]
           varm_layers <- varm_layers %||% ms_load
           reduc_misisng <- setdiff(x = names(varm_layers), y = names(ms_load))
           if (length(reduc_misisng) == length(varm_layers)) {
@@ -728,7 +781,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         for (grph in obsp_layers) {
           mat <- withCallingHandlers(
             expr = tryCatch(
-              expr = self$to_seurat_graph(obsp_layer = grph, obs_index = obs_index),
+              expr = self$to_seurat_graph(
+                obsp_layer = grph,
+                obs_index = obs_index
+              ),
               error = err_to_warn
             ),
             noArrayWarning = function(w) {
@@ -800,7 +856,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           (is_scalar_character(obs_index) && !is.na(obs_index)),
         "'var_index' must be a single character value" = is.null(var_index) ||
           (is_scalar_character(var_index) && !is.na(var_index)),
-        "'var_column_names' must be a character vector" = is.null(var_column_names) ||
+        "'var_column_names' must be a character vector" = is.null(
+          var_column_names
+        ) ||
           is.character(var_column_names) ||
           is_scalar_logical(var_column_names),
         "'drop_levels' must be TRUE or FALSE" = isTRUE(drop_levels) ||
@@ -817,11 +875,15 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Check our X_layers
       if (version == 'v3') {
         stopifnot(
-          "'X_layers' must be a named character vector" = is.character(X_layers) &&
+          "'X_layers' must be a named character vector" = is.character(
+            X_layers
+          ) &&
             is_named(X_layers, allow_empty = FALSE)
         )
       } else {
-        stopifnot("'X_layers' must be a character vector" = is.character(X_layers))
+        stopifnot(
+          "'X_layers' must be a character vector" = is.character(X_layers)
+        )
       }
       features <- if (is.null(var_index)) {
         paste0("feature", self$var_joinids()$as_vector())
@@ -855,7 +917,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           private$.to_seurat_assay_v3(
             counts = tryCatch(expr = X_layers[["counts"]], error = null),
             data = tryCatch(expr = X_layers[["data"]], error = null),
-            scale_data = tryCatch(expr = X_layers[["scale.data"]], error = null),
+            scale_data = tryCatch(
+              expr = X_layers[["scale.data"]],
+              error = null
+            ),
             cells = cells,
             features = features
           )
@@ -863,7 +928,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         v5 = {
           cells_hint <- .assay_obs_hint(private$.measurement_name)
           if (cells_hint %in% private$.experiment$obs$colnames()) {
-            cells_idx <- private$.load_df('obs', column_names = cells_hint)[[cells_hint]]
+            cells_idx <- private$.load_df('obs', column_names = cells_hint)[[
+              cells_hint
+            ]]
             cells <- cells[cells_idx]
           }
           private$.to_seurat_assay_v5(
@@ -882,10 +949,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (isTRUE(var_column_names)) {
         var_column_names <- NULL
       }
-      var_column_names <- var_column_names %||% setdiff(
-        x = self$var_df$attrnames(),
-        y = var_index
-      )
+      var_column_names <- var_column_names %||%
+        setdiff(
+          x = self$var_df$attrnames(),
+          y = var_index
+        )
       if (!(isFALSE(var_column_names) || rlang::is_na(var_column_names))) {
         var <- private$.load_df(
           "var",
@@ -921,13 +989,17 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     ) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
-        "'obsm_layer' must be a single character value" = is_scalar_character(obsm_layer),
+        "'obsm_layer' must be a single character value" = is_scalar_character(
+          obsm_layer
+        ),
         "'varm_layer' must be a single character value" = is.null(varm_layer) ||
           is_scalar_character(varm_layer) ||
           is_scalar_logical(varm_layer),
-        "one of 'obsm_layer' or 'varm_layer' must be provided" =
-          (is_scalar_character(obsm_layer) || is_scalar_logical(obsm_layer)) ||
-            (is_scalar_character(varm_layer) || is_scalar_logical(varm_layer)),
+        "one of 'obsm_layer' or 'varm_layer' must be provided" = (is_scalar_character(
+          obsm_layer
+        ) ||
+          is_scalar_logical(obsm_layer)) ||
+          (is_scalar_character(varm_layer) || is_scalar_logical(varm_layer)),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
         "'var_index' must be a single character value" = is.null(var_index) ||
@@ -981,7 +1053,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           error = null
         )
       )
-      if (length(seurat) == 2L && !identical(seurat[["embeddings"]], y = seurat[["loadings"]])) {
+      if (
+        length(seurat) == 2L &&
+          !identical(seurat[["embeddings"]], y = seurat[["loadings"]])
+      ) {
         stop(
           paste(
             strwrap(paste0(
@@ -1089,7 +1164,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     to_seurat_graph = function(obsp_layer, obs_index = NULL) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
-        "'obsp_layer' must be a single character value" = is_scalar_character(obsp_layer),
+        "'obsp_layer' must be a single character value" = is_scalar_character(
+          obsp_layer
+        ),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index))
       )
@@ -1170,15 +1247,21 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     ) {
       check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
       stopifnot(
-        "'X_layers' must be a character vector" = is_character_or_null(X_layers),
+        "'X_layers' must be a character vector" = is_character_or_null(
+          X_layers
+        ),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
         "'var_index' must be a single character value" = is.null(var_index) ||
           (is_scalar_character(var_index) && !is.na(var_index)),
-        "'obs_column_names' must be a character vector" = is.null(obs_column_names) ||
+        "'obs_column_names' must be a character vector" = is.null(
+          obs_column_names
+        ) ||
           is.character(obs_column_names) ||
           is_scalar_logical(obs_column_names),
-        "'var_column_names' must be a character vector" = is.null(var_column_names) ||
+        "'var_column_names' must be a character vector" = is.null(
+          var_column_names
+        ) ||
           is.character(var_column_names) ||
           is_scalar_logical(var_column_names),
         "'obsm_layers' must be a character vector" = is.null(obsm_layers) ||
@@ -1260,60 +1343,77 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     }
   ),
   active = list(
-
     #' @field experiment The parent [`SOMAExperiment`] object.
     experiment = function(value) {
-      if (!missing(value)) read_only_error("experiment")
+      if (!missing(value)) {
+        read_only_error("experiment")
+      }
       private$.experiment
     },
 
     #' @field indexer The [`SOMAAxisIndexer`] object.
     indexer = function(value) {
-      if (!missing(value)) read_only_error("indexer")
+      if (!missing(value)) {
+        read_only_error("indexer")
+      }
       private$.indexer
     },
 
     #' @field obs_query The `obs` [`SOMAAxisQuery`] object.
     obs_query = function(value) {
-      if (!missing(value)) read_only_error("obs_query")
+      if (!missing(value)) {
+        read_only_error("obs_query")
+      }
       private$.obs_query
     },
 
     #' @field var_query The `var` [`SOMAAxisQuery`] object.
     var_query = function(value) {
-      if (!missing(value)) read_only_error("var_query")
+      if (!missing(value)) {
+        read_only_error("var_query")
+      }
       private$.var_query
     },
 
     #' @field n_obs The number of `obs` axis query results.
     n_obs = function(value) {
-      if (!missing(value)) read_only_error("n_obs")
+      if (!missing(value)) {
+        read_only_error("n_obs")
+      }
       length(self$obs_joinids())
     },
 
     #' @field n_vars The number of `var` axis query results.
     n_vars = function(value) {
-      if (!missing(value)) read_only_error("n_vars")
+      if (!missing(value)) {
+        read_only_error("n_vars")
+      }
       length(self$var_joinids())
     },
 
     #' @field obs_df The `obs` [`SOMADataFrame`] object.
     obs_df = function(value) {
-      if (!missing(value)) read_only_error("obs_df")
+      if (!missing(value)) {
+        read_only_error("obs_df")
+      }
       self$experiment$obs
     },
 
     #' @field var_df The `var` [`SOMADataFrame`] object for the specified
     #' `measurement_name`.
     var_df = function(value) {
-      if (!missing(value)) read_only_error("var_df")
+      if (!missing(value)) {
+        read_only_error("var_df")
+      }
       self$ms$var
     },
 
     #' @field ms The [`SOMAMeasurement`] object for the specified
     #' `measurement_name`.
     ms = function(value) {
-      if (!missing(value)) read_only_error("ms")
+      if (!missing(value)) {
+        read_only_error("ms")
+      }
       self$experiment$ms$get(private$.measurement_name)
     }
   ),
@@ -1328,9 +1428,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       stopifnot(
         "'table' must be an Arrow table" = inherits(table, "Table"),
         "'repr' must be a single character value" = is_scalar_character(repr),
-        "'transpose' must be a single logical value" = is_scalar_logical(transpose),
-        "'table' must have column names 'soma_dim_0', 'soma_dim_1', and 'soma_data'" =
-          all(c("soma_dim_0", "soma_dim_1", "soma_data") %in% table$ColumnNames())
+        "'transpose' must be a single logical value" = is_scalar_logical(
+          transpose
+        ),
+        "'table' must have column names 'soma_dim_0', 'soma_dim_1', and 'soma_data'" = all(
+          c("soma_dim_0", "soma_dim_1", "soma_data") %in% table$ColumnNames()
+        )
       )
       repr <- match.arg(arg = repr, choices = c("C", "R", "T", "D"))
       obs <- table$GetColumnByName("soma_dim_0")$as_vector()
@@ -1340,10 +1443,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         j = self$indexer$by_var(var)$as_vector() + 1L,
         x = table$GetColumnByName("soma_data")$as_vector(),
         dims = c(self$n_obs, self$n_vars),
-        repr = switch(EXPR = repr,
-          D = "T",
-          repr
-        )
+        repr = switch(EXPR = repr, D = "T", repr)
       )
       if (isTRUE(transpose)) {
         mat <- Matrix::t(mat)
@@ -1378,7 +1478,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       stopifnot(
         is.character(df_name),
         is.null(index) || is_scalar_character(index),
-        is.null(column_names) || is.character(column_names) || is_scalar_logical(column_names),
+        is.null(column_names) ||
+          is.character(column_names) ||
+          is_scalar_logical(column_names),
         isTRUE(drop_levels) || isFALSE(drop_levels)
       )
       df_name <- match.arg(arg = df_name)
@@ -1493,7 +1595,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     # Helper methods for loading SCE components
     .load_sce_reduced_dims = function(obsm_layers, obs_ids) {
       stopifnot(
-        is.null(obsm_layers) || is.character(obsm_layers) || is_scalar_logical(obsm_layers),
+        is.null(obsm_layers) ||
+          is.character(obsm_layers) ||
+          is_scalar_logical(obsm_layers),
         is.character(obs_ids)
       )
       if (isTRUE(obsm_layers)) {
@@ -1514,10 +1618,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (skip_reduced_dims) {
         return(list())
       }
-      obsm_layers <- obsm_layers %||% stats::setNames(
-        object = ms_obsm,
-        nm = .anndata_to_sce_reduced_dim(ms_obsm)
-      )
+      obsm_layers <- obsm_layers %||%
+        stats::setNames(
+          object = ms_obsm,
+          nm = .anndata_to_sce_reduced_dim(ms_obsm)
+        )
       obsm_layers <- pad_names(obsm_layers)
       assert_subset(x = obsm_layers, y = ms_obsm, type = "cell embedding")
       reduced_dims <- lapply(
@@ -1525,16 +1630,14 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         FUN = function(i) {
           layer <- obsm_layers[i]
           rd <- names(obsm_layers)[i]
-          mat <- private$.load_m_axis(layer = layer, type = "Reduced dimensions")
+          mat <- private$.load_m_axis(
+            layer = layer,
+            type = "Reduced dimensions"
+          )
           dimnames(mat) <- list(
             obs_ids,
             paste0(
-              switch(EXPR = rd,
-                PCA = "PC",
-                ICA = "IC",
-                TSNE = "tSNE",
-                rd
-              ),
+              switch(EXPR = rd, PCA = "PC", ICA = "IC", TSNE = "tSNE", rd),
               seq_len(ncol(mat))
             )
           )
@@ -1545,7 +1648,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     .load_sce_col_pairs = function(obsp_layers, obs_ids) {
       stopifnot(
-        is.null(obsp_layers) || is.character(obsp_layers) || is_scalar_logical(obsp_layers),
+        is.null(obsp_layers) ||
+          is.character(obsp_layers) ||
+          is_scalar_logical(obsp_layers),
         is.character(obs_ids)
       )
       if (isTRUE(obsp_layers)) {
@@ -1568,7 +1673,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       obsp_layers <- obsp_layers %||% ms_obsp
       obsp_layers <- pad_names(obsp_layers)
-      assert_subset(x = obsp_layers, y = ms_obsp, type = "nearest neighbor graph")
+      assert_subset(
+        x = obsp_layers,
+        y = ms_obsp,
+        type = "nearest neighbor graph"
+      )
       col_pairs <- lapply(
         X = obsp_layers,
         FUN = function(layer) {
@@ -1581,7 +1690,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     .load_sce_row_pairs = function(varp_layers, var_ids) {
       stopifnot(
-        is.null(varp_layers) || is.character(varp_layers) || is_scalar_logical(varp_layers),
+        is.null(varp_layers) ||
+          is.character(varp_layers) ||
+          is_scalar_logical(varp_layers),
         is.character(var_ids)
       )
       if (isTRUE(varp_layers)) {
@@ -1629,7 +1740,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           is_scalar_character(data),
         "'counts' must be a single character value" = is.null(counts) ||
           is_scalar_character(counts),
-        "one of 'counts' or 'data' must be provided" = is_scalar_character(counts) ||
+        "one of 'counts' or 'data' must be provided" = is_scalar_character(
+          counts
+        ) ||
           is_scalar_character(data),
         "'scale_data' must be a single character value" = is.null(scale_data) ||
           is_scalar_character(scale_data),
@@ -1724,7 +1837,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
       # Find the default layers
       default_layers <- self$ms$X$get_metadata(default_hint)
-      if (!is.null(default_layers) && grepl(pattern = '^\\[', x = default_layers)) {
+      if (
+        !is.null(default_layers) && grepl(pattern = '^\\[', x = default_layers)
+      ) {
         check_package('jsonlite')
         default_layers <- jsonlite::fromJSON(default_layers)
       }
@@ -1795,7 +1910,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             self$X(lyr)$tables()$concat(),
             error = function(...) {
               warning(warningCondition(
-                sprintf("Layer '%s' falls outside the query condition, skipping...", lyr),
+                sprintf(
+                  "Layer '%s' falls outside the query condition, skipping...",
+                  lyr
+                ),
                 class = "unqueryableLayerWarning"
               ))
               return(NULL)
@@ -1846,10 +1964,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           class = "unqueryableLayerError"
         ))
       }
-      SeuratObject::DefaultLayer(obj) <- default_layers %||% setdiff(
-        SeuratObject::Layers(obj),
-        layer_name
-      )[1L]
+      SeuratObject::DefaultLayer(obj) <- default_layers %||%
+        setdiff(
+          SeuratObject::Layers(obj),
+          layer_name
+        )[1L]
       SeuratObject::LayerData(obj, layer = layer_name) <- NULL
 
       return(obj)
@@ -1868,7 +1987,8 @@ JoinIDCache <- R6::R6Class(
     },
     is_cached = function(axis) {
       stopifnot(axis %in% c("obs", "var"))
-      !is.null(switch(axis,
+      !is.null(switch(
+        axis,
         obs = !is.null(private$cached_obs),
         var = !is.null(private$cached_var)
       ))

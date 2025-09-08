@@ -17,7 +17,10 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
     #'
     initialize = function(sr, array, coords = NULL) {
       stopifnot(
-        "'array' must be a SOMASparseNDArray" = inherits(array, "SOMASparseNDArray")
+        "'array' must be a SOMASparseNDArray" = inherits(
+          array,
+          "SOMASparseNDArray"
+        )
       )
       if (is.null(coords)) {
         private$.coords <- vector(mode = "list", length = array$ndim())
@@ -33,8 +36,15 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
       } else {
         stopifnot(
           "'coords' must be a list of integer64 values" = is.list(coords) &&
-            all(vapply_lgl(coords, inherits, what = c("integer64", "numeric", "CoordsStrider"))),
-          "'coords' must be named with the dimnames of 'array'" = is_named(coords, FALSE) &&
+            all(vapply_lgl(
+              coords,
+              inherits,
+              what = c("integer64", "numeric", "CoordsStrider")
+            )),
+          "'coords' must be named with the dimnames of 'array'" = is_named(
+            coords,
+            FALSE
+          ) &&
             all(names(coords) %in% array$dimnames())
         )
         if (all(vapply_lgl(coords, inherits, what = "CoordsStrider"))) {
@@ -43,7 +53,10 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
           private$.coords <- vector(mode = "list", length = length(coords))
           names(private$.coords) <- names(coords)
           for (i in names(coords)) {
-            private$.coords[[i]] <- CoordsStrider$new(coords[[i]], stride = .Machine$integer.max)
+            private$.coords[[i]] <- CoordsStrider$new(
+              coords[[i]],
+              stride = .Machine$integer.max
+            )
           }
         }
       }
@@ -126,7 +139,6 @@ SOMASparseNDArrayRead <- R6::R6Class(
   inherit = SOMASparseNDArrayReadBase,
   cloneable = FALSE,
   public = list(
-
     #' @description Read as a sparse matrix (lifecycle: maturing). Returns
     #' an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or
     #' \link{matrixZeroBasedView} of it.
@@ -219,14 +231,23 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
     ) {
       super$initialize(sr, array, coords)
       stopifnot(
-        "'axis' must be a single integer value" = rlang::is_integerish(axis, n = 1L, finite = TRUE),
+        "'axis' must be a single integer value" = rlang::is_integerish(
+          axis,
+          n = 1L,
+          finite = TRUE
+        ),
         "'size' must be a single integer value" = is.null(size) ||
           rlang::is_integerish(size, 1L, finite = TRUE) ||
-          (inherits(size, "integer64") && length(size) == 1L && is.finite(size)),
-        "'reindex_disable_on_axis' must be a vector of integers" = is.null(reindex_disable_on_axis) ||
+          (inherits(size, "integer64") &&
+            length(size) == 1L &&
+            is.finite(size)),
+        "'reindex_disable_on_axis' must be a vector of integers" = is.null(
+          reindex_disable_on_axis
+        ) ||
           is_scalar_logical(reindex_disable_on_axis) ||
           rlang::is_integerish(reindex_disable_on_axis, finite = TRUE) ||
-          (inherits(reindex_disable_on_axis, "integer64") && all(is.finite(reindex_disable_on_axis)))
+          (inherits(reindex_disable_on_axis, "integer64") &&
+            all(is.finite(reindex_disable_on_axis)))
       )
       if (axis < 0L || axis >= self$array$ndim()) {
         stop(

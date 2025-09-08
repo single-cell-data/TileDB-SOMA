@@ -13,7 +13,6 @@
 ReadIter <- R6::R6Class(
   classname = "ReadIter",
   public = list(
-
     #' @description Create (lifecycle: maturing).
     #'
     #' @param sr soma read pointer.
@@ -60,7 +59,6 @@ ReadIter <- R6::R6Class(
     }
   ),
   private = list(
-
     # Internal 'external pointer' object used for iterated reads
     #
     soma_reader_pointer = NULL,

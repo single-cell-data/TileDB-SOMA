@@ -27,22 +27,49 @@ test_that("uri schemes are retrieved", {
 })
 
 test_that("schemes are removed from uris", {
-  expect_equal(uri_scheme_remove("int_column/float_column"), "int_column/float_column")
-  expect_equal(uri_scheme_remove("/int_column/float_column"), "/int_column/float_column")
-  expect_equal(uri_scheme_remove("file://int_column/float_column"), "int_column/float_column")
-  expect_equal(uri_scheme_remove("file:///int_column/float_column"), "/int_column/float_column")
+  expect_equal(
+    uri_scheme_remove("int_column/float_column"),
+    "int_column/float_column"
+  )
+  expect_equal(
+    uri_scheme_remove("/int_column/float_column"),
+    "/int_column/float_column"
+  )
+  expect_equal(
+    uri_scheme_remove("file://int_column/float_column"),
+    "int_column/float_column"
+  )
+  expect_equal(
+    uri_scheme_remove("file:///int_column/float_column"),
+    "/int_column/float_column"
+  )
   expect_equal(uri_scheme_remove("s3://my/bucket"), "my/bucket")
   expect_equal(uri_scheme_remove("tiledb://my/array"), "my/array")
 })
 
 test_that("relative uris are calculated correctly", {
-  expect_equal(make_uri_relative("int_column/float_column", "int_column"), "float_column")
-  expect_equal(make_uri_relative("/int_column/float_column", "/int_column"), "float_column")
-  expect_equal(make_uri_relative("file://int_column/float_column", "file://int_column"), "float_column")
+  expect_equal(
+    make_uri_relative("int_column/float_column", "int_column"),
+    "float_column"
+  )
+  expect_equal(
+    make_uri_relative("/int_column/float_column", "/int_column"),
+    "float_column"
+  )
+  expect_equal(
+    make_uri_relative("file://int_column/float_column", "file://int_column"),
+    "float_column"
+  )
 
   # Heterogenous schemes
-  expect_equal(make_uri_relative("int_column/float_column", "file://int_column"), "float_column")
-  expect_equal(make_uri_relative("file://int_column/float_column", "int_column"), "float_column")
+  expect_equal(
+    make_uri_relative("int_column/float_column", "file://int_column"),
+    "float_column"
+  )
+  expect_equal(
+    make_uri_relative("file://int_column/float_column", "int_column"),
+    "float_column"
+  )
 
   # Expected errors
   expect_error(

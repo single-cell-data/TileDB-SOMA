@@ -65,7 +65,6 @@ test_that("SOMADenseNDArray creation", {
     as.numeric(mat[1:4, 1:3])
   )
 
-
   # Subset the array on the second dimension
   tbl <- ndarray$read_arrow_table(
     coords = list(soma_dim_1 = bit64::as.integer64(0:2)),
@@ -106,33 +105,47 @@ test_that("platform_config is respected", {
   cfg$set("tiledb", "create", "cell_order", "ROW_MAJOR")
   cfg$set("tiledb", "create", "offsets_filters", list("RLE"))
   cfg$set("tiledb", "create", "validity_filters", list("RLE", "NONE"))
-  cfg$set("tiledb", "create", "dims", list(
-    soma_dim_0 = list(
-      filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 8), "NONE")
-      # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
-      # At present we get:
-      #
-      #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
-      #   max value representable by domain type
-      #
-      # tile = 999
-    ),
-    soma_dim_1 = list(
-      filters = list("RLE")
-      # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
-      # At present we get:
-      #
-      #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
-      #   max value representable by domain type
-      #
-      # tile = 999
+  cfg$set(
+    "tiledb",
+    "create",
+    "dims",
+    list(
+      soma_dim_0 = list(
+        filters = list(
+          "RLE",
+          list(name = "ZSTD", COMPRESSION_LEVEL = 8),
+          "NONE"
+        )
+        # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
+        # At present we get:
+        #
+        #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
+        #   max value representable by domain type
+        #
+        # tile = 999
+      ),
+      soma_dim_1 = list(
+        filters = list("RLE")
+        # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
+        # At present we get:
+        #
+        #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
+        #   max value representable by domain type
+        #
+        # tile = 999
+      )
     )
-  ))
-  cfg$set("tiledb", "create", "attrs", list(
-    soma_data = list(
-      filters = list("BITSHUFFLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
+  )
+  cfg$set(
+    "tiledb",
+    "create",
+    "attrs",
+    list(
+      soma_data = list(
+        filters = list("BITSHUFFLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
+      )
     )
-  ))
+  )
 
   # Create the SOMADenseNDArray
   dnda <- SOMADenseNDArrayCreate(
@@ -181,7 +194,13 @@ test_that("platform_config is respected", {
     dims <- sprintf("soma_dim_%i", 0:1)
   )
   expect_equal(
-    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    vapply(
+      domain,
+      FUN = '[[',
+      FUN.VALUE = character(1L),
+      "name",
+      USE.NAMES = FALSE
+    ),
     dims
   )
   # TODO: As noted above, check this when we are able to.
@@ -214,7 +233,12 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMADenseNDArray
-  dnda <- SOMADenseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
+  dnda <- SOMADenseNDArrayCreate(
+    uri = uri,
+    type = arrow::int32(),
+    shape = c(100, 100),
+    platform_config = cfg
+  )
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
@@ -226,7 +250,13 @@ test_that("platform_config defaults", {
     dims <- sprintf("soma_dim_%i", 0:1)
   )
   expect_equal(
-    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    vapply(
+      domain,
+      FUN = '[[',
+      FUN.VALUE = character(1L),
+      "name",
+      USE.NAMES = FALSE
+    ),
     dims
   )
   dim0 <- domain$soma_dim_0
@@ -247,7 +277,11 @@ test_that("SOMADenseNDArray timestamped ops", {
   uri <- tempfile(pattern = "soma-dense-nd-array-timestamps")
 
   t10 <- Sys.time()
-  dnda <- SOMADenseNDArrayCreate(uri = uri, type = arrow::int16(), shape = c(2, 2))
+  dnda <- SOMADenseNDArrayCreate(
+    uri = uri,
+    type = arrow::int16(),
+    shape = c(2, 2)
+  )
   M1 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M1)
   dnda$close()
@@ -268,7 +302,10 @@ test_that("SOMADenseNDArray timestamped ops", {
   expect_equal(dnda$read_dense_matrix(), M2)
   dnda$close()
 
-  dnda <- SOMADenseNDArrayOpen(uri = uri, tiledb_timestamp = t10 + 0.5 * as.numeric(t20 - t10))
+  dnda <- SOMADenseNDArrayOpen(
+    uri = uri,
+    tiledb_timestamp = t10 + 0.5 * as.numeric(t20 - t10)
+  )
   expect_equal(dnda$read_dense_matrix(), M1) # read between t10 and t20 sees only first write
   dnda$close()
 })

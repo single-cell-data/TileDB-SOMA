@@ -42,8 +42,14 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var, n_obs))
-  expect_identical(rownames(obj), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(obj),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(obj),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
   expect_true(all(query$obs_df$attrnames() %in% names(obj[[]])))
   expect_identical(SeuratObject::Assays(obj), "RNA")
   expect_s4_class(rna <- obj[["RNA"]], "Assay")
@@ -68,10 +74,12 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(colnames(graph), colnames(obj))
 
   # Test named
-  expect_no_condition(obj <- query$to_seurat(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_no_condition(
+    obj <- query$to_seurat(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
@@ -80,11 +88,15 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   )
   expect_identical(
     colnames(obj),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(SeuratObject::Assays(obj), "RNA")
   expect_false(all(query$obs_df$attrnames() %in% names(obj[[]])))
-  expect_true(all(setdiff(query$obs_df$attrnames(), "string_column") %in% names(obj[[]])))
+  expect_true(all(
+    setdiff(query$obs_df$attrnames(), "string_column") %in% names(obj[[]])
+  ))
   expect_s4_class(rna <- obj[["RNA"]], "Assay")
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
@@ -172,10 +184,12 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
 
   # Test `obs_column_names` assertions
   expect_error(query$to_seurat(obs_column_names = 1L))
-  expect_error(query$to_seurat(obs_column_names = c(
-    NA_character_,
-    NA_character_
-  )))
+  expect_error(query$to_seurat(
+    obs_column_names = c(
+      NA_character_,
+      NA_character_
+    )
+  ))
   expect_error(query$to_seurat(obs_column_names = c(TRUE, FALSE)))
   expect_error(query$to_seurat(obs_column_names = "tomato"))
 
@@ -287,18 +301,26 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
-  expect_identical(rownames(obj), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(obj),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(obj),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
   expect_identical(
     lapply(list(names(obj)), sort),
     lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 
   # Test named
-  expect_no_condition(obj <- query$to_seurat(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_no_condition(
+    obj <- query$to_seurat(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
@@ -307,7 +329,9 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   )
   expect_identical(
     colnames(obj),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(
     lapply(list(names(obj)), sort),
@@ -365,18 +389,26 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
-  expect_identical(rownames(obj), paste0("feature", query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(obj),
+    paste0("feature", query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(obj),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
   expect_identical(
     lapply(list(names(obj)), sort),
     lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 
   # Test named
-  expect_no_condition(obj <- query$to_seurat(
-    obs_index = "string_column",
-    var_index = "quux"
-  ))
+  expect_no_condition(
+    obj <- query$to_seurat(
+      obs_index = "string_column",
+      var_index = "quux"
+    )
+  )
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(
@@ -385,7 +417,9 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   )
   expect_identical(
     colnames(obj),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(
     lapply(list(names(obj)), sort),

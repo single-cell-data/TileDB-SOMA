@@ -8,11 +8,13 @@ test_that("DataFrame Factory", {
   # Check creation of a DF
   asch <- create_arrow_schema(foo_first = FALSE)
 
-  expect_silent(d2 <- SOMADataFrameCreate(
-    uri,
-    schema = asch,
-    domain = list(soma_joinid = c(0, 99))
-  ))
+  expect_silent(
+    d2 <- SOMADataFrameCreate(
+      uri,
+      schema = asch,
+      domain = list(soma_joinid = c(0, 99))
+    )
+  )
 
   tbl <- arrow::arrow_table(
     soma_joinid = 1L:10L,
@@ -35,14 +37,18 @@ test_that("DataFrame Factory with specified index_column_names", {
 
   # Check creation of a DF
   asch <- create_arrow_schema()
-  expect_error(d2 <- SOMADataFrameCreate(uri, index_column_names = "int_column")) # misses schema
+  expect_error(
+    d2 <- SOMADataFrameCreate(uri, index_column_names = "int_column")
+  ) # misses schema
 
-  expect_silent(d2 <- SOMADataFrameCreate(
-    uri,
-    schema = asch,
-    index_column_names = "int_column",
-    domain = list(int_column = c(1, 10))
-  ))
+  expect_silent(
+    d2 <- SOMADataFrameCreate(
+      uri,
+      schema = asch,
+      index_column_names = "int_column",
+      domain = list(int_column = c(1, 10))
+    )
+  )
 
   tbl <- arrow::arrow_table(
     int_column = 1L:10L,
@@ -73,7 +79,9 @@ test_that("SparseNDArray Factory", {
   # check creation of a sparse array
   expect_error(s2 <- SOMASparseNDArrayCreate(uri, arrow::int32())) # misses shape
   expect_error(s2 <- SOMASparseNDArrayCreate(uri, shape = c(10, 10))) # misses type
-  expect_silent(s2 <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10)))
+  expect_silent(
+    s2 <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
+  )
   mat <- create_sparse_matrix_with_int_dims(10, 10)
   s2$write(mat)
 
@@ -102,7 +110,9 @@ test_that("DenseNDArray Factory", {
   # check creation of a sparse array
   expect_error(s2 <- SOMADenseNDArrayCreate(uri, arrow::int32())) # misses shape
   expect_error(s2 <- SOMADenseNDArrayCreate(uri, shape = c(10, 10))) # misses type
-  expect_silent(s2 <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10)))
+  expect_silent(
+    s2 <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
+  )
   mat <- create_dense_matrix_with_int_dims(10, 10)
   s2$write(mat)
 

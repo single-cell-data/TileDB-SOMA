@@ -7,7 +7,9 @@ test_that("membership-caching", {
   expect_no_condition(exp <- SOMAExperimentCreate(uri))
 
   # write exp$ms
-  expect_no_condition(exp$ms <- SOMACollectionCreate(file.path(uri, "ms"))$close())
+  expect_no_condition(
+    exp$ms <- SOMACollectionCreate(file.path(uri, "ms"))$close()
+  )
   expect_no_condition(exp$close())
 
   # exp is open for write
@@ -17,11 +19,17 @@ test_that("membership-caching", {
 
   # add exp$ms$get("one")
   ms <- exp$ms
-  expect_no_condition(ms$set(SOMAMeasurementCreate(file.path(uri, "ms", "one"))$close(), "one"))
+  expect_no_condition(ms$set(
+    SOMAMeasurementCreate(file.path(uri, "ms", "one"))$close(),
+    "one"
+  ))
 
   # add exp$ms$get("one")$obsm
   expect_true(exp$ms$length() == 1)
   expect_no_condition(one <- exp$ms$get("one"))
-  expect_no_condition(one$set(SOMACollectionCreate(file.path(uri, "ms", "one", "obsm"))$close(), "obsm"))
+  expect_no_condition(one$set(
+    SOMACollectionCreate(file.path(uri, "ms", "one", "obsm"))$close(),
+    "obsm"
+  ))
   expect_true(exp$ms$get("one")$length() == 1)
 })

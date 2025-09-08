@@ -25,13 +25,14 @@ test_that("Arrow Interface from SOMAArrayReader", {
   tb3 <- soma_array_to_arrow_table(soma_array_reader(
     uri = uri,
     colnames = c("obs_id", "percent.mt", "nCount_RNA", "seurat_clusters"),
-    dim_ranges = list(soma_joinid = rbind(
-      bit64::as.integer64(c(1000, 1004)),
-      bit64::as.integer64(c(2000, 2004))
-    )),
+    dim_ranges = list(
+      soma_joinid = rbind(
+        bit64::as.integer64(c(1000, 1004)),
+        bit64::as.integer64(c(2000, 2004))
+      )
+    ),
     dim_points = list(soma_joinid = bit64::as.integer64(seq(0, 100, by = 20)))
   ))
-
 
   expect_equal(tb3$num_rows, 16)
   expect_equal(tb3$num_columns, 4)
@@ -50,12 +51,21 @@ test_that("SOMAArrayReader result order", {
   ndarray$write(M)
   ndarray$close()
 
-  M1 <- soma_array_to_arrow_table(soma_array_reader(uri = uri, result_order = "auto"))
+  M1 <- soma_array_to_arrow_table(soma_array_reader(
+    uri = uri,
+    result_order = "auto"
+  ))
   expect_equal(M, matrix(M1$soma_data, 4, 4, byrow = TRUE))
 
-  M2 <- soma_array_to_arrow_table(soma_array_reader(uri = uri, result_order = "row-major"))
+  M2 <- soma_array_to_arrow_table(soma_array_reader(
+    uri = uri,
+    result_order = "row-major"
+  ))
   expect_equal(M, matrix(M2$soma_data, 4, 4, byrow = TRUE))
 
-  M3 <- soma_array_to_arrow_table(soma_array_reader(uri = uri, result_order = "column-major"))
+  M3 <- soma_array_to_arrow_table(soma_array_reader(
+    uri = uri,
+    result_order = "column-major"
+  ))
   expect_equal(M, matrix(M3$soma_data, 4, 4, byrow = FALSE))
 })

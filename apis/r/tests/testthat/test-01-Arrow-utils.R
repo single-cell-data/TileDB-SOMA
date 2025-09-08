@@ -1,4 +1,3 @@
-
 test_that("Validating arrow data type compatibility", {
   expect_false(check_arrow_data_types(arrow::int32(), arrow::float32()))
   expect_true(check_arrow_data_types(arrow::int32(), arrow::int32()))
