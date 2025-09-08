@@ -111,7 +111,7 @@ class ArrowAdapter {
      * @return ArrowSchema
      */
     static ArrowSchema* arrow_schema_from_tiledb_attribute(
-        const Attribute& attribute, const Context& ctx, const Array& tiledb_array);
+        const Attribute& attribute, const Context& ctx, const Array& tiledb_array, bool downcast_dict_of_large_var);
 
     /**
      * @brief Create a TileDB ArraySchema from ArrowSchema and additional JSON

@@ -95,7 +95,7 @@ std::string_view SOMASparseNDArray::soma_data_type() {
 //===================================================================
 
 managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
-    return this->arrow_schema();
+    return this->arrow_schema(true);
 }
 
 }  // namespace tiledbsoma

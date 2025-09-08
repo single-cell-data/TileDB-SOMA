@@ -299,7 +299,7 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(const Dimension& d
 }
 
 ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
-    const Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
+    const Attribute& attribute, const Context& ctx, const Array& tiledb_array, bool downcast_dict_of_large_var) {
     // Accessing dimension attributes may throw.
     // To avoid leaking memory we need to access the before allocating any
     // memory so we are able to free any allocated memory of the caller without
@@ -342,7 +342,15 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
 
     if (enmr_name.has_value()) {
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type()).data());
+        if (downcast_dict_of_large_var) {
+            if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_CHAR) {
+                dict->format = strdup("z");
+            } else {
+                dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type(), false).data());
+            }
+        } else {
+            dict->format = strdup(ArrowAdapter::to_arrow_format(enmr->type()).data());
+        }
         dict->name = strdup(enmr->name().c_str());
         dict->metadata = nullptr;
         if (enmr->ordered()) {
@@ -764,7 +772,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        auto dcoltype = to_arrow_format(enmr->type()).data();
+        auto dcoltype = to_arrow_format(enmr->type(), !downcast_dict_of_large_var).data();
         auto dnatype = to_nanoarrow_type(dcoltype);
 
         if (dnatype == NANOARROW_TYPE_TIMESTAMP) {

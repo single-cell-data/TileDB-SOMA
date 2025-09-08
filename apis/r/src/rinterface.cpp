@@ -368,7 +368,7 @@ Rcpp::CharacterVector c_attrnames(const std::string& uri, Rcpp::XPtr<somactx_wra
 // [[Rcpp::export]]
 SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
+    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema(true);
     sr->close();
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
