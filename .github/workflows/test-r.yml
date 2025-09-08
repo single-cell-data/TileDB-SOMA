@@ -67,6 +67,9 @@ jobs:
 
       - uses: ./.github/actions/setup-r
         with:
+            os: ${{ inputs.os }}}
+            r: ${{ inputs.r }}
+            http-user-agent: ${{ inputs.http-user-agent }}
             extra-packages: any::covr, any::xml2
 
       - name: Test coverage
