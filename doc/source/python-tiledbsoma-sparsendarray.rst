@@ -20,6 +20,7 @@
       ~SparseNDArray.close
       ~SparseNDArray.read
       ~SparseNDArray.write
+      ~SparseNDArray.delete_cells
       ~SparseNDArray.verify_open_for_writing
 
       ~SparseNDArray.non_empty_domain

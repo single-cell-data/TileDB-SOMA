@@ -38,6 +38,8 @@
       ~Experiment.add_new_sparse_ndarray
 
       ~Experiment.axis_query
+      ~Experiment.obs_axis_delete
+      ~Experiment.var_axis_delete
 
    .. rubric:: Attributes
 
