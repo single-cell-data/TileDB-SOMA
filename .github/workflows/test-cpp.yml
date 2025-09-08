@@ -11,14 +11,14 @@ on:
         type: string
       run_asan:
         required: true
-        type: bool
+        type: boolean
       report_codecov:
         required: true
         type: boolean
 
 jobs:
 
-  ctest:
+  catch2:
     runs-on: ${{ inputs.os }}
     steps:
       - name: Checkout TileDB-SOMA
@@ -30,13 +30,13 @@ jobs:
       - name: Run C++ tests
         run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
 
-     - name: Upload coverage to Codecov
-       if: $${ inputs.report_codecov }}
-       uses: codecov/codecov-action@v5
-       with:
-         flags: libtiledbsoma
-         gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
-         token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage to Codecov
+        if: ${{ inputs.report_codecov }}
+        uses: codecov/codecov-action@v5
+        with:
+          flags: libtiledbsoma
+          gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
+          token: ${{ secrets.CODECOV_TOKEN }}
 
 
   asan:
@@ -68,4 +68,4 @@ jobs:
           ls external/lib/
 
       - name: Run C++ unittests
-        run:  ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
+        run: ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure

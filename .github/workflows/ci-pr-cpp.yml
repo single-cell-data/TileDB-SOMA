@@ -1,4 +1,4 @@
-name: libTileDB-SOMA CodeCov
+name: TileDB-SOMA C++ Tests (Pull-request)
 
 on:
   pull_request:

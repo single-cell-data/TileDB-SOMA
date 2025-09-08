@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  python-tests:
     strategy:
       fail-fast: true
 
