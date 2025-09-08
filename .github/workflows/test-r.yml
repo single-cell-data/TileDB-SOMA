@@ -17,6 +17,9 @@ on:
       http-user-agent:
         required: false
         type: string
+      report_codecov:
+        required: true
+        type: boolean
 
 jobs:
   R-CMD-check:
@@ -53,3 +56,41 @@ jobs:
           build_args: '"--no-manual"'
           error-on: '"error"'
           working-directory: 'apis/r/'
+
+
+  test-coverage:
+    if: ${{ inputs.report_codecov }}
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-r
+        with:
+            extra-packages: any::covr, any::xml2
+
+      - name: Test coverage
+        run: |
+          cov <- covr::package_coverage(
+            path = "apis/r",
+            quiet = FALSE,
+            clean = FALSE,
+            ine_exclusions = list(
+              nanoarrow_c = "apis/r/src/nanoarrow.c",
+              nanoarrow_h = "apis/r/src/nanoarrow.h"
+            ),
+            install_path = file.path(
+              normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"),
+              "package"
+            )
+          )
+          print(cov)
+          covr::to_cobertura(cov)
+        shell: Rscript {0}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          flag: r
+          files: ./cobertura.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
