@@ -18,11 +18,12 @@
       ~PointCloudDataFrame.open
       ~PointCloudDataFrame.reopen
       ~PointCloudDataFrame.close
-      ~PointCloudDataFrame.verify_open_for_writing
 
       ~PointCloudDataFrame.keys
       ~PointCloudDataFrame.read
       ~PointCloudDataFrame.write
+      ~PointCloudDataFrame.delete_cells
+      ~PointCloudDataFrame.verify_open_for_writing
 
       ~PointCloudDataFrame.config_options_from_schema
       ~PointCloudDataFrame.non_empty_domain

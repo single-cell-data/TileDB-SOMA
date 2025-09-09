@@ -20,6 +20,7 @@
       ~DataFrame.close
       ~DataFrame.read
       ~DataFrame.write
+      ~DataFrame.delete_cells
       ~DataFrame.verify_open_for_writing
 
       ~DataFrame.keys
