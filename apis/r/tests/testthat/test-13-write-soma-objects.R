@@ -47,10 +47,7 @@ test_that("write_soma.data.frame enumerations", {
 
   expect_s3_class(tbl <- sdf$read()$concat(), "Table")
   expect_equal(ncol(tbl), schema$num_fields)
-  expect_identical(
-    sort(names(tbl)),
-    sort(schema$names)
-  )
+  expect_identical(sort(names(tbl)), sort(schema$names))
 
   expect_s3_class(df <- as.data.frame(tbl), "data.frame")
   for (i in names(co2)) {
@@ -92,10 +89,7 @@ test_that("write_soma.data.frame no enumerations", {
 
   expect_s3_class(tbl <- sdf$read()$concat(), "Table")
   expect_equal(ncol(tbl), schema$num_fields)
-  expect_identical(
-    sort(names(tbl)),
-    sort(schema$names)
-  )
+  expect_identical(sort(names(tbl)), sort(schema$names))
 
   expect_s3_class(df <- as.data.frame(tbl), "data.frame")
   for (i in names(co2)) {
@@ -118,12 +112,7 @@ test_that("write_soma.data.frame registration", {
   co2 <- get_data("CO2", package = "datasets")
 
   expect_no_condition(
-    sdf <- write_soma(
-      co2,
-      uri = "co2",
-      soma_parent = collection,
-      key = "co2"
-    )
+    sdf <- write_soma(co2, uri = "co2", soma_parent = collection, key = "co2")
   )
   expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
@@ -282,12 +271,7 @@ test_that("write_soma sparse matrix mechanics", {
   expect_equal(smat$shape(), dim(knex))
   # Test transposition
   expect_no_condition(
-    tmat <- write_soma(
-      knex,
-      uri = "knext",
-      soma = collection,
-      transpose = TRUE
-    )
+    tmat <- write_soma(knex, uri = "knext", soma = collection, transpose = TRUE)
   )
   expect_s3_class(tmat, "SOMASparseNDArray")
   expect_true(tmat$exists())

@@ -27,10 +27,7 @@ get_tiledb_version <- function(compact = FALSE) {
   stopifnot(
     "'compact' must be TRUE or FALSE" = isTRUE(compact) || isFALSE(compact)
   )
-  version <- `names<-`(
-    tiledb_embedded_version(),
-    c("major", "minor", "patch")
-  )
+  version <- `names<-`(tiledb_embedded_version(), c("major", "minor", "patch"))
   if (compact) {
     return(paste(version, collapse = "."))
   }

@@ -198,10 +198,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   # Test `obs_column_names` assertions
   expect_error(query$to_single_cell_experiment(obs_column_names = 1L))
   expect_error(query$to_single_cell_experiment(
-    obs_column_names = c(
-      NA_character_,
-      NA_character_
-    )
+    obs_column_names = c(NA_character_, NA_character_)
   ))
   expect_error(query$to_single_cell_experiment(
     obs_column_names = c(TRUE, FALSE)
@@ -210,10 +207,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   # Test `var_column_names` assertions
   expect_error(query$to_single_cell_experiment(var_column_names = 1L))
   expect_error(query$to_single_cell_experiment(
-    var_column_names = c(
-      NA_character_,
-      NA_character_
-    )
+    var_column_names = c(NA_character_, NA_character_)
   ))
   expect_error(query$to_single_cell_experiment(
     var_column_names = c(TRUE, FALSE)

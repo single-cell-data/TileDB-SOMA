@@ -73,7 +73,5 @@ SOMAContextBase <- R6::R6Class(
 )
 
 .SOMA_CONTEXTS <- function() {
-  return(c(
-    member_uris_are_relative = "logical"
-  ))
+  return(c(member_uris_are_relative = "logical"))
 }

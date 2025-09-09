@@ -300,41 +300,33 @@ test_that("soma_joinid domain lower bound must be zero", {
     arrow::field("myfloat", arrow::float32(), nullable = FALSE)
   )
 
-  expect_error(
-    SOMADataFrameCreate(
-      uri,
-      asch,
-      index_column_names = index_column_names,
-      domain = list(soma_joinid = c(3, 2))
-    )
-  )
+  expect_error(SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = index_column_names,
+    domain = list(soma_joinid = c(3, 2))
+  ))
 
-  expect_error(
-    SOMADataFrameCreate(
-      uri,
-      asch,
-      index_column_names = index_column_names,
-      domain = list(soma_joinid = c(0, -1))
-    )
-  )
+  expect_error(SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = index_column_names,
+    domain = list(soma_joinid = c(0, -1))
+  ))
 
-  expect_error(
-    SOMADataFrameCreate(
-      uri,
-      asch,
-      index_column_names = index_column_names,
-      domain = list(soma_joinid = c(-1, 0))
-    )
-  )
+  expect_error(SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = index_column_names,
+    domain = list(soma_joinid = c(-1, 0))
+  ))
 
-  expect_no_condition(
-    SOMADataFrameCreate(
-      uri,
-      asch,
-      index_column_names = index_column_names,
-      domain = list(soma_joinid = c(2, 99))
-    )
-  )
+  expect_no_condition(SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = index_column_names,
+    domain = list(soma_joinid = c(2, 99))
+  ))
 
   sdf <- SOMADataFrameOpen(uri)
   expect_true(sdf$exists())
@@ -695,9 +687,7 @@ test_that("platform_config is respected", {
       i32 = list(
         filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
       ),
-      f64 = list(
-        filters = list()
-      )
+      f64 = list(filters = list())
     )
   )
 
@@ -941,10 +931,7 @@ test_that("SOMADataFrame can be updated", {
 
   # Verify enum was added on disk
   sdf <- SOMADataFrameOpen(uri, "READ")
-  expect_s3_class(
-    tbl1 <- sdf$read()$concat(),
-    "Table"
-  )
+  expect_s3_class(tbl1 <- sdf$read()$concat(), "Table")
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
   expect_s3_class(
     tbl1$GetColumnByName("frobo")$as_vector(),
@@ -969,10 +956,7 @@ test_that("SOMADataFrame can be updated", {
 
   # Verify unordered enum was added on disk
   sdf <- SOMADataFrameOpen(uri, "READ")
-  expect_s3_class(
-    tbl1 <- sdf$read()$concat(),
-    "Table"
-  )
+  expect_s3_class(tbl1 <- sdf$read()$concat(), "Table")
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
   expect_s3_class(
     tbl1$GetColumnByName("rlvl")$as_vector(),
@@ -1007,10 +991,7 @@ test_that("SOMADataFrame can be updated", {
 
   # Verify ordered was added on disk
   sdf <- SOMADataFrameOpen(uri, "READ")
-  expect_s3_class(
-    tbl1 <- sdf$read()$concat(),
-    "Table"
-  )
+  expect_s3_class(tbl1 <- sdf$read()$concat(), "Table")
   sdf$close()
 
   # Read ordered enums
@@ -1024,18 +1005,12 @@ test_that("SOMADataFrame can be updated", {
   # Error if attempting to drop an array dimension
   tbl0$int_column <- NULL # drop the indexed dimension
   sdf <- SOMADataFrameOpen(uri, "WRITE")
-  expect_error(
-    sdf$update(tbl0),
-    "The following indexed field does not exist"
-  )
+  expect_error(sdf$update(tbl0), "The following indexed field does not exist")
   tbl0 <- tbl1
 
   # Error on incompatible schema updates
   tbl0$string_column <- tbl0$string_column$cast(target_type = arrow::int32()) # string to int
-  expect_error(
-    sdf$update(tbl0),
-    "Schemas are incompatible"
-  )
+  expect_error(sdf$update(tbl0), "Schemas are incompatible")
   tbl0 <- tbl1
 
   # Error if the number of rows changes
@@ -1067,12 +1042,10 @@ test_that("SOMADataFrame can be updated from a data frame", {
   df0$float_column <- NULL
 
   # Update to drop 'float_column' from the array and retrieve string_column values from row names
-  expect_silent(
-    SOMADataFrameOpen(uri, "WRITE")$update(
-      df0,
-      row_index_name = "string_column"
-    )
-  )
+  expect_silent(SOMADataFrameOpen(uri, "WRITE")$update(
+    df0,
+    row_index_name = "string_column"
+  ))
 
   df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
   expect_setequal(

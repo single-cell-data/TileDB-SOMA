@@ -27,14 +27,10 @@ desc <- as.list(
 desc <- Filter(f = Negate(f = is.na), x = desc)
 
 if (!is.null(desc$Additional_repositories)) {
-  desc$Additional_repositories <- trimws(
-    x = unlist(
-      x = strsplit(
-        x = desc$Additional_repositories,
-        split = ','
-      )
-    )
-  )
+  desc$Additional_repositories <- trimws(unlist(strsplit(
+    x = desc$Additional_repositories,
+    split = ","
+  )))
 }
 
 repos <- c(desc$Additional_repositories, getOption("repos"))

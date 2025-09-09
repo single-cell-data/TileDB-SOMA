@@ -52,10 +52,7 @@ test_that("ScalarMap mechanics", {
   expect_no_condition(map$remove("b"))
   expect_equal(map$keys(), c("a", "c", "x", "y", "z"))
   expect_no_condition(map$remove("x")$remove("z"))
-  expect_mapequal(
-    map$items(),
-    list(a = "a", c = 3L, y = FALSE)
-  )
+  expect_mapequal(map$items(), list(a = "a", c = 3L, y = FALSE))
 })
 
 test_that("Scalar Map types", {

@@ -6,10 +6,7 @@ test_that("SOMADataFrame", {
     arrow::field("int", arrow::int32()),
     arrow::field(
       "str",
-      arrow::dictionary(
-        index_type = arrow::int8(),
-        value_type = arrow::utf8()
-      )
+      arrow::dictionary(index_type = arrow::int8(), value_type = arrow::utf8())
     )
   )
 

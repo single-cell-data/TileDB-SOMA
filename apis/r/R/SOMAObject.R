@@ -230,9 +230,7 @@ SOMAObject <- R6::R6Class(
     #' @return Invisibly returns \code{self}
     #'
     set_metadata = function(metadata) {
-      stopifnot(
-        "Metadata must be a named list" = is_named_list(metadata)
-      )
+      stopifnot("Metadata must be a named list" = is_named_list(metadata))
 
       private$.check_open_for_write()
       private$.update_metadata_cache()
@@ -393,12 +391,7 @@ SOMAObject <- R6::R6Class(
     # @description Throw an error saying a field is read-only
     #
     .read_only_error = \(field) {
-      stop(
-        "Field ",
-        sQuote(field),
-        " is read-only",
-        call. = FALSE
-      )
+      stop("Field ", sQuote(field), " is read-only", call. = FALSE)
     },
 
     # @description Check that the object is open for reading

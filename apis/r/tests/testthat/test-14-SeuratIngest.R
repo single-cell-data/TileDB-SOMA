@@ -171,10 +171,7 @@ test_that("Write v5 in-memory Assay mechanics", {
 
   expect_identical(ms$uri, file.path(collection$uri, "rna"))
   assay_hint <- .assay_version_hint("v5")
-  expect_equivalent(
-    ms$get_metadata(names(assay_hint)),
-    assay_hint[[1L]]
-  )
+  expect_equivalent(ms$get_metadata(names(assay_hint)), assay_hint[[1L]])
   expect_identical(ms$names(), c("X", "var"))
   expect_s3_class(ms$var, "SOMADataFrame")
   expect_identical(setdiff(ms$var$attrnames(), "var_id"), names(rna[[]]))

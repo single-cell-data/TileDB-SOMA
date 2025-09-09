@@ -189,11 +189,7 @@ SOMASparseNDArrayCreate <- function(
   if (ingest_mode %in% c("resume")) {
     snda$open(mode = "WRITE")
   } else {
-    snda$create(
-      type,
-      shape,
-      platform_config = platform_config
-    )
+    snda$create(type, shape, platform_config = platform_config)
   }
   return(snda)
 }
@@ -276,11 +272,7 @@ SOMADenseNDArrayCreate <- function(
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp
   )
-  dnda$create(
-    type,
-    shape,
-    platform_config = platform_config
-  )
+  dnda$create(type, shape, platform_config = platform_config)
   return(dnda)
 }
 

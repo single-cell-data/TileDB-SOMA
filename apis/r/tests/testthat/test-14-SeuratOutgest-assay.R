@@ -52,10 +52,7 @@ test_that("Load assay from ExperimentQuery mechanics", {
 
   # Test adding `scale.data`
   expect_no_condition(
-    sd <- query$to_seurat_assay(c(
-      data = "logcounts",
-      scale.data = "counts"
-    ))
+    sd <- query$to_seurat_assay(c(data = "logcounts", scale.data = "counts"))
   )
   expect_s4_class(scaled <- SeuratObject::GetAssayData(sd, "scale.data"), NA)
   expect_true(is.matrix(scaled))
@@ -124,10 +121,7 @@ test_that("Load assay from ExperimentQuery mechanics", {
   # Test `var_column_names` assertions
   expect_error(query$to_seurat_assay(var_column_names = 1L))
   expect_error(query$to_seurat_assay(
-    var_column_names = c(
-      NA_character_,
-      NA_character_
-    )
+    var_column_names = c(NA_character_, NA_character_)
   ))
   expect_error(query$to_seurat_assay(var_column_names = c(TRUE, FALSE)))
   expect_error(query$to_seurat_assay(var_column_names = "tomato"))
@@ -488,19 +482,10 @@ test_that("Load v5 ragged assay from sliced ExperimentQuery", {
     class = "unqueryableLayerWarning"
   )
   expect_s4_class(assay, "Assay5")
-  expect_setequal(
-    setdiff(layers, "matC"),
-    SeuratObject::Layers(assay)
-  )
+  expect_setequal(setdiff(layers, "matC"), SeuratObject::Layers(assay))
   expect_equal(dim(assay), sapply(list(var_slice, obs_slice), FUN = length))
-  expect_identical(
-    rownames(assay),
-    paste0("feature", as.integer(var_slice))
-  )
-  expect_identical(
-    colnames(assay),
-    paste0("cell", as.integer(obs_slice))
-  )
+  expect_identical(rownames(assay), paste0("feature", as.integer(var_slice)))
+  expect_identical(colnames(assay), paste0("cell", as.integer(obs_slice)))
 })
 
 test_that("Load assay from indexed ExperimentQuery", {

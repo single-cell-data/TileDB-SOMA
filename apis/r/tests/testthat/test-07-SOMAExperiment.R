@@ -93,10 +93,7 @@ test_that("Update obs and var", {
   exp <- SOMAExperimentOpen(uri, "WRITE")
   exp$update_obs(tbl_obs0)
 
-  expect_equal(
-    SOMAExperimentOpen(uri)$obs$read()$concat(),
-    tbl_obs0
-  )
+  expect_equal(SOMAExperimentOpen(uri)$obs$read()$concat(), tbl_obs0)
 
   # var: drop an existing column and add a new one
   tbl_var0$qux <- tbl_var0$quux

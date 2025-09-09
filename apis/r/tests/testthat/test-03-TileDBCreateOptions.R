@@ -231,12 +231,7 @@ test_that("TileDBCreateOptions offsets_filters", {
   )
 
   cfg <- PlatformConfig$new()
-  cfg$set(
-    "tiledb",
-    "create",
-    "offsets_filters",
-    list("RLE")
-  )
+  cfg$set("tiledb", "create", "offsets_filters", list("RLE"))
   tdco <- TileDBCreateOptions$new(cfg)
   expect_equal(length(tdco$offsets_filters()), 1)
 
@@ -245,10 +240,7 @@ test_that("TileDBCreateOptions offsets_filters", {
     "tiledb",
     "create",
     "offsets_filters",
-    list(
-      "RLE",
-      list(name = "ZSTD", COMPRESSION_LEVEL = 9)
-    )
+    list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
   )
   tdco <- TileDBCreateOptions$new(cfg)
   expect_equal(length(tdco$offsets_filters()), 2)
@@ -263,12 +255,7 @@ test_that("TileDBCreateOptions validity_filters", {
   )
 
   cfg <- PlatformConfig$new()
-  cfg$set(
-    "tiledb",
-    "create",
-    "validity_filters",
-    list("RLE")
-  )
+  cfg$set("tiledb", "create", "validity_filters", list("RLE"))
   tdco <- TileDBCreateOptions$new(cfg)
   expect_equal(length(tdco$validity_filters()), 1)
 
@@ -277,10 +264,7 @@ test_that("TileDBCreateOptions validity_filters", {
     "tiledb",
     "create",
     "validity_filters",
-    list(
-      "RLE",
-      list(name = "ZSTD", COMPRESSION_LEVEL = 9)
-    )
+    list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
   )
   tdco <- TileDBCreateOptions$new(cfg)
   expect_equal(length(tdco$validity_filters()), 2)

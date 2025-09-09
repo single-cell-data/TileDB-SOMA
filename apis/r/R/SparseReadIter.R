@@ -56,10 +56,7 @@ SparseReadIter <- R6::R6Class(
     #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
     #'
     concat = function() {
-      soma_array_to_sparse_matrix_concat(
-        self,
-        private$zero_based
-      )
+      return(soma_array_to_sparse_matrix_concat(self, private$zero_based))
     }
   ),
   private = list(

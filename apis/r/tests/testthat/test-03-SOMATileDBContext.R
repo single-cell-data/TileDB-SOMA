@@ -74,16 +74,10 @@ test_that("SOMATileDBContext SOMA + TileDB mechanics", {
   ctx <- SOMATileDBContext$new()
   tiledb_names <- ctx$.__enclos_env__$private$.tiledb_ctx_names()
   expect_error(
-    ctx <- SOMATileDBContext$new(c(
-      a = "1",
-      member_uris_are_relative = TRUE
-    ))
+    ctx <- SOMATileDBContext$new(c(a = "1", member_uris_are_relative = TRUE))
   )
   expect_no_condition(
-    ctx <- SOMATileDBContext$new(list(
-      a = "1",
-      member_uris_are_relative = TRUE
-    ))
+    ctx <- SOMATileDBContext$new(list(a = "1", member_uris_are_relative = TRUE))
   )
   expect_length(ctx, length(tiledb_names) + 2L)
   expect_equal(ctx$.__enclos_env__$private$.tiledb_ctx_names()[1L], "a")

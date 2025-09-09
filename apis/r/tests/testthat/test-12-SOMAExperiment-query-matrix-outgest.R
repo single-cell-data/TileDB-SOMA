@@ -78,12 +78,8 @@ test_that("matrix outgest with filtered results", {
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    var_query = SOMAAxisQuery$new(
-      value_filter = "vst.variable == 'TRUE'"
-    ),
-    obs_query = SOMAAxisQuery$new(
-      value_filter = "nCount_RNA > 400"
-    )
+    var_query = SOMAAxisQuery$new(value_filter = "vst.variable == 'TRUE'"),
+    obs_query = SOMAAxisQuery$new(value_filter = "nCount_RNA > 400")
   )
 
   expect_equal(query$n_obs, ncol(pbmc_small1))
@@ -174,8 +170,8 @@ test_that("matrix outgest assertions", {
   expect_identical(
     dimnames(query$to_sparse_matrix("X", "counts")),
     lapply(
-      list(query$obs_joinids(), query$var_joinids()),
-      function(x) as.character(x$as_vector())
+      X = list(query$obs_joinids(), query$var_joinids()),
+      FUN = function(x) as.character(x$as_vector())
     )
   )
 

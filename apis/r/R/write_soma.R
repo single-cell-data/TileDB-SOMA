@@ -667,11 +667,7 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
-.check_soma_uri <- function(
-  uri,
-  soma_parent = NULL,
-  relative = TRUE
-) {
+.check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||

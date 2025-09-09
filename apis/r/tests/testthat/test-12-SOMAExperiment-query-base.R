@@ -278,12 +278,8 @@ test_that("querying by both coordinates and value filters", {
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = SOMAAxisQuery$new(
-      coords = list(soma_joinid = obs_slice),
-    ),
-    var_query = SOMAAxisQuery$new(
-      value_filter = var_value_filter
-    )
+    obs_query = SOMAAxisQuery$new(coords = list(soma_joinid = obs_slice), ),
+    var_query = SOMAAxisQuery$new(value_filter = var_value_filter)
   )
 
   expect_true(query$n_obs == diff(range(obs_slice)) + 1)
@@ -293,12 +289,8 @@ test_that("querying by both coordinates and value filters", {
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = SOMAAxisQuery$new(
-      value_filter = obs_value_filter
-    ),
-    var_query = SOMAAxisQuery$new(
-      coords = list(soma_joinid = var_slice)
-    )
+    obs_query = SOMAAxisQuery$new(value_filter = obs_value_filter),
+    var_query = SOMAAxisQuery$new(coords = list(soma_joinid = var_slice))
   )
 
   expect_true(query$n_obs == length(obs_label_values))
@@ -357,9 +349,7 @@ test_that("queries with empty results", {
     obs_query = SOMAAxisQuery$new(
       value_filter = "string_column == 'does-not-exist'"
     ),
-    var_query = SOMAAxisQuery$new(
-      value_filter = "quux == 'does-not-exist'"
-    )
+    var_query = SOMAAxisQuery$new(value_filter = "quux == 'does-not-exist'")
   )
   expect_equal(query$obs()$concat()$num_rows, 0)
   expect_equal(query$var()$concat()$num_rows, 0)
@@ -418,12 +408,8 @@ test_that("query result value indexer", {
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = SOMAAxisQuery$new(
-      coords = list(soma_joinid = obs_slice)
-    ),
-    var_query = SOMAAxisQuery$new(
-      coords = list(soma_joinid = var_slice)
-    )
+    obs_query = SOMAAxisQuery$new(coords = list(soma_joinid = obs_slice)),
+    var_query = SOMAAxisQuery$new(coords = list(soma_joinid = var_slice))
   )
 
   indexer <- query$indexer
@@ -485,12 +471,8 @@ test_that("query result value indexer upcast", {
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = SOMAAxisQuery$new(
-      coords = list(soma_joinid = obs_slice)
-    ),
-    var_query = SOMAAxisQuery$new(
-      coords = list(soma_joinid = var_slice)
-    )
+    obs_query = SOMAAxisQuery$new(coords = list(soma_joinid = obs_slice)),
+    var_query = SOMAAxisQuery$new(coords = list(soma_joinid = var_slice))
   )
 
   indexer <- query$indexer

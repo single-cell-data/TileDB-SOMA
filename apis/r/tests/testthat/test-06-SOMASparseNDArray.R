@@ -582,10 +582,7 @@ test_that("platform_config defaults", {
     domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
     n = 2L
   )
-  expect_named(
-    domain,
-    dims <- sprintf("soma_dim_%i", 0:1)
-  )
+  expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
   expect_equal(
     vapply(
       domain,

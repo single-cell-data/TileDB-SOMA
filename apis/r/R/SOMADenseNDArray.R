@@ -144,9 +144,7 @@ SOMADenseNDArray <- R6::R6Class(
       private$.check_open_for_write()
 
       spdl::debug("[SOMADenseNDArray::write] entered")
-      stopifnot(
-        "'values' must be a matrix" = is.matrix(values)
-      )
+      stopifnot("'values' must be a matrix" = is.matrix(values))
 
       if (is.null(coords)) {
         coords <- list(seq_len(nrow(values)), seq_len(ncol(values)))

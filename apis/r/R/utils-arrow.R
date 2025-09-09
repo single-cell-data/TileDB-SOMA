@@ -352,9 +352,11 @@ get_domain_and_extent_dataframe <- function(
         rlang::is_list(domain, n = length(ind_col_names)) &&
           identical(sort(names(domain)), sort(ind_col_names)) &&
           all(vapply_lgl(
-            domain,
-            function(x) {
-              is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+            X = domain,
+            FUN = function(x) {
+              return(
+                is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+              )
             }
           ))
       )

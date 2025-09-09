@@ -31,11 +31,7 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     #' @return Returns \code{self}.
     #'
-    create = function(
-      type,
-      shape,
-      platform_config = NULL
-    ) {
+    create = function(type, shape, platform_config = NULL) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),

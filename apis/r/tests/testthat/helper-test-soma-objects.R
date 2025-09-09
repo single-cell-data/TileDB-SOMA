@@ -78,9 +78,7 @@ create_and_populate_var <- function(
       rep_len("lvl2", length.out = floor(nrows / 2))
     ))
   }
-  domain <- list(
-    soma_joinid = c(0, nrows - 1L)
-  )
+  domain <- list(soma_joinid = c(0, nrows - 1L))
 
   dname <- dirname(uri)
   if (!dir.exists(dname)) {

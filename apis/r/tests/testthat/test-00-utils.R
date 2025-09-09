@@ -1,20 +1,11 @@
 test_that("validate read coords", {
   # NULL is a valid value
-  expect_equal(
-    validate_read_coords(NULL),
-    NULL
-  )
+  expect_equal(validate_read_coords(NULL), NULL)
 
   # bare vector is converted to list
-  expect_equal(
-    validate_read_coords(1:10),
-    list(1:10)
-  )
+  expect_equal(validate_read_coords(1:10), list(1:10))
 
-  expect_equal(
-    validate_read_coords(list(1:10)),
-    list(1:10)
-  )
+  expect_equal(validate_read_coords(list(1:10)), list(1:10))
 
   # list of multiple coordinate vectors must be named
   expect_error(

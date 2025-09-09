@@ -324,9 +324,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     set_metadata = function(metadata) {
-      stopifnot(
-        "Metadata must be a named list" = is_named_list(metadata)
-      )
+      stopifnot("Metadata must be a named list" = is_named_list(metadata))
 
       private$.check_open_for_write()
       private$.update_metadata_cache()
@@ -667,10 +665,7 @@ SOMACollectionBase <- R6::R6Class(
     # Instantiate a soma member object.
     # Responsible for calling the appropriate R6 class constructor.
     construct_member = function(uri, type) {
-      stopifnot(
-        is_scalar_character(uri),
-        is_scalar_character(type)
-      )
+      stopifnot(is_scalar_character(uri), is_scalar_character(type))
       spdl::debug(
         "[SOMACollectionBase$construct_member] entered, uri {} type {}",
         uri,
@@ -739,10 +734,7 @@ SOMACollectionBase <- R6::R6Class(
       )
 
       if (!inherits(value, expected_class)) {
-        stop(
-          sprintf("%s must be a '%s'", name, expected_class),
-          call. = FALSE
-        )
+        stop(sprintf("%s must be a '%s'", name, expected_class), call. = FALSE)
       }
       self$set(value, name = name)
       return(invisible(self))

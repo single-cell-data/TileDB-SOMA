@@ -334,11 +334,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         )$tables()$concat()
       })
 
-      SOMAAxisQueryResult$new(
-        obs = obs_ft,
-        var = var_ft,
-        X_layers = x_matrices
-      )
+      SOMAAxisQueryResult$new(obs = obs_ft, var = var_ft, X_layers = x_matrices)
     },
 
     #' @description Retrieve a collection layer as a sparse matrix with named
@@ -433,12 +429,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           soma_dim_0 = self$obs_joinids(),
           soma_dim_1 = self$var_joinids()
         ),
-        obsm = list(
-          soma_dim_0 = self$obs_joinids()
-        ),
-        varm = list(
-          soma_dim_0 = self$var_joinids()
-        ),
+        obsm = list(soma_dim_0 = self$obs_joinids()),
+        varm = list(soma_dim_0 = self$var_joinids()),
         obsp = list(
           soma_dim_0 = self$obs_joinids(),
           soma_dim_1 = self$obs_joinids()
@@ -663,10 +655,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         obs_column_names <- NULL
       }
       obs_column_names <- obs_column_names %||%
-        setdiff(
-          x = self$obs_df$attrnames(),
-          y = obs_index
-        )
+        setdiff(x = self$obs_df$attrnames(), y = obs_index)
       if (!(isFALSE(obs_column_names) || rlang::is_na(obs_column_names))) {
         obs <- private$.load_df(
           "obs",
@@ -866,9 +855,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       assay_hint <- names(.assay_version_hint())
       # Get the Seurat assay version
-      version <- version %||%
-        self$ms$get_metadata(assay_hint) %||%
-        'v3'
+      version <- version %||% self$ms$get_metadata(assay_hint) %||% 'v3'
       match.arg(version, choices = c('v3', 'v5'))
       op <- options(Seurat.object.assay.version = version)
       on.exit(options(op), add = TRUE)
@@ -950,10 +937,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         var_column_names <- NULL
       }
       var_column_names <- var_column_names %||%
-        setdiff(
-          x = self$var_df$attrnames(),
-          y = var_index
-        )
+        setdiff(x = self$var_df$attrnames(), y = var_index)
       if (!(isFALSE(var_column_names) || rlang::is_na(var_column_names))) {
         var <- private$.load_df(
           "var",
@@ -1965,10 +1949,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         ))
       }
       SeuratObject::DefaultLayer(obj) <- default_layers %||%
-        setdiff(
-          SeuratObject::Layers(obj),
-          layer_name
-        )[1L]
+        setdiff(SeuratObject::Layers(obj), layer_name)[1L]
       SeuratObject::LayerData(obj, layer = layer_name) <- NULL
 
       return(obj)

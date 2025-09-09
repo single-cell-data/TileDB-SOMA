@@ -248,8 +248,10 @@ write_soma.DimReduc <- function(
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
   idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+    X = parents,
+    FUN = function(i) {
+      return(identical(sys.function(i), write_soma.Seurat))
+    }
   ))
   shape <- if (length(idx) == 1L) {
     get("shape", envir = sys.frame(parents[idx]))
@@ -441,8 +443,10 @@ write_soma.Graph <- function(
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
   idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+    X = parents,
+    FUN = function(i) {
+      return(identical(sys.function(i), write_soma.Seurat))
+    }
   ))
   shape <- if (length(idx) == 1L) {
     get("shape", envir = sys.frame(parents[idx]))
@@ -559,12 +563,7 @@ write_soma.Seurat <- function(
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
   # Prepare cell-level metadata (obs)
-  obs_df <- .df_index(
-    x = x[[]],
-    alt = "cells",
-    axis = "obs",
-    prefix = "seurat"
-  )
+  obs_df <- .df_index(x = x[[]], alt = "cells", axis = "obs", prefix = "seurat")
   obs_df[[attr(obs_df, 'index')]] <- colnames(x)
 
   # Write assays
@@ -667,10 +666,7 @@ write_soma.Seurat <- function(
     }
     loadings <- SeuratObject::Loadings(x[[reduc]])
     if (!SeuratObject::IsMatrixEmpty(loadings)) {
-      fidx <- match(
-        x = rownames(loadings),
-        table = rownames(x[[measurement]])
-      )
+      fidx <- match(x = rownames(loadings), table = rownames(x[[measurement]]))
       nfeatures <- nrow(x[[measurement]])
     } else {
       fidx <- nfeatures <- NULL
@@ -870,11 +866,7 @@ write_soma.SeuratCommand <- function(
 
   # Encode as JSON
   spdl::info("Encoding command log as JSON")
-  enc <- as.character(jsonlite::toJSON(
-    xlist,
-    null = "null",
-    auto_unbox = TRUE
-  ))
+  enc <- as.character(jsonlite::toJSON(xlist, null = "null", auto_unbox = TRUE))
 
   # Write out and return
   sdf <- write_soma(

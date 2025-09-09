@@ -113,8 +113,9 @@ BlockwiseReadIterBase <- R6::R6Class(
     #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}.
     #'
     read_complete = function() {
-      !self$coords_axis$has_next() ||
-        is.null(private$soma_reader_pointer)
+      return(
+        !self$coords_axis$has_next() || is.null(private$soma_reader_pointer)
+      )
     },
     #' @description Read the next chunk of the iterated read. If read
     #' is complete, throws an \code{iterationCompleteWarning} warning and
@@ -363,10 +364,9 @@ BlockwiseSparseReadIter <- R6::R6Class(
         ...,
         reindex_disable_on_axis = reindex_disable_on_axis
       )
-      stopifnot(
-        "Sparse reads only work with two-dimensional arrays" = self$array$ndim() ==
-          2L
-      )
+      if (self$array$ndim() != 2L) {
+        stop("Sparse reads only work with two-dimensional arrays")
+      }
       reprs <- c(
         "T",
         if (!bit64::as.integer64(0L) %in% self$reindex_disable_on_axis) "R",

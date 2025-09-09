@@ -73,25 +73,11 @@ SOMADataFrame <- R6::R6Class(
 
       schema <- private$validate_schema(schema, index_column_names)
 
-      stopifnot(
-        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(
-          domain
-        ) ||
-          (
-            # Check that `domain` is a list of length `length(index_column_names)`
-            # where all values are named after `index_column_names`
-            # and all values are `NULL` or a two-length atomic non-factor vector
-            rlang::is_list(domain, n = length(index_column_names)) &&
-              identical(sort(names(domain)), sort(index_column_names)) &&
-              all(vapply_lgl(
-                domain,
-                function(x) {
-                  is.null(x) ||
-                    (is.atomic(x) && !is.factor(x) && length(x) == 2L)
-                }
-              ))
-          )
-      )
+      if (!(is.null(domain) || .is_domain(domain, index_column_names))) {
+        stop(
+          "domain must be NULL or a named list, with values being 2-element vectors or NULL"
+        )
+      }
 
       attr_column_names <- setdiff(schema$names, index_column_names)
       stopifnot(
@@ -400,15 +386,18 @@ SOMADataFrame <- R6::R6Class(
       )
 
       drop_cols_for_clib <- drop_cols
-      add_cols_types_for_clib <-
-        add_cols_enum_value_types_for_clib <-
-          add_cols_enum_ordered_for_clib <- vector(
-            "list",
-            length = length(add_cols)
-          )
-      names(add_cols_types_for_clib) <-
-        names(add_cols_enum_value_types_for_clib) <-
-          names(add_cols_enum_ordered_for_clib) <- add_cols
+      add_cols_types_for_clib <- stats::setNames(
+        vector("list", length(add_cols)),
+        nm = add_cols
+      )
+      add_cols_enum_value_types_for_clib <- stats::setNames(
+        vector("list", length(add_cols)),
+        nm = add_cols
+      )
+      add_cols_enum_ordered_for_clib <- stats::setNames(
+        vector("list", length(add_cols)),
+        nm = add_cols
+      )
 
       # Add columns
       for (add_col in add_cols) {
@@ -542,13 +531,10 @@ SOMADataFrame <- R6::R6Class(
     #' @return Named list of minimum/maximum values.
     #'
     domain = function() {
-      as.list(
-        arrow::as_record_batch(
-          arrow::as_arrow_table(
-            domain(self$uri, private$.soma_context)
-          )
-        )
-      )
+      return(as.list(arrow::as_record_batch(arrow::as_arrow_table(domain(
+        self$uri,
+        private$.soma_context
+      )))))
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -558,13 +544,10 @@ SOMADataFrame <- R6::R6Class(
     #' @return Named list of minimum/maximum values.
     #'
     maxdomain = function() {
-      as.list(
-        arrow::as_record_batch(
-          arrow::as_arrow_table(
-            maxdomain(self$uri, private$.soma_context)
-          )
-        )
-      )
+      return(as.list(arrow::as_record_batch(arrow::as_arrow_table(maxdomain(
+        self$uri,
+        private$.soma_context
+      )))))
     },
 
     #' @description Test if the array has the upgraded resizeable domain feature
@@ -601,14 +584,12 @@ SOMADataFrame <- R6::R6Class(
           (bit64::is.integer64(new_shape) && length(new_shape) == 1)
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      invisible(
-        resize_soma_joinid_shape(
-          self$uri,
-          new_shape,
-          .name_of_function(),
-          private$.soma_context
-        )
-      )
+      return(invisible(resize_soma_joinid_shape(
+        self$uri,
+        new_shape,
+        .name_of_function(),
+        private$.soma_context
+      )))
     },
 
     #' @description Allows you to set the domain of a \code{SOMADataFrame},
@@ -746,19 +727,13 @@ SOMADataFrame <- R6::R6Class(
       dimnames <- self$dimnames()
 
       # Check user-provided domain against dataframe domain.
-      stopifnot(
-        "new_domain must be a named list, with values being 2-element vectors or NULL, with names the same as the dataframe's index-column names" = rlang::is_list(
-          new_domain,
-          n = length(dimnames)
-        ) &&
-          identical(sort(names(new_domain)), sort(dimnames)) &&
-          all(vapply_lgl(
-            new_domain,
-            function(x) {
-              is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
-            }
-          ))
-      )
+      if (!.is_domain(new_domain, dimnames)) {
+        stop(
+          "new_domain must be a named list, with values being 2-element",
+          " vectors or NULL, with names the same as the dataframe's",
+          " index-column names"
+        )
+      }
 
       # From the dataframe's schema, extract the subschema for only index
       # columns (TileDB dimensions).

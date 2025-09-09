@@ -60,10 +60,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     uri,
     ctxxp = somactx,
     dim_range = list(
-      soma_dim_1 = cbind(
-        bit64::as.integer64(1),
-        bit64::as.integer64(2)
-      )
+      soma_dim_1 = cbind(bit64::as.integer64(1), bit64::as.integer64(2))
     )
   )
   expect_true(inherits(sr, "externalptr"))

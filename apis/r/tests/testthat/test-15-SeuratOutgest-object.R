@@ -75,10 +75,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
 
   # Test named
   expect_no_condition(
-    obj <- query$to_seurat(
-      obs_index = "string_column",
-      var_index = "quux"
-    )
+    obj <- query$to_seurat(obs_index = "string_column", var_index = "quux")
   )
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var, n_obs))
@@ -130,10 +127,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   )
   expect_identical(counts, data)
   expect_no_condition(obj <- query$to_seurat(c(data = "logcounts")))
-  expect_s4_class(
-    SeuratObject::GetAssayData(obj[["RNA"]], "data"),
-    "dgCMatrix"
-  )
+  expect_s4_class(SeuratObject::GetAssayData(obj[["RNA"]], "data"), "dgCMatrix")
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::GetAssayData(
     obj[["RNA"]],
     "counts"
@@ -185,10 +179,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   # Test `obs_column_names` assertions
   expect_error(query$to_seurat(obs_column_names = 1L))
   expect_error(query$to_seurat(
-    obs_column_names = c(
-      NA_character_,
-      NA_character_
-    )
+    obs_column_names = c(NA_character_, NA_character_)
   ))
   expect_error(query$to_seurat(obs_column_names = c(TRUE, FALSE)))
   expect_error(query$to_seurat(obs_column_names = "tomato"))
@@ -316,10 +307,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
 
   # Test named
   expect_no_condition(
-    obj <- query$to_seurat(
-      obs_index = "string_column",
-      var_index = "quux"
-    )
+    obj <- query$to_seurat(obs_index = "string_column", var_index = "quux")
   )
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
@@ -404,10 +392,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
 
   # Test named
   expect_no_condition(
-    obj <- query$to_seurat(
-      obs_index = "string_column",
-      var_index = "quux"
-    )
+    obj <- query$to_seurat(obs_index = "string_column", var_index = "quux")
   )
   expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_select, n_obs_select))

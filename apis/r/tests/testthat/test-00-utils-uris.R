@@ -1,8 +1,5 @@
 test_that("file path construction handles remote URLs", {
-  expect_identical(
-    file_path("int_column"),
-    file.path("int_column")
-  )
+  expect_identical(file_path("int_column"), file.path("int_column"))
   expect_identical(
     file_path("int_column", "float_column"),
     file.path("int_column", "float_column")

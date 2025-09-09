@@ -177,8 +177,10 @@
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
   idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+    X = parents,
+    FUN = function(i) {
+      return(identical(sys.function(i), write_soma.Seurat))
+    }
   ))
   shape <- if (length(idx) == 1L) {
     get("shape", envir = sys.frame(parents[idx]))

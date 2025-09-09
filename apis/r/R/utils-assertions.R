@@ -153,10 +153,7 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
     # Schema isn't useful without dimnames because we don't know which fields
     # are attributes and which are dimensions.
     if (!is.null(schema)) {
-      stop(
-        "'dimnames' must be provided with a 'schema'",
-        call. = FALSE
-      )
+      stop("'dimnames' must be provided with a 'schema'", call. = FALSE)
     }
   } else {
     #
@@ -174,10 +171,7 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
 
     # With a schema, we can check if any dimensions are int64 and cast them
     if (!is.null(schema)) {
-      stopifnot(
-        is_arrow_schema(schema),
-        all(dimnames %in% schema$names)
-      )
+      stopifnot(is_arrow_schema(schema), all(dimnames %in% schema$names))
 
       # identify int64 dimensions
       int64_dims <- vapply_lgl(dimnames, function(x) {

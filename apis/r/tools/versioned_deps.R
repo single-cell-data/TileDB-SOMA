@@ -42,13 +42,11 @@ for (i in seq_along(along.with = deps)) {
       x = sub(pattern = "\\)$", replacement = "", x = version)
     )
   )
-  names(x = versions)[i] <- trimws(
-    x = sub(
-      pattern = pattern,
-      replacement = "",
-      x = deps[i]
-    )
-  )
+  names(x = versions)[i] <- trimws(sub(
+    pattern = pattern,
+    replacement = "",
+    x = deps[i]
+  ))
 }
 versions <- Filter(f = Negate(f = is.na), x = versions)
 

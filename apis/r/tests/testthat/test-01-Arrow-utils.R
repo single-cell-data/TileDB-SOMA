@@ -4,9 +4,7 @@ test_that("Validating arrow data type compatibility", {
   # strings and large strings are compatible
   expect_true(check_arrow_data_types(arrow::string(), arrow::large_utf8()))
 
-  expect_error(
-    check_arrow_data_types("not an arrow data type", arrow::int32())
-  )
+  expect_error(check_arrow_data_types("not an arrow data type", arrow::int32()))
 })
 
 test_that("Validating arrow schema data type compatibility", {

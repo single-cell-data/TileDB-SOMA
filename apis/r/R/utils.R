@@ -61,11 +61,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 }
 
 .encode_as_char <- function(x) {
-  return(switch(
-    EXPR = typeof(x),
-    double = sprintf("%a", x),
-    x
-  ))
+  return(switch(EXPR = typeof(x), double = sprintf("%a", x), x))
 }
 
 .err_to_warn <- function(err) {
@@ -83,12 +79,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   stopifnot(is.character(x))
   double <- paste0(
     "^",
-    c(
-      "[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+",
-      "[-]?Inf",
-      "NA",
-      "NaN"
-    ),
+    c("[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+", "[-]?Inf", "NA", "NaN"),
     "$",
     collapse = "|"
   )
@@ -98,6 +89,42 @@ uns_hint <- function(type = c("1d", "2d")) {
     } else {
       x
     }
+  )
+}
+
+#' Is an Object a Domain Specification
+#'
+#' Check that an object is a domain specification. Valid domain specifications
+#' are named lists where each entry is either \code{NULL} or a two-length
+#' atomic vector (no lists or factors) giving the bounds
+#'
+#' @param x An \R object
+#' @param nm Vector of expected names of the domain specification
+#'
+#' @return \code{TRUE} if \code{x} is a valid domain specification,
+#' otherwise \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+.is_domain <- function(x, nm) {
+  if (!is.character(nm)) {
+    stop("'nm' must be a character vector")
+  }
+  return(
+    rlang::is_list(x = x, n = length(x = nm)) &&
+      identical(x = sort(names(x = x)), y = sort(nm)) &&
+      all(vapply(
+        X = x,
+        FUN = function(i) {
+          return(
+            is.null(i) ||
+              (is.atomic(i) && !is.factor(i) && length(i) == 2L)
+          )
+        },
+        FUN.VALUE = logical(1L)
+      ))
   )
 }
 
@@ -236,10 +263,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   def <- if (length(type) > 1L) {
     paste0('[', paste(dQuote(type, FALSE), collapse = ','), ']')
   } else {
-    tryCatch(
-      expr = methods::getClassDef(type),
-      error = function(e) type
-    )
+    tryCatch(expr = methods::getClassDef(type), error = function(e) type)
   }
   if (inherits(def, c('classUnionRepresentation', 'refClassRepresentation'))) {
     def <- sprintf('%s:%s', def@package, def@className)
@@ -376,9 +400,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' pad_names(x3) # returns c(a = "x", y = "y", c = "z")
 #'
 pad_names <- function(x) {
-  stopifnot(
-    is.character(x)
-  )
+  stopifnot(is.character(x))
   if (is.null(names(x))) {
     return(stats::setNames(nm = x))
   }
@@ -389,10 +411,7 @@ pad_names <- function(x) {
 
 # For use in read-only R6 active bindings
 read_only_error <- function(field_name) {
-  stop(
-    sprintf("'%s' is a read-only field.", field_name),
-    call. = FALSE
-  )
+  stop(sprintf("'%s' is a read-only field.", field_name), call. = FALSE)
 }
 
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"

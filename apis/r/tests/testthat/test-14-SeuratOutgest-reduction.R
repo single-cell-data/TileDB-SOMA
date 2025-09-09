@@ -183,10 +183,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   suppress <- list(NA, FALSE)
   for (i in seq_along(suppress)) {
     expect_no_condition(
-      no_load <- query$to_seurat_reduction(
-        "pca",
-        suppress[[i]]
-      )
+      no_load <- query$to_seurat_reduction("pca", suppress[[i]])
     )
     expect_equal(dim(no_load), c(n_obs, n_pcs))
     expect_equal(dim(SeuratObject::Loadings(no_load)), c(0L, 0L))
@@ -354,10 +351,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
     query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
   )
   expect_no_condition(
-    named_umap <- query$to_seurat_reduction(
-      "umap",
-      obs_index = "string_column"
-    )
+    named_umap <- query$to_seurat_reduction("umap", obs_index = "string_column")
   )
   expect_identical(
     SeuratObject::Cells(named_umap),
@@ -411,10 +405,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   )
   expect_no_condition(pca <- query$to_seurat_reduction("pca"))
   expect_s4_class(pca, "DimReduc")
-  expect_identical(
-    dim(pca),
-    c(length(obs_label_values), n_pcs)
-  )
+  expect_identical(dim(pca), c(length(obs_label_values), n_pcs))
   expect_identical(dim(SeuratObject::Embeddings(pca)), dim(pca))
   expect_identical(
     dim(SeuratObject::Loadings(pca)),
@@ -440,10 +431,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   )
   expect_warning(ica <- query$to_seurat_reduction("ica"))
   expect_s4_class(ica, "DimReduc")
-  expect_identical(
-    dim(ica),
-    c(length(obs_label_values), n_ics)
-  )
+  expect_identical(dim(ica), c(length(obs_label_values), n_ics))
   expect_identical(dim(SeuratObject::Embeddings(ica)), dim(ica))
   expect_identical(
     dim(SeuratObject::Loadings(ica)),
@@ -469,10 +457,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   )
   expect_no_condition(umap <- query$to_seurat_reduction("umap"))
   expect_s4_class(umap, "DimReduc")
-  expect_identical(
-    dim(umap),
-    c(length(obs_label_values), n_umaps)
-  )
+  expect_identical(dim(umap), c(length(obs_label_values), n_umaps))
   expect_identical(dim(SeuratObject::Embeddings(umap)), dim(umap))
   expect_identical(dim(SeuratObject::Loadings(umap)), c(0L, 0L))
   expect_identical(
@@ -532,10 +517,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
     var_label_values
   )
   expect_no_condition(
-    named_umap <- query$to_seurat_reduction(
-      "umap",
-      obs_index = "string_column"
-    )
+    named_umap <- query$to_seurat_reduction("umap", obs_index = "string_column")
   )
   expect_identical(
     SeuratObject::Cells(named_umap),

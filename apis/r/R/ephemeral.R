@@ -389,13 +389,7 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       type <- match.arg(
         arg = type,
-        choices = c(
-          "base",
-          "added",
-          "opened",
-          "edited",
-          "custom"
-        )
+        choices = c("base", "added", "opened", "edited", "custom")
       )
       if (type == "custom" && !is_scalar_character(msg)) {
         stop("'msg' must be a single character value")
