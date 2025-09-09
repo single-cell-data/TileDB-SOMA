@@ -1,0 +1,71 @@
+# Reusable workflow that runs C++ tests.
+# About reusable workflows: https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
+
+name: TileDB-SOMA C++ CI
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      run_asan:
+        required: true
+        type: boolean
+      report_codecov:
+        required: true
+        type: boolean
+
+jobs:
+
+  catch2:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Build libtiledbsoma
+        run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
+
+      - name: Run C++ tests
+        run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
+
+      - name: Upload coverage to Codecov
+        if: ${{ inputs.report_codecov }}
+        uses: codecov/codecov-action@v5
+        with:
+          flags: libtiledbsoma
+          gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+
+  asan:
+    if: ${{ inputs.run_asan }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Install pre-built libtiledb
+        run: |
+          mkdir -p external
+            # Please do not edit manually -- let scripts/update-tiledb-version.py update this
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz
+          tar -C external -xzf tiledb-*.tar.gz
+          ls external/lib/
+
+      - name: Build and install libtiledbsoma
+        run: |
+          cmake -S libtiledbsoma -B build \
+            -D CMAKE_BUILD_TYPE=ASAN \
+            -D CMAKE_PREFIX_PATH=$(pwd)/external/ \
+            -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
+            -D OVERRIDE_INSTALL_PREFIX=OFF \
+            -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D TILEDB_REMOVE_DEPRECATIONS=ON \
+            -D FORCE_BUILD_TILEDB=OFF
+          cmake --build build -j 2
+          ls external/lib/
+
+      - name: Run C++ unittests
+        run: ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure

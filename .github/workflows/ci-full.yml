@@ -1,0 +1,66 @@
+# Run full CI for Python, R, and C++
+name: TileDB-SOMA CI (full)
+
+on:
+  push:
+    branches:
+      - main
+      - 'release-*'
+  pull_request:
+    paths:
+      - '.github/workflows/ci-full.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        include:
+          - os: ubuntu-24.04
+            cc: gcc-13
+            cxx: g++-13
+          - os: macos-latest
+            cc: clang
+            cxx: clang++
+    uses: ./.github/workflows/test-python.yml
+    with:
+      os: ${{ matrix.os }}
+      python_version: ${{ matrix.python-version }}
+      cc: ${{ matrix.cc }}
+      cxx: ${{ matrix.cxx }}
+      report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11' }}
+    secrets: inherit
+
+  r-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest, r: 'release', report_codecov: false}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', report_codecov: false}
+          - {os: ubuntu-latest, r: 'release', report_codecov: true}
+          - {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false}
+    uses: ./.github/workflows/test-r.yml
+    with:
+      os: ${{ matrix.config.os }}
+      r: ${{ matrix.config.r }}
+      http-user-agent: ${{ matrix.config.http-user-agent }}
+      report_codecov: ${{ matrix.config.report_codecov }}
+    secrets: inherit
+
+  cpp-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/test-cpp.yml
+    with:
+      os: ${{ matrix.os }}
+      run_asan: ${{ matrix.os == 'ubuntu-latest' }}
+      report_codecov: $${{ matrix.os == 'ubuntu-latest' }}
+    secrets: inherit

@@ -1,5 +1,5 @@
 ---
-title: Daily `python-packaging.yml` build failing
+title: Failed scheduled CI run
 labels: bug
 ---
 

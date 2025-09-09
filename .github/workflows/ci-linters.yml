@@ -1,0 +1,33 @@
+name: Run pre-commit
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore pre-commit cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-ubuntu-24.04-3.12-${{ hashFiles('.github/workflows/lint-python.yml', '.pre-commit-config.yaml') }}
+
+      - name: Install pre-commit
+        run: pip -v install pre-commit
+
+      - name: Log pip dependencies
+        run: pip list
+
+      - name: Run pre-commit hooks on all files
+        run: pre-commit run -a -v

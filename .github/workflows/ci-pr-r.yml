@@ -1,0 +1,33 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+
+name: TileDB-SOMA R CI (Pull-request)
+on:
+  pull_request:
+    paths:
+      - 'libtiledbsoma/**'
+      - 'apis/r/**'
+      - '!**.md'
+      - '.github/workflows/ci-pr-r.yml'
+      - '.github/workslows/test-r.yml'
+      - '.github/actions/setup-r/**'
+  workflow_dispatch:
+
+
+jobs:
+  r-tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        config:
+          - {os: macos-latest, r: 'release', report_codecov: false}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', report_codecov: false}
+          - {os: ubuntu-latest, r: 'release', report_codecov: true}
+          - {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false}
+    uses: ./.github/workflows/test-r.yml
+    with:
+      os: ${{ matrix.config.os }}
+      r: ${{ matrix.config.r }}
+      http-user-agent: ${{ matrix.config.http-user-agent }}
+      report_codecov: ${{ matrix.config.report_codecov }}
+    secrets: inherit

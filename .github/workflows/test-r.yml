@@ -1,0 +1,99 @@
+# Reusable workflow that runs R tests
+# Workflow derived from: https://github.com/r-lib/actions/tree/v2/examples
+# About reusable workflows: https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+
+name: TileDB-SOMA R CI
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      r:
+        required: true
+        type: string
+      http-user-agent:
+        required: false
+        type: string
+      report_codecov:
+        required: false
+        type: boolean
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ inputs.os }}
+
+    name: ${{ inputs.os }} (${{ inputs.r }})
+
+    env:
+      R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_TESTS_NLINES_: 0
+      CATCHSEGV: "TRUE"
+      R_REMOTES_UPGRADE: "never"
+      TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+
+    permissions: read-all
+
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Show matrix OS
+        run: echo "inputs.os:" ${{ inputs.os }}
+
+      - uses: ./.github/actions/setup-r
+        with:
+            os: ${{ inputs.os }}}
+            r: ${{ inputs.r }}
+            http-user-agent: ${{ inputs.http-user-agent }}
+            extra-packages: any::rcmdcheck
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          build_args: '"--no-manual"'
+          error-on: '"error"'
+          working-directory: 'apis/r/'
+
+
+  test-coverage:
+    if: ${{ inputs.report_codecov }}
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-r
+        with:
+            os: ${{ inputs.os }}}
+            r: ${{ inputs.r }}
+            http-user-agent: ${{ inputs.http-user-agent }}
+            extra-packages: any::covr, any::xml2
+
+      - name: Test coverage
+        run: |
+          cov <- covr::package_coverage(
+            path = "apis/r",
+            quiet = FALSE,
+            clean = FALSE,
+            ine_exclusions = list(
+              nanoarrow_c = "apis/r/src/nanoarrow.c",
+              nanoarrow_h = "apis/r/src/nanoarrow.h"
+            ),
+            install_path = file.path(
+              normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"),
+              "package"
+            )
+          )
+          print(cov)
+          covr::to_cobertura(cov)
+        shell: Rscript {0}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          flag: r
+          files: ./cobertura.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
