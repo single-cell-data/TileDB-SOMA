@@ -121,7 +121,10 @@ class SOMAColumn {
      * @param which_kind
      */
     virtual std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
-        const SOMAContext& ctx, Array& array, enum Domainish which_kind) const = 0;
+        const SOMAContext& ctx,
+        Array& array,
+        enum Domainish which_kind,
+        bool downcast_dict_of_large_var = false) const = 0;
 
     /**
      * Get the SOMAColumn encoded as an ArrowSchema for use with R/Python API.
@@ -129,7 +132,8 @@ class SOMAColumn {
      * @param ctx
      * @param array
      */
-    virtual ArrowSchema* arrow_schema_slot(const SOMAContext& ctx, Array& array) const = 0;
+    virtual ArrowSchema* arrow_schema_slot(
+        const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var = false) const = 0;
 
     /**
      * Get the domain kind of the SOMAColumn.

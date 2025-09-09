@@ -73,7 +73,7 @@ std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(
 //===================================================================
 
 managed_unique_ptr<ArrowSchema> SOMAPointCloudDataFrame::schema() const {
-    return this->arrow_schema();
+    return this->arrow_schema(true);
 }
 
 const std::vector<std::string> SOMAPointCloudDataFrame::index_column_names() const {

@@ -400,7 +400,7 @@ std::any SOMAGeometryColumn::_core_current_domain_slot(NDRectangle& ndrect) cons
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
-    const SOMAContext& ctx, Array& array, enum Domainish kind) const {
+    const SOMAContext& ctx, Array& array, enum Domainish kind, bool) const {
     switch (domain_type().value()) {
         case TILEDB_FLOAT64: {
             ArrowSchema* parent_schema = static_cast<ArrowSchema*>(malloc(sizeof(ArrowSchema)));
@@ -464,8 +464,10 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
     }
 }
 
-ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(const SOMAContext& ctx, Array& array) const {
-    return ArrowAdapter::arrow_schema_from_tiledb_attribute(attribute, *ctx.tiledb_ctx(), array);
+ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
+    const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var) const {
+    return ArrowAdapter::arrow_schema_from_tiledb_attribute(
+        attribute, *ctx.tiledb_ctx(), array, downcast_dict_of_large_var);
 }
 
 void SOMAGeometryColumn::serialize(nlohmann::json& columns_schema) const {

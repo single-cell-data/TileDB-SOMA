@@ -97,7 +97,7 @@ class ArrowAdapter {
      * std::unique_ptr<ArrowSchema>>
      */
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ColumnBuffer> column);
+        std::shared_ptr<ColumnBuffer> column, bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
@@ -111,7 +111,7 @@ class ArrowAdapter {
      * @return ArrowSchema
      */
     static ArrowSchema* arrow_schema_from_tiledb_attribute(
-        const Attribute& attribute, const Context& ctx, const Array& tiledb_array);
+        const Attribute& attribute, const Context& ctx, const Array& tiledb_array, bool downcast_dict_of_large_var);
 
     /**
      * @brief Create a TileDB ArraySchema from ArrowSchema and additional JSON
@@ -935,7 +935,8 @@ class ArrowAdapter {
         managed_unique_ptr<ArrowSchema> schema, int64_t index);
 
    private:
-    static size_t _set_var_dictionary_buffers(Enumeration& enumeration, const Context& ctx, const void** buffers);
+    static size_t _set_var_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers, bool downcast_dict_of_large_var = false);
 
     static size_t _set_dictionary_buffers(Enumeration& enumeration, const Context& ctx, const void** buffers);
 
