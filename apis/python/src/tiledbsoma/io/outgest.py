@@ -26,7 +26,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 
-from tiledbsoma import Collection, DataFrame, DenseNDArray, Experiment, Measurement, SparseNDArray, _util, logging
+from tiledbsoma import Collection, DataFrame, DenseNDArray, Experiment, Measurement, SparseNDArray, _logging, _util
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from tiledbsoma._dask.load import SOMADaskConfig, load_daskarray
 from tiledbsoma._exception import SOMAError
@@ -69,7 +69,7 @@ def to_h5ad(
         Maturing.
     """
     s = _util.get_start_stamp()
-    logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
+    _logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
     anndata = to_anndata(
         experiment,
@@ -82,13 +82,13 @@ def to_h5ad(
     )
 
     s2 = _util.get_start_stamp()
-    logging.log_io(None, f"START  write {h5ad_path}")
+    _logging.log_io(None, f"START  write {h5ad_path}")
 
     anndata.write_h5ad(h5ad_path)
 
-    logging.log_io(None, _util.format_elapsed(s2, f"FINISH write {h5ad_path}"))
+    _logging.log_io(None, _util.format_elapsed(s2, f"FINISH write {h5ad_path}"))
 
-    logging.log_io(None, _util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}"))
+    _logging.log_io(None, _util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}"))
 
 
 def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
@@ -266,7 +266,7 @@ def to_anndata(
         Maturing.
     """
     s = _util.get_start_stamp()
-    logging.log_io(None, "START  Experiment.to_anndata")
+    _logging.log_io(None, "START  Experiment.to_anndata")
 
     if measurement_name not in experiment.ms:
         raise ValueError(f"requested measurement name {measurement_name} not found in input: {experiment.ms.keys()}")
@@ -409,9 +409,9 @@ def to_anndata(
     if "uns" in measurement:
         s = _util.get_start_stamp()
         uns_coll = cast("Collection[Any]", measurement["uns"])
-        logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
+        _logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
         uns_future = tp.submit(_extract_uns, uns_coll, uns_keys=uns_keys)
-        logging.log_io(
+        _logging.log_io(
             None,
             _util.format_elapsed(s, f"Finish writing uns for {uns_coll.uri}"),
         )
@@ -437,7 +437,7 @@ def to_anndata(
         uns=uns,
     )
 
-    logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
+    _logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
 
     return anndata
 
@@ -546,7 +546,7 @@ def _extract_uns(
                     pdf = element.read().concat().to_pandas()
                     return _outgest_uns_2d_string_array(pdf, element.uri)
                 if hint is not None:
-                    logging.log_io_same(
+                    _logging.log_io_same(
                         f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame",
                     )
                 return _read_dataframe(element, fallback_index_name="index")
@@ -558,7 +558,7 @@ def _extract_uns(
         elif isinstance(element, DenseNDArray):
             extracted[key] = tp.submit(lambda e: e.read().to_numpy(), element)
         else:
-            logging.log_io_same(f"Skipping uns key {key} with unhandled type {element.soma_type}")
+            _logging.log_io_same(f"Skipping uns key {key} with unhandled type {element.soma_type}")
 
     # Primitives got set on the SOMA-experiment uns metadata.
     for key, value in collection.metadata.items():

@@ -60,9 +60,9 @@ from tiledbsoma import (
     PointCloudDataFrame,
     SparseNDArray,
     _factory,
+    _logging,
     _util,
     eta,
-    logging,
 )
 from tiledbsoma._collection import AnyTileDBCollection, CollectionBase
 from tiledbsoma._common_nd_array import NDArray
@@ -199,7 +199,7 @@ def register_h5ads(
     context = _validate_soma_tiledb_context(context)
     concurrency_level = _concurrency_level(context)
 
-    logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
+    _logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
     executor_context: contextlib.AbstractContextManager[ProcessPoolExecutor | ThreadPoolExecutor]
     if use_multiprocessing:
         if multiprocessing.get_start_method() == "fork":
@@ -229,7 +229,7 @@ def register_h5ads(
                 ),
             ),
         )
-    logging.log_io(None, "Loaded per-axis metadata")
+    _logging.log_io(None, "Loaded per-axis metadata")
 
     return ExperimentAmbientLabelMapping._register_common(
         experiment_uri,
@@ -418,12 +418,12 @@ def from_h5ad(
     context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
-    logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
+    _logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
 
-    logging.log_io(None, f"START  READING {input_path}")
+    _logging.log_io(None, f"START  READING {input_path}")
 
     with read_h5ad(input_path, mode="r", ctx=context) as anndata:
-        logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
+        _logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
         uri = _from_anndata(
             experiment_uri,
@@ -443,7 +443,7 @@ def from_h5ad(
             additional_metadata=additional_metadata,
         )
 
-    logging.log_io(None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}"))
+    _logging.log_io(None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}"))
     return uri
 
 
@@ -581,15 +581,15 @@ def _from_anndata(
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
     s = _util.get_start_stamp()
-    logging.log_io(None, "START  DECATEGORICALIZING")
+    _logging.log_io(None, "START  DECATEGORICALIZING")
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
 
-    logging.log_io(None, _util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
+    _logging.log_io(None, _util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
 
     s = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {experiment_uri}")
+    _logging.log_io(None, f"START  WRITING {experiment_uri}")
 
     ingest_ctx: IngestCtx = {
         "context": context,
@@ -822,7 +822,7 @@ def _from_anndata(
 
     experiment.close()
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {experiment.uri}",
         _util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
@@ -879,7 +879,7 @@ def append_obs(
     joinid_map = registration_mapping.obs_axis.id_mapping_from_dataframe(new_obs)
 
     s = _util.get_start_stamp()
-    logging.log_io_same(f"Start  writing obs for {exp.obs.uri}")
+    _logging.log_io_same(f"Start  writing obs for {exp.obs.uri}")
 
     with _write_dataframe(
         exp.obs.uri,
@@ -891,7 +891,7 @@ def append_obs(
         axis_mapping=joinid_map,
         must_exist=True,
     ):
-        logging.log_io_same(_util.format_elapsed(s, f"Finish writing obs for {exp.obs.uri}"))
+        _logging.log_io_same(_util.format_elapsed(s, f"Finish writing obs for {exp.obs.uri}"))
     return exp.obs.uri
 
 
@@ -949,7 +949,7 @@ def append_var(
     joinid_map = registration_mapping.var_axes[measurement_name].id_mapping_from_dataframe(new_var)
 
     s = _util.get_start_stamp()
-    logging.log_io_same(f"Start  writing var for {sdf.uri}")
+    _logging.log_io_same(f"Start  writing var for {sdf.uri}")
 
     with _write_dataframe(
         sdf.uri,
@@ -961,7 +961,7 @@ def append_var(
         axis_mapping=joinid_map,
         must_exist=True,
     ):
-        logging.log_io_same(_util.format_elapsed(s, f"Finish writing var for {sdf.uri}"))
+        _logging.log_io_same(_util.format_elapsed(s, f"Finish writing var for {sdf.uri}"))
     return sdf.uri
 
 
@@ -1031,7 +1031,7 @@ def append_X(
     context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
-    logging.log_io_same(f"Start  writing var for {X.uri}")
+    _logging.log_io_same(f"Start  writing var for {X.uri}")
 
     axis_0_mapping = registration_mapping.obs_axis.id_mapping_from_values(obs_ids)
     axis_1_mapping = registration_mapping.var_axes[measurement_name].id_mapping_from_values(var_ids)
@@ -1047,7 +1047,7 @@ def append_X(
         axis_1_mapping=axis_1_mapping,
         must_exist=True,
     ):
-        logging.log_io_same(_util.format_elapsed(s, f"Finish writing X for {X.uri}"))
+        _logging.log_io_same(_util.format_elapsed(s, f"Finish writing X for {X.uri}"))
     return X.uri
 
 
@@ -1338,7 +1338,7 @@ def _write_arrow_table(
         _write_arrow_table(arrow_table[:m], handle, tiledb_create_options, tiledb_write_options)
         _write_arrow_table(arrow_table[m:], handle, tiledb_create_options, tiledb_write_options)
     else:
-        logging.log_io(
+        _logging.log_io(
             None,
             f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
         )
@@ -1408,7 +1408,7 @@ def _write_dataframe_impl(
     Expects the required ``soma_joinid`` index to have already been added to the ``pd.DataFrame``.
     """
     s = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {df_uri}")
+    _logging.log_io(None, f"START  WRITING {df_uri}")
 
     arrow_table = conversions.df_to_arrow_table(df)
 
@@ -1432,7 +1432,7 @@ def _write_dataframe_impl(
             storage_ned = _read_nonempty_domain(soma_df)
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
-                logging.log_io(
+                _logging.log_io(
                     f"Skipped {df_uri}",
                     _util.format_elapsed(s, f"SKIPPED {df_uri}"),
                 )
@@ -1481,7 +1481,7 @@ def _write_dataframe_impl(
             check_for_containment(df, soma_df, ingestion_params)
 
     if ingestion_params.write_schema_no_data:
-        logging.log_io(
+        _logging.log_io(
             f"Wrote schema {df_uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {df_uri}"),
         )
@@ -1496,7 +1496,7 @@ def _write_dataframe_impl(
 
     add_metadata(soma_df, additional_metadata)
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {df_uri}",
         _util.format_elapsed(s, f"FINISH WRITING {df_uri}"),
     )
@@ -1557,7 +1557,7 @@ def _create_from_matrix(
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
 
     s = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {uri}")
+    _logging.log_io(None, f"START  WRITING {uri}")
 
     if must_exist:
         if ingestion_params.error_if_already_exists:
@@ -1588,13 +1588,13 @@ def _create_from_matrix(
             soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
 
     if ingestion_params.write_schema_no_data:
-        logging.log_io(
+        _logging.log_io(
             f"Wrote schema {uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {uri}"),
         )
         return soma_ndarray
 
-    logging.log_io(
+    _logging.log_io(
         f"Writing {uri}",
         _util.format_elapsed(s, f"START  WRITING {uri}"),
     )
@@ -1622,7 +1622,7 @@ def _create_from_matrix(
     else:
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {uri}",
         _util.format_elapsed(s, f"FINISH WRITING {uri}"),
     )
@@ -1880,7 +1880,7 @@ def update_matrix(
     #   https://github.com/single-cell-data/TileDB-SOMA/issues/1971
 
     s = _util.get_start_stamp()
-    logging.log_io(
+    _logging.log_io(
         f"Writing {soma_ndarray.uri}",
         f"START  UPDATING {soma_ndarray.uri}",
     )
@@ -1910,7 +1910,7 @@ def update_matrix(
     else:
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {soma_ndarray.uri}",
         _util.format_elapsed(s, f"FINISH UPDATING {soma_ndarray.uri}"),
     )
@@ -2038,12 +2038,12 @@ def _write_matrix_to_denseNDArray(
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         storage_ned = _read_nonempty_domain(soma_ndarray)
         matrix_bounds = [(0, int(n - 1)) for n in matrix.shape]  # Cast for lint in case np.int64
-        logging.log_io(
+        _logging.log_io(
             None,
             f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
         )
         if _chunk_is_contained_in(matrix_bounds, storage_ned):
-            logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
+            _logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
             return
 
     # Write all at once?
@@ -2091,7 +2091,7 @@ def _write_matrix_to_denseNDArray(
 
         # Print doubly-inclusive lo..hi like 0..17 and 18..31.
         chunk_percent = min(100, 100 * (i2 - 1) / nrow)
-        logging.log_io(
+        _logging.log_io(
             None,
             "START  chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),  # noqa: UP031
         )
@@ -2106,7 +2106,7 @@ def _write_matrix_to_denseNDArray(
             )  # Cast for lint in case np.int64
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
-                logging.log_io(
+                _logging.log_io(
                     "... %7.3f%% done" % chunk_percent,  # noqa: UP031
                     "SKIP   chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),  # noqa: UP031
                 )
@@ -2124,7 +2124,7 @@ def _write_matrix_to_denseNDArray(
         eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
         if chunk_percent < 100:
-            logging.log_io(
+            _logging.log_io(
                 "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),  # noqa: UP031
                 "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" % (chunk_seconds, chunk_percent, eta_seconds),  # noqa: UP031
             )
@@ -2436,12 +2436,12 @@ def _write_matrix_to_sparseNDArray(
         # THIS IS A HACK AND ONLY WORKS BECAUSE WE ARE DOING THIS BEFORE ALL WRITES.
         storage_ned = _read_nonempty_domain(soma_ndarray)
         matrix_bounds = [(0, int(n - 1)) for n in matrix.shape]  # Cast for lint in case np.int64
-        logging.log_io(
+        _logging.log_io(
             None,
             f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
         )
         if _chunk_is_contained_in(matrix_bounds, storage_ned):
-            logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
+            _logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
             return
 
     add_metadata(soma_ndarray, additional_metadata)
@@ -2564,7 +2564,7 @@ def _write_matrix_to_sparseNDArray(
             )  # Cast for lint in case np.int64
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
-                logging.log_io(
+                _logging.log_io(
                     "... %7.3f%% done" % chunk_percent,  # noqa: UP031
                     "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"  # noqa: UP031
                     % (
@@ -2580,7 +2580,7 @@ def _write_matrix_to_sparseNDArray(
                 continue
 
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
-        logging.log_io(
+        _logging.log_io(
             None,
             "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"  # noqa: UP031
             % (
@@ -2601,7 +2601,7 @@ def _write_matrix_to_sparseNDArray(
         eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
         if chunk_percent < 100:
-            logging.log_io(
+            _logging.log_io(
                 f"... {chunk_percent:7.3f}% done, ETA {eta_seconds}",
                 f"FINISH chunk in {chunk_seconds:.3f} seconds, {chunk_percent:7.3f}% done, ETA {eta_seconds}",
             )
@@ -2723,7 +2723,7 @@ def _ingest_uns_dict(
             )
 
     msg = f"Wrote   {coll.uri} (uns collection)"
-    logging.log_io(msg, msg)
+    _logging.log_io(msg, msg)
 
 
 def _ingest_uns_node(
@@ -2792,7 +2792,7 @@ def _ingest_uns_node(
         return
 
     msg = f"Skipped {coll.uri}[{key!r}] (uns object): unrecognized type {type(value)}"
-    logging.log_io(msg, msg)
+    _logging.log_io(msg, msg)
 
 
 def _ingest_uns_array(
@@ -2809,7 +2809,7 @@ def _ingest_uns_array(
     """
     if value.dtype.names is not None:
         # This is a structured array, which we do not support.
-        logging.log_io_same(f"Skipped {coll.uri}[{key!r}] (uns): unsupported structured array")
+        _logging.log_io_same(f"Skipped {coll.uri}[{key!r}] (uns): unsupported structured array")
 
     if value.dtype.char in ("U", "O"):
         # In the wild it's quite common to see arrays of strings in uns data.
@@ -2855,7 +2855,7 @@ def _ingest_uns_string_array(
         helper = _ingest_uns_2d_string_array
     else:
         msg = f"Skipped {coll.uri}[{key!r}] (uns object): string array is neither one-dimensional nor two-dimensional"
-        logging.log_io(msg, msg)
+        _logging.log_io(msg, msg)
         return
 
     helper(
@@ -2977,14 +2977,14 @@ def _ingest_uns_ndarray(
 
     if any(e <= 0 for e in value.shape):
         msg = f"Skipped {arr_uri} (uns ndarray): zero in shape {value.shape}"
-        logging.log_io(msg, msg)
+        _logging.log_io(msg, msg)
         return
 
     try:
         pa_dtype = pa.from_numpy_dtype(value.dtype)
     except pa.ArrowNotImplementedError:
         msg = f"Skipped {arr_uri} (uns ndarray): unsupported dtype {value.dtype!r} ({value.dtype})"
-        logging.log_io(msg, msg)
+        _logging.log_io(msg, msg)
         return
     try:
         soma_arr = DenseNDArray.create(
@@ -3003,7 +3003,7 @@ def _ingest_uns_ndarray(
         storage_ned = _read_nonempty_domain(soma_arr)
         dim_range = ((0, value.shape[0] - 1),)
         if _chunk_is_contained_in(dim_range, storage_ned):
-            logging.log_io(
+            _logging.log_io(
                 f"Skipped {soma_arr.uri}",
                 f"Skipped {soma_arr.uri}",
             )
@@ -3022,7 +3022,7 @@ def _ingest_uns_ndarray(
         )
 
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
-    logging.log_io(msg, msg)
+    _logging.log_io(msg, msg)
 
 
 def _concurrency_level(context: SOMATileDBContext) -> int:
