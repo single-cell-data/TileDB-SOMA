@@ -7,8 +7,8 @@ import pytest
 import scanpy as sc
 
 import tiledbsoma
+import tiledbsoma._logging
 import tiledbsoma.io
-import tiledbsoma.logging
 
 from .util import util_make_uri, util_tear_down_uri
 
@@ -26,7 +26,7 @@ def test_write_with_updates(conftest_context, conftest_namespace, conftest_defau
 
     adata = sc.datasets.pbmc3k()
 
-    tiledbsoma.logging.info()
+    tiledbsoma._logging.info()
     tiledbsoma.io.from_anndata(
         creation_uri,
         adata,
