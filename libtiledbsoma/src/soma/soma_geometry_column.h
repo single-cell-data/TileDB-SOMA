@@ -56,7 +56,13 @@ class SOMAGeometryColumn : public SOMAColumn {
         const SOMACoordinateSpace& coordinate_space,
         const std::string& soma_type,
         std::string_view type_metadata,
-        PlatformConfig platform_config);
+        const PlatformConfig& platform_config);
+
+    static std::shared_ptr<SOMAGeometryColumn> create(
+        std::shared_ptr<Context> ctx,
+        const SOMACoordinateSpace& coordinate_space,
+        const std::vector<DimensionConfigAdapter<double_t>>& dim_configs,
+        const PlatformConfig& platform_config);
 
     SOMAGeometryColumn(std::vector<Dimension> dimensions, Attribute attribute, SOMACoordinateSpace coordinate_space)
         : dimensions(dimensions)

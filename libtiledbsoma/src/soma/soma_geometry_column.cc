@@ -78,49 +78,66 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     ArrowSchema* spatial_schema,
     ArrowArray* spatial_array,
     const SOMACoordinateSpace& coordinate_space,
-    const std::string& soma_type,
+    const std::string&,
     std::string_view type_metadata,
-    PlatformConfig platform_config) {
-    std::vector<Dimension> dims;
+    const PlatformConfig& platform_config) {
+    if (schema->name != SOMA_GEOMETRY_COLUMN_NAME) {
+        throw TileDBSOMAError("Internal error: unexpect column name");
+    }
+
     if (type_metadata.compare("WKB") != 0) {
-        throw TileDBSOMAError(
+        throw std::invalid_argument(
             fmt::format(
-                "[SOMAGeometryColumn] "
-                "Unkwown type metadata for `{}`: "
-                "Expected 'WKB', got '{}'",
+                "Unkwown type metadata for `{}`: Expected 'WKB', got '{}'", SOMA_GEOMETRY_COLUMN_NAME, type_metadata));
+    }
+
+    std::vector<DimensionConfigAdapter<double_t>> dim_configs{};
+    for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
+        auto dim_schema = spatial_schema->children[j];
+        auto dim_array = spatial_array->children[j];
+        auto dim_type = ArrowAdapter::to_tiledb_format(dim_schema->format, type_metadata);
+        if (dim_type != TILEDB_FLOAT64) {
+            throw TileDBSOMAError("Internal error: unexpected geometry dimension type.");
+        }
+        dim_configs.push_back(DimensionConfigAdapter<double_t>(static_cast<const double_t*>(dim_array->buffers[1])));
+    }
+    return SOMAGeometryColumn::create(ctx, coordinate_space, dim_configs, platform_config);
+}
+
+std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
+    std::shared_ptr<Context> ctx,
+    const SOMACoordinateSpace& coordinate_space,
+    const std::vector<DimensionConfigAdapter<double_t>>& dim_configs,
+    const PlatformConfig& platform_config) {
+    if (coordinate_space.size() != dim_configs.size()) {
+        throw std::invalid_argument(
+            fmt::format(
+                "Mismatched number of dimensions on column '{}'. The coordinate space has '{}' axes, but input for "
+                "'{}' "
+                "dimensions was provide.",
                 SOMA_GEOMETRY_COLUMN_NAME,
-                type_metadata));
+                coordinate_space.size(),
+                dim_configs.size()));
     }
 
-    for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(
-            ArrowAdapter::tiledb_dimension_from_arrow_schema(
-                ctx,
-                spatial_schema->children[j],
-                spatial_array->children[j],
-                soma_type,
-                type_metadata,
-                SOMA_GEOMETRY_DIMENSION_PREFIX,
-                "__min",
-                platform_config));
+    auto dim_filter_list = utils::create_dim_filter_list(
+        SOMA_GEOMETRY_COLUMN_NAME, platform_config, "SOMAGeometryDataFrame", ctx);
+    std::vector<Dimension> dims;
+    for (size_t jj = 0; jj < dim_configs.size(); ++jj) {
+        auto dim_name = SOMA_GEOMETRY_DIMENSION_PREFIX + coordinate_space.axis(jj).name + "__min";
+        dims.push_back(dim_configs[jj].create_dimension(*ctx, dim_name, dim_filter_list));
+    }
+    for (size_t jj = 0; jj < dim_configs.size(); ++jj) {
+        auto dim_name = SOMA_GEOMETRY_DIMENSION_PREFIX + coordinate_space.axis(jj).name + "__max";
+        dims.push_back(dim_configs[jj].create_dimension(*ctx, dim_name, dim_filter_list));
     }
 
-    for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(
-            ArrowAdapter::tiledb_dimension_from_arrow_schema(
-                ctx,
-                spatial_schema->children[j],
-                spatial_array->children[j],
-                soma_type,
-                type_metadata,
-                SOMA_GEOMETRY_DIMENSION_PREFIX,
-                "__max",
-                platform_config));
-    }
+    Attribute attr(*ctx, SOMA_GEOMETRY_COLUMN_NAME, TILEDB_GEOM_WKB);
+    attr.set_cell_val_num(TILEDB_VAR_NUM);
+    FilterList attr_filter_list = utils::create_attr_filter_list(SOMA_GEOMETRY_COLUMN_NAME, platform_config, ctx);
+    attr.set_filter_list(attr_filter_list);
 
-    auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(ctx, schema, type_metadata, platform_config);
-
-    return std::make_shared<SOMAGeometryColumn>(SOMAGeometryColumn(dims, attribute.first, coordinate_space));
+    return std::make_shared<SOMAGeometryColumn>(SOMAGeometryColumn(dims, attr, coordinate_space));
 }
 
 void SOMAGeometryColumn::_set_dim_points(ManagedQuery& query, const std::any& points) const {
