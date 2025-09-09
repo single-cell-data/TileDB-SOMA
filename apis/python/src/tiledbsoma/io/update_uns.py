@@ -13,6 +13,7 @@ from somacore.options import PlatformConfig
 
 from tiledbsoma import Experiment, SOMATileDBContext
 from tiledbsoma._collection import AnyTileDBCollection, Collection
+from tiledbsoma._logging import logger
 from tiledbsoma.io._common import AdditionalMetadata, UnsMapping, UnsNode
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import (
@@ -22,7 +23,6 @@ from tiledbsoma.io.ingest import (
     _maybe_set,
     _write_dataframe,
 )
-from tiledbsoma.logging import logger
 
 Strict = Literal[True, "raise", "warn", "info", "debug", "dry_run"]
 
