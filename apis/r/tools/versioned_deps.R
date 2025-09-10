@@ -9,13 +9,15 @@ root <- rprojroot::find_package_root_file()
 deps <- read.dcf(file.path(root, "DESCRIPTION"))[1L, c("Depends", "Imports")]
 deps <- Filter(
   f = nzchar,
-  x = trimws(x = unlist(
-    x = strsplit(
-      x = gsub(pattern = ",", replacement = "\n", x = deps),
-      split = "\n"
-    ),
-    use.names = FALSE
-  ))
+  x = trimws(
+    x = unlist(
+      x = strsplit(
+        x = gsub(pattern = ",", replacement = "\n", x = deps),
+        split = "\n"
+      ),
+      use.names = FALSE
+    )
+  )
 )
 
 pattern <- sprintf(
@@ -33,12 +35,14 @@ for (i in seq_along(along.with = deps)) {
     x = deps[i],
     m = regexpr(pattern = pattern, text = deps[i])
   )
-  versions[i] <- trimws(x = sub(
-    pattern = "\\(>=",
-    replacement = "",
-    x = sub(pattern = "\\)$", replacement = "", x = version)
-  ))
-  names(x = versions)[i] <- trimws(x = sub(
+  versions[i] <- trimws(
+    x = sub(
+      pattern = "\\(>=",
+      replacement = "",
+      x = sub(pattern = "\\)$", replacement = "", x = version)
+    )
+  )
+  names(x = versions)[i] <- trimws(sub(
     pattern = pattern,
     replacement = "",
     x = deps[i]

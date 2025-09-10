@@ -22,7 +22,10 @@
 #'
 .hits_to_mat <- function(hits) {
   stopifnot(
-    "S4Vectors must be installed" = requireNamespace("S4Vectors", quietly = TRUE),
+    "S4Vectors must be installed" = requireNamespace(
+      "S4Vectors",
+      quietly = TRUE
+    ),
     "'hits' must be a 'Hits' object" = inherits(hits, "Hits")
   )
   meta_cols <- S4Vectors::mcols(hits)
@@ -59,7 +62,10 @@
 #'
 .mat_to_hits <- function(mat) {
   stopifnot(
-    "S4Vectors must be installed" = requireNamespace("S4Vectors", quietly = TRUE),
+    "S4Vectors must be installed" = requireNamespace(
+      "S4Vectors",
+      quietly = TRUE
+    ),
     "'mat' must be a matrix" = is_matrix(mat)
   )
   f <- if (inherits(mat, "Matrix")) {
@@ -80,8 +86,5 @@
   repr <- repr[1L]
   repr <- match.arg(repr)
   version <- "1.20.0"
-  return(switch(EXPR = repr,
-    v = package_version(version),
-    version
-  ))
+  return(switch(EXPR = repr, v = package_version(version), version))
 }

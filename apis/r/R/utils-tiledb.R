@@ -15,7 +15,8 @@ match_query_layout <- function(layout) {
 }
 
 map_query_layout <- function(layout) {
-  switch(layout,
+  switch(
+    layout,
     ROW_MAJOR = "row-major",
     COL_MAJOR = "column-major",
     tolower(layout)
@@ -23,11 +24,10 @@ map_query_layout <- function(layout) {
 }
 
 get_tiledb_version <- function(compact = FALSE) {
-  stopifnot("'compact' must be TRUE or FALSE" = isTRUE(compact) || isFALSE(compact))
-  version <- `names<-`(
-    tiledb_embedded_version(),
-    c("major", "minor", "patch")
+  stopifnot(
+    "'compact' must be TRUE or FALSE" = isTRUE(compact) || isFALSE(compact)
   )
+  version <- `names<-`(tiledb_embedded_version(), c("major", "minor", "patch"))
   if (compact) {
     return(paste(version, collapse = "."))
   }
@@ -45,12 +45,25 @@ get_tiledb_version <- function(compact = FALSE) {
 #' show_package_versions()
 #'
 show_package_versions <- function() {
-  cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n",
-    "tiledb-r:      ", toString(utils::packageVersion("tiledb")), "\n",
-    "tiledb core:   ", as.character(get_tiledb_version(compact = TRUE)), "\n",
-    "libtiledbsoma: ", libtiledbsoma_version(compact = TRUE), "\n",
-    "R:             ", R.version.string, "\n",
-    "OS:            ", utils::osVersion, "\n",
+  cat(
+    "tiledbsoma:    ",
+    toString(utils::packageVersion("tiledbsoma")),
+    "\n",
+    "tiledb-r:      ",
+    toString(utils::packageVersion("tiledb")),
+    "\n",
+    "tiledb core:   ",
+    as.character(get_tiledb_version(compact = TRUE)),
+    "\n",
+    "libtiledbsoma: ",
+    libtiledbsoma_version(compact = TRUE),
+    "\n",
+    "R:             ",
+    R.version.string,
+    "\n",
+    "OS:            ",
+    utils::osVersion,
+    "\n",
     sep = ""
   )
 }

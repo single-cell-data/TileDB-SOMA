@@ -23,21 +23,33 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_no_condition(graph <- query$to_seurat_graph("connectivities"))
   expect_s4_class(graph, "Graph")
   expect_identical(dim(graph), c(n_obs, n_obs))
-  expect_identical(rownames(graph), paste0("cell", query$obs_joinids()$as_vector()))
-  expect_identical(colnames(graph), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(graph),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(graph),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
   expect_identical(SeuratObject::DefaultAssay(graph), "RNA")
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_graph("connectivities", "string_column"))
+  expect_no_condition(
+    named <- query$to_seurat_graph("connectivities", "string_column")
+  )
   expect_s4_class(named, "Graph")
   expect_identical(dim(named), c(n_obs, n_obs))
   expect_identical(
     rownames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(SeuratObject::DefaultAssay(named), "RNA")
 
@@ -93,21 +105,33 @@ test_that("Load graph from sliced ExperimentQuery", {
   expect_no_condition(graph <- query$to_seurat_graph("connectivities"))
   expect_s4_class(graph, "Graph")
   expect_identical(dim(graph), c(n_obs_slice, n_obs_slice))
-  expect_identical(rownames(graph), paste0("cell", query$obs_joinids()$as_vector()))
-  expect_identical(colnames(graph), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(graph),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(graph),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
   expect_identical(SeuratObject::DefaultAssay(graph), "RNA")
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_graph("connectivities", "string_column"))
+  expect_no_condition(
+    named <- query$to_seurat_graph("connectivities", "string_column")
+  )
   expect_s4_class(named, "Graph")
   expect_identical(dim(named), c(n_obs_slice, n_obs_slice))
   expect_identical(
     rownames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(SeuratObject::DefaultAssay(named), "RNA")
 })
@@ -150,22 +174,34 @@ test_that("Load graph from indexed ExperimentQuery", {
   expect_no_condition(graph <- query$to_seurat_graph("connectivities"))
   expect_s4_class(graph, "Graph")
   expect_identical(dim(graph), c(n_obs_select, n_obs_select))
-  expect_identical(rownames(graph), paste0("cell", query$obs_joinids()$as_vector()))
-  expect_identical(colnames(graph), paste0("cell", query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(graph),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(graph),
+    paste0("cell", query$obs_joinids()$as_vector())
+  )
   expect_identical(SeuratObject::DefaultAssay(graph), "RNA")
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_graph("connectivities", "string_column"))
+  expect_no_condition(
+    named <- query$to_seurat_graph("connectivities", "string_column")
+  )
   expect_s4_class(named, "Graph")
   expect_identical(dim(named), c(n_obs_select, n_obs_select))
   expect_identical(
     rownames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(rownames(named), obs_label_values)
   expect_identical(
     colnames(named),
-    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName(
+      "string_column"
+    )$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
   expect_identical(SeuratObject::DefaultAssay(named), "RNA")

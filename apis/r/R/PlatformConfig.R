@@ -35,7 +35,9 @@ PlatformConfig <- R6::R6Class(
     #'
     params = function(platform = NULL) {
       stopifnot(
-        "'platform' must be a scalar character or logical value" = is.null(platform) ||
+        "'platform' must be a scalar character or logical value" = is.null(
+          platform
+        ) ||
           is_scalar_character(platform) ||
           is_scalar_logical(platform)
       )
@@ -128,7 +130,9 @@ PlatformConfig <- R6::R6Class(
     #'
     set = function(platform, param, key, value) {
       stopifnot(
-        "'platform' must be a single character value" = is_scalar_character(platform),
+        "'platform' must be a single character value" = is_scalar_character(
+          platform
+        ),
         "'param' must be a single character value" = is_scalar_character(param)
       )
       pmap <- super$get(key = platform, default = ConfigList$new())

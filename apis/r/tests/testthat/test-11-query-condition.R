@@ -1,6 +1,8 @@
 test_that("DataFrame Factory", {
   uri <- tempfile()
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+  if (dir.exists(uri)) {
+    unlink(uri, recursive = TRUE)
+  }
 
   ctx <- soma_context()
 
@@ -57,11 +59,55 @@ test_that("DataFrame Factory", {
     uint16 = 201L:210L,
     uint32 = 301L:310L,
     uint64 = 401L:410L,
-    string = c("apple", "ball", "cat", "dog", "egg", "fig", "goose", "hay", "ice", "jam"),
-    utf8 = c("apple", "ball", "cat", "dog", "egg", "fig", "goose", "hay", "ice", "jam"),
-    large_utf8 = c("APPLE", "BALL", "CAT", "DOG", "EGG", "FIG", "GOOSE", "HAY", "ICE", "JAM"),
+    string = c(
+      "apple",
+      "ball",
+      "cat",
+      "dog",
+      "egg",
+      "fig",
+      "goose",
+      "hay",
+      "ice",
+      "jam"
+    ),
+    utf8 = c(
+      "apple",
+      "ball",
+      "cat",
+      "dog",
+      "egg",
+      "fig",
+      "goose",
+      "hay",
+      "ice",
+      "jam"
+    ),
+    large_utf8 = c(
+      "APPLE",
+      "BALL",
+      "CAT",
+      "DOG",
+      "EGG",
+      "FIG",
+      "GOOSE",
+      "HAY",
+      "ICE",
+      "JAM"
+    ),
     enum = factor(
-      c("red", "yellow", "green", "red", "red", "red", "yellow", "green", "red", "green"),
+      c(
+        "red",
+        "yellow",
+        "green",
+        "red",
+        "red",
+        "red",
+        "yellow",
+        "green",
+        "red",
+        "green"
+      ),
       levels = c("red", "yellow", "green")
     ),
     float32 = 1.5:10.5,

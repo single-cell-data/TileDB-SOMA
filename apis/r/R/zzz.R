@@ -44,19 +44,26 @@ NULL
   rpkg_lib <- get_tiledb_version(compact = FALSE)
   # Check major and minor but not micro: sc-50464
   rpkg_lib_version <- paste(rpkg_lib[["major"]], rpkg_lib[["minor"]], sep = ".")
-  soma_lib_version <- libtiledbsoma_version(compact = TRUE, major_minor_only = TRUE)
+  soma_lib_version <- libtiledbsoma_version(
+    compact = TRUE,
+    major_minor_only = TRUE
+  )
   if (rpkg_lib_version != soma_lib_version) {
     msg <- sprintf(
       "TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s",
-      sQuote(rpkg_lib_version), sQuote(soma_lib_version)
+      sQuote(rpkg_lib_version),
+      sQuote(soma_lib_version)
     )
     packageStartupMessage(msg)
   }
   if (interactive()) {
     packageStartupMessage(
-      "TileDB-SOMA R package ", utils::packageVersion(pkgname),
-      " with TileDB Embedded ", format(get_tiledb_version(TRUE)),
-      " on ", utils::osVersion,
+      "TileDB-SOMA R package ",
+      utils::packageVersion(pkgname),
+      " with TileDB Embedded ",
+      format(get_tiledb_version(TRUE)),
+      " on ",
+      utils::osVersion,
       ".\nSee https://github.com/single-cell-data for more information ",
       "about the SOMA project."
     )

@@ -8,24 +8,28 @@ if (isTRUE(as.logical(Sys.getenv("_CI_USE_BIOC_")))) {
   setRepositories(ind = 1:3)
 }
 
-desc <- as.list(x = as.data.frame(x = read.dcf(
-  file = file.path(wd, "DESCRIPTION"),
-  fields = c(
-    "Depends",
-    "Imports",
-    "LinkingTo",
-    "Suggests",
-    "Enhances",
-    "Additional_repositories"
+desc <- as.list(
+  x = as.data.frame(
+    x = read.dcf(
+      file = file.path(wd, "DESCRIPTION"),
+      fields = c(
+        "Depends",
+        "Imports",
+        "LinkingTo",
+        "Suggests",
+        "Enhances",
+        "Additional_repositories"
+      )
+    )
   )
-)))
+)
 
 desc <- Filter(f = Negate(f = is.na), x = desc)
 
 if (!is.null(desc$Additional_repositories)) {
-  desc$Additional_repositories <- trimws(x = unlist(x = strsplit(
+  desc$Additional_repositories <- trimws(unlist(strsplit(
     x = desc$Additional_repositories,
-    split = ','
+    split = ","
   )))
 }
 
@@ -78,14 +82,16 @@ if (nrow(x = desc)) {
   )
   message("Finding additional downstream dependencies")
   db <- utils::available.packages(repos = repos, type = pkgtype)
-  deps <- unique(x = unlist(
-    x = tools::package_dependencies(
-      packages = desc$Package,
-      db = db,
-      recursive = TRUE
-    ),
-    use.names = FALSE
-  ))
+  deps <- unique(
+    x = unlist(
+      x = tools::package_dependencies(
+        packages = desc$Package,
+        db = db,
+        recursive = TRUE
+      ),
+      use.names = FALSE
+    )
+  )
   deps <- setdiff(x = deps, y = c(utils::sessionInfo()$basePkgs, desc$Package))
   deps <- Filter(
     f = Negate(f = \(x) isTRUE(requireNamespace(x, quietly = TRUE))),

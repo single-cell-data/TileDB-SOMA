@@ -20,8 +20,13 @@ IntIndexer <- R6::R6Class(
     #' @param data Integer keys used to build the index (hash) table
     #'
     initialize = function(data) {
-      stopifnot("'data' must be a vector of integers" = rlang::is_integerish(data, finite = TRUE) ||
-        (inherits(data, "integer64") && all(is.finite(data))))
+      stopifnot(
+        "'data' must be a vector of integers" = rlang::is_integerish(
+          data,
+          finite = TRUE
+        ) ||
+          (inherits(data, "integer64") && all(is.finite(data)))
+      )
 
       # Setup the re-indexer with data
       private$.reindexer <- reindex_create()
@@ -48,9 +53,13 @@ IntIndexer <- R6::R6Class(
         }
       }
       stopifnot(
-        "'target' must be a vector or arrow array of integers" = rlang::is_integerish(target, finite = TRUE) ||
+        "'target' must be a vector or arrow array of integers" = rlang::is_integerish(
+          target,
+          finite = TRUE
+        ) ||
           (inherits(target, "integer64") && all(is.finite(target))),
-        "'nomatch_na' must be TRUE or FALSE" = isTRUE(nomatch_na) || isFALSE(nomatch_na)
+        "'nomatch_na' must be TRUE or FALSE" = isTRUE(nomatch_na) ||
+          isFALSE(nomatch_na)
       )
       # Do vector-based re-indexing
       val <- reindex_lookup(private$.reindexer, bit64::as.integer64(target))

@@ -4,7 +4,10 @@ test_that("CoordsStrider start/end mechanics", {
   start <- 1L
   end <- 200L
   # Test no stride
-  expect_s3_class(strider <- CoordsStrider$new(start = start, end = end), "CoordsStrider")
+  expect_s3_class(
+    strider <- CoordsStrider$new(start = start, end = end),
+    "CoordsStrider"
+  )
   expect_equal(strider$stride, end)
   expect_null(strider$coords)
   expect_type(coords <- as.list(strider), "list")
@@ -25,7 +28,11 @@ test_that("CoordsStrider start/end mechanics", {
   }
   expect_equal(unlist64(coords), seq.int(start, end))
   expect_error(strider$next_element(), "StopIteration", class = "stopIteration")
-  expect_error(iterators::nextElem(strider), "StopIteration", class = "stopIteration")
+  expect_error(
+    iterators::nextElem(strider),
+    "StopIteration",
+    class = "stopIteration"
+  )
   expect_false(strider$has_next())
   expect_false(itertools::hasNext(strider))
   # Test with uneven stride
@@ -82,7 +89,11 @@ test_that("CoordsStrider coodinate mechanics", {
   }
   expect_equal(unlist64(coords), init)
   expect_error(strider$next_element(), "StopIteration", class = "stopIteration")
-  expect_error(iterators::nextElem(strider), "StopIteration", class = "stopIteration")
+  expect_error(
+    iterators::nextElem(strider),
+    "StopIteration",
+    class = "stopIteration"
+  )
   expect_false(strider$has_next())
   expect_false(itertools::hasNext(strider))
   # Test with uneven stride

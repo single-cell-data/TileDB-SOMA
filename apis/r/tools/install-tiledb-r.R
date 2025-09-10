@@ -4,13 +4,22 @@ options(bspm.version.check = TRUE)
 
 # Find tiledb-r constraints
 deps <- read.dcf('DESCRIPTION', fields = 'Imports')[1, ]
-deps <- trimws(strsplit(gsub(pattern = ',', replacement = '\n', x = deps), split = '\n')[[1L]])
+deps <- trimws(strsplit(
+  gsub(pattern = ',', replacement = '\n', x = deps),
+  split = '\n'
+)[[1L]])
 deps <- Filter(nzchar, deps)
 deps <- Filter(function(x) grepl('^tiledb', x), deps)
 deps <- gsub(pattern = '[[:space:]]', replacement = '', x = deps)
 deps <- gsub(pattern = '.*\\(|\\)', replacement = '', x = deps)
-const <- data.frame(comp = gsub(pattern = '[[:digit:]\\.]*', replacement = '', x = deps))
-const$vers <- gsub(pattern = paste(const$comp, collapse = '|'), replacement = '', x = deps)
+const <- data.frame(
+  comp = gsub(pattern = '[[:digit:]\\.]*', replacement = '', x = deps)
+)
+const$vers <- gsub(
+  pattern = paste(const$comp, collapse = '|'),
+  replacement = '',
+  x = deps
+)
 (const)
 
 # Find correct version of tiledb-r
@@ -41,7 +50,13 @@ if (!all(valid)) {
   x = apply(
     X = db[db[, 'Package'] == 'tiledb', , drop = FALSE],
     MARGIN = 1L,
-    FUN = \(x) tools::package_dependencies("tiledb", db = t(as.matrix(x)), recursive = TRUE)$tiledb,
+    FUN = \(x) {
+      tools::package_dependencies(
+        "tiledb",
+        db = t(as.matrix(x)),
+        recursive = TRUE
+      )$tiledb
+    },
     simplify = FALSE
   )
 ))

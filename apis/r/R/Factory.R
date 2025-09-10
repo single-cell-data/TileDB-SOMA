@@ -118,7 +118,11 @@ SOMADataFrameOpen <- function(
   tiledb_timestamp = NULL,
   soma_context = NULL
 ) {
-  spdl::debug("[SOMADataFrameOpen] uri {} ts ({})", uri, tiledb_timestamp %||% "now")
+  spdl::debug(
+    "[SOMADataFrameOpen] uri {} ts ({})",
+    uri,
+    tiledb_timestamp %||% "now"
+  )
   sdf <- SOMADataFrame$new(
     uri,
     platform_config = platform_config,
@@ -185,11 +189,7 @@ SOMASparseNDArrayCreate <- function(
   if (ingest_mode %in% c("resume")) {
     snda$open(mode = "WRITE")
   } else {
-    snda$create(
-      type,
-      shape,
-      platform_config = platform_config
-    )
+    snda$create(type, shape, platform_config = platform_config)
   }
   return(snda)
 }
@@ -262,18 +262,17 @@ SOMADenseNDArrayCreate <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
-  spdl::debug("[SOMADenseNDArrayCreate] tstamp ({})", tiledb_timestamp %||% "now")
+  spdl::debug(
+    "[SOMADenseNDArrayCreate] tstamp ({})",
+    tiledb_timestamp %||% "now"
+  )
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp
   )
-  dnda$create(
-    type,
-    shape,
-    platform_config = platform_config
-  )
+  dnda$create(type, shape, platform_config = platform_config)
   return(dnda)
 }
 

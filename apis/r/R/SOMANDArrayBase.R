@@ -17,7 +17,6 @@ SOMANDArrayBase <- R6::R6Class(
   classname = "SOMANDArrayBase",
   inherit = SOMAArrayBase,
   public = list(
-
     #' @description Create a SOMA NDArray named with the URI
     #' (lifecycle: maturing).\cr
     #' \cr
@@ -32,11 +31,7 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     #' @return Returns \code{self}.
     #'
-    create = function(
-      type,
-      shape,
-      platform_config = NULL
-    ) {
+    create = function(type, shape, platform_config = NULL) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),
@@ -44,7 +39,10 @@ SOMANDArrayBase <- R6::R6Class(
       ))
       if (!"tiledbsoma" %in% envs) {
         stop(
-          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          paste(
+            strwrap(private$.internal_use_only("create", "collection")),
+            collapse = '\n'
+          ),
           call. = FALSE
         )
       }
@@ -105,7 +103,10 @@ SOMANDArrayBase <- R6::R6Class(
     #' @param type A character value describing the TileDB data type.
     #'
     set_data_type = function(type) {
-      spdl::debug("[SOMANDArrayBase::set_data_type] caching type {}", type$ToString())
+      spdl::debug(
+        "[SOMANDArrayBase::set_data_type] caching type {}",
+        type$ToString()
+      )
       private$.type <- type
     },
 
@@ -134,9 +135,11 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     resize = function(new_shape, check_only = FALSE) {
       stopifnot(
-        "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
-          rlang::is_integerish(new_shape, n = self$ndim()) ||
-            (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
+        "'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(
+          new_shape,
+          n = self$ndim()
+        ) ||
+          (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
@@ -174,9 +177,11 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     tiledbsoma_upgrade_shape = function(shape, check_only = FALSE) {
       stopifnot(
-        "'shape' must be a vector of integerish values, of the same length as maxshape" =
-          rlang::is_integerish(shape, n = self$ndim()) ||
-            (bit64::is.integer64(shape) && length(shape) == self$ndim())
+        "'shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(
+          shape,
+          n = self$ndim()
+        ) ||
+          (bit64::is.integer64(shape) && length(shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
@@ -214,23 +219,23 @@ SOMANDArrayBase <- R6::R6Class(
       # Ensure coords is a named list, use to select dim points
       stopifnot(
         "'coords' must be a list" = is.list(coords) && length(coords),
-        "'coords' must be a list integerish vectors" =
-          all(vapply(
-            X = coords,
-            FUN = function(x) {
-              if (is.null(x)) {
-                return(TRUE)
-              }
-              return(
-                (is.null(dim(x)) && !is.factor(x)) &&
-                  (rlang::is_integerish(x, finite = TRUE) || (bit64::is.integer64(x) && all(is.finite(x)))) &&
-                  length(x) &&
-                  all(x >= 0L)
-              )
-            },
-            FUN.VALUE = logical(length = 1L),
-            USE.NAMES = FALSE
-          )),
+        "'coords' must be a list integerish vectors" = all(vapply(
+          X = coords,
+          FUN = function(x) {
+            if (is.null(x)) {
+              return(TRUE)
+            }
+            return(
+              (is.null(dim(x)) && !is.factor(x)) &&
+                (rlang::is_integerish(x, finite = TRUE) ||
+                  (bit64::is.integer64(x) && all(is.finite(x)))) &&
+                length(x) &&
+                all(x >= 0L)
+            )
+          },
+          FUN.VALUE = logical(length = 1L),
+          USE.NAMES = FALSE
+        )),
         "'coords' if unnamed must have length of dim names, else if named names must match dim names" = ifelse(
           test = is.null(names(coords)),
           yes = length(coords) == length(self$dimnames()),
@@ -264,8 +269,14 @@ SOMANDArrayBase <- R6::R6Class(
     .convert_shape_argument = function(new_shape) {
       # ensure new_shape is an integerish vector
       stopifnot(
-        "'new_shape' must be an integerish vector with the same length as the array's maxshape" = rlang::is_integerish(new_shape, n = self$ndim(), finite = TRUE) ||
-          (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim() && all(is.finite(new_shape)))
+        "'new_shape' must be an integerish vector with the same length as the array's maxshape" = rlang::is_integerish(
+          new_shape,
+          n = self$ndim(),
+          finite = TRUE
+        ) ||
+          (bit64::is.integer64(new_shape) &&
+            length(new_shape) == self$ndim() &&
+            all(is.finite(new_shape)))
       )
 
       # convert integer to integer64 to match dimension type

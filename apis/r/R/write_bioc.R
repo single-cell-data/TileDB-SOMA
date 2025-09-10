@@ -378,7 +378,9 @@ write_soma.SummarizedExperiment <- function(
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
-    "'ms_name' must be a single character value" = is_scalar_character(ms_name) &&
+    "'ms_name' must be a single character value" = is_scalar_character(
+      ms_name
+    ) &&
       nzchar(ms_name) &&
       !is.na(ms_name)
   )

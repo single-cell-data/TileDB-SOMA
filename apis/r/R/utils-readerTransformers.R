@@ -24,7 +24,8 @@ soma_array_to_arrow_table_concat <- function(it) {
 soma_array_to_sparse_matrix_concat <- function(it, zero_based = FALSE) {
   stopifnot(
     "'it' must be a 'ReadIter' object" = inherits(it, "ReadIter"),
-    "'zero_based' must be TRUE or FALSE" = isTRUE(zero_based) || isFALSE(zero_based)
+    "'zero_based' must be TRUE or FALSE" = isTRUE(zero_based) ||
+      isFALSE(zero_based)
   )
   mat <- it$read_next()
   while (!it$read_complete()) {
@@ -54,7 +55,12 @@ soma_array_to_sparse_matrix_concat <- function(it, zero_based = FALSE) {
 #' @return Matrix::\link{sparseMatrix} or \link{matrixZeroBasedView} of
 #' Matrix::\link[Matrix]{sparseMatrix}
 #' @noRd
-arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, zero_based = FALSE) {
+arrow_table_to_sparse <- function(
+  tbl,
+  repr = c("C", "T", "R"),
+  shape = NULL,
+  zero_based = FALSE
+) {
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
   # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
   # usually populated with soma_joinid, users will need to access the matrix
@@ -68,15 +74,17 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
   }
 
   stopifnot(
-    "'shape' must not exceed '.Machine$integer.max'." =
-      all(shape <= .Machine$integer.max),
-    "A Matrix::sparseMatrix cannot hold more than 2^31 - 1 non-zero values" =
-      nrow(tbl) <= .Machine$integer.max
+    "'shape' must not exceed '.Machine$integer.max'." = all(
+      shape <= .Machine$integer.max
+    ),
+    "A Matrix::sparseMatrix cannot hold more than 2^31 - 1 non-zero values" = nrow(
+      tbl
+    ) <=
+      .Machine$integer.max
   )
 
-  exceedsInt32Limit <- (
-    tbl$soma_dim_0 >= .Machine$integer.max | tbl$soma_dim_1 >= .Machine$integer.max
-  )
+  exceedsInt32Limit <- (tbl$soma_dim_0 >= .Machine$integer.max |
+    tbl$soma_dim_1 >= .Machine$integer.max)
 
   if (any(exceedsInt32Limit)$as_vector()) {
     stop(

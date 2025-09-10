@@ -42,14 +42,24 @@ test_that("Load SeuratComand mechanics", {
           objstring <- paste(trimws(methods::slot(objlog, i)), collapse = " ")
           expect_identical(methods::slot(log, i), objstring, info = info)
         },
-        expect_identical(methods::slot(log, i), methods::slot(objlog, i), info = info)
+        expect_identical(
+          methods::slot(log, i),
+          methods::slot(objlog, i),
+          info = info
+        )
       )
     }
     params <- methods::slot(log, "params")
     for (param in names(params)) {
-      info <- paste("Differing parameter", sQuote(param), "for command", sQuote(cmd))
+      info <- paste(
+        "Differing parameter",
+        sQuote(param),
+        "for command",
+        sQuote(cmd)
+      )
       objparam <- do.call(`$`, list(objlog, param))
-      switch(typeof(params[[param]]),
+      switch(
+        typeof(params[[param]]),
         character = {
           objstring <- paste(trimws(objparam), collapse = " ")
           expect_identical(params[[param]], objstring, info = info)
@@ -64,16 +74,37 @@ test_that("Load SeuratComand mechanics", {
     function(x) is.null(SeuratObject::DefaultAssay(x)),
     methods::slot(pbmc_small, "commands")
   )
-  expect_length(no.cmds <- .load_seurat_command(uns, "no-assay"), length(no.assay))
+  expect_length(
+    no.cmds <- .load_seurat_command(uns, "no-assay"),
+    length(no.assay)
+  )
   expect_identical(sort(names(no.cmds)), sort(names(no.assay)))
 
   # Test assertions
-  expect_error(.load_seurat_command(list(), SeuratObject::DefaultAssay(pbmc_small)))
-  expect_error(.load_seurat_command(exp$ms, SeuratObject::DefaultAssay(pbmc_small)))
-  expect_error(.load_seurat_command(uns, 1:3), regexp = "^'ms_names' must be a character vector with no empty strings$")
-  expect_error(.load_seurat_command(uns, TRUE), regexp = "^'ms_names' must be a character vector with no empty strings$")
-  expect_error(.load_seurat_command(uns, NULL), regexp = "^'ms_names' must be a character vector with no empty strings$")
-  expect_error(.load_seurat_command(uns, ""), regexp = "^'ms_names' must be a character vector with no empty strings$")
+  expect_error(.load_seurat_command(
+    list(),
+    SeuratObject::DefaultAssay(pbmc_small)
+  ))
+  expect_error(.load_seurat_command(
+    exp$ms,
+    SeuratObject::DefaultAssay(pbmc_small)
+  ))
+  expect_error(
+    .load_seurat_command(uns, 1:3),
+    regexp = "^'ms_names' must be a character vector with no empty strings$"
+  )
+  expect_error(
+    .load_seurat_command(uns, TRUE),
+    regexp = "^'ms_names' must be a character vector with no empty strings$"
+  )
+  expect_error(
+    .load_seurat_command(uns, NULL),
+    regexp = "^'ms_names' must be a character vector with no empty strings$"
+  )
+  expect_error(
+    .load_seurat_command(uns, ""),
+    regexp = "^'ms_names' must be a character vector with no empty strings$"
+  )
 })
 
 test_that("Loading SeuratCommands works from experiment queries", {
@@ -81,15 +112,20 @@ test_that("Loading SeuratCommands works from experiment queries", {
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
   skip_if_not_installed("jsonlite")
 
-
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
-  uri <- write_soma(pbmc_small, uri = tempfile(pattern = "seurat-command-query"))
+  uri <- write_soma(
+    pbmc_small,
+    uri = tempfile(pattern = "seurat-command-query")
+  )
 
   expect_no_condition(exp <- SOMAExperimentOpen(uri))
   on.exit(exp$close(), add = TRUE)
 
   expect_s3_class(
-    query <- SOMAExperimentAxisQuery$new(exp, SeuratObject::DefaultAssay(pbmc_small)),
+    query <- SOMAExperimentAxisQuery$new(
+      exp,
+      SeuratObject::DefaultAssay(pbmc_small)
+    ),
     "SOMAExperimentAxisQuery"
   )
 
@@ -120,7 +156,10 @@ test_that("Load SeuratCommand with missing commands", {
   expect_false("seurat_commands" %in% uns$names())
 
   expect_s3_class(
-    query <- SOMAExperimentAxisQuery$new(exp, SeuratObject::DefaultAssay(pbmc_small)),
+    query <- SOMAExperimentAxisQuery$new(
+      exp,
+      SeuratObject::DefaultAssay(pbmc_small)
+    ),
     "SOMAExperimentAxisQuery"
   )
 

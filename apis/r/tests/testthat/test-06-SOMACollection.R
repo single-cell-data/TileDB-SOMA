@@ -49,21 +49,34 @@ test_that("SOMACollection basics", {
   subcollection$close()
 
   # Add another dataframe to the collection, this time using add_new_dataframe
-  collection$add_new_dataframe("new_df", create_arrow_schema(), "int_column", domain = list(int_column = c(0, 999)))$close()
+  collection$add_new_dataframe(
+    "new_df",
+    create_arrow_schema(),
+    "int_column",
+    domain = list(int_column = c(0, 999))
+  )$close()
   df3 <- collection$get("new_df")
   df3 <- SOMADataFrameOpen(df3$uri)
   expect_true(df3$soma_type == "SOMADataFrame")
   df3$close()
 
   # Add new DenseNDArray to the collection
-  collection$add_new_dense_ndarray("nd_d_arr", arrow::int32(), shape = c(10, 5))$close()
+  collection$add_new_dense_ndarray(
+    "nd_d_arr",
+    arrow::int32(),
+    shape = c(10, 5)
+  )$close()
   arr <- collection$get("nd_d_arr")
   arr <- SOMADenseNDArrayOpen(arr$uri)
   expect_true(arr$soma_type == "SOMADenseNDArray")
   arr$close()
 
   # Add new SparseNDArray to the collection
-  collection$add_new_sparse_ndarray("nd_s_arr", arrow::int32(), shape = c(10, 5))$close()
+  collection$add_new_sparse_ndarray(
+    "nd_s_arr",
+    arrow::int32(),
+    shape = c(10, 5)
+  )$close()
   arr <- collection$get("nd_s_arr")
   arr <- SOMASparseNDArrayOpen(arr$uri)
   expect_true(arr$soma_type == "SOMASparseNDArray")
@@ -84,14 +97,23 @@ test_that("SOMACollection timestamped ops", {
 
   # add array A with 1 in top-left entry @ t1
   collection <- SOMACollectionOpen(uri, mode = "WRITE")
-  collection$add_new_sparse_ndarray("A", arrow::int8(), shape = c(2, 2))$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
+  collection$add_new_sparse_ndarray(
+    "A",
+    arrow::int8(),
+    shape = c(2, 2)
+  )$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
   collection$close()
   t1 <- Sys.time()
   Sys.sleep(1.01)
 
   # write 1 into bottom-right of A @ t2
   collection <- SOMACollectionOpen(uri, mode = "WRITE")
-  collection$get("A")$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
+  collection$get("A")$write(Matrix::sparseMatrix(
+    i = 2,
+    j = 2,
+    x = 1,
+    dims = c(2, 2)
+  ))
   collection$close()
 
   # open A via collection with no timestamp => A should reflect the final state
@@ -137,7 +159,12 @@ test_that("Platform config and context are respected by add_ methods", {
 
   # Add a dataframe element to the collection
   tbl <- create_arrow_table()
-  sdf1 <- collection$add_new_dataframe("sdf1", tbl$schema, "soma_joinid", domain = list(soma_joinid = c(0, 999)))
+  sdf1 <- collection$add_new_dataframe(
+    "sdf1",
+    tbl$schema,
+    "soma_joinid",
+    domain = list(soma_joinid = c(0, 999))
+  )
   sdf1$write(tbl)
 
   # Verify the config and context params were inherited

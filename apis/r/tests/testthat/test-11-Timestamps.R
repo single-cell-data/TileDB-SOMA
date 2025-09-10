@@ -4,15 +4,20 @@ test_that("SOMADataFrame", {
   sch <- arrow::schema(
     arrow::field("soma_joinid", arrow::int64()),
     arrow::field("int", arrow::int32()),
-    arrow::field("str", arrow::dictionary(
-      index_type = arrow::int8(),
-      value_type = arrow::utf8()
-    ))
+    arrow::field(
+      "str",
+      arrow::dictionary(index_type = arrow::int8(), value_type = arrow::utf8())
+    )
   )
 
   ## create at t = 1
   ts1 <- as.POSIXct(1, tz = "UTC", origin = "1970-01-01")
-  sdf <- tiledbsoma::SOMADataFrameCreate(uri, sch, tiledb_timestamp = ts1, domain = list(soma_joinid = c(0, 999)))
+  sdf <- tiledbsoma::SOMADataFrameCreate(
+    uri,
+    sch,
+    tiledb_timestamp = ts1,
+    domain = list(soma_joinid = c(0, 999))
+  )
 
   ## write part1 at t = 2
   dat2 <- arrow::arrow_table(

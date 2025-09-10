@@ -37,7 +37,6 @@ SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
   inherit = SOMANDArrayBase,
   public = list(
-
     #' @description Read as an \link[arrow:Table]{Arrow table}
     #' (lifecycle: maturing).
     #'
@@ -145,19 +144,17 @@ SOMADenseNDArray <- R6::R6Class(
       private$.check_open_for_write()
 
       spdl::debug("[SOMADenseNDArray::write] entered")
-      stopifnot(
-        "'values' must be a matrix" = is.matrix(values)
-      )
+      stopifnot("'values' must be a matrix" = is.matrix(values))
 
       if (is.null(coords)) {
         coords <- list(seq_len(nrow(values)), seq_len(ncol(values)))
       }
 
       stopifnot(
-        "'coords' must be a list of integer vectors" =
-          is.list(coords) && all(vapply_lgl(coords, is.integer)),
-        "length of 'coords' must match number of dimensions" =
-          length(coords) == self$ndim()
+        "'coords' must be a list of integer vectors" = is.list(coords) &&
+          all(vapply_lgl(coords, is.integer)),
+        "length of 'coords' must match number of dimensions" = length(coords) ==
+          self$ndim()
       )
 
       ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
@@ -196,8 +193,10 @@ SOMADenseNDArray <- R6::R6Class(
     .dim_capacity_and_extent = function(name, shape = NULL, create_options) {
       out <- list(name = name, capacity = NULL, extent = NULL)
       stopifnot(
-        "'shape' must be a positive scalar integer" =
-          rlang::is_scalar_integerish(shape) && shape > 0
+        "'shape' must be a positive scalar integer" = rlang::is_scalar_integerish(
+          shape
+        ) &&
+          shape > 0
       )
       out$capacity <- shape
       out$extent <- min(shape, create_options$dim_tile(name))

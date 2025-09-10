@@ -22,7 +22,10 @@ test_that("Write SingleCellExperiment mechanics", {
 
   expect_no_error(experiment$ms)
 
-  expect_identical(experiment$ms$names(), SingleCellExperiment::mainExpName(sce))
+  expect_identical(
+    experiment$ms$names(),
+    SingleCellExperiment::mainExpName(sce)
+  )
   expect_s3_class(
     ms <- experiment$ms$get(SingleCellExperiment::mainExpName(sce)),
     "SOMAMeasurement"
@@ -40,7 +43,10 @@ test_that("Write SingleCellExperiment mechanics", {
   )
   for (i in ms$obsm$names()) {
     expect_s3_class(arr <- ms$obsm$get(i), "SOMASparseNDArray")
-    expect_equivalent(arr$shape(), dim(SingleCellExperiment::reducedDim(sce, i)))
+    expect_equivalent(
+      arr$shape(),
+      dim(SingleCellExperiment::reducedDim(sce, i))
+    )
   }
 
   # SCE doesn't support `varm`

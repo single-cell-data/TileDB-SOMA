@@ -69,7 +69,10 @@ test_that("`reopen()` works on arrays", {
     expect_identical(
       arr$mode(),
       orig,
-      info = sprintf("%s$reopen() with an identical mode returns the same mode", cls)
+      info = sprintf(
+        "%s$reopen() with an identical mode returns the same mode",
+        cls
+      )
     )
     expect_true(arr$is_open(), info = is_open)
 
@@ -86,11 +89,20 @@ test_that("`reopen()` works on arrays", {
       expect_identical(
         arr$mode(),
         mode,
-        info = sprintf("%s$reopen('%s') returns a mode of '%s'", cls, mode, mode)
+        info = sprintf(
+          "%s$reopen('%s') returns a mode of '%s'",
+          cls,
+          mode,
+          mode
+        )
       )
       expect_true(
         arr$is_open(),
-        info = sprintf("%s$reopen('%s') from CLOSED returns an open object", cls, mode)
+        info = sprintf(
+          "%s$reopen('%s') from CLOSED returns an open object",
+          cls,
+          mode
+        )
       )
       expect_no_condition(arr$close())
     }

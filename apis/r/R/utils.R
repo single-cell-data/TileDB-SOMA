@@ -1,4 +1,3 @@
-
 string_collapse <- function(x, sep = ", ") {
   return(glue::glue_collapse(x, sep = sep, width = getOption("width", Inf)))
 }
@@ -62,17 +61,16 @@ uns_hint <- function(type = c("1d", "2d")) {
 }
 
 .encode_as_char <- function(x) {
-  return(switch(
-    EXPR = typeof(x),
-    double = sprintf("%a", x),
-    x
-  ))
+  return(switch(EXPR = typeof(x), double = sprintf("%a", x), x))
 }
 
 .err_to_warn <- function(err) {
   warning(warningCondition(
     message = conditionMessage(err),
-    class = setdiff(class(err), c("warning", "simpleError", "error", "condition")),
+    class = setdiff(
+      class(err),
+      c("warning", "simpleError", "error", "condition")
+    ),
     call = conditionCall(err)
   ))
 }
@@ -81,20 +79,53 @@ uns_hint <- function(type = c("1d", "2d")) {
   stopifnot(is.character(x))
   double <- paste0(
     "^",
-    c(
-      "[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+",
-      "[-]?Inf",
-      "NA",
-      "NaN"
-    ),
+    c("[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+", "[-]?Inf", "NA", "NaN"),
     "$",
     collapse = "|"
   )
-  return(if (all(grepl(double, x))) {
-    as.numeric(x)
-  } else {
-    x
-  })
+  return(
+    if (all(grepl(double, x))) {
+      as.numeric(x)
+    } else {
+      x
+    }
+  )
+}
+
+#' Is an Object a Domain Specification
+#'
+#' Check that an object is a domain specification. Valid domain specifications
+#' are named lists where each entry is either \code{NULL} or a two-length
+#' atomic vector (no lists or factors) giving the bounds
+#'
+#' @param x An \R object
+#' @param nm Vector of expected names of the domain specification
+#'
+#' @return \code{TRUE} if \code{x} is a valid domain specification,
+#' otherwise \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+.is_domain <- function(x, nm) {
+  if (!is.character(nm)) {
+    stop("'nm' must be a character vector")
+  }
+  return(
+    rlang::is_list(x = x, n = length(x = nm)) &&
+      identical(x = sort(names(x = x)), y = sort(nm)) &&
+      all(vapply(
+        X = x,
+        FUN = function(i) {
+          return(
+            is.null(i) ||
+              (is.atomic(i) && !is.factor(i) && length(i) == 2L)
+          )
+        },
+        FUN.VALUE = logical(1L)
+      ))
+  )
 }
 
 #' Is an Object Integerish
@@ -132,20 +163,21 @@ uns_hint <- function(type = c("1d", "2d")) {
   } else {
     TRUE
   }
-  res <- res && if (!is.null(x = finite)) {
-    stopifnot(isTRUE(x = finite) || isFALSE(x = finite))
-    # In `rlang::is_integerish()`,
-    # `finite = TRUE`: all values are finite
-    # `finite = FALSE`: at least one value is infinite
-    # `bit64::is.infinite()` returns FALSE for NA
-    ifelse(
-      test = finite,
-      yes = all(is.finite(x = x)),
-      no = any(is.infinite(x = x) | is.na(x = x))
-    )
-  } else {
-    TRUE
-  }
+  res <- res &&
+    if (!is.null(x = finite)) {
+      stopifnot(isTRUE(x = finite) || isFALSE(x = finite))
+      # In `rlang::is_integerish()`,
+      # `finite = TRUE`: all values are finite
+      # `finite = FALSE`: at least one value is infinite
+      # `bit64::is.infinite()` returns FALSE for NA
+      ifelse(
+        test = finite,
+        yes = all(is.finite(x = x)),
+        no = any(is.infinite(x = x) | is.na(x = x))
+      )
+    } else {
+      TRUE
+    }
   return(res)
 }
 
@@ -177,7 +209,10 @@ uns_hint <- function(type = c("1d", "2d")) {
   if (isTRUE(x = cond)) {
     warning(warningCondition(
       message = conditionMessage(w),
-      class = setdiff(class(w), c("warning", "simpleError", "error", "condition")),
+      class = setdiff(
+        class(w),
+        c("warning", "simpleError", "error", "condition")
+      ),
       call = conditionCall(w)
     ))
   } else {
@@ -222,15 +257,13 @@ uns_hint <- function(type = c("1d", "2d")) {
     return(hint)
   }
   stopifnot(
-    "'type' must be a non-empty character" = is.character(type) && all(nzchar(type))
+    "'type' must be a non-empty character" = is.character(type) &&
+      all(nzchar(type))
   )
   def <- if (length(type) > 1L) {
     paste0('[', paste(dQuote(type, FALSE), collapse = ','), ']')
   } else {
-    tryCatch(
-      expr = methods::getClassDef(type),
-      error = function(e) type
-    )
+    tryCatch(expr = methods::getClassDef(type), error = function(e) type)
   }
   if (inherits(def, c('classUnionRepresentation', 'refClassRepresentation'))) {
     def <- sprintf('%s:%s', def@package, def@className)
@@ -250,17 +283,21 @@ uns_hint <- function(type = c("1d", "2d")) {
           invert = TRUE
         )
       ),
-      FUN = function(x) ifelse(
-        test = grepl(pattern = '^data\\.frame', x = x),
-        yes = paste(strsplit(x, split = '\\.')[[1L]][1:2], collapse = '.'),
-        no = strsplit(x, split = '\\.')[[1L]][1L]
-      ),
+      FUN = function(x) {
+        ifelse(
+          test = grepl(pattern = '^data\\.frame', x = x),
+          yes = paste(strsplit(x, split = '\\.')[[1L]][1:2], collapse = '.'),
+          no = strsplit(x, split = '\\.')[[1L]][1L]
+        )
+      },
       USE.NAMES = FALSE
     )
     def <- switch(
       EXPR = def@package,
       methods = {
-        def <- if ('oldClass' %in% names(def@contains) || def@className %in% btypes) {
+        def <- if (
+          'oldClass' %in% names(def@contains) || def@className %in% btypes
+        ) {
           as.character(def@className)
         } else {
           sprintf('%s:%s', def@package, def@className)
@@ -306,7 +343,9 @@ uns_hint <- function(type = c("1d", "2d")) {
 #'
 .read_soma_joinids.SOMADataFrame <- function(x, ...) {
   x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
-  return(x$read(column_names = "soma_joinid")$concat()$GetColumnByName("soma_joinid")$as_vector())
+  return(x$read(column_names = "soma_joinid")$concat()$GetColumnByName(
+    "soma_joinid"
+  )$as_vector())
 }
 
 #' @param axis Which dimension to read (zero-based)
@@ -361,9 +400,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' pad_names(x3) # returns c(a = "x", y = "y", c = "z")
 #'
 pad_names <- function(x) {
-  stopifnot(
-    is.character(x)
-  )
+  stopifnot(is.character(x))
   if (is.null(names(x))) {
     return(stats::setNames(nm = x))
   }
@@ -374,10 +411,7 @@ pad_names <- function(x) {
 
 # For use in read-only R6 active bindings
 read_only_error <- function(field_name) {
-  stop(
-    sprintf("'%s' is a read-only field.", field_name),
-    call. = FALSE
-  )
+  stop(sprintf("'%s' is a read-only field.", field_name), call. = FALSE)
 }
 
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
@@ -398,7 +432,7 @@ SOMA_ENCODING_VERSION <- "1.1.0"
   # * Even then there can be a second component returned like 'c(1)'
   #   -- hence the [[1]]
   # * Then remove the 'obj$' from 'obj$foo'
-  name <- as.character(sys.call(sys.parent(n=1)))[[1]]
+  name <- as.character(sys.call(sys.parent(n = 1)))[[1]]
   name <- sub('.*\\$', replacement = '', x = name)
   return(name)
 }

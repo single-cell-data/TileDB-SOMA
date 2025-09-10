@@ -1,4 +1,3 @@
-
 #' Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write
 #'
 #' Various helpers to write \pkg{Seurat} sub-objects to SOMA objects..
@@ -234,22 +233,25 @@ write_soma.DimReduc <- function(
     "'fidx' must be a positive integer vector" = is.null(fidx) ||
       (rlang::is_integerish(fidx, finite = TRUE) && all(fidx > 0L)),
     "'nfeatures' must be a single positive integer" = is.null(nfeatures) ||
-      (rlang::is_integerish(nfeatures, n = 1L, finite = TRUE) && nfeatures > 0L),
+      (rlang::is_integerish(nfeatures, n = 1L, finite = TRUE) &&
+        nfeatures > 0L),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
 
-  key <- tolower(gsub(pattern = "_$", replacement = "", x = SeuratObject::Key(x)))
-  key <- switch(EXPR = key,
-    pc = "pca",
-    ic = "ica",
-    key
-  )
+  key <- tolower(gsub(
+    pattern = "_$",
+    replacement = "",
+    x = SeuratObject::Key(x)
+  ))
+  key <- switch(EXPR = key, pc = "pca", ic = "ica", key)
 
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
   idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+    X = parents,
+    FUN = function(i) {
+      return(identical(sys.function(i), write_soma.Seurat))
+    }
   ))
   shape <- if (length(idx) == 1L) {
     get("shape", envir = sys.frame(parents[idx]))
@@ -332,7 +334,8 @@ write_soma.DimReduc <- function(
 
   # Write feature loadings
   if (!SeuratObject::IsMatrixEmpty(loadings)) {
-    ldgs <- switch(EXPR = key,
+    ldgs <- switch(
+      EXPR = key,
       pca = "PCs",
       ica = "ICs",
       paste0(toupper(key), "s")
@@ -347,12 +350,20 @@ write_soma.DimReduc <- function(
         tiledbsoma_ctx = tiledbsoma_ctx
       )
     } else if (isTRUE(relative)) {
-      SOMACollectionOpen(uri = file_path(soma_parent$uri, "varm"), mode = "WRITE")
+      SOMACollectionOpen(
+        uri = file_path(soma_parent$uri, "varm"),
+        mode = "WRITE"
+      )
     } else {
       soma_parent$varm
     }
     withCallingHandlers(
-      .register_soma_object(varm, soma_parent, key = "varm", relative = relative),
+      .register_soma_object(
+        varm,
+        soma_parent,
+        key = "varm",
+        relative = relative
+      ),
       existingKeyWarning = .maybe_muffle
     )
     on.exit(varm$close(), add = TRUE, after = FALSE)
@@ -432,8 +443,10 @@ write_soma.Graph <- function(
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
   idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+    X = parents,
+    FUN = function(i) {
+      return(identical(sys.function(i), write_soma.Seurat))
+    }
   ))
   shape <- if (length(idx) == 1L) {
     get("shape", envir = sys.frame(parents[idx]))
@@ -550,12 +563,7 @@ write_soma.Seurat <- function(
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
   # Prepare cell-level metadata (obs)
-  obs_df <- .df_index(
-    x = x[[]],
-    alt = "cells",
-    axis = "obs",
-    prefix = "seurat"
-  )
+  obs_df <- .df_index(x = x[[]], alt = "cells", axis = "obs", prefix = "seurat")
   obs_df[[attr(obs_df, 'index')]] <- colnames(x)
 
   # Write assays
@@ -658,10 +666,7 @@ write_soma.Seurat <- function(
     }
     loadings <- SeuratObject::Loadings(x[[reduc]])
     if (!SeuratObject::IsMatrixEmpty(loadings)) {
-      fidx <- match(
-        x = rownames(loadings),
-        table = rownames(x[[measurement]])
-      )
+      fidx <- match(x = rownames(loadings), table = rownames(x[[measurement]]))
       nfeatures <- nrow(x[[measurement]])
     } else {
       fidx <- nfeatures <- NULL
@@ -783,7 +788,10 @@ write_soma.SeuratCommand <- function(
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       (is_scalar_character(uri) && nzchar(uri)),
-    "'soma_parent' must be a SOMACollection" = inherits(soma_parent, what = "SOMACollection"),
+    "'soma_parent' must be a SOMACollection" = inherits(
+      soma_parent,
+      what = "SOMACollection"
+    ),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
 
@@ -791,7 +799,11 @@ write_soma.SeuratCommand <- function(
   uri <- uri %||% methods::slot(x, name = "name")
 
   # Create a group for command logs
-  logs_uri <- .check_soma_uri(key, soma_parent = soma_parent, relative = relative)
+  logs_uri <- .check_soma_uri(
+    key,
+    soma_parent = soma_parent,
+    relative = relative
+  )
   logs <- if (!key %in% soma_parent$names()) {
     spdl::info("Creating a group for command logs")
     logs <- SOMACollectionCreate(
@@ -854,11 +866,7 @@ write_soma.SeuratCommand <- function(
 
   # Encode as JSON
   spdl::info("Encoding command log as JSON")
-  enc <- as.character(jsonlite::toJSON(
-    xlist,
-    null = "null",
-    auto_unbox = TRUE
-  ))
+  enc <- as.character(jsonlite::toJSON(xlist, null = "null", auto_unbox = TRUE))
 
   # Write out and return
   sdf <- write_soma(

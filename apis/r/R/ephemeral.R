@@ -102,7 +102,9 @@ EphemeralCollectionBase <- R6::R6Class(
       if (self$length()) {
         f <- vapply(
           self$members,
-          FUN = \(x) if (inherits(x, "SOMACollectionBase")) "GROUP" else "ARRAY",
+          FUN = \(x) {
+            if (inherits(x, "SOMACollectionBase")) "GROUP" else "ARRAY"
+          },
           FUN.VALUE = character(1L),
           USE.NAMES = FALSE
         )
@@ -128,7 +130,10 @@ EphemeralCollectionBase <- R6::R6Class(
     get_tiledb_config = function(param = NULL) {
       if (!is.null(param)) {
         tryCatch(
-          expr = private$.ephemeral_error("custom", "and have no TileDB configuration"),
+          expr = private$.ephemeral_error(
+            "custom",
+            "and have no TileDB configuration"
+          ),
           error = function(e) {
             warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
           }
@@ -172,7 +177,10 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       if (!is.null(relative)) {
         tryCatch(
-          expr = private$.ephemeral_error("custom", "so relative has no effect"),
+          expr = private$.ephemeral_error(
+            "custom",
+            "so relative has no effect"
+          ),
           error = function(e) {
             warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
           }
@@ -280,7 +288,6 @@ EphemeralCollectionBase <- R6::R6Class(
     add_new_sparse_ndarray = \(key, type, shape) private$.ephemeral_error()
   ),
   active = list(
-
     #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}.
     #'
     uri = function(value) {
@@ -382,13 +389,7 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       type <- match.arg(
         arg = type,
-        choices = c(
-          "base",
-          "added",
-          "opened",
-          "edited",
-          "custom"
-        )
+        choices = c("base", "added", "opened", "edited", "custom")
       )
       if (type == "custom" && !is_scalar_character(msg)) {
         stop("'msg' must be a single character value")

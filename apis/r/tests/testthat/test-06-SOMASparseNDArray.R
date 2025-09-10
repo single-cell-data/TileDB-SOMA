@@ -83,7 +83,10 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(nnz(uri, soma_context()), 60L)
   ## nnz with config, expected breakge as 'bad key' used
   ## uses 'internal' create function to not cache globally as soma_context() would
-  badconfig <- createSOMAContext(c(sm.encryption_key = "Nope", sm.encryption_type = "AES_256_GCM"))
+  badconfig <- createSOMAContext(c(
+    sm.encryption_key = "Nope",
+    sm.encryption_type = "AES_256_GCM"
+  ))
   expect_error(nnz(uri, badconfig))
   ## shape as free function
   expect_equal(shape(uri, soma_context()), c(10, 10))
@@ -213,7 +216,10 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
   expect_equal(mat2$nrow(), 10)
   expect_equal(mat2$ncol(), 10)
   ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat[1:9, 1:9]), as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())))
+  expect_true(all.equal(
+    as.numeric(mat[1:9, 1:9]),
+    as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())
+  ))
   expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
 
   ndarray <- SOMASparseNDArrayOpen(uri)
@@ -242,7 +248,10 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   expect_equal(mat2$nrow(), 10)
   expect_equal(mat2$ncol(), 10)
   ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())))
+  expect_true(all.equal(
+    as.numeric(mat),
+    as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())
+  ))
   expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
 
   ndarray <- SOMASparseNDArrayOpen(uri)
@@ -255,7 +264,10 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   expect_equal(mat2$dim(), c(10, 10))
   expect_equal(mat2$nrow(), 10)
   expect_equal(mat2$ncol(), 10)
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())))
+  expect_true(all.equal(
+    as.numeric(mat),
+    as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())
+  ))
   expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
   ndarray$close()
 })
@@ -327,7 +339,11 @@ test_that("SOMASparseNDArray read coordinates", {
     } else {
       mat@j %in% coords$soma_dim_1
     }
-    nr <- ifelse(isTRUE(ii) && isTRUE(jj), yes = length(mat@x), no = sum(ii & jj))
+    nr <- ifelse(
+      isTRUE(ii) && isTRUE(jj),
+      yes = length(mat@x),
+      no = sum(ii & jj)
+    )
     expect_identical(nrow(tbl), nr, label = label)
   }
 
@@ -398,11 +414,13 @@ test_that("SOMASparseNDArray creation with duplicates", {
       NULL
     }
     arr <- SOMASparseNDArrayCreate(
-      uri = tempfile(pattern = sprintf(
-        fmt = "sparse-ndarray-%s-%s",
-        ifelse(allow, yes = "dupAllowed", no = "dupDisallowed"),
-        ifelse(dups, yes = "duplicated", no = "nodups")
-      )),
+      uri = tempfile(
+        pattern = sprintf(
+          fmt = "sparse-ndarray-%s-%s",
+          ifelse(allow, yes = "dupAllowed", no = "dupDisallowed"),
+          ifelse(dups, yes = "duplicated", no = "nodups")
+        )
+      ),
       type = arrow::float64(),
       shape = c(100L, 100L),
       platform_config = cfg
@@ -427,33 +445,47 @@ test_that("platform_config is respected", {
   cfg$set("tiledb", "create", "cell_order", "ROW_MAJOR")
   cfg$set("tiledb", "create", "offsets_filters", list("RLE"))
   cfg$set("tiledb", "create", "validity_filters", list("RLE", "NONE"))
-  cfg$set("tiledb", "create", "dims", list(
-    soma_dim_0 = list(
-      filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 8), "NONE")
-      # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
-      # At present we get:
-      #
-      #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
-      #   max value representable by domain type
-      #
-      # tile = 999
-    ),
-    soma_dim_1 = list(
-      filters = list("RLE")
-      # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
-      # At present we get:
-      #
-      #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
-      #   max value representable by domain type
-      #
-      # tile = 999
+  cfg$set(
+    "tiledb",
+    "create",
+    "dims",
+    list(
+      soma_dim_0 = list(
+        filters = list(
+          "RLE",
+          list(name = "ZSTD", COMPRESSION_LEVEL = 8),
+          "NONE"
+        )
+        # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
+        # At present we get:
+        #
+        #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
+        #   max value representable by domain type
+        #
+        # tile = 999
+      ),
+      soma_dim_1 = list(
+        filters = list("RLE")
+        # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
+        # At present we get:
+        #
+        #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
+        #   max value representable by domain type
+        #
+        # tile = 999
+      )
     )
-  ))
-  cfg$set("tiledb", "create", "attrs", list(
-    soma_data = list(
-      filters = list("BITSHUFFLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
+  )
+  cfg$set(
+    "tiledb",
+    "create",
+    "attrs",
+    list(
+      soma_data = list(
+        filters = list("BITSHUFFLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
+      )
     )
-  ))
+  )
 
   # Create the SOMASparseNDArray
   snda <- SOMASparseNDArrayCreate(
@@ -499,7 +531,13 @@ test_that("platform_config is respected", {
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
   expect_equal(
-    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    vapply(
+      domain,
+      FUN = '[[',
+      FUN.VALUE = character(1L),
+      "name",
+      USE.NAMES = FALSE
+    ),
     dims
   )
   # TODO: As noted above, check this when we are able to.
@@ -532,19 +570,27 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMASparseNDArray
-  snda <- SOMASparseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
+  snda <- SOMASparseNDArrayCreate(
+    uri = uri,
+    type = arrow::int32(),
+    shape = c(100, 100),
+    platform_config = cfg
+  )
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
     domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
     n = 2L
   )
-  expect_named(
-    domain,
-    dims <- sprintf("soma_dim_%i", 0:1)
-  )
+  expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
   expect_equal(
-    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    vapply(
+      domain,
+      FUN = '[[',
+      FUN.VALUE = character(1L),
+      "name",
+      USE.NAMES = FALSE
+    ),
     dims
   )
   dim0 <- domain$soma_dim_0
@@ -577,7 +623,11 @@ test_that("SOMASparseNDArray timestamped ops", {
 
   # t=20: write 1 into bottom-right entry
   t20 <- as.POSIXct(20, tz = "UTC", origin = "1970-01-01")
-  snda <- SOMASparseNDArrayOpen(uri = uri, mode = "WRITE", tiledb_timestamp = t20)
+  snda <- SOMASparseNDArrayOpen(
+    uri = uri,
+    mode = "WRITE",
+    tiledb_timestamp = t20
+  )
   snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
   snda$close()
 

@@ -35,7 +35,10 @@ test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
   expect_s4_class(umap_mat, "dgTMatrix")
   expect_identical(dim(umap_mat), c(n_obs, n_umaps))
 
-  expect_error(query$obsm("X_ica"), regexp = "obsm layer must be a SOMASparseNDArray")
+  expect_error(
+    query$obsm("X_ica"),
+    regexp = "obsm layer must be a SOMASparseNDArray"
+  )
 
   # Read `varm` layers
   expect_s3_class(pc_qry <- query$varm("PCs"), "SOMASparseNDArrayRead")
@@ -43,10 +46,16 @@ test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
   expect_s4_class(pc_mat, "dgTMatrix")
   expect_identical(dim(pc_mat), c(n_var, n_pcs))
 
-  expect_error(query$varm("ICs"), regexp = "varm layer must be a SOMASparseNDArray")
+  expect_error(
+    query$varm("ICs"),
+    regexp = "varm layer must be a SOMASparseNDArray"
+  )
 
   # Read `obsp` layers
-  expect_s3_class(con_qry <- query$obsp("connectivities"), "SOMASparseNDArrayRead")
+  expect_s3_class(
+    con_qry <- query$obsp("connectivities"),
+    "SOMASparseNDArrayRead"
+  )
   con_mat <- con_qry$sparse_matrix()$concat()
   expect_s4_class(con_mat, "dgTMatrix")
   expect_identical(dim(con_mat), c(n_obs, n_obs))
@@ -162,7 +171,10 @@ test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
   expect_lte(max(pc_var), max(var_slice))
 
   # Read `obsp` layers
-  expect_s3_class(con_qry <- query$obsp("connectivities"), "SOMASparseNDArrayRead")
+  expect_s3_class(
+    con_qry <- query$obsp("connectivities"),
+    "SOMASparseNDArrayRead"
+  )
   con_tbl <- con_qry$tables()$concat()
   expect_s3_class(con_tbl, "Table")
   for (axis in paste0("soma_dim_", 0:1)) {
@@ -244,9 +256,12 @@ test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
     var_query = SOMAAxisQuery$new(value_filter = var_value_filter)
   )
 
-
-  obs_ids <- query$obs("soma_joinid")$concat()$GetColumnByName("soma_joinid")$as_vector()
-  var_ids <- query$var("soma_joinid")$concat()$GetColumnByName("soma_joinid")$as_vector()
+  obs_ids <- query$obs("soma_joinid")$concat()$GetColumnByName(
+    "soma_joinid"
+  )$as_vector()
+  var_ids <- query$var("soma_joinid")$concat()$GetColumnByName(
+    "soma_joinid"
+  )$as_vector()
   expect_length(obs_ids, n_obs_select)
   expect_length(var_ids, n_var_select)
 
@@ -271,7 +286,10 @@ test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
   expect_in(pc_var, var_ids)
 
   # Read `obsp` layers
-  expect_s3_class(con_qry <- query$obsp("connectivities"), "SOMASparseNDArrayRead")
+  expect_s3_class(
+    con_qry <- query$obsp("connectivities"),
+    "SOMASparseNDArrayRead"
+  )
   con_tbl <- con_qry$tables()$concat()
   expect_s3_class(con_tbl, "Table")
   for (axis in paste0("soma_dim_", 0:1)) {

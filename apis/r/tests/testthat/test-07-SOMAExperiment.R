@@ -58,9 +58,18 @@ test_that("Configured SOMAExperiment", {
     X_layer_names = c("counts", "logcounts"),
     config = cfg
   )
-  expect_equal(experiment$platform_config$get("tiledb", "create", "capacity"), "8888")
-  expect_equal(experiment$platform_config$get("tiledb", "create", "cell_order"), "row-major")
-  expect_equal(experiment$platform_config$get("tiledb", "create", "tile_order"), "col-major")
+  expect_equal(
+    experiment$platform_config$get("tiledb", "create", "capacity"),
+    "8888"
+  )
+  expect_equal(
+    experiment$platform_config$get("tiledb", "create", "cell_order"),
+    "row-major"
+  )
+  expect_equal(
+    experiment$platform_config$get("tiledb", "create", "tile_order"),
+    "col-major"
+  )
 })
 
 test_that("Update obs and var", {
@@ -84,10 +93,7 @@ test_that("Update obs and var", {
   exp <- SOMAExperimentOpen(uri, "WRITE")
   exp$update_obs(tbl_obs0)
 
-  expect_equal(
-    SOMAExperimentOpen(uri)$obs$read()$concat(),
-    tbl_obs0
-  )
+  expect_equal(SOMAExperimentOpen(uri)$obs$read()$concat(), tbl_obs0)
 
   # var: drop an existing column and add a new one
   tbl_var0$qux <- tbl_var0$quux

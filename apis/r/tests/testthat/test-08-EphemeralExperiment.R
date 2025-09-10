@@ -17,7 +17,9 @@ test_that("Ephemeral Experiment mechanics", {
   # Add ms
   expect_error(experiment$ms <- obs)
   expect_error(experiment$ms <- SOMAMeasurementCreate(file.path(uri, "_ms")))
-  expect_no_condition(experiment$ms <- SOMACollectionCreate(file.path(uri, "ms")))
+  expect_no_condition(
+    experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))
+  )
   expect_equal(experiment$length(), 2)
   expect_s3_class(experiment$ms, "SOMACollection")
 })

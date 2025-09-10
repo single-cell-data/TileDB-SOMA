@@ -27,7 +27,6 @@ SparseReadIter <- R6::R6Class(
   classname = "SparseReadIter",
   inherit = ReadIter,
   public = list(
-
     #' @description Create (lifecycle: maturing).
     #'
     #' @param sr Soma reader pointer.
@@ -40,8 +39,9 @@ SparseReadIter <- R6::R6Class(
       # TODO implement zero_based argument, currently doesn't do anything
       stopifnot(
         "'shape' must have two dimensions" = length(shape) == 2,
-        "'shape' must not exceed '.Machine$integer.max'" =
-          all(shape <= .Machine$integer.max)
+        "'shape' must not exceed '.Machine$integer.max'" = all(
+          shape <= .Machine$integer.max
+        )
       )
 
       # Initiate super class
@@ -55,10 +55,9 @@ SparseReadIter <- R6::R6Class(
     #'
     #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
     #'
-    concat = function() soma_array_to_sparse_matrix_concat(
-      self,
-      private$zero_based
-    )
+    concat = function() {
+      return(soma_array_to_sparse_matrix_concat(self, private$zero_based))
+    }
   ),
   private = list(
     repr = NULL,

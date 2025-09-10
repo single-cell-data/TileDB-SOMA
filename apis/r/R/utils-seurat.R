@@ -24,10 +24,16 @@
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uns' must be a SOMACollection" = inherits(uns, what = "SOMACollection"),
-    "'ms_names' must be a character vector with no empty strings" = is.character(ms_names) &&
+    "'ms_names' must be a character vector with no empty strings" = is.character(
+      ms_names
+    ) &&
       all(nzchar(ms_names))
   )
-  if (!(key %in% uns$names() && inherits(logs <- uns$get(key), what = "SOMACollection"))) {
+  if (
+    !(key %in%
+      uns$names() &&
+      inherits(logs <- uns$get(key), what = "SOMACollection"))
+  ) {
     stop(errorCondition(
       "Cannot find a SOMACollection with command logs in 'uns'",
       class = c("noCommandLogsError", "missingCollectionError")
@@ -39,7 +45,10 @@
   ))
   hint <- uns_hint("1d")
   lognames <- logs$names()
-  commands <- stats::setNames(vector("list", length = length(lognames)), lognames)
+  commands <- stats::setNames(
+    vector("list", length = length(lognames)),
+    lognames
+  )
   for (x in lognames) {
     spdl::info("Attempting to read command log {}", x)
     xdf <- logs$get(x)
@@ -49,7 +58,9 @@
     }
     xhint <- tryCatch(xdf$get_metadata(names(hint)), error = function(...) "")
     if (xhint != hint[[1L]]) {
-      spdl::warn("Log {} is invalid: not a one-dimensional character data frame")
+      spdl::warn(
+        "Log {} is invalid: not a one-dimensional character data frame"
+      )
       next
     }
     spdl::info("Reading in and decoding command log")
@@ -65,7 +76,9 @@
       cmdlist[[param]] <- if (param == "time.stamp") {
         ts <- sapply(
           jsonlite::fromJSON(cmdlist[[param]]),
-          FUN = function(dt) tryCatch(.decode_from_char(dt), error = function(...) dt),
+          FUN = function(dt) {
+            tryCatch(.decode_from_char(dt), error = function(...) dt)
+          },
           simplify = FALSE,
           USE.NAMES = TRUE
         )
@@ -79,7 +92,10 @@
     }
     spdl::info("Assembling command log")
     params <- cmdlist[setdiff(names(cmdlist), slots)]
-    cmdlist <- c(cmdlist[setdiff(names(cmdlist), names(params))], list(params = params))
+    cmdlist <- c(
+      cmdlist[setdiff(names(cmdlist), names(params))],
+      list(params = params)
+    )
     commands[[x]] <- do.call(methods::new, c(cmdlist, Class = "SeuratCommand"))
   }
   commands <- Filter(Negate(is.null), x = commands)
@@ -95,7 +111,9 @@
 
 .assay_obs_hint <- function(assay) {
   stopifnot(
-    "'assay' must be a single, non-empty character value" = is.character(assay) &&
+    "'assay' must be a single, non-empty character value" = is.character(
+      assay
+    ) &&
       length(assay) == 1L &&
       nzchar(assay) &&
       !is.na(assay)
@@ -116,16 +134,15 @@
   return(list(soma_ecosystem_seurat_v5_default_layers = lyr))
 }
 
-.ragged_array_hint <- function() list(soma_ecosystem_seurat_v5_ragged = 'ragged')
+.ragged_array_hint <- function() {
+  list(soma_ecosystem_seurat_v5_ragged = 'ragged')
+}
 
 .MINIMUM_SEURAT_VERSION <- function(repr = c('v', 'c')) {
   repr <- repr[1L]
   repr <- match.arg(arg = repr)
   version <- "4.1.0"
-  return(switch(EXPR = repr,
-    v = package_version(version),
-    version
-  ))
+  return(switch(EXPR = repr, v = package_version(version), version))
 }
 
 .write_seurat_assay <- function(
@@ -160,8 +177,10 @@
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
   idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+    X = parents,
+    FUN = function(i) {
+      return(identical(sys.function(i), write_soma.Seurat))
+    }
   ))
   shape <- if (length(idx) == 1L) {
     get("shape", envir = sys.frame(parents[idx]))
@@ -171,7 +190,8 @@
   shape <- rev(shape)
 
   # Create a proper URI
-  uri <- uri %||% sub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
+  uri <- uri %||%
+    sub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
@@ -225,7 +245,11 @@
         ))
         next
       }
-      type <- .type_hint(ifelse(is.matrix(ldat), yes = 'matrix', no = class(ldat)))
+      type <- .type_hint(ifelse(
+        is.matrix(ldat),
+        yes = 'matrix',
+        no = class(ldat)
+      ))
       if (all(features_matrix[, layer]) && all(cells_matrix[, layer])) {
         spdl::info("Adding '{}' matrix as '{}'", layer, layer)
         tryCatch(
@@ -279,10 +303,15 @@
   } else {
     for (slot in c("counts", "data", "scale.data")) {
       mat <- SeuratObject::GetAssayData(x, slot)
-      if (SeuratObject::IsMatrixEmpty(mat)) next
+      if (SeuratObject::IsMatrixEmpty(mat)) {
+        next
+      }
 
       # Skip 'data' slot if it's identical to 'counts'
-      if (slot == "data" && identical(mat, SeuratObject::GetAssayData(x, "counts"))) {
+      if (
+        slot == "data" &&
+          identical(mat, SeuratObject::GetAssayData(x, "counts"))
+      ) {
         spdl::info("Skipping 'data' slot because it's identical to 'counts'")
         next
       }

@@ -18,14 +18,22 @@ test_that("Factory re-creation", {
     fname <- as.character(factories[[i]])
     fxn <- eval(factories[[i]])
     uri <- tempfile(pattern = fname)
-    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-    expect_no_condition(obj <- switch(
-      EXPR = fname,
-      SOMADataFrameCreate = fxn(uri, schema = schema),
-      SOMASparseNDArrayCreate = ,
-      SOMADenseNDArrayCreate = fxn(uri, type = arrow::int32(), shape = c(20L, 10L)),
-      fxn(uri)
-    ))
+    if (dir.exists(uri)) {
+      unlink(uri, recursive = TRUE)
+    }
+    expect_no_condition(
+      obj <- switch(
+        EXPR = fname,
+        SOMADataFrameCreate = fxn(uri, schema = schema),
+        SOMASparseNDArrayCreate = ,
+        SOMADenseNDArrayCreate = fxn(
+          uri,
+          type = arrow::int32(),
+          shape = c(20L, 10L)
+        ),
+        fxn(uri)
+      )
+    )
     expect_error(fxn(uri))
     obj$close()
   }
@@ -43,33 +51,43 @@ test_that("Resume-mode factories", {
     fxn <- eval(factories[[i]])
     label <- paste0(fname, "-resume")
     uri <- tempfile(pattern = label)
-    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
+    if (dir.exists(uri)) {
+      unlink(uri, recursive = TRUE)
+    }
     # Do an initial create
-    expect_no_condition(obj <- switch(
-      EXPR = fname,
-      SOMADataFrameCreate = fxn(uri, schema = schema),
-      SOMASparseNDArrayCreate = ,
-      SOMADenseNDArrayCreate = fxn(uri, type = arrow::int32(), shape = c(20L, 10L)),
-      fxn(uri)
-    ))
+    expect_no_condition(
+      obj <- switch(
+        EXPR = fname,
+        SOMADataFrameCreate = fxn(uri, schema = schema),
+        SOMASparseNDArrayCreate = ,
+        SOMADenseNDArrayCreate = fxn(
+          uri,
+          type = arrow::int32(),
+          shape = c(20L, 10L)
+        ),
+        fxn(uri)
+      )
+    )
     expect_true(obj$is_open(), label = fname)
     expect_identical(obj$mode(), "WRITE", label = fname)
     expect_true(obj$exists(), label = fname)
     obj$close()
 
     # Test that re-creating in "resume" mode simply re-opens the object
-    expect_no_condition(obj <- switch(
-      EXPR = fname,
-      SOMADataFrameCreate = fxn(uri, schema = schema, ingest_mode = "resume"),
-      SOMASparseNDArrayCreate = ,
-      SOMADenseNDArrayCreate = fxn(
-        uri,
-        type = arrow::int32(),
-        shape = c(20L, 10L),
-        ingest_mode = "resume"
-      ),
-      fxn(uri, ingest_mode = "resume")
-    ))
+    expect_no_condition(
+      obj <- switch(
+        EXPR = fname,
+        SOMADataFrameCreate = fxn(uri, schema = schema, ingest_mode = "resume"),
+        SOMASparseNDArrayCreate = ,
+        SOMADenseNDArrayCreate = fxn(
+          uri,
+          type = arrow::int32(),
+          shape = c(20L, 10L),
+          ingest_mode = "resume"
+        ),
+        fxn(uri, ingest_mode = "resume")
+      )
+    )
     expect_true(obj$is_open(), label = label)
     expect_identical(obj$mode(), "WRITE", label = label)
     obj$close()
@@ -249,7 +267,12 @@ test_that("Resume-mode sparse arrays", {
   knexp <- knex[idx, , drop = FALSE]
   uri <- "knex-parital"
   expect_s3_class(
-    ssap <- write_soma(knexp, uri = uri, soma_parent = collection, shape = dim(knex)),
+    ssap <- write_soma(
+      knexp,
+      uri = uri,
+      soma_parent = collection,
+      shape = dim(knex)
+    ),
     "SOMASparseNDArray"
   )
   on.exit(ssap$close(), add = TRUE, after = FALSE)
@@ -429,7 +452,9 @@ test_that("Resume-mode Seurat", {
     if (inherits(i, "Assay")) {
       next
     }
-    SeuratObject::DefaultAssay(pbmc_partial[[i]]) <- SeuratObject::DefaultAssay(pbmc_partial[[i]]) %||%
+    SeuratObject::DefaultAssay(pbmc_partial[[
+      i
+    ]]) <- SeuratObject::DefaultAssay(pbmc_partial[[i]]) %||%
       SeuratObject::DefaultAssay(pbmc_partial)
   }
 
@@ -511,7 +536,10 @@ test_that("Resume-mode Seurat", {
 test_that("Resume-mode SingleCellExperiment", {
   skip_if(!extended_tests())
   skip_if_not_installed("pbmc3k")
-  suppressMessages(skip_if_not_installed("SingleCellExperiment", .MINIMUM_SCE_VERSION("c")))
+  suppressMessages(skip_if_not_installed(
+    "SingleCellExperiment",
+    .MINIMUM_SCE_VERSION("c")
+  ))
 
   sce <- pbmc3k_sce()
   SingleCellExperiment::mainExpName(sce) <- "RNA"

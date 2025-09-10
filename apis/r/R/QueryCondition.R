@@ -51,22 +51,18 @@
 #'
 #' @noRd
 #'
-parse_query_condition <- function(
-  expr,
-  schema,
-  strict = TRUE,
-  somactx
-) {
+parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
   spdl::debug("[parseqc] ENTER [{}]", expr)
 
   stopifnot(
-    "The expr argument must be a single character string" =
-      is(expr, "character") && length(expr) == 1,
-    "The schema argument must be an Arrow Schema" =
-      is(schema, "ArrowObject") &&
-        is(schema, "Schema"),
-    "The argument must be a somactx object" =
-      is(somactx, "externalptr")
+    "The expr argument must be a single character string" = is(
+      expr,
+      "character"
+    ) &&
+      length(expr) == 1,
+    "The schema argument must be an Arrow Schema" = is(schema, "ArrowObject") &&
+      is(schema, "Schema"),
+    "The argument must be a somactx object" = is(somactx, "externalptr")
   )
 
   # ----------------------------------------------------------------
@@ -78,7 +74,10 @@ parse_query_condition <- function(
     return(tolower(as.character(node)) %in% c("%in%", "%nin%"))
   }
   .is_comparison_operator <- function(node) {
-    return(tolower(as.character(node)) %in% c(">", ">=", "<", "<=", "==", "!=", "%in%", "%nin%"))
+    return(
+      tolower(as.character(node)) %in%
+        c(">", ">=", "<", "<=", "==", "!=", "%in%", "%nin%")
+    )
   }
   .is_boolean_operator <- function(node) {
     return(as.character(node) %in% c("&&", "||", "!", "&", "|"))
@@ -92,13 +91,17 @@ parse_query_condition <- function(
     return(grepl("^[[:digit:]]+$", as.character(node)))
   }
   .is_double <- function(node) {
-    return(grepl("^[[:digit:]\\.]+$", as.character(node)) && length(grepRaw(".", as.character(node), fixed = TRUE, all = TRUE)) == 1)
+    return(
+      grepl("^[[:digit:]\\.]+$", as.character(node)) &&
+        length(grepRaw(".", as.character(node), fixed = TRUE, all = TRUE)) == 1
+    )
   }
 
   .error_function <- if (strict) stop else warning
 
   .map_op_to_character <- function(x) {
-    return(switch(x,
+    return(switch(
+      x,
       `>` = "GT",
       `>=` = "GE",
       `<` = "LT",
@@ -109,7 +112,8 @@ parse_query_condition <- function(
   }
 
   .map_bool_to_character <- function(x) {
-    return(switch(x,
+    return(switch(
+      x,
       `&&` = "AND",
       `&` = "AND",
       `||` = "OR",
@@ -125,10 +129,7 @@ parse_query_condition <- function(
     if (is.symbol(node)) {
       stop("Unexpected symbol in expression: ", format(node))
     } else if (node[[1]] == "(") {
-      spdl::debug(
-        "[parseqc] paren [{}]",
-        as.character(node[2])
-      )
+      spdl::debug("[parseqc] paren [{}]", as.character(node[2]))
       return(.parse_tree_to_qc(node[[2]]))
     } else if (.is_boolean_operator(node[1])) {
       spdl::debug(
@@ -158,7 +159,12 @@ parse_query_condition <- function(
 
       arrow_field <- schema[[attr_name]]
       if (is.null(arrow_field)) {
-        .error_function("No attribute '", attr_name, "' is present.", call. = FALSE)
+        .error_function(
+          "No attribute '",
+          attr_name,
+          "' is present.",
+          call. = FALSE
+        )
       }
       arrow_type_name <- arrow_field$type$name
       is_enum <- is(arrow_field$type, "DictionaryType")
@@ -168,7 +174,12 @@ parse_query_condition <- function(
         values <- as.integer(values)
       }
 
-      return(tiledbsoma_query_condition_in_nin(attr_name, tdb_op_name, values, somactx))
+      return(tiledbsoma_query_condition_in_nin(
+        attr_name,
+        tdb_op_name,
+        values,
+        somactx
+      ))
     } else if (.is_comparison_operator(node[1])) {
       spdl::debug(
         "[parseqc] cmpop [{}] [{}] [{}]",
@@ -183,7 +194,12 @@ parse_query_condition <- function(
 
       arrow_field <- schema[[attr_name]]
       if (is.null(arrow_field)) {
-        .error_function("No attribute '", attr_name, "' is present.", call. = FALSE)
+        .error_function(
+          "No attribute '",
+          attr_name,
+          "' is present.",
+          call. = FALSE
+        )
       }
       arrow_type_name <- arrow_field$type$name
 
@@ -204,14 +220,17 @@ parse_query_condition <- function(
           arrow_type_name <- "timestamp_ns"
         } else {
           .error_function(
-            "Attribute '", attr_name, "' has unknown unit ",
+            "Attribute '",
+            attr_name,
+            "' has unknown unit ",
             arrow_field$type$unit,
             call. = FALSE
           )
         }
       }
 
-      value <- switch(arrow_type_name,
+      value <- switch(
+        arrow_type_name,
         ascii = rhs_text,
         string = rhs_text,
         utf8 = rhs_text,
@@ -297,7 +316,9 @@ setClass(
 #' @noRd
 #'
 tiledbsoma_empty_query_condition <- function(somactx) {
-  stopifnot("The argument must be a somactx object" = is(somactx, "externalptr"))
+  stopifnot(
+    "The argument must be a somactx object" = is(somactx, "externalptr")
+  )
   ptr <- libtiledbsoma_empty_query_condition(somactx)
   query_condition <- methods::new(
     "tiledbsoma_query_condition",
@@ -337,14 +358,19 @@ tiledbsoma_query_condition_from_triple <- function(
   qc
 ) {
   stopifnot(
-    "Argument 'qc' with query condition object required" = inherits(qc, "tiledbsoma_query_condition"),
+    "Argument 'qc' with query condition object required" = inherits(
+      qc,
+      "tiledbsoma_query_condition"
+    ),
     "Argument 'attr_name' must be character" = is.character(attr_name),
-    "Argument 'value' must be of length one" = (
-      is.vector(value) ||
-        bit64::is.integer64(value) ||
-        inherits(value, "POSIXt") ||
-        inherits(value, "Date")) && all.equal(length(value), 1),
-    "Argument 'arrow_type_name' must be character" = is.character(arrow_type_name),
+    "Argument 'value' must be of length one" = (is.vector(value) ||
+      bit64::is.integer64(value) ||
+      inherits(value, "POSIXt") ||
+      inherits(value, "Date")) &&
+      all.equal(length(value), 1),
+    "Argument 'arrow_type_name' must be character" = is.character(
+      arrow_type_name
+    ),
     "Argument 'op_name' must be character" = is.character(op_name)
   )
 
@@ -354,7 +380,13 @@ tiledbsoma_query_condition_from_triple <- function(
   if (grepl("int64", arrow_type_name) && !inherits(value, "integer64")) {
     value <- bit64::as.integer64(value)
   }
-  libtiledbsoma_query_condition_from_triple(qc@ptr, attr_name, value, arrow_type_name, op_name)
+  libtiledbsoma_query_condition_from_triple(
+    qc@ptr,
+    attr_name,
+    value,
+    arrow_type_name,
+    op_name
+  )
   qc@init <- TRUE
   invisible(qc)
 }
@@ -377,8 +409,14 @@ tiledbsoma_query_condition_from_triple <- function(
 #'
 tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
   stopifnot(
-    "Argument 'lhs' must be a query condition object" = is(lhs, "tiledbsoma_query_condition"),
-    "Argument 'rhs' must be a query condition object" = is(rhs, "tiledbsoma_query_condition"),
+    "Argument 'lhs' must be a query condition object" = is(
+      lhs,
+      "tiledbsoma_query_condition"
+    ),
+    "Argument 'rhs' must be a query condition object" = is(
+      rhs,
+      "tiledbsoma_query_condition"
+    ),
     "Argument 'op_name' must be a character" = is.character(op_name)
   )
   op_name <- match.arg(op_name, c("AND", "OR", "NOT"))
@@ -414,13 +452,22 @@ tiledbsoma_query_condition_in_nin <- function(
 ) {
   stopifnot(
     "Argument 'attr_name' must be character" = is.character(attr_name),
-    "Argument 'values' must be int, double, int64 or char" =
-      (is.numeric(values) || bit64::is.integer64(values) || is.character(values)),
-    "Argument 'op_name' must be one of 'IN' or 'NOT_IN'" = op_name %in% c("IN", "NOT_IN")
+    "Argument 'values' must be int, double, int64 or char" = (is.numeric(
+      values
+    ) ||
+      bit64::is.integer64(values) ||
+      is.character(values)),
+    "Argument 'op_name' must be one of 'IN' or 'NOT_IN'" = op_name %in%
+      c("IN", "NOT_IN")
   )
 
   qc <- tiledbsoma_empty_query_condition(somactx)
-  qc@ptr <- libtiledbsoma_query_condition_in_nin(somactx, attr_name, op_name, values)
+  qc@ptr <- libtiledbsoma_query_condition_in_nin(
+    somactx,
+    attr_name,
+    op_name,
+    values
+  )
   qc@init <- TRUE
   invisible(qc)
 }

@@ -64,18 +64,23 @@ TileDBCreateOptions <- R6::R6Class(
   classname = "TileDBCreateOptions",
   inherit = MappingBase,
   public = list(
-
     #' @description Create a \code{TileDBCreateOptions} object
     #'
     #' @template param-platform-config
     #'
     initialize = function(platform_config = NULL) {
       if (!is.null(platform_config)) {
-        stopifnot("'platform_config' must be a PlatformConfig" = inherits(
-          x = platform_config,
-          what = "PlatformConfig"
-        ))
-        if ("tiledb" %in% platform_config$platforms() && "create" %in% platform_config$params()) {
+        stopifnot(
+          "'platform_config' must be a PlatformConfig" = inherits(
+            x = platform_config,
+            what = "PlatformConfig"
+          )
+        )
+        if (
+          "tiledb" %in%
+            platform_config$platforms() &&
+            "create" %in% platform_config$params()
+        ) {
           map <- platform_config$get("tiledb", "create")
           for (key in map$keys()) {
             super$set(key, map$get(key))
@@ -121,7 +126,9 @@ TileDBCreateOptions <- R6::R6Class(
     #'
     dim_tile = function(dim_name, default = 2048) {
       stopifnot(
-        "'dim_name' must be a single character value" = is.character(dim_name) &&
+        "'dim_name' must be a single character value" = is.character(
+          dim_name
+        ) &&
           length(dim_name) == 1L &&
           nzchar(dim_name),
         "'default' must be a single integerish value" = rlang::is_scalar_integerish(
@@ -146,11 +153,15 @@ TileDBCreateOptions <- R6::R6Class(
 
     #' @return int
     #'
-    sparse_nd_array_dim_zstd_level = function() self$get("sparse_nd_array_dim_zstd_level"),
+    sparse_nd_array_dim_zstd_level = function() {
+      self$get("sparse_nd_array_dim_zstd_level")
+    },
 
     #' @return int
     #'
-    dense_nd_array_dim_zstd_level = function() self$get("dense_nd_array_dim_zstd_level"),
+    dense_nd_array_dim_zstd_level = function() {
+      self$get("dense_nd_array_dim_zstd_level")
+    },
 
     #' @param default Default offset filters to use if not currently set
     #'
@@ -159,9 +170,13 @@ TileDBCreateOptions <- R6::R6Class(
     #'
     offsets_filters = function(default = list()) {
       stopifnot(
-        "'default' must be an unnamed list" = is.list(default) && !is_named(default)
+        "'default' must be an unnamed list" = is.list(default) &&
+          !is_named(default)
       )
-      return(private$.build_filters(self$get("offsets_filters", default = default)))
+      return(private$.build_filters(self$get(
+        "offsets_filters",
+        default = default
+      )))
     },
 
     #' @param default Default validity filters to use if not currently set
@@ -171,9 +186,13 @@ TileDBCreateOptions <- R6::R6Class(
     #'
     validity_filters = function(default = list()) {
       stopifnot(
-        "'default' must be an unnamed list" = is.list(default) && !is_named(default)
+        "'default' must be an unnamed list" = is.list(default) &&
+          !is_named(default)
       )
-      return(private$.build_filters(self$get("validity_filters", default = default)))
+      return(private$.build_filters(self$get(
+        "validity_filters",
+        default = default
+      )))
     },
 
     #' @param dim_name Name of dimension to get filters for
@@ -195,10 +214,13 @@ TileDBCreateOptions <- R6::R6Class(
     #'
     dim_filters = function(dim_name, default = list()) {
       stopifnot(
-        "'dim_name' must be a single character value" = is.character(dim_name) &&
+        "'dim_name' must be a single character value" = is.character(
+          dim_name
+        ) &&
           length(dim_name) == 1L &&
           nzchar(dim_name),
-        "'default' must be an unnamed list" = is.list(default) && !is_named(default)
+        "'default' must be an unnamed list" = is.list(default) &&
+          !is_named(default)
       )
       filters <- private$.dim(dim_name)[["filters"]] %||% default
       return(private$.build_filters(filters))
@@ -223,10 +245,13 @@ TileDBCreateOptions <- R6::R6Class(
     #'
     attr_filters = function(attr_name, default = list()) {
       stopifnot(
-        "'attr_name' must be a single character value" = is.character(attr_name) &&
+        "'attr_name' must be a single character value" = is.character(
+          attr_name
+        ) &&
           length(attr_name) == 1L &&
           nzchar(attr_name),
-        "'default' must be an unnamed list" = is.list(default) && !is_named(default)
+        "'default' must be an unnamed list" = is.list(default) &&
+          !is_named(default)
       )
       filters <- private$.attr(attr_name)[["filters"]] %||% default
       return(private$.build_filters(filters))
@@ -249,7 +274,11 @@ TileDBCreateOptions <- R6::R6Class(
     #' @return The 'create options' as a list
     #'
     to_list = function(build_filters = TRUE) {
-      stopifnot("'build_filters' must be TRUE or FALSE" = is_scalar_logical(build_filters))
+      stopifnot(
+        "'build_filters' must be TRUE or FALSE" = is_scalar_logical(
+          build_filters
+        )
+      )
       opts <- super$to_list()
       for (key in grep("_filters$", names(.CREATE_DEFAULTS), value = TRUE)) {
         if (is.null(opts[[key]])) {
@@ -269,7 +298,8 @@ TileDBCreateOptions <- R6::R6Class(
             }
           }
         }
-      } else { ## ie   if (isFALSE(build_filters)) {   as build_filters is bool
+      } else {
+        ## ie   if (isFALSE(build_filters)) {   as build_filters is bool
         for (key in grep("_filters$", names(opts), value = TRUE)) {
           # spdl::trace("[tdco::to_list] _filters key is {}", key)
           opts[[key]] <- private$.build_filters_json(opts[[key]])
@@ -279,7 +309,9 @@ TileDBCreateOptions <- R6::R6Class(
           for (i in seq_along(names(opts[[key]]))) {
             nm <- names(opts[[key]])[[i]]
             elem <- opts[[key]][[i]]
-            if (i > 1) json <- paste0(json, ",")
+            if (i > 1) {
+              json <- paste0(json, ",")
+            }
             json <- paste(json, sprintf(r"("%s": { "filters":)", nm))
             if ("filters" %in% names(elem)) {
               jsonflt <- private$.build_filters_json(elem[["filters"]])
@@ -360,13 +392,21 @@ TileDBCreateOptions <- R6::R6Class(
       )
       filter <- tiledb::tiledb_filter(item[["name"]])
       for (key in setdiff(x = names(item), y = "name")) {
-        tiledb::tiledb_filter_set_option(filter, option = key, value = item[[key]])
+        tiledb::tiledb_filter_set_option(
+          filter,
+          option = key,
+          value = item[[key]]
+        )
       }
       return(filter)
     },
     .build_filters_json = function(lst) {
       if (length(lst) > 1L) {
-        res <- paste0("[", paste(lapply(lst, private$.build_filter_json), collapse = ", "), "]")
+        res <- paste0(
+          "[",
+          paste(lapply(lst, private$.build_filter_json), collapse = ", "),
+          "]"
+        )
       } else if (length(lst) == 1L) {
         res <- private$.build_filter_json(lst[[1L]])
       } else {
@@ -385,7 +425,9 @@ TileDBCreateOptions <- R6::R6Class(
     ## @return A JSON string describing the tiledb filter setting
     ##
     .build_filter_json = function(item) {
-      if (is.character(item) && length(item) == 1) item <- list(name = item)
+      if (is.character(item) && length(item) == 1) {
+        item <- list(name = item)
+      }
       stopifnot(
         "'item' must be a named list" = is.list(item) && !is.null(names(item)),
         "'name' must be one of the names in 'item'" = "name" %in% names(item)
@@ -395,7 +437,10 @@ TileDBCreateOptions <- R6::R6Class(
       if (length(item) > 1) {
         for (j in seq(2, length(item))) {
           key <- names(item)[[j]]
-          json <- paste0(json, sprintf(r"(, "%s": %s)", key, format(item[[key]])))
+          json <- paste0(
+            json,
+            sprintf(r"(, "%s": %s)", key, format(item[[key]]))
+          )
         }
       }
       json <- paste0(json, " }")

@@ -46,7 +46,9 @@ BlockwiseReadIterBase <- R6::R6Class(
       private$.axis <- axis
       # Check coords
       stopifnot(
-        "'coords' must be a named list of 'CoordsStrider' objects" = is_named_list(coords) &&
+        "'coords' must be a named list of 'CoordsStrider' objects" = is_named_list(
+          coords
+        ) &&
           all(vapply_lgl(coords, inherits, "CoordsStrider"))
       )
       axname <- self$array$dimnames()[self$axis + 1L]
@@ -60,27 +62,34 @@ BlockwiseReadIterBase <- R6::R6Class(
       private$.coords <- coords
       # Check reindex_disable_on_axis
       if (is_scalar_logical(reindex_disable_on_axis)) {
-        reindex_disable_on_axis <- if (isTRUE(reindex_disable_on_axis)) { # TRUE
+        reindex_disable_on_axis <- if (isTRUE(reindex_disable_on_axis)) {
+          # TRUE
           seq(bit64::as.integer64(0L), ndim)
-        } else if (isFALSE(reindex_disable_on_axis)) { # FALSE
+        } else if (isFALSE(reindex_disable_on_axis)) {
+          # FALSE
           NULL
-        } else { # NA
+        } else {
+          # NA
           ax <- seq(bit64::as.integer64(0L), ndim)
           ax[ax != self$axis]
         }
       }
       if (!is.null(reindex_disable_on_axis)) {
         stopifnot(
-          "'reindex_disable_on_axis' must be a vector of integers" = (
-            rlang::is_integerish(reindex_disable_on_axis) ||
-              inherits(reindex_disable_on_axis, "integer64")
+          "'reindex_disable_on_axis' must be a vector of integers" = (rlang::is_integerish(
+            reindex_disable_on_axis
+          ) ||
+            inherits(reindex_disable_on_axis, "integer64")),
+          "'reindex_disable_on_axis' must be finite" = is.finite(
+            reindex_disable_on_axis
           ),
-          "'reindex_disable_on_axis' must be finite" = is.finite(reindex_disable_on_axis),
           "'reindex_disable_on_axis' must be within the range of dimensions of the array" = all(
             reindex_disable_on_axis >= 0 & reindex_disable_on_axis <= ndim
           )
         )
-        reindex_disable_on_axis <- unique(bit64::as.integer64(reindex_disable_on_axis))
+        reindex_disable_on_axis <- unique(bit64::as.integer64(
+          reindex_disable_on_axis
+        ))
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
       axes_to_reindex <- self$axes_to_reindex
@@ -104,8 +113,9 @@ BlockwiseReadIterBase <- R6::R6Class(
     #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}.
     #'
     read_complete = function() {
-      !self$coords_axis$has_next() ||
-        is.null(private$soma_reader_pointer)
+      return(
+        !self$coords_axis$has_next() || is.null(private$soma_reader_pointer)
+      )
     },
     #' @description Read the next chunk of the iterated read. If read
     #' is complete, throws an \code{iterationCompleteWarning} warning and
@@ -194,7 +204,8 @@ BlockwiseReadIterBase <- R6::R6Class(
     # @description Re-index an Arrow table
     reindex_arrow_table = function(tbl) {
       stopifnot(
-        "'tbl' must be an Arrow table" = R6::is.R6(tbl) && inherits(tbl, "Table")
+        "'tbl' must be an Arrow table" = R6::is.R6(tbl) &&
+          inherits(tbl, "Table")
       )
       dname <- self$array$dimnames()[self$axis + 1L]
       if (!dname %in% names(tbl)) {
@@ -353,9 +364,9 @@ BlockwiseSparseReadIter <- R6::R6Class(
         ...,
         reindex_disable_on_axis = reindex_disable_on_axis
       )
-      stopifnot(
-        "Sparse reads only work with two-dimensional arrays" = self$array$ndim() == 2L
-      )
+      if (self$array$ndim() != 2L) {
+        stop("Sparse reads only work with two-dimensional arrays")
+      }
       reprs <- c(
         "T",
         if (!bit64::as.integer64(0L) %in% self$reindex_disable_on_axis) "R",

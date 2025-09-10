@@ -34,8 +34,10 @@ SOMATileDBContext <- R6::R6Class(
         config <- unlist(config)
       }
       stopifnot(
-        "'config' must be a character vector" = !length(config) || is.character(config),
-        "'config' must be named" = !length(config) || is_named(config, allow_empty = FALSE)
+        "'config' must be a character vector" = !length(config) ||
+          is.character(config),
+        "'config' must be named" = !length(config) ||
+          is_named(config, allow_empty = FALSE)
       )
       config["sm.mem.reader.sparse_global_order.ratio_array_data"] <- "0.3"
       # Add the TileDB context
@@ -55,7 +57,10 @@ SOMATileDBContext <- R6::R6Class(
     #' @return Return the items of the map as a list
     #'
     items = function() {
-      return(c(super$items(), as.list(tiledb::config(object = private$.tiledb_ctx))))
+      return(c(
+        super$items(),
+        as.list(tiledb::config(object = private$.tiledb_ctx))
+      ))
     },
 
     #' @return The number of items in the map
@@ -94,7 +99,8 @@ SOMATileDBContext <- R6::R6Class(
     set = function(key, value) {
       stopifnot(
         "'key' must be a single character value" = is_scalar_character(key),
-        "'value' must be a single atomic value" = is.atomic(value) && length(value) == 1L
+        "'value' must be a single atomic value" = is.atomic(value) &&
+          length(value) == 1L
       )
       if (key %in% private$.tiledb_ctx_names()) {
         cfg <- tiledb::config(private$.tiledb_ctx)

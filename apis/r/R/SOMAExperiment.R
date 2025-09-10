@@ -34,7 +34,11 @@ SOMAExperiment <- R6::R6Class(
     #'
     #' @return A \code{\link{SOMAExperimentAxisQuery}} object.
     #'
-    axis_query = function(measurement_name, obs_query = NULL, var_query = NULL) {
+    axis_query = function(
+      measurement_name,
+      obs_query = NULL,
+      var_query = NULL
+    ) {
       SOMAExperimentAxisQuery$new(
         experiment = self,
         measurement_name = measurement_name,
@@ -60,10 +64,11 @@ SOMAExperiment <- R6::R6Class(
     #'
     update_var = function(values, measurement_name, row_index_name = NULL) {
       stopifnot(
-        "Must specify a single measurement name" =
-          is_scalar_character(measurement_name),
-        "Measurement does not exist in the experiment" =
-          measurement_name %in% self$ms$names()
+        "Must specify a single measurement name" = is_scalar_character(
+          measurement_name
+        ),
+        "Measurement does not exist in the experiment" = measurement_name %in%
+          self$ms$names()
       )
       self$ms$get(measurement_name)$var$update(values, row_index_name)
     }

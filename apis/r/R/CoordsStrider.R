@@ -36,12 +36,28 @@ CoordsStrider <- R6::R6Class(
     #' @param end If \code{coords} is missing, the ending coordinate
     #' to generate
     #'
-    initialize = function(coords, ..., stride = NULL, start = NULL, end = NULL) {
+    initialize = function(
+      coords,
+      ...,
+      stride = NULL,
+      start = NULL,
+      end = NULL
+    ) {
       if (missing(coords)) {
         stopifnot(
-          "'start' must be a single integer value" = rlang::is_integerish(start, 1L, TRUE) ||
-            (inherits(start, "integer64") && length(start) == 1L && is.finite(start)),
-          "'end' must be a single integer value" = rlang::is_integerish(end, 1L, TRUE) ||
+          "'start' must be a single integer value" = rlang::is_integerish(
+            start,
+            1L,
+            TRUE
+          ) ||
+            (inherits(start, "integer64") &&
+              length(start) == 1L &&
+              is.finite(start)),
+          "'end' must be a single integer value" = rlang::is_integerish(
+            end,
+            1L,
+            TRUE
+          ) ||
             (inherits(end, "integer64") && length(end) == 1L && is.finite(end)),
           "'start' must be less than or equal to 'end'" = start <= end
         )
@@ -51,18 +67,28 @@ CoordsStrider <- R6::R6Class(
         private$.index <- 0L
       } else {
         stopifnot(
-          "'coords' must be a vector of integer-like values" = inherits(coords, c("integer64", "numeric", "integer"))
+          "'coords' must be a vector of integer-like values" = inherits(
+            coords,
+            c("integer64", "numeric", "integer")
+          )
         )
         private$.coords <- bit64::as.integer64(coords)
         stride <- stride %||% length(coords)
         stopifnot(
-          "'stride' must be less than `Machine$integer.max`" = stride <= .Machine$integer.max
+          "'stride' must be less than `Machine$integer.max`" = stride <=
+            .Machine$integer.max
         )
         private$.index <- 1L
       }
       stopifnot(
-        "'stride' must be a single integer value" = rlang::is_integerish(stride, 1L, TRUE) ||
-          (inherits(stride, "integer64") && length(stride == 1L) && is.finite(stride)),
+        "'stride' must be a single integer value" = rlang::is_integerish(
+          stride,
+          1L,
+          TRUE
+        ) ||
+          (inherits(stride, "integer64") &&
+            length(stride == 1L) &&
+            is.finite(stride)),
         stride > 0L
       )
       private$.stride <- bit64::as.integer64(stride)
@@ -168,9 +194,14 @@ CoordsStrider <- R6::R6Class(
         return(private$.stride)
       }
       stopifnot(
-        "'stride' must be a single integer value" = (rlang::is_integerish(value, n = 1L, finite = TRUE) ||
-          (inherits(value, "integer64") && length(value) == 1L && is.finite(value))
-        ) &&
+        "'stride' must be a single integer value" = (rlang::is_integerish(
+          value,
+          n = 1L,
+          finite = TRUE
+        ) ||
+          (inherits(value, "integer64") &&
+            length(value) == 1L &&
+            is.finite(value))) &&
           value > 0L
       )
       private$.stride <- bit64::as.integer64(value)
@@ -253,7 +284,11 @@ hasNext.CoordsStrider <- function(obj, ...) obj$has_next()
 unlist64 <- function(x) {
   stopifnot(
     "'x' must be a list" = is.list(x),
-    "'x' must contain 'integer64' values" = all(vapply_lgl(x, inherits, what = "integer64"))
+    "'x' must contain 'integer64' values" = all(vapply_lgl(
+      x,
+      inherits,
+      what = "integer64"
+    ))
   )
   res <- bit64::integer64(sum(vapply_int(x, length)))
   idx <- 1L

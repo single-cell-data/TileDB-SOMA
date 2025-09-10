@@ -15,7 +15,6 @@ SOMACollectionBase <- R6::R6Class(
   classname = "SOMACollectionBase",
   inherit = SOMAObject,
   public = list(
-
     #' @description Create a SOMA collection (lifecycle: maturing).\cr
     #' \cr
     #' \strong{Note}: \code{$create()} is considered internal and should not be
@@ -33,7 +32,10 @@ SOMACollectionBase <- R6::R6Class(
       ))
       if (!"tiledbsoma" %in% envs) {
         stop(
-          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          paste(
+            strwrap(private$.internal_use_only("create", "collection")),
+            collapse = '\n'
+          ),
           call. = FALSE
         )
       }
@@ -93,13 +95,21 @@ SOMACollectionBase <- R6::R6Class(
         FUN.VALUE = character(1L)
       ))
       if (sys.parent()) {
-        if (inherits(environment(sys.function(sys.parent()))$self, what = "SOMAObject")) {
+        if (
+          inherits(
+            environment(sys.function(sys.parent()))$self,
+            what = "SOMAObject"
+          )
+        ) {
           envs <- union(envs, "tiledbsoma")
         }
       }
       if (!"tiledbsoma" %in% envs) {
         stop(
-          paste(strwrap(private$.internal_use_only("open", "collection")), collapse = '\n'),
+          paste(
+            strwrap(private$.internal_use_only("open", "collection")),
+            collapse = '\n'
+          ),
           call. = FALSE
         )
       }
@@ -110,7 +120,9 @@ SOMACollectionBase <- R6::R6Class(
       # Set the group timestamp
       # In READ mode, if the opener supplied no timestamp then we default to the time of
       # opening, providing a temporal snapshot of all group members.
-      private$.group_open_timestamp <- if (self$mode() == "READ" && is.null(self$tiledbtimestamp)) {
+      private$.group_open_timestamp <- if (
+        self$mode() == "READ" && is.null(self$tiledbtimestamp)
+      ) {
         Sys.time()
       } else {
         self$tiledb_timestamp
@@ -255,13 +267,18 @@ SOMACollectionBase <- R6::R6Class(
     #'
     remove = function(name) {
       if (self$mode == "WRITE") {
-        .Deprecated(msg = sprintf(
-          "Removing a member in %s mode is deprecated. Collection should be opened in %s mode.",
-          sQuote("WRITE"),
-          sQuote("DELETE")
-        ))
+        .Deprecated(
+          msg = sprintf(
+            "Removing a member in %s mode is deprecated. Collection should be opened in %s mode.",
+            sQuote("WRITE"),
+            sQuote("DELETE")
+          )
+        )
       } else if (self$mode != "DELETE") {
-        stop("SOMA object is not opened in 'delete' mode; cannot remove member.", call. = FALSE)
+        stop(
+          "SOMA object is not opened in 'delete' mode; cannot remove member.",
+          call. = FALSE
+        )
       }
 
       if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
@@ -307,9 +324,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     set_metadata = function(metadata) {
-      stopifnot(
-        "Metadata must be a named list" = is_named_list(metadata)
-      )
+      stopifnot("Metadata must be a named list" = is_named_list(metadata))
 
       private$.check_open_for_write()
       private$.update_metadata_cache()
@@ -409,7 +424,12 @@ SOMACollectionBase <- R6::R6Class(
     #'
     #' @return Returns the newly-created array stored at \code{key}.
     #'
-    add_new_sparse_ndarray = function(key, type, shape, platform_config = NULL) {
+    add_new_sparse_ndarray = function(
+      key,
+      type,
+      shape,
+      platform_config = NULL
+    ) {
       ndarr <- SOMASparseNDArrayCreate(
         uri = file_path(self$uri, key),
         type = type,
@@ -473,7 +493,6 @@ SOMACollectionBase <- R6::R6Class(
     }
   ),
   private = list(
-
     # @field .tiledb_group ...
     #
     .tiledb_group = NULL,
@@ -536,8 +555,14 @@ SOMACollectionBase <- R6::R6Class(
       if (!length(private$.member_cache)) {
         private$.member_cache <- members
       } else {
-        members <- members[setdiff(names(members), names(private$.member_cache))]
-        private$.member_cache <- utils::modifyList(private$.member_cache, members)
+        members <- members[setdiff(
+          names(members),
+          names(private$.member_cache)
+        )]
+        private$.member_cache <- utils::modifyList(
+          private$.member_cache,
+          members
+        )
       }
 
       # Close the read-handle if the group is open for writing
@@ -640,10 +665,7 @@ SOMACollectionBase <- R6::R6Class(
     # Instantiate a soma member object.
     # Responsible for calling the appropriate R6 class constructor.
     construct_member = function(uri, type) {
-      stopifnot(
-        is_scalar_character(uri),
-        is_scalar_character(type)
-      )
+      stopifnot(is_scalar_character(uri), is_scalar_character(type))
       spdl::debug(
         "[SOMACollectionBase$construct_member] entered, uri {} type {}",
         uri,
@@ -665,7 +687,10 @@ SOMACollectionBase <- R6::R6Class(
       )
       soma_type <- metadata$soma_object_type
       if (is.null(soma_type)) {
-        stop("SOMA object type metadata is missing; cannot construct", call. = FALSE)
+        stop(
+          "SOMA object type metadata is missing; cannot construct",
+          call. = FALSE
+        )
       }
       spdl::debug(
         "[SOMACollectionBase$construct_member] Instantiating {} object at: '{}'",
@@ -709,10 +734,7 @@ SOMACollectionBase <- R6::R6Class(
       )
 
       if (!inherits(value, expected_class)) {
-        stop(
-          sprintf("%s must be a '%s'", name, expected_class),
-          call. = FALSE
-        )
+        stop(sprintf("%s must be a '%s'", name, expected_class), call. = FALSE)
       }
       self$set(value, name = name)
       return(invisible(self))

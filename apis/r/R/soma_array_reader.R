@@ -43,18 +43,21 @@ soma_array_reader <- function(
   stopifnot(
     "'uri' must be character" = is.character(uri),
     "'colnames' must be character or NULL" = is_character_or_null(colnames),
-    "'qc' must be a query condition object pointer or NULL" =
     # inherits(qc,"tiledb_query_condition") || is.null(qc),
-      is(qc, "externalptr") || is.null(qc),
-    "'dim_points' must be a named list or NULL" =
-      is_named_list(dim_points) || is.null(dim_points),
-    "'dim_ranges' must be a named list or NULL" =
-      is_named_list(dim_ranges) || is.null(dim_ranges),
+    "'qc' must be a query condition object pointer or NULL" = is(
+      qc,
+      "externalptr"
+    ) ||
+      is.null(qc),
+    "'dim_points' must be a named list or NULL" = is_named_list(dim_points) ||
+      is.null(dim_points),
+    "'dim_ranges' must be a named list or NULL" = is_named_list(dim_ranges) ||
+      is.null(dim_ranges),
     "'batch_size' must be character" = is.character(batch_size),
     "'result_order' must be character" = is.character(result_order),
     "'loglevel' must be character" = is.character(loglevel),
-    "'soma_context' must be external pointer or NULL" =
-      is.null(soma_context) || inherits(soma_context, "externalptr")
+    "'soma_context' must be external pointer or NULL" = is.null(soma_context) ||
+      inherits(soma_context, "externalptr")
   )
 
   if (!is.null(dim_points)) {
@@ -66,13 +69,24 @@ soma_array_reader <- function(
     }
   }
 
-  if (is.null(soma_context)) soma_context <- soma_context() # package-level cached instance
+  if (is.null(soma_context)) {
+    soma_context <- soma_context()
+  } # package-level cached instance
   spdl::debug(
     "[soma_array_reader] calling soma_array_reader_impl ({},{}",
-    timestamprange[1], timestamprange[2]
+    timestamprange[1],
+    timestamprange[2]
   )
   soma_array_reader_impl(
-    uri, soma_context, colnames, qc, dim_points, dim_ranges, batch_size,
-    result_order, loglevel, timestamprange
+    uri,
+    soma_context,
+    colnames,
+    qc,
+    dim_points,
+    dim_ranges,
+    batch_size,
+    result_order,
+    loglevel,
+    timestamprange
   )
 }
