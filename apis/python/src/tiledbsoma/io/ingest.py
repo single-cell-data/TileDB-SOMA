@@ -1816,7 +1816,7 @@ def _update_dataframe(
             else:
                 add_attrs[add_key] = get_arrow_str_format(atype)
 
-        sdf_r._handle._handle._update_dataframe_schema(list(drop_keys), add_attrs, add_enmrs)
+        sdf_r._handle_wrapper._handle._update_dataframe_schema(list(drop_keys), add_attrs, add_enmrs)
 
     _write_dataframe(
         df_uri=sdf.uri,
@@ -2136,7 +2136,7 @@ def _write_matrix_to_denseNDArray(
 
 def _read_nonempty_domain(arr: SOMAArray) -> Any:  # noqa: ANN401
     try:
-        return arr._handle.non_empty_domain()
+        return arr._handle_wrapper.non_empty_domain()
     except (SOMAError, RuntimeError):
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
@@ -2145,7 +2145,7 @@ def _read_nonempty_domain(arr: SOMAArray) -> Any:  # noqa: ANN401
 
     cls = type(arr)
     with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
-        return readarr._handle.non_empty_domain()
+        return readarr._handle_wrapper.non_empty_domain()
 
 
 def _find_sparse_chunk_size(

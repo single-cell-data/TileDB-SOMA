@@ -24,7 +24,7 @@ _WrapperType_co = TypeVar("_WrapperType_co", bound=_tdb_handles.AnyWrapper, cova
 
 """The type of handle on a backend object that we have.
 
-Covariant because ``_handle`` is read-only.
+Covariant because ``_handle_wrapper`` is read-only.
 """
 
 
@@ -51,7 +51,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     )
     """Class variable of the Wrapper class used to open this object type."""
 
-    __slots__ = ("_close_stack", "_handle")
+    __slots__ = ("_close_stack", "_handle_wrapper")
 
     @classmethod
     def open(
@@ -77,7 +77,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
                 or a datetime.datetime object.
-                When not provided (the default), the current time is used.
+                When not provided (the default), the current time_wrapper is used.
                 A value of zero results in default, i.e., the current time.
 
         Returns:
@@ -138,8 +138,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 f" Directly calling `{name}(...)` is intended for TileDB SOMA"
                 f" internal use only.",
             )
-        self._handle = handle
-        self._close_stack.enter_context(self._handle)
+        self._handle_wrapper = handle
+        self._close_stack.enter_context(self._handle_wrapper)
         self._parse_special_metadata()
 
     def _parse_special_metadata(self) -> None:
@@ -169,19 +169,21 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Experimental.
         """
-        self._handle.close()
-        self._handle = self._wrapper_type.open(self._handle.uri, mode, self._handle.context, tiledb_timestamp)  # type: ignore
-        self._close_stack.enter_context(self._handle)
+        self._handle_wrapper.close()
+        self._handle_wrapper = self._wrapper_type.open(
+            self._handle_wrapper.uri, mode, self._handle_wrapper.context, tiledb_timestamp
+        )  # type: ignore
+        self._close_stack.enter_context(self._handle_wrapper)
         self._parse_special_metadata()
         return self
 
     @property
     def context(self) -> SOMATileDBContext:
-        return self._handle.context
+        return self._handle_wrapper.context
 
     @property
     def metadata(self) -> MutableMapping[str, Any]:
-        return self._handle.metadata
+        return self._handle_wrapper.metadata
 
     def __repr__(self) -> str:
         return f"<{self._my_repr()}>"
@@ -202,7 +204,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Maturing.
         """
-        return self._handle.uri
+        return self._handle_wrapper.uri
 
     def close(self) -> None:
         """Release any resources held while the object is open.
@@ -231,7 +233,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Maturing.
         """
-        return self._handle.closed
+        return self._handle_wrapper.closed
 
     @property
     def mode(self) -> options.OpenMode:
@@ -246,7 +248,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Maturing.
         """
-        return self._handle.mode
+        return self._handle_wrapper.mode
 
     def _verify_open_for_deleting(self) -> None:
         """Raises an error if the object is not open for deleting."""
@@ -277,7 +279,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def tiledb_timestamp_ms(self) -> int:
         """The time this object was opened, as millis since the Unix epoch."""
-        return self._handle.timestamp_ms
+        return self._handle_wrapper.timestamp_ms
 
     @classmethod
     def exists(

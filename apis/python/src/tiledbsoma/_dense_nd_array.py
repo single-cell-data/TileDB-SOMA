@@ -226,7 +226,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         #
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
-        handle: clib.SOMADenseNDArray = self._handle._handle
+        handle: clib.SOMADenseNDArray = self._handle_wrapper._handle
 
         if result_order == options.ResultOrder.AUTO:
             warnings.warn(
@@ -294,7 +294,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        clib_handle = self._handle._handle
+        clib_handle = self._handle_wrapper._handle
 
         # Compute the coordinates for the dense array.
         new_coords: list[int | Slice[int] | None] = []

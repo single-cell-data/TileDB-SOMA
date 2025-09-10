@@ -78,11 +78,11 @@ def test_sparse_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_typ
 
     # Ensure read mode uses clib object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A:
-        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
+        assert isinstance(A._handle_wrapper._handle, soma.pytiledbsoma.SOMASparseNDArray)
 
     # Ensure write mode uses clib object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
+        assert isinstance(A._handle_wrapper._handle, soma.pytiledbsoma.SOMASparseNDArray)
 
     # Ensure it cannot be opened by another type
     with pytest.raises(soma.SOMAError):

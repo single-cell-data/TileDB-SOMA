@@ -281,7 +281,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """Returns the number of rows in the dataframe."""
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
-        return cast("PointCloudDataFrameWrapper", self._handle).count
+        return cast("PointCloudDataFrameWrapper", self._handle_wrapper).count
 
     def delete_cells(
         self,
@@ -330,7 +330,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             qc = QueryCondition(value_filter)
             qc.init_query_condition(self.schema, [])
             qc_handle = qc.c_obj
-        self._handle._handle.delete_cells(coord_filter._handle, qc_handle)
+        self._handle_wrapper._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,
@@ -453,7 +453,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             {},  # Move index value_filters into this dict to optimize queries
             self._tiledb_dim_names(),
             self._coord_space.axis_names,
-            self._handle.schema,
+            self._handle_wrapper.schema,
         )
 
         return somacore.SpatialRead(
@@ -505,7 +505,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self._write_table(values, sort_coords)
 
         if write_options.consolidate_and_vacuum:
-            self._handle._handle.consolidate_and_vacuum()
+            self._handle_wrapper._handle.consolidate_and_vacuum()
 
         return self
 

@@ -297,7 +297,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """Returns the number of rows in the geometry dataframe."""
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a GeometryDataFrameWrapper
-        return cast("GeometryDataFrameWrapper", self._handle).count
+        return cast("GeometryDataFrameWrapper", self._handle_wrapper).count
 
     def delete_cells(
         self,
@@ -442,7 +442,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             {},  # Move index value_filters into this dict to optimize queries
             self.index_column_names,
             self._coord_space.axis_names,
-            self._handle.schema,
+            self._handle_wrapper.schema,
             spatial_column=SOMA_GEOMETRY,
         )
 
@@ -493,7 +493,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         self._write_table(values, write_options.sort_coords)
 
         if write_options.consolidate_and_vacuum:
-            self._handle._handle.consolidate_and_vacuum()
+            self._handle_wrapper._handle.consolidate_and_vacuum()
 
         return self
 
