@@ -493,7 +493,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         self._write_table(values, write_options.sort_coords)
 
         if write_options.consolidate_and_vacuum:
-            self._handle_wrapper._handle.consolidate_and_vacuum()
+            self._handle.consolidate_and_vacuum()
 
         return self
 

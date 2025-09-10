@@ -513,12 +513,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 "StatusAndReason",
-                self._handle_wrapper._handle.can_resize_soma_joinid_shape(
+                self._handle.can_resize_soma_joinid_shape(
                     newshape,
                     function_name_for_messages=function_name_for_messages,
                 ),
             )
-        self._handle_wrapper._handle.resize_soma_joinid_shape(
+        self._handle.resize_soma_joinid_shape(
             newshape,
             function_name_for_messages=function_name_for_messages,
         )
@@ -539,12 +539,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 "StatusAndReason",
-                self._handle_wrapper._handle.can_upgrade_soma_joinid_shape(
+                self._handle.can_upgrade_soma_joinid_shape(
                     newshape,
                     function_name_for_messages=function_name_for_messages,
                 ),
             )
-        self._handle_wrapper._handle.upgrade_soma_joinid_shape(
+        self._handle.upgrade_soma_joinid_shape(
             newshape,
             function_name_for_messages=function_name_for_messages,
         )
@@ -620,12 +620,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 "StatusAndReason",
-                self._handle_wrapper._handle.can_upgrade_domain(
+                self._handle.can_upgrade_domain(
                     pyarrow_domain_table,
                     function_name_for_messages,
                 ),
             )
-        self._handle_wrapper._handle.upgrade_domain(
+        self._handle.upgrade_domain(
             pyarrow_domain_table,
             function_name_for_messages,
         )
@@ -674,12 +674,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 "StatusAndReason",
-                self._handle_wrapper._handle.can_change_domain(
+                self._handle.can_change_domain(
                     pyarrow_domain_table,
                     function_name_for_messages,
                 ),
             )
-        self._handle_wrapper._handle.change_domain(pyarrow_domain_table, function_name_for_messages)
+        self._handle.change_domain(pyarrow_domain_table, function_name_for_messages)
         return (True, "")
 
     def __len__(self) -> int:
@@ -724,7 +724,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             qc = QueryCondition(value_filter)
             qc.init_query_condition(self.schema, [])
             qc_handle = qc.c_obj
-        self._handle_wrapper._handle.delete_cells(coord_filter._handle, qc_handle)
+        self._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,
@@ -847,7 +847,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self._write_table(values, write_options.sort_coords)
 
         if write_options.consolidate_and_vacuum:
-            self._handle_wrapper._handle.consolidate_and_vacuum()
+            self._handle.consolidate_and_vacuum()
 
         return self
 

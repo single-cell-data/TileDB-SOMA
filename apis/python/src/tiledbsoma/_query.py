@@ -851,7 +851,7 @@ def _read_as_csr(
     d1_joinids = d1_joinids_arr.to_numpy()
     try:
         # frag_cell_count is >= nnz, as it does not account for deletes and double-counts updates
-        frag_cell_count: int | None = matrix._handle_wrapper._handle.fragment_cell_count()
+        frag_cell_count: int | None = matrix._handle.fragment_cell_count()
     except SOMAError:
         frag_cell_count = None
 

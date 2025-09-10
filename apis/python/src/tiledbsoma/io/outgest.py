@@ -99,7 +99,7 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
     fallback_row_count = 32768
     try:
         # frag_cell_count is >= nnz, as it does not account for deletes and double-counts updates
-        frag_cell_count: int | None = X._handle_wrapper._handle.fragment_cell_count()
+        frag_cell_count: int | None = X._handle.fragment_cell_count()
     except SOMAError:
         frag_cell_count = None
     partition_sz = (

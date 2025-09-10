@@ -140,7 +140,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         super().__init__()
 
         self.array = array
-        self.shape = array._handle_wrapper._handle.shape
+        self.shape = array._handle.shape
         self.ndim = len(self.shape)
         self.eager = eager
         self.result_order = result_order
@@ -532,7 +532,7 @@ class ArrowTableRead(Iterator[pa.Table]):
         *,
         coord_space: CoordinateSpace | None = None,
     ) -> None:
-        clib_handle = array._handle_wrapper._handle
+        clib_handle = array._handle
 
         self.mq = ManagedQuery(array, platform_config)
 

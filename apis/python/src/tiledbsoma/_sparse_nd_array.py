@@ -229,7 +229,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 f"Invalid PlatformConfig with type {type(platform_config)}. Must have type {TileDBDeleteOptions.__name__}."
             )
         coord_filter = CoordinateValueFilters.create(self, coords)
-        self._handle_wrapper._handle.delete_cells(coord_filter._handle)
+        self._handle.delete_cells(coord_filter._handle)
 
     def read(
         self,
@@ -319,7 +319,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
-        clib_sparse_array = self._handle_wrapper._handle
+        clib_sparse_array = self._handle
 
         if isinstance(values, pa.SparseCOOTensor):
             # Write bulk data
@@ -445,7 +445,7 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
         """
         self.array = array
         self.coords = coords
-        self.shape = tuple(array._handle_wrapper._handle.shape)
+        self.shape = tuple(array._handle.shape)
         self.result_order = result_order
         self.platform_config = platform_config
 

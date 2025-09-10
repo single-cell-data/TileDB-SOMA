@@ -150,11 +150,11 @@ def test_dataframe(tmp_path, arrow_schema):
 
     # Ensure read mode uses clib object
     with soma.DataFrame.open(tmp_path.as_posix(), "r") as A:
-        assert isinstance(A._handle_wrapper._handle, soma.pytiledbsoma.SOMADataFrame)
+        assert isinstance(A._handle, soma.pytiledbsoma.SOMADataFrame)
 
     # Ensure write mode uses clib object
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle_wrapper._handle, soma.pytiledbsoma.SOMADataFrame)
+        assert isinstance(A._handle, soma.pytiledbsoma.SOMADataFrame)
 
     # Ensure it cannot be opened by another type
     with pytest.raises(soma.SOMAError):
@@ -3996,7 +3996,7 @@ def test_managed_query_gow(tmp_path):
     ).close()
 
     with soma.DataFrame.open(uri, "w") as A:
-        mq = soma.pytiledbsoma.ManagedQuery(A._handle_wrapper._handle, A.context.native_context)
+        mq = soma.pytiledbsoma.ManagedQuery(A._handle, A.context.native_context)
         mq.set_layout(soma.pytiledbsoma.ResultOrder.globalorder)
 
         # Cannot finalize before submitting

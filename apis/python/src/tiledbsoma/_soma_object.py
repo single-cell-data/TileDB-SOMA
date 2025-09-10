@@ -51,7 +51,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     )
     """Class variable of the Wrapper class used to open this object type."""
 
-    __slots__ = ("_close_stack", "_handle_wrapper")
+    __slots__ = ("_close_stack", "_handle", "_handle_wrapper")
 
     @classmethod
     def open(
@@ -139,6 +139,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 f" internal use only.",
             )
         self._handle_wrapper = handle
+        self._handle = self._handle_wrapper._handle
         self._close_stack.enter_context(self._handle_wrapper)
         self._parse_special_metadata()
 
@@ -173,6 +174,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle_wrapper = self._wrapper_type.open(
             self._handle_wrapper.uri, mode, self._handle_wrapper.context, tiledb_timestamp
         )  # type: ignore
+        self._handle = self._handle_wrapper._handle
         self._close_stack.enter_context(self._handle_wrapper)
         self._parse_special_metadata()
         return self

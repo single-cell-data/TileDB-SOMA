@@ -1816,7 +1816,7 @@ def _update_dataframe(
             else:
                 add_attrs[add_key] = get_arrow_str_format(atype)
 
-        sdf_r._handle_wrapper._handle._update_dataframe_schema(list(drop_keys), add_attrs, add_enmrs)
+        sdf_r._handle._update_dataframe_schema(list(drop_keys), add_attrs, add_enmrs)
 
     _write_dataframe(
         df_uri=sdf.uri,

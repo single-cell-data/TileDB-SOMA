@@ -330,7 +330,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             qc = QueryCondition(value_filter)
             qc.init_query_condition(self.schema, [])
             qc_handle = qc.c_obj
-        self._handle_wrapper._handle.delete_cells(coord_filter._handle, qc_handle)
+        self._handle.delete_cells(coord_filter._handle, qc_handle)
 
     def read(
         self,
@@ -505,7 +505,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self._write_table(values, sort_coords)
 
         if write_options.consolidate_and_vacuum:
-            self._handle_wrapper._handle.consolidate_and_vacuum()
+            self._handle.consolidate_and_vacuum()
 
         return self
 
