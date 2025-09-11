@@ -380,7 +380,7 @@ class CollectionBase(
 
     def members(self) -> dict[str, tuple[str, str]]:
         """Get a mapping of {member_name: (uri, soma_object_type)}."""
-        handle = cast("_tdb_handles.SOMAGroupWrapper[Any]", self._handle)
+        handle = cast("_tdb_handles.SOMAGroupWrapper[Any]", self._handle_wrapper)
         return handle.members()
 
     def __repr__(self) -> str:

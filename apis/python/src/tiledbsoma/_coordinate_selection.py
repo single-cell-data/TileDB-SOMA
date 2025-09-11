@@ -35,9 +35,9 @@ class CoordinateValueFilters:
         if not is_nonstringy_sequence(coords):
             raise TypeError(f"The coords type {type(coords)} must be a regular sequence, not str or bytes")
 
-        if len(coords) > len(array._handle._handle.dimension_names):
+        if len(coords) > len(array._handle.dimension_names):
             raise ValueError(
-                f"The coords ({len(coords)} elements) must be shorter than the number of index columns ({len(array._handle._handle.dimension_names)})",
+                f"The coords ({len(coords)} elements) must be shorter than the number of index columns ({len(array._handle.dimension_names)})",
             )
 
         value_filter = cls(array)
@@ -46,12 +46,12 @@ class CoordinateValueFilters:
         return value_filter
 
     def __attrs_post_init__(self) -> None:
-        object.__setattr__(self, "_handle", clib.CoordinateValueFilters(self._array._handle._handle))
+        object.__setattr__(self, "_handle", clib.CoordinateValueFilters(self._array._handle))
 
     def add_coordinate_selection(
         self, column_index: int, coord: options.SparseDFCoord | options.SparseNDCoord | options.DenseCoord
     ) -> None:
-        array_handle = self._array._handle._handle
+        array_handle = self._array._handle
         dim = array_handle.schema.field(column_index)
         if dim.metadata is not None and dim.metadata[b"dtype"].decode("utf-8") == "WKB":
             raise NotImplementedError("Support for adding a selection to a geometry column is not yet implemented.")

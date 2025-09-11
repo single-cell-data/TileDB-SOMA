@@ -293,7 +293,7 @@ def test_metadata_bad_key(soma_object, bad_key):
     soma_object.metadata[bad_key] = "test_value"
 
     with pytest.raises(soma.SOMAError):
-        soma_object._handle.metadata._write()
+        soma_object._handle_wrapper.metadata._write()
 
 
 @pytest.mark.parametrize(
@@ -317,4 +317,4 @@ def test_metadata_bad_string_value(soma_object, bad_value):
     soma_object.metadata["test_key"] = bad_value
 
     with pytest.raises(soma.SOMAError):
-        soma_object._handle.metadata._write()
+        soma_object._handle_wrapper.metadata._write()

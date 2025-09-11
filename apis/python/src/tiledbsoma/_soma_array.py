@@ -14,6 +14,7 @@ from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._managed_query import ManagedQuery
 from ._soma_object import SOMAObject
+from ._util import _cast_domainish
 
 
 class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
@@ -114,7 +115,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         has actually had data written, this function will return a tighter
         range.
         """
-        return self._handle.non_empty_domain()
+        return _cast_domainish(self._handle.non_empty_domain())
 
     def _tiledb_array_keys(self) -> tuple[str, ...]:
         """Return all dim and attr names."""
@@ -122,13 +123,13 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
 
     def _tiledb_dim_names(self) -> tuple[str, ...]:
         """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
-        return self._handle.dim_names
+        return tuple(self._handle.dimension_names)
 
     def _tiledb_attr_names(self) -> tuple[str, ...]:
         """Reads the attribute names from the schema:
         for example, the list of column names in a dataframe.
         """
-        return self._handle.attr_names
+        return tuple(f.name for f in self.schema if f.name not in self._handle.dimension_names)
 
     def _domain(self) -> tuple[tuple[Any, Any], ...]:
         """This is the SOMA domain, not the core domain.
@@ -143,7 +144,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         * Core current domain is new as of core 2.25 and can be
           resized up to core (max) domain.
         """
-        return self._handle.domain
+        return _cast_domainish(self._handle.domain())
 
     def _maxdomain(self) -> tuple[tuple[Any, Any], ...]:
         """This is the SOMA maxdomain, not the core domain.
@@ -158,7 +159,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         * Core current domain is new as of core 2.25 and can be
           resized up to core (max) domain.
         """
-        return self._handle.maxdomain
+        return _cast_domainish(self._handle.maxdomain())
 
     def _write_table(self, values: pa.Table, sort_coords: bool) -> None:
         """Helper function that sets the correct result order for the layout

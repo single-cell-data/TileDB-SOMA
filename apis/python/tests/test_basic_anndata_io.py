@@ -334,13 +334,13 @@ def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri, tmp_path):
         expected_relative = True  # since local disk
 
     with tiledbsoma.Experiment.open(output_path) as G:
-        assert G._handle._handle.is_relative("obs") == expected_relative
-        assert G._handle._handle.is_relative("ms") == expected_relative
+        assert G._handle.is_relative("obs") == expected_relative
+        assert G._handle.is_relative("ms") == expected_relative
 
-        assert G.ms._handle._handle.is_relative("RNA") == expected_relative
-        assert G.ms["RNA"]._handle._handle.is_relative("var") == expected_relative
-        assert G.ms["RNA"]._handle._handle.is_relative("X") == expected_relative
-        assert G.ms["RNA"].X._handle._handle.is_relative("data") == expected_relative
+        assert G.ms._handle.is_relative("RNA") == expected_relative
+        assert G.ms["RNA"]._handle.is_relative("var") == expected_relative
+        assert G.ms["RNA"]._handle.is_relative("X") == expected_relative
+        assert G.ms["RNA"].X._handle.is_relative("data") == expected_relative
 
         for collection_name in [
             "obsm",
@@ -348,12 +348,12 @@ def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri, tmp_path):
             "varm",
         ]:  # conftest_h5ad_file_extended has no varp
             for member in G.ms["RNA"][collection_name]:
-                assert G.ms["RNA"][collection_name]._handle._handle.is_relative(member) == expected_relative
+                assert G.ms["RNA"][collection_name]._handle.is_relative(member) == expected_relative
 
-        assert G.ms._handle._handle.is_relative("raw") == expected_relative
-        assert G.ms["raw"]._handle._handle.is_relative("var") == expected_relative
-        assert G.ms["raw"]._handle._handle.is_relative("X") == expected_relative
-        assert G.ms["raw"].X._handle._handle.is_relative("data") == expected_relative
+        assert G.ms._handle.is_relative("raw") == expected_relative
+        assert G.ms["raw"]._handle.is_relative("var") == expected_relative
+        assert G.ms["raw"]._handle.is_relative("X") == expected_relative
+        assert G.ms["raw"].X._handle.is_relative("data") == expected_relative
 
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])

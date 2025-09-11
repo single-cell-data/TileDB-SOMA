@@ -44,11 +44,11 @@ def test_dense_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_type
 
     # Ensure read mode uses clib object
     with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A:
-        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
+        assert isinstance(A._handle, soma.pytiledbsoma.SOMADenseNDArray)
 
     # Ensure write mode uses clib object
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
+        assert isinstance(A._handle, soma.pytiledbsoma.SOMADenseNDArray)
 
     # Ensure it cannot be opened by another type
     with pytest.raises(soma.SOMAError):
