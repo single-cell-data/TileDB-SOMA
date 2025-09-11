@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import Any
 
 import pyarrow as pa
 import somacore
@@ -297,7 +297,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """Returns the number of rows in the geometry dataframe."""
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a GeometryDataFrameWrapper
-        return cast("GeometryDataFrameWrapper", self._handle_wrapper).count
+        return int(self._handle.count)
 
     def delete_cells(
         self,
@@ -442,7 +442,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             {},  # Move index value_filters into this dict to optimize queries
             self.index_column_names,
             self._coord_space.axis_names,
-            self._handle_wrapper.schema,
+            self._handle.schema,
             spatial_column=SOMA_GEOMETRY,
         )
 

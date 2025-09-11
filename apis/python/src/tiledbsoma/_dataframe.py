@@ -392,7 +392,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             if not isinstance(field.type, pa.DictionaryType):
                 raise KeyError(f"column name '{column_name}' is not of dictionary type")
 
-        return self._handle_wrapper.get_enumeration_values(column_names)
+        return cast("dict[str, pa.Array]", self._handle.get_enumeration_values(column_names))
 
     def extend_enumeration_values(self: DataFrame, values: dict[str, pa.Array], deduplicate: bool = False) -> None:
         """Extend enumeration values for each column defined in `values`.
@@ -424,7 +424,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead",
                 )
 
-        self._handle_wrapper.extend_enumeration_values(values, deduplicate)
+        self._handle.extend_enumeration_values(values, deduplicate)
 
     @property
     def domain(self) -> tuple[tuple[Any, Any], ...]:
@@ -455,7 +455,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a DataFrameWrapper
-        return cast("DataFrameWrapper", self._handle_wrapper).count
+        return int(self._handle.count)
 
     @property
     def _maybe_soma_joinid_shape(self) -> int | None:
@@ -467,7 +467,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._handle_wrapper.maybe_soma_joinid_shape
+        return cast("Union[int, None]", self._handle.maybe_soma_joinid_shape)
 
     @property
     def _maybe_soma_joinid_maxshape(self) -> int | None:
@@ -478,7 +478,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._handle_wrapper.maybe_soma_joinid_maxshape
+        return cast("Union[int, None]", self._handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:
@@ -489,7 +489,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        return self._handle_wrapper.tiledbsoma_has_upgraded_domain
+        return cast("bool", self._handle.tiledbsoma_has_upgraded_domain)
 
     def tiledbsoma_resize_soma_joinid_shape(self, newshape: int, check_only: bool = False) -> StatusAndReason:
         """Increases the shape of the dataframe on the ``soma_joinid`` index

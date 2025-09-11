@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pyarrow as pa
@@ -207,7 +207,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Maturing.
         """
         self._verify_open_for_reading()
-        return cast("SparseNDArrayWrapper", self._handle_wrapper).nnz
+        return int(self._handle.nnz())
 
     def delete_cells(self, coords: options.SparseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
         """Deletes cells at the specified coordinates in a :class:`SparseNDArray`.

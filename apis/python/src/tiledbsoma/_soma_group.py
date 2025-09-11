@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Iterator
 from threading import Lock
 from typing import Any, Callable, Generic, TypeVar, cast
@@ -158,9 +159,23 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
     def _del_element(self, key: str) -> None:
         if key in self._mutated_keys:
-            raise SOMAError(f"cannot delete previously-mutated key {key!r}")
+            raise SOMAError(f"Cannot delete previously-mutated key '{key!r}'.")
         try:
-            self._handle_wrapper.deleter.remove(key)
+            if self.closed:
+                raise SOMAError(f"Cannot delete '{key!r}'. {self} is closed")
+            if self.mode == "d":
+                self._handle.remove(key)
+            elif self.mode == "w":
+                warnings.warn(
+                    f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
+                    DeprecationWarning,
+                    stacklevel=3,
+                )
+                self._handle.remove(key)
+            else:
+                raise SOMAError(
+                    f"Deleting is not allowed in mode '{self.mode}'. {self} should be reopened with mode='d'."
+                )
         except Exception as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe

@@ -2136,7 +2136,7 @@ def _write_matrix_to_denseNDArray(
 
 def _read_nonempty_domain(arr: SOMAArray) -> Any:  # noqa: ANN401
     try:
-        return arr._handle_wrapper.non_empty_domain()
+        return arr.non_empty_domain()
     except (SOMAError, RuntimeError):
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
@@ -2145,7 +2145,7 @@ def _read_nonempty_domain(arr: SOMAArray) -> Any:  # noqa: ANN401
 
     cls = type(arr)
     with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
-        return readarr._handle_wrapper.non_empty_domain()
+        return readarr.non_empty_domain()
 
 
 def _find_sparse_chunk_size(

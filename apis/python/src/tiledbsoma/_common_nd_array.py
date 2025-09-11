@@ -98,8 +98,8 @@ class NDArray(SOMAArray, somacore.NDArray):
             Maturing.
         """
         if check_only:
-            return self._handle_wrapper.tiledbsoma_can_resize(newshape)
-        self._handle_wrapper.resize(newshape)
+            return cast("StatusAndReason", self._handle.can_resize(newshape))
+        self._handle.resize(newshape)
         return (True, "")
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None], check_only: bool = False) -> StatusAndReason:
@@ -108,8 +108,8 @@ class NDArray(SOMAArray, somacore.NDArray):
         any dimension. Raises an error if the array already has a shape.
         """
         if check_only:
-            return self._handle_wrapper.tiledbsoma_can_upgrade_shape(newshape)
-        self._handle_wrapper.tiledbsoma_upgrade_shape(newshape)
+            return cast("StatusAndReason", self._handle.tiledbsoma_can_upgrade_shape(newshape))
+        self._handle.tiledbsoma_upgrade_shape(newshape)
         return (True, "")
 
     @property
@@ -121,7 +121,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return cast("tuple[int, ...]", tuple(self._handle_wrapper.shape))
+        return cast("tuple[int, ...]", tuple(self._handle.shape))
 
     @property
     def maxshape(self) -> tuple[int, ...]:
@@ -132,7 +132,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return cast("tuple[int, ...]", tuple(self._handle_wrapper.maxshape))
+        return cast("tuple[int, ...]", tuple(self._handle.maxshape))
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
@@ -143,7 +143,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return self._handle_wrapper.tiledbsoma_has_upgraded_shape
+        return cast("bool", self._handle.tiledbsoma_has_upgraded_shape)
 
     @property
     def type(self) -> pa.DataType:

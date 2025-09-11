@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import cast
 
 import pyarrow as pa
 import somacore
@@ -281,7 +280,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """Returns the number of rows in the dataframe."""
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
-        return cast("PointCloudDataFrameWrapper", self._handle_wrapper).count
+        return int(self._handle.count)
 
     def delete_cells(
         self,
@@ -453,7 +452,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             {},  # Move index value_filters into this dict to optimize queries
             self._tiledb_dim_names(),
             self._coord_space.axis_names,
-            self._handle_wrapper.schema,
+            self._handle.schema,
         )
 
         return somacore.SpatialRead(
