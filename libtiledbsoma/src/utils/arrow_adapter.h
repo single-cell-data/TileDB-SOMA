@@ -140,21 +140,6 @@ class ArrowAdapter {
         std::optional<std::pair<int64_t, int64_t>> timestamp_range = std::nullopt);
 
     /**
-     * @brief Get a TileDB dimension from an Arrow schema.
-     *
-     * @return std::pair<Dimension, bool> The TileDB dimension.
-     */
-    static Dimension tiledb_dimension_from_arrow_schema(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* schema,
-        ArrowArray* array,
-        std::string soma_type,
-        std::string_view type_metadata,
-        std::string prefix = std::string(),
-        std::string suffix = std::string(),
-        PlatformConfig platform_config = PlatformConfig());
-
-    /**
      * @brief Get a TileDB attribute with its enumeration from an Arrow schema.
      *
      * @return std::pair<Attribute, std::optional<Enumeration>>
