@@ -32,7 +32,7 @@ class ManagedQuery:
     _handle: clib.ManagedQuery = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:
-        array_handle = self._array._handle._handle
+        array_handle = self._array._handle
 
         if self._platform_config is not None:
             cfg = array_handle.context().config()
@@ -46,7 +46,7 @@ class ManagedQuery:
         if isinstance(coord, np.ndarray) and coord.ndim != 1:
             raise ValueError(f"only 1D numpy arrays may be used to index; got {coord.ndim}")
 
-        column = self._array._handle._handle.get_column(dim.name)
+        column = self._array._handle.get_column(dim.name)
 
         try:
             set_dim_points = getattr(column, f"set_dim_points_{dim.type}")
@@ -80,7 +80,7 @@ class ManagedQuery:
         if not lo_hi:
             return
 
-        column = self._array._handle._handle.get_column(dim.name)
+        column = self._array._handle.get_column(dim.name)
 
         try:
             set_dim_range = getattr(column, f"set_dim_ranges_{dim.type}")
@@ -93,7 +93,7 @@ class ManagedQuery:
         if coord is None:
             return
 
-        array_handle = self._array._handle._handle
+        array_handle = self._array._handle
         dim = array_handle.schema.field(dim_idx)
         dom = _util._cast_domainish(array_handle.domain())[dim_idx]
 
@@ -139,7 +139,7 @@ class ManagedQuery:
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.\
-                ned = _util._cast_domainish(self._array._handle._handle.non_empty_domain())
+                ned = _util._cast_domainish(self._array._handle.non_empty_domain())
                 _, stop = ned[dim_idx]
             else:
                 stop = coord.stop
@@ -174,10 +174,10 @@ class ManagedQuery:
         if not is_nonstringy_sequence(coords):
             raise TypeError(f"The coords type {type(coords)} must be a regular sequence, not str or bytes")
 
-        if len(coords) > len(self._array._handle._handle.dimension_names):
+        if len(coords) > len(self._array._handle.dimension_names):
             raise ValueError(
                 f"The coords ({len(coords)} elements) must be shorter than ndim"
-                f" ({len(self._array._handle._handle.dimension_names)})",
+                f" ({len(self._array._handle.dimension_names)})",
             )
 
         for i, coord in enumerate(coords):
@@ -196,7 +196,7 @@ class ManagedQuery:
         ordered_dom_min = [dom[0][axis] for axis in axis_names]
         ordered_dom_max = [dom[1][axis] for axis in axis_names]
 
-        column = self._array._handle._handle.get_column(dim.name)
+        column = self._array._handle.get_column(dim.name)
 
         if all(is_slice_of(x, np.float64) for x in coord):
             range_min = []

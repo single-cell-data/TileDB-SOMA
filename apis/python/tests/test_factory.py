@@ -153,8 +153,8 @@ def test_factory_unknown_files():
 
 def _setmetadata(open_tdb_object, metadata_typename, encoding_version):
     """force modify the metadata values"""
-    set_metadata = open_tdb_object._handle._handle.set_metadata
-    del_metadata = open_tdb_object._handle._handle.delete_metadata
+    set_metadata = open_tdb_object._handle.set_metadata
+    del_metadata = open_tdb_object._handle.delete_metadata
 
     if metadata_typename is not None:
         val = np.array([metadata_typename], "S")

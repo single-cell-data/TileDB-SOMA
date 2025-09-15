@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Iterator
 from threading import Lock
 from typing import Any, Callable, Generic, TypeVar, cast
@@ -142,7 +143,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             # TileDB groups currently do not support replacing elements.
             # If we use a hack to flush writes, corruption is possible.
             raise SOMAError(f"replacing key {key!r} is unsupported")
-        clib_collection = self._handle._handle
+        clib_collection = self._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
         clib_collection.add(
             uri=uri,
@@ -158,9 +159,23 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
     def _del_element(self, key: str) -> None:
         if key in self._mutated_keys:
-            raise SOMAError(f"cannot delete previously-mutated key {key!r}")
+            raise SOMAError(f"Cannot delete previously-mutated key '{key!r}'.")
         try:
-            self._handle.deleter.remove(key)
+            if self.closed:
+                raise SOMAError(f"Cannot delete '{key!r}'. {self} is closed")
+            if self.mode == "d":
+                self._handle.remove(key)
+            elif self.mode == "w":
+                warnings.warn(
+                    f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
+                    DeprecationWarning,
+                    stacklevel=3,
+                )
+                self._handle.remove(key)
+            else:
+                raise SOMAError(
+                    f"Deleting is not allowed in mode '{self.mode}'. {self} should be reopened with mode='d'."
+                )
         except Exception as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe
@@ -254,7 +269,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             Experimental.
         """
         super().reopen(mode, tiledb_timestamp)
-        self._contents = {key: _CachedElement(entry) for key, entry in self._handle.initial_contents.items()}  # type: ignore[union-attr]
+        self._contents = {key: _CachedElement(entry) for key, entry in self._handle_wrapper.initial_contents.items()}  # type: ignore[union-attr]
         self._mutated_keys = set()
         return self
 

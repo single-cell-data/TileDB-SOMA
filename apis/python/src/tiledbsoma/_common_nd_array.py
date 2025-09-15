@@ -98,7 +98,7 @@ class NDArray(SOMAArray, somacore.NDArray):
             Maturing.
         """
         if check_only:
-            return self._handle.tiledbsoma_can_resize(newshape)
+            return cast("StatusAndReason", self._handle.can_resize(newshape))
         self._handle.resize(newshape)
         return (True, "")
 
@@ -108,7 +108,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         any dimension. Raises an error if the array already has a shape.
         """
         if check_only:
-            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
+            return cast("StatusAndReason", self._handle.tiledbsoma_can_upgrade_shape(newshape))
         self._handle.tiledbsoma_upgrade_shape(newshape)
         return (True, "")
 
@@ -143,7 +143,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return self._handle.tiledbsoma_has_upgraded_shape
+        return cast("bool", self._handle.tiledbsoma_has_upgraded_shape)
 
     @property
     def type(self) -> pa.DataType:
