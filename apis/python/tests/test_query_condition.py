@@ -50,6 +50,7 @@ def soma_query(uri, condition):
         'louvain == "NK cells"',  # string
         "percent_mito > 0.02",  # float
         "is_b_cell == True",  # bool
+        "ord == None",  # None values
         # compare_op
         "n_genes == 480",
         "n_genes != 480",
@@ -76,15 +77,51 @@ def soma_query(uri, condition):
         "(percent_mito > 0.02) | (n_genes > 700)",  # bit or
     ],
 )
-def test_query_condition(condition):
+def test_query_condition(tmp_path, condition):
     """Compare condition to result from Pandas - they should match"""
-    uri = os.path.join(SOMA_URI, "obs")
-    pandas = pandas_query(uri, condition)
-    soma_arrow = soma_query(uri, condition)
-    assert len(pandas.index) == soma_arrow.num_rows
-    assert pandas.empty or (
-        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True)).all().all()
-    )
+
+    if "None" in condition:
+        import pandas as pd
+        import pyarrow as pa
+
+        import tiledbsoma as soma
+
+        uri = tmp_path.as_posix()
+        asch = pa.schema(
+            [
+                pa.field("int", pa.int32()),
+                pa.field("bool", pa.bool_()),
+                pa.field("ord", pa.dictionary(pa.int64(), pa.string())),
+            ],
+            metadata={
+                "int": "nullable",
+                "bool": "nullable",
+                "ord": "nullable",
+            },
+        )
+
+        pydict = {}
+        pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        pydict["int"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+        pydict["bool"] = [True, True, True, False, True, False, None, False, None, None]
+        pydict["ord"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
+        data = pa.Table.from_pydict(pydict)
+
+        with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
+            sdf.write(data)
+
+        soma_arrow = soma_query(uri, condition)
+        assert soma_arrow.num_rows == 2
+        assert soma_arrow.column("soma_joinid").to_pylist() == [3, 7]
+
+    else:
+        uri = os.path.join(SOMA_URI, "obs")
+        pandas = pandas_query(uri, condition)
+        soma_arrow = soma_query(uri, condition)
+        assert len(pandas.index) == soma_arrow.num_rows
+        assert pandas.empty or (
+            (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True)).all().all()
+        )
 
 
 @pytest.mark.parametrize(

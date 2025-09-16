@@ -103,6 +103,14 @@ class PyQueryCondition {
         }
     }
 
+    void init_null(const string& attribute_name, tiledb_query_condition_op_t op) {
+        try {
+            qc_->init(attribute_name, nullptr, 0, op);
+        } catch (TileDBError& e) {
+            TPY_ERROR_LOC(e.what());
+        }
+    }
+
     shared_ptr<QueryCondition> ptr() {
         return qc_;
     }
