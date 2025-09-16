@@ -72,21 +72,7 @@ class ManagedQuery {
     /** No copy constructor: use move constructor instead. */
     ManagedQuery(const ManagedQuery&) = delete;
 
-    ManagedQuery(ManagedQuery&& other)
-        : ctx_(std::move(other.ctx_))
-        , array_(std::move(other.array_))
-        , name_(std::move(other.name_))
-        , schema_(std::move(other.schema_))
-        , query_(std::move(other.query_))
-        , subarray_(std::move(other.subarray_))
-        , subarray_range_set_(std::move(other.subarray_range_set_))
-        , subarray_range_empty_(std::move(other.subarray_range_empty_))
-        , columns_(std::move(other.columns_))
-        , results_complete_(std::move(other.results_complete_))
-        , total_num_cells_(std::move(other.total_num_cells_))
-        , buffers_(std::move(other.buffers_))
-        , query_submitted_(std::move(other.query_submitted_)) {
-    }
+    ManagedQuery(ManagedQuery&& other) = default;
 
     ~ManagedQuery() = default;
 
