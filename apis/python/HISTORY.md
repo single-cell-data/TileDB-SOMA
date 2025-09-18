@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
-- \[[](<>)\] Remove deprecated function `tiledbsoma_build_index`, `io.append_obs`, `io.append_var`, `io.append_X`, and `io.create_from_matrix`. Remove the deprecated method `config_options_from_schema` from `SOMAArray`.
+- \[[#4240](https://github.com/single-cell-data/TileDB-SOMA/pull/4240)\] Remove deprecated function `tiledbsoma_build_index`, `io.append_obs`, `io.append_var`, `io.append_X`, and `io.create_from_matrix`. Remove the deprecated method `config_options_from_schema` from `SOMAArray`.
 
 ### Fixed
 
