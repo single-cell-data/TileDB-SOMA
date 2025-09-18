@@ -192,9 +192,10 @@ def register_h5ads(
         2. Adding a new ``Measurement`` for observations that *already exist* in the ``Experiment``.
 
     Schema Evolution:
-        The append workflow does not automatically evolve the schema of the ``obs`` DataFrame. If inputs contain columns
-        in ``obs`` not present in the existing ``Experiment.obs`` they will not be added. If your append operation
-        requires adding new ``obs`` columns, use :func:`update_obs()` *before* creating the registration map.
+        The append workflow does not automatically evolve the schema of the ``obs``/``var`` DataFrames in the target
+        ``Experiment``. If inputs contain ``obs``/``var``columns not present in the target ``Experiment`` an error is
+        thrown. If your append operation requires new columns, use :func:`update_obs()`/:func:`update_var()` *before*
+        creating the registration map.
 
     Duplicate obs IDs:
         By default obs IDs (from ``obs_field_name``) across all inputs and the  existing ``Experiment`` must be globally
