@@ -46,6 +46,50 @@ def soma_query(uri, condition):
     "soma_pd_condition",
     [
         # types
+        ("int == None or int == 1", "(int != int) | (int == 1)"),
+        ("int == None and bool == None", "int.isna() & bool.isna()"),
+        ("int == None and ord != 'g1'", "int.isna() & ord != 'g1'"),
+    ],
+)
+def test_query_with_combo_none_condition(tmp_path, soma_pd_condition):
+    import pandas as pd
+    import pyarrow as pa
+
+    import tiledbsoma as soma
+
+    uri = tmp_path.as_posix()
+    asch = pa.schema(
+        [
+            pa.field("int", pa.int32()),
+            pa.field("bool", pa.bool_()),
+            pa.field("ord", pa.dictionary(pa.int64(), pa.string())),
+        ],
+        metadata={
+            "int": "nullable",
+            "bool": "nullable",
+            "ord": "nullable",
+        },
+    )
+
+    pydict = {}
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    pydict["int"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["bool"] = [True, True, True, False, True, False, None, False, None, None]
+    pydict["ord"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
+    data = pa.Table.from_pydict(pydict)
+
+    with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
+        sdf.write(data)
+
+    soma_arrow = soma_query(uri, soma_pd_condition[0])
+    pandas = pandas_query(uri, soma_pd_condition[1])
+    assert len(pandas.index) == soma_arrow.num_rows
+
+
+@pytest.mark.parametrize(
+    "soma_pd_condition",
+    [
+        # types
         ("ord == None", "ord.isna()"),
         ("ord != None", "ord.notna()"),
         ("ord <= None", "ord < ord"),
