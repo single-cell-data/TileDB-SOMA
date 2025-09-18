@@ -408,9 +408,6 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """
         return self._handle.schema_config_options()
 
-    def config_options_from_schema(self) -> clib.PlatformConfig:
-        return self._handle.config_options_from_schema()
-
     @property
     def meta(self) -> MetadataWrapper:
         return self.metadata

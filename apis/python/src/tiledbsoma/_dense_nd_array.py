@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
 
 import numpy as np
@@ -197,8 +196,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             coords:
                 The coordinates for slicing the array.
             result_order:
-                Order of read results.
-                This can be one of 'row-major' (default) or 'column-major'
+                Order of read results. This can be one of 'row-major' (default) or 'column-major'
             partitions:
                 An optional :class:`ReadPartitions` hint to indicate
                 how results should be organized.
@@ -229,14 +227,10 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         handle: clib.SOMADenseNDArray = self._handle
 
         if result_order == options.ResultOrder.AUTO:
-            warnings.warn(
-                "The use of 'result_order=\"auto\"' is deprecated and will be "
-                "removed in future versions. Please use 'row-order' (the default "
-                "if no option is provided) or 'col-order' instead.",
-                DeprecationWarning,
-                stacklevel=2,
+            raise ValueError(
+                "The use of 'result_order=\"auto\"' is unsupported. Use 'row-order' (the default "
+                "if no option is provided) or 'col-order' instead."
             )
-            result_order = somacore.ResultOrder.ROW_MAJOR
 
         target_shape = dense_indices_to_shape(coords, tuple(handle.shape), result_order)
 

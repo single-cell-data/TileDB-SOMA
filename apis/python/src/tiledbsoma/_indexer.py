@@ -10,8 +10,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from somacore.query.types import IndexLike
-from typing_extensions import deprecated
 
 from tiledbsoma import pytiledbsoma as clib
 
@@ -27,24 +25,6 @@ IndexerDataType = Union[
     pa.ChunkedArray,
     list[int],
 ]
-
-
-@deprecated("This function is deprecated and will be removed in a future release.")
-def tiledbsoma_build_index(data: IndexerDataType, *, context: SOMATileDBContext | None = None) -> IndexLike:
-    """Initialize re-indexer for provided indices (deprecated).
-
-    Provides the same functionality as the``IntIndexer`` class.
-
-    Args:
-       data:
-           Integer keys used to build the index (hash) table.
-       context:
-           ``SOMATileDBContext`` object containing concurrency level.
-
-    Lifecycle:
-        Deprecated.
-    """
-    return IntIndexer(data, context=context)
 
 
 class IntIndexer:
