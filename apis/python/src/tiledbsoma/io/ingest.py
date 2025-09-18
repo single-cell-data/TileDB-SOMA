@@ -201,7 +201,10 @@ def register_h5ads(
         By default obs IDs (from ``obs_field_name``) across all inputs and the  existing ``Experiment`` must be globally
         unique. If any duplicates are found, a ``SOMAError`` is raised to prevent unintentionally overwriting existing
         data, which is non-deterministic in multi-writer scenarios. Set ``allow_duplicate_obs_ids=True`` only when
-        adding a *new Measurement* for an existing set of observations (i.e., no new obs IDs).
+
+    New ``var`` IDs:
+        The append workflow automatically handles ``var`` IDs (from ``var_field_name``) that do not already exist in the target
+        ``Experiment``, assuming the input supplies all existing columns with compatible dtypes.
 
     Concurrency:
         If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing to register each
