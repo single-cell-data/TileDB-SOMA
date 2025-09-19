@@ -27,8 +27,6 @@
       ~SparseNDArray.tiledbsoma_upgrade_shape
       ~SparseNDArray.resize
 
-      ~SparseNDArray.config_options_from_schema
-
    .. rubric:: Attributes
 
    .. autosummary::
@@ -53,4 +51,3 @@
       ~SparseNDArray.tiledb_timestamp_ms
 
       ~SparseNDArray.metadata
-

@@ -27,7 +27,6 @@ Functions
     :nosignatures:
 
     tiledbsoma.io.add_X_layer
-    tiledbsoma.io.add_matrix_to_collection
     tiledbsoma.io.create_from_matrix
     tiledbsoma.io.update_obs
     tiledbsoma.io.update_var
@@ -41,9 +40,6 @@ Functions
 
     tiledbsoma.io.register_anndatas
     tiledbsoma.io.register_h5ads
-    tiledbsoma.io.append_X
-    tiledbsoma.io.append_obs
-    tiledbsoma.io.append_var
     tiledbsoma.io.get_experiment_shapes
     tiledbsoma.io.show_experiment_shapes
     tiledbsoma.io.upgrade_experiment_shapes

@@ -25,8 +25,6 @@
       ~DenseNDArray.non_empty_domain
       ~DenseNDArray.resize
 
-      ~DenseNDArray.config_options_from_schema
-
    .. rubric:: Attributes
 
    .. autosummary::

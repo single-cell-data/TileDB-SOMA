@@ -76,5 +76,3 @@ Functions
     tiledbsoma.tiledbsoma_stats_dump
     tiledbsoma.tiledbsoma_stats_as_py
     tiledbsoma.tiledbsoma_stats_json
-
-    tiledbsoma.tiledbsoma_build_index

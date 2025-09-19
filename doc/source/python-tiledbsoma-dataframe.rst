@@ -31,8 +31,6 @@
       ~DataFrame.tiledbsoma_upgrade_soma_joinid_shape
       ~DataFrame.non_empty_domain
 
-      ~DataFrame.config_options_from_schema
-
    .. rubric:: Attributes
 
    .. autosummary::
@@ -56,4 +54,3 @@
       ~DataFrame.tiledb_timestamp_ms
 
       ~DataFrame.metadata
-

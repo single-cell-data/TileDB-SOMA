@@ -25,7 +25,6 @@
       ~PointCloudDataFrame.delete_cells
       ~PointCloudDataFrame.verify_open_for_writing
 
-      ~PointCloudDataFrame.config_options_from_schema
       ~PointCloudDataFrame.non_empty_domain
       ~PointCloudDataFrame.read_spatial_region
 
@@ -50,4 +49,3 @@
       ~PointCloudDataFrame.domain
       ~PointCloudDataFrame.index_column_names
       ~PointCloudDataFrame.schema
-
