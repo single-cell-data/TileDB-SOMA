@@ -28,12 +28,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-tags: true  # ensure we get all tags for package version number
+      
       - name: Install dependencies
-        run: pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
-      - run: pip list
+        run: |
+          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip list
+
       - name: Build sdist
         run: python setup.py sdist
         working-directory: ./apis/python
+      
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
@@ -96,7 +100,6 @@ jobs:
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
           echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
 
-
       - name: Install dependencies
         run: |
           pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
@@ -133,68 +136,55 @@ jobs:
 
   # This step locally tries out the built wheels, without publishing to PyPI
   test_wheels:
-    name: "Smoke test ${{ matrix.python.undotted-version }}-${{ matrix.wheel-name }} wheel"
+    name: "Smoke test ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }} wheel"
     needs: build_wheels
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python:
-          - undotted-version: '39'
-            dotted-version: '3.9'
-          - undotted-version: '310'
-            dotted-version: '3.10'
-          - undotted-version: '311'
-            dotted-version: '3.11'
-          - undotted-version: '312'
-            dotted-version: '3.12'
-          - undotted-version: '313'
-            dotted-version: '3.13'
-        wheel-name:
-          - manylinux_2_28-x86_64
-          - manylinux_2_28-aarch64
-          - macos-x86_64
-          - macos-arm64
-        include:
-          - wheel-name: manylinux_2_28-x86_64
-            os: ubuntu-24.04
-            arch: x86_64
-          - wheel-name: manylinux_2_28-aarch64
-            os: ubuntu-24.04-arm
-            arch: aarch64
-          - wheel-name: macos-x86_64
-            os: macos-15-intel
-            arch: x86_64
-          - wheel-name: macos-arm64
-            os: macos-15
-            arch: arm64
+        python_version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        buildplat:
+          - [ubuntu-22.04, manylinux_x86_64]
+          - [ubuntu-24.04-arm, manylinux_aarch64]
+          - [macos-13, macosx_x86_64]
+          - [macos-15, macosx_arm64]
       fail-fast: false
     steps:
-      - name: Set up Python ${{ matrix.python.dotted-version }}
+      - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python.dotted-version }}
+          python-version: ${{ matrix.python_version }}
+      
+      - name: Get arch
+        run: |
+          plat="${{ matrix.buildplat[1] }}"
+          arch="${plat#*_}"
+          echo "ARCH=$arch" >> $GITHUB_ENV
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python.undotted-version }}
+          name: wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
+
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python.undotted-version }}-cp${{ matrix.python.undotted-version }}-*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-${{ matrix.python_version }}-${{ matrix.python_version }}-*_${{ env.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
           pip install $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
+
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
+        
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
