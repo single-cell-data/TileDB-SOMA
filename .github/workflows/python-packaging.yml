@@ -102,10 +102,11 @@ jobs:
       - name: Install dependencies
         run: pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
       - run: pip list
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
         with:
-          package-dir: ./api/python
+          package-dir: apis/python/
           output-dir: wheelhouse
         env:
           CIBW_BUILD_VERBOSITY: 3
