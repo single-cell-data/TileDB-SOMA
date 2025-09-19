@@ -71,28 +71,9 @@ jobs:
         python_version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64]
-          # - [ubuntu-24.04-arm, manylinux_aarch64]
+          - [ubuntu-24.04-arm, manylinux_aarch64]
           - [macos-13, macosx_x86_64]
           - [macos-15, macosx_arm64]
-
-        # include:
-        #   - cibw_build: manylinux_x86_64
-        #     os: ubuntu-24.04
-        #     wheel-name: manylinux_2_28-x86_64
-        #   - cibw_build: manylinux_aarch64
-        #     os: ubuntu-24.04-arm
-        #     wheel-name: manylinux_2_28-aarch64
-        #     CIBW_BEFORE_BUILD_LINUX: dnf install -y ninja-build perl-IPC-Cmd zip
-        #     # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
-        #     CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=1
-        #   - cibw_build: macosx_x86_64
-        #     os: macos-13
-        #     cibw_archs_macos: x86_64
-        #     wheel-name: macos-x86_64
-        #   - cibw_build: macosx_arm64
-        #     os: macos-15  # Note:  macos-15 is arm64 only
-        #     cibw_archs_macos: arm64
-        #     wheel-name: macos-arm64
     steps:
       
       - name: Checkout TileDB-SOMA
@@ -124,6 +105,7 @@ jobs:
           plat="${{ matrix.buildplat[1] }}"
           arch="${plat#*_}"
           echo "ARCH=$arch" >> $GITHUB_ENV
+          echo $arch ${{ env.CIBW_BEFORE_BUILD_LINUX }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
