@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import math
 import operator
-import pathlib
 import string
 from collections import OrderedDict
 from collections.abc import Hashable, Mapping, Sequence
