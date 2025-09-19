@@ -178,20 +178,40 @@ def register_h5ads(
     use_multiprocessing: bool = False,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
-    """Extends registration data from the baseline, already-written SOMA
-    experiment to include multiple H5AD input files. See ``from_h5ad`` and
-    ``from_anndata`` on-line help.
+    """Register H5AD files to extend an existing SOMA ``Experiment``.
 
-    The registration process will raise an error if any `obs` IDs (from `obs_field_name`)
-    are duplicated across the combination of all inputs and the target SOMA Experiment.
-    You can set `allow_duplicate_obs_ids=True` to bypass this check if you are adding a
-    new Measurement to existing observations.
+    This is the required first step before calling :func:`from_h5ad` or :func:`from_anndata` with ``append=True``. It
+    inspects all input H5ADs (and the target ``Experiment``, if ``experiment_uri`` is supplied) to produce a global
+    :class:`ExperimentAmbientLabelMapping` that describes how ``obs``/``var`` identifiers map to the target ``Experiment``.
 
-    If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
-    to register each H5AD in parallel. In cases with many files, this can produce a performance
-    benefit. Regardless of ``use_multiprocessing``, H5ADs will be registered concurrently -- you
-    can control the concurrency using the ``soma.compute_concurrency_level`` configuration
-    parameter in the ``context`` argument.
+    Supported Workflows:
+        This function and the subsequent append workflow are designed for two primary scenarios:
+
+        1. Append new observations from inputs with ``obs``/``var`` schemas that are consistent with the target ``Experiment``
+        (i.e., same column names and dtypes).
+        2. Adding a new ``Measurement`` for observations that *already exist* in the target ``Experiment``.
+
+    Schema Evolution:
+        The append workflow does not automatically evolve the schema of the ``obs``/``var`` DataFrames in the target
+        ``Experiment``. If inputs contain ``obs``/``var``columns not present in the target ``Experiment`` an error is
+        thrown. If your append operation requires new columns, use :func:`update_obs()`/:func:`update_var()` *before*
+        creating the registration map.
+
+    Duplicate ``obs`` IDs:
+        By default ``obs`` IDs (from ``obs_field_name``) across all inputs and the  existing ``Experiment`` must be globally
+        unique. If any duplicates are found, a ``SOMAError`` is raised to prevent unintentionally overwriting existing
+        data, which is non-deterministic in multi-writer scenarios. Set ``allow_duplicate_obs_ids=True`` only when
+        adding a *new ``Measurement``* for an existing set of observations (i.e., no new ``obs`` IDs).
+
+    New ``var`` IDs:
+        The append workflow automatically handles ``var`` IDs (from ``var_field_name``) that do not already exist in the target
+        ``Experiment``, assuming the input supplies all existing columns with compatible dtypes.
+
+    Concurrency:
+        If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing to register each
+        H5AD in parallel. In cases with many files, this can produce a performance benefit. Regardless of
+        ``use_multiprocessing``, H5ADs will be registered concurrently -- you can control the concurrency using the
+        ``soma.compute_concurrency_level`` configuration parameter in the ``context`` argument.
     """
     if isinstance(h5ad_file_names, str):
         h5ad_file_names = [h5ad_file_names]
@@ -253,9 +273,9 @@ def register_anndatas(
     context: SOMATileDBContext | None = None,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
-    """Extends registration data from the baseline, already-written SOMA
-    experiment to include multiple H5AD input files. See ``from_h5ad`` and
-    ``from_anndata`` on-line help.
+    """Register ``AnnData`` objects to extend an existing SOMA ``Experiment``.
+
+    See :func:`register_h5ads()` for details.
     """
     if isinstance(adatas, ad.AnnData):
         adatas = [adatas]
@@ -366,6 +386,7 @@ def from_h5ad(
           .. code-block:: python
 
               import tiledbsoma.io
+
               rd = tiledbsoma.io.register_h5ads(
                   experiment_uri,
                   h5ad_file_names,
@@ -401,6 +422,7 @@ def from_h5ad(
               with soma.open(uri, 'w') as exp:
                   exp.metadata.update({"aaa": "BBB"})
                   exp.obs.metadata.update({"ccc": 123})
+
 
     Returns:
         The URI of the newly created experiment.
