@@ -63,7 +63,7 @@ jobs:
           name: sdist
           path: apis/python/dist/
       - name: Install sdist artifact
-        working-directory: ./apis/python
+        working-directory: apis/python
         run: pip install --verbose dist/${{ needs.build_sdist.outputs.sdist_name }}
       - name: sdist smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
