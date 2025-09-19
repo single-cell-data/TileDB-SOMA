@@ -7,6 +7,7 @@ from __future__ import annotations
 import math
 import operator
 import string
+import sys
 from collections import OrderedDict
 from collections.abc import Hashable, Mapping, Sequence
 from datetime import timedelta
@@ -544,6 +545,10 @@ def assert_anndata_equal(src_adata: ad.AnnData, read_adata: ad.AnnData) -> None:
     assert_uns_equal(src_adata, read_adata)
 
 
+@ht.reproduce_failure(
+    "6.139.2",
+    b"AXicc0xwdGZ05HRkAkNGRwZHZiTMCsRMjgmNBkMbMkCAIwxpMGAARkcWFN8zOToPtKuhboc4GeoBGGRsDIQxYYgR5P5GAyAubDQAAHNmgWk=",
+)
 @settings(
     suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
     deadline=timedelta(milliseconds=2500),
@@ -582,9 +587,16 @@ def test_roundtrip_from_anndata_to_anndata(
         assert False, repr(e)
 
     # Pick X and raw.X layer names that are NOT already used by the layers mapping
-    #
-    X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
-    raw_X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name))
+    # Case insensitive on MacOS.
+    if sys.platform == "darwin":
+        used_layer_names = set(lname.upper() for lname in adata.layers)
+        X_layer_name = data.draw(posix_filename().filter(lambda x: x.upper() not in used_layer_names))
+        raw_X_layer_name = data.draw(
+            posix_filename().filter(lambda x: x.upper() not in used_layer_names and x.upper() != X_layer_name.upper())
+        )
+    else:
+        X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
+        raw_X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name))
 
     print(">>>>>>")
     print(test_path, test_path / "adata.h5ad", experiment_uri)
