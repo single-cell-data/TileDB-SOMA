@@ -94,6 +94,8 @@ jobs:
         run: |
           echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
+          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
+
 
       - name: Install dependencies
         run: |
@@ -101,11 +103,11 @@ jobs:
           pip list
       
       - name: Get arch
+        if: ${{ startsWith(matrix.buildplat[0], 'macos-') == true }}
         run: |
           plat="${{ matrix.buildplat[1] }}"
           arch="${plat#*_}"
           echo "ARCH=$arch" >> $GITHUB_ENV
-          echo $arch ${{ env.CIBW_BEFORE_BUILD_LINUX }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
@@ -116,17 +118,17 @@ jobs:
           CIBW_BUILD: ${{ matrix.python_version }}-${{ matrix.buildplat[1] }}
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: ${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
+          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CMAKE_OSX_ARCHITECTURES: ${{ env.arch }}
+          CMAKE_OSX_ARCHITECTURES: ${{ env.arch || ''}}
           MACOSX_DEPLOYMENT_TARGET: "13.3"
 
-      - name: Upload wheel-${{ matrix.wheel-name }}-${{ matrix.python_version }}
+      - name: Upload wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python_version }}
+          name: wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
           path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
