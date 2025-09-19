@@ -1224,3 +1224,151 @@ test_that("factor levels cannot extend beyond index limit", {
     }
   }
 })
+
+test_that("SOMA-506/SOMA-512, close + reopen", {
+  uri <- tempfile("soma-506-512")
+
+  df <- function(sz) {
+    return(data.frame(
+      soma_joinid = bit64::seq.integer64(from = 0L, to = sz - 1L),
+      str = as.character(seq.int(from = 0L, to = sz - 1L)),
+      float = as.double(seq.int(from = 0L, to = sz - 1L)),
+      int = seq.int(from = 0L, to = sz - 1L),
+      bool = rep_len(c(TRUE, FALSE), length.out = sz),
+      cat = rep_len(factor(c("A", "B", "C")), length.out = sz)
+    ))
+  }
+
+  n_obs <- 20L
+  n_var <- 11L
+  obs_df <- df(n_obs)
+  var_df <- df(n_var)
+  x_mat <- create_sparse_matrix_with_int_dims(n_obs, n_var)
+
+  expect_s3_class(exp <- SOMAExperimentCreate(uri), "SOMAExperiment")
+  expect_s3_class(
+    exp$add_new_dataframe(
+      "obs",
+      schema = arrow::infer_schema(obs_df),
+      index_column_names = "soma_joinid",
+      domain = list(soma_joinid = c(0L, n_obs))
+    ),
+    "SOMADataFrame"
+  )
+  expect_no_condition(ms <- SOMACollectionCreate(file.path(exp$uri, "ms")))
+  expect_no_condition(exp$add_new_collection(ms, "ms"))
+  expect_no_condition(rna <- SOMAMeasurementCreate(file.path(ms$uri, "RNA")))
+  expect_no_condition(ms$add_new_collection(rna, "RNA"))
+  expect_s3_class(
+    rna$add_new_dataframe(
+      "var",
+      schema = arrow::infer_schema(var_df),
+      index_column_names = "soma_joinid",
+      domain = list(soma_joinid = c(0L, n_var))
+    ),
+    "SOMADataFrame"
+  )
+  expect_no_condition(X <- SOMACollectionCreate(file.path(rna$uri, "X")))
+  expect_no_condition(rna$add_new_collection(X, "X"))
+  expect_s3_class(
+    xarray <- X$add_new_sparse_ndarray(
+      "data",
+      type = arrow::infer_type(x_mat@x),
+      shape = dim(x_mat)
+    ),
+    "SOMASparseNDArray"
+  )
+  # Close and re-open
+  expect_no_condition(exp$close())
+  expect_s3_class(exp <- SOMAExperimentOpen(uri, "WRITE"), "SOMAExperiment")
+  # Write data
+  expect_no_condition(exp$obs$write(arrow::as_arrow_table(obs_df)))
+  expect_no_condition(exp$ms$get("RNA")$var$write(arrow::as_arrow_table(var_df)))
+  expect_no_condition(exp$ms$get("RNA")$X$get("data")$write(x_mat))
+  expect_no_condition(exp$close())
+  # Read back
+  expect_s3_class(exp <- SOMAExperimentOpen(uri), "SOMAExperiment")
+  expect_s3_class(exp$obs$read()$concat(), "Table")
+  expect_no_condition(exp$close())
+  # Check timestamps
+  fmt <- file.path(exp$uri, "obs", "__%s")
+  expect_length(schema <- list.files(sprintf(fmt, "schema")), 3L)
+  expect_length(fragments <- list.files(sprintf(fmt, "fragments")), 1L)
+  schema_ts <- unlist(strsplit(sub("^__", "", schema[2L]), split = "_"))
+  frag_ts <- unlist(strsplit(sub("^__", "", fragments), split = "_"))
+  expect_identical(schema_ts[2L], frag_ts[2L])
+})
+
+test_that("SOMA-506/SOMA-512, straight through", {
+  uri <- tempfile("soma-506-512")
+
+  df <- function(sz) {
+    return(data.frame(
+      soma_joinid = bit64::seq.integer64(from = 0L, to = sz - 1L),
+      str = as.character(seq.int(from = 0L, to = sz - 1L)),
+      float = as.double(seq.int(from = 0L, to = sz - 1L)),
+      int = seq.int(from = 0L, to = sz - 1L),
+      bool = rep_len(c(TRUE, FALSE), length.out = sz),
+      cat = rep_len(factor(c("A", "B", "C")), length.out = sz)
+    ))
+  }
+
+  n_obs <- 20L
+  n_var <- 11L
+  obs_df <- df(n_obs)
+  var_df <- df(n_var)
+  x_mat <- create_sparse_matrix_with_int_dims(n_obs, n_var)
+
+  expect_s3_class(
+    exp <- SOMAExperimentCreate(uri),
+    "SOMAExperiment"
+  )
+  expect_s3_class(
+    exp$add_new_dataframe(
+      "obs",
+      schema = arrow::infer_schema(obs_df),
+      index_column_names = "soma_joinid",
+      domain = list(soma_joinid = c(0L, n_obs))
+    ),
+    "SOMADataFrame"
+  )
+  expect_no_condition(ms <- SOMACollectionCreate(file.path(exp$uri, "ms")))
+  expect_no_condition(exp$add_new_collection(ms, "ms"))
+  expect_no_condition(rna <- SOMAMeasurementCreate(file.path(ms$uri, "RNA")))
+  expect_no_condition(ms$add_new_collection(rna, "RNA"))
+  expect_s3_class(
+    rna$add_new_dataframe(
+      "var",
+      schema = arrow::infer_schema(var_df),
+      index_column_names = "soma_joinid",
+      domain = list(soma_joinid = c(0L, n_var))
+    ),
+    "SOMADataFrame"
+  )
+  expect_no_condition(X <- SOMACollectionCreate(file.path(rna$uri, "X")))
+  expect_no_condition(rna$add_new_collection(X, "X"))
+  expect_s3_class(
+    xarray <- X$add_new_sparse_ndarray(
+      "data",
+      type = arrow::infer_type(x_mat@x),
+      shape = dim(x_mat)
+    ),
+    "SOMASparseNDArray"
+  )
+  # Write data
+  expect_no_condition(exp$obs$write(arrow::as_arrow_table(obs_df)))
+  expect_no_condition(exp$ms$get("RNA")$var$write(arrow::as_arrow_table(var_df)))
+  expect_no_condition(exp$ms$get("RNA")$X$get("data")$write(x_mat))
+  expect_no_condition(exp$close())
+  # Read back
+  expect_s3_class(exp <- SOMAExperimentOpen(uri), "SOMAExperiment")
+  expect_s3_class(exp$obs$read()$concat(), "Table")
+  expect_no_condition(exp$close())
+  # Check timestamps
+  fmt <- file.path(exp$uri, "obs", "__%s")
+  expect_length(schema <- list.files(sprintf(fmt, "schema")), 3L)
+  expect_length(fragments <- list.files(sprintf(fmt, "fragments")), 1L)
+  schema_ts <- unlist(strsplit(sub("^__", "", schema[2L]), split = "_"))
+  frag_ts <- unlist(strsplit(sub("^__", "", fragments), split = "_"))
+  expect_identical(schema_ts[2L], frag_ts[2L])
+})
