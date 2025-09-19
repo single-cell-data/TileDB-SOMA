@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import math
 import operator
+import pathlib
 import string
 from collections import OrderedDict
 from collections.abc import Hashable, Mapping, Sequence
@@ -586,6 +587,15 @@ def test_roundtrip_from_anndata_to_anndata(
     X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
     raw_X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name))
 
+    print(">>>>>>")
+    print(test_path, test_path / "adata.h5ad", experiment_uri)
+    print(f"measurement_name={measurement_name}, X_layer_name={X_layer_name}, raw_X_layer_name={raw_X_layer_name}")
+    print(repr(adata))
+    print(f"raw.var is None? {adata.raw.var is None}, raw.X is None? {adata.raw.X is None}")
+    print("------")
+    print("\n".join([str(p) for p in test_path.resolve().glob("**")]))
+    print("<<<<<<")
+
     with suppress_type_checks():
         tiledbsoma.io.from_anndata(
             experiment_uri,
@@ -597,12 +607,17 @@ def test_roundtrip_from_anndata_to_anndata(
         )
 
         with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
-            read_adata = tiledbsoma.io.to_anndata(
-                E,
-                measurement_name=measurement_name,
-                X_layer_name=X_layer_name if adata.X is not None else None,
-                extra_X_layer_names=list(adata.layers.keys()),
-            )
+            try:  # XXX debugging
+                read_adata = tiledbsoma.io.to_anndata(
+                    E,
+                    measurement_name=measurement_name,
+                    X_layer_name=X_layer_name if adata.X is not None else None,
+                    extra_X_layer_names=list(adata.layers.keys()),
+                )
+            except tiledbsoma.SOMAError:
+                print("POST EXCEPTION glob")
+                print("\n".join([str(p) for p in test_path.resolve().glob("**")]))
+                raise
 
             # TODO: io.to_anndata does not load raw. Do a manual verification
             # of the arrays created by io.from_anndata.

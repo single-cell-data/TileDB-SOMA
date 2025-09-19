@@ -191,6 +191,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
+            print("==========", e)
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
