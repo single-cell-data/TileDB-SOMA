@@ -43,8 +43,8 @@ from tiledbsoma import (
     PointCloudDataFrame,
     Scene,
     SparseNDArray,
+    _logging,
     _util,
-    logging,
 )
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
@@ -404,7 +404,7 @@ def from_visium(
 
     # Read 10x HDF5 gene expression file.
     start_time = _util.get_start_stamp()
-    logging.log_io(None, f"START READING {input_paths.gene_expression}")
+    _logging.log_io(None, f"START READING {input_paths.gene_expression}")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
     with TenXCountMatrixReader(input_paths.gene_expression) as reader:
@@ -426,7 +426,7 @@ def from_visium(
                 "genome": reader.genome,
             },
         )
-    logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
+    _logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
     # Create registration mapping if none was provided and get obs/var data needed
     # for spatial indexing.
@@ -440,7 +440,7 @@ def from_visium(
 
     # Write the new experiment.
     start_time = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {experiment_uri}")
+    _logging.log_io(None, f"START  WRITING {experiment_uri}")
     with _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx) as experiment:
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
@@ -609,7 +609,7 @@ def from_visium(
                 with _create_or_open_collection(Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {experiment.uri}",
         _util.format_elapsed(start_time, f"FINISH WRITING {experiment.uri}"),
     )
@@ -629,7 +629,7 @@ def _write_arrow_to_dataframe(
 ) -> DataFrame:
     # Start timer
     start_time = _util.get_start_stamp()
-    logging.log_io(None, f"START WRITING {df_uri}")
+    _logging.log_io(None, f"START WRITING {df_uri}")
 
     try:
         soma_df = DataFrame.create(
@@ -654,7 +654,7 @@ def _write_arrow_to_dataframe(
 
     add_metadata(soma_df, additional_metadata)
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote {df_uri}",
         _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
     )
@@ -674,7 +674,7 @@ def _write_X_layer(
     context: SOMATileDBContext | None,
 ) -> _NDArr:
     start_time = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {uri}")
+    _logging.log_io(None, f"START  WRITING {uri}")
 
     shape = (reader.nobs, reader.nvar)
     assert reader._data is not None
@@ -692,7 +692,7 @@ def _write_X_layer(
             raise SOMAError(f"{uri} already exists") from e
         soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
 
-    logging.log_io(
+    _logging.log_io(
         f"Writing {uri}",
         _util.format_elapsed(start_time, f"START  WRITING {uri}"),
     )
@@ -726,7 +726,7 @@ def _write_X_layer(
     else:
         raise TypeError(f"Unknown array type {type(soma_ndarray)}.")
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {uri}",
         _util.format_elapsed(start_time, f"FINISH WRITING {uri}"),
     )
@@ -745,7 +745,7 @@ def _write_scene_presence_dataframe(
     context: SOMATileDBContext | None = None,
 ) -> DataFrame:
     start_time = _util.get_start_stamp()
-    logging.log_io(None, "START WRITING Presence matrix")
+    _logging.log_io(None, "START WRITING Presence matrix")
     try:
         soma_df = DataFrame.create(
             df_uri,
@@ -767,7 +767,7 @@ def _write_scene_presence_dataframe(
         soma_df = DataFrame.open(df_uri, "w", context=context)
 
     if ingestion_params.write_schema_no_data:
-        logging.log_io(
+        _logging.log_io(
             f"Wrote schema {df_uri}",
             _util.format_elapsed(start_time, f"FINISH WRITING SCHEMA {df_uri}"),
         )
@@ -788,7 +788,7 @@ def _write_scene_presence_dataframe(
         )
         _write_arrow_table(arrow_table, soma_df, tiledb_create_options, tiledb_write_options)
 
-    logging.log_io(
+    _logging.log_io(
         f"Wrote   {df_uri}",
         _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
     )
@@ -813,7 +813,7 @@ def _write_visium_spots(
     locations and metadata. Returns the open dataframe for writing.
     """
     start_time = _util.get_start_stamp()
-    logging.log_io(None, "START WRITING loc")
+    _logging.log_io(None, "START WRITING loc")
     names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"] if major_version == 1 else None
     df = (
         pd.read_csv(input_tissue_positions, names=names)
@@ -867,7 +867,7 @@ def _write_visium_spots(
         _write_arrow_table(arrow_table, soma_point_cloud, tiledb_create_options, tiledb_write_options)
 
     add_metadata(soma_point_cloud, additional_metadata)
-    logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING loc"))
+    _logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING loc"))
     return soma_point_cloud
 
 
@@ -908,7 +908,7 @@ def _create_visium_tissue_images(
     visium resolutions levels and returns the open image for writing.
     """
     start_time = _util.get_start_stamp()
-    logging.log_io(None, "START WRITING IMAGES")
+    _logging.log_io(None, "START WRITING IMAGES")
 
     # Open the first image to get the base size.
     with Image.open(image_paths[0][1]) as im:
@@ -962,5 +962,5 @@ def _create_visium_tissue_images(
         )
         im_array.close()
 
-    logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING IMAGES"))
+    _logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING IMAGES"))
     return image_pyramid

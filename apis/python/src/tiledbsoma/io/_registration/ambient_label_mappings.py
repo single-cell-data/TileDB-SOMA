@@ -19,8 +19,8 @@ import pyarrow as pa
 from typing_extensions import Self, TypeAlias
 
 import tiledbsoma
+import tiledbsoma._logging as _logging
 import tiledbsoma.io
-import tiledbsoma.logging as logging
 from tiledbsoma import DataFrame, Experiment, SOMAError
 from tiledbsoma._types import PDIndex
 from tiledbsoma.io._util import read_h5ad
@@ -418,7 +418,7 @@ class ExperimentAmbientLabelMapping:
         # Step 1: load all existing Experiment info.
         #
         if experiment_uri is not None:
-            logging.log_io_same("Loading existing experiment joinid map")
+            _logging.log_io_same("Loading existing experiment joinid map")
             experiment_metadata_ft = tp.submit(
                 ExperimentAmbientLabelMapping._load_existing_experiment_metadata,
                 experiment_uri,
@@ -430,7 +430,7 @@ class ExperimentAmbientLabelMapping:
         #
         # Step 2: reduce axis metadata
         #
-        logging.log_io_same("Reducing axis metadata")
+        _logging.log_io_same("Reducing axis metadata")
         obs_axis_metadata, var_axis_metadata, raw_var_axis_metadata = tp.map(
             AnnDataAxisMetadata.reduce,
             [
@@ -455,7 +455,7 @@ class ExperimentAmbientLabelMapping:
             examples = obs_axis_metadata.field_index[obs_axis_metadata.field_index.duplicated().nonzero()[0]]
             _raise_non_unique_obs_id_error(examples)
 
-        logging.log_io_same("Finished reducing axis metadata")
+        _logging.log_io_same("Finished reducing axis metadata")
 
         # And, grab the result of step 1 from the futures
         if experiment_uri is not None:
@@ -465,7 +465,7 @@ class ExperimentAmbientLabelMapping:
                 existing_obs_enum_values,
                 existing_var_enum_values,
             ) = experiment_metadata_ft.result()
-            logging.log_io_same("Existing joinid maps are loaded.")
+            _logging.log_io_same("Existing joinid maps are loaded.")
         else:
             existing_obs_joinid_map = pd.DataFrame()
             existing_var_joinid_maps = {
@@ -498,7 +498,7 @@ class ExperimentAmbientLabelMapping:
             else:
                 next_soma_joinid = 0
 
-            logging.log_io_same(f"next soma_joinid={next_soma_joinid}")
+            _logging.log_io_same(f"next soma_joinid={next_soma_joinid}")
             maps.append(
                 pd.DataFrame(
                     index=joinids_index,
