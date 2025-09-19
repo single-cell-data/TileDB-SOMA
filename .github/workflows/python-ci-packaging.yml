@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.0-rc1/tiledb-linux-x86_64-2.29.0-rc1-b5a7e8d.tar.gz
           tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
           ls external/lib/
           echo "LD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
@@ -150,10 +150,10 @@ jobs:
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
           if [ `uname -m` == "arm64" ]; then
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-macos-arm64-2.28.1-d648231.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.0-rc1/tiledb-macos-arm64-2.29.0-rc1-b5a7e8d.tar.gz
             tar -C external -xzf tiledb-macos-arm64-*.tar.gz
           else
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-macos-x86_64-2.28.1-d648231.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.0-rc1/tiledb-macos-x86_64-2.29.0-rc1-b5a7e8d.tar.gz
             tar -C external -xzf tiledb-macos-x86_64-*.tar.gz
           fi
           ls external/lib/
@@ -246,14 +246,14 @@ jobs:
           if [ `uname -s` == "Darwin" ]; then
             if [ `uname -m` == "arm64" ]; then
                 # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-macos-arm64-2.28.1-d648231.tar.gz
+                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.0-rc1/tiledb-macos-arm64-2.29.0-rc1-b5a7e8d.tar.gz
             else
                 # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-macos-x86_64-2.28.1-d648231.tar.gz
+                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.0-rc1/tiledb-macos-x86_64-2.29.0-rc1-b5a7e8d.tar.gz
             fi
           else
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.0-rc1/tiledb-linux-x86_64-2.29.0-rc1-b5a7e8d.tar.gz
           fi
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
