@@ -545,10 +545,6 @@ def assert_anndata_equal(src_adata: ad.AnnData, read_adata: ad.AnnData) -> None:
     assert_uns_equal(src_adata, read_adata)
 
 
-@ht.reproduce_failure(
-    "6.139.2",
-    b"AXicc0xwdGZ05HRkAkNGRwZHZiTMCsRMjgmNBkMbMkCAIwxpMGAARkcWFN8zOToPtKuhboc4GeoBGGRsDIQxYYgR5P5GAyAubDQAAHNmgWk=",
-)
 @settings(
     suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
     deadline=timedelta(milliseconds=2500),
@@ -598,15 +594,6 @@ def test_roundtrip_from_anndata_to_anndata(
         X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
         raw_X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name))
 
-    print(">>>>>>")
-    print(test_path, test_path / "adata.h5ad", experiment_uri)
-    print(f"measurement_name={measurement_name}, X_layer_name={X_layer_name}, raw_X_layer_name={raw_X_layer_name}")
-    print(repr(adata))
-    print(f"raw.var is None? {adata.raw.var is None}, raw.X is None? {adata.raw.X is None}")
-    print("------")
-    print("\n".join([str(p) for p in test_path.resolve().glob("**")]))
-    print("<<<<<<")
-
     with suppress_type_checks():
         tiledbsoma.io.from_anndata(
             experiment_uri,
@@ -618,17 +605,12 @@ def test_roundtrip_from_anndata_to_anndata(
         )
 
         with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
-            try:  # XXX debugging
-                read_adata = tiledbsoma.io.to_anndata(
-                    E,
-                    measurement_name=measurement_name,
-                    X_layer_name=X_layer_name if adata.X is not None else None,
-                    extra_X_layer_names=list(adata.layers.keys()),
-                )
-            except tiledbsoma.SOMAError:
-                print("POST EXCEPTION glob")
-                print("\n".join([str(p) for p in test_path.resolve().glob("**")]))
-                raise
+            read_adata = tiledbsoma.io.to_anndata(
+                E,
+                measurement_name=measurement_name,
+                X_layer_name=X_layer_name if adata.X is not None else None,
+                extra_X_layer_names=list(adata.layers.keys()),
+            )
 
             # TODO: io.to_anndata does not load raw. Do a manual verification
             # of the arrays created by io.from_anndata.
