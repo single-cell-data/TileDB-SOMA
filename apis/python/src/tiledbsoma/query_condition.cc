@@ -86,6 +86,11 @@ void load_query_condition(py::module& m) {
             static_cast<void (PyQueryCondition::*)(const string&, bool, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
 
+        .def(
+            "init_null",
+            static_cast<void (PyQueryCondition::*)(const string&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::init_null))
+
         .def("combine", &PyQueryCondition::combine)
 
         .def("negate", &PyQueryCondition::negate)
