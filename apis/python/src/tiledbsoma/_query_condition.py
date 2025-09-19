@@ -293,7 +293,10 @@ class QueryConditionTree(ast.NodeVisitor):
         val = self.cast_val_to_dtype(val, dtype)
 
         pyqc = clib.PyQueryCondition()
-        self.init_pyqc(pyqc, dtype)(att, val, op)
+        if val is None:
+            self.init_pyqc(pyqc, None)(att, op)
+        else:
+            self.init_pyqc(pyqc, dtype)(att, val, op)
 
         return pyqc
 
@@ -387,10 +390,12 @@ class QueryConditionTree(ast.NodeVisitor):
 
     def cast_val_to_dtype(
         self,
-        val: str | int | float | bytes | np.int32 | np.int64 | np.float32,
-        dtype: str,
-    ) -> str | int | float | bytes | np.int32 | np.int64 | np.float32:
-        if dtype != "string":
+        val: str | int | float | bytes | np.int32 | np.int64 | np.float32 | None,
+        dtype: str | None,
+    ) -> str | int | float | bytes | np.int32 | np.int64 | np.float32 | None:
+        if val is None:
+            dtype = "null"
+        elif dtype != "string":
             try:
                 # this prevents numeric strings ("1", '123.32') from getting
                 # casted to numeric types
@@ -409,8 +414,10 @@ class QueryConditionTree(ast.NodeVisitor):
 
         return val
 
-    def init_pyqc(self, pyqc: clib.PyQueryCondition, dtype: str) -> Callable:
-        if dtype != "string" and np.issubdtype(dtype, np.datetime64):
+    def init_pyqc(self, pyqc: clib.PyQueryCondition, dtype: str | None) -> Callable:
+        if dtype is None:
+            dtype = "null"
+        elif dtype != "string" and np.issubdtype(dtype, np.datetime64):
             dtype = "int64"
 
         init_fn_name = f"init_{dtype}"
