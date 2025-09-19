@@ -64,44 +64,66 @@ jobs:
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
 
   build_wheels:
-    name: Build ${{ matrix.python-version }}-${{ matrix.wheel-name }} wheel
-    runs-on: ${{ matrix.os }}
+    name: Wheel ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python }}
+    runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       matrix:
-        python-version: ['39', '310', '311', '312', '313']
-        cibw_build: [manylinux_x86_64, manylinux_aarch64, macosx_x86_64, macosx_arm64]
-        include:
-          - cibw_build: manylinux_x86_64
-            os: ubuntu-24.04
-            wheel-name: manylinux_2_28-x86_64
-          - cibw_build: manylinux_aarch64
-            os: ubuntu-24.04-arm
-            wheel-name: manylinux_2_28-aarch64
-            CIBW_BEFORE_BUILD_LINUX: dnf install -y ninja-build perl-IPC-Cmd zip
-            # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
-            CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=1
-          - cibw_build: macosx_x86_64
-            os: macos-15-intel
-            cibw_archs_macos: x86_64
-            wheel-name: macos-x86_64
-          - cibw_build: macosx_arm64
-            os: macos-15  # Note:  macos-15 is arm64 only
-            cibw_archs_macos: arm64
-            wheel-name: macos-arm64
+        python-version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        buildplat:
+          - [ubuntu-22.04, manylinux_x86_64]
+          - [ubuntu-24.04-arm, manylinux_aarch64]
+          - [macos-13, macosx_x86_64]
+          - [macos-15, macosx_arm64]
+
+        # include:
+        #   - cibw_build: manylinux_x86_64
+        #     os: ubuntu-24.04
+        #     wheel-name: manylinux_2_28-x86_64
+        #   - cibw_build: manylinux_aarch64
+        #     os: ubuntu-24.04-arm
+        #     wheel-name: manylinux_2_28-aarch64
+        #     CIBW_BEFORE_BUILD_LINUX: dnf install -y ninja-build perl-IPC-Cmd zip
+        #     # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
+        #     CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=1
+        #   - cibw_build: macosx_x86_64
+        #     os: macos-13
+        #     cibw_archs_macos: x86_64
+        #     wheel-name: macos-x86_64
+        #   - cibw_build: macosx_arm64
+        #     os: macos-15  # Note:  macos-15 is arm64 only
+        #     cibw_archs_macos: arm64
+        #     wheel-name: macos-arm64
     steps:
+      
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
           fetch-tags: true  # ensure we get all tags for package version number
+     
       - name: "Brew setup on macOS"
         if: ${{ startsWith(matrix.buildplat[0], 'macos-') == true }}
         run: |
           set -e pipefail
           brew update
           brew install automake pkg-config ninja llvm
+      
+      - name: "Brew setup on manylinux_aarch64"
+        # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
+        if: ${{ endsWith(matrix.buildplat[1], 'aarch64') == true }}
+        run: |
+          dnf install -y ninja-build perl-IPC-Cmd zip
+          echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
+
       - name: Install dependencies
-        run: pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
-      - run: pip list
+        run: |
+          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip list
+      
+      - name: Get arch
+        run: |
+          plat="${{ matrix.buildplat[1] }}"
+          arch="${plat#*_}"
+          echo "ARCH=$arch" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
@@ -109,14 +131,16 @@ jobs:
           package-dir: apis/python/
           output-dir: wheelhouse
         env:
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BEFORE_BUILD_LINUX: ${{ matrix.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: ${{ matrix.CIBW_ENVIRONMENT_LINUX || '' }}
+          CIBW_ENVIRONMENT_LINUX: ${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
-          CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
-          CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CMAKE_OSX_ARCHITECTURES: ${{ env.arch }}
           MACOSX_DEPLOYMENT_TARGET: "13.3"
+
       - name: Upload wheel-${{ matrix.wheel-name }}-${{ matrix.python-version }}
         uses: actions/upload-artifact@v4
         with:
