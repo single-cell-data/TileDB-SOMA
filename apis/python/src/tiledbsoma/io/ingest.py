@@ -181,15 +181,15 @@ def register_h5ads(
     """Register H5AD files to extend an existing SOMA ``Experiment``.
 
     This is the required first step before calling :func:`from_h5ad` or :func:`from_anndata` with ``append=True``. It
-    inspects all input H5ADs (and the target ``Experiment``, if ``experiment_uri`` is not ``None``) to produce a global
-    :class:`ExperimentAmbientLabelMapping` that describes how ``obs`` and ``var`` identifiers and schema elements map to
-    the target ``Experiment``.
+    inspects all input H5ADs (and the target ``Experiment``, if ``experiment_uri`` is supplied) to produce a global
+    :class:`ExperimentAmbientLabelMapping` that describes how ``obs``/``var`` identifiers map to the target ``Experiment``.
 
     Supported Workflows:
         This function and the subsequent append workflow are designed for two primary scenarios:
 
-        1. Concatenating multiple datasets where ``obs`` and ``var`` schemas are consistent across all inputs and the target ``Experiment``.
-        2. Adding a new ``Measurement`` for observations that *already exist* in the ``Experiment``.
+        1. Append new observations from inputs with ``obs``/``var`` schemas that are consistent with the target ``Experiment``
+        (i.e., same column names and dtypes).
+        2. Adding a new ``Measurement`` for observations that *already exist* in the target ``Experiment``.
 
     Schema Evolution:
         The append workflow does not automatically evolve the schema of the ``obs``/``var`` DataFrames in the target
@@ -197,10 +197,11 @@ def register_h5ads(
         thrown. If your append operation requires new columns, use :func:`update_obs()`/:func:`update_var()` *before*
         creating the registration map.
 
-    Duplicate obs IDs:
-        By default obs IDs (from ``obs_field_name``) across all inputs and the  existing ``Experiment`` must be globally
+    Duplicate ``obs`` IDs:
+        By default ``obs`` IDs (from ``obs_field_name``) across all inputs and the  existing ``Experiment`` must be globally
         unique. If any duplicates are found, a ``SOMAError`` is raised to prevent unintentionally overwriting existing
         data, which is non-deterministic in multi-writer scenarios. Set ``allow_duplicate_obs_ids=True`` only when
+        adding a *new ``Measurement``* for an existing set of observations (i.e., no new ``obs`` IDs).
 
     New ``var`` IDs:
         The append workflow automatically handles ``var`` IDs (from ``var_field_name``) that do not already exist in the target
