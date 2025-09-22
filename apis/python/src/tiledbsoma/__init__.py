@@ -177,7 +177,7 @@ from ._general_utilities import (
     show_package_versions,
 )
 from ._geometry_dataframe import GeometryDataFrame
-from ._indexer import IntIndexer, tiledbsoma_build_index
+from ._indexer import IntIndexer
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
@@ -238,7 +238,6 @@ __all__ = [
     "get_storage_engine",
     "open",
     "show_package_versions",
-    "tiledbsoma_build_index",
     "tiledbsoma_stats_as_py",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",

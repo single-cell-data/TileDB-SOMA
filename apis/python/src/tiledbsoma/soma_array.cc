@@ -87,7 +87,6 @@ void load_soma_array(py::module& m) {
                 }
             })
         .def("schema_config_options", &SOMAArray::schema_config_options)
-        .def("config_options_from_schema", &SOMAArray::config_options_from_schema)
         .def("context", &SOMAArray::ctx)
 
         .def(

@@ -2,11 +2,9 @@
 #
 # Licensed under the MIT License.
 
-import warnings
 from typing import Any
 
 import pyarrow as pa
-from typing_extensions import deprecated
 
 from . import _tdb_handles
 
@@ -65,47 +63,6 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
             Experimental.
         """
         return self._handle.schema_config_options()
-
-    @deprecated("This method is deprecated and will be removed in a future release.")
-    def config_options_from_schema(self) -> clib.PlatformConfig:
-        """Returns metadata about the array that is not encompassed within the
-        Arrow Schema, in the form of a PlatformConfig (deprecated).
-
-        Use ``schema_config_options`` instead.
-
-        Available attributes are:
-            * dataframe_dim_zstd_level: int
-            * sparse_nd_array_dim_zstd_level: int
-            * sparse_nd_array_dim_zstd_level: int
-            * write_X_chunked: bool
-            * goal_chunk_nnz: int
-            * remote_cap_nbytes: int
-            * capacity: int
-            * offsets_filters: str
-                * name (of filter): str
-                * compression_level: str
-            * validity_filters: str
-            * attrs: str
-                * name (of attribute): str
-                    * filters: str
-                        * name (of filter): str
-                        * compression_level: str
-            * dims: str
-                * name (of dimension): str
-                    * filters: str
-                        * name (of filter): str
-                        * compression_level: str
-                    * tile: int
-            * allows_duplicates: bool
-            * tile_order: str
-            * cell_order: str
-            * consolidate_and_vacuum: bool
-
-        Lifecycle:
-            Deprecated.
-        """
-        warnings.warn("Deprecated. Use schema_config_options instead.", DeprecationWarning, stacklevel=2)
-        return self._handle.config_options_from_schema()
 
     def non_empty_domain(self) -> tuple[tuple[Any, Any], ...]:
         """Retrieves the non-empty domain for each dimension, namely the smallest

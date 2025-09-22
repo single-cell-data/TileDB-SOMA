@@ -359,17 +359,6 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * @brief Get members of the schema (capacity, allows_duplicates,
-     * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
-     * and dim filters) in the form of a PlatformConfig
-     *
-     * @return PlatformConfig
-     */
-    inline PlatformConfig config_options_from_schema() const {
-        return utils::platform_config_from_tiledb_schema(*schema_);
-    }
-
-    /**
      * Set metadata key-value items to an open array. The array must
      * opened in WRITE mode, otherwise the function will error out.
      *

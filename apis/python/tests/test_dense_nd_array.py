@@ -510,7 +510,7 @@ def test_read_result_order(tmp_path):
         assert np.array_equal(A.read(), data)
         assert np.array_equal(A.read(result_order="row-major"), data)
         assert np.array_equal(A.read(result_order="column-major"), data.T)
-        with pytest.warns(DeprecationWarning, match="The use of 'result_order=\"auto\"' is deprecated"):
+        with pytest.raises(ValueError):
             assert np.array_equal(A.read(result_order="auto"), data)
 
 
