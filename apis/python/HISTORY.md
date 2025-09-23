@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [Release 2.0.0]
+
+### Added
+
 - \[[#4125](https://github.com/single-cell-data/TileDB-SOMA/pull/4125)\] Add delete mode specified by `mode='d'`.
 - \[[#4205](https://github.com/single-cell-data/TileDB-SOMA/pull/4205)\] Add `delete_cells` method to `SparseNDArray`, `DataFrame`, and `PointCloudDataFrame`.
 - \[[#4212](https://github.com/single-cell-data/TileDB-SOMA/pull/4212)\] Add `type` read-only property to `DenseNDArray` and `SparseNDArray`.

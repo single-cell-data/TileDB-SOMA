@@ -2,6 +2,20 @@
 
 ## Added
 
+## Changed
+
+## Deprecated
+
+## Removed
+
+## Fixed
+
+## Security
+
+# tiledbsoma 2.0.0
+
+## Added
+
 - Add delete mode specified by `mode="DELETE"`. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
 
 ## Changed
@@ -11,12 +25,6 @@
 ## Deprecated
 
 - Deprecate removing elements from a collection in write mode. In the future, all new removals will need to be done in delete mode. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
-
-## Removed
-
-## Fixed
-
-## Security
 
 # tiledbsoma 1.18.0
 
