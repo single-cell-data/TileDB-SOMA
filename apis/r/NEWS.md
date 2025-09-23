@@ -20,7 +20,7 @@
 
 ## Changed
 
-- Update [TileDB core to 2.28.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1). ([#4077](https://github.com/single-cell-data/TileDB-SOMA/pull/4177))
+- Update [TileDB core to 2.29.0](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.0). ([#4241](https://github.com/single-cell-data/TileDB-SOMA/pull/4241))
 
 ## Deprecated
 
