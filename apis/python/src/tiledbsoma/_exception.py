@@ -79,7 +79,9 @@ def is_already_exists_error(e: SOMAError) -> bool:
 class NotCreateableError(SOMAError):
     """Raised when attempting to create an already existing SOMA object.
 
-    Lifecycle: Maturing
+    This error is deprecated. Check for :class:`AlreadyExistsError` instead.
+
+    Lifecycle: Deprecated
     """
 
 

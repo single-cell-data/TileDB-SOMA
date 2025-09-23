@@ -48,7 +48,7 @@ from tiledbsoma import (
 )
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
-from tiledbsoma._exception import AlreadyExistsError, NotCreateableError, SOMAError
+from tiledbsoma._exception import AlreadyExistsError, SOMAError
 from tiledbsoma._soma_object import AnySOMAObject
 from tiledbsoma._types import IngestMode
 from tiledbsoma.io import conversions
@@ -639,7 +639,7 @@ def _write_arrow_to_dataframe(
             platform_config=platform_config,
             context=context,
         )
-    except (AlreadyExistsError, NotCreateableError) as e:
+    except AlreadyExistsError as e:
         raise SOMAError(f"{df_uri} already exists") from e
 
     if not ingestion_params.write_schema_no_data:
@@ -687,7 +687,7 @@ def _write_X_layer(
             platform_config=platform_config,
             context=context,
         )
-    except (AlreadyExistsError, NotCreateableError) as e:
+    except AlreadyExistsError as e:
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists") from e
         soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
@@ -761,7 +761,7 @@ def _write_scene_presence_dataframe(
             platform_config=platform_config,
             context=context,
         )
-    except (AlreadyExistsError, NotCreateableError) as e:
+    except AlreadyExistsError as e:
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{df_uri} already exists") from e
         soma_df = DataFrame.open(df_uri, "w", context=context)
@@ -883,7 +883,7 @@ def _create_or_open_scene(
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             scene = Scene.create(uri, context=context)
-    except (AlreadyExistsError, NotCreateableError) as e:
+    except AlreadyExistsError as e:
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists") from e
