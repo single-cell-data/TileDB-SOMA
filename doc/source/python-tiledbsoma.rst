@@ -77,4 +77,8 @@ Functions
     tiledbsoma.tiledbsoma_stats_as_py
     tiledbsoma.tiledbsoma_stats_json
 
+    tiledbsoma.logging_level_debug
+    tiledbsoma.logging_level_info
+    tiledbsoma.logging_level_warning
+
     tiledbsoma.tiledbsoma_build_index

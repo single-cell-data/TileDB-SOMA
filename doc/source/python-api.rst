@@ -19,10 +19,9 @@ Features:
 * Enables distributed computation over datasets
 
 
-.. toctree:: 
+.. toctree::
    :maxdepth: 2
 
    python-tiledbsoma
    python-tiledbsoma-io
    python-tiledbsoma-io-spatial
-   python-tiledbsoma-logging
