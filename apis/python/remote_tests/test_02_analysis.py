@@ -26,7 +26,7 @@ def test_write_with_updates(conftest_context, conftest_namespace, conftest_defau
 
     adata = sc.datasets.pbmc3k()
 
-    tiledbsoma._logging.info()
+    tiledbsoma.logging_level_info()
     tiledbsoma.io.from_anndata(
         creation_uri,
         adata,

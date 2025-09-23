@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger("tiledbsoma")
 
 
-def warning() -> None:
+def logging_level_warning() -> None:
     """Sets :mod:`tiledbsoma.logging` to a WARNING level.
     Use :func:`tiledbsoma.logging.info` in notebooks to suppress
     progress indicators for data ingestion.
@@ -22,7 +22,7 @@ def warning() -> None:
     _set_level(logging.WARNING)
 
 
-def info() -> None:
+def logging_level_info() -> None:
     """Sets :mod:`tiledbsoma.logging` to an INFO level.
     Use :func:`tiledbsoma.logging.info` in notebooks to see
     progress indicators for data ingestion.
@@ -33,7 +33,7 @@ def info() -> None:
     _set_level(logging.INFO)
 
 
-def debug() -> None:
+def logging_level_debug() -> None:
     """Sets :mod:`tiledbsoma.logging` to a DEBUG level.
     Use :func:`tiledbsoma.logging.debug` in notebooks to see
     more detailed progress indicators for data ingestion.

@@ -178,6 +178,7 @@ from ._general_utilities import (
 )
 from ._geometry_dataframe import GeometryDataFrame
 from ._indexer import IntIndexer
+from ._logging import logging_level_debug, logging_level_info, logging_level_warning
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
@@ -236,6 +237,9 @@ __all__ = [
     "get_implementation_version",
     "get_libtiledbsoma_core_version",
     "get_storage_engine",
+    "logging_level_debug",
+    "logging_level_info",
+    "logging_level_warning",
     "open",
     "show_package_versions",
     "tiledbsoma_stats_as_py",
