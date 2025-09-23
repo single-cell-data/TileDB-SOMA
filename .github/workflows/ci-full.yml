@@ -27,6 +27,7 @@ jobs:
           - os: macos-latest
             cc: clang
             cxx: clang++
+            extra_pytest_options: "-m 'not medium_runner'"
     uses: ./.github/workflows/test-python.yml
     with:
       os: ${{ matrix.os }}
@@ -34,6 +35,7 @@ jobs:
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
       report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11' }}
+      extra_pytest_options: ${{ matrix.extra_pytest_options }}
     secrets: inherit
 
   r-tests:

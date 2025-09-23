@@ -35,6 +35,7 @@ from .test_experiment_query_spatial import soma_spatial_experiment  # noqa: F401
         "louvain == 'B cells' and n_genes < 500",
     ],
 )
+@pytest.mark.medium_runner
 def test_experiment_obs_axis_delete_from_pbmc3k(
     tmp_path, soma_tiledb_context, experiment_path, coords, value_filter
 ) -> None:

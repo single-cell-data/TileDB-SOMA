@@ -1793,6 +1793,7 @@ def test_iter(tmp_path: pathlib.Path):
         next(b)
 
 
+@pytest.mark.medium_runner
 def test_context_cleanup(tmp_path: pathlib.Path) -> None:
     arrow_tensor = create_random_tensor("table", (1,), np.float32(), density=1)
     with soma.SparseNDArray.create(tmp_path.as_uri(), type=pa.float64(), shape=(1,)) as write_arr:
