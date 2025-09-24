@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import inspect
+import warnings
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -146,8 +147,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         uri: str,
         *,
         schema: pa.Schema,
-        index_column_names: Sequence[str] = (SOMA_JOINID,),
         domain: Domain | None = None,
+        index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -161,36 +162,20 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 columns to be named as index columns.  If the schema includes types unsupported by
                 the SOMA implementation, an error will be raised.
             index_column_names:
-                A list of column names to use as user-defined
-                index columns (e.g., ``['cell_type', 'tissue_type']``).
-                All named columns must exist in the schema, and at least one
-                index column name is required.
+                A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``).
+                All named columns must exist in the schema, and at least one index column name is required.
             domain:
-                An optional sequence of tuples specifying the domain of each
-                index column. Each tuple must be a pair consisting of the
-                minimum and maximum values storable in the index column. For
-                example, if there is a single int64-valued index column, then
-                ``domain`` might be ``[(100, 200)]`` to indicate that values
-                between 100 and 200, inclusive, can be stored in that column.
-                If provided, this sequence must have the same length as
-                ``index_column_names``, and the index-column domain will be as
-                specified.  If omitted entirely, or if ``None`` in a given
-                dimension, the corresponding index-column domain will use an
-                empty range, and data writes after that will fail with "A range
-                was set outside of the current domain". Unless you have a
-                particular reason not to, you should always provide the desired
-                `domain` at create time: this is an optional but strongly
-                recommended parameter. See also ``change_domain`` which allows
-                you to expand the domain after create.
+                A sequence of tuples, each specifying the range of storable values for an index column. For example,
+                an int64-valued index column, ``domain=[(100, 200)]`` indicates values between 100 and 200
+                (including 100 and 200) can be stored.  This sequence's length must match index_column_names. Leaving
+                the domain as ``None`` is deprecated.
             platform_config:
-                Platform-specific options used to create this array.
-                This may be provided as settings in a dictionary, with options
-                located in the ``{'tiledb': {'create': ...}}`` key,
-                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
+                Platform-specific options used to create this array. This may be provided as settings in a dictionary,
+                with options located in the ``{'tiledb': {'create': ...}}`` key, or as a
+                :class:`~tiledbsoma.TileDBCreateOptions` object.
             tiledb_timestamp:
-                If specified, overrides the default timestamp
-                used to open this object. If unset, uses the timestamp provided by
-                the context.
+                If specified, overrides the default timestamp used to open this object. If unset, uses the timestamp
+                provided by the context.
 
 
         Returns:
@@ -254,6 +239,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         domain = None
 
         if soma_domain is None:
+            warnings.warn(
+                "Setting ``domain=None`` is deprecated. Please specify the desired domain for the dataframe.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             soma_domain = tuple(None for _ in index_column_names)
         else:
             ndom = len(soma_domain)

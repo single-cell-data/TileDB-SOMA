@@ -92,6 +92,40 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
+        """Creates a SOMA ``DenseNDArray`` at the given URI.
+
+        Args:
+            type:
+                The Arrow type to be stored in the NDArray. If the type is unsupported, an error will be raised.
+            shape:
+                The current maximum capacity of each dimension. All lengths must be in the positive int64 range. The
+                shape can be increased, but not decreased, after creation.
+            platform_config:
+                Platform-specific options used to create this array.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
+            tiledb_timestamp:
+                If specified, overrides the default timestamp
+                used to open this object. If unset, uses the timestamp provided by
+                the context.
+
+        Returns:
+            The created ``DenseNDArray``.
+
+        Raises:
+            TypeError:
+                If the ``type`` is unsupported.
+            ValueError:
+                If the ``shape`` is unsupported.
+            tiledbsoma.AlreadyExistsError:
+                If the underlying object already exists at the given URI.
+            TileDBError:
+                If unable to create the underlying object.
+
+        Lifecycle:
+            Maturing.
+        """
         context = _validate_soma_tiledb_context(context)
 
         index_column_schema = []
