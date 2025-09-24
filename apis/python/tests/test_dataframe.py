@@ -183,7 +183,9 @@ def test_dataframe(tmp_path, arrow_schema):
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("myfloat",))
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("myfloat",), domain=((0, 10),)
+    )
     assert sdf.index_column_names == ("myfloat",)
 
 
@@ -279,7 +281,7 @@ def test_delete_cells_joinid_with_string_column(tmp_path, delete_coords, value_f
         ),
         pytest.param(
             pa.large_string(),
-            None,
+            [None],
             ["apple", "banana", "coconut", "durian", "eggplant", "fig", "guava", "honeydew"],
             id="string",
         ),
@@ -1847,9 +1849,7 @@ def test_columns(tmp_path):
     """
 
     A = soma.DataFrame.create(
-        (tmp_path / "A").as_posix(),
-        schema=pa.schema([("a", pa.int32())]),
-        index_column_names=["a"],
+        (tmp_path / "A").as_posix(), schema=pa.schema([("a", pa.int32())]), index_column_names=["a"], domain=((0, 0),)
     )
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
@@ -1865,6 +1865,7 @@ def test_columns(tmp_path):
         (tmp_path / "D").as_posix(),
         schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
         index_column_names=["a"],
+        domain=((0, 0),),
     )
     assert sorted(D.keys()) == sorted(["a", "soma_joinid"])
     assert D.schema.field("soma_joinid").type == pa.int64()
@@ -1874,6 +1875,7 @@ def test_columns(tmp_path):
             (tmp_path / "E").as_posix(),
             schema=pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
             index_column_names=["a"],
+            domain=((0, 0),),
         )
 
 
@@ -2600,6 +2602,7 @@ def test_create_platform_config_overrides(tmp_path, create_options, expected_sch
     soma.DataFrame.create(
         uri,
         schema=pa.schema([pa.field("colA", pa.string())]),
+        domain=((0, 0),),
         platform_config={"tiledb": {"create": {**create_options}}},
     ).close()
 
@@ -3300,7 +3303,7 @@ def test_bounds_on_somajoinid_domain(tmp_path):
 def test_pass_configs(tmp_path, arrow_schema):
     uri = tmp_path.as_posix()
 
-    with soma.DataFrame.create(uri, schema=arrow_schema()) as sdf:
+    with soma.DataFrame.create(uri, schema=arrow_schema(), domain=((0, 0),)) as sdf:
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]
         pydict["myint"] = [10, 20, 30, 40, 50]

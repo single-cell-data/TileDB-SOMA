@@ -282,12 +282,15 @@ def create_basic_object(soma_type, uri, **kwargs) -> tiledbsoma.SOMAObject:
         return tiledbsoma.Scene.create(uri, **kwargs)
     if soma_type == "SOMADataFrame":
         kwargs.setdefault("schema", pa.schema([pa.field("myint", pa.int64())]))
+        kwargs.setdefault("domain", ((0, 10),))
         return tiledbsoma.DataFrame.create(uri, **kwargs)
     if soma_type == "SOMAGeometryDataFrame":
         kwargs.setdefault("schema", pa.schema([("quality", pa.float32())]))
+        kwargs.setdefault("domain", ((-10.0, 10.0), (-10.0, 10.0)))
         return tiledbsoma.GeometryDataFrame.create(uri, **kwargs)
     if soma_type == "SOMAPointCloudDataFrame":
         kwargs.setdefault("schema", pa.schema([("x", pa.float64()), ("y", pa.float64())]))
+        kwargs.setdefault("domain", ((-10.0, 10.0), (-10.0, 10.0)))
         return tiledbsoma.PointCloudDataFrame.create(uri, **kwargs)
     if soma_type == "SOMADenseNDArray":
         kwargs.setdefault("type", pa.float64())
