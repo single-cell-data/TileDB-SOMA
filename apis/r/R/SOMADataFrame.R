@@ -73,6 +73,12 @@ SOMADataFrame <- R6::R6Class(
 
       schema <- private$validate_schema(schema, index_column_names)
 
+      if (is.null(domain)) {
+        lifecycle::deprecate_warn(
+          "2.0.0",
+          "create(domain = 'must be a named list')",
+        )
+      }
       if (!(is.null(domain) || .is_domain(domain, index_column_names))) {
         stop(
           "domain must be NULL or a named list, with values being 2-element vectors or NULL"
