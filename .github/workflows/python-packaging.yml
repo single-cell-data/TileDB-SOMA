@@ -35,8 +35,9 @@ jobs:
           pip list
 
       - name: Build sdist
+        working-directory: apis/python
         run: python setup.py sdist
-        working-directory: ./apis/python
+
       
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
@@ -64,7 +65,9 @@ jobs:
           path: apis/python/dist/
       - name: Install sdist artifact
         working-directory: apis/python
-        run: pip install --verbose dist/${{ needs.build_sdist.outputs.sdist_name }}
+        run: |
+          echo $PWD
+          pip install --verbose dist/*.tar.gz
       - name: sdist smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
 
