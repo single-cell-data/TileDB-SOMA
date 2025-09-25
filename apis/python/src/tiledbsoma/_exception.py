@@ -77,7 +77,7 @@ def is_already_exists_error(e: SOMAError) -> bool:
 
 
 class NotCreateableError(SOMAError):
-    """Raised when attempting to create an already existing SOMA object.
+    """Raised when an URI is malformed for a particular storage backend.
 
     This error is deprecated. Check for :class:`AlreadyExistsError` instead.
 
