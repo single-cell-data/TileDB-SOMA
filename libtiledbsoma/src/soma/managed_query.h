@@ -72,6 +72,12 @@ class ManagedQuery {
     /** No copy constructor: use move constructor instead. */
     ManagedQuery(const ManagedQuery&) = delete;
 
+    /**
+     * Default move constructor.
+     *
+     * Note: Each member should have a non-deleted move constructor. If there is a need to
+     * violate this an explicitly defined move constructor should be added.
+     */
     ManagedQuery(ManagedQuery&& other) = default;
 
     ~ManagedQuery() = default;
