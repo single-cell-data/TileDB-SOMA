@@ -522,6 +522,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     "n_obs,n_vars,obsp_layer_names,varp_layer_names,obsm_layer_names,varm_layer_names",
     [(1001, 99, ["foo"], ["bar"], ["baz"], ["quux"])],
 )
+@pytest.mark.medium_runner
 def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
     obs_slice = slice(3, 72)
     var_slice = slice(7, 21)
@@ -884,6 +885,7 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
         ['var_id not in ["S100A6", "CYBA", "NONESUCH"]', 1836],
     ],
 )
+@pytest.mark.medium_runner
 def test_experiment_query_historical(soma_tiledb_context, version, obs_params, var_params):
     """Checks that experiments written by older versions are still queryable."""
 
@@ -953,6 +955,7 @@ def test_experiment_query_historical(soma_tiledb_context, version, obs_params, v
 @pytest.mark.parametrize("obsp_layers", [(), ("connectivities",), ("distances",), ("connectivities", "distances")])
 @pytest.mark.parametrize("varp_layers", [()])
 @pytest.mark.parametrize("varm_layers", [(), ("PCs",)])
+@pytest.mark.medium_runner
 def test_annotation_matrix_slots(
     soma_tiledb_context, version, obsm_layers, obsp_layers, varm_layers, varp_layers
 ) -> None:
