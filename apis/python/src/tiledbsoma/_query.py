@@ -63,7 +63,7 @@ if TYPE_CHECKING:
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from ._util import _df_set_index, _resolve_futures
+from ._util import MISSING, Sentinel, _df_set_index, _resolve_futures
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -401,7 +401,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
     def to_anndata(
         self,
-        X_name: str,
+        X_name: str | Sentinel | None = MISSING,
         *,
         column_names: AxisColumnNames | None = None,
         X_layers: Sequence[str] = (),
@@ -419,6 +419,10 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         Args:
             X_name:
                 The X layer to read and return in the ``X`` slot.
+                If unspecified (default), and the measurement contains an X layer named
+                ``"data"``, it will be used. If ``None``, the returned AnnData will have
+                ``X=None`` and ``layers`` will be unpopulated. If a string, that layer must
+                exist in the measurement ``X`` collection.
             column_names:
                 The columns in the ``var`` and ``obs`` dataframes to read.
             X_layers:
@@ -465,9 +469,29 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         tp = self._threadpool
         x_collection = self._ms.X
-        all_x_names = [X_name, *list(X_layers)]
         all_x_arrays: dict[str, SparseNDArray] = {}
-        for _xname in all_x_names:
+        # Enforce identical semantics to io.to_anndata for X handling
+        if X_name is None and X_layers:
+            raise ValueError("If X_name is None, X_layers must not be provided")
+
+        chosen_x: str | None = None
+        if X_name is MISSING:
+            if "data" in x_collection:
+                chosen_x = "data"
+        elif X_name is not None:
+            if not isinstance(X_name, str) or not X_name:
+                raise ValueError("X layer names must be specified as a string.")
+            if X_name not in x_collection:
+                raise ValueError(f"X layer name '{X_name}' not found in measurement")
+            chosen_x = X_name
+
+        # Gather X and any requested extra layers
+        for _xname in [chosen_x] if chosen_x is not None else []:
+            x_array = x_collection[_xname]
+            if not isinstance(x_array, SparseNDArray):
+                raise NotImplementedError("Dense array unsupported")
+            all_x_arrays[_xname] = x_array
+        for _xname in list(X_layers):
             if not isinstance(_xname, str) or not _xname:
                 raise ValueError("X layer names must be specified as a string.")
             if _xname not in x_collection:
@@ -489,26 +513,30 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
 
-        x_matrices = {
-            _xname: (
-                tp.submit(
-                    _read_as_csr,
-                    layer,
-                    obs_joinids,
-                    var_joinids,
-                    self._indexer.by_obs,
-                    self._indexer.by_var,
+        x_matrices = (
+            {
+                _xname: (
+                    tp.submit(
+                        _read_as_csr,
+                        layer,
+                        obs_joinids,
+                        var_joinids,
+                        self._indexer.by_obs,
+                        self._indexer.by_var,
+                    )
+                    if not dask
+                    else load_daskarray(
+                        layer=layer,
+                        coords=(obs_joinids, var_joinids),
+                        **dask,
+                    )
                 )
-                if not dask
-                else load_daskarray(
-                    layer=layer,
-                    coords=(obs_joinids, var_joinids),
-                    **dask,
-                )
-            )
-            for _xname, layer in all_x_arrays.items()
-        }
-        x_future = x_matrices.pop(X_name)
+                for _xname, layer in all_x_arrays.items()
+            }
+            if (X_name is not None and X_name is not MISSING) or chosen_x is not None or X_layers
+            else {}
+        )
+        x_future = x_matrices.pop(chosen_x) if chosen_x is not None else None
 
         obsm_future = {
             key: tp.submit(
@@ -561,14 +589,14 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                     var[name] = var[name].cat.remove_unused_categories()
 
         return AnnData(
-            X=x_future.result() if isinstance(x_future, Future) else x_future,
+            X=(x_future.result() if isinstance(x_future, Future) else x_future) if chosen_x is not None else None,
             obs=obs,
             var=var,
             obsm=(_resolve_futures(obsm_future) or None),
             obsp=(_resolve_futures(obsp_future) or None),
             varm=(_resolve_futures(varm_future) or None),
             varp=(_resolve_futures(varp_future) or None),
-            layers=(_resolve_futures(x_matrices) or None),
+            layers=_resolve_futures(x_matrices),
         )
 
     def to_spatialdata(  # type: ignore[no-untyped-def]  # noqa: ANN202
