@@ -72,7 +72,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         ...         ("B", pa.large_string()),
         ...     ]
         ... )
-        >>> with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema) as df:
+        >>> with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema, domain=[(0, 2)]) as df:
         ...     data = pa.Table.from_pydict(
         ...         {
         ...             "soma_joinid": [0, 1, 2],
