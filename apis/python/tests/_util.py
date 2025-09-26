@@ -91,9 +91,9 @@ def assert_array_equal(a0, a1):
         raise ValueError(f"Unsupported type: {type(a0)}")
 
 
-def assert_adata_equal(ad0: AnnData, ad1: AnnData):
-    assert_frame_equal(ad0.obs, ad1.obs)
-    assert_frame_equal(ad0.var, ad1.var)
+def assert_adata_equal(ad0: AnnData, ad1: AnnData, **kwargs):
+    assert_frame_equal(ad0.obs, ad1.obs, **kwargs)
+    assert_frame_equal(ad0.var, ad1.var, **kwargs)
     assert_uns_equal(ad0.uns, ad1.uns)
     assert_array_equal(ad0.X, ad1.X)
     assert_array_dicts_equal(ad0.obsm, ad1.obsm)

@@ -12,14 +12,7 @@ import warnings
 from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Literal,
-    Protocol,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, Literal, Protocol, TypeVar
 
 import attrs
 import numpy as np
@@ -486,11 +479,11 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             chosen_x = X_name
 
         # Gather X and any requested extra layers
-        for _xname in [chosen_x] if chosen_x is not None else []:
-            x_array = x_collection[_xname]
+        if chosen_x is not None:
+            x_array = x_collection[chosen_x]
             if not isinstance(x_array, SparseNDArray):
                 raise NotImplementedError("Dense array unsupported")
-            all_x_arrays[_xname] = x_array
+            all_x_arrays[chosen_x] = x_array
         for _xname in list(X_layers):
             if not isinstance(_xname, str) or not _xname:
                 raise ValueError("X layer names must be specified as a string.")
