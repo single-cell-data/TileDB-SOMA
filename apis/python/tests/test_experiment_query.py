@@ -26,10 +26,11 @@ from tiledbsoma import (
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.experiment_query import X_as_series
+from tiledbsoma.io import to_anndata as io_to_anndata
 
 from tests._util import raises_no_typeguard
 
-from ._util import ROOT_DATA_DIR
+from ._util import ROOT_DATA_DIR, assert_adata_equal_extra_columns_exempt
 
 # Number of features for the embeddings layer
 N_FEATURES = 50
@@ -157,8 +158,43 @@ def test_experiment_query_all(soma_experiment):
 
         assert len(ad.layers) == 0
 
+
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data",))])
+def test_experiment_query_to_anndata_no_X(soma_experiment):
+    """When X_name is None, AnnData should have X=None and no layers."""
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        ad = query.to_anndata(X_name=None)
+        assert ad.X is None
+        assert len(ad.layers) == 0
+        assert ad.n_obs == query.n_obs
+        assert ad.n_vars == query.n_vars
+
+
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data", "raw"))])
+def test_equivalence_default_X_uses_data_when_present(soma_experiment):
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        ad_query = query.to_anndata()  # default
+        ad_io = io_to_anndata(soma_experiment, "RNA")  # default
+        assert_adata_equal_extra_columns_exempt(ad_query, ad_io)
+
+
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data",))])
+def test_equivalence_X_none_returns_empty_X_and_no_layers(soma_experiment):
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        ad_query = query.to_anndata(X_name=None)
+        ad_io = io_to_anndata(soma_experiment, "RNA", X_layer_name=None)
+        assert_adata_equal_extra_columns_exempt(ad_query, ad_io)
+
+
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw",))])
+def test_equivalence_explicit_X_layer(soma_experiment):
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        ad_query = query.to_anndata("raw")
+        ad_io = io_to_anndata(soma_experiment, "RNA", X_layer_name="raw")
+        assert_adata_equal_extra_columns_exempt(ad_query, ad_io)
+
         raw_X = soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables().concat()
-        ad_X_coo = ad.X.tocoo()
+        ad_X_coo = ad_query.X.tocoo()
         assert np.array_equal(raw_X["soma_dim_0"], ad_X_coo.row)
         assert np.array_equal(raw_X["soma_dim_1"], ad_X_coo.col)
         assert np.array_equal(raw_X["soma_data"], ad_X_coo.data)
