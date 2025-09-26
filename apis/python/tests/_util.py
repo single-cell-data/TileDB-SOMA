@@ -103,6 +103,30 @@ def assert_adata_equal(ad0: AnnData, ad1: AnnData, **kwargs):
 
 
 def assert_adata_equal_extra_columns_exempt(ad0: AnnData, ad1: AnnData):
+    """
+    Compare AnnData objects while ignoring column length and shape differences.
+
+    This helper function performs structural comparison between two AnnData objects
+    without considering differences in column dimensions or array shapes. It is
+    specifically designed for comparing AnnData exports from soma.io and EAQ
+    (Experimental Query API) pipelines.
+
+    The function exists to handle the intentional design difference where EAQ
+    exports include an additional `soma_joinid` column that is not present in
+    standard soma.io exports. This allows for meaningful comparison of the core
+    data content while accommodating the expected structural differences.
+
+    Note:
+        This comparison is tailored for soma.io vs EAQ export validation and may
+        not be suitable for general AnnData object comparison tasks.
+
+    Args:
+        anndata1 (AnnData): First AnnData object to compare
+        anndata2 (AnnData): Second AnnData object to compare
+
+    Returns:
+        bool: True if objects are equivalent (ignoring shape/column differences), False otherwise
+    """
     assert ad0.n_obs == ad1.n_obs
     assert ad0.n_vars == ad1.n_vars
     # X can be None in some cases
