@@ -30,7 +30,7 @@ from tiledbsoma.io import to_anndata as io_to_anndata
 
 from tests._util import raises_no_typeguard
 
-from ._util import ROOT_DATA_DIR
+from ._util import ROOT_DATA_DIR, assert_adata_equal_extra_columns_exempt
 
 # Number of features for the embeddings layer
 N_FEATURES = 50
@@ -170,43 +170,12 @@ def test_experiment_query_to_anndata_no_X(soma_experiment):
         assert ad.n_vars == query.n_vars
 
 
-def _assert_adata_equivalent(a, b):
-    assert a.n_obs == b.n_obs
-    assert a.n_vars == b.n_vars
-    # X can be None in some cases
-    if a.X is None or b.X is None:
-        assert a.X is None and b.X is None
-    else:
-        assert (a.X != b.X).nnz == 0
-    # layers should be dicts (possibly empty)
-    assert set(a.layers) == set(b.layers)
-    for k in a.layers:
-        assert (a.layers[k] != b.layers[k]).nnz == 0
-    # obs/var equality we dont account for the extra soma_joinid column for a -> ExperimentAxisQuery
-    assert a.obs.label.equals(b.obs.label)
-    assert a.var.label.equals(b.var.label)
-    # obsm/varm keys and shapes
-    assert set(a.obsm) == set(b.obsm)
-    for k in a.obsm:
-        assert a.obsm[k].shape == b.obsm[k].shape
-    assert set(a.varm) == set(b.varm)
-    for k in a.varm:
-        assert a.varm[k].shape == b.varm[k].shape
-    # obsp/varp structural equality
-    assert set(a.obsp) == set(b.obsp)
-    for k in a.obsp:
-        assert (a.obsp[k] != b.obsp[k]).nnz == 0
-    assert set(a.varp) == set(b.varp)
-    for k in a.varp:
-        assert (a.varp[k] != b.varp[k]).nnz == 0
-
-
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data", "raw"))])
 def test_equivalence_default_X_uses_data_when_present(soma_experiment):
     with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         ad_query = query.to_anndata()  # default
         ad_io = io_to_anndata(soma_experiment, "RNA")  # default
-        _assert_adata_equivalent(ad_query, ad_io)
+        assert_adata_equal_extra_columns_exempt(ad_query, ad_io)
 
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data",))])
@@ -214,7 +183,7 @@ def test_equivalence_X_none_returns_empty_X_and_no_layers(soma_experiment):
     with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         ad_query = query.to_anndata(X_name=None)
         ad_io = io_to_anndata(soma_experiment, "RNA", X_layer_name=None)
-        _assert_adata_equivalent(ad_query, ad_io)
+        assert_adata_equal_extra_columns_exempt(ad_query, ad_io)
 
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw",))])
@@ -222,7 +191,7 @@ def test_equivalence_explicit_X_layer(soma_experiment):
     with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         ad_query = query.to_anndata("raw")
         ad_io = io_to_anndata(soma_experiment, "RNA", X_layer_name="raw")
-        _assert_adata_equivalent(ad_query, ad_io)
+        assert_adata_equal_extra_columns_exempt(ad_query, ad_io)
 
         raw_X = soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables().concat()
         ad_X_coo = ad_query.X.tocoo()
