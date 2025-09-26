@@ -102,35 +102,35 @@ def assert_adata_equal(ad0: AnnData, ad1: AnnData, **kwargs):
     assert_array_dicts_equal(ad0.varp, ad1.varp)
 
 
-def assert_adata_equal_extra_columns_exempt(a, b):
-    assert a.n_obs == b.n_obs
-    assert a.n_vars == b.n_vars
+def assert_adata_equal_extra_columns_exempt(ad0: AnnData, ad1: AnnData):
+    assert ad0.n_obs == ad1.n_obs
+    assert ad0.n_vars == ad1.n_vars
     # X can be None in some cases
-    if a.X is None or b.X is None:
-        assert a.X is None and b.X is None
+    if ad0.X is None or ad1.X is None:
+        assert ad0.X is None and ad1.X is None
     else:
-        assert (a.X != b.X).nnz == 0
+        assert (ad0.X != ad1.X).nnz == 0
     # layers should be dicts (possibly empty)
-    assert set(a.layers) == set(b.layers)
-    for k in a.layers:
-        assert (a.layers[k] != b.layers[k]).nnz == 0
-    # obs/var equality we dont account for the extra soma_joinid column for a -> ExperimentAxisQuery
-    assert a.obs.label.equals(b.obs.label)
-    assert a.var.label.equals(b.var.label)
+    assert set(ad0.layers) == set(ad1.layers)
+    for k in ad0.layers:
+        assert (ad0.layers[k] != ad1.layers[k]).nnz == 0
+    # obs/var equality we dont account for the extra soma_joinid column for ad0 -> ExperimentAxisQuery
+    assert ad0.obs.label.equals(ad1.obs.label)
+    assert ad0.var.label.equals(ad1.var.label)
     # obsm/varm keys and shapes
-    assert set(a.obsm) == set(b.obsm)
-    for k in a.obsm:
-        assert a.obsm[k].shape == b.obsm[k].shape
-    assert set(a.varm) == set(b.varm)
-    for k in a.varm:
-        assert a.varm[k].shape == b.varm[k].shape
+    assert set(ad0.obsm) == set(ad1.obsm)
+    for k in ad0.obsm:
+        assert ad0.obsm[k].shape == ad1.obsm[k].shape
+    assert set(ad0.varm) == set(ad1.varm)
+    for k in ad0.varm:
+        assert ad0.varm[k].shape == ad1.varm[k].shape
     # obsp/varp structural equality
-    assert set(a.obsp) == set(b.obsp)
-    for k in a.obsp:
-        assert (a.obsp[k] != b.obsp[k]).nnz == 0
-    assert set(a.varp) == set(b.varp)
-    for k in a.varp:
-        assert (a.varp[k] != b.varp[k]).nnz == 0
+    assert set(ad0.obsp) == set(ad1.obsp)
+    for k in ad0.obsp:
+        assert (ad0.obsp[k] != ad1.obsp[k]).nnz == 0
+    assert set(ad0.varp) == set(ad1.varp)
+    for k in ad0.varp:
+        assert (ad0.varp[k] != ad1.varp[k]).nnz == 0
 
 
 def assert_transform_equal(actual: CoordinateTransform, expected: CoordinateTransform) -> None:
