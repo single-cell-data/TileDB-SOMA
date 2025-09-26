@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Release 2.0.0]
 
-This release is the first TileDB-SOMA release that follows our new versioning policy (see the [developer docs](dev_docs/POLICIES.md). Some highlights include new `delete_cells` feature, removes several deprecated functions, adds breaking behavior to the `ExperimentAxisQuery.to_anndata` method, and updating the core TileDB version to 2.28.1.
+This release is the first TileDB-SOMA release that follows our new versioning policy (see the [developer docs](../../dev_docs/POLICIES.md)). Highlights of this release include the addition of a "delete" feature, removal of deprecated function, an update to TileDB 2.28.1 and breaking changes to `ExperimentAxisQuery.to_anndata`.
 
 ### Added
 

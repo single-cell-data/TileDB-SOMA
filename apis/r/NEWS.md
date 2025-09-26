@@ -14,7 +14,7 @@
 
 # tiledbsoma 2.0.0
 
-This release is the first TileDB-SOMA release that follows our new versioning policy (see the [developer docs](dev_docs/POLICIES.md). It introduces the new `DELETE` mode and deprecates removing elements from a `Collection` in `WRITE` mode. It also updates the core TileDB version to 2.28.1.
+This release is the first TileDB-SOMA release that follows our new versioning policy (see the [developer docs](../../dev_docs/POLICIES.md)). It introduces the new `DELETE` mode and deprecates removing elements from a `Collection` in `WRITE` mode. It also updates the core TileDB version to 2.28.1.
 
 ## Added
 
