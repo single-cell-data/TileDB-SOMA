@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [Release 2.0.0]
+
+This release is the first TileDB-SOMA release that follows our new versioning policy (see the [developer docs](dev_docs/POLICIES.md). Some highlights include new `delete_cells` feature, removes several deprecated functions, adds breaking behavior to the `ExperimentAxisQuery.to_anndata` method, and updating the core TileDB version to 2.28.1.
+
+### Added
+
 - \[[#4125](https://github.com/single-cell-data/TileDB-SOMA/pull/4125)\] Add delete mode specified by `mode='d'`.
 - \[[#4205](https://github.com/single-cell-data/TileDB-SOMA/pull/4205)\] Add `delete_cells` method to `SparseNDArray`, `DataFrame`, and `PointCloudDataFrame`.
 - \[[#4212](https://github.com/single-cell-data/TileDB-SOMA/pull/4212)\] Add `type` read-only property to `DenseNDArray` and `SparseNDArray`.
@@ -36,8 +52,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - \[[#4139](https://github.com/single-cell-data/tiledb-soma/pull/4139)\] [python] ExperimentAxisQuery.to_anndata would export obsm/varm as float32, regardless of the underlying SOMA data type. With this fix, the exported matrix will have the same data type as the original data.
 - \[[#4147](https://github.com/single-cell-data/TileDB-SOMA/pull/4147)\] [python] Fix a race condition in SOMA collection caching which would result in redundant object opens.
 - \[[#4223](https://github.com/single-cell-data/TileDB-SOMA/pull/4223)\] [python] Fix race condition in H5AD reading in the `tiledbsoma.io` module.
-
-### Security
 
 ## [Release 1.18.0]
 
