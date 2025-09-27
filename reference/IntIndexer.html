@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>The SOMA Re-Indexer</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.1/R/IntIndexer.R" class="external-link"><code>R/IntIndexer.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/R/IntIndexer.R" class="external-link"><code>R/IntIndexer.R</code></a></small>
       <div class="d-none name"><code>IntIndexer.Rd</code></div>
     </div>
 
@@ -118,12 +118,30 @@
 
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="op">(</span><span class="va">keys</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10000</span>, <span class="op">-</span><span class="fl">100000</span>, <span class="fl">200000</span>, <span class="fl">5</span>, <span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -1e+04 -1e+05  2e+05  5e+00  1e+00  7e+00</span>
+<span class="r-in"><span><span class="op">(</span><span class="va">lookups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">4L</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1L</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span>, simplify <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] -1  1  2  3  4  5 -1  1  2  3  4  5 -1  1  2  3  4  5 -1  1  2  3  4  5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">indexer</span> <span class="op">&lt;-</span> <span class="va">IntIndexer</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">keys</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">indexer</span><span class="op">$</span><span class="fu">get_indexer</span><span class="op">(</span><span class="va">lookups</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> integer64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] -1 4  -1 -1 -1 3  -1 4  -1 -1 -1 3  -1 4  -1 -1 -1 3  -1 4  -1 -1 -1 3 </span>
+<span class="r-in"><span><span class="va">indexer</span><span class="op">$</span><span class="fu">get_indexer</span><span class="op">(</span><span class="va">lookups</span>, nomatch_na <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> integer64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] &lt;NA&gt; 4    &lt;NA&gt; &lt;NA&gt; &lt;NA&gt; 3    &lt;NA&gt; 4    &lt;NA&gt; &lt;NA&gt; &lt;NA&gt; 3    &lt;NA&gt; 4    &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] &lt;NA&gt; &lt;NA&gt; 3    &lt;NA&gt; 4    &lt;NA&gt; &lt;NA&gt; &lt;NA&gt; 3   </span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
+  <p>Developed by Paul Hoffman, Aaron Wolen, TileDB, Inc..</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -9,7 +9,7 @@ object to a SOMA"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ object to a SOMA"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Write a <code>SummarizedExperiment</code> object to a SOMA</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.1/R/write_bioc.R" class="external-link"><code>R/write_bioc.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/R/write_bioc.R" class="external-link"><code>R/write_bioc.R</code></a></small>
       <div class="d-none name"><code>write_soma.SummarizedExperiment.Rd</code></div>
     </div>
 
@@ -70,15 +70,15 @@ object to a SOMA</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An object</p></dd>
+<dd><p>An object.</p></dd>
 
 
 <dt id="arg-uri">uri<a class="anchor" aria-label="anchor" href="#arg-uri"></a></dt>
-<dd><p>URI for resulting SOMA object</p></dd>
+<dd><p>URI for resulting SOMA object.</p></dd>
 
 
 <dt id="arg-ms-name">ms_name<a class="anchor" aria-label="anchor" href="#arg-ms-name"></a></dt>
-<dd><p>Name for resulting measurement</p></dd>
+<dd><p>Name for resulting measurement.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -86,25 +86,26 @@ object to a SOMA</p>
 
 
 <dt id="arg-ingest-mode">ingest_mode<a class="anchor" aria-label="anchor" href="#arg-ingest-mode"></a></dt>
-<dd><p>Ingestion mode when creating the SOMA; choose from:</p><ul><li><p>“<code>write</code>”: create a new SOMA and error if it already exists</p></li>
+<dd><p>Ingestion mode when creating the SOMA; choose from:</p><ul><li><p>“<code>write</code>”: create a new SOMA and error if it already
+exists.</p></li>
 <li><p>“<code>resume</code>”: attempt to create a new SOMA; if it already
-exists, simply open it for writing</p></li>
+exists, simply open it for writing.</p></li>
 </ul></dd>
 
 
 <dt id="arg-platform-config">platform_config<a class="anchor" aria-label="anchor" href="#arg-platform-config"></a></dt>
 <dd><p>Optional <a href="PlatformConfig.html">platform
-configuration</a></p></dd>
+configuration</a>.</p></dd>
 
 
 <dt id="arg-tiledbsoma-ctx">tiledbsoma_ctx<a class="anchor" aria-label="anchor" href="#arg-tiledbsoma-ctx"></a></dt>
-<dd><p>Optional <code><a href="SOMATileDBContext.html">SOMATileDBContext</a></code></p></dd>
+<dd><p>Optional <code><a href="SOMATileDBContext.html">SOMATileDBContext</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The URI to the resulting <code><a href="SOMAExperiment.html">SOMAExperiment</a></code> generated from
-the data contained in <code>x</code></p>
+the data contained in <code>x</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="writing-coldata">Writing <code>colData</code><a class="anchor" aria-label="anchor" href="#writing-coldata"></a></h2>
@@ -112,18 +113,18 @@ the data contained in <code>x</code></p>
 
 <p><code>colData</code> is written out as a
 <a href="SOMADataFrame.html">data frame</a> called “<code>obs</code>” at
-the <code><a href="SOMAExperiment.html">experiment</a></code> level</p>
+the <code><a href="SOMAExperiment.html">experiment</a></code> level.</p>
     </div>
     <div class="section level2">
     <h2 id="writing-assay-matrices">Writing Assay Matrices<a class="anchor" aria-label="anchor" href="#writing-assay-matrices"></a></h2>
 
 
 <p>Each assay matrix is written out as a
-<a href="SOMASparseNDArray.html">sparse matrix</a> within the <code>X</code> group of
-<code><a href="SOMAMeasurement.html">measurement</a></code> names <code>ms_name</code>. Names
-for assay matrices within <code>X</code> are taken from the
+<a href="SOMASparseNDArray.html">sparse matrix</a> within the <code>X</code> group
+of <code><a href="SOMAMeasurement.html">measurement</a></code> named
+<code>ms_name</code>. Names for assay matrices within <code>X</code> are taken from the
 assay names. Assay matrices are
-transposed (samples as rows) prior to writing</p>
+transposed (samples as rows) prior to writing.</p>
     </div>
     <div class="section level2">
     <h2 id="writing-rowdata">Writing <code>rowData</code><a class="anchor" aria-label="anchor" href="#writing-rowdata"></a></h2>
@@ -131,15 +132,42 @@ transposed (samples as rows) prior to writing</p>
 
 <p><code>rowData</code> is written out as a
 <a href="SOMADataFrame.html">data frame</a> called “<code>var</code>” at
-the <code><a href="SOMAMeasurement.html">measurement</a></code> level</p>
+the <code><a href="SOMAMeasurement.html">measurement</a></code> level.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># requireNamespace("withr", quietly = TRUE) &amp;&amp; requireNamespace("SummarizedExperiment", quietly = TRUE)</span></span></span>
+<span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="va">uri</span> <span class="op">&lt;-</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempfile</a></span><span class="op">(</span>pattern <span class="op">=</span> <span class="st">"summarized-experiment"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/rsparsematrix.html" class="external-link">rsparsematrix</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fl">230L</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">80L</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0.3</span>,</span></span>
+<span class="r-in"><span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"feature_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">230</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"cell_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu">SummarizedExperiment</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">mat</span>, logcounts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">mat</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">uri</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">se</span>, <span class="va">uri</span>, ms_name <span class="op">=</span> <span class="st">"RNA"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMAExperimentOpen.html">SOMAExperimentOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">exp</span><span class="op">$</span><span class="va">obs</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="va">exp</span><span class="op">$</span><span class="va">ms</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"RNA"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">var</span></span></span>
+<span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">X</span><span class="op">$</span><span class="fu">names</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">exp</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
+  <p>Developed by Paul Hoffman, Aaron Wolen, TileDB, Inc..</p>
 </div>
 
 <div class="pkgdown-footer-right">

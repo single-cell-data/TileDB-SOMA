@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,14 +40,28 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.17.1" id="tiledbsoma-1171">tiledbsoma 1.17.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-1171"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.18.0" id="tiledbsoma-1180">tiledbsoma 1.18.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1180"></a></h2>
 <div class="section level3">
-<h3 id="changed-1-17-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1-17-1"></a></h3>
-<ul><li>Update <a href="https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1" class="external-link">TileDB core to 2.28.1</a>. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4177" class="external-link">#4077</a>)</li>
+<h3 id="added-1-18-0">Added<a class="anchor" aria-label="anchor" href="#added-1-18-0"></a></h3>
+<ul><li>New <code>SOMAObject</code> base class to serve as root for <code>SOMAArrayBase</code> and <code>SOMACollectionBase</code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3771" class="external-link">#3771</a>)</li>
+<li>New field <code>SOMACollectionBase$members</code> to get a list with the members of a collection (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3771" class="external-link">#3771</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changed-1-18-0">Changed<a class="anchor" aria-label="anchor" href="#changed-1-18-0"></a></h3>
+<ul><li>Handshake <code>internal_use_only = "allowed_use"</code> for <code>$new()</code>, <code>$open()</code>, and <code>$create()</code> has been replaced with environment scoping; use of factory functions for opening and creation is now mandatory (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3771" class="external-link">#3771</a>)</li>
+<li>
+<code>TileDBObject</code>, <code>TileDBArray</code>, and <code>TileDBGroup</code> classes have been removed (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3771" class="external-link">#3771</a>)</li>
+<li>
+<code>SOMACollection$to_list()</code> and <code>SOMACollection$to_data_frame()</code> have been removed as they were unused public internal methods inherited from <code>TileDBGroup</code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3771" class="external-link">#3771</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="removed-1-18-0">Removed<a class="anchor" aria-label="anchor" href="#removed-1-18-0"></a></h3>
+<ul><li>
+<code>SOMAArray$object</code> has been removed (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3771" class="external-link">#3771</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -445,7 +459,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
+  <p>Developed by Paul Hoffman, Aaron Wolen, TileDB, Inc..</p>
 </div>
 
 <div class="pkgdown-footer-right">

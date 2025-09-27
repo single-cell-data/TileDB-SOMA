@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA TileDB Context</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.1/R/SOMATileDBContext.R" class="external-link"><code>R/SOMATileDBContext.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/R/SOMATileDBContext.R" class="external-link"><code>R/SOMATileDBContext.R</code></a></small>
       <div class="d-none name"><code>SOMATileDBContext.Rd</code></div>
     </div>
 
@@ -240,12 +240,180 @@ a stored (and long-lived) result from <code>to_tiledb_context</code>.</p>
 
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="op">(</span><span class="va">ctx</span> <span class="op">&lt;-</span> <span class="va">SOMATileDBContext</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMATileDBContext&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   config.env_var_prefix: TILEDB_</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   config.logging_format: DEFAULT</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   config.logging_level: 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   filestore.buffer_size: 104857600</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_dir: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_name: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.capnp_traversal_limit: 2147483648</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.curl.buffer_size: 524288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.curl.retry_errors: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.curl.tcp_keepalive: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.curl.verbose: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.http_compressor: any</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.load_enumerations_on_array_open: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.load_enumerations_on_array_open_all_schemas: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.load_metadata_on_array_open: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.load_non_empty_domain_on_array_open: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.payer_namespace: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.retry_count: 25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.retry_delay_factor: 1.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.retry_http_codes: 503</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.retry_initial_delay_ms: 500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.server_address: https://api.tiledb.com</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.server_serialization_format: CAPNP</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.use_refactored_array_open: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rest.use_refactored_array_open_and_query_submit: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.allow_separate_attribute_writes: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.allow_updates_experimental: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.check_coord_dups: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.check_coord_oob: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.check_global_order: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.compute_concurrency_level: 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.amplification: 1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.buffer_size: 50000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.max_fragment_size: 18446744073709551615</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.mode: fragments</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.purge_deleted_cells: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.step_max_frags: 4294967295</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.step_min_frags: 4294967295</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.step_size_ratio: 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.steps: 4294967295</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.timestamp_end: 18446744073709551615</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.consolidation.timestamp_start: 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.dedup_coords: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.enable_signal_handlers: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.encryption_key: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.encryption_type: NO_ENCRYPTION</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.enumerations_max_size: 10485760</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.enumerations_max_total_size: 52428800</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.fragment_info.preload_mbrs: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.group.timestamp_end: 18446744073709551615</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.group.timestamp_start: 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.io_concurrency_level: 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.max_tile_overlap_size: 314572800</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.consolidation.buffers_weight: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.consolidation.reader_weight: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.consolidation.writer_weight: 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.malloc_trim: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.reader.sparse_global_order.ratio_array_data: 0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.reader.sparse_global_order.ratio_coords: 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.reader.sparse_global_order.ratio_tile_ranges: 0.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.reader.sparse_unordered_with_dups.ratio_array_data: 0.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.reader.sparse_unordered_with_dups.ratio_coords: 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.reader.sparse_unordered_with_dups.ratio_tile_ranges: 0.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.tile_upper_memory_limit: 1073741824</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.mem.total_budget: 10737418240</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.memory_budget: 5368709120</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.memory_budget_var: 10737418240</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.merge_overlapping_ranges_experimental: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.partial_tile_offsets_loading: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.query.condition_evaluator: ast</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.query.dense.qc_coords_mode: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.query.dense.reader: refactored</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.query.sparse_global_order.preprocess_tile_merge: 32768</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.query.sparse_global_order.reader: refactored</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.query.sparse_unordered_with_dups.reader: refactored</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.read_range_oob: warn</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.skip_checksum_validation: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.skip_est_size_partitioning: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.skip_unary_partitioning_budget_check: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.vacuum.mode: fragments</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.var_offsets.bitsize: 64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.var_offsets.extra_element: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sm.var_offsets.mode: bytes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ssl.ca_file: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ssl.ca_path: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ssl.verify: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.blob_endpoint: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.block_list_block_size: 5242880</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.max_parallel_ops: 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.max_retries: 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.max_retry_delay_ms: 60000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.retry_delay_ms: 800</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.storage_account_key: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.storage_account_name: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.storage_sas_token: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.azure.use_block_list_upload: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.file.posix_directory_permissions: 755</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.file.posix_file_permissions: 644</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.endpoint: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.impersonate_service_account: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.max_direct_upload_size: 10737418240</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.max_parallel_ops: 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.multi_part_size: 5242880</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.project_id: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.request_timeout_ms: 3000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.service_account_key: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.use_multi_part_upload: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.gcs.workload_identity_configuration: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.log_operations: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.max_batch_size: 104857600</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.min_batch_gap: 512000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.min_batch_size: 20971520</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.min_parallel_size: 10485760</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.read_ahead_cache_size: 10485760</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.read_ahead_size: 102400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.read_logging_mode: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_access_key_id: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_external_id: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_load_frequency: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_role_arn: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_secret_access_key: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_session_name: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.aws_session_token: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.bucket_canned_acl: NOT_SET</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.ca_file: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.ca_path: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.config_source: auto</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.connect_max_tries: 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.connect_scale_factor: 25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.connect_timeout_ms: 10800</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.endpoint_override: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.install_sigpipe_handler: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.logging_level: Off</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.max_parallel_ops: 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.multipart_part_size: 5242880</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.no_sign_request: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.object_canned_acl: NOT_SET</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.proxy_host: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.proxy_password: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.proxy_port: 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.proxy_scheme: http</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.proxy_username: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.region: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.request_timeout_ms: 3000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.requester_pays: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.scheme: https</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.skip_init: false</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.sse: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.sse_kms_key_id: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.storage_class: NOT_SET</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.use_multipart_upload: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.use_virtual_addressing: true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vfs.s3.verify_ssl: true</span>
+<span class="r-in"><span><span class="va">ctx</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"sm.mem.reader.sparse_global_order.ratio_array_data"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sm.mem.reader.sparse_global_order.ratio_array_data </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                              "0.3" </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">ctx</span><span class="op">$</span><span class="fu">to_tiledb_context</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class "tiledb_ctx"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Slot "ptr":</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;pointer: 0x5570701cfb10&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
+  <p>Developed by Paul Hoffman, Aaron Wolen, TileDB, Inc..</p>
 </div>
 
 <div class="pkgdown-footer-right">

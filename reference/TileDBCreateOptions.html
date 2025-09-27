@@ -13,7 +13,7 @@ Intended for internal use only."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ Intended for internal use only."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>TileDBCreateOptions</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.1/R/TileDBCreateOptions.R" class="external-link"><code>R/TileDBCreateOptions.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/R/TileDBCreateOptions.R" class="external-link"><code>R/TileDBCreateOptions.R</code></a></small>
       <div class="d-none name"><code>TileDBCreateOptions.Rd</code></div>
     </div>
 
@@ -114,8 +114,8 @@ object</p></dd>
 </div><p></p><hr><a id="method-TileDBCreateOptions-cell_tile_orders"></a><div class="section">
 <h3 id="method-cell-tile-orders-">Method <code>cell_tile_orders()</code><a class="anchor" aria-label="anchor" href="#method-cell-tile-orders-"></a></h3>
 <p>Returns the cell and tile orders that should be used.
-If neither <code>cell_order</code> nor <code>tile_order</code> is present, only in this
-case will we use the default values provided.</p><div class="section">
+If neither <code>cell_order</code> nor <code>tile_order</code> is present, only in
+this case will we use the default values provided.</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">cell_tile_orders</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -425,7 +425,107 @@ case will we use the default values provided.</p><div class="section">
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="op">(</span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;PlatformConfig&gt;</span>
+<span class="r-in"><span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;TileDBCreateOptions&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   tile_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cell_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   capacity: 1e+05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   allows_duplicates: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dataframe_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sparse_nd_array_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dense_nd_array_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   offsets_filters: list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   write_X_chunked: TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   goal_chunk_nnz: 2e+08</span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">cell_tile_orders</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cell_order  tile_order </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> "ROW_MAJOR" "ROW_MAJOR" </span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">to_list</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $tile_order</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ROW_MAJOR"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $cell_order</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ROW_MAJOR"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $capacity</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1e+05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $allows_duplicates</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dataframe_dim_zstd_level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $sparse_nd_array_dim_zstd_level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dense_nd_array_dim_zstd_level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets_filters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets_filters[[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tiledb_filter("DOUBLE_DELTA") </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets_filters[[2]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tiledb_filter_set_option(tiledb_filter("BIT_WIDTH_REDUCTION"),"BIT_WIDTH_MAX_WINDOW",256) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets_filters[[3]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tiledb_filter_set_option(tiledb_filter("ZSTD"),"COMPRESSION_LEVEL",-1) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $write_X_chunked</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $goal_chunk_nnz</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2e+08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $validity_filters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> list()</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">to_list</span><span class="op">(</span>build_filters <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $tile_order</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ROW_MAJOR"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $cell_order</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ROW_MAJOR"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $capacity</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1e+05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $allows_duplicates</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dataframe_dim_zstd_level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $sparse_nd_array_dim_zstd_level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dense_nd_array_dim_zstd_level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets_filters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "[{  \"name\": \"DOUBLE_DELTA\" }, {  \"name\": \"BIT_WIDTH_REDUCTION\" }, {  \"name\": \"ZSTD\" }]"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $write_X_chunked</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $goal_chunk_nnz</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2e+08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $validity_filters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] ""</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dims</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "{ }"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $attrs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "{ }"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
 <span class="r-in"><span><span class="co">## Method `TileDBCreateOptions$dim_tile`</span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
@@ -527,7 +627,7 @@ case will we use the default values provided.</p><div class="section">
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
+  <p>Developed by Paul Hoffman, Aaron Wolen, TileDB, Inc..</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -9,7 +9,7 @@ SOMA Array Base Class"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ SOMA Array Base Class"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA Array Base Class</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.1/R/SOMAArrayBase.R" class="external-link"><code>R/SOMAArrayBase.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/R/SOMAArrayBase.R" class="external-link"><code>R/SOMAArrayBase.R</code></a></small>
       <div class="d-none name"><code>SOMAArrayBase.Rd</code></div>
     </div>
 
@@ -54,20 +54,17 @@ SOMA Array Base Class"></head><body>
 
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Adds SOMA-specific functionality to the <code><a href="TileDBArray.html">TileDBArray</a></code> class.  (lifecycle:
-maturing)</p>
+    <p>Virtual base class to add array-specific functionality to the
+<code><a href="SOMAObject.html">SOMAObject</a></code> class (lifecycle: maturing).</p>
     </div>
     <div class="section level2">
-    <h2 id="super-classes">Super classes<a class="anchor" aria-label="anchor" href="#super-classes"></a></h2>
-    <p><code><a href="TileDBObject.html">tiledbsoma::TileDBObject</a></code> -&gt; <code><a href="TileDBArray.html">tiledbsoma::TileDBArray</a></code> -&gt; <code>SOMAArrayBase</code></p>
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p>Derived classes: <code><a href="SOMADataFrame.html">SOMADataFrame</a></code>,
+<code><a href="SOMANDArrayBase.html">SOMANDArrayBase</a></code></p></div>
     </div>
     <div class="section level2">
-    <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
-    <p></p><div class="r6-active-bindings"><dl><dt><code>soma_type</code></dt>
-<dd><p>Retrieve the SOMA object type.</p></dd>
-
-
-</dl><p></p></div>
+    <h2 id="super-class">Super class<a class="anchor" aria-label="anchor" href="#super-class"></a></h2>
+    <p><code><a href="SOMAObject.html">tiledbsoma::SOMAObject</a></code> -&gt; <code>SOMAArrayBase</code></p>
     </div>
     <div class="section level2">
     <h2 id="methods">Methods<a class="anchor" aria-label="anchor" href="#methods"></a></h2>
@@ -75,60 +72,118 @@ maturing)</p>
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
-<ul><li><p><a href="#method-SOMAArrayBase-allows_duplicates"><code>SOMAArrayBase$allows_duplicates()</code></a></p></li>
-<li><p><a href="#method-SOMAArrayBase-attributes"><code>SOMAArrayBase$attributes()</code></a></p></li>
+<ul><li><p><a href="#method-SOMAArrayBase-open"><code>SOMAArrayBase$open()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-close"><code>SOMAArrayBase$close()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-allows_duplicates"><code>SOMAArrayBase$allows_duplicates()</code></a></p></li>
 <li><p><a href="#method-SOMAArrayBase-is_sparse"><code>SOMAArrayBase$is_sparse()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-schema"><code>SOMAArrayBase$schema()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-attributes"><code>SOMAArrayBase$attributes()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-attrnames"><code>SOMAArrayBase$attrnames()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-dimensions"><code>SOMAArrayBase$dimensions()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-dimnames"><code>SOMAArrayBase$dimnames()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-colnames"><code>SOMAArrayBase$colnames()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-index_column_names"><code>SOMAArrayBase$index_column_names()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-shape"><code>SOMAArrayBase$shape()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-maxshape"><code>SOMAArrayBase$maxshape()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-non_empty_domain"><code>SOMAArrayBase$non_empty_domain()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-ndim"><code>SOMAArrayBase$ndim()</code></a></p></li>
+<li><p><a href="#method-SOMAArrayBase-print"><code>SOMAArrayBase$print()</code></a></p></li>
 <li><p><a href="#method-SOMAArrayBase-clone"><code>SOMAArrayBase$clone()</code></a></p></li>
-</ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href="TileDBObject.html#method-initialize"><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href="TileDBObject.html#method-is_open"><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href="TileDBObject.html#method-mode"><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href="TileDBObject.html#method-reopen"><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href="TileDBArray.html#method-attrnames"><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href="TileDBArray.html#method-close"><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href="TileDBArray.html#method-colnames"><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href="TileDBArray.html#method-dimensions"><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href="TileDBArray.html#method-dimnames"><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href="TileDBArray.html#method-get_metadata"><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href="TileDBArray.html#method-index_column_names"><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href="TileDBArray.html#method-maxshape"><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href="TileDBArray.html#method-ndim"><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href="TileDBArray.html#method-non_empty_domain"><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href="TileDBArray.html#method-open"><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href="TileDBArray.html#method-print"><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href="TileDBArray.html#method-schema"><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href="TileDBArray.html#method-set_metadata"><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href="TileDBArray.html#method-shape"><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href="TileDBArray.html#method-tiledb_array"><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href="TileDBArray.html#method-tiledb_schema"><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
-</ul></details></p><hr><a id="method-SOMAArrayBase-allows_duplicates"></a><div class="section">
-<h3 id="method-allows-duplicates-">Method <code>allows_duplicates()</code><a class="anchor" aria-label="anchor" href="#method-allows-duplicates-"></a></h3>
-<p>Does an array allow duplicates?</p><div class="section">
+</ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href="SOMAObject.html#method-class"><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href="SOMAObject.html#method-exists"><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href="SOMAObject.html#method-get_metadata"><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href="SOMAObject.html#method-initialize"><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href="SOMAObject.html#method-is_open"><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href="SOMAObject.html#method-mode"><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href="SOMAObject.html#method-reopen"><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href="SOMAObject.html#method-set_metadata"><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
+</ul></details></p><hr><a id="method-SOMAArrayBase-open"></a><div class="section">
+<h3 id="method-open-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code><a class="anchor" aria-label="anchor" href="#method-open-"></a></h3>
+<p>Open the SOMA object for read or write.<br><br><strong>Note</strong>: <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code> is considered internal and should not be
+called directly; use factory functions
+(eg. <code><a href="SOMASparseNDArrayOpen.html">SOMASparseNDArrayOpen</a>()</code>) instead.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">allows_duplicates</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">open</span><span class="op">(</span>mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"READ"</span>, <span class="st">"WRITE"</span>, <span class="st">"DELETE"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
+<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>mode</code></dt>
+<dd><p>Mode to open the object in.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
-<p><code>TRUE</code> if the underlying TileDB array allows duplicates;
-otherwise <code>FALSE</code></p>
+<p>Return s<code>self</code>.</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMAArrayBase-attributes"></a><div class="section">
-<h3 id="method-attributes-">Method <code><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes()</a></code><a class="anchor" aria-label="anchor" href="#method-attributes-"></a></h3>
-<p>Retrieve the array attributes</p><div class="section">
+</div><p></p><hr><a id="method-SOMAArrayBase-close"></a><div class="section">
+<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
+<p>Close the SOMA array.</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">attributes</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>Invisibly returns <code>self</code>.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-allows_duplicates"></a><div class="section">
+<h3 id="method-allows-duplicates-">Method <code>allows_duplicates()</code><a class="anchor" aria-label="anchor" href="#method-allows-duplicates-"></a></h3>
+<p>Does an array allow duplicates?</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">allows_duplicates</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p><code>TRUE</code> if the underlying TileDB array allows duplicates;
+otherwise <code>FALSE</code>.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-is_sparse"></a><div class="section">
+<h3 id="method-is-sparse-">Method <code>is_sparse()</code><a class="anchor" aria-label="anchor" href="#method-is-sparse-"></a></h3>
+<p>Is an array sparse?</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">is_sparse</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<p><code>TRUE</code> if the underlying TileDB array is sparse;
+otherwise <code>FALSE</code>.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-schema"></a><div class="section">
+<h3 id="method-schema-">Method <code>schema()</code><a class="anchor" aria-label="anchor" href="#method-schema-"></a></h3>
+<p>Retrieve the array schema as an Arrow schema
+(lifecycle: maturing).</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">schema</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<p>An Arrow <code><a href="https://arrow.apache.org/docs/r/reference/Schema-class.html" class="external-link">Schema</a></code> object.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-attributes"></a><div class="section">
+<h3 id="method-attributes-">Method <code><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes()</a></code><a class="anchor" aria-label="anchor" href="#method-attributes-"></a></h3>
+<p>Retrieve the array attributes.</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">attributes</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>A named list of array attributes; each entry contains the
-following named entries:</p><ul><li><p>“<code>name</code>”: name of the attribute</p></li>
-<li><p>“<code>type</code>”: datatype of the attribute</p></li>
-<li><p>“<code>ncells</code>”: number of values per dimension cell</p></li>
-<li><p>“<code>nullable</code>”: is the attribute nullable</p></li>
+following named entries:</p><ul><li><p>“<code>name</code>”: name of the attribute.</p></li>
+<li><p>“<code>type</code>”: datatype of the attribute.</p></li>
+<li><p>“<code>ncells</code>”: number of values per dimension cell.</p></li>
+<li><p>“<code>nullable</code>”: is the attribute nullable.</p></li>
 <li><p>“<code>filter_list</code>”: a list with filter information; this
 list contains the following entries:</p><ul><li><p>“<code>filter_type</code>”</p></li>
 <li><p>“<code>compression_level</code>”</p></li>
@@ -140,28 +195,174 @@ list contains the following entries:</p><ul><li><p>“<code>filter_type</code>�
 </ul></li>
 </ul></div>
 
-</div><p></p><hr><a id="method-SOMAArrayBase-is_sparse"></a><div class="section">
-<h3 id="method-is-sparse-">Method <code>is_sparse()</code><a class="anchor" aria-label="anchor" href="#method-is-sparse-"></a></h3>
-<p>Is an array sparse?</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">is_sparse</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><hr><a id="method-SOMAArrayBase-attrnames"></a><div class="section">
+<h3 id="method-attrnames-">Method <code>attrnames()</code><a class="anchor" aria-label="anchor" href="#method-attrnames-"></a></h3>
+<p>Retrieve attribute names (lifecycle: maturing).</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">attrnames</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
-<p><code>TRUE</code> if the underlying TileDB array is sparse;
-otherwise <code>FALSE</code></p>
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<p>A character vector with the array's attribute names.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-dimensions"></a><div class="section">
+<h3 id="method-dimensions-">Method <code>dimensions()</code><a class="anchor" aria-label="anchor" href="#method-dimensions-"></a></h3>
+<p>Retrieve the array dimensions (lifecycle: maturing)</p><div class="section">
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">dimensions</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<p>A named list of array dimensions; each entry contains the
+following named entries:</p><ul><li><p>“<code>name</code>”: name of the dimension.</p></li>
+<li><p>“<code>type</code>”: datatype of the dimension.</p></li>
+<li><p>“<code>ncells</code>”: number of values per dimension cell.</p></li>
+<li><p>“<code>domain</code>”: domain of the dimension.</p></li>
+<li><p>“<code>tile</code>”: tile of the dimension.</p></li>
+<li><p>“<code>filter_list</code>”: a list with filter information; this
+list contains the following entries:</p><ul><li><p>“<code>filter_type</code>”</p></li>
+<li><p>“<code>compression_level</code>”</p></li>
+<li><p>“<code>bit_width</code>”</p></li>
+<li><p>“<code>positive_delta</code>”</p></li>
+<li><p>“<code>float_bytewidth</code>”</p></li>
+<li><p>“<code>float_factor</code>”</p></li>
+<li><p>“<code>float_offset</code>”</p></li>
+</ul></li>
+</ul></div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-dimnames"></a><div class="section">
+<h3 id="method-dimnames-">Method <code><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames()</a></code><a class="anchor" aria-label="anchor" href="#method-dimnames-"></a></h3>
+<p>Retrieve dimension names (lifecycle: maturing).</p><div class="section">
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">dimnames</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<p>A character vector with the array's dimension names.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-colnames"></a><div class="section">
+<h3 id="method-colnames-">Method <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code><a class="anchor" aria-label="anchor" href="#method-colnames-"></a></h3>
+<p>Retrieve the names of all columns, including dimensions and
+attributes (lifecycle: maturing).</p><div class="section">
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">colnames</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<p>A character vector with the array's column names.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-index_column_names"></a><div class="section">
+<h3 id="method-index-column-names-">Method <code>index_column_names()</code><a class="anchor" aria-label="anchor" href="#method-index-column-names-"></a></h3>
+<p>Retrieve names of index (dimension) columns (lifecycle: maturing)</p><div class="section">
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">index_column_names</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<p>A character vector with the array index (dimension) names</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-shape"></a><div class="section">
+<h3 id="method-shape-">Method <code>shape()</code><a class="anchor" aria-label="anchor" href="#method-shape-"></a></h3>
+<p>Retrieve the shape, i.e. the capacity of each dimension
+Attempted reads and writes outside the <code>shape</code> will result in a
+run-time error: this is the purpose of <code>shape</code>. This will not
+necessarily match the bounds of occupied cells within the array.
+Using <code>$resize()</code>, this may be increased up to the hard limit which
+<code>maxshape()</code> reports (lifecycle: maturing).</p><div class="section">
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">shape</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<p>A named vector of dimension length and of the same type as
+the dimension.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-maxshape"></a><div class="section">
+<h3 id="method-maxshape-">Method <code>maxshape()</code><a class="anchor" aria-label="anchor" href="#method-maxshape-"></a></h3>
+<p>Retrieve the hard limit up to which the array may be resized
+using the <code>$resize()</code> method (lifecycle: maturing).</p><div class="section">
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">maxshape</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<p>A named vector of dimension length and of the same type as
+the dimension.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-non_empty_domain"></a><div class="section">
+<h3 id="method-non-empty-domain-">Method <code>non_empty_domain()</code><a class="anchor" aria-label="anchor" href="#method-non-empty-domain-"></a></h3>
+<p>Returns a named list of minimum/maximum pairs, one per index
+column, which are the smallest and largest values written on that
+index column.</p><div class="section">
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">non_empty_domain</span><span class="op">(</span>index1 <span class="op">=</span> <span class="cn">FALSE</span>, max_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>index1</code></dt>
+<dd><p>Return the non-empty domain with 1-based indices</p></dd>
+
+
+<dt><code>max_only</code></dt>
+<dd><p>Return only the max value per dimension, and return
+this as a vector. Names are dropped (lifecycle: maturing).</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<p>Named list of minimum/maximum values, or integer vector
+of maximum values.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-ndim"></a><div class="section">
+<h3 id="method-ndim-">Method <code>ndim()</code><a class="anchor" aria-label="anchor" href="#method-ndim-"></a></h3>
+<p>Retrieve number of dimensions (lifecycle: maturing).</p><div class="section">
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">ndim</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<p>A scalar with the number of dimensions.</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAArrayBase-print"></a><div class="section">
+<h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
+<p>Print-friendly representation of the object.</p><div class="section">
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
+<p>Invisibly returns <code>self</code>.</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMAArrayBase-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAArrayBase</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
@@ -178,7 +379,7 @@ otherwise <code>FALSE</code></p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
+  <p>Developed by Paul Hoffman, Aaron Wolen, TileDB, Inc..</p>
 </div>
 
 <div class="pkgdown-footer-right">
