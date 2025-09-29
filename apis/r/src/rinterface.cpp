@@ -1,6 +1,7 @@
-#include <Rcpp.h>                   // for R interface to C++
-#include <nanoarrow/r.h>            // for C interface to Arrow (via R package)
-#include <RcppInt64>                // for fromInteger64
+#include <Rcpp.h>         // for R interface to C++
+#include <nanoarrow/r.h>  // for C interface to Arrow (via R package)
+#include <RcppInt64>      // for fromInteger64
+#include <format>
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow
 #include <type_traits>
 
@@ -68,12 +69,12 @@ SEXP soma_array_reader(
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
 
-    tdbs::LOG_INFO(fmt::format("[soma_array_reader] Reading from {}", uri));
+    tdbs::LOG_INFO(std::format("[soma_array_reader] Reading from {}", uri));
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
-        tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] Selecting {} columns", column_names.size()));
+        tdbs::LOG_DEBUG(std::format("[soma_array_reader] Selecting {} columns", column_names.size()));
     }
 
     auto tdb_result_order = get_tdb_result_order(result_order);
@@ -82,7 +83,7 @@ SEXP soma_array_reader(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
     if (timestamprange.isNotNull()) {
         Rcpp::DatetimeVector vec(timestamprange);
-        tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]));
+        tdbs::LOG_DEBUG(std::format("[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]));
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
@@ -100,7 +101,7 @@ SEXP soma_array_reader(
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
         tdbs::LOG_INFO(
-            fmt::format(
+            std::format(
                 "[soma_array_reader] Dimension {} type {} domain {} extent {}",
                 dim.name(),
                 tiledb::impl::to_str(dim.type()),
@@ -142,7 +143,7 @@ SEXP soma_array_reader(
             uri);
     }
     tdbs::LOG_INFO(
-        fmt::format(
+        std::format(
             "[soma_array_reader] Read complete with {} rows and {} cols",
             sr_data->get()->num_rows(),
             sr_data->get()->names().size()));
@@ -164,7 +165,7 @@ SEXP soma_array_reader(
 
     arr->length = 0;  // initial value
     for (size_t i = 0; i < ncol; i++) {
-        tdbs::LOG_INFO(fmt::format("[soma_array_reader] Accessing '{}' at pos {}", names[i], i));
+        tdbs::LOG_INFO(std::format("[soma_array_reader] Accessing '{}' at pos {}", names[i], i));
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -178,11 +179,11 @@ SEXP soma_array_reader(
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
         tdbs::LOG_INFO(
-            fmt::format(
+            std::format(
                 "[soma_array_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length));
 
         if (pp.first->length > arr->length) {
-            tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] Setting array length to {}", pp.first->length));
+            tdbs::LOG_DEBUG(std::format("[soma_array_reader] Setting array length to {}", pp.first->length));
             arr->length = pp.first->length;
         }
     }
@@ -197,9 +198,8 @@ SEXP soma_array_reader(
 //'
 //' Set the logging level for the \R package and underlying C++ library
 //'
-//' @param level A character value with logging level understood by
-//' \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-//' \dQuote{warn}
+//' @param level A character value with logging level. May be \dQuote{trace}, \dQuote{debug}, \dQuote{info},
+//' or \dQuote{warn}
 //'
 //' @return Invisibly returns \code{NULL}
 //'
@@ -209,6 +209,58 @@ SEXP soma_array_reader(
 void set_log_level(const std::string& level) {
     spdl::setup("R", level);
     tdbs::LOG_SET_LEVEL(level);
+}
+
+//' Set a trace message
+//'
+//' @param msg The message to set with level 'trace'
+//'
+//' @return Invisibly returns \code{NULL}
+//'
+//' @export
+//'
+// [[Rcpp::export]]
+void soma_trace(const std::string& msg) {
+    tdbs::LOG_TRACE(msg);
+}
+
+//' Set a debug message
+//'
+//' @param msg The message to set with level 'debug'
+//'
+//' @return Invisibly returns \code{NULL}
+//'
+//' @export
+//'
+// [[Rcpp::export]]
+void soma_debug(const std::string& msg) {
+    tdbs::LOG_DEBUG(msg);
+}
+
+//' Set a info message
+//'
+//' @param msg The message to set with level 'info'
+//'
+//' @return Invisibly returns \code{NULL}
+//'
+//' @export
+//'
+// [[Rcpp::export]]
+void soma_info(const std::string& msg) {
+    tdbs::LOG_INFO(msg);
+}
+
+//' Set a warn message
+//'
+//' @param msg The message to set with level 'warn'
+//'
+//' @return Invisibly returns \code{NULL}
+//'
+//' @export
+//'
+// [[Rcpp::export]]
+void soma_warn(const std::string& msg) {
+    tdbs::LOG_WARN(msg);
 }
 
 // [[Rcpp::export]]
@@ -379,7 +431,7 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 
     for (size_t i = 0; i < static_cast<size_t>(lib_retval->n_children); i++) {
         tdbs::LOG_INFO(
-            fmt::format(
+            std::format(
                 "[c_schema] Accessing name '{}' format '{}' at position {}",
                 std::string(lib_retval->children[i]->name),
                 std::string(lib_retval->children[i]->format),

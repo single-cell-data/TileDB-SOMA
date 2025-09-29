@@ -9,6 +9,7 @@
 #include <nanoarrow/r.h>          // for C interface to Arrow (via R package)
 #include <tiledbsoma/reindexer/reindexer.h>
 #include <RcppInt64>  // for fromInteger64
+#include <format>
 #include <tiledbsoma/tiledbsoma>
 
 #include "rutilities.h"  // local declarations
@@ -34,7 +35,7 @@ void apply_dim_points(
                 uv[i] = static_cast<uint64_t>(iv[i]);
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
                     mq->select_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
-                    tdbs::LOG_INFO(fmt::format("[apply_dim_points] Applying dim point {} on {}", uv[i], nm));
+                    tdbs::LOG_INFO(std::format("[apply_dim_points] Applying dim point {} on {}", uv[i], nm));
                     suitable = true;
                 }
             }
@@ -45,7 +46,7 @@ void apply_dim_points(
             for (size_t i = 0; i < iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     mq->select_point<int64_t>(nm, iv[i]);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", iv[i], nm));
+                    tdbs::LOG_DEBUG(std::format("[apply_dim_points] Applying dim point {} on {}", iv[i], nm));
                     suitable = true;
                 }
             }
@@ -56,7 +57,7 @@ void apply_dim_points(
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
                     mq->select_point<float>(nm, v);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", v, nm));
+                    tdbs::LOG_DEBUG(std::format("[apply_dim_points] Applying dim point {} on {}", v, nm));
                     suitable = true;
                 }
             }
@@ -66,7 +67,7 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     mq->select_point<double>(nm, payload[i]);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", payload[i], nm));
+                    tdbs::LOG_DEBUG(std::format("[apply_dim_points] Applying dim point {} on {}", payload[i], nm));
                     suitable = true;
                 }
             }
@@ -76,7 +77,7 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     mq->select_point<int32_t>(nm, payload[i]);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", payload[i], nm));
+                    tdbs::LOG_DEBUG(std::format("[apply_dim_points] Applying dim point {} on {}", payload[i], nm));
                     suitable = true;
                 }
             }
@@ -109,7 +110,7 @@ void apply_dim_ranges(
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
                 vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
                 tdbs::LOG_DEBUG(
-                    fmt::format(
+                    std::format(
                         "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                         "{}",
                         i,
@@ -130,7 +131,7 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
                 tdbs::LOG_DEBUG(
-                    fmt::format(
+                    std::format(
                         "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                         "{}",
                         i,
@@ -153,7 +154,7 @@ void apply_dim_ranges(
                 float h = static_cast<float>(hi[i]);
                 vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
                 tdbs::LOG_DEBUG(
-                    fmt::format(
+                    std::format(
                         "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                         "{}",
                         i,
@@ -174,7 +175,7 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
                 tdbs::LOG_DEBUG(
-                    fmt::format(
+                    std::format(
                         "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                         "{}",
                         i,
@@ -195,7 +196,7 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
                 tdbs::LOG_DEBUG(
-                    fmt::format(
+                    std::format(
                         "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                         "{}",
                         i,
@@ -432,7 +433,7 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             std::vector<std::string> lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
                 arrow_array->children[i], arrow_schema->children[i]);
             tdbs::LOG_INFO(
-                fmt::format(
+                std::format(
                     "[domainish] name {} format {} length {} lo {} hi {}",
                     std::string(arrow_schema->children[i]->name),
                     std::string(arrow_schema->children[i]->format),
@@ -443,7 +444,7 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
             tdbs::LOG_INFO(
-                fmt::format(
+                std::format(
                     "[domainish] name {} format {} length {}",
                     std::string(arrow_schema->children[i]->name),
                     std::string(arrow_schema->children[i]->format),

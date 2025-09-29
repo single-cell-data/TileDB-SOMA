@@ -1,3 +1,5 @@
+#include <format>
+
 #include <Rcpp.h>                   // for R interface to C++
 #include <nanoarrow/r.h>            // for C interface to Arrow (via R package)
 #include <RcppInt64>                // for fromInteger64
@@ -140,7 +142,7 @@ void libtiledbsoma_query_condition_from_triple(
 
     } else if (arrow_type_name == "timestamp_s") {
         int64_t v = static_cast<int64_t>(Rcpp::as<double>(condition_value));
-        tdbs::LOG_DEBUG(fmt::format("ts3 {}", v));
+        tdbs::LOG_DEBUG(std::format("ts3 {}", v));
         uint64_t cond_val_size = sizeof(int64_t);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 

@@ -1,4 +1,5 @@
 #include <Rcpp/Lighter>  // for R interface to C++
+#include <format>
 
 #include <nanoarrow/r.h>            // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
@@ -192,13 +193,13 @@ void set_metadata(
     if (type == "character") {
         const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
         std::string value = Rcpp::as<std::string>(valuesxp);
-        tdbs::LOG_DEBUG(fmt::format("[set_metadata] key {} value {} is_array {} type {}", key, value, is_array, type));
+        tdbs::LOG_DEBUG(std::format("[set_metadata] key {} value {} is_array {} type {}", key, value, is_array, type));
         soup->set_metadata(key, value_type, value.length(), (void*)value.c_str(), true);
     } else if (type == "integer64") {
         const tiledb_datatype_t value_type = TILEDB_INT64;
         double dv = Rcpp::as<double>(valuesxp);
         int64_t value = Rcpp::fromInteger64(dv);
-        tdbs::LOG_DEBUG(fmt::format("[set_metadata] key {} value {} is_array {} type {}", key, value, is_array, type));
+        tdbs::LOG_DEBUG(std::format("[set_metadata] key {} value {} is_array {} type {}", key, value, is_array, type));
         soup->set_metadata(key, value_type, 1, (void*)&value, true);
     } else {
         Rcpp::stop("Unsupported type '%s'", type);

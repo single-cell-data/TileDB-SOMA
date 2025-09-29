@@ -1,4 +1,5 @@
 #include <Rcpp/Lighter>  // for R interface to C++
+#include <format>
 
 #include <nanoarrow/r.h>            // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
@@ -28,9 +29,9 @@ void c_group_create(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
     if (timestamp.isNotNull()) {
         Rcpp::DatetimeVector v(timestamp);
-        tdbs::LOG_DEBUG(fmt::format("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]));
+        tdbs::LOG_DEBUG(std::format("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]));
     } else {
-        tdbs::LOG_DEBUG(fmt::format("[c_group_create] uri {}", uri));
+        tdbs::LOG_DEBUG(std::format("[c_group_create] uri {}", uri));
     }
 
     tdbs::SOMAGroup::create(sctx, uri, type, tsrng);
