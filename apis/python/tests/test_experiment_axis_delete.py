@@ -109,6 +109,7 @@ def test_experiment_obs_axis_delete_from_pbmc3k(
         "var_id in ['PRDX1', 'TMED5', 'CDA', 'C1QA', 'C1QC', 'C1QB', 'ZNF436']",
     ],
 )
+@pytest.mark.medium_runner
 def test_experiment_var_axis_delete_from_pbmc3k(
     tmp_path, soma_tiledb_context, experiment_path, coords, value_filter
 ) -> None:
