@@ -88,7 +88,6 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
     const std::string& loglevel = "auto") {
     if (loglevel != "auto") {
-        spdl::set_level(loglevel);
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 

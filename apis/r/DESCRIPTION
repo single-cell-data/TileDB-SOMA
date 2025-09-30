@@ -6,7 +6,7 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     like those commonly used for single cell data analysis. It is documented at
     <https://github.com/single-cell-data>; a formal specification available is at
     <https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md>.
-Version: 2.0.99
+Version: 2.0.99.1
 Authors@R: c(
     person(given = "Paul", family = "Hoffman",
            role = c("cre", "aut"), email = "tiledb-r@tiledb.com",
@@ -45,7 +45,6 @@ Imports:
     R6,
     Rcpp,
     rlang (>= 1.1.5),
-    spdl,
     stats,
     tiledb (>= 0.32.0),
     tools,
@@ -53,8 +52,7 @@ Imports:
 LinkingTo:
     nanoarrow,
     Rcpp,
-    RcppInt64,
-    RcppSpdlog (>= 0.0.20)
+    RcppInt64
 Suggests:
     datasets,
     iterators,

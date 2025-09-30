@@ -62,7 +62,6 @@ SEXP soma_array_reader(
     const std::string& loglevel = "auto",
     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
     if (loglevel != "auto") {
-        spdl::set_level(loglevel);
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
@@ -207,7 +206,6 @@ SEXP soma_array_reader(
 //'
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
-    spdl::setup("R", level);
     tdbs::LOG_SET_LEVEL(level);
 }
 

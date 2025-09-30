@@ -4,7 +4,6 @@
 #pragma once
 
 #include <Rcpp.h>  // for R interface to C++
-#include <spdl.h>
 #include <format>
 #include <tiledb/tiledb>
 #include "tiledbsoma_types.h"
