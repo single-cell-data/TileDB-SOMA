@@ -41,12 +41,12 @@ SOMACollectionBase <- R6::R6Class(
       }
 
       # Instantiate the TileDB group
-      spdl::debug(
-        "[SOMACollectionBase$create] Creating new {} at '{}' at {}",
+      soma_debug(sprintf(
+        "[SOMACollectionBase$create] Creating new %s at '%s' at %s",
         self$class(),
         self$uri,
-        self$tiledb_timestamp
-      )
+        self$tiledb_timestamp %||% "now"
+      ))
       private$.tiledb_group <- c_group_create(
         uri = self$uri,
         type = self$class(),
@@ -152,7 +152,7 @@ SOMACollectionBase <- R6::R6Class(
           }
         }
 
-        spdl::debug("Closing {} '{}'", self$class(), self$uri)
+        soma_debug(sprintf("Closing %s '%s'", self$class(), self$uri))
         c_group_close(private$.tiledb_group)
         private$.mode <- NULL
         private$.tiledb_group <- NULL
@@ -195,12 +195,12 @@ SOMACollectionBase <- R6::R6Class(
         object$uri
       }
       name <- name %||% basename(uri)
-      spdl::debug(
-        "[SOMACollectionBase$set] '{}' uri {} relative {}",
+      soma_debug(sprintf(
+        "[SOMACollectionBase$set] '%s' uri %s relative %s",
         name,
         uri,
         relative
-      )
+      ))
 
       c_group_set(
         xp = private$.tiledb_group,
@@ -236,17 +236,20 @@ SOMACollectionBase <- R6::R6Class(
       }
 
       obj <- if (is.null(member$object)) {
-        spdl::debug(
-          "[SOMACollectionBase$get] construct member {} type {}",
+        soma_debug(sprintf(
+          "[SOMACollectionBase$get] construct member %s type %s",
           member$uri,
           member$type
-        )
+        ))
         private$construct_member(member$uri, member$type)
       } else {
         member$object
       }
 
-      spdl::debug("[SOMACollectionBase$get] open check, mode {}", self$mode())
+      soma_debug(sprintf(
+        "[SOMACollectionBase$get] open check, mode %s",
+        self$mode()
+      ))
       if (!obj$is_open()) {
         switch(
           EXPR = (mode <- self$mode()),
@@ -329,7 +332,7 @@ SOMACollectionBase <- R6::R6Class(
       private$.check_open_for_write()
       private$.update_metadata_cache()
 
-      spdl::debug("Writing metadata to {} '{}'", self$class(), self$uri)
+      soma_debug(sprintf("Writing metadata to %s '%s'", self$class(), self$uri))
       for (i in seq_along(metadata)) {
         key <- names(metadata)[i]
         obj <- metadata[[i]]
@@ -519,21 +522,21 @@ SOMACollectionBase <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      spdl::debug(
-        "[SOMACollectionBase$updating_member_cache] class {} uri '{}'",
+      soma_debug(sprintf(
+        "[SOMACollectionBase$updating_member_cache] class %s uri '%s'",
         self$class(),
         self$uri
-      )
+      ))
 
       # Get a read-handle for the group
       handle <- if (self$mode() == "WRITE") {
-        spdl::debug(
-          "[SOMACollectionBase$updating_member_cache] re-opening {} uri '{}' ctx null {} time null {}",
+        soma_debug(sprintf(
+          "[SOMACollectionBase$updating_member_cache] re-opening %s uri '%s' ctx null %s time null %s",
           self$class(),
           self$uri,
           is.null(private$.soma_context),
           is.null(self$.tiledb_timestamp_range)
-        )
+        ))
         c_group_open(
           uri = self$uri,
           type = "READ",
@@ -619,17 +622,21 @@ SOMACollectionBase <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      spdl::debug("Updating metadata cache for {} '{}'", self$class(), self$uri)
+      soma_debug(sprintf(
+        "Updating metadata cache for %s '%s'",
+        self$class(),
+        self$uri
+      ))
 
       # Get a read-handle for the group
       handle <- if (self$mode() == "WRITE") {
-        spdl::debug(
-          "[SOMACollectionBase$updating_member_cache] re-opening {} uri '{}' ctx null {} time null {}",
+        soma_debug(sprintf(
+          "[SOMACollectionBase$updating_member_cache] re-opening %s uri '%s' ctx null %s time null %s",
           self$class(),
           self$uri,
           is.null(private$.soma_context),
           is.null(self$.tiledb_timestamp_range)
-        )
+        ))
         c_group_open(
           uri = self$uri,
           type = "READ",
@@ -666,11 +673,11 @@ SOMACollectionBase <- R6::R6Class(
     # Responsible for calling the appropriate R6 class constructor.
     construct_member = function(uri, type) {
       stopifnot(is_scalar_character(uri), is_scalar_character(type))
-      spdl::debug(
-        "[SOMACollectionBase$construct_member] entered, uri {} type {}",
+      soma_debug(sprintf(
+        "[SOMACollectionBase$construct_member] entered, uri %s type %s",
         uri,
         type
-      )
+      ))
 
       array <- switch(
         EXPR = type,
@@ -692,11 +699,11 @@ SOMACollectionBase <- R6::R6Class(
           call. = FALSE
         )
       }
-      spdl::debug(
-        "[SOMACollectionBase$construct_member] Instantiating {} object at: '{}'",
+      soma_debug(sprintf(
+        "[SOMACollectionBase$construct_member] Instantiating %s object at: '%s'",
         soma_type,
         uri
-      )
+      ))
 
       fxn <- tryCatch(
         base::get(

@@ -398,7 +398,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obs_labels <- var_labels <- NULL
       if (!is.null(obs_index)) {
         if (collection %in% c("varm", "varp")) {
-          spdl::warn("The obs_index is ignored for {} collections", collection)
+          soma_warn(sprintf(
+            "The obs_index is ignored for %s collections",
+            collection
+          ))
         } else {
           obs_labels <- self$obs(column_names = obs_index)$concat()[[
             1
@@ -411,7 +414,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
       if (!is.null(var_index)) {
         if (collection %in% c("obsm", "obsp")) {
-          spdl::warn("The var_index is ignored for {} collections", collection)
+          soma_warn(sprintf(
+            "The var_index is ignored for %s collections",
+            collection
+          ))
         } else {
           var_labels <- self$var(column_names = var_index)$concat()[[
             1
@@ -1076,7 +1082,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         obsm_layer <- ms_embed[obsm_layer]
       }
 
-      spdl::info("Reading obsm layer '{}' into memory", obsm_layer)
+      soma_info(sprintf("Reading obsm layer '%s' into memory", obsm_layer))
       warn_if_dense("obsm", self$ms$obsm$get(obsm_layer))
       embed_mat <- self$to_sparse_matrix(
         collection = "obsm",
@@ -1089,7 +1095,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         rownames(embed_mat) <- paste0("cell", rownames(embed_mat))
       }
       colnames(embed_mat) <- paste0(key, seq_len(ncol(embed_mat)))
-      spdl::debug("Converting '{}' dgTMatrix to matrix", obsm_layer)
+      soma_debug(sprintf("Converting '%s' dgTMatrix to matrix", obsm_layer))
       embed_mat <- as.matrix(embed_mat)
 
       # Autoset loadings if needed
@@ -1107,7 +1113,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           varm_layer <- ms_load[varm_layer]
         }
 
-        spdl::info("Reading varm layer '{}' into memory", varm_layer)
+        soma_info(sprintf("Reading varm layer '%s' into memory", varm_layer))
         warn_if_dense("varm", self$ms$varm$get(varm_layer))
         load_mat <- self$to_sparse_matrix(
           collection = "varm",
@@ -1120,7 +1126,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           rownames(load_mat) <- paste0("feature", rownames(load_mat))
         }
         colnames(load_mat) <- paste0(key, seq_len(ncol(load_mat)))
-        spdl::debug("Converting '{}' dgTMatrix to matrix", varm_layer)
+        soma_debug(sprintf("Converting '%s' dgTMatrix to matrix", varm_layer))
         load_mat <- as.matrix(load_mat)
 
         if (!is.null(embed_mat) && ncol(load_mat) != ncol(embed_mat)) {
@@ -1543,7 +1549,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       soma_axis <- soma_collection$get(layer)
       warn_if_dense(m_axis, soma_axis)
       mat <- self$to_sparse_matrix(collection = m_axis, layer_name = layer)
-      spdl::debug("Converting '{}' dgTMatrix to matrix", layer)
+      soma_debug(sprintf("Converting '%s' dgTMatrix to matrix", layer))
       return(as.matrix(mat))
     },
     .load_p_axis = function(
@@ -1562,15 +1568,21 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(switch(
         EXPR = repr,
         C = {
-          spdl::debug("Converting '{}' TsparseMatrix to CsparseMatrix", layer)
+          soma_debug(sprintf(
+            "Converting '%s' TsparseMatrix to CsparseMatrix",
+            layer
+          ))
           as(mat, "CsparseMatrix")
         },
         R = {
-          spdl::debug("Converting '{}' TsparseMatrix to RsparseMatrix", layer)
+          soma_debug(sprintf(
+            "Converting '%s' TsparseMatrix to RsparseMatrix",
+            layer
+          ))
           as(mat, "RsparseMatrix")
         },
         D = {
-          spdl::debug("Converting '{}' TsparseMatrix to matrix", layer)
+          soma_debug(sprintf("Converting '%s' TsparseMatrix to matrix", layer))
           as.matrix(mat)
         },
         mat
@@ -1985,7 +1997,7 @@ JoinIDCache <- R6::R6Class(
     },
     obs = function() {
       if (is.null(private$cached_obs)) {
-        spdl::info("[JoinIDCache] Loading obs joinids")
+        soma_info("[JoinIDCache] Loading obs joinids")
         private$cached_obs <- private$load_joinids(
           df = self$query$obs_df,
           axis_query = self$query$obs_query
@@ -1998,7 +2010,7 @@ JoinIDCache <- R6::R6Class(
     },
     var = function() {
       if (is.null(private$cached_var)) {
-        spdl::info("[JoinIDCache] Loading var joinids")
+        soma_info("[JoinIDCache] Loading var joinids")
         private$cached_var <- private$load_joinids(
           df = self$query$var_df,
           axis_query = self$query$var_query

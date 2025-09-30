@@ -72,11 +72,11 @@ soma_array_reader <- function(
   if (is.null(soma_context)) {
     soma_context <- soma_context()
   } # package-level cached instance
-  spdl::debug(
-    "[soma_array_reader] calling soma_array_reader_impl ({},{}",
+  soma_debug(sprintf(
+    "[soma_array_reader] calling soma_array_reader_impl ({},{})",
     timestamprange[1],
     timestamprange[2]
-  )
+  ))
   soma_array_reader_impl(
     uri,
     soma_context,
