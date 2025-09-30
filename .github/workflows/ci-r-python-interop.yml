@@ -27,7 +27,8 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
+          fetch-tags: true  # Tags used for Python package version.
 
       - name: Set Up Test Data
         run: make data
