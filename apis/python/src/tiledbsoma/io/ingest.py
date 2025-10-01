@@ -72,6 +72,7 @@ from tiledbsoma._soma_array import SOMAArray
 from tiledbsoma._soma_object import AnySOMAObject, SOMAObject
 from tiledbsoma._tdb_handles import RawHandle
 from tiledbsoma._types import _INGEST_MODES, INGEST_MODES, IngestMode, NPNDArray, Path, _IngestMode
+from tiledbsoma.io.shaping import get_experiment_shapes
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
@@ -1654,6 +1655,65 @@ def update_matrix(
     )
 
 
+def _validate_matrix_to_collection(
+    exp: Experiment, measurement_name: str, collection_name: str, matrix_name: str, matrix_data: Matrix | h5py.Dataset
+) -> None:
+    """Validates the shape of a new matrix against an existing matrix in a collection.
+
+    Raises:
+        ValueError: If the matrix shape is incompatible.
+    """
+    target_shapes = get_experiment_shapes(exp.uri)
+    target_shape = target_shapes["ms"][measurement_name]["X"]["data"]["shape"]  # (O, V)
+    target_obs_size = target_shape[0]  # O: Observation (row) size
+    target_var_size = target_shape[1]  # V: Variable (column) size
+
+    # Check if the dimensionality is the same
+    if len(matrix_data.shape) != len(target_shape):
+        raise SOMAError(
+            f"Matrix '{matrix_name}' has {len(matrix_data.shape)} dimensions, "
+            f"but the existing matrix has {len(target_shape)}. Shapes must match."
+        )
+
+    if collection_name == "X":
+        # X: (O, V) - Must match both dimensions exactly
+        if matrix_data.shape != target_shape:
+            raise SOMAError(
+                f"Matrix 'X' shape {matrix_data.shape} is incompatible with target shape {target_shape}. "
+                "Both dimensions must match exactly."
+            )
+    elif collection_name == "obsm":
+        if matrix_data.shape[0] != target_obs_size:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the observation size (O). "
+                f"Found {matrix_data.shape[0]}, expected {target_obs_size}."
+            )
+    elif collection_name == "varm":
+        if matrix_data.shape[0] != target_var_size:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the variable size (V). "
+                f"Found {matrix_data.shape[0]}, expected {target_var_size}."
+            )
+    elif collection_name == "obsp":
+        expected_shape = (target_obs_size, target_obs_size)
+        if matrix_data.shape != expected_shape:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the observation size. "
+                f"Found {matrix_data.shape}, expected {(target_obs_size, target_obs_size)}."
+            )
+    elif collection_name == "varp":
+        expected_shape = (target_var_size, target_var_size)
+        if matrix_data.shape != expected_shape:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the observation size (O). "
+                f"Found {matrix_data.shape}, expected {(target_var_size, target_var_size)}."
+            )
+    else:
+        # For any other matrix name, you might choose to enforce an exact match
+        # or skip validation entirely. For safety, enforce exact match.
+        pass
+
+
 def add_X_layer(
     exp: Experiment,
     measurement_name: str,
@@ -1711,12 +1771,13 @@ def add_matrix_to_collection(
     # tiledb://namespace/uuid.  When the caller passes a creation URI (which
     # they must) via exp.uri, we need to follow that.
     extend_creation_uri = exp.uri.startswith("tiledb://")
-
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
             coll_uri = f"{exp.uri}/ms/{_util.sanitize_key(measurement_name)}/{_util.sanitize_key(collection_name)}"
         else:
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
+
+        _validate_matrix_to_collection(exp, measurement_name, collection_name, matrix_name, matrix_data)
 
         if collection_name in meas:
             coll = cast("Collection[RawHandle]", meas[collection_name])
@@ -1728,6 +1789,7 @@ def add_matrix_to_collection(
                 context=context,
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
+
         with coll:
             matrix_uri = _util.uri_joinpath(coll_uri, _util.sanitize_key(matrix_name))
 

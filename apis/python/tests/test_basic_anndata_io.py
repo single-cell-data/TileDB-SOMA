@@ -472,6 +472,52 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
+@pytest.mark.parametrize(
+    "matrix_type,offset",
+    [
+        ("obsm", (1, 0)),
+        ("obsm", (-1, 0)),
+        ("varm", (1, 0)),
+        ("varm", (-1, 0)),
+        ("obsp", (1, 0)),
+        ("obsp", (0, 1)),
+        ("obsp", (-1, 0)),
+        ("varp", (1, 0)),
+        ("varp", (0, 1)),
+        ("varp", (-1, 0)),
+    ],
+)
+def test_matrix_shape_enforcement(conftest_pbmc_small, tmp_path, matrix_type, offset):
+    """Test shape validation for all matrix collection types."""
+    output_path = tmp_path.as_posix()
+    original = conftest_pbmc_small.copy()
+    n_obs, n_vars = conftest_pbmc_small.n_obs, conftest_pbmc_small.n_vars
+
+    # Create SOMA experiment
+    tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
+    assert_adata_equal(original, conftest_pbmc_small)
+
+    # Determine expected shape based on matrix type
+    shape_map = {
+        "obsm": (n_obs, 5),
+        "varm": (n_vars, 5),
+        "obsp": (n_obs, n_obs),
+        "varp": (n_vars, n_vars),
+    }
+    base_shape = shape_map[matrix_type]
+    bad_shape = (max(1, base_shape[0] + offset[0]), max(1, base_shape[1] + offset[1]))
+
+    if bad_shape == base_shape:
+        pytest.skip("Offset resulted in valid shape")
+
+    # Create invalid matrix
+    bad_matrix = csr_matrix((bad_shape[0], bad_shape[1])) if matrix_type in ["obsp", "varp"] else np.ones(bad_shape)
+
+    # Should raise error for invalid shape
+    with _factory.open(output_path, "w") as exp, pytest.raises(tiledbsoma.SOMAError):
+        tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
+
+
 def test_export_anndata(conftest_pbmc_small, tmp_path):
     output_path = tmp_path.as_posix()
 
