@@ -259,6 +259,7 @@ def test_change_counts(
 
 
 @pytest.mark.parametrize("separate_ingest", [False, True])
+@pytest.mark.medium_runner
 def test_update_non_null_to_null(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata, separate_ingest):
     uri = tmp_path.as_uri()
 
@@ -305,6 +306,7 @@ def test_update_non_null_to_null(soma_tiledb_context, tmp_path, conftest_pbmc3k_
     verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
 
 
+@pytest.mark.medium_runner
 def test_enmr_add_drop_readd(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata):
     uri = tmp_path.as_posix()
 

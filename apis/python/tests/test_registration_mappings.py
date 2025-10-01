@@ -1222,6 +1222,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b, soma_tiled
         assert readback_b == obs_ids_b
 
 
+@pytest.mark.medium_runner
 def test_multimodal_names(tmp_path, conftest_pbmc3k_adata, soma_tiledb_context):
     uri = tmp_path.as_posix()
 
