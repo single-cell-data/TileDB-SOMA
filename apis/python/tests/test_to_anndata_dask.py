@@ -129,6 +129,7 @@ sweep_queries = pytest.mark.parametrize(
 @sweep_queries
 @pytest.mark.parametrize("obs_chunk_size", [20, 30, 80, 100])
 @pytest.mark.parametrize("var_chunk_size", [3, 10, 20])
+@pytest.mark.medium_runner
 def test_dask_query_to_anndata(
     conftest_pbmc_small_exp: Experiment,
     obs_query: AxisQuery,
@@ -154,6 +155,7 @@ def test_dask_query_to_anndata(
     "obs_query,var_query,shape,nnz,obs_chunk_size,var_chunk_size",
     [(AxisQuery(), AxisQuery(), (80, 20), 1600, 20, 3)],
 )
+@pytest.mark.medium_runner
 def test_dask_query_to_anndata_timestamp(
     conftest_pbmc_small_exp_path: Path,
     obs_query: AxisQuery,
@@ -225,6 +227,7 @@ def test_dask_query_to_anndata_timestamp(
     "obs_query,var_query,shape,nnz,obs_chunk_size,var_chunk_size",
     [(AxisQuery(), AxisQuery(), (80, 20), 1600, 20, 3)],
 )
+@pytest.mark.medium_runner
 def test_dask_query_to_anndata_layers(
     conftest_pbmc_small_exp_path: Path,
     obs_query: AxisQuery,

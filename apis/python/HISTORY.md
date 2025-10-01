@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [Release 2.0.0]
+
+This release is the first TileDB-SOMA release that follows our new versioning policy (see the [developer docs](../../dev_docs/POLICIES.md)). Highlights of this release include the addition of a "delete" feature, removal of deprecated function, an update to TileDB 2.28.1 and breaking changes to `ExperimentAxisQuery.to_anndata`.
+
+### Added
+
 - \[[#4125](https://github.com/single-cell-data/TileDB-SOMA/pull/4125)\] Add delete mode specified by `mode='d'`.
 - \[[#4205](https://github.com/single-cell-data/TileDB-SOMA/pull/4205)\] Add `delete_cells` method to `SparseNDArray`, `DataFrame`, and `PointCloudDataFrame`.
 - \[[#4212](https://github.com/single-cell-data/TileDB-SOMA/pull/4212)\] Add `type` read-only property to `DenseNDArray` and `SparseNDArray`.
@@ -20,10 +36,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - \[[#4177](https://github.com/single-cell-data/TileDB-SOMA/pull/4177)\] Update [TileDB core to 2.28.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1).
 - Update TileDB version to https://github.com/single-cell-data/TileDB-SOMA/pull/4177
 - \[[#4209](https://github.com/single-cell-data/TileDB-SOMA/pull/4209)\], \[[#4220](https://github.com/single-cell-data/TileDB-SOMA/pull/4220)\] DataFrame columns of dictionary type, with a `large_string` or `large_binary` value type, were incorrectly reported as an Arrow `string`. They are now correctly reported as dictionary-typed fields with a value type of `large_string` and `large_binary`, respectively. NB: all string/binary types are automatically up-cast to their large variant in tiledbsoma.
+- \[[#4250](https://github.com/single-cell-data/TileDB-SOMA/pull/4250) \] Make X an optional argument for `ExperimentAxisQuery.to_anndata` in parity with `tiledbsoma.io.to_anndata`.
 
 ### Deprecated
 
 - \[[#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125)\] Deprecate removing elements from a collection in write mode. In the future, all new removals will need to be done in delete mode.
+- \[[#4245](https://github.com/single-cell-data/TileDB-SOMA/pull/4245)\] Deprecate unused exception `NotCreateableError`.
 
 ### Removed
 
@@ -34,8 +52,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - \[[#4139](https://github.com/single-cell-data/tiledb-soma/pull/4139)\] [python] ExperimentAxisQuery.to_anndata would export obsm/varm as float32, regardless of the underlying SOMA data type. With this fix, the exported matrix will have the same data type as the original data.
 - \[[#4147](https://github.com/single-cell-data/TileDB-SOMA/pull/4147)\] [python] Fix a race condition in SOMA collection caching which would result in redundant object opens.
 - \[[#4223](https://github.com/single-cell-data/TileDB-SOMA/pull/4223)\] [python] Fix race condition in H5AD reading in the `tiledbsoma.io` module.
-
-### Security
 
 ## [Release 1.18.0]
 

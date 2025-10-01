@@ -1,7 +1,10 @@
+import pytest
+
 import tiledbsoma
 import tiledbsoma.io
 
 
+@pytest.mark.medium_runner
 def test_update_matrix_X(conftest_pbmc3k_adata, tmp_path):
     output_path = tmp_path.as_posix()
 
@@ -33,6 +36,7 @@ def test_update_matrix_X(conftest_pbmc3k_adata, tmp_path):
 
 
 # Magical conftest.py fixture
+@pytest.mark.medium_runner
 def test_update_matrix_obsm(conftest_pbmc3k_adata, tmp_path):
     output_path = tmp_path.as_posix()
 

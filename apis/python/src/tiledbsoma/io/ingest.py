@@ -67,7 +67,7 @@ from tiledbsoma import (
 from tiledbsoma._collection import AnyTileDBCollection, CollectionBase
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
-from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, NotCreateableError, SOMAError
+from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, SOMAError
 from tiledbsoma._soma_array import SOMAArray
 from tiledbsoma._soma_object import AnySOMAObject, SOMAObject
 from tiledbsoma._tdb_handles import RawHandle
@@ -910,7 +910,7 @@ def _create_or_open_collection(
 ) -> CollectionBase[_TDBO]:
     try:
         coll = cls.create(uri, context=context)
-    except (AlreadyExistsError, NotCreateableError) as e:
+    except AlreadyExistsError as e:
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists") from e
@@ -1274,7 +1274,7 @@ def _write_dataframe_impl(
             # Save the original index name for outgest. We use JSON for elegant indication of index name
             # being None (in Python anyway).
             soma_df.metadata[SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(original_index_metadata)
-        except (AlreadyExistsError, NotCreateableError) as e:
+        except AlreadyExistsError as e:
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{df_uri} already exists") from e
             soma_df = DataFrame.open(df_uri, "w", context=context)
@@ -1347,7 +1347,7 @@ def _create_from_matrix(
                 platform_config=platform_config,
                 context=context,
             )
-        except (AlreadyExistsError, NotCreateableError) as e:
+        except AlreadyExistsError as e:
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{uri} already exists") from e
             soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
@@ -2759,7 +2759,7 @@ def _ingest_uns_ndarray(
             platform_config=platform_config,
             context=context,
         )
-    except (AlreadyExistsError, NotCreateableError):
+    except AlreadyExistsError:
         soma_arr = DenseNDArray.open(arr_uri, "w", context=context)
 
     # If resume mode: don't re-write existing data. This is the user's explicit request

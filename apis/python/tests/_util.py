@@ -91,15 +91,70 @@ def assert_array_equal(a0, a1):
         raise ValueError(f"Unsupported type: {type(a0)}")
 
 
-def assert_adata_equal(ad0: AnnData, ad1: AnnData):
-    assert_frame_equal(ad0.obs, ad1.obs)
-    assert_frame_equal(ad0.var, ad1.var)
+def assert_adata_equal(ad0: AnnData, ad1: AnnData, **kwargs):
+    assert_frame_equal(ad0.obs, ad1.obs, **kwargs)
+    assert_frame_equal(ad0.var, ad1.var, **kwargs)
     assert_uns_equal(ad0.uns, ad1.uns)
     assert_array_equal(ad0.X, ad1.X)
     assert_array_dicts_equal(ad0.obsm, ad1.obsm)
     assert_array_dicts_equal(ad0.varm, ad1.varm)
     assert_array_dicts_equal(ad0.obsp, ad1.obsp)
     assert_array_dicts_equal(ad0.varp, ad1.varp)
+
+
+def assert_adata_equal_extra_columns_exempt(ad0: AnnData, ad1: AnnData):
+    """
+    Compare AnnData objects while ignoring column length and shape differences.
+
+    This helper function performs structural comparison between two AnnData objects
+    without considering differences in column dimensions or array shapes. It is
+    specifically designed for comparing AnnData exports from soma.io and EAQ
+    (Experimental Query API) pipelines.
+
+    The function exists to handle the intentional design difference where EAQ
+    exports include an additional `soma_joinid` column that is not present in
+    standard soma.io exports. This allows for meaningful comparison of the core
+    data content while accommodating the expected structural differences.
+
+    Note:
+        This comparison is tailored for soma.io vs EAQ export validation and may
+        not be suitable for general AnnData object comparison tasks.
+
+    Args:
+        anndata1 (AnnData): First AnnData object to compare
+        anndata2 (AnnData): Second AnnData object to compare
+
+    Returns:
+        bool: True if objects are equivalent (ignoring shape/column differences), False otherwise
+    """
+    assert ad0.n_obs == ad1.n_obs
+    assert ad0.n_vars == ad1.n_vars
+    # X can be None in some cases
+    if ad0.X is None or ad1.X is None:
+        assert ad0.X is None and ad1.X is None
+    else:
+        assert (ad0.X != ad1.X).nnz == 0
+    # layers should be dicts (possibly empty)
+    assert set(ad0.layers) == set(ad1.layers)
+    for k in ad0.layers:
+        assert (ad0.layers[k] != ad1.layers[k]).nnz == 0
+    # obs/var equality we dont account for the extra soma_joinid column for ad0 -> ExperimentAxisQuery
+    assert ad0.obs.label.equals(ad1.obs.label)
+    assert ad0.var.label.equals(ad1.var.label)
+    # obsm/varm keys and shapes
+    assert set(ad0.obsm) == set(ad1.obsm)
+    for k in ad0.obsm:
+        assert ad0.obsm[k].shape == ad1.obsm[k].shape
+    assert set(ad0.varm) == set(ad1.varm)
+    for k in ad0.varm:
+        assert ad0.varm[k].shape == ad1.varm[k].shape
+    # obsp/varp structural equality
+    assert set(ad0.obsp) == set(ad1.obsp)
+    for k in ad0.obsp:
+        assert (ad0.obsp[k] != ad1.obsp[k]).nnz == 0
+    assert set(ad0.varp) == set(ad1.varp)
+    for k in ad0.varp:
+        assert (ad0.varp[k] != ad1.varp[k]).nnz == 0
 
 
 def assert_transform_equal(actual: CoordinateTransform, expected: CoordinateTransform) -> None:

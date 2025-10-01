@@ -606,6 +606,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
             assert getter(k).nullable
 
 
+@pytest.mark.medium_runner
 def test_export_obsm_with_holes(soma_tiledb_context, h5ad_file_with_obsm_holes, tmp_path):
     adata = ad.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     original = adata.copy()
@@ -1301,6 +1302,7 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
         assert adata.uns["X"] == new_adata.uns["X"]
 
 
+@pytest.mark.medium_runner
 def test_soma_file_handling_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
     if not TESTDATA.exists():

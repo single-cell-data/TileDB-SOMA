@@ -1386,6 +1386,7 @@ def test_registration_lists_and_tuples(tmp_path, soma_tiledb_context):
         ["1.15.7", True],
     ],
 )
+@pytest.mark.medium_runner
 def test_extend_enmr_to_older_experiments_64521(tmp_path, soma_tiledb_context, version_and_shaped):
     version, _ = version_and_shaped
 

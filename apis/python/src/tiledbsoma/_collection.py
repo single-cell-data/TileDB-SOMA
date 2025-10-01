@@ -91,8 +91,6 @@ class CollectionBase(
         Raises:
             tiledbsoma.AlreadyExistsError:
                 If the underlying object already exists at the given URI.
-            tiledbsoma.NotCreateableError:
-                If the URI is malformed for a particular storage backend.
             TileDBError:
                 If unable to create the underlying object.
 

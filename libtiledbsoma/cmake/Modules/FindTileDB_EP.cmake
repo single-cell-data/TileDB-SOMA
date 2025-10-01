@@ -70,8 +70,13 @@ else()
           endif()
 
         else() # Linux
-          SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz")
-          SET(DOWNLOAD_SHA1 "f7c2c76bae0373cfc259b2a854b464abb873bbee")
+          if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)")
+            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-arm64-2.28.1-d648231.tar.gz")
+            SET(DOWNLOAD_SHA1 "baf2c5d901e4f99c0214312749c0a4b67f58365c")
+          else()
+            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.28.1/tiledb-linux-x86_64-2.28.1-d648231.tar.gz")
+            SET(DOWNLOAD_SHA1 "f7c2c76bae0373cfc259b2a854b464abb873bbee")
+          endif()
         endif()
 
         ExternalProject_Add(ep_tiledb
