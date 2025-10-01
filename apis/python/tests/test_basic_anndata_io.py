@@ -315,6 +315,7 @@ def test_resume_mode(resume_mode_h5ad_file, tmp_path):
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
+@pytest.mark.medium_runner
 def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri, tmp_path):
     output_path = tmp_path.as_posix()
 
@@ -357,6 +358,7 @@ def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri, tmp_path):
 
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
+@pytest.mark.medium_runner
 def test_ingest_uns(
     tmp_path: Path,
     conftest_pbmc3k_h5ad_path,
