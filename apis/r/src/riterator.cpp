@@ -7,7 +7,7 @@
 #include <nanoarrow/nanoarrow.h>
 #include <nanoarrow/r.h>  // for C interface to Arrow (via R package nanoarrow)
 #include <RcppInt64>      // for fromInteger64
-#include <format>
+#include <sstream>
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
@@ -91,7 +91,9 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    tdbs::LOG_DEBUG(std::format("[mq_setup] Setting up {}", uri));
+    std::stringstream ss;
+    ss << "[mq_setup] Setting up " << uri;
+    tdbs::LOG_DEBUG(ss.str());
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
@@ -121,13 +123,10 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        tdbs::LOG_DEBUG(
-            std::format(
-                "[mq_setup] Dimension {} type {} domain {} extent {}",
-                dim.name(),
-                tiledb::impl::to_str(dim.type()),
-                dim.domain_to_str(),
-                dim.tile_extent_to_str()));
+        std::stringstream ss;
+        ss << "[mq_setup] Dimension '" << dim.name() << "' type " << tiledb::impl::to_str(dim.type()) << " domain "
+           << dim.domain_to_str() << " extent " << dim.tile_extent_to_str();
+        tdbs::LOG_DEBUG(ss.str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
@@ -204,14 +203,19 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
 
     if (mq_complete(mq)) {
-        tdbs::LOG_TRACE(
-            std::format("[mq_next] complete {} num_cells {}", mq->is_complete(true), mq->total_num_cells()));
+        std::stringstream ss;
+        ss << "[mq_next] complete " << mq->is_complete(true) << " num_cells " << mq->total_num_cells();
+        tdbs::LOG_TRACE(ss.str());
         return create_empty_arrow_table();
     }
 
     auto mq_data = mq->read_next();
-    tdbs::LOG_DEBUG(
-        std::format("[mq_next] Read {} rows and {} cols", mq_data->get()->num_rows(), mq_data->get()->names().size()));
+    {
+        std::stringstream ss;
+        ss << "[mq_next] Read " << mq_data->get()->num_rows() << " rows and " << mq_data->get()->names().size()
+           << " cols";
+        tdbs::LOG_DEBUG(ss.str());
+    }
 
     if (!mq_data) {
         tdbs::LOG_TRACE("[mq_next] complete - mq_data read no data");
@@ -236,8 +240,11 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     arr->length = 0;  // initial value
 
     for (size_t i = 0; i < ncol; i++) {
-        tdbs::LOG_TRACE(std::format("[mq_next] Accessing {} at {}", names[i], i));
-
+        {
+            std::stringstream ss;
+            ss << "[mq_next] Accessing " << names[i] << " at " << i;
+            tdbs::LOG_TRACE(ss.str());
+        }
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = mq_data->get()->at(names[i]);
 
@@ -248,12 +255,16 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
 
         if (pp.first->length > arr->length) {
-            tdbs::LOG_DEBUG(std::format("[soma_array_reader] Setting array length to {}", pp.first->length));
+            std::stringstream ss;
+            ss << "[soma_array_reader] Setting array length to " << pp.first->length;
+            tdbs::LOG_DEBUG(ss.str());
             arr->length = pp.first->length;
         }
     }
 
-    tdbs::LOG_DEBUG(std::format("[mq_next] Exporting chunk with {} rows", arr->length));
+    std::stringstream ss;
+    ss << "[mq_next] Exporting chunk with " << arr->length << " rows";
+    tdbs::LOG_DEBUG(ss.str());
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;
@@ -273,12 +284,8 @@ void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp:
 
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);
     mq->select_points<int64_t>(dim, vec);
-    tdbs::LOG_DEBUG(
-        std::format(
-            "[mq_set_dim_points] Set on dim '{}' for {} points, first two are {} "
-            "and {}",
-            dim,
-            points.length(),
-            vec[0],
-            vec[1]));
+    std::stringstream ss;
+    ss << "[mq_set_dim_points] Set on dim '" << dim << "' for " << points.length() << " points, first two are "
+       << vec[0] << " and " << vec[1];
+    tdbs::LOG_DEBUG(ss.str());
 }
