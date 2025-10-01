@@ -1656,14 +1656,20 @@ def update_matrix(
 
 
 def _validate_matrix_to_collection(
-    exp: Experiment, measurement_name: str, collection_name: str, matrix_name: str, matrix_data: Matrix | h5py.Dataset
+    exp: Experiment,
+    measurement_name: str,
+    collection_name: str,
+    matrix_name: str,
+    matrix_data: Matrix | h5py.Dataset,
+    *,
+    context: SOMATileDBContext | None = None,
 ) -> None:
     """Validates the shape of a new matrix against an existing matrix in a collection.
 
     Raises:
         ValueError: If the matrix shape is incompatible.
     """
-    target_shapes = get_experiment_shapes(exp.uri)
+    target_shapes = get_experiment_shapes(exp.uri, context=context)
     target_shape = target_shapes["ms"][measurement_name]["X"]["data"]["shape"]  # (O, V)
     target_obs_size = target_shape[0]  # O: Observation (row) size
     target_var_size = target_shape[1]  # V: Variable (column) size
@@ -1777,7 +1783,9 @@ def add_matrix_to_collection(
         else:
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
-        _validate_matrix_to_collection(exp, measurement_name, collection_name, matrix_name, matrix_data)
+        _validate_matrix_to_collection(
+            exp, measurement_name, collection_name, matrix_name, matrix_data, context=context
+        )
 
         if collection_name in meas:
             coll = cast("Collection[RawHandle]", meas[collection_name])
