@@ -126,7 +126,7 @@ set_log_level <- function(level) {
 #'
 #' @return Invisibly returns \code{NULL}
 #'
-#' @export
+#' @noRd
 #'
 soma_trace <- function(msg) {
     invisible(.Call(`_tiledbsoma_soma_trace`, msg))
@@ -138,7 +138,7 @@ soma_trace <- function(msg) {
 #'
 #' @return Invisibly returns \code{NULL}
 #'
-#' @export
+#' @noRd
 #'
 soma_debug <- function(msg) {
     invisible(.Call(`_tiledbsoma_soma_debug`, msg))
@@ -150,7 +150,7 @@ soma_debug <- function(msg) {
 #'
 #' @return Invisibly returns \code{NULL}
 #'
-#' @export
+#' @noRd
 #'
 soma_info <- function(msg) {
     invisible(.Call(`_tiledbsoma_soma_info`, msg))
@@ -162,7 +162,7 @@ soma_info <- function(msg) {
 #'
 #' @return Invisibly returns \code{NULL}
 #'
-#' @export
+#' @noRd
 #'
 soma_warn <- function(msg) {
     invisible(.Call(`_tiledbsoma_soma_warn`, msg))
