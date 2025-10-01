@@ -202,11 +202,11 @@ test_that("matrix outgest assertions", {
   )
 
   # a warning is issued if an index is unnecessarily provided
-  expect_output(
+  expect_message(
     query$to_sparse_matrix("obsm", "X_pca", var_index = "var_id"),
     "The var_index is ignored for obsm collections"
   )
-  expect_output(
+  expect_message(
     query$to_sparse_matrix("varm", "PCs", obs_index = "obs_id"),
     "The obs_index is ignored for varm collections"
   )
