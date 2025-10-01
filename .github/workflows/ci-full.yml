@@ -9,8 +9,6 @@ on:
   pull_request:
     paths:
       - '.github/workflows/ci-full.yml'
-  release:
-    types: [published]
   workflow_dispatch:
 
 jobs:
