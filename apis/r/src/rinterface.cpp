@@ -224,7 +224,7 @@ void set_log_level(const std::string& level) {
 //'
 //' @return Invisibly returns \code{NULL}
 //'
-//' @export
+//' @noRd
 //'
 // [[Rcpp::export]]
 void soma_trace(const std::string& msg) {
@@ -237,7 +237,7 @@ void soma_trace(const std::string& msg) {
 //'
 //' @return Invisibly returns \code{NULL}
 //'
-//' @export
+//' @noRd
 //'
 // [[Rcpp::export]]
 void soma_debug(const std::string& msg) {
@@ -250,7 +250,7 @@ void soma_debug(const std::string& msg) {
 //'
 //' @return Invisibly returns \code{NULL}
 //'
-//' @export
+//' @noRd
 //'
 // [[Rcpp::export]]
 void soma_info(const std::string& msg) {
@@ -263,7 +263,7 @@ void soma_info(const std::string& msg) {
 //'
 //' @return Invisibly returns \code{NULL}
 //'
-//' @export
+//' @noRd
 //'
 // [[Rcpp::export]]
 void soma_warn(const std::string& msg) {
