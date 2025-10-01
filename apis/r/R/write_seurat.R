@@ -373,7 +373,7 @@ write_soma.DimReduc <- function(
     mat[fidx, ] <- loadings
 
     # Write the feature loadings
-    soma_info(sprintf("Adding feature loadings as {}", sQuote(ldgs)))
+    soma_info(sprintf("Adding feature loadings as %s", sQuote(ldgs)))
 
     # Always write reductions as sparse arrays
     write_soma(
@@ -580,7 +580,7 @@ write_soma.Seurat <- function(
   on.exit(expms$close(), add = TRUE, after = FALSE)
 
   for (measurement in SeuratObject::Assays(x)) {
-    soma_info(sprintf("Adding assay {}", sQuote(measurement)))
+    soma_info(sprintf("Adding assay %s", sQuote(measurement)))
     tryCatch(
       expr = withCallingHandlers(
         .register_soma_object(
@@ -671,7 +671,7 @@ write_soma.Seurat <- function(
     } else {
       fidx <- nfeatures <- NULL
     }
-    soma_info(sprintf("Adding dimensional reduction {}", sQuote(reduc)))
+    soma_info(sprintf("Adding dimensional reduction %s", sQuote(reduc)))
     tryCatch(
       expr = write_soma(
         x = x[[reduc]],
@@ -709,7 +709,7 @@ write_soma.Seurat <- function(
       next
     }
     ms <- SOMAMeasurementOpen(file_path(expms$uri, measurement))
-    soma_info(sprintf("Adding graph {}", sQuote(obsp)))
+    soma_info(sprintf("Adding graph %s", sQuote(obsp)))
     tryCatch(
       expr = write_soma(
         x = x[[obsp]],
@@ -748,7 +748,7 @@ write_soma.Seurat <- function(
 
   # Write command logs
   for (cmd in SeuratObject::Command(x)) {
-    soma_info(sprintf("Adding command log '{}'", cmd))
+    soma_info(sprintf("Adding command log '%s'", cmd))
     write_soma(
       x = x[[cmd]],
       uri = cmd,

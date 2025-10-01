@@ -290,7 +290,7 @@ write_soma.SingleCellExperiment <- function(
   on.exit(varp$close(), add = TRUE, after = FALSE)
 
   for (rp in SingleCellExperiment::rowPairNames(x)) {
-    soma_info(sprintf("Adding rowPair {}", rp))
+    soma_info(sprintf("Adding rowPair %s", rp))
     write_soma(
       x = SingleCellExperiment::rowPair(x, rp),
       uri = rp,

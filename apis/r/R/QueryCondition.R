@@ -147,7 +147,7 @@ parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
       ))
     } else if (.is_in_operator(node[1])) {
       soma_debug(sprintf(
-        "[parseqc] inop [{}] [{}] [{}]",
+        "[parseqc] inop [%s] [%s] [%s]",
         as.character(node[2]),
         as.character(node[1]),
         as.character(node[3])

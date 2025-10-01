@@ -72,11 +72,17 @@ soma_array_reader <- function(
   if (is.null(soma_context)) {
     soma_context <- soma_context()
   } # package-level cached instance
-  soma_debug(sprintf(
-    "[soma_array_reader] calling soma_array_reader_impl ({},{})",
-    timestamprange[1],
-    timestamprange[2]
-  ))
+  if (is.null(timestamprange)) {
+    soma_debug(
+      "[soma_array_reader] calling soma_array_reader_impl for all time"
+    )
+  } else {
+    soma_debug(sprintf(
+      "[soma_array_reader] calling soma_array_reader_impl (%s,%s)",
+      timestamprange[1],
+      timestamprange[2]
+    ))
+  }
   soma_array_reader_impl(
     uri,
     soma_context,

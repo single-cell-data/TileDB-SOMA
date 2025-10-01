@@ -269,7 +269,7 @@ SOMADataFrame <- R6::R6Class(
 
       if (is.null(self$.tiledb_timestamp_range)) {
         soma_debug(sprintf(
-          "[SOMADataFrame$read] calling mq_setup",
+          "[SOMADataFrame$read] calling mq_setup for %s",
           self$uri
         ))
       } else {
