@@ -52,7 +52,7 @@
 #' @noRd
 #'
 parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
-  spdl::debug("[parseqc] ENTER [{}]", expr)
+  soma_debug(sprintf("[parseqc] ENTER [%s]", expr))
 
   stopifnot(
     "The expr argument must be a single character string" = is(
@@ -129,15 +129,15 @@ parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
     if (is.symbol(node)) {
       stop("Unexpected symbol in expression: ", format(node))
     } else if (node[[1]] == "(") {
-      spdl::debug("[parseqc] paren [{}]", as.character(node[2]))
+      soma_debug(sprintf("[parseqc] paren [%s]", as.character(node[2])))
       return(.parse_tree_to_qc(node[[2]]))
     } else if (.is_boolean_operator(node[1])) {
-      spdl::debug(
-        "[parseqc] boolop [{}] [{}] [{}]",
+      soma_debug(sprintf(
+        "[parseqc] boolop [%s] [%s] [%s]",
         as.character(node[2]),
         as.character(node[1]),
         as.character(node[3])
-      )
+      ))
 
       return(tiledbsoma_query_condition_combine(
         .parse_tree_to_qc(node[[2]]),
@@ -146,12 +146,12 @@ parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
         somactx
       ))
     } else if (.is_in_operator(node[1])) {
-      spdl::debug(
-        "[parseqc] inop [{}] [{}] [{}]",
+      soma_debug(sprintf(
+        "[parseqc] inop [%s] [%s] [%s]",
         as.character(node[2]),
         as.character(node[1]),
         as.character(node[3])
-      )
+      ))
 
       attr_name <- as.character(node[2])
       r_op_name <- tolower(as.character(node[1]))
@@ -181,12 +181,12 @@ parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
         somactx
       ))
     } else if (.is_comparison_operator(node[1])) {
-      spdl::debug(
-        "[parseqc] cmpop [{}] [{}] [{}]",
+      soma_debug(sprintf(
+        "[parseqc] cmpop [%s] [%s] [%s]",
         as.character(node[2]),
         as.character(node[1]),
         as.character(node[3])
-      )
+      ))
 
       op_name <- as.character(node[1])
       attr_name <- as.character(node[2])
@@ -262,13 +262,13 @@ parse_query_condition <- function(expr, schema, strict = TRUE, somactx) {
         as.numeric(rhs_text)
       )
 
-      spdl::debug(
-        "[parseqc] triple name:[{}] value:[{}] type:[{}] op:[{}]",
+      soma_debug(sprintf(
+        "[parseqc] triple name:[%s] value:[%s] type:[%s] op:[%s]",
         attr_name,
         value,
         arrow_type_name,
         op_name
-      )
+      ))
 
       # General case of extracting appropriate value given type info
       return(tiledbsoma_query_condition_from_triple(

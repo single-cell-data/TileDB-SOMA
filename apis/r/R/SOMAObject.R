@@ -114,12 +114,12 @@ SOMAObject <- R6::R6Class(
         private$.tiledb_timestamp <- tiledb_timestamp
       }
 
-      spdl::debug(
-        "[SOMAObject] initialize {} with '{}' at ({})",
+      soma_debug(sprintf(
+        "[SOMAObject] initialize %s with '%s' at (%s)",
         self$class(),
         self$uri,
         self$tiledb_timestamp %||% "now"
-      )
+      ))
     },
 
     # NOTE: The create/open/close are necessarily specific to arrays and
@@ -211,7 +211,11 @@ SOMAObject <- R6::R6Class(
       private$.check_open()
       private$.update_metadata_cache()
 
-      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
+      soma_debug(sprintf(
+        "Retrieving metadata for %s '%s'",
+        self$class(),
+        self$uri
+      ))
 
       if (is.null(key)) {
         return(private$.metadata_cache)
@@ -238,12 +242,12 @@ SOMAObject <- R6::R6Class(
       for (i in seq_along(metadata)) {
         key <- names(metadata)[i]
         value <- metadata[[i]]
-        spdl::debug(
-          "[SOMAObject$set_metadata] setting key {} to {} ({})",
+        soma_debug(sprintf(
+          "[SOMAObject$set_metadata] setting key %s to %s (%s)",
           key,
           value,
           class(value)
-        )
+        ))
         set_metadata(
           uri = self$uri,
           key = key,
@@ -460,12 +464,12 @@ SOMAObject <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      spdl::debug(
-        "[SOMAObject$update_metadata_cache] updating metadata cache for {} '{}' in {}",
+      soma_debug(sprintf(
+        "[SOMAObject$update_metadata_cache] updating metadata cache for %s '%s' in %s",
         self$class(),
         self$uri,
         self$mode()
-      )
+      ))
 
       private$.metadata_cache <- get_all_metadata(
         uri = self$uri,

@@ -200,7 +200,7 @@ write_soma.SingleCellExperiment <- function(
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
   # Write reduced dimensions
-  spdl::info("Adding reduced dimensions")
+  soma_info("Adding reduced dimensions")
   obsm <- if (!"obsm" %in% ms$names()) {
     SOMACollectionCreate(
       uri = file_path(ms$uri, "obsm"),
@@ -218,7 +218,7 @@ write_soma.SingleCellExperiment <- function(
   on.exit(obsm$close(), add = TRUE, after = FALSE)
 
   for (rd in SingleCellExperiment::reducedDimNames(x)) {
-    spdl::info("Adding reduced dimension {}", rd)
+    soma_info(sprintf("Adding reduced dimension %s", rd))
     write_soma(
       x = SingleCellExperiment::reducedDim(x, rd),
       uri = rd,
@@ -254,7 +254,7 @@ write_soma.SingleCellExperiment <- function(
   on.exit(obsp$close(), add = TRUE, after = FALSE)
 
   for (cp in SingleCellExperiment::colPairNames(x)) {
-    spdl::info("Adding colPair {}", cp)
+    soma_info(sprintf("Adding colPair %s", cp))
     write_soma(
       x = SingleCellExperiment::colPair(x, cp),
       uri = cp,
@@ -290,7 +290,7 @@ write_soma.SingleCellExperiment <- function(
   on.exit(varp$close(), add = TRUE, after = FALSE)
 
   for (rp in SingleCellExperiment::rowPairNames(x)) {
-    spdl::info("Adding rowPair {}", rp)
+    soma_info(sprintf("Adding rowPair %s", rp))
     write_soma(
       x = SingleCellExperiment::rowPair(x, rp),
       uri = rp,
@@ -404,7 +404,7 @@ write_soma.SummarizedExperiment <- function(
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
   # Write cell-level meta data (obs)
-  spdl::info("Adding colData")
+  soma_info("Adding colData")
   obs_df <- .df_index(SummarizedExperiment::colData(x), axis = "obs")
   obs_df[[attr(obs_df, "index")]] <- colnames(x)
   write_soma(
@@ -418,7 +418,7 @@ write_soma.SummarizedExperiment <- function(
   )
 
   # Write assays
-  spdl::info("Writing assays")
+  soma_info("Writing assays")
   expms <- SOMACollectionCreate(
     file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
@@ -455,7 +455,7 @@ write_soma.SummarizedExperiment <- function(
   on.exit(X$close(), add = TRUE, after = FALSE)
 
   for (assay in SummarizedExperiment::assayNames(x)) {
-    spdl::info("Adding {} assay", assay)
+    soma_info(sprintf("Adding %s assay", assay))
     write_soma(
       x = SummarizedExperiment::assay(x, assay),
       uri = assay,
@@ -471,7 +471,7 @@ write_soma.SummarizedExperiment <- function(
   }
 
   # Write feature-level meta data
-  spdl::info("Adding rowData")
+  soma_info("Adding rowData")
   var_df <- .df_index(SummarizedExperiment::rowData(x), axis = "var")
   if (!is.null(rownames(x))) {
     var_df[[attr(var_df, "index")]] <- rownames(x)

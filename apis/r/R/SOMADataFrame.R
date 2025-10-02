@@ -124,7 +124,7 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
 
-      spdl::debug("[SOMADataFrame$create] about to create schema from arrow")
+      soma_debug("[SOMADataFrame$create] about to create schema from arrow")
       createSchemaFromArrow(
         uri = self$uri,
         nasp = nasp,
@@ -137,7 +137,7 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      spdl::debug(
+      soma_debug(
         "[SOMADataFrame$create] about to call write_object_type_metadata"
       )
       self$open("WRITE")
@@ -266,12 +266,21 @@ SOMADataFrame <- R6::R6Class(
         )
         value_filter <- parsed@ptr
       }
-      spdl::debug(
-        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})",
-        self$uri,
-        self$.tiledb_timestamp_range[1],
-        self$.tiledb_timestamp_range[2]
-      )
+
+      if (is.null(self$.tiledb_timestamp_range)) {
+        soma_debug(sprintf(
+          "[SOMADataFrame$read] calling mq_setup for %s",
+          self$uri
+        ))
+      } else {
+        soma_debug(sprintf(
+          "[SOMADataFrame$read] calling mq_setup for %s at (%s, %s)",
+          self$uri,
+          self$.tiledb_timestamp_range[1],
+          self$.tiledb_timestamp_range[2]
+        ))
+      }
+
       sr <- mq_setup(
         uri = self$uri,
         private$.soma_context,
@@ -343,7 +352,7 @@ SOMADataFrame <- R6::R6Class(
       # Retrieve existing soma_joinids from array to:
       # - validate number of rows in values matches number of rows in array
       # - add original soma_joinids to values if not present
-      spdl::debug("[SOMADataFrame update]: Retrieving existing soma_joinids")
+      soma_debug("[SOMADataFrame update]: Retrieving existing soma_joinids")
       self$reopen(mode = "READ")
       joinids <- self$read(column_names = "soma_joinid")$concat()$soma_joinid
       if (length(joinids) != nrow(values)) {
@@ -404,13 +413,13 @@ SOMADataFrame <- R6::R6Class(
         col_type <- new_schema$GetFieldByName(add_col)$type
 
         if (inherits(col_type, "DictionaryType")) {
-          spdl::debug(
-            "[SOMADataFrame update]: adding enum column '{}' index type '{}' value type '{}' ordered {}",
+          soma_debug(sprintf(
+            "[SOMADataFrame update]: adding enum column '%s' index type '%s' value type '%s' ordered %s",
             add_col,
             col_type$index_type$name,
             col_type$value_type$name,
             col_type$ordered
-          )
+          ))
 
           add_cols_types_for_clib[[add_col]] <- col_type$index_type$name
           add_cols_enum_value_types_for_clib[[
@@ -418,11 +427,11 @@ SOMADataFrame <- R6::R6Class(
           ]] <- col_type$value_type$name
           add_cols_enum_ordered_for_clib[[add_col]] <- col_type$ordered
         } else {
-          spdl::debug(
-            "[SOMADataFrame update]: adding column '{}' type '{}'",
+          soma_debug(sprintf(
+            "[SOMADataFrame update]: adding column '%s' type '%s'",
             add_col,
             col_type$name
-          )
+          ))
 
           add_cols_types_for_clib[[add_col]] <- col_type$name
         }
@@ -444,7 +453,7 @@ SOMADataFrame <- R6::R6Class(
       # Reopen array for writing with new schema
       self$reopen(mode = "WRITE")
 
-      spdl::debug("[SOMADataFrame update]: Writing new data")
+      soma_debug("[SOMADataFrame update]: Writing new data")
       self$write(values)
     },
 

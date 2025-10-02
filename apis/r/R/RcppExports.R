@@ -109,9 +109,8 @@ soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_p
 #'
 #' Set the logging level for the \R package and underlying C++ library
 #'
-#' @param level A character value with logging level understood by
-#' \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-#' \dQuote{warn}
+#' @param level A character value with logging level. May be \dQuote{trace}, \dQuote{debug}, \dQuote{info},
+#' or \dQuote{warn}
 #'
 #' @return Invisibly returns \code{NULL}
 #'
@@ -119,6 +118,54 @@ soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_p
 #'
 set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
+}
+
+#' Set a trace message
+#'
+#' @param msg The message to set with level 'trace'
+#'
+#' @return Invisibly returns \code{NULL}
+#'
+#' @noRd
+#'
+soma_trace <- function(msg) {
+    invisible(.Call(`_tiledbsoma_soma_trace`, msg))
+}
+
+#' Set a debug message
+#'
+#' @param msg The message to set with level 'debug'
+#'
+#' @return Invisibly returns \code{NULL}
+#'
+#' @noRd
+#'
+soma_debug <- function(msg) {
+    invisible(.Call(`_tiledbsoma_soma_debug`, msg))
+}
+
+#' Set a info message
+#'
+#' @param msg The message to set with level 'info'
+#'
+#' @return Invisibly returns \code{NULL}
+#'
+#' @noRd
+#'
+soma_info <- function(msg) {
+    invisible(.Call(`_tiledbsoma_soma_info`, msg))
+}
+
+#' Set a warn message
+#'
+#' @param msg The message to set with level 'warn'
+#'
+#' @return Invisibly returns \code{NULL}
+#'
+#' @noRd
+#'
+soma_warn <- function(msg) {
+    invisible(.Call(`_tiledbsoma_soma_warn`, msg))
 }
 
 get_column_types <- function(uri, colnames) {

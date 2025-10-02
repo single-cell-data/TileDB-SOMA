@@ -286,7 +286,7 @@ write_soma.DimReduc <- function(
   on.exit(obsm$close(), add = TRUE, after = FALSE)
 
   embed <- paste0("X_", key)
-  spdl::info("Adding embeddings as {}", sQuote(embed))
+  soma_info(sprintf("Adding embeddings as %s", sQuote(embed)))
 
   # Always write reductions as sparse arrays
   write_soma(
@@ -373,7 +373,7 @@ write_soma.DimReduc <- function(
     mat[fidx, ] <- loadings
 
     # Write the feature loadings
-    spdl::info("Adding feature loadings as {}", sQuote(ldgs))
+    soma_info(sprintf("Adding feature loadings as %s", sQuote(ldgs)))
 
     # Always write reductions as sparse arrays
     write_soma(
@@ -580,7 +580,7 @@ write_soma.Seurat <- function(
   on.exit(expms$close(), add = TRUE, after = FALSE)
 
   for (measurement in SeuratObject::Assays(x)) {
-    spdl::info("Adding assay {}", sQuote(measurement))
+    soma_info(sprintf("Adding assay %s", sQuote(measurement)))
     tryCatch(
       expr = withCallingHandlers(
         .register_soma_object(
@@ -611,7 +611,7 @@ write_soma.Seurat <- function(
   }
 
   # Write cell-level metadata (obs)
-  spdl::info("Adding cell-level metadata")
+  soma_info("Adding cell-level metadata")
   write_soma(
     x = obs_df,
     uri = 'obs',
@@ -671,7 +671,7 @@ write_soma.Seurat <- function(
     } else {
       fidx <- nfeatures <- NULL
     }
-    spdl::info("Adding dimensional reduction {}", sQuote(reduc))
+    soma_info(sprintf("Adding dimensional reduction %s", sQuote(reduc)))
     tryCatch(
       expr = write_soma(
         x = x[[reduc]],
@@ -709,7 +709,7 @@ write_soma.Seurat <- function(
       next
     }
     ms <- SOMAMeasurementOpen(file_path(expms$uri, measurement))
-    spdl::info("Adding graph {}", sQuote(obsp))
+    soma_info(sprintf("Adding graph %s", sQuote(obsp)))
     tryCatch(
       expr = write_soma(
         x = x[[obsp]],
@@ -748,7 +748,7 @@ write_soma.Seurat <- function(
 
   # Write command logs
   for (cmd in SeuratObject::Command(x)) {
-    spdl::info("Adding command log '{}'", cmd)
+    soma_info(sprintf("Adding command log '%s'", cmd))
     write_soma(
       x = x[[cmd]],
       uri = cmd,
@@ -805,7 +805,7 @@ write_soma.SeuratCommand <- function(
     relative = relative
   )
   logs <- if (!key %in% soma_parent$names()) {
-    spdl::info("Creating a group for command logs")
+    soma_info("Creating a group for command logs")
     logs <- SOMACollectionCreate(
       uri = logs_uri,
       ingest_mode = ingest_mode,
@@ -830,14 +830,14 @@ write_soma.SeuratCommand <- function(
       logs$close()
       logs <- SOMACollectionOpen(logs_uri, mode = "WRITE")
     }
-    spdl::info("Found existing group for command logs")
+    soma_info("Found existing group for command logs")
     logs$reopen("WRITE")
     logs
   }
   on.exit(logs$close(), add = TRUE, after = FALSE)
 
   # Encode parameters
-  spdl::info("Encoding parameters in the command log")
+  soma_info("Encoding parameters in the command log")
   xlist <- as.list(x, complete = TRUE)
   for (i in names(xlist)) {
     # Timestamp -> JSON defaults to:
@@ -865,7 +865,7 @@ write_soma.SeuratCommand <- function(
   }
 
   # Encode as JSON
-  spdl::info("Encoding command log as JSON")
+  soma_info("Encoding command log as JSON")
   enc <- as.character(jsonlite::toJSON(xlist, null = "null", auto_unbox = TRUE))
 
   # Write out and return

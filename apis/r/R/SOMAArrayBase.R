@@ -61,24 +61,24 @@ SOMAArrayBase <- R6::R6Class(
       )
 
       if (is.null(self$tiledb_timestamp)) {
-        spdl::debug(
-          "[SOMAArrayBase$open] Opening {} '{}' in {} mode",
+        soma_debug(sprintf(
+          "[SOMAArrayBase$open] Opening %s '%s' in %s mode",
           self$class(),
           self$uri,
           self$mode()
-        )
+        ))
         private$.tiledb_array <- tiledb::tiledb_array_open(
           private$.tiledb_array,
           type = self$mode()
         )
       } else {
-        spdl::debug(
-          "[SOMAArrayBase$open] Opening {} '{}' in {} mode at ({})",
+        soma_debug(sprintf(
+          "[SOMAArrayBase$open] Opening %s '%s' in %s mode at (%s)",
           self$class(),
           self$uri,
           mode,
           self$tiledb_timestamp %||% "now"
-        )
+        ))
         private$.tiledb_array <- tiledb::tiledb_array_open_at(
           private$.tiledb_array,
           type = self$mode(),
@@ -99,11 +99,11 @@ SOMAArrayBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     close = function() {
-      spdl::debug(
-        "[SOMAArrayBase$close] Closing {} '{}'",
+      soma_debug(sprintf(
+        "[SOMAArrayBase$close] Closing %s '%s'",
         self$class(),
         self$uri
-      )
+      ))
       private$.mode <- NULL
       if (inherits(private$.tiledb_array, "tiledb_array")) {
         tiledb::tiledb_array_close(private$.tiledb_array)
@@ -288,7 +288,7 @@ SOMAArrayBase <- R6::R6Class(
       meta <- list()
       meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      spdl::debug("[SOMAArrayBase::write_object_metadata] calling set metadata")
+      soma_debug("[SOMAArrayBase::write_object_metadata] calling set metadata")
       self$set_metadata(meta)
     }
   )
