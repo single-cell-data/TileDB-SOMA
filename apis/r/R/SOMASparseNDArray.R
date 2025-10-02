@@ -198,10 +198,10 @@ SOMASparseNDArray <- R6::R6Class(
         index <- index + 2L
       }
       self$set_metadata(bbox_flat)
-      spdl::debug(
-        "[SOMASparseNDArray$write] Calling .write_coo_df ({})",
+      soma_debug(sprintf(
+        "[SOMASparseNDArray$write] Calling .write_coo_df (%s)",
         self$tiledb_timestamp %||% "now"
-      )
+      ))
 
       self$.write_coordinates(coo)
 
@@ -246,14 +246,14 @@ SOMASparseNDArray <- R6::R6Class(
 
       # Arrow Tables cannot have NULL names, so this only applies to dataframes
       if (is.null(names(values))) {
-        spdl::warn(
+        soma_warn(
           "[SOMASparseNDArray$.write_coordinates] no names on input data frame, assuming <dimensions[...], data> order"
         )
         names(values) <- c(dnames, attrn)
       }
 
       # Check dimensions
-      spdl::debug(
+      soma_debug(
         "[SOMASparseNDArray$.write_coordinates] checking dimension values"
       )
       for (i in seq_along(dnames)) {
@@ -274,7 +274,7 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       # Check attribute
-      spdl::debug("[SOMASparseNDArray$.write_coordinates] checking data values")
+      soma_debug("[SOMASparseNDArray$.write_coordinates] checking data values")
       if (is.null(private$.type)) {
         tt <- self$schema()[attrn]$type
         if (is.null(tt)) {
@@ -307,7 +307,7 @@ SOMASparseNDArray <- R6::R6Class(
       tbl <- arrow::as_arrow_table(values, schema = sch)
 
       # Write via libtiledbsoma
-      spdl::debug("[SOMASparseNDArray$.write_coordinates] writing arrow table")
+      soma_debug("[SOMASparseNDArray$.write_coordinates] writing arrow table")
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)

@@ -7,9 +7,8 @@
 set_log_level(level)
 }
 \arguments{
-\item{level}{A character value with logging level understood by
-\sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-\dQuote{warn}}
+\item{level}{A character value with logging level. May be \dQuote{trace}, \dQuote{debug}, \dQuote{info},
+or \dQuote{warn}}
 }
 \value{
 Invisibly returns \code{NULL}
