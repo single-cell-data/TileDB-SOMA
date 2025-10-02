@@ -50,28 +50,28 @@
     lognames
   )
   for (x in lognames) {
-    spdl::info("Attempting to read command log {}", x)
+    soma_info(sprintf("Attempting to read command log %s", x))
     xdf <- logs$get(x)
     if (!inherits(xdf, "SOMADataFrame")) {
-      spdl::warn("Log {} is invalid: not a SOMADataFrame", x)
+      soma_warn(sprintf("Log %s is invalid: not a SOMADataFrame", x))
       next
     }
     xhint <- tryCatch(xdf$get_metadata(names(hint)), error = function(...) "")
     if (xhint != hint[[1L]]) {
-      spdl::warn(
-        "Log {} is invalid: not a one-dimensional character data frame"
-      )
+      soma_warn(sprintf(
+        "Log %s is invalid: not a one-dimensional character data frame"
+      ))
       next
     }
-    spdl::info("Reading in and decoding command log")
+    soma_info("Reading in and decoding command log")
     tbl <- xdf$read(column_names = "values")$concat()
     enc <- as.data.frame(tbl)[["values"]]
     cmdlist <- jsonlite::fromJSON(enc)
     if (!(is.null(cmdlist$assay.used) || cmdlist$assay.used %in% ms_names)) {
-      spdl::info("Skipping command log {}: assay used not requested", x)
+      soma_info(sprintf("Skipping command log %s: assay used not requested", x))
       next
     }
-    spdl::info("Decoding command log parameters")
+    soma_info("Decoding command log parameters")
     for (param in names(cmdlist)) {
       cmdlist[[param]] <- if (param == "time.stamp") {
         ts <- sapply(
@@ -90,7 +90,7 @@
         cmdlist[[param]]
       }
     }
-    spdl::info("Assembling command log")
+    soma_info("Assembling command log")
     params <- cmdlist[setdiff(names(cmdlist), slots)]
     cmdlist <- c(
       cmdlist[setdiff(names(cmdlist), names(params))],
@@ -99,7 +99,7 @@
     commands[[x]] <- do.call(methods::new, c(cmdlist, Class = "SeuratCommand"))
   }
   commands <- Filter(Negate(is.null), x = commands)
-  spdl::info("Returning {} command log(s)", length(commands))
+  soma_info(sprintf("Returning %s command log(s)", length(commands)))
   idx <- order(sapply(commands, methods::slot, name = "time.stamp"))
   return(commands[idx])
 }
@@ -251,7 +251,7 @@
         no = class(ldat)
       ))
       if (all(features_matrix[, layer]) && all(cells_matrix[, layer])) {
-        spdl::info("Adding '{}' matrix as '{}'", layer, layer)
+        soma_info(sprintf("Adding '%s' matrix as '%s'", layer, layer))
         tryCatch(
           expr = {
             arr <- write_soma(
@@ -312,13 +312,16 @@
         slot == "data" &&
           identical(mat, SeuratObject::GetAssayData(x, "counts"))
       ) {
-        spdl::info("Skipping 'data' slot because it's identical to 'counts'")
+        soma_info("Skipping 'data' slot because it's identical to 'counts'")
         next
       }
 
       # Pad 'scale.data'
       if (!identical(x = dim(mat), y = dim(x))) {
-        spdl::info("Padding layer '{}' to match dimensions of assay", slot)
+        soma_info(sprintf(
+          "Padding layer '%s' to match dimensions of assay",
+          slot
+        ))
         mat <- pad_matrix(
           x = mat,
           rowidx = match(x = rownames(mat), table = rownames(x)),
@@ -331,7 +334,7 @@
       }
 
       layer <- gsub(pattern = '\\.', replacement = '_', x = slot)
-      spdl::info("Adding '{}' matrix as '{}'", slot, layer)
+      soma_info(sprintf("Adding '%s' matrix as '%s'", slot, layer))
       tryCatch(
         expr = write_soma(
           x = mat,
@@ -363,7 +366,7 @@
     prefix = 'seurat'
   )
   var_df[[attr(x = var_df, which = 'index')]] <- rownames(x)
-  spdl::info("Adding feature-level metadata")
+  soma_info("Adding feature-level metadata")
   write_soma(
     x = var_df,
     uri = 'var',

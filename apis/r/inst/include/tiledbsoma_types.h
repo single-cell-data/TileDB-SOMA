@@ -44,10 +44,8 @@ typedef struct SOMAContextWrapper somactx_wrap_t;
 
 struct SOMAGroupWrapper {
     SOMAGroupWrapper(std::unique_ptr<tdbs::SOMAGroup> grpptr_) : grpptr(std::move(grpptr_)) {
-        //spdl::trace("[SOMAGroupWrapper] ctor");
     }
     ~SOMAGroupWrapper() {
-        //spdl::trace("[SOMAGroupWrapper] dtor");
     }
     std::unique_ptr<tdbs::SOMAGroup> grpptr;
 };

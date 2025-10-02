@@ -301,7 +301,7 @@ TileDBCreateOptions <- R6::R6Class(
       } else {
         ## ie   if (isFALSE(build_filters)) {   as build_filters is bool
         for (key in grep("_filters$", names(opts), value = TRUE)) {
-          # spdl::trace("[tdco::to_list] _filters key is {}", key)
+          # soma_trace(sprintf("[tdco::to_list] _filters key is %s", key))
           opts[[key]] <- private$.build_filters_json(opts[[key]])
         }
         for (key in c("dims", "attrs")) {
@@ -320,7 +320,7 @@ TileDBCreateOptions <- R6::R6Class(
             json <- paste(json, " }")
           }
           json <- paste(json, "}")
-          # spdl::trace("[tdco::to_list] dim/attrs key {} -> {}", key, json)
+          # soma_trace(sprintf("[tdco::to_list] dim/attrs key %s -> %s", key, json))
           opts[[key]] <- json
         }
       }
@@ -412,7 +412,7 @@ TileDBCreateOptions <- R6::R6Class(
       } else {
         res <- ""
       }
-      # spdl::trace("[.build_filters_json] res: {}", res)
+      # soma_trace(sprintf("[.build_filters_json] res: %s", res))
       res
     },
 
@@ -444,7 +444,7 @@ TileDBCreateOptions <- R6::R6Class(
         }
       }
       json <- paste0(json, " }")
-      # spdl::trace("[.build_filter_json] filter to json: {}", json)
+      # soma_trace(sprintf("[.build_filter_json] filter to json: %s", json))
       json
     }
   )

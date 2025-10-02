@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <spdl.h>
-#include <RcppSpdlog>
+#include <Rcpp.h>  // for R interface to C++
+#include <sstream>
 #include <tiledb/tiledb>
 #include "tiledbsoma_types.h"
 namespace tdbs = tiledbsoma;
@@ -37,9 +37,10 @@ inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rc
         size_t n = confvec.length();
         for (size_t i = 0; i < n; i++) {
             platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
-            tdbs::LOG_TRACE(
-                fmt::format(
-                    "[config_vector_to_map] adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i])));
+            std::stringstream ss;
+            ss << "[config_vector_to_map] adding '" << std::string(namesvec[i]) << "' = '" << std::string(confvec[i])
+               << "'";
+            tdbs::LOG_TRACE(ss.str());
         }
     }
 

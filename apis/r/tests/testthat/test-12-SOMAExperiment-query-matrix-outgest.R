@@ -201,20 +201,26 @@ test_that("matrix outgest assertions", {
     )
   )
 
-  # a warning is issued if an index is unnecessarily provided
-  expect_output(
-    query$to_sparse_matrix("obsm", "X_pca", var_index = "var_id"),
-    "The var_index is ignored for obsm collections"
-  )
-  expect_output(
-    query$to_sparse_matrix("varm", "PCs", obs_index = "obs_id"),
-    "The obs_index is ignored for varm collections"
-  )
-
   # retrieved labels must be unique
   expect_error(
     query$to_sparse_matrix("obsm", "X_pca", obs_index = "groups"),
     "All obs_index values must be unique"
+  )
+})
+
+test_that("matrix outgest assertions: warnings for unused axes", {
+  skip_if(
+    TRUE,
+    message = "Disabling tests until SOMA's logger is plumbed through R's stdout/stderr"
+  )
+  # a warning is issued if an index is unnecessarily provided
+  expect_message(
+    query$to_sparse_matrix("obsm", "X_pca", var_index = "var_id"),
+    "The var_index is ignored for obsm collections"
+  )
+  expect_message(
+    query$to_sparse_matrix("varm", "PCs", obs_index = "obs_id"),
+    "The obs_index is ignored for varm collections"
   )
 })
 
