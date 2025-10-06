@@ -23,6 +23,7 @@ This release is the first TileDB-SOMA release that follows our new versioning po
 ## Changed
 
 - Update [TileDB core to 2.28.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1). ([#4077](https://github.com/single-cell-data/TileDB-SOMA/pull/4177))
+- Remove RcppSpdlog and spld as dependencies. Logs are no longer forwarded through R output.
 
 ## Deprecated
 
