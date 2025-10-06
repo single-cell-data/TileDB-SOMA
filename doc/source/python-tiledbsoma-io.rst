@@ -27,7 +27,6 @@ Functions
     :nosignatures:
 
     tiledbsoma.io.add_X_layer
-
     tiledbsoma.io.update_obs
     tiledbsoma.io.update_var
     tiledbsoma.io.update_matrix
