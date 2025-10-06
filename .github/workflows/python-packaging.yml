@@ -102,7 +102,7 @@ jobs:
         if: matrix.os == 'macos-15-intel'
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.1'
+          xcode-version: '16.0'
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
         with:
