@@ -62,10 +62,10 @@ SOMADenseNDArray <- R6::R6Class(
       }
       coords <- private$.convert_coords(coords)
 
-      spdl::debug(
-        "[SOMADenseNDArray$read_arrow_table] timestamp ({})",
+      soma_debug(sprintf(
+        "[SOMADenseNDArray$read_arrow_table] timestamp (%s)",
         self$tiledb_timestamp %||% "now"
-      )
+      ))
 
       rl <- soma_array_reader(
         uri = uri,
@@ -143,7 +143,7 @@ SOMADenseNDArray <- R6::R6Class(
     write = function(values, coords = NULL) {
       private$.check_open_for_write()
 
-      spdl::debug("[SOMADenseNDArray::write] entered")
+      soma_debug("[SOMADenseNDArray::write] entered")
       stopifnot("'values' must be a matrix" = is.matrix(values))
 
       if (is.null(coords)) {
@@ -164,11 +164,11 @@ SOMADenseNDArray <- R6::R6Class(
 
       arr <- private$.tiledb_array
       tiledb::query_layout(arr) <- "COL_MAJOR"
-      spdl::debug("[SOMADenseNDArray::write] about to call write")
+      soma_debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
       tbl <- arrow::arrow_table(soma_data = values, schema = arrsch)
 
-      spdl::debug("[SOMADenseNDArray::write] array created")
+      soma_debug("[SOMADenseNDArray::write] array created")
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
@@ -181,7 +181,7 @@ SOMADenseNDArray <- R6::R6Class(
         config = NULL,
         tsvec = self$.tiledb_timestamp_range
       )
-      spdl::debug("[SOMADenseNDArray::write] written")
+      soma_debug("[SOMADenseNDArray::write] written")
 
       return(invisible(self))
     }

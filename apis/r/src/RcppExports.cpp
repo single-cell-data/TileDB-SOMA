@@ -362,6 +362,46 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// soma_trace
+void soma_trace(const std::string& msg);
+RcppExport SEXP _tiledbsoma_soma_trace(SEXP msgSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type msg(msgSEXP);
+    soma_trace(msg);
+    return R_NilValue;
+END_RCPP
+}
+// soma_debug
+void soma_debug(const std::string& msg);
+RcppExport SEXP _tiledbsoma_soma_debug(SEXP msgSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type msg(msgSEXP);
+    soma_debug(msg);
+    return R_NilValue;
+END_RCPP
+}
+// soma_info
+void soma_info(const std::string& msg);
+RcppExport SEXP _tiledbsoma_soma_info(SEXP msgSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type msg(msgSEXP);
+    soma_info(msg);
+    return R_NilValue;
+END_RCPP
+}
+// soma_warn
+void soma_warn(const std::string& msg);
+RcppExport SEXP _tiledbsoma_soma_warn(SEXP msgSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type msg(msgSEXP);
+    soma_warn(msg);
+    return R_NilValue;
+END_RCPP
+}
 // get_column_types
 Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& colnames);
 RcppExport SEXP _tiledbsoma_get_column_types(SEXP uriSEXP, SEXP colnamesSEXP) {
@@ -945,6 +985,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},
     {"_tiledbsoma_soma_array_reader", (DL_FUNC) &_tiledbsoma_soma_array_reader, 10},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
+    {"_tiledbsoma_soma_trace", (DL_FUNC) &_tiledbsoma_soma_trace, 1},
+    {"_tiledbsoma_soma_debug", (DL_FUNC) &_tiledbsoma_soma_debug, 1},
+    {"_tiledbsoma_soma_info", (DL_FUNC) &_tiledbsoma_soma_info, 1},
+    {"_tiledbsoma_soma_warn", (DL_FUNC) &_tiledbsoma_soma_warn, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
     {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 2},
     {"_tiledbsoma_check_arrow_schema_tag", (DL_FUNC) &_tiledbsoma_check_arrow_schema_tag, 1},
