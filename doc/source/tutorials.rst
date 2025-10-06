@@ -1,7 +1,7 @@
 User Guide
 ==========
 
-For comprehensive tutorials and guides, visit the `TileDB Academy Single-Cell Section <https://cloud.tiledb.com/academy/structure/life-sciences/single-cell>`_.
+For comprehensive tutorials and guides, visit the `Single-Cell <https://cloud.tiledb.com/academy/structure/life-sciences/single-cell>`_ section of `TileDB Academy <https://cloud.tiledb.com/academy/>`_.
 
 .. toctree::
    :maxdepth: 2
