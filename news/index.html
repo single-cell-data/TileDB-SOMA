@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.18.99.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.99.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,25 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0rc1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.0.0" id="tiledbsoma-200">tiledbsoma 2.0.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-200"></a></h2>
+<p>This release is the first TileDB-SOMA release that follows our new versioning policy (see the <a href="../../dev_docs/POLICIES.html">developer docs</a>). It introduces the new <code>DELETE</code> mode and deprecates removing elements from a <code>Collection</code> in <code>WRITE</code> mode. It also updates the core TileDB version to 2.28.1.</p>
+<div class="section level3">
+<h3 id="added-2-0-0">Added<a class="anchor" aria-label="anchor" href="#added-2-0-0"></a></h3>
+<ul><li>Add delete mode specified by <code>mode="DELETE"</code>. (<a href="https://github.com/single-cell-data/tiledb-soma/pull/4125" class="external-link">#4125</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changed-2-0-0">Changed<a class="anchor" aria-label="anchor" href="#changed-2-0-0"></a></h3>
+<ul><li>Update <a href="https://github.com/TileDB-Inc/TileDB/releases/tag/2.28.1" class="external-link">TileDB core to 2.28.1</a>. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4177" class="external-link">#4077</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="deprecated-2-0-0">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-2-0-0"></a></h3>
+<ul><li>Deprecate removing elements from a collection in write mode. In the future, all new removals will need to be done in delete mode. (<a href="https://github.com/single-cell-data/tiledb-soma/pull/4125" class="external-link">#4125</a>)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.18.0" id="tiledbsoma-1180">tiledbsoma 1.18.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1180"></a></h2>
 <div class="section level3">
