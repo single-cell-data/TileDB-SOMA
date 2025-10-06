@@ -515,7 +515,7 @@ def test_matrix_shape_enforcement(conftest_pbmc_small, tmp_path, matrix_type, of
 
     # Should raise error for invalid shape
     with _factory.open(output_path, "w") as exp, pytest.raises(tiledbsoma.SOMAError):
-        tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
+        tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix, schema_validation=True)
 
 
 @pytest.mark.parametrize(
@@ -548,7 +548,7 @@ def test_matrix_X_layer_enforcement(conftest_pbmc_small, tmp_path, offset):
 
     # Should raise error for invalid shape
     with _factory.open(output_path, "w") as exp, pytest.raises(tiledbsoma.SOMAError):
-        tiledbsoma.io.add_X_layer(exp, "RNA", "bad", bad_matrix)
+        tiledbsoma.io.add_X_layer(exp, "RNA", "bad", bad_matrix, schema_validation=True)
 
 
 def test_export_anndata(conftest_pbmc_small, tmp_path):
