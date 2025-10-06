@@ -1756,6 +1756,7 @@ def add_X_layer(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
+    schema_validation: bool = False,
 ) -> None:
     """This is useful for adding X data, for example from
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
@@ -1775,6 +1776,7 @@ def add_X_layer(
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
         context=context,
+        schema_validation=schema_validation,
     )
 
 
@@ -1788,6 +1790,7 @@ def add_matrix_to_collection(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
+    schema_validation: bool = False,
 ) -> None:
     """This is useful for adding X/obsp/varm/etc data, for example from
     Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
@@ -1810,9 +1813,10 @@ def add_matrix_to_collection(
         else:
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
-        _validate_matrix_to_collection(
-            exp, measurement_name, collection_name, matrix_name, matrix_data, context=context
-        )
+        if schema_validation:
+            _validate_matrix_to_collection(
+                exp, measurement_name, collection_name, matrix_name, matrix_data, context=context
+            )
 
         if collection_name in meas:
             coll = cast("Collection[RawHandle]", meas[collection_name])
