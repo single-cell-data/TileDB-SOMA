@@ -1,7 +1,6 @@
 <a href="https://tiledb.com"><img src="https://github.com/TileDB-Inc/TileDB/raw/main/doc/source/_static/tiledb-logo_color_no_margin_@4x.png" alt="TileDB logo" width="400"></a>
 
-[![TileDB-SOMA Python CI](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-ci-full.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-ci-full.yml)
-[![TileDB-SOMA R CI](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/r-ci.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/r-ci.yml)
+[![TileDB-SOMA CI](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/ci-full.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/ci-full.yml)
 [![PyPI version](https://badge.fury.io/py/tiledbsoma.svg)](https://badge.fury.io/py/tiledbsoma)
 [![tiledbsoma status badge](https://tiledb-inc.r-universe.dev/badges/tiledbsoma)](https://tiledb-inc.r-universe.dev)
 [![codecov](https://codecov.io/github/single-cell-data/TileDB-SOMA/branch/main/graph/badge.svg)](https://codecov.io/github/single-cell-data/TileDB-SOMA)
