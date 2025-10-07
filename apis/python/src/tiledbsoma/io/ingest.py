@@ -72,7 +72,6 @@ from tiledbsoma._soma_array import SOMAArray
 from tiledbsoma._soma_object import AnySOMAObject, SOMAObject
 from tiledbsoma._tdb_handles import RawHandle
 from tiledbsoma._types import _INGEST_MODES, INGEST_MODES, IngestMode, NPNDArray, Path, _IngestMode
-from tiledbsoma.io.shaping import get_experiment_shapes
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
@@ -1661,19 +1660,18 @@ def _validate_matrix_to_collection(
     collection_name: str,
     matrix_name: str,
     matrix_data: Matrix | h5py.Dataset,
-    *,
-    context: SOMATileDBContext | None = None,
 ) -> None:
     """Validates the shape of a new matrix against an existing matrix in a collection.
 
     Raises:
         ValueError: If the matrix shape is incompatible.
     """
-    target_shapes = get_experiment_shapes(exp.uri, context=context)
-    target_shape = target_shapes["ms"][measurement_name]["X"]["data"]["shape"]  # (O, V)
-    target_obs_size = target_shape[0]  # O: Observation (row) size
-    target_var_size = target_shape[1]  # V: Variable (column) size
+    obs_soma_joinid_domain = exp.obs._maybe_soma_joinid_shape  # O
+    var_soma_joinid_domain = exp.ms[measurement_name].var._maybe_soma_joinid_shape  # V
 
+    target_obs_size = obs_soma_joinid_domain  # O: Observation (row) size
+    target_var_size = var_soma_joinid_domain  # V: Variable (column) size
+    target_shape = (target_obs_size, target_var_size)
     # Check if the dimensionality is the same
     if len(matrix_data.shape) != len(target_shape):
         raise SOMAError(
@@ -1787,9 +1785,7 @@ def add_matrix_to_collection(
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
         if schema_validation:
-            _validate_matrix_to_collection(
-                exp, measurement_name, collection_name, matrix_name, matrix_data, context=context
-            )
+            _validate_matrix_to_collection(exp, measurement_name, collection_name, matrix_name, matrix_data)
 
         if collection_name in meas:
             coll = cast("Collection[RawHandle]", meas[collection_name])
