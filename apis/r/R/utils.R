@@ -444,6 +444,43 @@ uns_hint <- function(type = c("1d", "2d")) {
   return(TableReadIter$new(sr)$concat()$GetColumnByName(dimname)$as_vector())
 }
 
+.s3_method_defined <- function(f, class, envir = parent.frame()) {
+  stopifnot(
+    rlang::is_character(f, n = 1L) && nzchar(f),
+    rlang::is_character(class) && all(nzchar(class))
+  )
+  if (!utils::isS3stdGeneric(f)) {
+    rlang::abort(sprintf("'%s' is not a generic function", f))
+  }
+  methods <- attr(utils::methods(generic.function = f), which = "info")
+  methods$method <- row.names(methods)
+  methods <- methods[!methods$isS4, , drop = FALSE]
+  if (!nrow(methods)) {
+    rlang::abort(sprintf("'%s' is not an S3 generic", f))
+  }
+  methods <- do.call(
+    what = rbind,
+    args = lapply(
+      X = split(x = methods, f = methods$from),
+      FUN = function(df) {
+        fakes <- tools::nonS3methods(unique(df$from))
+        return(df[!df$method %in% fakes, , drop = FALSE])
+      }
+    )
+  )
+  if (!nrow(methods)) {
+    rlang::abort(sprintf("No actual methods found for '%s'", f))
+  }
+  row.names(methods) <- NULL
+  if (length(class) == 1L) {
+    cdef <- methods::getClassDef(Class = class)
+    if (!"oldClass" %in% names(cdef@contains)) {
+      class <- c(class, names(cdef@contains))
+    }
+  }
+  return(any(sprintf("%s.%s", f, class) %in% methods$method))
+}
+
 #' Pad Names of a Character Vector
 #'
 #' Fill in missing names of a vector using missing values of said vector
