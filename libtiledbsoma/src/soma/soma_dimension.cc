@@ -50,11 +50,113 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
     ArrowArray* array,
     const std::string& soma_type,
     std::string_view type_metadata,
-    PlatformConfig platform_config) {
-    auto dimension = ArrowAdapter::tiledb_dimension_from_arrow_schema(
-        ctx, schema, array, soma_type, type_metadata, "", "", platform_config);
+    const PlatformConfig& platform_config) {
+    auto tiledb_type = ArrowAdapter::to_tiledb_format(schema->format, type_metadata);
+    if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {  // Actual checks for string types not var types.
+        tiledb_type = TILEDB_STRING_ASCII;
+    }
 
-    return std::make_shared<SOMADimension>(SOMADimension(dimension));
+    switch (tiledb_type) {
+        case TILEDB_STRING_ASCII:
+            return SOMADimension::create(ctx, schema->name, soma_type, TILEDB_STRING_ASCII, platform_config);
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS: {
+            return SOMADimension::create<uint64_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<uint64_t>(static_cast<const uint64_t*>(array->buffers[1])),
+                platform_config,
+                tiledb_type);
+        }
+        case TILEDB_INT8:
+            return SOMADimension::create<int8_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<int8_t>(static_cast<const int8_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_UINT8:
+            return SOMADimension::create<uint8_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<uint8_t>(static_cast<const uint8_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_INT16:
+            return SOMADimension::create<int16_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<int16_t>(static_cast<const int16_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_UINT16:
+            return SOMADimension::create<uint16_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<uint16_t>(static_cast<const uint16_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_INT32:
+            return SOMADimension::create<int32_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<int32_t>(static_cast<const int32_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_UINT32:
+            return SOMADimension::create<uint32_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<uint32_t>(static_cast<const uint32_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_INT64:
+            return SOMADimension::create<int64_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<int64_t>(static_cast<const int64_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_UINT64:
+            return SOMADimension::create<uint64_t>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<uint64_t>(static_cast<const uint64_t*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_FLOAT32:
+            return SOMADimension::create<float>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<float>(static_cast<const float*>(array->buffers[1])),
+                platform_config);
+        case TILEDB_FLOAT64:
+            return SOMADimension::create<double>(
+                ctx,
+                schema->name,
+                soma_type,
+                DimensionConfigAdapter<double>(static_cast<const double*>(array->buffers[1])),
+                platform_config);
+        default:
+            throw TileDBSOMAError(
+                fmt::format("ArrowAdapter: Unsupported TileDB dimension: {} ", tiledb::impl::type_to_str(tiledb_type)));
+    }
+}
+
+std::shared_ptr<SOMADimension> SOMADimension::create(
+    std::shared_ptr<Context> ctx,
+    const std::string& name,
+    const std::string& soma_type,
+    tiledb_datatype_t tiledb_type,
+    const PlatformConfig& platform_config) {
+    auto dim = Dimension::create(*ctx, name, tiledb_type, nullptr, nullptr);
+    FilterList filter_list = utils::create_dim_filter_list(name, platform_config, soma_type, ctx);
+    dim.set_filter_list(filter_list);
+    return std::make_shared<SOMADimension>(SOMADimension(dim));
 }
 
 void SOMADimension::_set_dim_points(ManagedQuery& query, const std::any& points) const {
