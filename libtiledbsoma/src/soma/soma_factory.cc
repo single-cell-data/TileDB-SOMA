@@ -30,24 +30,8 @@ std::string get_soma_type_metadata_value(
             return get_soma_type_metadata_value_from_array(uri, ctx, timestamp);
         case Object::Type::Group:
             return get_soma_type_metadata_value_from_group(uri, ctx, timestamp);
-        case Object::Type::Invalid:
-            throw TileDBSOMAError(
-                fmt::format(
-                    "The object at URI '{}' has TileDB type Invalid ({}), which is neither Array ({}) nor Group ({})",
-                    uri,
-                    static_cast<int>(tiledb_type),
-                    static_cast<int>(Object::Type::Array),
-                    static_cast<int>(Object::Type::Group)));
         default:
-            throw TileDBSOMAError(
-                fmt::format(
-                    "The object at URI '{}' has unrecognized TileDB type ({}), which is neither Array ({}) nor Group "
-                    "({}) nor Invalid ({})",
-                    uri,
-                    static_cast<int>(tiledb_type),
-                    static_cast<int>(Object::Type::Array),
-                    static_cast<int>(Object::Type::Group),
-                    static_cast<int>(Object::Type::Invalid)));
+            throw TileDBSOMAError(fmt::format("The object at URI '{}' is not a valid TileDB array or group.", uri));
     }
 }
 

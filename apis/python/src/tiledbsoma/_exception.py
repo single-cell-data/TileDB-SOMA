@@ -43,8 +43,8 @@ def is_does_not_exist_error(e: Exception) -> bool:
         or "Unrecognized array" in stre
         or "HTTP code 401" in stre
         or "HTTP code 404" in stre
-        or "[SOMAObject::open] " in stre
-        or "has TileDB type Invalid" in stre
+        or "not a valid TileDB" in stre
+        or "Unable to open" in stre
     )
 
 
