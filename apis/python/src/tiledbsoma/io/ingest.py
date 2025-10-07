@@ -1700,22 +1700,18 @@ def _validate_matrix_to_collection(
             )
     elif collection_name == "obsp":
         expected_shape = (target_obs_size, target_obs_size)
-        if matrix_data.shape != expected_shape:
+        if matrix_data.shape[0:2] != expected_shape:
             raise SOMAError(
                 f"Matrix '{matrix_name}' must match the observation size. "
                 f"Found {matrix_data.shape}, expected {(target_obs_size, target_obs_size)}."
             )
     elif collection_name == "varp":
         expected_shape = (target_var_size, target_var_size)
-        if matrix_data.shape != expected_shape:
+        if matrix_data.shape[0:2] != expected_shape:
             raise SOMAError(
                 f"Matrix '{matrix_name}' must match the observation size (O). "
                 f"Found {matrix_data.shape}, expected {(target_var_size, target_var_size)}."
             )
-    else:
-        # For any other matrix name, you might choose to enforce an exact match
-        # or skip validation entirely. For safety, enforce exact match.
-        pass
 
 
 def add_X_layer(
