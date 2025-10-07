@@ -1723,11 +1723,33 @@ def add_X_layer(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
-    schema_validation: bool = False,
+    schema_validation: bool = True,
 ) -> None:
-    """This is useful for adding X data, for example from
+    """Add a new X layer to a measurement in the experiment.
+
+    This is useful for adding X data, for example from
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
     ``scanpy.pp.log1p``, etc.
+
+    Args:
+        exp: The experiment to add the X layer to. Must be open for writing.
+        measurement_name: Name of the measurement within the experiment.
+        X_layer_name: Name for the new X layer (e.g., "normalized", "log1p").
+        X_layer_data: Matrix data to store in the X layer. Can be a sparse matrix
+            (e.g., scipy.csr_matrix) or an h5py.Dataset.
+        ingest_mode: Mode for ingestion. Defaults to "write".
+        use_relative_uri: Whether to use relative URIs when storing references.
+            If None, the default behavior is used.
+        context: TileDB context for the operation. If None, uses the default context.
+        schema_validation: Whether to validate the matrix schema before adding.
+            Defaults to True.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If the experiment is not open for writing or if schema
+            validation fails.
 
     Lifecycle:
         Maturing.
@@ -1757,10 +1779,38 @@ def add_matrix_to_collection(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
-    schema_validation: bool = False,
+    schema_validation: bool = True,
 ) -> None:
-    """This is useful for adding X/obsp/varm/etc data, for example from
+    """Add a matrix to a specified collection within a measurement.
+
+    This is useful for adding X/obsp/varm/etc data, for example from
     Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
+
+    Args:
+        exp: The experiment to add the matrix to. Must be open for writing.
+        measurement_name: Name of the measurement within the experiment.
+        collection_name: Name of the collection to add the matrix to
+            (e.g., "X", "obsp", "varm").
+        matrix_name: Name for the new matrix within the collection.
+        matrix_data: Matrix data to store. Can be a sparse matrix
+            (e.g., scipy.csr_matrix) or an h5py.Dataset.
+        ingest_mode: Mode for ingestion. Defaults to "write".
+        use_relative_uri: Whether to use relative URIs when storing references.
+            If None, the default behavior is used.
+        context: TileDB context for the operation. If None, uses the default context.
+        schema_validation: Whether to validate the matrix schema before adding.
+            Defaults to True.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If schema validation fails or if the collection structure
+            is invalid.
+
+    Notes:
+        - If the collection doesn't exist, it will be created automatically.
+        - The matrix is stored as a SparseNDArray with identity axis mappings.
 
     Lifecycle:
         Maturing.
