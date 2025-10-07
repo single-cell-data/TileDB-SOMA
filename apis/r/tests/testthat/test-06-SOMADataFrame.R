@@ -1241,3 +1241,14 @@ test_that("factor levels cannot extend beyond index limit", {
     }
   }
 })
+
+test_that("deprecation warning for domain=NULL", {
+  uri <- tempfile()
+  schema <- arrow::schema(
+    soma_joinid = arrow::int64(),
+    data = arrow::int64(),
+  )
+  lifecycle::expect_deprecated(
+    soma_df <- SOMADataFrameCreate(uri, schema)
+  )
+})
