@@ -4,6 +4,7 @@ import contextlib
 import gc
 import json
 import random
+import shutil
 from copy import deepcopy
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
 
-from ._util import TESTDATA, assert_adata_equal, make_pd_df
+from ._util import ROOT_DATA_DIR, TESTDATA, assert_adata_equal, make_pd_df
 
 
 @pytest.fixture
@@ -473,7 +474,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "matrix_type,offset",
+    "matrix_type, offset",
     [
         ("obsm", (1, 0)),
         ("obsm", (-1, 0)),
@@ -487,15 +488,26 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
         ("varp", (-1, 0)),
     ],
 )
-def test_matrix_shape_enforcement(conftest_pbmc_small, tmp_path, matrix_type, offset):
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize(
+    "name_and_expected_shape",
+    [["pbmc3k_unprocessed", (2700, 13714)], ["pbmc3k_processed", (2638, 1838)]],
+)
+@pytest.mark.medium_runner
+def test_matrix_shape_enforcement(soma_tiledb_context, version, name_and_expected_shape, tmp_path, matrix_type, offset):
     """Test shape validation for all matrix collection types."""
     output_path = tmp_path.as_posix()
-    original = conftest_pbmc_small.copy()
-    n_obs, n_vars = conftest_pbmc_small.n_obs, conftest_pbmc_small.n_vars
+    name, expected_shape = name_and_expected_shape
+    original_path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(original_path)
+    if not Path(uri).is_dir():
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
+        )
 
-    # Create SOMA experiment
-    tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
-    assert_adata_equal(original, conftest_pbmc_small)
+    shutil.copytree(uri, output_path, dirs_exist_ok=True)
+    n_obs = expected_shape[0]
+    n_vars = expected_shape[1]
 
     # Determine expected shape based on matrix type
     shape_map = {
