@@ -10,7 +10,6 @@ import pandas  # noqa: ICN001
 import scipy  # noqa: F401
 
 import tiledbsoma
-import tiledbsoma.io
 import tiledb  # noqa: F401
 
 # module aliases
