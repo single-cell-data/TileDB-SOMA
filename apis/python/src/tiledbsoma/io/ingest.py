@@ -1402,39 +1402,31 @@ def update_obs(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "obs_id",
 ) -> None:
-    """Replaces the entire ``obs`` DataFrame with the contents of a new pandas DataFrame.
+    """Replace the entire ``obs`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
-    This function is designed to perform a full replacement of the ``obs`` DataFrame. It assumes the input ``new_data``
-    DataFrame represents the desired final state for the ``obs`` SOMA DataFrame. The operation implicitly relies on row
-    order for alignment.
+    Details:
+        This performs an in-place schema + data replacement of the :class:`Experiment`'s ``obs`` DataFrame using the provided ``new_data``. The operation:
 
-    **Details:**
-    * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``obs`` will be added. Columns present
-        in the existing ``obs`` but absent from ``new_data`` will be dropped.
-    * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows
-        and order as the existing ``obs`` DataFrame. It does *not* perform a join based on user-defined cell IDs or
-        other index columns.
+        * Adds any columns present in ``new_data`` but absent in existing ``obs``
+        * Drops any columns from the existing ``obs`` that are absent from ``new_data``
+        * Requires the **row count and order** to match the existing ``obs`` (no join/merge is performed)
 
-    To avoid data misalignment, the following workflow is recommended:
+    Supported Workflow:
+        To avoid data misalignment, the following workflow is recommended:
 
-    1. Read the *entire* existing  ``obs`` DataFrame into memory.
-    2. Perform all desired modifications (updating values, adding/dropping columns)
-       on this DataFrame, preserving the original row order.
-    3. Pass the fully modified DataFrame to ``update_obs``'s ``new_data`` argument.
+        1. Read the entire existing ``obs`` into memory.
+        2. Modify values / add or drop columns while preserving row order.
+        3. Pass the modified DataFrame as ``new_data``.
 
     Args:
-        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must be opened for write.
-        new_data: A pandas DataFrame containing the final desired data for the `obs` SOMA DataFrame.
+        exp: :class:`Experiment` opened for write.
+        new_data: A :class:`pandas.DataFrame` containing the final desired data for the existing ``obs`` DataFrame.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
+        default_index_name: Name to assign the index column if it is unnamed or is named ``"index"`` in the ``new_data`` class:`pandas.DataFrame`.
 
-        platform_config: Platform-specific options used to update this array, provided in the form
-            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
-
-        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
-            or has name ``"index"``.
-
-    Returns:
-        None
+    See Also:
+        - :func:`update_var` for updating a specific :class:`Measurement`'s ``var`` DataFrame.
 
     Lifecycle:
         Maturing.
@@ -1458,39 +1450,20 @@ def update_var(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
-    """Replaces the entire ``var`` DataFrame with the contents of a new pandas DataFrame.
+    """Replace the entire ``var`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
-    This function is designed to perform a full replacement of the ``var`` DataFrame. It assumes the input ``new_data``
-    DataFrame represents the desired final state for the ``var`` SOMA DataFrame. The operation implicitly relies on row
-    order for alignment.
-
-    **Details:**
-    * **Schema Changes:** Columns present in ``new_data`` but not in the existing ``var`` will be added. Columns present
-        in the existing ``var`` but absent from ``new_data`` will be dropped.
-    * **Row Alignment:** The function requires that the input ```new_data`` DataFrame has the exact same number of rows
-        and order as the existing ``var`` DataFrame. It does *not* perform a join based on user-defined cell IDs or
-        other index columns.
-
-    To avoid data misalignment, the following workflow is recommended:
-
-    1. Read the *entire* existing  ``var`` DataFrame into memory.
-    2. Perform all desired modifications (updating values, adding/dropping columns)
-       on this DataFrame, preserving the original row order.
-    3. Pass the fully modified DataFrame to ``update_var``'s ``new_data`` argument.
+    Analogous to ``update_obs``, but replaces the ``var`` DataFrame within a specific :class:`Measurement`. See :func:`update_obs` for details.
 
     Args:
-        exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must be opened for write.
-        new_data: A pandas DataFrame containing the final desired data for the `var` SOMA DataFrame.
+        exp: :class:`Experiment` opened for write.
+        new_data: A ``pandas.DataFrame`` containing the final desired data for the ``Measurement``'s ``var``.
+        measurement_name: Key in ``exp.ms`` identifying the ``Measurement`` whose ``var`` will be replaced.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
+        default_index_name: Name to assign the index column if it is unnamed or is named ``"index"`` in the ``new_data`` class:`pandas.DataFrame`.
 
-        platform_config: Platform-specific options used to update this array, provided in the form
-            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
-
-        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
-            or has name ``"index"``.
-
-    Returns:
-        None
+    See Also:
+        - :func:`update_obs` for updating the ``Experiment.obs`` DataFrame.
 
     Lifecycle:
         Maturing.
