@@ -411,3 +411,80 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 })
+
+test_that("Round tripping BPCells-backed Seurat objects", {
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+  so_version <- utils::packageVersion("SeuratObject")
+  skip_if_not(
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < "5.0.0") ||
+      so_version >= "5.0.0.9003",
+    message = so_msg(so_version)
+  )
+  skip_if_not_installed("BPCells")
+
+  fpath <- tempfile("seurat-bpcells-roundtrip")
+  dir.create(fpath, showWarnings = FALSE, recursive = TRUE)
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+  suppressWarnings(suppressMessages(
+    pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small)
+  ))
+  suppressWarnings(
+    pbmc_small[["RNA"]] <- methods::as(pbmc_small[["RNA"]], "Assay5")
+  )
+  pbmc_small[["RNA"]]$scale.data <- NULL
+  for (lyr in SeuratObject::Layers(pbmc_small)) {
+    SeuratObject::LayerData(pbmc_small[["RNA"]], lyr) <- BPCells::write_matrix_dir(
+      mat = SeuratObject::LayerData(pbmc_small[["RNA"]], lyr),
+      dir = tempfile(lyr, tmpdir = fpath)
+    )
+    expect_s4_class(
+      SeuratObject::LayerData(pbmc_small[["RNA"]], lyr),
+      "IterableMatrix"
+    )
+  }
+  extra <- c(
+    SeuratObject::Graphs(pbmc_small),
+    SeuratObject::Reductions(pbmc_small),
+    SeuratObject::Command(pbmc_small)
+  )
+  for (i in extra) {
+    pbmc_small[[i]] <- NULL
+  }
+
+  assay_hint <- .assay_version_hint("v5")
+  type_hint <- names(.type_hint(NULL))
+  uri <- tempfile(pattern = SeuratObject::Project(pbmc_small), tmpdir = fpath)
+
+  expect_no_condition(uri <- write_soma(pbmc_small, uri))
+  expect_type(uri, "character")
+  expect_no_condition(experiment <- SOMAExperimentOpen(uri))
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  query <- experiment$axis_query("RNA")
+  expect_s4_class(
+    assay <- query$to_seurat_assay(X_layers = experiment$ms$get("RNA")$X$names()),
+    "Assay5"
+  )
+  expect_identical(dim(assay), dim(pbmc_small))
+  expect_identical(
+    sort(SeuratObject::Layers(assay)),
+    sort(SeuratObject::Layers(pbmc_small))
+  )
+
+  for (lyr in SeuratObject::Layers(assay)) {
+    expect_s4_class(
+      ldat <- SeuratObject::LayerData(assay, lyr),
+      "dgCMatrix"
+    )
+    odat <- SeuratObject::LayerData(pbmc_small[["RNA"]], lyr)
+    expect_identical(
+      unname(as.matrix(ldat)),
+      unname(as.matrix(methods::as(odat, "dgCMatrix"))),
+      info = lyr
+    )
+  }
+
+  skip_if(TRUE, "BPCells matrices are not currently round-tripped as BPCells")
+})
