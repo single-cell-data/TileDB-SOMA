@@ -6,6 +6,7 @@
 \alias{write_soma.Hits}
 \alias{write_soma.character}
 \alias{write_soma.data.frame}
+\alias{write_soma.IterableMatrix}
 \alias{write_soma.matrix}
 \alias{write_soma.Matrix}
 \alias{write_soma.TsparseMatrix}
@@ -59,6 +60,22 @@
   ...,
   key = NULL,
   ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+)
+
+\method{write_soma}{IterableMatrix}(
+  x,
+  uri,
+  soma_parent,
+  sparse = TRUE,
+  type = NULL,
+  transpose = FALSE,
+  ...,
+  key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -268,6 +285,9 @@ head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
 (sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
 
 sdf$close()
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("BPCells", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Write a BPCells `IterableMatrix` to a SOMA
 \dontshow{\}) # examplesIf}
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Write a matrix to a SOMA
