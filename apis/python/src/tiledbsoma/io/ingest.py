@@ -1460,7 +1460,7 @@ def update_var(
         measurement_name: Key in ``exp.ms`` identifying the ``Measurement`` whose ``var`` will be replaced.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
-        default_index_name: Name to assign the index column if unnamed (or named ``"index"``) in ``new_data``.
+        default_index_name: Name to assign the index column if it is unnamed or is named ``"index"`` in the ``new_data`` class:`pandas.DataFrame`.
 
     See Also:
         - :func:`update_obs` for updating the ``Experiment.obs`` DataFrame.
