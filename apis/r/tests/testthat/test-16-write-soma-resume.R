@@ -354,6 +354,8 @@ test_that("Resume-mode dense arrays", {
 
 test_that("Resume-mode BPCells", {
   skip_if(TRUE, "resume-mode for BPCells has not been implemented")
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed("BPCells")
 })
 
 test_that("Resume-mode Seurat", {

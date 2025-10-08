@@ -526,7 +526,7 @@ test_that("Write Seurat with v3 and v5 assays", {
 })
 
 test_that("Write Seurat with BPCells layers", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
   skip_if_not_installed("BPCells")
 
