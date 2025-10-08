@@ -960,24 +960,27 @@ def _fill_out_slot_soma_domain(
             saturated_multi_range = []
             for axis_domain in slot_domain:
                 if axis_domain is None:
-                    axes_lo.append(f64info.min)
-                    axes_hi.append(f64info.max)
+                    axes_lo.append(float(f64info.min))
+                    axes_hi.append(float(f64info.max))
                     saturated_multi_range.append(True)
-                elif not isinstance(axis_domain, tuple) or len(axis_domain) != 2:
-                    raise ValueError("Axis domain should be a tuple[float, float]")
                 else:
-                    if np.issubdtype(type(axis_domain[0]), NPFloating) or np.issubdtype(
-                        type(axis_domain[1]),
-                        NPFloating,
-                    ):
-                        raise ValueError("Axis domain should be a tuple[float, float]")
-
-                    axes_lo.append(axis_domain[0])
-                    axes_hi.append(axis_domain[1])
+                    if not isinstance(axis_domain, tuple) or len(axis_domain) != 2:
+                        raise ValueError(f"Axis domain should be a tuple[float, float], but received '{axis_domain}'.")
+                    try:
+                        lo = float(axis_domain[0])
+                        hi = float(axis_domain[1])
+                    except ValueError as err:
+                        raise ValueError(
+                            f"Axis domain should be a tuple[float, float], but received '{axis_domain}'."
+                        ) from err
+                    axes_lo.append(lo)
+                    axes_hi.append(hi)
                     saturated_multi_range.append(False)
             slot_domain = tuple(axes_lo), tuple(axes_hi)
         else:
-            raise ValueError(f"{SOMA_GEOMETRY} domain should be either a list of None or a list of tuple[float, float]")
+            raise ValueError(
+                f"{SOMA_GEOMETRY} domain should be either a list of None or a list of tuple[float, float], but received '{slot_domain}'."
+            )
 
         return (slot_domain, tuple(saturated_multi_range))
 

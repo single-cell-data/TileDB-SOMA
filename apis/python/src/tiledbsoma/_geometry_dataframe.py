@@ -170,7 +170,9 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         if soma_geometry_domain is None:
             soma_geometry_domain = [None for _ in axis_names]
         elif not isinstance(soma_geometry_domain, list):
-            raise ValueError(f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float]")
+            raise ValueError(
+                f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float], but received '{soma_geometry_domain}'."
+            )
         elif len(soma_geometry_domain) != len(axis_names):
             raise ValueError(f"Dimension mishmatch between '{SOMA_GEOMETRY}' domain and coordinate system")
 
