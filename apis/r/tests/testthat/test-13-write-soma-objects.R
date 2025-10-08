@@ -397,7 +397,7 @@ test_that("write_soma.character scalar", {
 })
 
 test_that("write_soma.IterableMatrix mechanics", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed("BPCells")
 
   uri <- tempfile(pattern = "write-soma-bpcells")
