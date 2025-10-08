@@ -73,7 +73,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' for \pkg{tiledbsoma}
 #'
 #' @param n Number of entries on the static axis
-#' @param tiledbsoma_cts A \code{SOMATileDBContext} object
+#' @param tiledbsoma_ctx A \code{SOMATileDBContext} object
 #'
 #' @return Number of entries on the alternate axis to chunk
 #'
