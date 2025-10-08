@@ -124,7 +124,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   }
   # Calculate the blocks size assuming we're working with numeric matrices
   # Not integer or logical
-  num_bytes <- object.size(numeric(1L))
+  num_bytes <- utils::object.size(numeric(1L))
   return(floor(bytes / as.numeric(num_bytes) / n))
 }
 

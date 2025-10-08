@@ -36,3 +36,4 @@ src/libtiledbsoma/.editorconfig
 ^travis-tool\.sh$
 ^run\.sh$
 ^travis_wait_.*\.log$
+^air\.toml$
