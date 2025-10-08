@@ -444,7 +444,39 @@ uns_hint <- function(type = c("1d", "2d")) {
   return(TableReadIter$new(sr)$concat()$GetColumnByName(dimname)$as_vector())
 }
 
-.s3_method_defined <- function(f, class, envir = parent.frame()) {
+#' Determine if an S3 Method Exists
+#'
+#' Check to see that S3 method dispatch could reasonably be performed. Exposed
+#' S3 method selectors do not follow S4 inheritance, so asking if a method
+#' exists using \code{\link[utils:getS3method]{utils::getS3method}()} will not
+#' always work. This function simply checks to see if and S3 method
+#' \emph{could} be selected, but will not attempt to select one for use
+#'
+#' @param f Name of generic function
+#' @param class Name of class
+#'
+#' @return \code{TRUE} if an S3 method \code{<f>.<class>()} can be found,
+#' otherwise \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examples
+#' utils::methods("write_soma") # list all methods for `write_soma()`
+#'
+#' # `utils::.getS3method()` reports that there is no method for dgCMatrices
+#' # even though `write_soma.Matrix()` is defined
+#' tryCatch(utils::getS3method("write_soma", "dgCMatrix"), error = force)
+#'
+#' # `.s3_method_defined()` will report that a method for dgCMatrices exists
+#' .s3_method_defined("write_soma", "dgCMatrix") # TRUE
+#'
+#' # For classes where there is no method, `.s3_method_defined()` returns FALSE
+#' .s3_method_defined("write_soma", "classRepresentation")
+#' .s3_method_defined("write_soma", "vector")
+#'
+.s3_method_defined <- function(f, class) {
   stopifnot(
     rlang::is_character(f, n = 1L) && nzchar(f),
     rlang::is_character(class) && all(nzchar(class))
