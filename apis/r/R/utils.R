@@ -481,10 +481,10 @@ uns_hint <- function(type = c("1d", "2d")) {
     rlang::is_character(f, n = 1L) && nzchar(f),
     rlang::is_character(class) && all(nzchar(class))
   )
-  if (!utils::isS3stdGeneric(f)) {
+  methods <- attr(utils::methods(generic.function = f), which = "info")
+  if (!nrow(methods)) {
     rlang::abort(sprintf("'%s' is not a generic function", f))
   }
-  methods <- attr(utils::methods(generic.function = f), which = "info")
   methods$method <- row.names(methods)
   methods <- methods[!methods$isS4, , drop = FALSE]
   if (!nrow(methods)) {
@@ -506,7 +506,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   row.names(methods) <- NULL
   if (length(class) == 1L) {
     cdef <- methods::getClassDef(Class = class)
-    if (!"oldClass" %in% names(cdef@contains)) {
+    if (!is.null(cdef) && !"oldClass" %in% names(cdef@contains)) {
       class <- c(class, names(cdef@contains))
     }
   }
