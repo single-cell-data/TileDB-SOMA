@@ -192,7 +192,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
     def __init__(self) -> None:
         super().__init__(shapes_factory=sparse_array_shape)
 
-    @initialize(type=ndarray_datatype(), shape=sparse_array_shape(allow_none=True))
+    @initialize(type=ndarray_datatype(), shape=sparse_array_shape(allow_none=False))
     def setup(self, type: pa.DataType, shape: tuple[int | None, ...]) -> None:
         super().setup(
             type,

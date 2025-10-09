@@ -90,20 +90,16 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
         Args:
             uri: The URI where the dataframe will be created.
-            schema: Arrow schema defining the per-column schema. This schema
-                must define all columns, including columns to be named as index
-                columns.  If the schema includes types unsupported by the SOMA
+            schema: Arrow schema defining the per-column schema. This schema must define all columns, including
+                columns to be named as index columns.  If the schema includes types unsupported by the SOMA
                 implementation, a ValueError will be raised.
-            coordinate_space: Either the coordinate space or the axis names for the
-                coordinate space the point cloud is defined on.
-            domain: An optional sequence of tuples specifying the domain of each
-                index column. Two tuples must be provided for the ``soma_geometry``
-                column which store the width followed by the height. Each tuple should
-                be a pair consisting of the minimum and maximum values storable in the
-                index column. If omitted entirely, or if ``None`` in a given dimension,
-                the corresponding index-column domain will use the minimum and maximum
-                possible values for the column's datatype.  This makes a dataframe
-                growable.
+            coordinate_space: Either the coordinate space or the axis names for the coordinate space the
+                geometry dataframe is defined on.
+            domain: A sequence of tuples, each specifying the range of storable values for an index column. Must contain
+                a domain for each axis and the ``soma_joinid``. For example, for a floating-pointing 2D coordinate space
+                the domain ``domain=[(-10.5, 10.5), (0, 5.5), (0, 10_0000)]`` indicates values in the 2D region
+                ``(-10.5, 10.5) x (0, 5.5)`` with `soma_joinid` in the range ``(0, 10_000)`` (inclusive) are valid. Leaving
+                the domain as ``None`` is deprecated.
 
         Returns:
             The newly created geometry dataframe, opened for writing.
@@ -154,6 +150,11 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         # Check if domain has the right size (number of axis + 1 for SOMA_JOINID)
 
         if soma_domain is None:
+            warnings.warn(
+                "Setting ``domain=None`` is deprecated. Please specify the desired domain for the point cloud dataframe.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             soma_domain = tuple(None for _ in index_column_names)
         else:
             ndom = len(soma_domain)
@@ -169,7 +170,9 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         if soma_geometry_domain is None:
             soma_geometry_domain = [None for _ in axis_names]
         elif not isinstance(soma_geometry_domain, list):
-            raise ValueError(f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float]")
+            raise ValueError(
+                f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float], but received '{soma_geometry_domain}'."
+            )
         elif len(soma_geometry_domain) != len(axis_names):
             raise ValueError(f"Dimension mishmatch between '{SOMA_GEOMETRY}' domain and coordinate system")
 

@@ -86,28 +86,16 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
         Args:
             uri: The URI where the dataframe will be created.
-            schema: Arrow schema defining the per-column schema. This schema
-                must define all columns, including columns to be named as index
-                columns.  If the schema includes types unsupported by the SOMA
+            schema: Arrow schema defining the per-column schema. This schema must define all columns, including
+                columns to be named as index columns.  If the schema includes types unsupported by the SOMA
                 implementation, a ValueError will be raised.
-            coordinate_space: Either the coordinate space or the axis names for the
-                coordinate space the point cloud is defined on.
-            domain:
-                An optional sequence of tuples specifying the domain of each
-                index column. Each tuple must be a pair consisting of the
-                minimum and maximum values storable in the index column. For
-                example, if there is a single int64-valued index column, then
-                ``domain`` might be ``[(100, 200)]`` to indicate that values
-                between 100 and 200, inclusive, can be stored in that column.
-                If provided, this sequence must have the same length as
-                ``index_column_names``, and the index-column domain will be as
-                specified.  If omitted entirely, or if ``None`` in a given
-                dimension, the corresponding index-column domain will use an
-                empty range, and data writes after that will fail with "A range
-                was set outside of the current domain". Unless you have a
-                particular reason not to, you should always provide the desired
-                `domain` at create time: this is an optional but strongly
-                recommended parameter.
+            coordinate_space: Either the coordinate space or the axis names for the coordinate space the point
+                cloud is defined on.
+            domain: A sequence of tuples, each specifying the range of storable values for an index column. Must contain
+                a domain for each axis and the ``soma_joinid``. For example, for a floating-pointing 2D coordinate space
+                the domain ``domain=[(-10.5, 10.5), (0, 5.5), (0, 10_0000)]`` indicates values in the 2D region
+                ``(-10.5, 10.5) x (0, 5.5)`` with `soma_joinid` in the range ``(0, 10_000)`` (inclusive) are valid. Leaving
+                the domain as ``None`` is deprecated.
 
         Returns:
             The newly created point cloud, opened for writing.
@@ -174,6 +162,11 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         domain = None
 
         if soma_domain is None:
+            warnings.warn(
+                "Setting ``domain=None`` is deprecated. Please specify the desired domain for the point cloud dataframe.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             soma_domain = tuple(None for _ in index_column_names)
         else:
             ndom = len(soma_domain)

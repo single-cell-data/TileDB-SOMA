@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -110,6 +111,46 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
+        """Creates a SOMA ``SparseNDArray`` at the given URI.
+
+        Args:
+            type:
+                The Arrow type to be stored in the NDArray. If the type is unsupported, an error will be raised.
+            shape:
+                The current maximum capacity of each dimension. All lengths must be in the positive int64 range. The
+                shape can be increased, but not decreased, after creation.
+            platform_config:
+                Platform-specific options used to create this array. This may be provided as settings in a dictionary,
+                with options located in the ``{'tiledb': {'create': ...}}`` key, or as a
+                :class:`~tiledbsoma.TileDBCreateOptions` object.
+            tiledb_timestamp:
+                If specified, overrides the default timestamp used to open this object. If unset, uses the timestamp
+                provided by the context.
+
+        Returns:
+            The created ``SparseNDArray``.
+
+        Raises:
+            TypeError:
+                If the ``type`` is unsupported.
+            ValueError:
+                If the ``shape`` is unsupported.
+            tiledbsoma.AlreadyExistsError:
+                If the underlying object already exists at the given URI.
+            TileDBError:
+                If unable to create the underlying object.
+
+        Examples:
+            >>> with tiledbsoma.SparseNDArray.create("array1", type=pa.float64(), shape=(1000, 100, 100)) as array:
+            >>>     print(array.schema)
+            soma_dim_0: int64 not null
+            soma_dim_1: int64 not null
+            soma_dim_2: int64 not null
+            soma_data: double not null
+
+        Lifecycle:
+            Maturing.
+        """
         context = _validate_soma_tiledb_context(context)
 
         # SOMA-to-core mappings:
@@ -133,6 +174,15 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         index_column_schema = []
         index_column_data = {}
+
+        if any(col_size is None for col_size in shape):
+            new_shape = tuple(1 if col_size is None else col_size for col_size in shape)
+            warnings.warn(
+                f"Using ``None`` in the shape is deprecated. Updating shape={shape} to shape={new_shape}.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            shape = new_shape
 
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
@@ -163,9 +213,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             if dim_shape == 0:
                 raise ValueError("SparseNDArray shape slots must be at least 1")
             if dim_shape is None:
-                # Core current-domain semantics are (lo, hi) with both
-                # inclusive, with lo <= hi. This means smallest is (0, 0)
-                # which is shape 1, not 0.
                 dim_shape = 1
 
             index_column_data[pa_field.name] = [
