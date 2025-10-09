@@ -166,3 +166,20 @@ domain_for_arrow_table <- function() {
     grp = NULL
   ))
 }
+
+#' Get the Expected Deprecation Stage
+#'
+#' @return Returns one of \dQuote{\code{deprecated}}, \dQuote{\code{defunct}},
+#' or an empty string \code{""}
+#'
+#' @examples
+#' test_that("example deprecation", {
+#'   switch(
+#'     EXPR = deprecation_stage("2.0.0"),
+#'     deprecated = lifecycle::expect_deprecated(deprecated_function()),
+#'     defunct = lifecycle::expect_defunct(deprecated_function())
+#'     expect_no_condition(deprecated_function())
+#'   )
+#' })
+#'
+deprecation_stage <- function(when) .deprecation_stage(when) %||% ""

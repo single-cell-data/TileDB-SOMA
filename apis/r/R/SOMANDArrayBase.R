@@ -103,6 +103,10 @@ SOMANDArrayBase <- R6::R6Class(
     #' @param type A character value describing the TileDB data type.
     #'
     set_data_type = function(type) {
+      .deprecate(
+        when = "2.0.0",
+        what = sprintf("%s$set_data_type()", class(self)[1L])
+      )
       soma_debug(sprintf(
         "[SOMANDArrayBase::set_data_type] caching type %s",
         type$ToString()

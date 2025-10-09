@@ -40,6 +40,7 @@ Imports:
     data.table,
     fs,
     glue,
+    lifecycle,
     Matrix (>= 1.6.4),
     methods,
     nanoarrow,
