@@ -123,6 +123,14 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             TileDBError:
                 If unable to create the underlying object.
 
+        Examples:
+            >>> with tiledbsoma.DenseNDArray.create("array1", type=pa.float64(), shape=(1000, 100, 100)) as array:
+            >>>     print(array.schema)
+            soma_dim_0: int64 not null
+            soma_dim_1: int64 not null
+            soma_dim_2: int64 not null
+            soma_data: double not null
+
         Lifecycle:
             Maturing.
         """

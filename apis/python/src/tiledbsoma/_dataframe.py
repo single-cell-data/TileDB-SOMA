@@ -196,19 +196,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 If unable to create the underlying object.
 
         Examples:
-            >>> df = pd.DataFrame(data={"soma_joinid": [0, 1], "col1": ["a", "b"]})
-            ... with tiledbsoma.DataFrame.create(
-            ...    "a_dataframe", schema=pa.Schema.from_pandas(df)
-            ... ) as soma_df:
-            ...     soma_df.write(pa.Table.from_pandas(df, preserve_index=False))
-            ...
-            >>> with tiledbsoma.open("a_dataframe") as soma_df:
-            ...     a_df = soma_df.read().concat().to_pandas()
-            ...
-            >>> a_df
-               soma_joinid col1
-            0            0    a
-            1            1    b
+            >>> schema = pa.schema([("soma_joinid", pa.int64()), ("label", pa.large_string()), ("data", pa.float64())])
+            >>> with tiledbsoma.DataFrame.create("dataframe1", schema=schema, domain=((0, 10),)) as soma_df:
+            ...     print(soma_df.schema)
+            soma_joinid: int64 not null
+            label: large_string
+            data: double
 
         Lifecycle:
             Maturing.
