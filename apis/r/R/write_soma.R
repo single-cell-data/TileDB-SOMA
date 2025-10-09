@@ -331,7 +331,7 @@ write_soma.IterableMatrix <- function(
     "'transpose' must be a single logical value" = is_scalar_logical(transpose),
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key)),
-    "'shape' must be a vector of two postiive integers" = is.null(shape) ||
+    "'shape' must be a vector of two positive integers" = is.null(shape) ||
       (rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L))
   )
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))

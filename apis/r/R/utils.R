@@ -72,7 +72,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' does not specify a memory size. This value is taken from the CI workflows
 #' for \pkg{tiledbsoma}
 #'
-#' @param n Number of entries on the static axis
+#' @param n Number of entries on the static (non-iterated) axis
 #' @param tiledbsoma_ctx A \code{SOMATileDBContext} object
 #'
 #' @return Number of entries on the alternate axis to chunk
