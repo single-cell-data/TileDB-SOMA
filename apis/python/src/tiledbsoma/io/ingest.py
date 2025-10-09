@@ -1703,14 +1703,14 @@ def _validate_matrix_to_collection(
         if matrix_data.shape[0:2] != expected_shape:
             raise SOMAError(
                 f"Matrix '{matrix_name}' must match the observation size. "
-                f"Found {matrix_data.shape}, expected {(target_obs_size, target_obs_size)}."
+                f"Found {matrix_data.shape[0:2]}, expected {(target_obs_size, target_obs_size)}."
             )
     elif collection_name == "varp":
         expected_shape = (target_var_size, target_var_size)
         if matrix_data.shape[0:2] != expected_shape:
             raise SOMAError(
                 f"Matrix '{matrix_name}' must match the observation size (O). "
-                f"Found {matrix_data.shape}, expected {(target_var_size, target_var_size)}."
+                f"Found {matrix_data.shape[0:2]}, expected {(target_var_size, target_var_size)}."
             )
 
 
