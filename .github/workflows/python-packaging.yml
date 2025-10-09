@@ -5,13 +5,11 @@ name: TileDB-SOMA python sdist & wheels
 on:
   # Trigger publication to TestPyPI via user workflow request:
   #     gh workflow run python-packaging.yml --ref branch
-  # Specify the branch or other ref as required, allowing testing
-  # of PRs/branches.
   workflow_dispatch:
   pull_request:
     paths:
       - '.github/workflows/python-packaging.yml'
-  # Trigger publication to PyPi via new release event.
+  # Trigger publication to PyPI via new release event.
   release:
     types: [published]
   # Schedule wheel-build and smoke-test on a regular schedule.
@@ -22,186 +20,186 @@ on:
     - cron: "42 9 * * *"
 
 jobs:
-  sdist:
+  build_sdist:
     name: Build source distribution
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # ensure we get all tags to inform package version determination
+          fetch-tags: true  # ensure we get all tags for package version number
+      
       - name: Install dependencies
-        run: pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
-      - run: pip list
+        run: |
+          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip list
+
       - name: Build sdist
+        working-directory: apis/python
         run: python setup.py sdist
-        working-directory: ./apis/python
+
+      
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
           name: sdist
           path: apis/python/dist/
 
-  # This step builds wheels and uploads them to GitHub Actions storage.
-  # See also https://github.com/single-cell-data/TileDB-SOMA/issues/700.
-  # See also https://github.com/single-cell-data/TileDB-SOMA/wiki/PyPI-packaging-notes
-  # for important transitional context.
-  wheels:
-    # Note: tries all supported Python versions as specified in apis/python/setup.py
-    name: Build ${{ matrix.python-version }}-${{ matrix.wheel-name }} wheel
-    needs: sdist
+  test_sdist:
+    name: Build source distribution
+    needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ '39', '310', '311', '312', '313' ]
-        cibw_build: [ manylinux_x86_64, manylinux_aarch64, macosx_x86_64, macosx_arm64 ]
-        include:
-          - cibw_build: manylinux_x86_64
-            os: ubuntu-24.04
-            wheel-name: manylinux_2_28-x86_64
-          - cibw_build: manylinux_aarch64
-            os: ubuntu-24.04-arm
-            wheel-name: manylinux_2_28-aarch64
-            CIBW_BEFORE_BUILD_LINUX: dnf install -y ninja-build perl-IPC-Cmd zip
-            # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
-            CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=1
-          - cibw_build: macosx_x86_64
-            os: macos-15-intel
-            cibw_archs_macos: x86_64
-            wheel-name: macos-x86_64
-          - cibw_build: macosx_arm64
-            os: macos-15  # Note:  macos-15 is arm64 only
-            cibw_archs_macos: arm64
-            wheel-name: macos-arm64
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
+        python_version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
+      - name: Set up Python ${{ matrix.python_version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
         with:
           name: sdist
-      - name: Rename sdist
-        run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
-      # This is crucial for ongoing debug (do not remove it) as this shows the
-      # OS version as used by `pip install` to find wheel names. Importantly,
-      # macos 12 and macos14 self-report as `macosx-10.9-universal2` via
-      # `distutil.util.get_platform()`.
-      - name: Show self-reported platform
+          path: apis/python/dist/
+      - name: Install sdist artifact
+        working-directory: apis/python
         run: |
-          echo "python --version"; python --version
-          echo matrix.platform: ${{ matrix.platform }}
-          echo matrix.arch: ${{ matrix.arch }}
-          # This bit is crucial since it's used to match up to a component of the wheel-file name
-          pip install setuptools
-          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
-          python -c 'import platform; print("platform.platform()", platform.platform())'
-      - name: Select XCode version for macos-arm64
-        if: matrix.os == 'macos-15'
-        uses: maxim-lobanov/setup-xcode@v1
+          echo $PWD
+          pip install --verbose dist/*.tar.gz
+      - name: sdist smoke test ${{ matrix.os }}
+        run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
+
+  build_wheels:
+    name: ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }} wheel
+    runs-on: ${{ matrix.buildplat[0] }}
+    strategy:
+      matrix:
+        python_version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        buildplat:
+          - [ubuntu-22.04, manylinux_x86_64]
+          - [ubuntu-24.04-arm, manylinux_aarch64]
+          - [macos-15-intel, macosx_x86_64]
+          - [macos-15, macosx_arm64]
+    steps:
+      
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
         with:
-          xcode-version: '16.1'
-      - name: Select XCode version for macos-x86_64
-        if: matrix.os == 'macos-15-intel'
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '16.0'
+          fetch-tags: true  # ensure we get all tags for package version number
+     
+      - name: "Brew setup on macOS"
+        if: ${{ startsWith(matrix.buildplat[0], 'macos-') == true }}
+        run: |
+          set -e pipefail
+          brew update
+          brew install automake pkg-config ninja llvm
+      
+      - name: "Brew setup on manylinux_aarch64"
+        # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
+        if: ${{ endsWith(matrix.buildplat[1], 'aarch64') == true }}
+        run: |
+          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
+          echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
+          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip list
+      
+      - name: Get arch
+        if: ${{ startsWith(matrix.buildplat[0], 'macos-') == true }}
+        run: |
+          plat="${{ matrix.buildplat[1] }}"
+          arch="${plat#*_}"
+          echo "ARCH=$arch" >> $GITHUB_ENV
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
         with:
-          package-dir: tiledbsoma.tar.gz
-          only: cp${{ matrix.python-version }}-${{ matrix.cibw_build }}
+          package-dir: apis/python/
+          output-dir: wheelhouse
         env:
-          CIBW_BUILD_VERBOSITY: 1
-          CIBW_BEFORE_BUILD_LINUX: ${{ matrix.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: ${{ matrix.CIBW_ENVIRONMENT_LINUX || '' }}
-          # Most recent tags with no listed security issues at https://quay.io/repository/pypa/manylinux_2_28_aarch64?tab=tags, ca. 2025-04-03
-          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64:2025.03.22-2
-          CIBW_MANYLINUX_AARCH64_IMAGE: quay.io/pypa/manylinux_2_28_aarch64:2025.03.22-2
-          CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
-          CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
+          CIBW_BUILD: ${{ matrix.python_version }}-${{ matrix.buildplat[1] }}
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
+          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
+          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
+          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CMAKE_OSX_ARCHITECTURES: ${{ env.arch || ''}}
           MACOSX_DEPLOYMENT_TARGET: "13.3"
 
-      - name: Upload wheel-${{ matrix.wheel-name }}-${{ matrix.python-version }} to GitHub Actions storage
+      - name: Upload wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python-version }}
+          name: wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
           path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
-  smoke-test:
-    name: "Smoke test ${{ matrix.python.undotted-version }}-${{ matrix.wheel-name }} wheel"
-    needs: wheels
+  test_wheels:
+    name: "Smoke test ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }} wheel"
+    needs: build_wheels
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python:
-          - undotted-version: '39'
-            dotted-version: '3.9'
-          - undotted-version: '310'
-            dotted-version: '3.10'
-          - undotted-version: '311'
-            dotted-version: '3.11'
-          - undotted-version: '312'
-            dotted-version: '3.12'
-          - undotted-version: '313'
-            dotted-version: '3.13'
-        wheel-name:
-          - manylinux_2_28-x86_64
-          - manylinux_2_28-aarch64
-          - macos-x86_64
-          - macos-arm64
-        include:
-          - wheel-name: manylinux_2_28-x86_64
-            os: ubuntu-24.04
-            arch: x86_64
-          - wheel-name: manylinux_2_28-aarch64
-            os: ubuntu-24.04-arm
-            arch: aarch64
-          - wheel-name: macos-x86_64
-            os: macos-15-intel
-            arch: x86_64
-          - wheel-name: macos-arm64
-            os: macos-15
-            arch: arm64
+        python_version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        buildplat:
+          - [ubuntu-22.04, manylinux_x86_64]
+          - [ubuntu-24.04-arm, manylinux_aarch64]
+          - [macos-15-intel, macosx_x86_64]
+          - [macos-15, macosx_arm64]
       fail-fast: false
     steps:
-      - name: Set up Python ${{ matrix.python.dotted-version }}
+      - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python.dotted-version }}
+          python-version: ${{ matrix.python_version }}
+      
+      - name: Get arch
+        run: |
+          plat="${{ matrix.buildplat[1] }}"
+          arch="${plat#*_}"
+          echo "ARCH=$arch" >> $GITHUB_ENV
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python.undotted-version }}
+          name: wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
+
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python.undotted-version }}-cp${{ matrix.python.undotted-version }}-*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-${{ matrix.python_version }}-${{ matrix.python_version }}-*_${{ env.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
           pip install $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
+
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
+        
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
           "
 
   # Publish to TestPyPI upon user workflow request
-  publish-to-test-pypi:
+  publish_test_pypi:
     name: Publish package to TestPyPI
-    needs: smoke-test
+    needs: [test_sdist, test_wheels]
     runs-on: ubuntu-24.04
-    # Configuration: https://github.com/single-cell-data/SOMA/settings/environments
     environment: test-pypi
-    # Configuration: https://pypi.org/manage/project/somacore/settings/publishing
     permissions:
       id-token: write
     if: github.event_name == 'workflow_dispatch'
@@ -222,9 +220,9 @@ jobs:
           verbose: true
 
   # Publish to PyPI upon release.
-  publish-to-pypi:
+  publish_pypi:
     name: Publish package to PyPI
-    needs: smoke-test
+    needs: [test_sdist, test_wheels]
     runs-on: ubuntu-24.04
     # Configuration: https://github.com/single-cell-data/SOMA/settings/environments
     environment: pypi
@@ -251,8 +249,8 @@ jobs:
   # -- only for scheduled ones.
   create_issue_on_fail:
     runs-on: ubuntu-24.04
-    needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
-    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch' && github.run_attempt == 1
+    needs: [test_sdist, test_wheels, publish_test_pypi, publish_pypi]
+    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && github.run_attempt == 1
     steps:
       - name: Checkout TileDB-SOMA `main`
         uses: actions/checkout@v4
