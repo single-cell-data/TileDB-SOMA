@@ -157,6 +157,7 @@ def sparse_array(
     tiledb_timestamp=tiledb_timestamps(),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
+@pytest.mark.medium_runner
 def test_fuzz_SparseNDArray_create(
     tmp_path,
     uri: str,
