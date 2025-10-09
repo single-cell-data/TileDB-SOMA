@@ -1,6 +1,6 @@
 # Workflow to build distribution, and push to PyPI or TestPyPI
 
-name: TileDB-SOMA python sdist & wheels
+name: TileDB-SOMA Python Release
 
 on:
   # Trigger publication to TestPyPI via user workflow request:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-tags: true  # ensure we get all tags for package version number
-      
+
       - name: Install dependencies
         run: |
           pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
@@ -38,7 +38,7 @@ jobs:
         working-directory: apis/python
         run: python setup.py sdist
 
-      
+
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
@@ -83,19 +83,19 @@ jobs:
           - [macos-15-intel, macosx_x86_64]
           - [macos-15, macosx_arm64]
     steps:
-      
+
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
           fetch-tags: true  # ensure we get all tags for package version number
-     
+
       - name: "Brew setup on macOS"
         if: ${{ startsWith(matrix.buildplat[0], 'macos-') == true }}
         run: |
           set -e pipefail
           brew update
           brew install automake pkg-config ninja llvm
-      
+
       - name: "Brew setup on manylinux_aarch64"
         # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
         if: ${{ endsWith(matrix.buildplat[1], 'aarch64') == true }}
@@ -108,7 +108,7 @@ jobs:
         run: |
           pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
           pip list
-      
+
       - name: Get arch
         if: ${{ startsWith(matrix.buildplat[0], 'macos-') == true }}
         run: |
@@ -157,7 +157,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
-      
+
       - name: Get arch
         run: |
           plat="${{ matrix.buildplat[1] }}"
@@ -184,7 +184,7 @@ jobs:
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
-        
+
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |

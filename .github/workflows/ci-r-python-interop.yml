@@ -1,4 +1,4 @@
-name: TileDB-SOMA R-Python interop testing
+name: TileDB-SOMA R-Python Interop CI
 
 on:
   pull_request:
