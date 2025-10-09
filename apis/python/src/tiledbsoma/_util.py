@@ -35,9 +35,6 @@ from .options._tiledb_create_write_options import (
     _DictFilterSpec,
 )
 
-if TYPE_CHECKING:
-    pass
-
 _JSONFilter = Union[str, dict[str, Union[str, Union[int, float]]]]
 _JSONFilterList = Union[str, list[_JSONFilter]]
 
@@ -64,6 +61,34 @@ def is_local_path(path: str) -> bool:
     if path.startswith("file://"):
         return True
     return "://" not in path
+
+
+def is_tiledb_carrara_uri(uri: str) -> bool:
+    """Carrara-style tiledb:// URIs support relative path operations.
+
+    The original, absolute-only, URIs had the format:
+
+        tiledb://ORG/UUID
+
+    The new URIs are:
+
+        tiledb://WORKSPACE/TEAMSPACE/optional-path-elements/
+
+    The current methodology to distinguish between these is to look at the run-time
+    environment, and determine if we are running on Cloud or Carrara. This is a
+    temporary bridge to some means of reasoning about the URLs.
+
+    NB: this is a temporary HACK, and will be replaced as the URI design center evolves.
+    """
+    if not uri.startswith("tiledb://"):
+        return False
+
+    # Circular reference breaker. Ugly, temporary, hopefully.
+    from .options._soma_tiledb_context import SOMATileDBContext
+
+    CLOUD_DEPLOYMENTS = {"https://api.tiledb.com", "https://api.dev.tiledb.io"}
+    context = SOMATileDBContext()
+    return context.native_context.config()["rest.server_address"] not in CLOUD_DEPLOYMENTS
 
 
 def make_relative_path(uri: str, relative_to: str) -> str:
@@ -105,7 +130,9 @@ def uri_joinpath(base: str, path: str) -> str:
         return base
 
     if not p_base.scheme or p_base.scheme == "file":
-        # if a file path, just use pathlib.
+        # if a file path, just use pathlib. This is significantly more
+        # permissive than it should be, given that `file://` URIs are
+        # only absolute.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
     else:
         if ".." in path:

@@ -20,7 +20,7 @@ from . import pytiledbsoma as clib
 from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
-from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
+from ._util import is_relative_uri, is_tiledb_carrara_uri, make_relative_path, sanitize_key, uri_joinpath
 
 CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
@@ -229,18 +229,16 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
                 full_uri=maybe_relative_uri,
                 relative=False,
             )
-        if not self.uri.startswith("tiledb://"):
-            # We don't need to post-process anything.
+        if not self.uri.startswith("tiledb://") or is_tiledb_carrara_uri(self.uri):
+            # We don't need to post-process anything - URI schema handles relative paths.
             return _ChildURI(
                 add_uri=maybe_relative_uri,
                 full_uri=uri_joinpath(self.uri, maybe_relative_uri),
                 relative=True,
             )
-        # Our own URI is a ``tiledb://`` URI. Since TileDB Cloud requires absolute
-        # URIs, we need to calculate the absolute URI to pass to Group.add
+        # TileDB Cloud requires absolute URIs; we need to calculate the absolute URI to pass to Group.add
         # based on our creation URI.
-        # TODO: Handle the case where we reopen a TileDB Cloud Group, but by
-        # name rather than creation path.
+        # TODO: Handle the case where we reopen a TileDB Cloud Group, but by name rather than creation path.
         absolute_uri = uri_joinpath(self.uri, maybe_relative_uri)
         return _ChildURI(add_uri=absolute_uri, full_uri=absolute_uri, relative=False)
 
@@ -305,7 +303,12 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         # The TileDB-Py API supports use_relative_uri in [True, False].
         # Map from the former to the latter -- and also honor our somacore contract for None --
         # using the following rule.
-        if use_relative_uri is None and value.uri.startswith("tiledb://"):
+        if (
+            use_relative_uri is None
+            and value.uri.startswith("tiledb://")
+            and not is_tiledb_carrara_uri(value.uri)
+        ):
+            # Carrara uses relative URIs
             # TileDB-Cloud does not use relative URIs, ever.
             use_relative_uri = False
 
