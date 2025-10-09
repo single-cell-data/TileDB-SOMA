@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add validation mode specified by `schema_validation=True`.
-
 ### Changed
+
+- \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add validation mode specified by `schema_validation=True`.
 
 ### Deprecated
 
