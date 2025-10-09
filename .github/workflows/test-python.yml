@@ -38,11 +38,11 @@ jobs:
         run: cat /proc/cpuinfo
 
       - name: MacOS CPU info
-        if: ${{ startsWith(input.os, 'macos-') == true }}
+        if: ${{ startsWith(inputs.os, 'macos-') == true }}
         run: sysctl -a | grep cpu
 
       - name: "Brew setup on macOS"
-        if: ${{ startsWith(input.os, 'macos-') == true }}
+        if: ${{ startsWith(inputs.os, 'macos-') == true }}
         run: |
           set -e pipefail
           brew update
