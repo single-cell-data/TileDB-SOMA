@@ -519,9 +519,6 @@ def test_matrix_shape_enforcement(soma_tiledb_context, version, name_and_expecte
     base_shape = shape_map[matrix_type]
     bad_shape = (max(1, base_shape[0] + offset[0]), max(1, base_shape[1] + offset[1]))
 
-    if bad_shape == base_shape:
-        pytest.skip("Offset resulted in valid shape")
-
     # Create invalid matrix
     bad_matrix = csr_matrix((bad_shape[0], bad_shape[1])) if matrix_type in ["obsp", "varp"] else np.ones(bad_shape)
 
@@ -551,9 +548,6 @@ def test_matrix_X_layer_enforcement(conftest_pbmc_small, tmp_path, offset):
     shape_map = conftest_pbmc_small.n_obs, conftest_pbmc_small.n_vars
     base_shape = shape_map
     bad_shape = (max(1, base_shape[0] + offset[0]), max(1, base_shape[1] + offset[1]))
-
-    if bad_shape == base_shape:
-        pytest.skip("Offset resulted in valid shape")
 
     # Create invalid matrix
     bad_matrix = np.ones(bad_shape)
