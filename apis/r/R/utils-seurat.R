@@ -233,23 +233,24 @@
     # Write `X` matrices
     for (layer in SeuratObject::Layers(x)) {
       ldat <- SeuratObject::LayerData(x, layer = layer)
-      if (!inherits(ldat, what = c("matrix", "Matrix"))) {
-        warning(warningCondition(
+      if (!.s3_method_defined("write_soma", class(ldat))) {
+        rlang::warn(
           message = sprintf(
             "Unknown matrix type %s (layer %s)",
             class(ldat)[1L],
             layer
           ),
-          class = "unknownMatrixTypeWarning",
-          call = str2lang("write_soma()")
-        ))
+          class = "unknownMatrixTypeWarning"
+        )
         next
       }
-      type <- .type_hint(ifelse(
-        is.matrix(ldat),
-        yes = 'matrix',
-        no = class(ldat)
-      ))
+      type <- .type_hint(if (is.matrix(ldat)) {
+        "matrix"
+      } else if (methods::is(ldat, "IterableMatrix")) {
+        "dgCMatrix"
+      } else {
+        class(ldat)
+      })
       if (all(features_matrix[, layer]) && all(cells_matrix[, layer])) {
         soma_info(sprintf("Adding '%s' matrix as '%s'", layer, layer))
         tryCatch(

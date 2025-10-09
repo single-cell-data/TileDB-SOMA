@@ -352,6 +352,12 @@ test_that("Resume-mode dense arrays", {
   gc()
 })
 
+test_that("Resume-mode BPCells", {
+  skip_if(TRUE, "resume-mode for BPCells has not been implemented")
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed("BPCells")
+})
+
 test_that("Resume-mode Seurat", {
   skip_if(!extended_tests())
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))

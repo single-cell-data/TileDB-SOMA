@@ -79,6 +79,9 @@ head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
 
 sdf$close()
 \dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("BPCells", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Write a BPCells `IterableMatrix` to a SOMA
+\dontshow{\}) # examplesIf}
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Write a matrix to a SOMA
 uri <- withr::local_tempfile(pattern = "matrix")

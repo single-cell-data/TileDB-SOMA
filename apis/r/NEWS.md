@@ -2,6 +2,8 @@
 
 ## Added
 
+- Add support for ingestion of BPCells-backed `Seurat` objects in `write_soma()` ([#4273](https://github.com/single-cell-data/TileDB-SOMA/pull/4273))
+
 ## Changed
 
 ## Deprecated

@@ -28,7 +28,9 @@ runs:
         r-version: ${{ inputs.r }}
         http-user-agent: ${{ inputs.http-user-agent }}
         use-public-rspm: true
-        extra-repositories: https://tiledb-inc.r-universe.dev
+        extra-repositories: |
+          https://tiledb-inc.r-universe.dev
+          https://bnprks.r-universe.dev/
 
     - name: P3M Bioconductor
       run: |

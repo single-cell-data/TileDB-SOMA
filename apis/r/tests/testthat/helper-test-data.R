@@ -9,6 +9,74 @@ get_data <- function(x, package = NULL) {
   return(e[[x]])
 }
 
+#' Write a Matrix to a BPCells Format
+#'
+#' @param x A matrix
+#' @param dirname Directory to write to
+#' @param format BPCells matrix format
+#' @param ... Additional arguments passed to \code{BPCells::write_*()}
+#'
+#' @return \code{x} as a BPCells matrix
+#'
+#' @keywords internal
+#'
+write_bpcells <- function(
+  x,
+  dirname = tempfile(),
+  format = c("memory", "10x", "anndata", "directory", "hdf5"),
+  ...
+) {
+  if (!requireNamespace("BPCells", quietly = TRUE)) {
+    rlang::abort("Cannot find BPCells")
+  }
+  if (!(is.matrix(x) || methods::is(x, "Matrix"))) {
+    rlang::abort("'x' must be a matrix")
+  }
+  x <- methods::as(
+    methods::as(
+      methods::as(x, "CsparseMatrix"),
+      "generalMatrix"
+    ),
+    "dMatrix"
+  )
+  if (!rlang::is_character(dirname, n = 1L) || !nzchar(dirname)) {
+    rlang::abort("'dirname' must be a single, non-empty character string")
+  }
+  dir.create(dirname, showWarnings = FALSE, recursive = TRUE)
+  format <- match.arg(format)
+  if (is.null(rownames(x))) {
+    rownames(x) <- sprintf("feature_%i", seq_len(nrow(x)))
+  }
+  if (is.null(colnames(x))) {
+    colnames(x) <- sprintf("cell_%i", seq_len(ncol(x)))
+  }
+  return(switch(
+    EXPR = format,
+    memory = suppressMessages(BPCells::write_matrix_memory(x, ...)),
+    "10x" = suppressWarnings(BPCells::write_matrix_10x_hdf5(
+      suppressMessages(BPCells::write_matrix_memory(x)),
+      path = tempfile("bpcells-10x", tmpdir = dirname, fileext = ".h5"),
+      ...
+    )),
+    anndata = suppressWarnings(BPCells::write_matrix_anndata_hdf5(
+      suppressMessages(BPCells::write_matrix_memory(x)),
+      path = tempfile("bpcells-h5ad", tmpdir = dirname, fileext = ".h5ad"),
+      ...
+    )),
+    directory = suppressMessages(BPCells::write_matrix_dir(
+      x,
+      dir = tempfile("bpcells-dir", tmpdir = dirname),
+      ...
+    )),
+    hdf5 = suppressMessages(BPCells::write_matrix_hdf5(
+      x,
+      path = tempfile("bpcells-matrix", tmpdir = dirname, fileext = ".h5"),
+      group = "matrix",
+      ...
+    ))
+  ))
+}
+
 create_sparse_matrix_with_int_dims <- function(
   nrows = 10,
   ncols = 5,

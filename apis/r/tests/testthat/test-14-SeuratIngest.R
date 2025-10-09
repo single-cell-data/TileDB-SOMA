@@ -524,3 +524,67 @@ test_that("Write Seurat with v3 and v5 assays", {
   )
   expect_true(all(obs_hints %in% experiment$obs$colnames()))
 })
+
+test_that("Write Seurat with BPCells layers", {
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+  skip_if_not_installed("BPCells")
+
+  fpath <- tempfile("seurat-bpcells-ingest")
+  dir.create(fpath, showWarnings = FALSE, recursive = TRUE)
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+  suppressWarnings(suppressMessages(
+    pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small)
+  ))
+  suppressWarnings(
+    pbmc_small[["RNA"]] <- methods::as(pbmc_small[["RNA"]], "Assay5")
+  )
+  pbmc_small[["RNA"]]$scale.data <- NULL
+  for (lyr in SeuratObject::Layers(pbmc_small)) {
+    SeuratObject::LayerData(pbmc_small[["RNA"]], lyr) <- BPCells::write_matrix_dir(
+      mat = SeuratObject::LayerData(pbmc_small[["RNA"]], lyr),
+      dir = tempfile(lyr, tmpdir = fpath)
+    )
+    expect_s4_class(
+      SeuratObject::LayerData(pbmc_small[["RNA"]], lyr),
+      "IterableMatrix"
+    )
+  }
+  extra <- c(
+    SeuratObject::Graphs(pbmc_small),
+    SeuratObject::Reductions(pbmc_small),
+    SeuratObject::Command(pbmc_small)
+  )
+  for (i in extra) {
+    pbmc_small[[i]] <- NULL
+  }
+
+  assay_hint <- .assay_version_hint("v5")
+  type_hint <- names(.type_hint(NULL))
+  uri <- tempfile(pattern = SeuratObject::Project(pbmc_small), tmpdir = fpath)
+
+  expect_no_condition(uri <- write_soma(pbmc_small, uri))
+  expect_type(uri, "character")
+  expect_no_condition(experiment <- SOMAExperimentOpen(uri))
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  expect_s3_class(experiment, "SOMAExperiment")
+  expect_no_error(experiment$ms)
+  expect_identical(experiment$ms$names(), "RNA")
+
+  ms <- experiment$ms$get("RNA")
+  on.exit(ms$close(), add = TRUE, after = FALSE)
+
+  expect_equivalent(ms$get_metadata(names(assay_hint)), assay_hint[[1L]])
+  expect_identical(
+    sort(ms$X$names()),
+    sort(SeuratObject::Layers(pbmc_small[["RNA"]]))
+  )
+
+  for (lyr in SeuratObject::Layers(pbmc_small[["RNA"]])) {
+    expect_type(th <- ms$X$get(lyr)$get_metadata(type_hint), "character")
+    expect_length(th, n = 1L)
+    expect_identical(th, expected = "Matrix:dgCMatrix", info = lyr)
+  }
+})
