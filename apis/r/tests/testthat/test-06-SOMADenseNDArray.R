@@ -288,7 +288,7 @@ test_that("SOMADenseNDArray timestamped ops", {
   t20 <- Sys.time()
   dnda <- SOMADenseNDArrayOpen(uri = uri, mode = "WRITE")
   switch(
-    EXPR = deprecation_stage("1.17.1"),
+    EXPR = deprecation_stage("2.0.0"),
     deprecate = lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16())),
     defunct = lifecycle::expect_defunct(dnda$set_data_type(arrow::int16()))
   )
