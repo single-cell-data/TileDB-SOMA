@@ -94,7 +94,7 @@ jobs:
         run: |
           set -e pipefail
           brew update
-          brew install automake pkg-config ninja llvm
+          brew install automake llvm
 
       - name: "Brew setup on manylinux_aarch64"
         # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
@@ -142,7 +142,7 @@ jobs:
   test_wheels:
     name: "Smoke test ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }} wheel"
     needs: build_wheels
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       matrix:
         python_version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
