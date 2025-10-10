@@ -1248,7 +1248,13 @@ test_that("deprecation warning for domain=NULL", {
     soma_joinid = arrow::int64(),
     data = arrow::int64(),
   )
-  lifecycle::expect_deprecated(
-    soma_df <- SOMADataFrameCreate(uri, schema)
+  with_mocked_bindings(
+    .tiledbsoma_deprecation_version = function() "2.1.0",
+    .deprecation_stage = function(when) "deprecate",
+    {
+      lifecycle::expect_deprecated(
+        soma_df <- SOMADataFrameCreate(uri, schema)
+      )
+    }
   )
 })
