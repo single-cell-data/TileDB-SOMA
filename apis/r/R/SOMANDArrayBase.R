@@ -98,7 +98,12 @@ SOMANDArrayBase <- R6::R6Class(
     },
 
     ## needed eg after open() to set (Arrow) type
-    #' @description Sets a cache value for the datatype (lifecycle: maturing).
+    #' @description Sets a cache value for the datatype.
+    #'
+    #' @section Lifecycle:
+    #' As of \pkg{tiledbsoma} 2.1.0, \code{$set_data_type()} is deprecated; this
+    #' functionality is no longer needed as \code{libtiledbsoma} now accurately
+    #' sets the TileDB data type upon array opening
     #'
     #' @param type A character value describing the TileDB data type.
     #'
