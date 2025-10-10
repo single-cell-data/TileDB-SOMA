@@ -145,7 +145,12 @@ jobs:
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       matrix:
-        python_version: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        python_version:
+          - ['3.9', 'cp39']
+          - ['3.10', 'cp310']
+          - ['3.11', 'cp311']
+          - ['3.12', 'cp312']
+          - ['3.13', 'cp313']
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64]
           - [ubuntu-24.04-arm, manylinux_aarch64]
@@ -167,13 +172,13 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version }}
+          name: wheel-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version[1] }}
 
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-${{ matrix.python_version }}-${{ matrix.python_version }}-*_${{ env.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.python_version[1] }}-*_${{ env.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
@@ -188,7 +193,7 @@ jobs:
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version[0] }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
