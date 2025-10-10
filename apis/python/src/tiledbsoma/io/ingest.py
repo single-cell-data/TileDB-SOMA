@@ -1656,18 +1656,39 @@ def update_matrix(
 
 def _validate_matrix_to_collection(
     exp: Experiment,
-    measurement_name: str,
+    meas: Measurement,
     collection_name: str,
     matrix_name: str,
     matrix_data: Matrix | h5py.Dataset,
 ) -> None:
     """Validates the shape of a new matrix against an existing matrix in a collection.
 
+    Args:
+        exp: The experiment object
+        measurement_name: Name of the measurement
+        collection_name: Name of the collection
+        matrix_name: Name of the matrix
+        matrix_data: The matrix data to validate
+        meas: The already-opened measurement object
+
     Raises:
         ValueError: If the matrix shape is incompatible.
     """
     obs_soma_joinid_domain = exp.obs._maybe_soma_joinid_shape  # O
-    var_soma_joinid_domain = exp.ms[measurement_name].var._maybe_soma_joinid_shape  # V
+
+    # Try to access the var DataFrame directly, fallback to explicit open if needed
+    try:
+        var_soma_joinid_domain = meas.var._maybe_soma_joinid_shape  # V
+    except (SOMAError, RuntimeError) as e:
+        # Only execute if error message contains specific substring
+        if "Array is not open" in str(e):
+            # If direct access fails (e.g. measurement in write mode)
+            # open the var DataFrame explicitly in read mode
+            with DataFrame.open(meas.var.uri, "r", context=meas.context) as var_df:
+                var_soma_joinid_domain = var_df._maybe_soma_joinid_shape  # V
+        else:
+            # Re-raise the exception if it doesn't match
+            raise e
 
     target_obs_size = obs_soma_joinid_domain  # O: Observation (row) size
     target_var_size = var_soma_joinid_domain  # V: Variable (column) size
@@ -1831,7 +1852,7 @@ def add_matrix_to_collection(
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
         if schema_validation:
-            _validate_matrix_to_collection(exp, measurement_name, collection_name, matrix_name, matrix_data)
+            _validate_matrix_to_collection(exp, meas, collection_name, matrix_name, matrix_data)
 
         if collection_name in meas:
             coll = cast("Collection[RawHandle]", meas[collection_name])
