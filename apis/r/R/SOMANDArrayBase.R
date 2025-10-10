@@ -104,7 +104,7 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     set_data_type = function(type) {
       .deprecate(
-        when = "2.0.0",
+        when = "2.1.0",
         what = sprintf("%s$set_data_type()", class(self)[1L])
       )
       soma_debug(sprintf(
