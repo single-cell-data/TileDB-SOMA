@@ -75,7 +75,7 @@ SOMADataFrame <- R6::R6Class(
 
       if (is.null(domain)) {
         lifecycle::deprecate_warn(
-          "2.0.0",
+          "2.1.0",
           "create(domain = 'must be a named list')",
         )
       }
