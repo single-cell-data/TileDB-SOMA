@@ -24,7 +24,7 @@ test_that("Factory re-creation", {
     expect_no_condition(
       obj <- switch(
         EXPR = fname,
-        SOMADataFrameCreate = fxn(uri, schema = schema),
+        SOMADataFrameCreate = fxn(uri, schema = schema, domain = list(soma_joinid = c(0, 0))),
         SOMASparseNDArrayCreate = ,
         SOMADenseNDArrayCreate = fxn(
           uri,
@@ -58,7 +58,7 @@ test_that("Resume-mode factories", {
     expect_no_condition(
       obj <- switch(
         EXPR = fname,
-        SOMADataFrameCreate = fxn(uri, schema = schema),
+        SOMADataFrameCreate = fxn(uri, schema = schema, domain = list(soma_joinid = c(0, 0))),
         SOMASparseNDArrayCreate = ,
         SOMADenseNDArrayCreate = fxn(
           uri,
@@ -77,7 +77,7 @@ test_that("Resume-mode factories", {
     expect_no_condition(
       obj <- switch(
         EXPR = fname,
-        SOMADataFrameCreate = fxn(uri, schema = schema, ingest_mode = "resume"),
+        SOMADataFrameCreate = fxn(uri, schema = schema, ingest_mode = "resume", domain = list(soma_joinid = c(0, 0))),
         SOMASparseNDArrayCreate = ,
         SOMADenseNDArrayCreate = fxn(
           uri,
