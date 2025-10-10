@@ -183,9 +183,7 @@ uns_hint <- function(type = c("1d", "2d")) {
     .standard_regexps()$valid_R_system_version
   )
   if (grepl(pattern = pattern, x = current)) {
-    current <- as.integer(unlist(strsplit(as.character(current), split = "\\.")))
-    current[2L] <- current[2L] + 1L
-    current <- package_version(paste0(c(current[1:2], 0L), collapse = "."))
+current <- package_version(paste0(c(current$major, current$minor + 1L, 0L), collapse = "."))
   }
   return(current)
 }

@@ -177,7 +177,7 @@ domain_for_arrow_table <- function() {
 #'   switch(
 #'     EXPR = deprecation_stage("2.0.0"),
 #'     deprecated = lifecycle::expect_deprecated(deprecated_function()),
-#'     defunct = lifecycle::expect_defunct(deprecated_function())
+#'     defunct = lifecycle::expect_defunct(deprecated_function()),
 #'     expect_no_condition(deprecated_function())
 #'   )
 #' })
