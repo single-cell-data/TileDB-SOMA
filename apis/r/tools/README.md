@@ -4,7 +4,7 @@ This directory provides a series of scripts to aid developers in maintaining the
 
 ### Documentation for Developer Scripts
 
- - [`fetch_releases.R`](#fetch_releases.R)
+- [`fetch_releases.R`](#fetch_releases.R)
 
 ## `fetch_releases.R`
 
@@ -18,8 +18,8 @@ system.file("extdata", "releases.dcf", package = "tiledbsoma")
 
 This script depends on the following R packages
 
- - [gh](https://cran.r-project.org/package=gh)
- - [rprojroot](https://cran.r-project.org/package=rprojroot)
+- [gh](https://cran.r-project.org/package=gh)
+- [rprojroot](https://cran.r-project.org/package=rprojroot)
 
 This script also requires a GitHub token; for more details about setting up a GitHub token for use with the gh package, please see [`?gh::gh_token`](https://gh.r-lib.org/reference/gh_token.html)
 
