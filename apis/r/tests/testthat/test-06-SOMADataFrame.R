@@ -1257,4 +1257,7 @@ test_that("deprecation warning for domain=NULL", {
       )
     }
   )
+  if (utils::packageVersion("tiledbsoma") >= "2.1.0") {
+    lifecycle::expect_deprecated(soma_df <- SOMADataFrameCreate(tempfile(), schema))
+  }
 })
