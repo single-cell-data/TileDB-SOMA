@@ -320,7 +320,7 @@ test_that("`SOMADenseNDArray$set_data_type()` deprecations", {
   dnda <- SOMADenseNDArrayOpen(uri = uri)
 
   with_mocked_bindings(
-    .tiledbsoma_version = function() "2.1.0",
+    .tiledbsoma_deprecation_version = function() "2.1.0",
     .deprecation_stage = function(when) "deprecate",
     {
       lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16()))

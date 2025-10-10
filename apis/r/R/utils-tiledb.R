@@ -34,7 +34,11 @@ get_tiledb_version <- function(compact = FALSE) {
   return(version)
 }
 
-#' Get the TileDB-SOMA Version in \code{major.minor} format
+#' Get the TileDB-SOMA Version in \code{major.minor} Format for use with Deprecations
+#'
+#' Get the version of \pkg{tiledbsoma} in \code{major.minor} format. This is
+#' designed for use with deprecations, as it will automatically roll the version
+#' up to the next \emph{minor} version if a development version is detected.
 #'
 #' @return The version of \pkg{tiledbsoma} in \code{major.minor} format
 #'
@@ -42,7 +46,7 @@ get_tiledb_version <- function(compact = FALSE) {
 #'
 #' @noRd
 #'
-.tiledbsoma_version <- function() {
+.tiledbsoma_deprecation_version <- function() {
   current <- utils::packageVersion("tiledbsoma")
   pattern <- sprintf(
     fmt = "^%s(\\.[[:digit:]]+)+$",

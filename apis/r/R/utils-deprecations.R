@@ -143,7 +143,7 @@
     ))
   }
   # Get current package version
-  current <- .tiledbsoma_version()
+  current <- .tiledbsoma_deprecation_version()
   if (current < when) {
     # Deprecation will happen in the future
     return(invisible(NULL))
