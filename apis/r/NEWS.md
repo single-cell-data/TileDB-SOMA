@@ -8,6 +8,8 @@
 
 ## Deprecated
 
+- `SOMANDArrayBase$set_data_type()` is marked for deprecation begining with tiledbsoma 2.1.0
+
 ## Removed
 
 ## Fixed
