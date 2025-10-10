@@ -1,4 +1,4 @@
-name: TileDB-SOMA C++ Tests (Pull-request)
+name: TileDB-SOMA C++ CI (Pull-request)
 
 on:
   pull_request:
