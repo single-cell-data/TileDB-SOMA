@@ -287,11 +287,7 @@ test_that("SOMADenseNDArray timestamped ops", {
 
   t20 <- Sys.time()
   dnda <- SOMADenseNDArrayOpen(uri = uri, mode = "WRITE")
-  switch(
-    EXPR = deprecation_stage("2.0.0"),
-    deprecate = lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16())),
-    defunct = lifecycle::expect_defunct(dnda$set_data_type(arrow::int16()))
-  )
+
   M2 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M2)
   dnda$close()
@@ -306,4 +302,32 @@ test_that("SOMADenseNDArray timestamped ops", {
   )
   expect_equal(dnda$read_dense_matrix(), M1) # read between t10 and t20 sees only first write
   dnda$close()
+})
+
+test_that("`SOMADenseNDArray$set_data_type()` deprecations", {
+  skip_if(!extended_tests())
+  uri <- tempfile(pattern = "soma-dense-nd-array-timestamps")
+
+  dnda <- SOMADenseNDArrayCreate(
+    uri = uri,
+    type = arrow::int16(),
+    shape = c(2, 2)
+  )
+  M1 <- matrix(rep(1, 4), 2, 2)
+  dnda$write(M1)
+  dnda$close()
+
+  dnda <- SOMADenseNDArrayOpen(uri = uri)
+
+  with_mocked_bindings(
+    .tiledbsoma_version = function() "2.1.0",
+    .deprecation_stage = function(when) "deprecate",
+    {
+      lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16()))
+    }
+  )
+
+  if (utils::packageVersion("tiledbsoma") >= "2.1.0") {
+    lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16()))
+  }
 })
