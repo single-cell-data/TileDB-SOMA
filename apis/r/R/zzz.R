@@ -34,6 +34,8 @@ NULL
 ## .onAttach is also called when the package is 'attached' via 'library(tiledbsoma)'
 ## During package build and byte-code compilation and load check, both are called.
 .onLoad <- function(libname, pkgname) {
+  .pkgenv$libname <- libname
+  .pkgenv$pkgname <- pkgname
   ## create a slot for somactx in per-package enviroment, do no fill it yet to allow 'lazy load'
   .pkgenv[["somactx"]] <- NULL
 }

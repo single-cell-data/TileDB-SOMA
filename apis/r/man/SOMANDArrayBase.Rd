@@ -7,6 +7,13 @@
 Virtual base class to add ND-array-specific functionality to the
 \code{\link{SOMAArrayBase}} class (lifecycle: maturing).
 }
+\section{Lifecycle}{
+
+As of \pkg{tiledbsoma} 2.1.0, \code{$set_data_type()} is deprecated; this
+functionality is no longer needed as \code{libtiledbsoma} now accurately
+sets the TileDB data type upon array opening
+}
+
 \seealso{
 Derived classes: \code{\link{SOMADenseNDArray}},
 \code{\link{SOMASparseNDArray}}
@@ -91,7 +98,7 @@ Returns \code{self}.
 \if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
 \subsection{Method \code{set_data_type()}}{
-Sets a cache value for the datatype (lifecycle: maturing).
+Sets a cache value for the datatype.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
 }
