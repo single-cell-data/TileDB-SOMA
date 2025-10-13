@@ -77,7 +77,9 @@ R functionality additionally enters a defunct stage, in which an error is thrown
 - documentation must clearly indicate the scope of defunct status (e.g, function, a particular set of parameters, etc) and must include actionable guidance on migration.
 - `NEWS.md` must clearly indicate the defunct status and any guidance on migration.
 
-At next major release after the defunct status, the affected R functionality must be removed.
+At next major release after the defunct status, the affected R functionality must be removed. A helper function `.deprecate()` is provided to handle the migration from deprecation to defunct for use within R code. This function has the same interface as `lifecycle::deprecate_*()` and may be used in palce of `lifecycle::deprecate_warn()` and `lifecycle::deprecate_stop()`; tests must be migrated from `lifecycle::expect_deprecated()` to `lifecycle::expect_defunct()` manually.
+
+There is a script at `apis/r/tools/fetch_releases.R` that caches TileDB-SOMA releases for the R package's migration between deprecated and defunct stages. This script should be run after each GH release to ensure that this cache is up-to-date. For more details, please see `apis/r/tools/README.md`
 
 For other breaking changes which are not "deprecate and remove":
 

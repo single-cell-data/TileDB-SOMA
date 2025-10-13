@@ -47,10 +47,7 @@ class NDArray(SOMAArray, somacore.NDArray):
             shape:
                 The maximum capacity of each dimension, including room
                 for any intended future appends, as a sequence.  E.g. ``(100, 10)``.
-                All lengths must be in the positive int64 range, or ``None``.  It's
-                necessary to say ``shape=(None, None)`` or ``shape=(None, None,
-                None)``, as the sequence length determines the number of dimensions
-                N in the N-dimensional array.
+                All lengths must be in the positive int64 range.
 
                 For :class:`SparseNDArray` only, if a slot is None, then the minimum
                 possible range will be used.  This makes a :class:`SparseNDArray`

@@ -300,6 +300,121 @@ write_soma.data.frame <- function(
   return(sdf)
 }
 
+#' @name write_soma_objects
+#' @rdname write_soma_objects
+#'
+#' @method write_soma IterableMatrix
+#' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("BPCells", quietly = TRUE)
+#' # Write a BPCells `IterableMatrix` to a SOMA
+#'
+write_soma.IterableMatrix <- function(
+  x,
+  uri,
+  soma_parent,
+  sparse = TRUE,
+  type = NULL,
+  transpose = FALSE,
+  ...,
+  key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  stopifnot(
+    "Cannot find 'BPCells'" = requireNamespace("BPCells", quietly = TRUE),
+    "'sparse' must be a single logical value" = is_scalar_logical(sparse),
+    "'type' must be an Arrow type" = is.null(type) || is_arrow_data_type(type),
+    "'transpose' must be a single logical value" = is_scalar_logical(transpose),
+    "'key' must be a single character value" = is.null(key) ||
+      (is_scalar_character(key) && nzchar(key)),
+    "'shape' must be a vector of two positive integers" = is.null(shape) ||
+      (rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L))
+  )
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
+  if (!isTRUE(sparse)) {
+    rlang::abort("BPCells matrices can only be written sparsely at this time")
+  }
+  if (ingest_mode != "write") {
+    rlang::abort("'resume' mode for BPCells is not yet implemented")
+  }
+  # Create a proper URI
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    relative = relative
+  )
+  if (is.character(key) && is.null(soma_parent)) {
+    stop("'soma_parent' must be a SOMACollection if 'key' is provided")
+  }
+  # Transpose the matrix
+  if (isTRUE(transpose)) {
+    x <- Matrix::t(x)
+  }
+  # Check the shape
+  shape <- shape %||% dim(x)
+  if (any(shape < dim(x))) {
+    rlang::abort(sprintf(
+      paste(
+        "Requested an array of shape (%s)",
+        "but was given a matrix with a larger shape (%s)"
+      ),
+      paste(shape, collapse = ", "),
+      paste(dim(x), collapse = ", ")
+    ))
+  }
+  # Create the array
+  type <- type %||% arrow::infer_type(
+    suppressMessages(suppressWarnings(as.matrix(x[1, 1])))
+  )
+  array <- SOMASparseNDArrayCreate(
+    uri = uri,
+    type = type,
+    shape = shape,
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = Sys.time()
+  )
+  # TODO: Add support for resume-mode
+  if (!is.null(x)) {
+    stride <- .block_size(ncol(x), tiledbsoma_ctx = array$tiledbsoma_ctx)
+    strider <- CoordsStrider$new(start = 1L, end = nrow(x), stride = stride)
+    while (strider$has_next()) {
+      idx <- as.integer(strider$next_element())
+      slice <- as(as(x[idx, , drop = FALSE], "dgCMatrix"), "TsparseMatrix")
+      if (!length(slice@x)) {
+        next
+      }
+      array$.write_coordinates(data.frame(
+        soma_dim_0 = bit64::as.integer64(slice@i),
+        soma_dim_1 = bit64::as.integer64(slice@j),
+        soma_data = if (inherits(type, c("Int16", "Int32"))) {
+          as.integer(slice@x)
+        } else if (inherits(type, c("Int64"))) {
+          bit64::as.integer64(slice@x)
+        } else {
+          slice@x
+        }
+      ))
+    }
+  }
+  # Add to `soma_parent`
+  if (is.character(key)) {
+    mode <- array$mode()
+    on.exit(array$reopen(mode), add = TRUE, after = FALSE)
+    withCallingHandlers(
+      expr = .register_soma_object(array, soma_parent, key, relative),
+      existingKeyWarning = .maybe_muffle
+    )
+  }
+  # Return
+  return(array)
+}
+
 #' @param sparse Create a \link[tiledbsoma:SOMASparseNDArray]{sparse} or
 #' \link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}.
 #' @param type \link[arrow:data-type]{Arrow type} for encoding \code{x}

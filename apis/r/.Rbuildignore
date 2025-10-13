@@ -14,6 +14,7 @@
 ^dev$
 ^local
 ^copy_source.sh$
+^tools/*\.html$
 
 # build artifacts with libtiledbsoma
 src/include
@@ -36,3 +37,4 @@ src/libtiledbsoma/.editorconfig
 ^travis-tool\.sh$
 ^run\.sh$
 ^travis_wait_.*\.log$
+^air\.toml$

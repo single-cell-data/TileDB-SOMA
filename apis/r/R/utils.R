@@ -60,6 +60,74 @@ uns_hint <- function(type = c("1d", "2d")) {
   return(hint)
 }
 
+#' Generate a Block Size for Matrix Iteration
+#'
+#' Generate block sizes for matrix iteration; the block sizes are calculated
+#' while keeping one axis static and chunking on the alternate axis
+#'
+#' \code{tiledbsoma_ctx} is an option available to \code{write_soma()}; we can
+#' use the options in the context to determine how much memory we can use from
+#' the option \dQuote{\code{soma.init_buffer_bytes}}. A default value of
+#' \eqn{33,554,432} bytes is used when no context is provided, or the context
+#' does not specify a memory size. This value is taken from the CI workflows
+#' for \pkg{tiledbsoma}
+#'
+#' @param n Number of entries on the static (non-iterated) axis
+#' @param tiledbsoma_ctx A \code{SOMATileDBContext} object
+#'
+#' @return Number of entries on the alternate axis to chunk
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examplesIf requireNamespace("SeuratObject", quietly = TRUE)
+#' data("pbmc_small", package = "SeuratObject")
+#' pbmc_small <- UpdateSeuratObject(pbmc_small)
+#'
+#' # Pull a matrix from `pbmc_small`, transpose to be obs x var
+#' # instead of var x obs
+#' mat <- t(pbmc_small[["RNA"]]$counts)
+#' n_var <- ncol(mat)
+#'
+#' # Use a context to limit tp half a megabyte
+#' ctx <- SOMATileDBContext$new(c(
+#'   soma.init_buffer_bytes = as.character(0.5 * (1024L ^ 2L))
+#' ))
+#'
+#' # Generate a block size to iterate across the obs axis
+#' # `n` is the number of entries on the static axis, not the iterated axis
+#' .block_size(n = n_var, tiledbsoma_ctx = ctx)
+#'
+.block_size <- function(n, tiledbsoma_ctx = NULL) {
+  if (!rlang::is_integerish(n, n = 1L, finite = TRUE) || n <= 0L) {
+    rlang::abort("'n' must be a single, finite, positive integer value")
+  }
+  if (!(is.null(tiledbsoma_ctx) || inherits(tiledbsoma_ctx, "SOMATileDBContext"))) {
+    rlang::abort("'tiledbsoma_ctx' must be a SOMATileDBContext object")
+  }
+  default <- 33554432
+  # If no context was provided, use the default value
+  bytes <- if (is.null(tiledbsoma_ctx)) {
+    default
+  } else {
+    # Try to pull the "soma.init_buffer_bytes" option from the context
+    # If it doesn't exist, use the default value
+    # If it does, but is not numeric, throw an error
+    tryCatch(
+      expr = as.numeric(tiledbsoma_ctx$get(
+        "soma.init_buffer_bytes",
+        default = default
+      )),
+      warning = stop
+    )
+  }
+  # Calculate the blocks size assuming we're working with numeric matrices
+  # Not integer or logical
+  num_bytes <- utils::object.size(numeric(1L))
+  return(floor(bytes / as.numeric(num_bytes) / n))
+}
+
 .encode_as_char <- function(x) {
   return(switch(EXPR = typeof(x), double = sprintf("%a", x), x))
 }
@@ -374,6 +442,75 @@ uns_hint <- function(type = c("1d", "2d")) {
     timestamprange = x$.tiledb_timestamp_range
   )
   return(TableReadIter$new(sr)$concat()$GetColumnByName(dimname)$as_vector())
+}
+
+#' Determine if an S3 Method Exists
+#'
+#' Check to see that S3 method dispatch could reasonably be performed. Exposed
+#' S3 method selectors do not follow S4 inheritance, so asking if a method
+#' exists using \code{\link[utils:getS3method]{utils::getS3method}()} will not
+#' always work. This function simply checks to see if and S3 method
+#' \emph{could} be selected, but will not attempt to select one for use
+#'
+#' @param f Name of generic function
+#' @param class Name of class
+#'
+#' @return \code{TRUE} if an S3 method \code{<f>.<class>()} can be found,
+#' otherwise \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examples
+#' utils::methods("write_soma") # list all methods for `write_soma()`
+#'
+#' # `utils::.getS3method()` reports that there is no method for dgCMatrices
+#' # even though `write_soma.Matrix()` is defined
+#' tryCatch(utils::getS3method("write_soma", "dgCMatrix"), error = force)
+#'
+#' # `.s3_method_defined()` will report that a method for dgCMatrices exists
+#' .s3_method_defined("write_soma", "dgCMatrix") # TRUE
+#'
+#' # For classes where there is no method, `.s3_method_defined()` returns FALSE
+#' .s3_method_defined("write_soma", "classRepresentation")
+#' .s3_method_defined("write_soma", "vector")
+#'
+.s3_method_defined <- function(f, class) {
+  stopifnot(
+    rlang::is_character(f, n = 1L) && nzchar(f),
+    rlang::is_character(class) && all(nzchar(class))
+  )
+  methods <- attr(utils::methods(generic.function = f), which = "info")
+  if (!nrow(methods)) {
+    rlang::abort(sprintf("'%s' is not a generic function", f))
+  }
+  methods$method <- row.names(methods)
+  methods <- methods[!methods$isS4, , drop = FALSE]
+  if (!nrow(methods)) {
+    rlang::abort(sprintf("'%s' is not an S3 generic", f))
+  }
+  methods <- do.call(
+    what = rbind,
+    args = lapply(
+      X = split(x = methods, f = methods$from),
+      FUN = function(df) {
+        fakes <- tools::nonS3methods(unique(df$from))
+        return(df[!df$method %in% fakes, , drop = FALSE])
+      }
+    )
+  )
+  if (!nrow(methods)) {
+    rlang::abort(sprintf("No actual methods found for '%s'", f))
+  }
+  row.names(methods) <- NULL
+  if (length(class) == 1L) {
+    cdef <- methods::getClassDef(Class = class)
+    if (!is.null(cdef) && !"oldClass" %in% names(cdef@contains)) {
+      class <- c(class, names(cdef@contains))
+    }
+  }
+  return(any(sprintf("%s.%s", f, class) %in% methods$method))
 }
 
 #' Pad Names of a Character Vector

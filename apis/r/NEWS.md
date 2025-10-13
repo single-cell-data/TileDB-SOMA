@@ -2,9 +2,14 @@
 
 ## Added
 
+- Add support for ingestion of BPCells-backed `Seurat` objects in `write_soma()` ([#4273](https://github.com/single-cell-data/TileDB-SOMA/pull/4273))
+
 ## Changed
 
 ## Deprecated
+
+- Mark `SOMANDArrayBase$set_data_type()` for deprecation. ([#4279](https://github.com/single-cell-data/TileDB-SOMA/pull/4279))
+- Mark setting `domain` to `NULL` in `SOMADataFrame$create()` for deprecation. ([#4274](https://github.com/single-cell-data/TileDB-SOMA/pull/4274))
 
 ## Removed
 

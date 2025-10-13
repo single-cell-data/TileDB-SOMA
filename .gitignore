@@ -78,6 +78,7 @@ apis/r/**/local/*
 apis/r/.Rproj*
 apis/r/*.Rproj
 apis/r/.Rhistory
+apis/r/tools/*.html
 
 # Coverage/codecov
 .coverage

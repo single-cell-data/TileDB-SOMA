@@ -14,7 +14,7 @@ on:
     - cron: "42 9 * * *"
   workflow_dispatch:
 
-name: pkgdown
+name: TileDB-SOMA R Release
 
 jobs:
   pkgdown:
