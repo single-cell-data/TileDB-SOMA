@@ -158,10 +158,10 @@ jobs:
           - [macos-15, macosx_arm64]
       fail-fast: false
     steps:
-      - name: Set up Python ${{ matrix.python_version }}
+      - name: Set up Python ${{ matrix.python_version[0] }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: ${{ matrix.python_version[0] }}
 
       - name: Get arch
         run: |
