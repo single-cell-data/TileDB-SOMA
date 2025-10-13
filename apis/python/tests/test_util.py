@@ -1,9 +1,6 @@
-from functools import partial
-
 import pytest
 from somacore import ResultOrder
 
-import tiledbsoma
 import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._util import (
     dense_index_to_shape,
@@ -84,8 +81,8 @@ def test_uri_joinpath_object_store(scheme):
 
 @pytest.mark.parametrize("_carrara_mode", [True, False])
 def test_uri_joinpath_tiledb(carrara_mode):
-    # old-style CLOUD URI
     if not carrara_mode:
+        # old-style CLOUD URI
         assert uri_joinpath("tiledb://acct/", "A") == "tiledb://acct/A"
         assert uri_joinpath("tiledb://acct/", "A/B") == "tiledb://acct/A/B"
 
@@ -96,16 +93,12 @@ def test_uri_joinpath_tiledb(carrara_mode):
             assert uri_joinpath("tiledb://acct/A/", "../B/")
 
     else:
+        # New-style Carrara URI
         assert uri_joinpath("tiledb://ws/ts", "A") == "tiledb://ws/ts/A"
         assert uri_joinpath("tiledb://ws/ts/", "A") == "tiledb://ws/ts/A"
         assert uri_joinpath("tiledb://ws/ts", "A/") == "tiledb://ws/ts/A/"
         assert uri_joinpath("tiledb://ws/ts/", "A/") == "tiledb://ws/ts/A/"
         assert uri_joinpath("tiledb://ws/ts/A", "B") == "tiledb://ws/ts/A/B"
-
-        # TODO: what is behavior if missing ws or ts?
-
-        assert uri_joinpath("tiledb://ws/ts/s3://bkt/pth", "A") == "tiledb://ws/ts/A/s3://bkt/pth/A"
-        assert uri_joinpath("tiledb://ws/ts/A/s3://bkt/pth", "B") == "tiledb://ws/ts/A/B/s3://bkt/pth/B"
 
 
 def test_make_relative_path_posix():
@@ -161,11 +154,12 @@ def test_make_relative_path_tiledb(carrara_mode):
         assert make_relative_path("tiledb://A/B/C/", "tiledb://A/B") == "C"
         assert make_relative_path("tiledb://A/B/C/D", "tiledb://A/B/C") == "D"
 
-        # reg and storage path MUST share common suffix
-        assert make_relative_path("tiledb://A/B/C/s3:/D/E/C", "tiledb://A/B/s3://D/E/") == "C"
-
+        with pytest.raises(ValueError, match="different scheme"):
+            make_relative_path("/A/B/C/", "tiledb://A/B/")
+        with pytest.raises(ValueError, match="different scheme"):
+            make_relative_path("tiledb:/A/B/C/", "/A/B/")
         with pytest.raises(ValueError, match="is not in the subpath of"):
-            make_relative_path("tiledb://A/B/C/s3:/D/E/F", "tiledb://A/B/s3://D/E/")
+            make_relative_path("tiledb://A/C/D/", "tiledb://A/B/")
 
 
 @pytest.mark.parametrize(

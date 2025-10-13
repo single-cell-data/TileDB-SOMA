@@ -145,11 +145,12 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             raise SOMAError(f"replacing key {key!r} is unsupported")
         clib_collection = self._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
+
         clib_collection.add(
             uri=uri,
             uri_type=relative_type,
             name=key,
-            soma_type=clib_collection.type,
+            soma_type=soma_object.soma_type,
         )
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
@@ -303,11 +304,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         # The TileDB-Py API supports use_relative_uri in [True, False].
         # Map from the former to the latter -- and also honor our somacore contract for None --
         # using the following rule.
-        if (
-            use_relative_uri is None
-            and value.uri.startswith("tiledb://")
-            and not is_tiledb_carrara_uri(value.uri)
-        ):
+        if use_relative_uri is None and value.uri.startswith("tiledb://") and not is_tiledb_carrara_uri(value.uri):
             # Carrara uses relative URIs
             # TileDB-Cloud does not use relative URIs, ever.
             use_relative_uri = False

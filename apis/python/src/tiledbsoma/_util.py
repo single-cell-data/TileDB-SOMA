@@ -7,6 +7,7 @@ from __future__ import annotations
 import datetime
 import json
 import pathlib
+import re
 import time
 import urllib.parse
 from collections.abc import Mapping
@@ -14,7 +15,6 @@ from concurrent.futures import Future
 from itertools import zip_longest
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import (
-    TYPE_CHECKING,
     Any,
     TypeVar,
     Union,
@@ -28,6 +28,7 @@ import somacore
 from somacore import options
 
 from . import pytiledbsoma as clib
+from ._exception import SOMAError
 from ._types import OpenTimestamp, Slice, is_slice_of
 from .options._tiledb_create_write_options import (
     TileDBCreateOptions,
@@ -89,6 +90,16 @@ def is_tiledb_carrara_uri(uri: str) -> bool:
     CLOUD_DEPLOYMENTS = {"https://api.tiledb.com", "https://api.dev.tiledb.io"}
     context = SOMATileDBContext()
     return context.native_context.config()["rest.server_address"] not in CLOUD_DEPLOYMENTS
+
+
+def _validate_create_uri(uri: str) -> None:
+    """If the URI is a Carrara URI, perform early error checks for improved UX."""
+    if not is_tiledb_carrara_uri(uri):
+        return
+
+    # Storage URIs not supported - they are Cloud-only
+    if re.match(r"^tiledb://.*/.*://.*$", uri):
+        raise SOMAError("Unsupported URI format - storage URI specification not supported on Carrara.")
 
 
 def make_relative_path(uri: str, relative_to: str) -> str:

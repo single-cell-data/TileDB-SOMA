@@ -29,7 +29,7 @@ from ._managed_query import ManagedQuery
 from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseCOOTensorReadIter, TableReadIter
 from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple, OpenTimestamp
-from ._util import from_clib_result_order
+from ._util import _validate_create_uri, from_clib_result_order
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 
@@ -111,6 +111,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         context = _validate_soma_tiledb_context(context)
+        _validate_create_uri(uri)
 
         # SOMA-to-core mappings:
         #

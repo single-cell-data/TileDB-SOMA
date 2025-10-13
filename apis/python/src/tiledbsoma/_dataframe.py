@@ -38,6 +38,7 @@ from ._types import (
     OpenTimestamp,
     StatusAndReason,
 )
+from ._util import _validate_create_uri
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
@@ -230,6 +231,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
+        _validate_create_uri(uri)
 
         # SOMA-to-core mappings:
         #
