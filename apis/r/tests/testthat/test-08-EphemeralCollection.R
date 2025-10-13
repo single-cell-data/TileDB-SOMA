@@ -35,13 +35,15 @@ test_that("Ephemeral Collection mechanics", {
   expect_error(collection$add_new_dataframe(
     "new_df",
     create_arrow_schema(),
-    "int_column"
+    "int_column",
+    domain = list(int_column = c(0, 0))
   ))
   expect_no_condition(collection$set(
     SOMADataFrameCreate(
       file.path(uri, "new_df"),
       create_arrow_schema(),
-      "int_column"
+      "int_column",
+      domain = list(int_column = c(0, 0))
     ),
     "new_df"
   ))

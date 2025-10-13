@@ -598,7 +598,12 @@ test_that("soma_ prefix is reserved", {
   )
 
   expect_error(
-    SOMADataFrameCreate(uri, asch, index_column_names = "int_column"),
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = "int_column",
+      domain = list("int_column" = c(0, 0))
+    ),
     "Column names must not start with reserved prefix 'soma_'"
   )
 })
@@ -612,7 +617,12 @@ test_that("soma_joinid is added on creation", {
   if (dir.exists(uri)) {
     unlink(uri, recursive = TRUE)
   }
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
+  sdf <- SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = "int_column",
+    domain = list("int_column" = c(0, 0))
+  )
 
   expect_true("soma_joinid" %in% sdf$attrnames())
   expect_equal(sdf$attributes()$soma_joinid$type, "INT64")
@@ -632,7 +642,12 @@ test_that("soma_joinid validations", {
   )
 
   expect_error(
-    SOMADataFrameCreate(uri, asch, index_column_names = "int_column"),
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = "int_column",
+      domain = list("int_column" = c(0, 0))
+    ),
     "soma_joinid field must be of type Arrow int64"
   )
 })
@@ -699,6 +714,7 @@ test_that("platform_config is respected", {
     uri = uri,
     schema = asch,
     index_column_names = c("soma_joinid"),
+    domain = list(soma_joinid = c(0, 0)),
     platform_config = cfg
   )
 
@@ -779,6 +795,7 @@ test_that("platform_config defaults", {
     uri = uri,
     schema = asch,
     index_column_names = c("soma_joinid"),
+    domain = list(soma_joinid = c(0, 0)),
     platform_config = cfg
   )
 
@@ -802,7 +819,7 @@ test_that("Metadata", {
   skip_if(!extended_tests())
   uri <- file.path(withr::local_tempdir(), "sdf-metadata")
   asch <- create_arrow_schema()
-  sdf <- SOMADataFrameCreate(uri, asch)
+  sdf <- SOMADataFrameCreate(uri, asch, domain = list(soma_joinid = c(0, 0)))
 
   md <- list(string_column = "qux", int_column = "float_column")
   sdf$set_metadata(md)
@@ -1222,5 +1239,25 @@ test_that("factor levels cannot extend beyond index limit", {
       # success: we can write 130 factor levels into an *unsigned* int8
       expect_silent(SOMADataFrameOpen(uri, mode = "WRITE")$write(tbl2)$close())
     }
+  }
+})
+
+test_that("deprecation warning for domain=NULL", {
+  uri <- tempfile()
+  schema <- arrow::schema(
+    soma_joinid = arrow::int64(),
+    data = arrow::int64(),
+  )
+  with_mocked_bindings(
+    .tiledbsoma_deprecation_version = function() "2.1.0",
+    .deprecation_stage = function(when) "deprecate",
+    {
+      lifecycle::expect_deprecated(
+        soma_df <- SOMADataFrameCreate(uri, schema)
+      )
+    }
+  )
+  if (utils::packageVersion("tiledbsoma") >= "2.1.0") {
+    lifecycle::expect_deprecated(soma_df <- SOMADataFrameCreate(tempfile(), schema))
   }
 })
