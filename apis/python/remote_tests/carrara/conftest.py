@@ -11,7 +11,13 @@ import scipy.sparse as sp
 import tiledbsoma as soma
 import tiledb
 
-BASE_URI = "tiledb://TileDB-Inc./Bruce/remote_test"
+# Base Carrara URI used for all tests, AND its corresponding S3 location
+# in the teamspace bucket.
+#
+WORKSPACE_NAME = "TileDB-Inc."
+TEAMSPACE_NAME = "Bruce"
+TEST_FOLDER = "remote_test"
+BASE_URI = f"tiledb://{WORKSPACE_NAME}/{TEAMSPACE_NAME}/{TEST_FOLDER}"
 
 
 def pytest_addoption(parser):
