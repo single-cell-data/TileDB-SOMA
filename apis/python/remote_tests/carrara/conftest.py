@@ -10,7 +10,6 @@ import scipy.sparse as sp
 
 import tiledbsoma as soma
 import tiledb
-import tiledb.client
 
 BASE_URI = "tiledb://TileDB-Inc./Bruce/remote_test"
 
@@ -31,6 +30,8 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def carrara_context() -> soma.SOMATileDBContext:
+    import tiledb.client
+
     tiledb.client.login(profile_name="qa")
     return soma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
 
