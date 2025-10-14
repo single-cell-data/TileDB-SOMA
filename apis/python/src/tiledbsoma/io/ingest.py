@@ -1662,6 +1662,8 @@ def _validate_matrix_to_collection(
     matrix_data: Matrix | h5py.Dataset,
 ) -> None:
     """Validates against the Experiment shape, as defined by the axis dataframes.
+    Skips validation for pre-1.15 schemas till issue is resolved
+    https://github.com/single-cell-data/TileDB-SOMA/pull/4258#discussion_r2429676202.
 
     Args:
         exp: The experiment object
@@ -1674,6 +1676,14 @@ def _validate_matrix_to_collection(
     Raises:
         ValueError: If the matrix shape is incompatible.
     """
+    if not exp.obs.tiledbsoma_has_upgraded_domain:
+        logging.log_io(
+            f"Skipped validation for arrays with pre-1.15 schema\
+                       {matrix_name}",
+            f"SKIPPED VALIDATION {matrix_name}",
+        )
+        return
+
     obs_soma_joinid_domain = exp.obs._maybe_soma_joinid_shape
 
     # Try to access the var DataFrame directly, fallback to explicit open if needed
