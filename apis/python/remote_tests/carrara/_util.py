@@ -4,8 +4,6 @@ import pathlib
 import urllib.parse
 from typing import Any
 
-import tiledb.client
-
 
 def parse_tiledb_uri(uri: str) -> tuple[str, str, str | None]:
     """Given a tiledb URI, return (workspace, teamspace, path)."""
@@ -29,5 +27,7 @@ def join_tiledb_uri(workspace: str, teamspace: str, path: tuple[str] | str) -> s
 
 
 def get_asset_info(uri: str) -> dict[str, Any]:
+    import tiledb.client
+
     _, teamspace, path = parse_tiledb_uri(uri)
     return tiledb.client.assets.get_asset(path, teamspace=teamspace).to_dict()
