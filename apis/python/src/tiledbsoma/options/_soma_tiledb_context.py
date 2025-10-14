@@ -23,7 +23,7 @@ try:
     from tiledb import Ctx as TileDBCtx
 
     TILEDB_EXISTS = True
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     # If we set this to None, then the type hint TileDBCtx | None in the code
     # below will error out with:
     #   TypeError: unsupported operand type(s) for |: 'NoneType' and 'NoneType'
