@@ -6,6 +6,8 @@
 
 ## Changed
 
+- Update TileDB core version to [2.29.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.1). ([#4284](https://github.com/single-cell-data/TileDB-SOMA/pull/4284))
+
 ## Deprecated
 
 - Mark `SOMANDArrayBase$set_data_type()` for deprecation. ([#4279](https://github.com/single-cell-data/TileDB-SOMA/pull/4279))

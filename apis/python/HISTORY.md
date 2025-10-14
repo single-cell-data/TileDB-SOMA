@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- \[[#4284](https://github.com/single-cell-data/TileDB-SOMA/pull/4284)\] Update [TileDB core to 2.29.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.1).
+
 ### Deprecated
 
 - \[[#4275](https://github.com/single-cell-data/TileDB-SOMA/pull/4275)\] Deprecate allowing a dimension in `shape` for a new `SOMASpaseNDArray` to be defaulted to `1` with `None` in the `create` method. In the future, the shape must be a sequence of positive integers.
