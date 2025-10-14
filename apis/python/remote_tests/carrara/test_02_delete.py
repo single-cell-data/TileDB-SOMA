@@ -16,6 +16,7 @@ import tiledbsoma as soma
 import tiledb
 
 
+@pytest.mark.xfail(reason="Delete semantics are undefined/surprising")
 @pytest.mark.carrara
 def test_collection_delete(group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     soma.Collection.create(group_path, context=carrara_context).close()

@@ -6,6 +6,7 @@ from uuid import uuid4
 import anndata as ad
 import pytest
 import scanpy as sc
+import scipy.sparse as sp
 
 import tiledbsoma as soma
 import tiledb
@@ -71,5 +72,7 @@ def small_pbmc() -> ad.AnnData:
     del adata.uns["rank_genes_groups"]
 
     del adata.obsp["distances"]
+
+    adata.X = sp.csr_matrix(adata.X)
 
     return adata

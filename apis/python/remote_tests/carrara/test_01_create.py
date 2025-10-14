@@ -1,17 +1,5 @@
 """
 Basic object creation with Carrara URIs
-
-TODO:
-- add test with I18N member name and/or path
-- test with path that goes through sanitization (ie., weird str in path)
-- add_new_foo - test with unsupported URI
-- set - with unsupported name or name other than path segment
-- create - test with a storage path (should generate error)
-- delete member from collection, with and without member object deletion
-- move a member to a new group
-- verify storage URI generates sensible error
-- verify attempt to set to new name generates sensible error (ie.., create, add, add, boom?)
-etc
 """
 
 from __future__ import annotations
@@ -199,3 +187,30 @@ class TestPathEncoding:
 
         with soma.open(a_group, context=carrara_context) as C:
             assert C[key].shape == (11, 3, idx + 1), f"Mismatch on key={key}"
+
+
+@pytest.mark.xfail(reason="CORE-409")
+def test_name_noteq_path(group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+    """Carrara group member name must be EQ to the final path segment. This restriction
+    is unique to Carrara -- on all other storage subsystems, the URI and the Collection
+    member name are independent.
+
+    There are many APIs in SOMA which allow these parameters to be separately specified.
+    Check that we catch them all with a reasonable error.
+    """
+
+    soma.Collection.create(group_path, context=carrara_context).close()
+
+    with pytest.raises(soma.SOMAError), soma.open(group_path, mode="w") as C:
+        C.add_new_collection(key="test1", uri=f"{group_path}/not_test1")
+
+    with pytest.raises(soma.SOMAError), soma.open(group_path, mode="w") as C:
+        C.add_new_sparse_ndarray(key="test2", uri=f"{group_path}/not_test2", type=pa.float64(), shape=(100, 100))
+
+    with pytest.raises(soma.SOMAError), soma.open(group_path, mode="w") as C:
+        A = soma.SparseNDArray.create(f"{group_path}/test3", type=pa.int8(), shape=(100, 101))
+        C["not_test3"] = A
+
+    # Verify there were no side-effects
+    with soma.open(group_path, mode="r") as C:
+        assert len(C.keys()) == 0

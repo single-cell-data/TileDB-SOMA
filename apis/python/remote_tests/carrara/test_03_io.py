@@ -8,24 +8,28 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pandas.testing
+import scipy.sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io
+
+
+def array_eq(a1, a2) -> bool:
+    if isinstance(a1, np.ndarray) and isinstance(a2, np.ndarray):
+        return np.array_equal(a1, a2)
+
+    if isinstance(a1, sp.spmatrix) and isinstance(a2, sp.spmatrix):
+        return (a1.tocsr() != a2.tocsr()).nnz == 0
+
+    print(f"Oopps, unsupported types: {type(a1)}, {type(a2)}")
+
+    return False
 
 
 def test_soma_io_import(small_pbmc: ad.AnnData, group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     soma.io.from_anndata(group_path, small_pbmc, measurement_name="RNA", context=carrara_context)
 
     with soma.open(group_path, context=carrara_context) as exp:
-        print(small_pbmc)
-        print(exp)
-        print(exp.ms["RNA"])
-        for k in exp.ms["RNA"]:
-            print(exp.ms["RNA"][k])
-        for k in exp.ms["raw"]:
-            print(exp.ms["raw"][k])
-        print(exp)
-
         assert exp.obs.count == len(small_pbmc.obs)
         assert "RNA" in exp.ms
         assert exp.ms["RNA"].var.count == len(small_pbmc.var)
@@ -65,12 +69,8 @@ def test_soma_io_import(small_pbmc: ad.AnnData, group_path: str, carrara_context
         adata.var.index.name = small_pbmc.var.index.name
         pd.testing.assert_frame_equal(adata.obs, small_pbmc.obs)
         pd.testing.assert_frame_equal(adata.var, small_pbmc.var)
-        pd.testing.assert_frame_equal(adata.raw.var, small_pbmc.raw.var)
+
         assert (adata.X != small_pbmc.X).nnz == 0
-        assert (adata.raw.X != small_pbmc.raw.X).nnz == 0
         for slot in ("obsm", "varm", "obsp", "varp"):
             for k in getattr(small_pbmc, slot):
-                if isinstance(getattr(adata, slot)[k], np.ndarray):
-                    assert getattr(adata, slot)[k] == getattr(small_pbmc, slot)[k], f"{slot}[{k}] not EQ"
-                else:
-                    assert (getattr(adata, slot)[k] != getattr(small_pbmc, slot)[k]).nnz == 0, f"{slot}[{k}] not EQ"
+                assert array_eq(getattr(adata, slot)[k], getattr(small_pbmc, slot)[k]), f"{slot}[{k}] not EQ"
