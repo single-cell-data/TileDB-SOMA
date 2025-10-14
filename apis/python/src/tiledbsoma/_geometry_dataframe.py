@@ -45,7 +45,7 @@ from ._spatial_util import (
     process_spatial_df_region,
 )
 from ._types import OpenTimestamp
-from ._util import _validate_create_uri
+from ._util import validate_create_uri
 from .options import SOMATileDBContext
 
 _UNBATCHED = options.BatchSize()
@@ -109,7 +109,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             Experimental.
         """
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
-        _validate_create_uri(uri)
+        validate_create_uri(uri)
 
         # Get coordinate space axis data.
         if isinstance(coordinate_space, CoordinateSpace):

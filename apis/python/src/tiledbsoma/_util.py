@@ -76,10 +76,9 @@ def is_tiledb_carrara_uri(uri: str) -> bool:
         tiledb://WORKSPACE/TEAMSPACE/optional-path-elements/
 
     The current methodology to distinguish between these is to look at the run-time
-    environment, and determine if we are running on Cloud or Carrara. This is a
-    temporary bridge to some means of reasoning about the URLs.
+    environment, and determine if we are running on Cloud or Carrara.
 
-    NB: this is a temporary HACK, and will be replaced as the URI design center evolves.
+    NB: this method may change.
     """
     if not uri.startswith("tiledb://"):
         return False
@@ -92,7 +91,7 @@ def is_tiledb_carrara_uri(uri: str) -> bool:
     return context.native_context.config()["rest.server_address"] not in CLOUD_DEPLOYMENTS
 
 
-def _validate_create_uri(uri: str) -> None:
+def validate_create_uri(uri: str) -> None:
     """If the URI is a Carrara URI, perform early error checks for improved UX."""
     if not is_tiledb_carrara_uri(uri):
         return

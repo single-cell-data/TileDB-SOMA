@@ -35,7 +35,7 @@ from ._soma_group import SOMAGroup
 from ._soma_object import AnySOMAObject, SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
-from ._util import _validate_create_uri
+from ._util import validate_create_uri
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -99,7 +99,7 @@ class CollectionBase(
             Maturing.
         """
         context = _validate_soma_tiledb_context(context)
-        _validate_create_uri(uri)
+        validate_create_uri(uri)
         try:
             wrapper = cast("_tdb_handles.SOMAGroupWrapper[Any]", cls._wrapper_type)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)

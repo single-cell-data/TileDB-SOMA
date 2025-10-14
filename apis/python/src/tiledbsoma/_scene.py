@@ -36,7 +36,7 @@ from ._spatial_util import (
     transform_to_json,
 )
 from ._types import OpenTimestamp
-from ._util import _validate_create_uri
+from ._util import validate_create_uri
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -105,7 +105,7 @@ class Scene(
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         context = _validate_soma_tiledb_context(context)
-        _validate_create_uri(uri)
+        validate_create_uri(uri)
 
         if coordinate_space is None:
             axis_names = None

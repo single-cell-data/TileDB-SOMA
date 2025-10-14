@@ -23,7 +23,7 @@ from ._managed_query import ManagedQuery
 from ._read_iters import TableReadIter
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice
-from ._util import _validate_create_uri, dense_indices_to_shape
+from ._util import dense_indices_to_shape, validate_create_uri
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
@@ -135,7 +135,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             Maturing.
         """
         context = _validate_soma_tiledb_context(context)
-        _validate_create_uri(uri)
+        validate_create_uri(uri)
 
         index_column_schema = []
         index_column_data = {}
