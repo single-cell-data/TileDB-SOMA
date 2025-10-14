@@ -183,7 +183,7 @@ class SOMAGroup : public SOMAObject {
      * @param uri of member to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
-     * @param name of member
+     * @param soma_type the soma_type of the member
      */
     void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type);
 
