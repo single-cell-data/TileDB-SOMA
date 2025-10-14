@@ -327,6 +327,7 @@ setuptools.setup(
                 "src/tiledbsoma/coordinate_selection.cc",
                 "src/tiledbsoma/managed_query.cc",
                 "src/tiledbsoma/transformer.cc",
+                "src/tiledbsoma/bench.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
             ],
             include_dirs=INC_DIRS,
