@@ -10,18 +10,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- \[[#4284](https://github.com/single-cell-data/TileDB-SOMA/pull/4284)\] Update [TileDB core to 2.29.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.1).
-
 ### Deprecated
-
-- \[[#4275](https://github.com/single-cell-data/TileDB-SOMA/pull/4275)\] Deprecate allowing a dimension in `shape` for a new `SOMASpaseNDArray` to be defaulted to `1` with `None` in the `create` method. In the future, the shape must be a sequence of positive integers.
-- \[[#4275](https://github.com/single-cell-data/TileDB-SOMA/pull/4275)\] Deprecate leaving `domain=None` when creating a `SOMADataFrame`, `SOMAPointCloudDataFrame`, or `SOMAGeometryDataFrame`. In the future, the domain must be fully specified on creation.
 
 ### Removed
 
 ### Fixed
 
 ### Security
+
+## [Release 2.1.0]
+
+This release adds warnings for new deprecations in the allowed values for `shape` and `domain` in `create` methods and updates the TileDB core version to 2.29.1.
+
+### Changed
+
+- \[[#4284](https://github.com/single-cell-data/TileDB-SOMA/pull/4284)\] Update [TileDB core to 2.29.1](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.1).
+
+### Deprecated
+
+- \[[#4275](https://github.com/single-cell-data/TileDB-SOMA/pull/4275)\] Deprecate allowing a dimension in `shape` for a new `SOMASpaseNDArray` to be defaulted to `1` with `None` in the `create` method. In the future, the shape must be a sequence of positive integers.
+- \[[#4275](https://github.com/single-cell-data/TileDB-SOMA/pull/4275)\] Deprecate leaving `domain=None` when creating a `SOMADataFrame`, `SOMAPointCloudDataFrame`, or `SOMAGeometryDataFrame`. In the future, the domain must be fully specified on creation.
 
 ## [Release 2.0.0]
 
