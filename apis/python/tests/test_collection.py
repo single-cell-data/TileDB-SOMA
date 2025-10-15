@@ -170,7 +170,7 @@ def test_collection_mapping(soma_object, tmp_path):
     assert list(k for k in c) == list(c.keys())
     assert len(c) == 1
     assert [k for k in c] == ["mumble"]
-    assert c.members() == {"mumble": (soma_object.uri, "SOMACollection")}
+    assert c.members() == {"mumble": (soma_object.uri, soma_object.soma_type)}
 
     # TEMPORARY: This should no longer raise an error once TileDB supports
     # replacing an existing group member.
