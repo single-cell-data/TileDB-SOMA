@@ -130,6 +130,34 @@
     lib.loc = .pkgenv$libname,
     mustWork = TRUE
   )))
+  # Add fake release for current minor release if needed
+  mm <- unique(vapply(
+    X = releases$Version,
+    FUN = function(x) {
+      x <- unlist(strsplit(x = x, split = "\\."))
+      return(paste0(x[1:2], collapse = "."))
+    },
+    FUN.VALUE = character(length = 1L),
+    USE.NAMES = FALSE
+  ))
+  cmm <- unlist(strsplit(
+    x = as.character(utils::packageVersion(.pkgenv$pkgname)),
+    split = "\\."
+  ))
+  if (all(paste0(cmm[1:2], collapse = ".") > mm)) {
+    dates <- file.info(list.files(
+      base::system.file(package = .pkgenv$pkgname),
+      full.names = TRUE,
+      recursive = TRUE
+    ))$mtime
+    releases <- rbind(
+      releases,
+      data.frame(
+        Version = sprintf(fmt = "%s.%s.0", cmm[1L], cmm[2L]),
+        Date = format(as.POSIXlt(dates[which.max(dates)]), format = "%Y-%m-%d")
+      )
+    )
+  }
   # Check to see if the deprecation is scheduled for a future release
   # If so, exit out
   if (all(when > releases$Version)) {
