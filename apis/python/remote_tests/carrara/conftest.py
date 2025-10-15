@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 from uuid import uuid4
 
@@ -14,9 +15,10 @@ import tiledb
 # Base Carrara URI used for all tests, AND its corresponding S3 location
 # in the teamspace bucket.
 #
-WORKSPACE_NAME = "TileDB-Inc."
-TEAMSPACE_NAME = "Bruce"
-TEST_FOLDER = "remote_test"
+PROFILE_NAME = os.getenv("CARRARA_TEST_PROFILE") or "qa"
+WORKSPACE_NAME = os.getenv("CARRARA_TEST_WORKSPACE") or "TileDB-Inc."
+TEAMSPACE_NAME = os.getenv("CARRARA_TEST_TEAMSPACE") or "Bruce"
+TEST_FOLDER = os.getenv("CARRARA_TEST_FOLDER") or "remote_test"
 BASE_URI = f"tiledb://{WORKSPACE_NAME}/{TEAMSPACE_NAME}/{TEST_FOLDER}"
 
 
@@ -38,7 +40,8 @@ def pytest_collection_modifyitems(config, items):
 def carrara_context() -> soma.SOMATileDBContext:
     import tiledb.client
 
-    tiledb.client.login(profile_name="qa")
+    tiledb.client.login(profile_name=PROFILE_NAME)
+    assert tiledb.client.workspaces.get_workspace(tiledb.client.client.get_workspace_id()).name == WORKSPACE_NAME
     return soma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
 
 
