@@ -68,7 +68,7 @@
       details = details,
       # lifecycle tries to be clever when determining when to warn; however,
       # it's actually pretty bad at it. It doesn't work well with R6 nor does
-      # it accurately track testthat usage. As such, force the damn thing
+      # it accurately track testthat usage. We need to force it
       # to throw a deprecation warning
       id = id %||% as.character(Sys.time()),
       always = always,
