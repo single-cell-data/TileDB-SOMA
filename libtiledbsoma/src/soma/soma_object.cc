@@ -164,6 +164,6 @@ tiledb_object_t SOMAObject::tiledb_type_from_soma_type(const std::string& soma_t
     if (iTileDBType == typeMap.end())
         return tiledb_object_t::TILEDB_INVALID;
     return iTileDBType->second;
-}
+};
 
 }  // namespace tiledbsoma

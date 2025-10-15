@@ -153,6 +153,10 @@ json get_filter_list_json(tiledb::FilterList filter_list) {
                 // These filters have no options and are left empty
                 // intentionally
                 break;
+            default:
+                throw TileDBSOMAError(
+                    fmt::format(
+                        "Internal error: unrecognized filter type '{}'", tiledb::Filter::to_str(filter.filter_type())));
         }
         filter_list_as_json.emplace_back(filter_as_json);
     }
