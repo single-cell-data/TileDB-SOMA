@@ -48,6 +48,9 @@ tiledb_dir: pathlib.Path | None = None
 tiledbsoma_dir: pathlib.Path | None = None
 no_tiledb_dep: bool = False
 
+tiledb_dir = os.environ.get("TILEDB_PATH", tiledb_dir)
+tiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", tiledbsoma_dir)
+
 args = sys.argv[:]
 for arg in args:
     start, eq, last = arg.partition("=")
@@ -61,10 +64,7 @@ for arg in args:
         no_tiledb_dep = True
         sys.argv.remove(arg)
 
-
-tiledb_dir = os.environ.get("TILEDB_PATH", tiledb_dir)
 tiledb_given = tiledb_dir is not None
-tiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", tiledbsoma_dir)
 
 if tiledbsoma_dir is not None and tiledb_dir is None:
     raise ValueError(
