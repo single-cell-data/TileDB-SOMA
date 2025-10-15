@@ -11,7 +11,7 @@ SOMA measurement for writing
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.99</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ SOMA measurement for writing
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a SOMA Measurement</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-2.1/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
       <div class="d-none name"><code>SOMAMeasurementCreate.Rd</code></div>
     </div>
 
@@ -111,7 +111,7 @@ if it already exists, simply open it for writing.</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="fu">SOMAMeasurementCreate</span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpjD0Pq2/soma-measurement270955454f67</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpqA5QXd/soma-measurement29b867cfd534</span>
 <span class="r-in"><span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="va">ms</span><span class="op">$</span><span class="fu">add_new_dataframe</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"var"</span>,</span></span>
 <span class="r-in"><span>  <span class="va">sch</span>,</span></span>
@@ -124,10 +124,10 @@ if it already exists, simply open it for writing.</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMAMeasurementOpen.html">SOMAMeasurementOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpjD0Pq2/soma-measurement270955454f67</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpqA5QXd/soma-measurement29b867cfd534</span>
 <span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">var</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: file:///tmp/RtmpjD0Pq2/soma-measurement270955454f67/var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: file:///tmp/RtmpqA5QXd/soma-measurement29b867cfd534/var</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: var_id </span>
 <span class="r-in"><span></span></span>

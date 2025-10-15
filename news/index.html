@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.99</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,26 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.0.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-2.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.1.0" id="tiledbsoma-210">tiledbsoma 2.1.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-210"></a></h2>
+<p>This release adds support for ingestion of BPCells-backed <code>Seurat</code> objects in <code><a href="../reference/write_soma.html">write_soma()</a></code>, adds warnings for new deprecations, and updates the TileDB core version to 2.29.1.</p>
+<div class="section level3">
+<h3 id="added-2-1-0">Added<a class="anchor" aria-label="anchor" href="#added-2-1-0"></a></h3>
+<ul><li>Add support for ingestion of BPCells-backed <code>Seurat</code> objects in <code><a href="../reference/write_soma.html">write_soma()</a></code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4273" class="external-link">#4273</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changed-2-1-0">Changed<a class="anchor" aria-label="anchor" href="#changed-2-1-0"></a></h3>
+<ul><li>Update TileDB core version to <a href="https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.1" class="external-link">2.29.1</a>. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4284" class="external-link">#4284</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="deprecated-2-1-0">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-2-1-0"></a></h3>
+<ul><li>Mark <code>SOMANDArrayBase$set_data_type()</code> for deprecation. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4279" class="external-link">#4279</a>)</li>
+<li>Mark setting <code>domain</code> to <code>NULL</code> in <code>SOMADataFrame$create()</code> for deprecation. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4274" class="external-link">#4274</a>)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="tiledbsoma-200">tiledbsoma 2.0.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-200"></a></h2>
 <p>This release is the first TileDB-SOMA release that follows our new versioning policy (see the <a href="../../dev_docs/POLICIES.html">developer docs</a>). It introduces the new <code>DELETE</code> mode and deprecates removing elements from a <code>Collection</code> in <code>WRITE</code> mode. It also updates the core TileDB version to 2.28.1.</p>
