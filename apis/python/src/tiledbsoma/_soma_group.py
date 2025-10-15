@@ -149,7 +149,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             uri=uri,
             uri_type=relative_type,
             name=key,
-            soma_type=clib_collection.type,
+            soma_type=soma_object.soma_type,
         )
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),

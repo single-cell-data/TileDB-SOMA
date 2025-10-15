@@ -167,6 +167,11 @@ class SOMAObject {
      * must be opened in READ mode, otherwise the function will error out.
      */
     virtual uint64_t metadata_num() const = 0;
+
+    /**
+     * @brief Given a soma_type, return the underlying TileDB type.
+     */
+    static tiledb_object_t tiledb_type_from_soma_type(const std::string& soma_type);
 };
 }  // namespace tiledbsoma
 

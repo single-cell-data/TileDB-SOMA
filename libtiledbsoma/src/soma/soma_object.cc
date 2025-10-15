@@ -145,4 +145,25 @@ bool SOMAObject::check_type(std::string expected_type) {
     return soma_object_type == expected_type;
 };
 
+tiledb_object_t SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) {
+    const std::map<std::string, tiledb_object_t> typeMap = {
+        {"SOMAArray", tiledb_object_t::TILEDB_ARRAY},
+        {"SOMACollection", tiledb_object_t::TILEDB_GROUP},
+        {"SOMADataFrame", tiledb_object_t::TILEDB_ARRAY},
+        {"SOMADenseNDArray", tiledb_object_t::TILEDB_ARRAY},
+        {"SOMAExperiment", tiledb_object_t::TILEDB_GROUP},
+        {"SOMAGeometryDataFrame", tiledb_object_t::TILEDB_ARRAY},
+        {"SOMAGroup", tiledb_object_t::TILEDB_GROUP},
+        {"SOMAMeasurement", tiledb_object_t::TILEDB_GROUP},
+        {"SOMAMultiscaleImage", tiledb_object_t::TILEDB_GROUP},
+        {"SOMAPointCloudDataFrame", tiledb_object_t::TILEDB_ARRAY},
+        {"SOMAScene", tiledb_object_t::TILEDB_GROUP},
+        {"SOMASparseNDArray", tiledb_object_t::TILEDB_ARRAY},
+    };
+    const std::map<std::string, tiledb_object_t>::const_iterator iTileDBType = typeMap.find(soma_type);
+    if (iTileDBType == typeMap.end())
+        return tiledb_object_t::TILEDB_INVALID;
+    return iTileDBType->second;
+};
+
 }  // namespace tiledbsoma
