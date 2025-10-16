@@ -5,8 +5,6 @@ import urllib.parse
 from contextlib import contextmanager
 from typing import Any
 
-import tiledb.client
-
 
 def parse_tiledb_uri(uri: str) -> tuple[str, str, str | None]:
     """Given a tiledb URI, return (workspace, teamspace, path)."""
@@ -38,6 +36,8 @@ def get_asset_info(uri: str) -> dict[str, Any]:
 
 @contextmanager
 def carrara_cleanup_asset(url: str) -> str:
+    import tiledb.client
+
     _, teamspace, path = parse_tiledb_uri(url)
     try:
         yield url
