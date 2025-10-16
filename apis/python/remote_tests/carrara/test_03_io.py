@@ -16,7 +16,6 @@ import scipy.sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io
-import tiledb.client
 
 from ._util import carrara_cleanup_asset, parse_tiledb_uri
 from .conftest import BASE_URI
@@ -91,6 +90,7 @@ def test_soma_io_from_h5ad(
     tmp_path: pathlib.Path, small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMATileDBContext
 ) -> None:
     """Test ability to ingest an H5AD sourced from a Carrara asset URL."""
+    import tiledb.client
 
     local_small_pbmc_path = tmp_path / "small_pbmc.h5ad"
     small_pbmc.write(local_small_pbmc_path)
