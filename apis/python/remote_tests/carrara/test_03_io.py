@@ -4,14 +4,22 @@ Test soma.io
 
 from __future__ import annotations
 
+import pathlib
+from uuid import uuid4
+
 import anndata as ad
 import numpy as np
 import pandas as pd
 import pandas.testing
+import pytest
 import scipy.sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io
+import tiledb.client
+
+from ._util import carrara_cleanup_asset, parse_tiledb_uri
+from .conftest import BASE_URI
 
 
 def array_eq(a1, a2) -> bool:
@@ -21,15 +29,17 @@ def array_eq(a1, a2) -> bool:
     if isinstance(a1, sp.spmatrix) and isinstance(a2, sp.spmatrix):
         return (a1.tocsr() != a2.tocsr()).nnz == 0
 
-    print(f"Oopps, unsupported types: {type(a1)}, {type(a2)}")
+    print(f"Oops, unsupported types: {type(a1)}, {type(a2)}")
 
     return False
 
 
-def test_soma_io_import(small_pbmc: ad.AnnData, group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
-    soma.io.from_anndata(group_path, small_pbmc, measurement_name="RNA", context=carrara_context)
+def test_soma_io_roundtrip(
+    small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMATileDBContext
+) -> None:
+    soma.io.from_anndata(carrara_group_path, small_pbmc, measurement_name="RNA", context=carrara_context)
 
-    with soma.open(group_path, context=carrara_context) as exp:
+    with soma.open(carrara_group_path, context=carrara_context) as exp:
         assert exp.obs.count == len(small_pbmc.obs)
         assert "RNA" in exp.ms
         assert exp.ms["RNA"].var.count == len(small_pbmc.var)
@@ -74,3 +84,25 @@ def test_soma_io_import(small_pbmc: ad.AnnData, group_path: str, carrara_context
         for slot in ("obsm", "varm", "obsp", "varp"):
             for k in getattr(small_pbmc, slot):
                 assert array_eq(getattr(adata, slot)[k], getattr(small_pbmc, slot)[k]), f"{slot}[{k}] not EQ"
+
+
+@pytest.mark.xfail(reason="CORE-363 - VFS does not support Carrara asset paths")
+def test_soma_io_from_h5ad(
+    tmp_path: pathlib.Path, small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMATileDBContext
+) -> None:
+    """Test ability to ingest an H5AD sourced from a Carrara asset URL."""
+
+    local_small_pbmc_path = tmp_path / "small_pbmc.h5ad"
+    small_pbmc.write(local_small_pbmc_path)
+
+    with carrara_cleanup_asset(f"{BASE_URI}/{uuid4()}.h5ad") as h5ad_uri:
+        _, teamspace, remote_path = parse_tiledb_uri(h5ad_uri)
+        with open(local_small_pbmc_path, "rb") as fs:
+            # stage H5AD to Carrara as a file asset
+            tiledb.client.files.upload_file(teamspace, fs, remote_path, content_type="application/octet-stream")
+            # ingest from Carrara asset to Carrara SOMA experiment
+            soma.io.from_h5ad(carrara_group_path, h5ad_uri, measurement_name="RNA", context=carrara_context)
+            # verify
+            with soma.open(carrara_group_path) as exp:
+                assert exp.obs.count == small_pbmc.n_obs
+                assert exp.ms["RNA"].var.count == small_pbmc.n_vars

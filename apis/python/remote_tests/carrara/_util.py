@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pathlib
 import urllib.parse
+from contextlib import contextmanager
 from typing import Any
+
+import tiledb.client
 
 
 def parse_tiledb_uri(uri: str) -> tuple[str, str, str | None]:
@@ -31,3 +34,12 @@ def get_asset_info(uri: str) -> dict[str, Any]:
 
     _, teamspace, path = parse_tiledb_uri(uri)
     return tiledb.client.assets.get_asset(path, teamspace=teamspace).to_dict()
+
+
+@contextmanager
+def carrara_cleanup_asset(url: str) -> str:
+    _, teamspace, path = parse_tiledb_uri(url)
+    try:
+        yield url
+    finally:
+        tiledb.client.assets.delete_asset(path, teamspace=teamspace, delete_storage=True)

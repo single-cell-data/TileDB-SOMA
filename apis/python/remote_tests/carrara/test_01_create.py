@@ -17,22 +17,22 @@ from .conftest import BASE_URI
 
 
 @pytest.mark.carrara
-def test_dataframe_create(array_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_dataframe_create(carrara_array_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     schema = pa.schema([pa.field("soma_joinid", pa.int64(), nullable=False), ("A", pa.int32())])
     domain = ((0, 100),)
-    soma.DataFrame.create(array_path, schema=schema, domain=domain, context=carrara_context).close()
-    with soma.open(array_path, context=carrara_context) as A:
+    soma.DataFrame.create(carrara_array_path, schema=schema, domain=domain, context=carrara_context).close()
+    with soma.open(carrara_array_path, context=carrara_context) as A:
         assert A.soma_type == "SOMADataFrame"
         assert A.domain == domain
         assert A.schema == schema
 
 
 @pytest.mark.carrara
-def test_sparsendarray_create(array_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_sparsendarray_create(carrara_array_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     type = pa.float32()
     shape = (999, 101)
-    soma.SparseNDArray.create(array_path, type=type, shape=shape, context=carrara_context).close()
-    with soma.open(array_path, context=carrara_context) as A:
+    soma.SparseNDArray.create(carrara_array_path, type=type, shape=shape, context=carrara_context).close()
+    with soma.open(carrara_array_path, context=carrara_context) as A:
         assert A.soma_type == "SOMASparseNDArray"
         assert A.shape == shape
         assert A.type == type
@@ -40,23 +40,23 @@ def test_sparsendarray_create(array_path: str, carrara_context: soma.SOMATileDBC
 
 @pytest.mark.parametrize("soma_cls", [soma.Collection, soma.Experiment, soma.Measurement])
 @pytest.mark.carrara
-def test_collection_create(soma_cls, group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
-    soma_cls.create(group_path, context=carrara_context).close()
-    with soma.open(group_path, context=carrara_context) as C:
+def test_collection_create(soma_cls, carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+    soma_cls.create(carrara_group_path, context=carrara_context).close()
+    with soma.open(carrara_group_path, context=carrara_context) as C:
         assert C.soma_type == soma_cls.soma_type
         assert len(C) == 0
 
 
 @pytest.mark.carrara
-def test_collection_add_new(group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_collection_add_new(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     schema = pa.schema([pa.field("soma_joinid", pa.int64(), nullable=False), ("A", pa.int32())])
     domain = ((0, 100),)
     type_ = pa.float32()
     shape = (99, 101)
 
-    soma.Collection.create(group_path, context=carrara_context).close()
+    soma.Collection.create(carrara_group_path, context=carrara_context).close()
 
-    with soma.open(group_path, mode="w", context=carrara_context) as C:
+    with soma.open(carrara_group_path, mode="w", context=carrara_context) as C:
         C.add_new_collection("child1")
         C.add_new_collection("child2", kind=soma.Experiment)
         C.add_new_collection("child3", kind=soma.Measurement)
@@ -66,12 +66,12 @@ def test_collection_add_new(group_path: str, carrara_context: soma.SOMATileDBCon
         C.add_new_dense_ndarray("child7", type=type_, shape=shape)
 
     children = set(f"child{i}" for i in range(1, 8))
-    with soma.open(group_path, context=carrara_context) as C:
+    with soma.open(carrara_group_path, context=carrara_context) as C:
         assert len(C) == len(children)
         assert set(C) == children
 
         assert all(C._handle.is_relative(chld) for chld in children)
-        assert all(C[key].uri == f"{group_path}/{key}" for key in children)
+        assert all(C[key].uri == f"{carrara_group_path}/{key}" for key in children)
 
         assert C["child1"].soma_type == "SOMACollection"
         assert len(C["child1"]) == 0
@@ -99,21 +99,21 @@ def test_collection_add_new(group_path: str, carrara_context: soma.SOMATileDBCon
 
 
 @pytest.mark.carrara
-def test_collection_set(group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_collection_set(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     type_ = pa.int8()
     shape = (1, 1, 1)
 
-    soma.Collection.create(group_path, context=carrara_context).close()
+    soma.Collection.create(carrara_group_path, context=carrara_context).close()
 
-    with soma.Collection.open(group_path, mode="w", context=carrara_context) as C:
-        A = soma.SparseNDArray.create(f"{group_path}/sparse_ndarray", type=type_, shape=shape)
+    with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
+        A = soma.SparseNDArray.create(f"{carrara_group_path}/sparse_ndarray", type=type_, shape=shape)
         C["sparse_ndarray"] = A
 
-        M = soma.Measurement.create(f"{group_path}/measurement")
+        M = soma.Measurement.create(f"{carrara_group_path}/measurement")
         C["measurement"] = M
 
     children = {"sparse_ndarray", "measurement"}
-    with soma.open(group_path, context=carrara_context) as C:
+    with soma.open(carrara_group_path, context=carrara_context) as C:
         assert len(C) == len(children)
         assert set(C) == children
 
@@ -126,14 +126,16 @@ def test_collection_set(group_path: str, carrara_context: soma.SOMATileDBContext
 
 
 @pytest.mark.carrara
-def test_storage_path_generates_error(group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_storage_path_generates_error(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     with pytest.raises(soma.SOMAError, match="Unsupported URI format"):
-        soma.Collection.create(f"{group_path}/s3://tiledb-bruce/tmp/foobar")
+        soma.Collection.create(f"{carrara_group_path}/s3://tiledb-bruce/tmp/foobar")
     with pytest.raises(soma.SOMAError, match="Unsupported URI format"):
-        soma.SparseNDArray.create(f"{group_path}/s3://tiledb-bruce/tmp/foobar", type=pa.float32(), shape=(10, 11))
+        soma.SparseNDArray.create(
+            f"{carrara_group_path}/s3://tiledb-bruce/tmp/foobar", type=pa.float32(), shape=(10, 11)
+        )
 
 
-NAME_REASON = "Carrara names must contain only unaccented alphanumeric character, '.', '-', or '_'"
+NAME_REASON = "CLOUD-2323: Carrara names must contain only unaccented alphanumeric character, '.', '-', or '_'"
 
 
 class TestPathEncoding:
@@ -189,8 +191,8 @@ class TestPathEncoding:
             assert C[key].shape == (11, 3, idx + 1), f"Mismatch on key={key}"
 
 
-@pytest.mark.xfail(reason="CORE-409")
-def test_name_noteq_path(group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+@pytest.mark.xfail(reason="CLOUD-2332")
+def test_name_noteq_path(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     """Carrara group member name must be EQ to the final path segment. This restriction
     is unique to Carrara -- on all other storage subsystems, the URI and the Collection
     member name are independent.
@@ -199,18 +201,20 @@ def test_name_noteq_path(group_path: str, carrara_context: soma.SOMATileDBContex
     Check that we catch them all with a reasonable error.
     """
 
-    soma.Collection.create(group_path, context=carrara_context).close()
+    soma.Collection.create(carrara_group_path, context=carrara_context).close()
 
-    with pytest.raises(soma.SOMAError), soma.open(group_path, mode="w") as C:
-        C.add_new_collection(key="test1", uri=f"{group_path}/not_test1")
+    with pytest.raises(soma.SOMAError), soma.open(carrara_group_path, mode="w") as C:
+        C.add_new_collection(key="test1", uri=f"{carrara_group_path}/not_test1")
 
-    with pytest.raises(soma.SOMAError), soma.open(group_path, mode="w") as C:
-        C.add_new_sparse_ndarray(key="test2", uri=f"{group_path}/not_test2", type=pa.float64(), shape=(100, 100))
+    with pytest.raises(soma.SOMAError), soma.open(carrara_group_path, mode="w") as C:
+        C.add_new_sparse_ndarray(
+            key="test2", uri=f"{carrara_group_path}/not_test2", type=pa.float64(), shape=(100, 100)
+        )
 
-    with pytest.raises(soma.SOMAError), soma.open(group_path, mode="w") as C:
-        A = soma.SparseNDArray.create(f"{group_path}/test3", type=pa.int8(), shape=(100, 101))
+    with pytest.raises(soma.SOMAError), soma.open(carrara_group_path, mode="w") as C:
+        A = soma.SparseNDArray.create(f"{carrara_group_path}/test3", type=pa.int8(), shape=(100, 101))
         C["not_test3"] = A
 
     # Verify there were no side-effects
-    with soma.open(group_path, mode="r") as C:
+    with soma.open(carrara_group_path, mode="r") as C:
         assert len(C.keys()) == 0

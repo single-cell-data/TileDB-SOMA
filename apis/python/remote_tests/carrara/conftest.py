@@ -46,7 +46,7 @@ def carrara_context() -> soma.SOMATileDBContext:
 
 
 @pytest.fixture
-def array_path() -> Generator[str, None, None]:
+def carrara_array_path() -> Generator[str, None, None]:
     """Fixture returns an Array path that will be recursively deleted after test finishes."""
     path = f"{BASE_URI}/{uuid4()}"
     yield path
@@ -55,7 +55,7 @@ def array_path() -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def group_path() -> Generator[str, None, None]:
+def carrara_group_path() -> Generator[str, None, None]:
     """Fixture returns a Group path that will be recursively deleted after test finishes."""
     path = f"{BASE_URI}/{uuid4()}"
     yield path
