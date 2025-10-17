@@ -39,6 +39,7 @@ from ._spatial_util import (
 )
 from ._tdb_handles import PointCloudDataFrameWrapper
 from ._types import OpenTimestamp
+from ._util import validate_create_uri
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -104,6 +105,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             Experimental.
         """
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
+        validate_create_uri(uri)
 
         axis_dtype: pa.DataType | None = None
 
