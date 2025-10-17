@@ -4,20 +4,6 @@ All notable changes to the Python TileDB-SOMA project will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## [Release 2.1.0]
 
 This release adds warnings for new deprecations in the allowed values for `shape` and `domain` in `create` methods and updates the TileDB core version to 2.29.1.
