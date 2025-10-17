@@ -26,6 +26,13 @@ def test_dataframe_create(carrara_array_path: str, carrara_context: soma.SOMATil
         assert A.domain == domain
         assert A.schema == schema
 
+    tbl = pa.Table.from_pydict({"soma_joinid": [0, 2], "A": [100, 200]}).cast(schema)
+    with soma.open(carrara_array_path, mode="w") as A:
+        A.write(tbl)
+
+    with soma.open(carrara_array_path) as A:
+        assert tbl == A.read().concat()
+
 
 @pytest.mark.carrara
 def test_sparsendarray_create(carrara_array_path: str, carrara_context: soma.SOMATileDBContext) -> None:

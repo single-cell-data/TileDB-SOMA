@@ -73,7 +73,7 @@ def small_pbmc() -> ad.AnnData:
 
     # trim it down to something smallish
 
-    adata = adata[0:101, 0:99].copy()
+    adata = adata[0 : adata.n_obs // 2, 0 : adata.n_vars // 2].copy()
     del adata.obsm["X_draw_graph_fr"]
     del adata.obsm["X_pca"]
 
