@@ -1,17 +1,3 @@
-# Unreleased
-
-## Added
-
-## Changed
-
-## Deprecated
-
-## Removed
-
-## Fixed
-
-## Security
-
 # tiledbsoma 2.1.0
 
 This release adds support for ingestion of BPCells-backed `Seurat` objects in `write_soma()`, adds warnings for new deprecations, and updates the TileDB core version to 2.29.1.
