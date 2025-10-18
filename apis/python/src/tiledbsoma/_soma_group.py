@@ -50,7 +50,10 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(handle, **kwargs)
-        self._contents = {key: _CachedElement(entry) for key, entry in handle.initial_contents.items()}
+        self._contents = {
+            name: _CachedElement(_tdb_handles.GroupEntry.from_soma_group_entry(entry))
+            for name, entry in self._handle.members().items()
+        }
         """The contents of the persisted TileDB Group.
 
         This is loaded at startup when we have a read handle.
@@ -152,8 +155,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             soma_type=soma_object.soma_type,
         )
         self._contents[key] = _CachedElement(
-            entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
-            soma=soma_object,
+            entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type), soma=soma_object
         )
         self._mutated_keys.add(key)
 
@@ -269,7 +271,10 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             Experimental.
         """
         super().reopen(mode, tiledb_timestamp)
-        self._contents = {key: _CachedElement(entry) for key, entry in self._handle_wrapper.initial_contents.items()}  # type: ignore[union-attr]
+        self._contents = {
+            name: _CachedElement(_tdb_handles.GroupEntry.from_soma_group_entry(entry))
+            for name, entry in self._handle.members().items()
+        }
         self._mutated_keys = set()
         return self
 
