@@ -321,19 +321,9 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
             timestamp=(0, timestamp),
         )
 
-    def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
-        super()._do_initial_reads(group)
-
-        self.initial_contents = {
-            name: GroupEntry.from_soma_group_entry(entry) for name, entry in group.members().items()
-        }
-
     @property
     def meta(self) -> MetadataWrapper:
         return self.metadata
-
-    def members(self) -> dict[str, tuple[str, str]]:
-        return cast("dict[str, tuple[str, str]]", self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
