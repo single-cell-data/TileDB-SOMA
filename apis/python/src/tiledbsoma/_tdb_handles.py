@@ -283,21 +283,6 @@ AnyWrapper = Wrapper[RawHandle]
 """Non-instantiable type representing any Handle."""
 
 
-@attrs.define(frozen=True)
-class GroupEntry:
-    uri: str
-    wrapper_type: type[AnyWrapper]
-
-    @classmethod
-    def from_soma_group_entry(cls, obj: tuple[str, str]) -> GroupEntry:
-        uri, type = obj[0], obj[1]
-        if type == "SOMAArray":
-            return GroupEntry(uri, SOMAArrayWrapper)
-        if type == "SOMAGroup":
-            return GroupEntry(uri, SOMAGroupWrapper)
-        raise SOMAError(f"internal error: unknown object type {uri}")
-
-
 class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
