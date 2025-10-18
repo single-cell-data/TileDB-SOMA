@@ -620,7 +620,7 @@ class MultiscaleImage(
 
     def levels(self) -> dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
-        return {level.name: (self._contents[level.name].entry.uri, level.shape) for level in self._levels}
+        return {level.name: (self._contents[level.name].uri, level.shape) for level in self._levels}
 
     @property
     def level_count(self) -> int:
@@ -652,7 +652,7 @@ class MultiscaleImage(
         """
         if isinstance(level, int):
             level = self._levels[level].name
-        return self._contents[level].entry.uri
+        return self._contents[level].uri
 
     @property
     def nchannels(self) -> int:
