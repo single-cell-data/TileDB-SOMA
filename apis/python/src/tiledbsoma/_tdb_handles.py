@@ -28,11 +28,6 @@ from somacore import options
 from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
-from ._constants import (
-    SOMA_ENCODING_VERSION_METADATA_KEY,
-    SOMA_OBJECT_TYPE_METADATA_KEY,
-    SUPPORTED_SOMA_ENCODING_VERSIONS,
-)
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
@@ -167,34 +162,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
                 raise DoesNotExistError(tdbe) from tdbe
             raise
         wrapper._do_initial_reads(clib_handle)
-        obj_type = wrapper.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
-        if obj_type is None:
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-                f"the required '{SOMA_OBJECT_TYPE_METADATA_KEY!r}' metadata key.",
-            )
-        if isinstance(obj_type, bytes):
-            obj_type = str(obj_type, "utf-8")
-        if not isinstance(obj_type, str):
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The metadata key "
-                f"'{SOMA_OBJECT_TYPE_METADATA_KEY!r}' has unexpected type '{type(obj_type)}'.",
-            )
-
-        encoding_version = wrapper.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
-        if encoding_version is None:
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-                f"the required '{SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key.",
-            )
-        if isinstance(encoding_version, bytes):
-            encoding_version = str(encoding_version, "utf-8")
-        if encoding_version not in SUPPORTED_SOMA_ENCODING_VERSIONS:
-            raise ValueError(
-                f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
-                f"needs to be updated to a more recent version.",
-            )
-
         return wrapper
 
     @classmethod

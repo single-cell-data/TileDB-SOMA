@@ -141,7 +141,23 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle_wrapper = handle
         self._handle = self._handle_wrapper._handle
         self._close_stack.enter_context(self._handle_wrapper)
+        self._check_required_metadata()
         self._parse_special_metadata()
+
+    def _check_required_metadata(self) -> None:
+        encoding_version = self._handle_wrapper.metadata.get(_constants.SOMA_ENCODING_VERSION_METADATA_KEY)
+        if encoding_version is None:
+            raise SOMAError(
+                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+                f"the required '{_constants.SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key.",
+            )
+        if isinstance(encoding_version, bytes):
+            encoding_version = str(encoding_version, "utf-8")
+        if encoding_version not in _constants.SUPPORTED_SOMA_ENCODING_VERSIONS:
+            raise ValueError(
+                f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
+                f"needs to be updated to a more recent version.",
+            )
 
     def _parse_special_metadata(self) -> None:
         """Helper function the subclasses can override if they require additional validation or set-up."""
