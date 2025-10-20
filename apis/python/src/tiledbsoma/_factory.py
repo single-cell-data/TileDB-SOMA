@@ -32,9 +32,7 @@ from . import (
     _sparse_nd_array,
     _tdb_handles,
 )
-from ._constants import (
-    SOMA_OBJECT_TYPE_METADATA_KEY,
-)
+from ._constants import SOMA_OBJECT_TYPE_METADATA_KEY
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
 from ._soma_object import AnySOMAObject, SOMAObject
@@ -142,15 +140,21 @@ def open(
 
 
 @typeguard_ignore
-def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
+def reify_handle(handle_wrapper: _Wrapper) -> SOMAObject[_Wrapper]:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
-    typename = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
+    typename = handle_wrapper._handle.type
+    if typename is None:
+        raise SOMAError(
+            f"Cannot open {handle_wrapper.uri!r}. Missing required metadata key '{SOMA_OBJECT_TYPE_METADATA_KEY}'."
+        )
     cls = _type_name_to_cls(typename)
-    if not isinstance(hdl, cls._wrapper_type):
-        raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)} cannot be converted to a {typename}")
+    if not isinstance(handle_wrapper, cls._wrapper_type):
+        raise SOMAError(
+            f"Cannot open {handle_wrapper.uri!r}: a {type(handle_wrapper._handle)} cannot be converted to a {typename}"
+        )
     return cast(
         "_soma_object.SOMAObject[_Wrapper]",
-        cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
+        cls(handle_wrapper, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
     )
 
 
