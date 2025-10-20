@@ -39,7 +39,7 @@ TileDB-SOMA provides interoperability with existing Python or R data structures:
 
 ## Community
 
-- Please join the [TileDB Slack community](https://tiledb-community.slack.com/join/shared_invite/zt-ndq1ipwl-QcithaWG6j1BImtuQGSpag#/shared-invite/email) with dedicated channel `#genomics`.
+- Please join [TileDB's forum](https://forum.tiledb.com) for discussions and questions about TileDB-SOMA.
 - Please join the [CZI Slack community](https://cziscience.slack.com/join/shared_invite/zt-czl1kp2v-sgGpY4RxO3bPYmFg2XlbZA#/shared-invite/email), with dedicated
   channel `#cellxgene-census-users`.
 
