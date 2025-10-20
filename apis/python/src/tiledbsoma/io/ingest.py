@@ -1677,10 +1677,10 @@ def _validate_matrix_to_collection(
         ValueError: If the matrix shape is incompatible.
     """
     if not exp.obs.tiledbsoma_has_upgraded_domain:
-        logging.log_io(
+        warnings.warn(
             f"Skipped validation for arrays with pre-1.15 schema\
                        {matrix_name}",
-            f"SKIPPED VALIDATION {matrix_name}",
+            stacklevel=2,
         )
         return
 
