@@ -44,16 +44,11 @@ add_executable(unit_soma
 #    unit_thread_pool.cc
 )
 
-if(SPDLOG_LINK_SHARED)
-  target_link_libraries(unit_soma PRIVATE spdlog::spdlog)
-else()
-  target_include_directories(unit_soma PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
-endif()
-
 target_link_libraries(unit_soma
   PRIVATE
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
+    spdlog::spdlog
 )
 target_link_options(unit_soma
   PRIVATE
@@ -118,16 +113,11 @@ add_executable(unit_geometry
 #    unit_thread_pool.cc
 )
 
-if(SPDLOG_LINK_SHARED)
-  target_link_libraries(unit_geometry PRIVATE spdlog::spdlog)
-else()
-  target_include_directories(unit_geometry PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
-endif()
-
 target_link_libraries(unit_geometry
   PRIVATE
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
+    spdlog::spdlog
 )
 
 target_link_options(unit_geometry
@@ -191,16 +181,11 @@ add_executable(test_tiledb_adapter
     test_value_filter.cc
 )
 
-if(SPDLOG_LINK_SHARED)
-  target_link_libraries(test_tiledb_adapter PRIVATE spdlog::spdlog)
-else()
-  target_include_directories(test_tiledb_adapter PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
-endif()
-
 target_link_libraries(test_tiledb_adapter
   PRIVATE
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
+    spdlog::spdlog
 )
 
 target_link_options(test_tiledb_adapter
