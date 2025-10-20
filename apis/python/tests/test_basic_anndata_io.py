@@ -16,6 +16,7 @@ import pytest
 import scipy
 import somacore
 from anndata import AnnData
+from packaging.version import Version
 from scipy.sparse import csr_matrix
 
 import tiledbsoma
@@ -492,8 +493,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
         ("varp", (0, 0)),
     ],
 )
-# "1.7.3", "1.12.3", "1.14.5, "1.15.0", "1.15.7",
-@pytest.mark.parametrize("version", ["1.14.5"])
+@pytest.mark.parametrize("version", ["1.14.5", "1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize(
     "name_and_expected_shape",
     [["pbmc3k_unprocessed", (2700, 13714)], ["pbmc3k_processed", (2638, 1838)]],
@@ -527,15 +527,20 @@ def test_matrix_shape_enforcement(soma_tiledb_context, version, name_and_expecte
     # Create invalid matrix
     bad_matrix = csr_matrix((bad_shape[0], bad_shape[1])) if matrix_type in ["obsp", "varp"] else np.ones(bad_shape)
 
-    # Should raise error for invalid shape
-    if version.startswith("1.15"):
+    if Version(version) >= Version("1.15"):
         if offset != (0, 0):
-            with _factory.open(output_path, "w") as exp, pytest.raises(tiledbsoma.SOMAError):
+            # Should raise error of invalid shape for observation/variable size
+            with (
+                _factory.open(output_path, "w") as exp,
+                pytest.raises(tiledbsoma.SOMAError, match=r"Matrix .* must match the .* size"),
+            ):
                 tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
         else:
+            # Should pass the validation without errors
             with _factory.open(output_path, "w") as exp:
                 tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
     else:
+        # pre-1.15 versions are not being checked for schema validation.
         if offset == (0, 0):
             with _factory.open(output_path, "w") as exp:
                 tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
