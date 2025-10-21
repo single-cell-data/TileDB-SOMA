@@ -9,6 +9,7 @@ from typing import ClassVar, Union
 from somacore import measurement
 
 from . import _tdb_handles
+from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
@@ -70,6 +71,7 @@ class Measurement(
 
     __slots__ = ()
     _wrapper_type = _tdb_handles.MeasurementWrapper
+    _handle_type = clib.SOMAMeasurement
 
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "var": ("SOMADataFrame",),
