@@ -95,6 +95,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     __slots__ = ()
 
     _wrapper_type = SparseNDArrayWrapper
+    _handle_type = clib.SOMASparseNDArray
 
     # Inherited from somacore
     # * ndim accessor

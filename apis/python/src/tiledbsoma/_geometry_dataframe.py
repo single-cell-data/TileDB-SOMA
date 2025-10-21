@@ -63,6 +63,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     __slots__ = ("_coord_space",)
     _wrapper_type = GeometryDataFrameWrapper
+    _handle_type = clib.SOMAGeometryDataFrame
 
     # Lifecycle
 

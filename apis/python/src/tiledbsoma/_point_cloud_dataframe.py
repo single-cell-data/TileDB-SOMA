@@ -59,6 +59,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     __slots__ = ("_coord_space",)
     _wrapper_type = PointCloudDataFrameWrapper
+    _handle_type = clib.SOMAPointCloudDataFrame
 
     @classmethod
     def create(

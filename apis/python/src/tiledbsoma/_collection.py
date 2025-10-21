@@ -483,6 +483,7 @@ class Collection(CollectionBase[CollectionElementType], somacore.Collection[Coll
     __slots__ = ()
 
     _wrapper_type = _tdb_handles.CollectionWrapper
+    _handle_type = clib.SOMACollection
 
 
 @typeguard_ignore

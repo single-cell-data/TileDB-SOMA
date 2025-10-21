@@ -57,6 +57,7 @@ class Scene(
 
     __slots__ = ("_coord_space",)
     _wrapper_type = _tdb_handles.SceneWrapper
+    _handle_type = clib.SOMAScene
 
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "img": ("SOMACollection",),
