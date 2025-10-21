@@ -40,9 +40,11 @@ def test_experiment_reopen(tmp_path, soma_type):
 
     with tiledbsoma.open(uri, "w") as x1:
         assert x1.mode == "w"
+        x1.metadata["key"] = "value"
         x2 = x1.reopen("r")
         assert x2 is x1
         assert x1.mode == "r"
+        assert x2.metadata["key"] == "value"
     assert x1.closed
 
     for mode in ["r", "w"]:

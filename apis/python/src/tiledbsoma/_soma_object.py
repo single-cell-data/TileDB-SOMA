@@ -191,6 +191,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Experimental.
         """
+        self._metadata._write()
         self._handle_wrapper.close()
         self._handle_wrapper = self._wrapper_type.open(
             self._handle_wrapper.uri, mode, self._handle_wrapper.context, tiledb_timestamp
