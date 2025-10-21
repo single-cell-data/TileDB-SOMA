@@ -14,6 +14,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
+from . import pytiledbsoma as clib
 from ._exception import SOMAError
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
@@ -51,7 +52,10 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     )
     """Class variable of the Wrapper class used to open this object type."""
 
-    __slots__ = ("_close_stack", "_handle", "_handle_wrapper")
+    _handle_type: _tdb_handles.RawHandle
+    """Class variable of the clib class handle used to open this object type."""
+
+    __slots__ = ("_close_stack", "_handle", "_handle_wrapper", "_metadata")
 
     @classmethod
     def open(
@@ -140,8 +144,25 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         self._handle_wrapper = handle
         self._handle = self._handle_wrapper._handle
+        self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle_wrapper)
+        self._check_required_metadata()
         self._parse_special_metadata()
+
+    def _check_required_metadata(self) -> None:
+        encoding_version = self._metadata.get(_constants.SOMA_ENCODING_VERSION_METADATA_KEY)
+        if encoding_version is None:
+            raise SOMAError(
+                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+                f"the required '{_constants.SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key.",
+            )
+        if isinstance(encoding_version, bytes):
+            encoding_version = str(encoding_version, "utf-8")
+        if encoding_version not in _constants.SUPPORTED_SOMA_ENCODING_VERSIONS:
+            raise ValueError(
+                f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
+                f"needs to be updated to a more recent version.",
+            )
 
     def _parse_special_metadata(self) -> None:
         """Helper function the subclasses can override if they require additional validation or set-up."""
@@ -170,11 +191,13 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Experimental.
         """
+        self._metadata._write()
         self._handle_wrapper.close()
         self._handle_wrapper = self._wrapper_type.open(
             self._handle_wrapper.uri, mode, self._handle_wrapper.context, tiledb_timestamp
         )  # type: ignore
         self._handle = self._handle_wrapper._handle
+        self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle_wrapper)
         self._parse_special_metadata()
         return self
@@ -185,7 +208,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @property
     def metadata(self) -> MutableMapping[str, Any]:
-        return self._handle_wrapper.metadata
+        return self._metadata
 
     def __repr__(self) -> str:
         return f"<{self._my_repr()}>"
@@ -218,6 +241,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Maturing.
         """
+        if not self.closed:
+            self._metadata._write()
         self._close_stack.close()
 
     @property
@@ -324,8 +349,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         check_type("uri", uri, (str,))
         context = _validate_soma_tiledb_context(context)
         try:
-            with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
-                md_type = hdl.metadata.get(_constants.SOMA_OBJECT_TYPE_METADATA_KEY)
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            with cls._handle_type.open(
+                uri, mode=clib.OpenMode.soma_read, context=context.native_context, timestamp=(0, timestamp_ms)
+            ) as handle:
+                md_type = handle.type
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()

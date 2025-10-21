@@ -30,9 +30,19 @@ _TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
 class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
-    entry: _tdb_handles.GroupEntry
+    uri: str
+    wrapper_type: type[_tdb_handles.AnyWrapper]
     soma: AnySOMAObject | None = None
     """The reified object, if it has been opened."""
+
+    @classmethod
+    def from_handle_entry(cls, obj: tuple[str, str]) -> _CachedElement:
+        uri, type = obj[0], obj[1]
+        if type == "SOMAArray":
+            return _CachedElement(uri, _tdb_handles.SOMAArrayWrapper)
+        if type == "SOMAGroup":
+            return _CachedElement(uri, _tdb_handles.SOMAGroupWrapper)
+        raise SOMAError(f"internal error: unknown object type {uri}")
 
 
 class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[CollectionElementType]):
@@ -50,7 +60,9 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(handle, **kwargs)
-        self._contents = {key: _CachedElement(entry) for key, entry in handle.initial_contents.items()}
+        self._contents = {
+            name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
+        }
         """The contents of the persisted TileDB Group.
 
         This is loaded at startup when we have a read handle.
@@ -75,11 +87,11 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             if entry.soma is None:
                 from . import _factory  # Delayed binding to resolve circular import.
 
-                uri = entry.entry.uri
+                uri = entry.uri
                 mode = self.mode
                 context = self.context
                 timestamp = self.tiledb_timestamp_ms
-                clib_type = entry.entry.wrapper_type.clib_type
+                clib_type = entry.wrapper_type.clib_type
 
                 wrapper = _tdb_handles.open_handle_wrapper(uri, mode, context, timestamp, clib_type)
                 entry.soma = _factory.reify_handle(wrapper)
@@ -113,7 +125,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             obj = entry.soma
             if obj is None:
                 # We haven't reified this SOMA object yet. Don't try to open it.
-                yield f"{indent}{key!r}: {entry.entry.uri!r} (unopened)"
+                yield f"{indent}{key!r}: {entry.uri!r} (unopened)"
             else:
                 yield f"{indent}{key!r}: {obj._my_repr()}"
                 if isinstance(obj, SOMAGroup):
@@ -152,8 +164,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             soma_type=soma_object.soma_type,
         )
         self._contents[key] = _CachedElement(
-            entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
-            soma=soma_object,
+            uri=soma_object.uri, wrapper_type=soma_object._wrapper_type, soma=soma_object
         )
         self._mutated_keys.add(key)
 
@@ -269,7 +280,9 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
             Experimental.
         """
         super().reopen(mode, tiledb_timestamp)
-        self._contents = {key: _CachedElement(entry) for key, entry in self._handle_wrapper.initial_contents.items()}  # type: ignore[union-attr]
+        self._contents = {
+            name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
+        }
         self._mutated_keys = set()
         return self
 

@@ -140,6 +140,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     """
 
     _wrapper_type = DataFrameWrapper
+    _handle_type = clib.SOMADataFrame
 
     @classmethod
     def create(

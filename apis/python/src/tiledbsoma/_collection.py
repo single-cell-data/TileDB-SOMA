@@ -378,8 +378,7 @@ class CollectionBase(
 
     def members(self) -> dict[str, tuple[str, str]]:
         """Get a mapping of {member_name: (uri, soma_object_type)}."""
-        handle = cast("_tdb_handles.SOMAGroupWrapper[Any]", self._handle_wrapper)
-        return handle.members()
+        return cast("dict[str, tuple[str, str]]", self._handle.members())
 
     def __repr__(self) -> str:
         """Default display for :class:`Collection`."""
@@ -484,6 +483,7 @@ class Collection(CollectionBase[CollectionElementType], somacore.Collection[Coll
     __slots__ = ()
 
     _wrapper_type = _tdb_handles.CollectionWrapper
+    _handle_type = clib.SOMACollection
 
 
 @typeguard_ignore

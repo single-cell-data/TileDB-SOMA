@@ -11,28 +11,15 @@ from __future__ import annotations
 
 import abc
 import enum
-import warnings
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
-from typing import (
-    Any,
-    Generic,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Generic, TypeVar, Union
 
 import attrs
 import numpy as np
-import pyarrow as pa
 from somacore import options
 from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
-from ._constants import (
-    SOMA_ENCODING_VERSION_METADATA_KEY,
-    SOMA_OBJECT_TYPE_METADATA_KEY,
-    SUPPORTED_SOMA_ENCODING_VERSIONS,
-)
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
@@ -166,35 +153,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise
-        wrapper._do_initial_reads(clib_handle)
-        obj_type = wrapper.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
-        if obj_type is None:
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-                f"the required '{SOMA_OBJECT_TYPE_METADATA_KEY!r}' metadata key.",
-            )
-        if isinstance(obj_type, bytes):
-            obj_type = str(obj_type, "utf-8")
-        if not isinstance(obj_type, str):
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The metadata key "
-                f"'{SOMA_OBJECT_TYPE_METADATA_KEY!r}' has unexpected type '{type(obj_type)}'.",
-            )
-
-        encoding_version = wrapper.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
-        if encoding_version is None:
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-                f"the required '{SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key.",
-            )
-        if isinstance(encoding_version, bytes):
-            encoding_version = str(encoding_version, "utf-8")
-        if encoding_version not in SUPPORTED_SOMA_ENCODING_VERSIONS:
-            raise ValueError(
-                f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
-                f"needs to be updated to a more recent version.",
-            )
-
         return wrapper
 
     @classmethod
@@ -209,61 +167,11 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError
 
-    # Covariant types should normally not be in parameters, but this is for
-    # internal use only so it's OK.
-    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
-        """Final setup step before returning the Handle.
-
-        This is passed a raw TileDB object opened in read mode, since writers
-        will need to retrieve data from the backing store on setup.
-        """
-        # non-attrs-managed field
-        self.metadata = MetadataWrapper(self, dict(reader.meta))
-
-    @property
-    def reader(self) -> _RawHdl_co:
-        """Accessor to assert that you are working in read mode."""
-        if self.closed:
-            raise SOMAError(f"{self} is closed")
-        if self.mode == "r":
-            return self._handle
-        raise SOMAError(f"Cannot read from {self}; current mode='{self.mode}'. Reopen in mode='r'.")
-
-    @property
-    def writer(self) -> _RawHdl_co:
-        """Accessor to assert that you are working in write mode."""
-        if self.closed:
-            raise SOMAError(f"{self} is closed")
-        if self.mode == "w":
-            return self._handle
-        raise SOMAError(f"Cannot write to {self}; current mode='{self.mode}'. Reopen in mode='w'.")
-
-    @property
-    def deleter(self) -> _RawHdl_co:
-        """Accessor to assert that you are working in delete mode."""
-        if self.closed:
-            raise SOMAError(f"{self} is closed")
-        if self.mode == "d":
-            return self._handle
-        if self.mode == "w":
-            warnings.warn(
-                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-            return self._handle
-        raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")  # noqa: S608
-
     def close(self) -> None:
         if self.closed:
             return
-        self.metadata._write()
         self._handle.close()
         self.closed = True
-
-    def _check_open(self) -> None:
-        if self.closed:
-            raise SOMAError(f"{self!r} is closed")
 
     def __repr__(self) -> str:
         closed_str = " (closed)" if self.closed else ""
@@ -281,21 +189,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
 AnyWrapper = Wrapper[RawHandle]
 """Non-instantiable type representing any Handle."""
-
-
-@attrs.define(frozen=True)
-class GroupEntry:
-    uri: str
-    wrapper_type: type[AnyWrapper]
-
-    @classmethod
-    def from_soma_group_entry(cls, obj: tuple[str, str]) -> GroupEntry:
-        uri, type = obj[0], obj[1]
-        if type == "SOMAArray":
-            return GroupEntry(uri, SOMAArrayWrapper)
-        if type == "SOMAGroup":
-            return GroupEntry(uri, SOMAGroupWrapper)
-        raise SOMAError(f"internal error: unknown object type {uri}")
 
 
 class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
@@ -320,20 +213,6 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
             context=context.native_context,
             timestamp=(0, timestamp),
         )
-
-    def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
-        super()._do_initial_reads(group)
-
-        self.initial_contents = {
-            name: GroupEntry.from_soma_group_entry(entry) for name, entry in group.members().items()
-        }
-
-    @property
-    def meta(self) -> MetadataWrapper:
-        return self.metadata
-
-    def members(self) -> dict[str, tuple[str, str]]:
-        return cast("dict[str, tuple[str, str]]", self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
@@ -388,43 +267,6 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
             context=context.native_context,
             timestamp=(0, timestamp),
         )
-
-    def _do_initial_reads(self, reader: RawHandle) -> None:
-        """Final setup step before returning the Handle.
-
-        This is passed a raw TileDB object opened in read mode, since writers
-        will need to retrieve data from the backing store on setup.
-        """
-        # non-attrs-managed field
-        self.metadata = MetadataWrapper(self, dict(reader.meta))
-
-    @property
-    def schema(self) -> pa.Schema:
-        return self._handle.schema
-
-    def schema_config_options(self) -> clib.PlatformSchemaConfig:
-        """Returns a class containing the TileDB platform configuration options that
-        can be read from an array schema.
-        """
-        return self._handle.schema_config_options()
-
-    @property
-    def meta(self) -> MetadataWrapper:
-        return self.metadata
-
-    @property
-    def ndim(self) -> int:
-        return len(self._handle.dimension_names)
-
-    @property
-    def shape(self) -> tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast("tuple[int, ...]", tuple(self._handle.shape))
-
-    @property
-    def maxshape(self) -> tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast("tuple[int, ...]", tuple(self._handle.maxshape))
 
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
@@ -518,32 +360,49 @@ class MetadataWrapper(MutableMapping[str, Any]):
     through to the backing store and the cache is updated to match.
     """
 
-    owner: Wrapper[RawHandle]
+    owner: RawHandle
     cache: dict[str, Any]
     _mods: dict[str, _DictMod] = attrs.field(init=False, factory=dict)
     """Tracks the modifications we have made to cache entries."""
 
+    @classmethod
+    def from_handle(cls, owner: RawHandle) -> Self:
+        return cls(owner, dict(owner.meta))
+
     def __len__(self) -> int:
-        self.owner._check_open()
+        if self.owner.closed:
+            raise SOMAError("Cannot get length of metadata; object is closed. Open in mode='r'.")
         return len(self.cache)
 
     def __iter__(self) -> Iterator[str]:
-        self.owner._check_open()
+        if self.owner.closed:
+            raise SOMAError("Cannot iterate over metadata; object is closed. Open in mode='r'.")
         return iter(self.cache)
 
     def __getitem__(self, key: str) -> Any:  # noqa: ANN401
-        self.owner._check_open()
+        if self.owner.closed:
+            raise SOMAError(f"Cannot get metadata item '{key}'; object is closed. Open in mode='r'.")
         return self.cache[key]
 
     def __setitem__(self, key: str, value: Any) -> None:  # noqa: ANN401
-        self.owner.writer  # noqa: B018 Ensures we're open in write mode.
+        if self.owner.closed:
+            raise SOMAError(f"Cannot set metadata item '{key}'='{value}'; object is closed.")
+        if self.owner.mode != "w":
+            raise SOMAError(
+                f"Cannot write metadata item to '{key}'; current mode='{self.owner.mode}'. Reopen in mode='w'."
+            )
         state = self._current_state(key)
         _check_metadata_type(key, value)
         self.cache[key] = value
         self._mods[key] = state.next_state("set")
 
     def __delitem__(self, key: str) -> None:
-        self.owner.writer  # noqa: B018 Ensures we're open in write mode.
+        if self.owner.closed:
+            raise SOMAError(f"Cannot delete metadata item at '{key}'; object is closed.")
+        if self.owner.mode != "w":
+            raise SOMAError(
+                f"Cannot delete metadata item at '{key}'; current mode='{self.owner.mode}'. Reopen in mode='w'."
+            )
         state = self._current_state(key)
         del self.cache[key]
         self._mods[key] = state.next_state("del")
@@ -562,16 +421,15 @@ class MetadataWrapper(MutableMapping[str, Any]):
         for key, mod in self._mods.items():
             try:
                 if mod in (_DictMod.ADDED, _DictMod.UPDATED):
-                    set_metadata = self.owner._handle.set_metadata
                     val = self.cache[key]
                     if isinstance(val, str):
-                        set_metadata(key, np.array([val.encode("UTF-8")], "S"))
+                        self.owner.set_metadata(key, np.array([val.encode("UTF-8")], "S"))
                     elif isinstance(val, bytes):
-                        set_metadata(key, np.array([val], "V"))
+                        self.owner.set_metadata(key, np.array([val], "V"))
                     else:
-                        set_metadata(key, np.array([val]))
+                        self.owner.set_metadata(key, np.array([val]))
                 if mod is _DictMod.DELETED:
-                    self.owner._handle.delete_metadata(key)
+                    self.owner.delete_metadata(key)
             except Exception as e:  # noqa: BLE001, PERF203
                 # This should be done with Exception Groups
                 errors.append(e)
@@ -590,7 +448,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
             )
 
     def __repr__(self) -> str:
-        prefix = f"{type(self).__name__}({self.owner})"
+        prefix = f"{type(self).__name__}({self.owner})"  # TODO: Before merging add repr to handles
         if self.owner.closed:
             return f"<{prefix}>"
         return f"<{prefix} {self.cache}>"
