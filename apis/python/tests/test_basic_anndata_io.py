@@ -493,7 +493,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
         ("varp", (0, 0)),
     ],
 )
-@pytest.mark.parametrize("version", ["1.14.5", "1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("version", ["1.14.5", "1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
 @pytest.mark.parametrize(
     "name_and_expected_shape",
     [["pbmc3k_unprocessed", (2700, 13714)], ["pbmc3k_processed", (2638, 1838)]],
