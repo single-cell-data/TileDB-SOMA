@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import abc
 import enum
-import warnings
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from typing import Any, Generic, TypeVar, Union
 
@@ -167,40 +166,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError
-
-    @property
-    def reader(self) -> _RawHdl_co:
-        """Accessor to assert that you are working in read mode."""
-        if self.closed:
-            raise SOMAError(f"{self} is closed")
-        if self.mode == "r":
-            return self._handle
-        raise SOMAError(f"Cannot read from {self}; current mode='{self.mode}'. Reopen in mode='r'.")
-
-    @property
-    def writer(self) -> _RawHdl_co:
-        """Accessor to assert that you are working in write mode."""
-        if self.closed:
-            raise SOMAError(f"{self} is closed")
-        if self.mode == "w":
-            return self._handle
-        raise SOMAError(f"Cannot write to {self}; current mode='{self.mode}'. Reopen in mode='w'.")
-
-    @property
-    def deleter(self) -> _RawHdl_co:
-        """Accessor to assert that you are working in delete mode."""
-        if self.closed:
-            raise SOMAError(f"{self} is closed")
-        if self.mode == "d":
-            return self._handle
-        if self.mode == "w":
-            warnings.warn(
-                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-            return self._handle
-        raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")  # noqa: S608
 
     def close(self) -> None:
         if self.closed:
