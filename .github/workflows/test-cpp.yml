@@ -21,11 +21,31 @@ jobs:
   catch2:
     runs-on: ${{ inputs.os }}
     steps:
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: ${{ github.workspace }}/vcpkg
+          
+      - name: Bootstrap vcpkg
+        run: |
+          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Verify vcpkg toolchain exists
+        run: |
+          ls -la ${{ github.workspace }}/vcpkg/scripts/buildsystems/
+          if [ ! -f "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" ]; then
+            echo "ERROR: vcpkg.cmake not found!"
+            exit 1
+          fi
+        
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
-      - name: Build libtiledbsoma
-        run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
+      - name: Build
+        run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true --preset vcpkg
 
       - name: Run C++ tests
         run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
@@ -43,6 +63,19 @@ jobs:
     if: ${{ inputs.run_asan }}
     runs-on: ${{ inputs.os }}
     steps:
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+          
+      - name: Bootstrap vcpkg
+        run: ./vcpkg/bootstrap-vcpkg.sh
+        
+      - name: Set vcpkg toolchain path
+        run: echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
@@ -50,7 +83,7 @@ jobs:
         run: |
           mkdir -p external
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.1/tiledb-linux-x86_64-2.29.1-9a6284d.tar.gz
+          wget --quiet https://github.com/vcpkgTileDB-Inc/TileDB/releases/download/2.29.1/tiledb-linux-x86_64-2.29.1-9a6284d.tar.gz
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
 
