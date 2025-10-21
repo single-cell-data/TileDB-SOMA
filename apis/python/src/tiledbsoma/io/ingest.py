@@ -1654,6 +1654,90 @@ def update_matrix(
     )
 
 
+def _validate_matrix_to_collection(
+    exp: Experiment,
+    meas: Measurement,
+    collection_name: str,
+    matrix_name: str,
+    matrix_data: Matrix | h5py.Dataset,
+) -> None:
+    """Validates against the Experiment shape, as defined by the axis dataframes.
+    Skips validation for pre-1.15 schemas till issue is resolved
+    https://github.com/single-cell-data/TileDB-SOMA/pull/4258#discussion_r2429676202.
+
+    Args:
+        exp: The experiment object
+        measurement_name: Name of the measurement
+        collection_name: Name of the collection
+        matrix_name: Name of the matrix
+        matrix_data: The matrix data to validate
+        meas: The already-opened measurement object
+
+    Raises:
+        ValueError: If the matrix shape is incompatible.
+    """
+    if not exp.obs.tiledbsoma_has_upgraded_domain:
+        warnings.warn(
+            f"Skipped validation for arrays with pre-1.15 schema\
+                       {matrix_name}",
+            stacklevel=2,
+        )
+        return
+
+    obs_soma_joinid_domain = exp.obs._maybe_soma_joinid_shape
+
+    # Try to access the var DataFrame directly, fallback to explicit open if needed
+    if meas.var.closed:
+        with DataFrame.open(meas.var.uri, "r", context=meas.context, tiledb_timestamp=meas.tiledb_timestamp) as var_df:
+            var_soma_joinid_domain = var_df._maybe_soma_joinid_shape
+    else:
+        var_soma_joinid_domain = meas.var._maybe_soma_joinid_shape
+
+    target_obs_size = obs_soma_joinid_domain  # O: Observation (row) size
+    target_var_size = var_soma_joinid_domain  # V: Variable (column) size
+    target_shape = (target_obs_size, target_var_size)
+    # Check if the dimensionality is the same
+    if len(matrix_data.shape) != len(target_shape):
+        raise SOMAError(
+            f"Matrix '{matrix_name}' has {len(matrix_data.shape)} dimensions, "
+            f"but the existing matrix has {len(target_shape)}. Shapes must match."
+        )
+
+    if collection_name == "X":
+        # X: (O, V) - Must match both dimensions exactly
+        if matrix_data.shape != target_shape:
+            raise SOMAError(
+                f"Matrix 'X' shape {matrix_data.shape} is incompatible with target shape {target_shape}. "
+                "Both dimensions must match exactly."
+            )
+    elif collection_name == "obsm":
+        if matrix_data.shape[0] != target_obs_size:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the observation size (O). "
+                f"Found {matrix_data.shape[0]}, expected {target_obs_size}."
+            )
+    elif collection_name == "varm":
+        if matrix_data.shape[0] != target_var_size:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the variable size (V). "
+                f"Found {matrix_data.shape[0]}, expected {target_var_size}."
+            )
+    elif collection_name == "obsp":
+        expected_shape = (target_obs_size, target_obs_size)
+        if matrix_data.shape[0:2] != expected_shape:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the observation size. "
+                f"Found {matrix_data.shape[0:2]}, expected {(target_obs_size, target_obs_size)}."
+            )
+    elif collection_name == "varp":
+        expected_shape = (target_var_size, target_var_size)
+        if matrix_data.shape[0:2] != expected_shape:
+            raise SOMAError(
+                f"Matrix '{matrix_name}' must match the observation size (O). "
+                f"Found {matrix_data.shape[0:2]}, expected {(target_var_size, target_var_size)}."
+            )
+
+
 def add_X_layer(
     exp: Experiment,
     measurement_name: str,
@@ -1663,10 +1747,33 @@ def add_X_layer(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
+    schema_validation: bool = True,
 ) -> None:
-    """This is useful for adding X data, for example from
+    """Add a new X layer to a measurement in the experiment.
+
+    This is useful for adding X data, for example from
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
     ``scanpy.pp.log1p``, etc.
+
+    Args:
+        exp: The experiment to add the X layer to. Must be open for writing.
+        measurement_name: Name of the measurement within the experiment.
+        X_layer_name: Name for the new X layer (e.g., "normalized", "log1p").
+        X_layer_data: Matrix data to store in the X layer. Can be a sparse matrix
+            (e.g., scipy.csr_matrix) or an h5py.Dataset.
+        ingest_mode: Mode for ingestion. Defaults to "write".
+        use_relative_uri: Whether to use relative URIs when storing references.
+            If None, the default behavior is used.
+        context: TileDB context for the operation. If None, uses the default context.
+        schema_validation: Whether to validate the matrix schema before adding.
+            Defaults to True.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If the experiment is not open for writing or if schema
+            validation fails.
 
     Lifecycle:
         Maturing.
@@ -1682,6 +1789,7 @@ def add_X_layer(
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
         context=context,
+        schema_validation=schema_validation,
     )
 
 
@@ -1695,9 +1803,38 @@ def add_matrix_to_collection(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
+    schema_validation: bool = True,
 ) -> None:
-    """This is useful for adding X/obsp/varm/etc data, for example from
+    """Add a matrix to a specified collection within a measurement.
+
+    This is useful for adding X/obsp/varm/etc data, for example from
     Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
+
+    Args:
+        exp: The experiment to add the matrix to. Must be open for writing.
+        measurement_name: Name of the measurement within the experiment.
+        collection_name: Name of the collection to add the matrix to
+            (e.g., "X", "obsp", "varm").
+        matrix_name: Name for the new matrix within the collection.
+        matrix_data: Matrix data to store. Can be a sparse matrix
+            (e.g., scipy.csr_matrix) or an h5py.Dataset.
+        ingest_mode: Mode for ingestion. Defaults to "write".
+        use_relative_uri: Whether to use relative URIs when storing references.
+            If None, the default behavior is used.
+        context: TileDB context for the operation. If None, uses the default context.
+        schema_validation: Whether to validate the matrix schema before adding.
+            Defaults to True.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If schema validation fails or if the collection structure
+            is invalid.
+
+    Notes:
+        - If the collection doesn't exist, it will be created automatically.
+        - The matrix is stored as a SparseNDArray with identity axis mappings.
 
     Lifecycle:
         Maturing.
@@ -1711,12 +1848,14 @@ def add_matrix_to_collection(
     # tiledb://namespace/uuid.  When the caller passes a creation URI (which
     # they must) via exp.uri, we need to follow that.
     extend_creation_uri = exp.uri.startswith("tiledb://")
-
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
             coll_uri = f"{exp.uri}/ms/{_util.sanitize_key(measurement_name)}/{_util.sanitize_key(collection_name)}"
         else:
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
+
+        if schema_validation:
+            _validate_matrix_to_collection(exp, meas, collection_name, matrix_name, matrix_data)
 
         if collection_name in meas:
             coll = cast("Collection[RawHandle]", meas[collection_name])
@@ -1728,6 +1867,7 @@ def add_matrix_to_collection(
                 context=context,
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
+
         with coll:
             matrix_uri = _util.uri_joinpath(coll_uri, _util.sanitize_key(matrix_name))
 

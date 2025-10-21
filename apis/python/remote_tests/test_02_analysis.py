@@ -79,8 +79,11 @@ def test_write_with_updates(conftest_context, conftest_namespace, conftest_defau
         assert sorted(list(exp.ms["RNA"].X.keys())) == ["data", "logcounts"]
 
     # Add dimensional-reduction results
+    # identify highly variable genes but don't subset the data
+    # https://github.com/single-cell-data/TileDB-SOMA/pull/4258#discussion_r2417729246
     sc.pp.highly_variable_genes(adata, inplace=True)
-    adata = adata[:, adata.var.highly_variable]
+
+    # Run PCA on the full dataset, scanpy handles HVG selection
     sc.pp.scale(adata)
     sc.tl.pca(adata, use_highly_variable=True, n_comps=5)
 
