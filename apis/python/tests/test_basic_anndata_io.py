@@ -576,7 +576,10 @@ def test_matrix_X_layer_enforcement(conftest_pbmc_small, tmp_path, offset):
     bad_matrix = np.ones(bad_shape)
 
     # Should raise error for invalid shape
-    with _factory.open(output_path, "w") as exp, pytest.raises(tiledbsoma.SOMAError):
+    with (
+        _factory.open(output_path, "w") as exp,
+        pytest.raises(tiledbsoma.SOMAError, match=r"Matrix .* shape .* is incompatible with target shape *."),
+    ):
         tiledbsoma.io.add_X_layer(exp, "RNA", "bad", bad_matrix, schema_validation=True)
 
 
