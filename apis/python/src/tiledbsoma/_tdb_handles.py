@@ -13,17 +13,10 @@ import abc
 import enum
 import warnings
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
-from typing import (
-    Any,
-    Generic,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Generic, TypeVar, Union
 
 import attrs
 import numpy as np
-import pyarrow as pa
 from somacore import options
 from typing_extensions import Literal, Self
 
@@ -309,30 +302,6 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
             context=context.native_context,
             timestamp=(0, timestamp),
         )
-
-    @property
-    def schema(self) -> pa.Schema:
-        return self._handle.schema
-
-    def schema_config_options(self) -> clib.PlatformSchemaConfig:
-        """Returns a class containing the TileDB platform configuration options that
-        can be read from an array schema.
-        """
-        return self._handle.schema_config_options()
-
-    @property
-    def ndim(self) -> int:
-        return len(self._handle.dimension_names)
-
-    @property
-    def shape(self) -> tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast("tuple[int, ...]", tuple(self._handle.shape))
-
-    @property
-    def maxshape(self) -> tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast("tuple[int, ...]", tuple(self._handle.maxshape))
 
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
