@@ -51,6 +51,9 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.sh
           echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
+      - name: Build C++ core
+        run: ./scripts/bld --preset vcpkg --no-tiledb-deprecated=true --werror=true
+
       - name: Show matrix OS
         run: echo "inputs.os:" ${{ inputs.os }}
 
@@ -74,7 +77,23 @@ jobs:
     runs-on: ${{ inputs.os }}
 
     steps:
-      - uses: actions/checkout@v4
+    
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Build C++ core
+        run: ./scripts/bld --preset vcpkg --no-tiledb-deprecated=true --werror=true
 
       - uses: ./.github/actions/setup-r
         with:
