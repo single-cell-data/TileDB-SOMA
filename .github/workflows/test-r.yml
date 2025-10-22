@@ -40,6 +40,17 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
       - name: Show matrix OS
         run: echo "inputs.os:" ${{ inputs.os }}
 
