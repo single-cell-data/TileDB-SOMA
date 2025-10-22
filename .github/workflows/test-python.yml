@@ -54,6 +54,20 @@ jobs:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
 
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Build C++ core
+        run: ./scripts/bld --preset vcpkg --no-tiledb-deprecated=true --werror=true
+
       - name: Set up test data
         run: make data
 
