@@ -22,27 +22,22 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
 
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
       - name: Checkout vcpkg
         uses: actions/checkout@v4
         with:
           repository: microsoft/vcpkg
-          path: ${{ github.workspace }}/vcpkg
-          
+          path: vcpkg  
+
       - name: Bootstrap vcpkg
         run: |
-          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/bootstrap-vcpkg.sh
           echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       - name: Verify vcpkg toolchain exists
-        run: |
-          ls -la ${{ github.workspace }}/vcpkg/scripts/buildsystems/
-          if [ ! -f "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" ]; then
-            echo "ERROR: vcpkg.cmake not found!"
-            exit 1
-          fi
-        
-      - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
+        run: ls -la ${{ github.workspace }}/vcpkg/scripts/buildsystems/
 
       - name: Build
         run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true --preset vcpkg
