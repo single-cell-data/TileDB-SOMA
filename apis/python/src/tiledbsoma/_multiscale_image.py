@@ -34,7 +34,7 @@ from ._constants import (
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
-from ._soma_object import AnySOMAObject
+from ._soma_object import SOMAObject
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
@@ -83,7 +83,7 @@ class _MultiscaleImageMetadata:
 
 class MultiscaleImage(
     SOMAGroup[DenseNDArray],
-    somacore.MultiscaleImage[DenseNDArray, AnySOMAObject],
+    somacore.MultiscaleImage[DenseNDArray, SOMAObject],
 ):
     """A multiscale image represented as a collection of images at multiple resolution levels.
 

@@ -35,12 +35,12 @@ from . import (
 from ._constants import SOMA_OBJECT_TYPE_METADATA_KEY
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
-from ._soma_object import AnySOMAObject, SOMAObject
+from ._soma_object import SOMAObject
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-_Obj = TypeVar("_Obj", bound="_soma_object.AnySOMAObject")
+_Obj = TypeVar("_Obj", bound="SOMAObject")
 _Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 
 
@@ -52,7 +52,7 @@ def open(
     soma_type: str | None = None,
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
-) -> AnySOMAObject: ...
+) -> SOMAObject: ...
 
 
 @overload
@@ -71,10 +71,10 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: type[SOMAObject] | str | None = None,  # type: ignore[type-arg]
+    soma_type: type[SOMAObject] | str | None = None,
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
-) -> AnySOMAObject:
+) -> SOMAObject:
     """Opens a TileDB SOMA object.
 
     Args:
@@ -130,7 +130,7 @@ def open(
     else:
         raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
 
-    obj: AnySOMAObject = _type_name_to_cls(soma_type_name).open(
+    obj: SOMAObject = _type_name_to_cls(soma_type_name).open(
         uri=uri, mode=mode, context=context, tiledb_timestamp=tiledb_timestamp
     )
     if soma_type and obj.soma_type.lower() != soma_type_name.lower():
@@ -140,7 +140,7 @@ def open(
 
 
 @typeguard_ignore
-def reify_handle(handle_wrapper: _Wrapper) -> SOMAObject[_Wrapper]:
+def reify_handle(handle_wrapper: _Wrapper) -> SOMAObject:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     typename = handle_wrapper._handle.type
     if typename is None:
@@ -153,14 +153,14 @@ def reify_handle(handle_wrapper: _Wrapper) -> SOMAObject[_Wrapper]:
             f"Cannot open {handle_wrapper.uri!r}: a {type(handle_wrapper._handle)} cannot be converted to a {typename}"
         )
     return cast(
-        "_soma_object.SOMAObject[_Wrapper]",
+        "_soma_object.SOMAObject",
         cls(handle_wrapper, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
     )
 
 
 @no_type_check
-def _type_name_to_cls(type_name: str) -> type[AnySOMAObject]:
-    type_map: dict[str, type[AnySOMAObject]] = {
+def _type_name_to_cls(type_name: str) -> type[SOMAObject]:
+    type_map: dict[str, type[SOMAObject]] = {
         t.soma_type.lower(): t
         for t in (
             _collection.Collection,

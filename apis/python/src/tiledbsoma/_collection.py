@@ -32,16 +32,16 @@ from ._exception import (
 )
 from ._funcs import typeguard_ignore
 from ._soma_group import SOMAGroup
-from ._soma_object import AnySOMAObject, SOMAObject
+from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of SOMAObject
-CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
-_TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
-_Coll = TypeVar("_Coll", bound="CollectionBase[AnySOMAObject]")
+CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
+_TDBO = TypeVar("_TDBO", bound=SOMAObject)
+_Coll = TypeVar("_Coll", bound="CollectionBase[SOMAObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
@@ -143,7 +143,7 @@ class CollectionBase(
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
         **kwargs: Any,  # noqa: ANN401
-    ) -> Collection[AnySOMAObject]: ...
+    ) -> Collection[SOMAObject]: ...
 
     @overload
     def add_new_collection(

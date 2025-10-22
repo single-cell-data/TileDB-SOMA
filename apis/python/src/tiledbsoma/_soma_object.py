@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import MutableMapping
 from contextlib import ExitStack
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 import somacore
 from somacore import options
@@ -21,15 +21,8 @@ from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-_WrapperType_co = TypeVar("_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True)
 
-"""The type of handle on a backend object that we have.
-
-Covariant because ``_handle_wrapper`` is read-only.
-"""
-
-
-class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
+class SOMAObject(somacore.SOMAObject):
     """Base class for all TileDB SOMA objects.
 
     Accepts a SOMATileDBContext, to enable session state to be shared
@@ -40,8 +33,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     """
 
     _wrapper_type: (
-        type[_WrapperType_co]
-        | type[_tdb_handles.DataFrameWrapper]
+        type[_tdb_handles.DataFrameWrapper]
         | type[_tdb_handles.DenseNDArrayWrapper]
         | type[_tdb_handles.SparseNDArrayWrapper]
         | type[_tdb_handles.CollectionWrapper]
@@ -49,6 +41,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         | type[_tdb_handles.MeasurementWrapper]
         | type[_tdb_handles.SceneWrapper]
         | type[_tdb_handles.MultiscaleImageWrapper]
+        | type[_tdb_handles.PointCloudDataFrameWrapper]
+        | type[_tdb_handles.GeometryDataFrameWrapper]
     )
     """Class variable of the Wrapper class used to open this object type."""
 
@@ -102,19 +96,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
-        return cls(
-            handle,  # type: ignore[arg-type]
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        return cls(handle, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     def __init__(
         self,
-        handle: (
-            _WrapperType_co
-            | _tdb_handles.DataFrameWrapper
-            | _tdb_handles.DenseNDArrayWrapper
-            | _tdb_handles.SparseNDArrayWrapper
-        ),
+        handle: _tdb_handles.Wrapper[_tdb_handles.RawHandle],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ) -> None:
@@ -123,6 +109,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         This function is internal; users should open TileDB SOMA objects using
         the :meth:`create` and :meth:`open` factory class methods.
         """
+        if not isinstance(handle, self._wrapper_type):
+            raise TypeError("Internal error: Unexpected handle type {type(handle)}. Expected {self._wrapper_type}.")
         self._close_stack = ExitStack()
         """An exit stack to manage closing handles owned by this object.
 
@@ -195,7 +183,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle_wrapper.close()
         self._handle_wrapper = self._wrapper_type.open(
             self._handle_wrapper.uri, mode, self._handle_wrapper.context, tiledb_timestamp
-        )  # type: ignore
+        )
         self._handle = self._handle_wrapper._handle
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle_wrapper)
@@ -359,6 +347,3 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 return md_type.lower() == cls.soma_type.lower()
         except (RuntimeError, SOMAError):
             return False
-
-
-AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]

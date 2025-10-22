@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add optional schema validation to `tiledbsoma.io.add_X_layer`, which will generate an error if the provided matrix does not match the Experiment shape. Validation is enabled by default, for any dataset created with SOMA 1.15 or later.
+- \[[#4293](https://github.com/single-cell-data/TileDB-SOMA/pull/4293)\] [BREAKING] Change the `SOMAObject` class to no longer be a generic class over the handle `Wrapper` internal class.
 
 ### Deprecated
 

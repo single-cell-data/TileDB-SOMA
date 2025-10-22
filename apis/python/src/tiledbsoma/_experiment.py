@@ -25,19 +25,19 @@ from ._measurement import Measurement
 from ._point_cloud_dataframe import PointCloudDataFrame
 from ._query import ExperimentAxisQuery
 from ._scene import Scene
-from ._soma_object import AnySOMAObject
+from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from .options import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBDeleteOptions
 
 
 class Experiment(
-    CollectionBase[AnySOMAObject],
+    CollectionBase[SOMAObject],
     experiment.Experiment[
         DataFrame,
         Collection[Measurement],  # type: ignore[type-var]
         Collection[Scene],  # type: ignore[type-var]
-        AnySOMAObject,
+        SOMAObject,
     ],
 ):
     """A collection subtype that combines observations and measurements
@@ -250,9 +250,7 @@ class _ArrayDelMd:
     joinid_max: tuple[int, ...]
 
 
-def _append_if_supported(
-    candidates: list[_ArrayDelMd], obj: AnySOMAObject, name: str, join_on: tuple[str, ...]
-) -> None:
+def _append_if_supported(candidates: list[_ArrayDelMd], obj: SOMAObject, name: str, join_on: tuple[str, ...]) -> None:
     """Private method.
 
     Append the candidate array to the final selection list if:
@@ -289,7 +287,7 @@ def _append_if_supported(
 
 def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
     """Generate a list of candidate arrays for an obs axis delete."""
-    arr: AnySOMAObject
+    arr: SOMAObject
     candidates: list[_ArrayDelMd] = []
     if "obs_spatial_presence" in exp:
         _append_if_supported(candidates, exp.obs_spatial_presence, "obs_spatial_presence", ("soma_joinid",))
@@ -315,7 +313,7 @@ def _create_obs_axis_candidates(exp: Experiment) -> list[_ArrayDelMd]:
 
 def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDelMd]:
     """Generate a list of candidate arrays for a var axis delete."""
-    arr: AnySOMAObject
+    arr: SOMAObject
     if ms_name not in exp.ms:
         raise ValueError(f"Measurement name {ms_name} does not exist in the experiment")
 

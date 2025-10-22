@@ -13,12 +13,12 @@ from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._soma_object import AnySOMAObject
+from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 
 
 class Measurement(
-    CollectionBase[AnySOMAObject],
+    CollectionBase[SOMAObject],
     measurement.Measurement[
         DataFrame,
         Collection[  # type: ignore[type-var]
@@ -26,7 +26,7 @@ class Measurement(
         ],  # not just `NDArray` since that has no common `read`
         Collection[DenseNDArray],  # type: ignore[type-var]
         Collection[SparseNDArray],  # type: ignore[type-var]
-        AnySOMAObject,
+        SOMAObject,
     ],
 ):
     """A set of observations defined by a dataframe, with measurements.

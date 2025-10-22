@@ -49,7 +49,7 @@ from tiledbsoma import (
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from tiledbsoma._exception import AlreadyExistsError, SOMAError
-from tiledbsoma._soma_object import AnySOMAObject
+from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._types import IngestMode
 from tiledbsoma.io import conversions
 from tiledbsoma.io._common import AdditionalMetadata
@@ -583,7 +583,7 @@ def from_visium(
                             )
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
-                with _create_or_open_collection(Collection[AnySOMAObject], obsl_uri, **ingest_ctx) as obsl:
+                with _create_or_open_collection(Collection[SOMAObject], obsl_uri, **ingest_ctx) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
                     # Write spot data and add to the scene.
@@ -606,7 +606,7 @@ def from_visium(
                         loc.coordinate_space = coord_space
 
                 varl_uri = _util.uri_joinpath(scene_uri, "varl")
-                with _create_or_open_collection(Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx) as varl:
+                with _create_or_open_collection(Collection[Collection[SOMAObject]], varl_uri, **ingest_ctx) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 
     logging.log_io(
