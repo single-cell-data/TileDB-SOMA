@@ -6,8 +6,6 @@ from typing import Any
 
 import pyarrow as pa
 
-from . import _tdb_handles
-
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._managed_query import ManagedQuery
@@ -15,7 +13,7 @@ from ._soma_object import SOMAObject
 from ._util import _cast_domainish
 
 
-class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
+class SOMAArray(SOMAObject):
     """Base class for all SOMAArrays: DataFrame and NDarray.
 
     Lifecycle:

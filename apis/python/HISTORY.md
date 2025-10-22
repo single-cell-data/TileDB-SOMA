@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- \[[#4293](https://github.com/single-cell-data/TileDB-SOMA/pull/4293)\] [BREAKING] Change the `SOMAObject` class to no longer be a generic class over the handle `Wrapper` internal class.
+
 ### Deprecated
 
 ### Removed

@@ -18,12 +18,12 @@ from . import _tdb_handles
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._exception import SOMAError, is_does_not_exist_error
-from ._soma_object import AnySOMAObject, SOMAObject
+from ._soma_object import SOMAObject
 from ._types import OpenTimestamp
 from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
 
-CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
-_TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
+CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
+_TDBO = TypeVar("_TDBO", bound=SOMAObject)
 
 
 @attrs.define()
@@ -32,7 +32,7 @@ class _CachedElement:
 
     uri: str
     wrapper_type: type[_tdb_handles.AnyWrapper]
-    soma: AnySOMAObject | None = None
+    soma: SOMAObject | None = None
     """The reified object, if it has been opened."""
 
     @classmethod
@@ -45,7 +45,7 @@ class _CachedElement:
         raise SOMAError(f"internal error: unknown object type {uri}")
 
 
-class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[CollectionElementType]):
+class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
     """Base class for all SOMAGroups: CollectionBase and MultiscaleImage.
 
     Lifecycle:

@@ -28,7 +28,7 @@ from ._exception import SOMAError, map_exception_for_create
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
-from ._soma_object import AnySOMAObject
+from ._soma_object import SOMAObject
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
@@ -45,8 +45,8 @@ _SE = TypeVar("_SE", bound=_spatial_element)
 
 
 class Scene(
-    CollectionBase[AnySOMAObject],
-    somacore.Scene[MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, AnySOMAObject],
+    CollectionBase[SOMAObject],
+    somacore.Scene[MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, SOMAObject],
 ):
     """A collection subtype representing spatial assets that can all be stored
     on a single coordinate space.
@@ -139,11 +139,11 @@ class Scene(
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
 
-    def _open_subcollection(self, subcollection: str | Sequence[str]) -> CollectionBase[AnySOMAObject]:
+    def _open_subcollection(self, subcollection: str | Sequence[str]) -> CollectionBase[SOMAObject]:
         if len(subcollection) == 0:
             raise ValueError("Invalid subcollection: value cannot be empty.")
         subcollection = (subcollection,) if isinstance(subcollection, str) else tuple(subcollection)
-        coll: CollectionBase[AnySOMAObject] = self
+        coll: CollectionBase[SOMAObject] = self
         # Keep track of collection hierarchy for informative error reporting
         parent_name: list[str] = []
         for name in subcollection:
