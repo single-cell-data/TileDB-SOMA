@@ -67,9 +67,8 @@ jobs:
           build_args: '"--no-manual"'
           error-on: '"error"'
           working-directory: 'apis/r/'
-          configure-args: '--with-tiledbsoma=${{ github.workspace }}/dist'
         env:
-          CMAKE_PREFIX_PATH: ${{ github.workspace }}/dist:${{ github.workspace }}/build/vcpkg_installed/
+          PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
 
   test-coverage:
     if: ${{ inputs.report_codecov }}
@@ -97,8 +96,7 @@ jobs:
 
       - name: Test coverage
         env:
-          CMAKE_PREFIX_PATH: ${{ github.workspace }}/dist:${{ github.workspace }}/build/vcpkg_installed/
-          R_CONFIGURE_ARGS: '--with-tiledbsoma=${{ github.workspace }}/dist'
+          PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
         run: |
           cov <- covr::package_coverage(
             path = "apis/r",
