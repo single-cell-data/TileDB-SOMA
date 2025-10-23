@@ -25,10 +25,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml # <-- Calls the unified build file
+    uses: ./.github/workflows/build-cpp.yml 
     with:
       os: ${{ matrix.os }}
-      build_type: 'release' # <-- Passes 'release'
+      build_type: 'release'
 
   ci:
     needs: build-cpp-release
@@ -51,7 +51,7 @@ jobs:
         run: echo "matrix.os:" ${{ matrix.os }}
 
       - name: Linux CPU info
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: cat /proc/cpuinfo
 
       - name: Set up Python ${{ matrix.python_version }}
@@ -69,7 +69,7 @@ jobs:
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ inputs.os }}
+          name: cpp-build-release-${{ matrix.os }}
       
       - name: Log pip dependencies
         run: pip list
