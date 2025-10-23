@@ -48,6 +48,9 @@ jobs:
         with:
           name: cpp-build-release-${{ inputs.os }}
 
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
+        
       - name: Show matrix OS
         run: echo "inputs.os:" ${{ inputs.os }}
 
