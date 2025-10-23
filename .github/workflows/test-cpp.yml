@@ -28,14 +28,6 @@ jobs:
         with:
           name: cpp-build-release-${{ inputs.os }}
 
-
-      - name: Verify downloaded library
-        run: |
-          echo "--- Verifying dist/ ---"
-          ls -la dist/
-          echo "--- Verifying build/ ---"
-          ls -la build/
-
       - name: Restore Permissions
         run: chmod +x build/libtiledbsoma/test/*
 
@@ -64,6 +56,6 @@ jobs:
 
       - name: Restore Permissions
         run: chmod +x build/libtiledbsoma/test/*
-        
+
       - name: Run C++ unittests
         run: ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure

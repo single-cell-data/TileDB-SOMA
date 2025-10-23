@@ -37,7 +37,7 @@ jobs:
       matrix:
         include:
           - name: linux
-            os: ubuntu-24.04
+            os: ubuntu-latest
             python_version: 3.9 # Should match TileDB-Cloud version
             cc: gcc-13
             cxx: g++-13
@@ -70,16 +70,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cpp-build-release-${{ inputs.os }}
-          path: |
-            build/
-            dist/
-
-      - name: Verify downloaded library
-        run: |
-          echo "--- Verifying dist/ ---"
-          ls -la dist/
-          echo "--- Verifying build/ ---"
-          ls -la build/
       
       - name: Log pip dependencies
         run: pip list

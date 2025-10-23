@@ -48,14 +48,6 @@ jobs:
         with:
           name: cpp-build-release-${{ inputs.os }}
 
-
-      - name: Verify downloaded library
-        run: |
-          echo "--- Verifying dist/ ---"
-          ls -la dist/
-          echo "--- Verifying build/ ---"
-          ls -la build/
-
       - name: Show matrix OS
         run: echo "inputs.os:" ${{ inputs.os }}
 
