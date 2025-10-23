@@ -21,12 +21,21 @@ jobs:
   catch2:
     runs-on: ${{ inputs.os }}
     steps:
-
       - uses: actions/checkout@v4
-      - name: Download C++ Release build artifact
+      
+      - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ inputs.os }} 
+          name: cpp-build-release-${{ inputs.os }}
+
+
+      - name: Verify downloaded library
+        run: |
+          echo "--- Verifying dist/ ---"
+          ls -la dist/
+          echo "--- Verifying build/ ---"
+          ls -la build/
+
 
       - name: Run C++ tests
         run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure

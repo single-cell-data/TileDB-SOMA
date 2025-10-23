@@ -58,9 +58,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cpp-build-release-${{ inputs.os }}
-          path: |
-            build/
-            dist/
 
       - name: Verify downloaded library
         run: |
