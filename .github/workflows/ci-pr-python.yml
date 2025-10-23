@@ -8,7 +8,7 @@ on:
       - "!**.md"
       - ".github/workflows/ci-pr-python.yml"
       - ".github/workflows/test-python.yml"
-      - ".github/workflows/build-cpp.yml" # <-- The only build file
+      - ".github/workflows/build-cpp.yml"
   workflow_dispatch:
 
 jobs:
@@ -17,10 +17,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml # <-- Calls the unified build file
+    uses: ./.github/workflows/build-cpp.yml 
     with:
       os: ${{ matrix.os }}
-      build_type: 'release' # <-- Passes 'release'
+      build_type: 'release'
 
   python-tests:
     needs: build-cpp-release

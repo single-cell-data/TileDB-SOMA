@@ -8,7 +8,7 @@ on:
       - '!**.md'
       - '.github/workflows/r-python-interop-testing.yml'
       - '.github/actions/setup-r/**'
-      - ".github/workflows/build-cpp.yml" # <-- The only build file
+      - ".github/workflows/build-cpp.yml" 
   push:
     branches:
       - main
@@ -22,10 +22,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml # <-- Calls the unified build file
+    uses: ./.github/workflows/build-cpp.yml 
     with:
       os: ${{ matrix.os }}
-      build_type: 'release' # <-- Passes 'release'
+      build_type: 'release' 
 
   ci:
     needs: build-cpp-release
