@@ -46,7 +46,7 @@ jobs:
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ inputs.os }}
+          name: cpp-build-release-${{ matrix.os }}
           path: |
             build/
             dist/

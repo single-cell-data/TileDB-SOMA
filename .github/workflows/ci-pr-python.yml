@@ -26,12 +26,11 @@ jobs:
     needs: build-cpp-release
     strategy:
       fail-fast: true
-
       matrix:
-        os: [ubuntu-24.04, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ["3.9", "3.12", "3.13"]
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             cc: gcc-13
             cxx: g++-13
           - os: macos-latest
@@ -44,6 +43,6 @@ jobs:
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
-      report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.12' }}
+      report_codecov: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12' }}
       extra_pytest_options: ${{ matrix.extra_pytest_options }}
     secrets: inherit
