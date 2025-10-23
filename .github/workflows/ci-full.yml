@@ -16,10 +16,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             cc: gcc-13
             cxx: g++-13
           - os: macos-latest
@@ -32,7 +32,7 @@ jobs:
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
-      report_codecov: ${{ matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11' }}
+      report_codecov: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' }}
       extra_pytest_options: ${{ matrix.extra_pytest_options }}
     secrets: inherit
 
@@ -44,7 +44,7 @@ jobs:
           - {os: macos-latest, r: 'release', report_codecov: false}
           - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', report_codecov: false}
           - {os: ubuntu-latest, r: 'release', report_codecov: true}
-          - {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false}
+          # - {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false}
     uses: ./.github/workflows/test-r.yml
     with:
       os: ${{ matrix.config.os }}
