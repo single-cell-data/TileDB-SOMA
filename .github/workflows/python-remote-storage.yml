@@ -11,6 +11,7 @@ on:
       - "apis/python/**"
       - "!**.md"
       - '.github/workflows/python-remote-storage.yml'
+      - ".github/workflows/build-cpp.yml" # <-- The only build file
   workflow_dispatch:
 
 env:
@@ -19,7 +20,18 @@ env:
   TILEDB_REST_UNITTEST_TOKEN: ${{ secrets.TILEDB_REST_UNITTEST_TOKEN}}
 
 jobs:
+  build-cpp-release:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/build-cpp.yml # <-- Calls the unified build file
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'release' # <-- Passes 'release'
+
   ci:
+    needs: build-cpp-release
     strategy:
       fail-fast: false
       matrix:
@@ -54,19 +66,20 @@ jobs:
         with:
           fetch-depth: 0  # ensure we get all tags to inform package version determination
 
-      - name: Checkout vcpkg
-        uses: actions/checkout@v4
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
         with:
-          repository: microsoft/vcpkg
-          path: vcpkg
+          name: cpp-build-release-${{ inputs.os }}
+          path: |
+            build/
+            dist/
 
-      - name: Bootstrap vcpkg
+      - name: Verify downloaded library
         run: |
-          ./vcpkg/bootstrap-vcpkg.sh
-          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
-
-      - name: Build C++ core
-        run: ./scripts/bld --preset vcpkg --no-tiledb-deprecated=true --werror=true
+          echo "--- Verifying dist/ ---"
+          ls -la dist/
+          echo "--- Verifying build/ ---"
+          ls -la build/
       
       - name: Log pip dependencies
         run: pip list

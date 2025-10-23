@@ -6,10 +6,34 @@ on:
       - "libtiledbsoma/**"
       - ".github/workflows/ci-pr-cpp.yml"
       - ".github/workflows/test-cpp.yml"
+      - ".github/workflows/build-cpp.yml" # <-- The only build file
   workflow_dispatch:
 
 jobs:
+  
+  build-cpp-release:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/build-cpp.yml # <-- Calls the unified build file
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'release' # <-- Passes 'release'
+
+  # JOB 1B: Build ASAN
+  build-cpp-asan:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest] # ASAN only on Linux (for now)
+    uses: ./.github/workflows/build-cpp.yml # <-- Calls the SAME unified build file
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'asan' # <-- Passes 'asan'
+
   cpp-tests:
+    needs: [build-cpp-release, build-cpp-asan]
     strategy:
       fail-fast: true
       matrix:
