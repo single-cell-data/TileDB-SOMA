@@ -48,6 +48,9 @@ jobs:
         with:
           name: cpp-build-release-${{ matrix.os }}
 
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
+
       - name: Set Up Test Data
         run: make data
 
@@ -57,6 +60,10 @@ jobs:
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
+        env:
+          PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
+          LDFLAGS: "-Wl,-rpath,${{ github.workspace }}/dist/lib -Wl,-rpath,${{ github.workspace }}/build/vcpkg_installed/lib"
+
 
       # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
@@ -85,6 +92,9 @@ jobs:
 
       - name: Install Package
         run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
+        env:
+          PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
+          LDFLAGS: "-Wl,-rpath,${{ github.workspace }}/dist/lib -Wl,-rpath,${{ github.workspace }}/build/vcpkg_installed/lib"
 
       - name: Show R package versions
         run: Rscript -e 'tiledbsoma::show_package_versions()'
