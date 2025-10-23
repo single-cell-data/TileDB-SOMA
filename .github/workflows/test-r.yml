@@ -50,7 +50,7 @@ jobs:
 
       - name: Restore Permissions
         run: chmod +x build/libtiledbsoma/test/*
-        
+
       - name: Show matrix OS
         run: echo "inputs.os:" ${{ inputs.os }}
 
@@ -59,7 +59,7 @@ jobs:
             os: ${{ inputs.os }}}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
-            extra-packages: any::rcmdcheck
+            extra-packages: any::rcmdcheck, any::nanoarrow
 
       - uses: r-lib/actions/check-r-package@v2
         with:
@@ -67,7 +67,8 @@ jobs:
           build_args: '"--no-manual"'
           error-on: '"error"'
           working-directory: 'apis/r/'
-
+        env:
+          CMAKE_PREFIX_PATH: ${{ github.workspace }}/dist:${{ github.workspace }}/build/vcpkg_installed/
 
   test-coverage:
     if: ${{ inputs.report_codecov }}
@@ -78,28 +79,24 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
-      - name: Checkout vcpkg
-        uses: actions/checkout@v4
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
         with:
-          repository: microsoft/vcpkg
-          path: vcpkg
+          name: cpp-build-release-${{ inputs.os }}
 
-      - name: Bootstrap vcpkg
-        run: |
-          ./vcpkg/bootstrap-vcpkg.sh
-          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
-
-      - name: Build C++ core
-        run: ./scripts/bld --preset vcpkg --no-tiledb-deprecated=true --werror=true
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
 
       - uses: ./.github/actions/setup-r
         with:
             os: ${{ inputs.os }}}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
-            extra-packages: any::covr, any::xml2
+            extra-packages: any::covr, any::xml2, any::nanoarrow
 
       - name: Test coverage
+        env:
+          CMAKE_PREFIX_PATH: ${{ github.workspace }}/dist:${{ github.workspace }}/build/vcpkg_installed/
         run: |
           cov <- covr::package_coverage(
             path = "apis/r",
