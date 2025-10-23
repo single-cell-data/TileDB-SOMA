@@ -12,6 +12,17 @@ on:
   workflow_dispatch:
 
 jobs:
+
+  build-cpp-release:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/build-cpp.yml
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'release'
+
   python-tests:
     strategy:
       fail-fast: false
