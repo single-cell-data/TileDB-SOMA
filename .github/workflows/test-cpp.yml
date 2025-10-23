@@ -36,6 +36,8 @@ jobs:
           echo "--- Verifying build/ ---"
           ls -la build/
 
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
 
       - name: Run C++ tests
         run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
@@ -60,5 +62,8 @@ jobs:
         with:
           name: cpp-build-asan-${{ inputs.os }}
 
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
+        
       - name: Run C++ unittests
         run: ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
