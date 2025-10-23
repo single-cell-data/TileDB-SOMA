@@ -69,6 +69,7 @@ jobs:
           working-directory: 'apis/r/'
         env:
           PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
+          LDFLAGS: "-Wl,-rpath,${{ github.workspace }}/dist/lib -Wl,-rpath,${{ github.workspace }}/build/vcpkg_installed/lib"
 
   test-coverage:
     if: ${{ inputs.report_codecov }}
@@ -97,6 +98,7 @@ jobs:
       - name: Test coverage
         env:
           PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
+          LDFLAGS: "-Wl,-rpath,${{ github.workspace }}/dist/lib -Wl,-rpath,${{ github.workspace }}/build/vcpkg_installed/lib"
         run: |
           cov <- covr::package_coverage(
             path = "apis/r",
