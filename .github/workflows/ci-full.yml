@@ -18,12 +18,23 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml
+    uses: ./.github/workflows/build-cpp.yml 
     with:
       os: ${{ matrix.os }}
-      build_type: 'release'
+      build_type: 'release' 
+
+  build-cpp-asan:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest] 
+    uses: ./.github/workflows/build-cpp.yml 
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'asan' 
 
   python-tests:
+    needs: build-cpp-release
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +59,7 @@ jobs:
     secrets: inherit
 
   r-tests:
+    needs: build-cpp-release
     strategy:
       fail-fast: false
       matrix:
@@ -65,6 +77,7 @@ jobs:
     secrets: inherit
 
   cpp-tests:
+    needs: [build-cpp-release, build-cpp-asan]
     strategy:
       fail-fast: false
       matrix:
