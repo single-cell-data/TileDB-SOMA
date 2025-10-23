@@ -63,6 +63,11 @@ if [ -n "$use_venv" ]; then
 fi
 
 if [ -n "$reinstall" ] || [ -n "$made_venv" ]; then
+  git clone https://github.com/microsoft/vcpkg.git
+  cd vcpkg
+  ./bootstrap-vcpkg.sh
+  cd ..
+  export CMAKE_TOOLCHAIN_FILE='vcpkg/scripts/buildsystems/vcpkg.cmake'
   pip install -r doc/requirements_doc.txt || die "could not install doc dependencies"
   pushd "$ext_dir"
   pip install -e '.[spatial]' || die "could not install tiledbsoma-py"
