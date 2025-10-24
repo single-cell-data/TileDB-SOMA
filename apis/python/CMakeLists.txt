@@ -53,9 +53,19 @@ if(BUILD_LIBTILEDBSOMA)
     set(LIBTILEDBSOMA_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../dist")
     
     # Verify vcpkg is bootstrapped
+    # Try multiple possible vcpkg locations for different build contexts
     set(VCPKG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../vcpkg")
     if(NOT EXISTS "${VCPKG_ROOT}/vcpkg")
-        message(FATAL_ERROR "vcpkg not bootstrapped. Please run: ${VCPKG_ROOT}/bootstrap-vcpkg.sh")
+        # Try current working directory (for sdist builds)
+        set(VCPKG_ROOT "${CMAKE_CURRENT_BINARY_DIR}/vcpkg")
+        if(NOT EXISTS "${VCPKG_ROOT}/vcpkg")
+            # Try environment variable
+            if(DEFINED ENV{VCPKG_ROOT})
+                set(VCPKG_ROOT "$ENV{VCPKG_ROOT}")
+            else()
+                message(FATAL_ERROR "vcpkg not found. Please ensure vcpkg is bootstrapped and available.")
+            endif()
+        endif()
     endif()
     
     # Determine vcpkg toolchain file path

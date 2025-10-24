@@ -62,6 +62,19 @@ jobs:
         with:
           name: sdist
           path: apis/python/dist/
+      
+      - name: Set up vcpkg for sdist build
+        run: |
+          # Clone and bootstrap vcpkg for sdist builds
+          git clone https://github.com/microsoft/vcpkg.git vcpkg
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          cd ..
+          export CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake
+          export VCPKG_ROOT=$(pwd)/vcpkg
+          echo "CMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> $GITHUB_ENV
+      
       - name: Install sdist artifact
         working-directory: apis/python
         run: |
