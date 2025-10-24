@@ -62,12 +62,18 @@ if [ -n "$use_venv" ]; then
     source "$venv_dir/bin/activate" || die "could not activate virtualenv"
 fi
 
+# Setup vcpkg if building C++ components
+if [ ! -d "vcpkg" ]; then
+    echo "Setting up vcpkg..."
+    git clone https://github.com/microsoft/vcpkg.git vcpkg
+    ./vcpkg/bootstrap-vcpkg.sh
+fi
+
+# Export the toolchain file path
+export CMAKE_TOOLCHAIN_FILE="$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake"
+echo "CMAKE_TOOLCHAIN_FILE set to: $CMAKE_TOOLCHAIN_FILE"
+
 if [ -n "$reinstall" ] || [ -n "$made_venv" ]; then
-  git clone https://github.com/microsoft/vcpkg.git
-  cd vcpkg
-  ./bootstrap-vcpkg.sh
-  cd ..
-  export CMAKE_TOOLCHAIN_FILE='$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake'
   pip install -r doc/requirements_doc.txt || die "could not install doc dependencies"
   pushd "$ext_dir"
   pip install -e '.[spatial]' || die "could not install tiledbsoma-py"
