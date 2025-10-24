@@ -65,7 +65,7 @@ fi
 if [ -n "$reinstall" ] || [ -n "$made_venv" ]; then
   git clone https://github.com/microsoft/vcpkg.git
   cd vcpkg
-  ./bootstrap-vcpkg.sh --disable-metrics
+  ./bootstrap-vcpkg.sh
   cd ..
   export CMAKE_TOOLCHAIN_FILE='$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake'
   pip install -r doc/requirements_doc.txt || die "could not install doc dependencies"
