@@ -28,12 +28,10 @@ if [ -z "$CMAKE_TOOLCHAIN_FILE" ]; then
     fi
 fi
 
-# Step 2: Generate VERSION file
+# Step 2: Version is handled by setuptools_scm
 echo ""
-echo "=== Step 2: Generating VERSION file ==="
-cd "$REPO_ROOT/apis/python"
-python3 _get_version.py > VERSION
-cat VERSION
+echo "=== Step 2: Version management ==="
+echo "Version is automatically managed by setuptools_scm from Git tags"
 
 # Step 3: Create a clean build environment
 echo ""
@@ -41,7 +39,7 @@ echo "=== Step 3: Creating clean build environment ==="
 
 # Remove any existing build artifacts
 cd "$REPO_ROOT/apis/python"
-rm -rf build dist *.egg-info _skbuild
+rm -rf build dist *.egg-info _skbuild VERSION
 
 # Step 4: Install build dependencies
 echo ""

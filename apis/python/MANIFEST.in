@@ -1,4 +1,4 @@
-include version.py VERSION _get_version.py
+# Version files removed - now using setuptools_scm
 include CMakeLists.txt
 include ../../scripts/setup_build_env.sh
 include ../../scripts/setup_build_env.ps1

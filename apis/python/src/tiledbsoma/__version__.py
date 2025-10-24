@@ -4,22 +4,15 @@
 
 """Version information for tiledbsoma package."""
 
-# This file is generated/updated during the build process
-# The actual version comes from ../../version.py
-
-import sys
-from pathlib import Path
-
-# Try to import from the version.py in the root
+# Version is automatically managed by setuptools_scm
 try:
-    # Add the apis/python directory to the path
-    _root = Path(__file__).parent.parent.parent
-    if str(_root) not in sys.path:
-        sys.path.insert(0, str(_root))
+    from importlib.metadata import PackageNotFoundError, version
+except ImportError:
+    # Python < 3.8
+    from importlib_metadata import PackageNotFoundError, version  # type: ignore
 
-    from version import get_version
-
-    __version__ = get_version()
-except (ImportError, FileNotFoundError, AttributeError):
-    # Fallback version if we can't get it from git
+try:
+    __version__ = version("tiledbsoma")
+except PackageNotFoundError:
+    # Package is not installed, use fallback
     __version__ = "0.0.0+unknown"
