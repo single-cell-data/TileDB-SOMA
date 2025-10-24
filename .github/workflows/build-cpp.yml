@@ -25,7 +25,7 @@ jobs:
           
       - name: Bootstrap vcpkg
         run: |
-          ./vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/bootstrap-vcpkg.sh --disable-metrics
           echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       # --- Conditional ASAN Triplet ---
