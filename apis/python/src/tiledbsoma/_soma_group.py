@@ -19,7 +19,7 @@ from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import SOMAObject
-from ._types import OpenTimestamp
+from ._types import OpenTimestamp, SOMABaseTileDBType
 from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
 
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
@@ -31,7 +31,7 @@ class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
     uri: str
-    wrapper_type: type[_tdb_handles.AnyWrapper]
+    tiledb_type: SOMABaseTileDBType | None = None
     soma: SOMAObject | None = None
     """The reified object, if it has been opened."""
 
@@ -39,9 +39,9 @@ class _CachedElement:
     def from_handle_entry(cls, obj: tuple[str, str]) -> _CachedElement:
         uri, type = obj[0], obj[1]
         if type == "SOMAArray":
-            return _CachedElement(uri, _tdb_handles.SOMAArrayWrapper)
+            return _CachedElement(uri, SOMABaseTileDBType.SOMAArray)
         if type == "SOMAGroup":
-            return _CachedElement(uri, _tdb_handles.SOMAGroupWrapper)
+            return _CachedElement(uri, SOMABaseTileDBType.SOMAGroup)
         raise SOMAError(f"internal error: unknown object type {uri}")
 
 
@@ -92,7 +92,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                     mode=self.mode,
                     context=self.context,
                     tiledb_timestamp=self.tiledb_timestamp_ms,
-                    clib_type=entry.wrapper_type.clib_type,
+                    clib_type=None if entry.tiledb_type is None else entry.tiledb_type.name,
                 )
 
                 # Since we just opened this object, we own it and should close it.
@@ -162,9 +162,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             name=key,
             soma_type=soma_object.soma_type,
         )
-        self._contents[key] = _CachedElement(
-            uri=soma_object.uri, wrapper_type=soma_object._wrapper_type, soma=soma_object
-        )
+        self._contents[key] = _CachedElement(uri=soma_object.uri, tiledb_type=None, soma=soma_object)
         self._mutated_keys.add(key)
 
     def _del_element(self, key: str) -> None:
