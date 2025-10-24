@@ -59,7 +59,7 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
-          cache-dependency-path: ./apis/python/setup.py
+          cache-dependency-path: ./apis/python/pyproject.toml
 
       - name: Check out TileDB-SOMA
         uses: actions/checkout@v4
@@ -83,7 +83,7 @@ jobs:
         # run: pip install tiledbsoma==1.15.7
         #
         # From source:
-        run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+        run: pip -v install -e apis/python[all]
         #
         env:
           CC: ${{ matrix.cc }}

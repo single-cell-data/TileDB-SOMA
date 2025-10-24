@@ -104,10 +104,10 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: ./apis/python/setup.py
+          cache-dependency-path: ./apis/python/pyproject.toml
 
       - name: Install tiledbsoma
-        run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated "
+        run: pip -v install -e apis/python[all]
 
       - name: Show Python package versions
         run: |

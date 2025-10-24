@@ -12,7 +12,14 @@
     },
     {
       "name": "vcpkg",
-      "inherits": "vcpkg-base" 
+      "inherits": "vcpkg-base"
+    },
+    {
+      "name": "vcpkg-no-deprecated",
+      "inherits": "vcpkg-base",
+      "cacheVariables": {
+        "TILEDB_REMOVE_DEPRECATIONS": "ON"
+      }
     },
     {
       "name": "vcpkg-asan",

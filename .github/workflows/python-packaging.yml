@@ -22,16 +22,21 @@ jobs:
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
+          submodules: false  # vcpkg not needed for sdist
 
-      - name: Install dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build dependencies
         run: |
-          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip install --upgrade pip build
           pip list
 
       - name: Build sdist
         working-directory: apis/python
-        run: python setup.py sdist
-
+        run: python -m build --sdist
 
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
@@ -88,21 +93,25 @@ jobs:
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
+          submodules: false  # Don't checkout vcpkg as submodule, we'll clone it fresh
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
         run: |
           set -e pipefail
-          brew update
-          brew install automake llvm
+          brew update || true
+          brew install automake llvm git ninja || true
 
       - name: "Setup for arm builds"
         # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
         if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
         run: |
-          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
 
       - name: Get arch
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -111,26 +120,23 @@ jobs:
           arch="${plat#*_}"
           echo "ARCH=$arch" >> $GITHUB_ENV
 
-      - name: Install dependencies
+      - name: Install cibuildwheel
         run: |
-          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip install --upgrade pip cibuildwheel
           pip list
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
         with:
-          package-dir: apis/python/
+          package-dir: apis/python
           output-dir: wheelhouse
         env:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
-          CIBW_BUILD_VERBOSITY: 3
-          CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
-          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
-          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CMAKE_OSX_ARCHITECTURES: ${{ env.arch || ''}}
-          MACOSX_DEPLOYMENT_TARGET: "13.3"
+          # Platform-specific overrides
+          CIBW_ARCHS_MACOS: ${{ env.ARCH || 'x86_64 arm64' }}
+          # Platform-specific environment variables for vcpkg and build configuration
+          CIBW_MACOSX_DEPLOYMENT_TARGET: ${{ matrix.platform == 'macosx_x86_64' && '13.3' || matrix.platform == 'macosx_arm64' && '13.3' || '13.3' }}
+          CIBW_VCPKG_FORCE_SYSTEM_BINARIES: ${{ matrix.platform == 'manylinux_aarch64' && '1' || '0' }}
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl

@@ -67,10 +67,10 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
           cache: pip
-          cache-dependency-path: ./apis/python/setup.py
+          cache-dependency-path: ./apis/python/pyproject.toml
 
       - name: Install tiledbsoma
-        run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+        run: pip -v install -e apis/python[all]
         env:
           CC: ${{ inputs.cc }}
           CXX: ${{ inputs.cxx }}

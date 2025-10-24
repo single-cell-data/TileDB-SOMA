@@ -1,6 +1,14 @@
-include RELEASE-VERSION version.py
+include version.py VERSION _get_version.py
+include CMakeLists.txt
+include ../../scripts/setup_build_env.sh
+include ../../scripts/setup_build_env.ps1
 include src/tiledbsoma/*.cc
 include src/tiledbsoma/*.h
-graft dist_links
-prune dist_links/libtiledbsoma/test/__pycache__
 include requirements_*.txt
+# Include libtiledbsoma source for building
+graft ../../libtiledbsoma/src
+graft ../../libtiledbsoma/cmake
+include ../../libtiledbsoma/CMakeLists.txt
+include ../../libtiledbsoma/CMakePresets.json
+include ../../libtiledbsoma/vcpkg.json
+include ../../libtiledbsoma/vcpkg-configuration.json

@@ -1,10 +1,180 @@
 [build-system]
 requires = [
-    "pybind11[global]>=2.10.0",
-    "setuptools>=70.1",  # `setuptools.command.bdist_wheel`
-    "cmake>=3.21,<4",  # CMake 4 builds are broken on ARM Linux: https://github.com/single-cell-data/TileDB-SOMA/issues/3890
+    "scikit-build-core>=0.10.0",
+    "pybind11>=2.10.0",
+    # Note: cmake is automatically provided by scikit-build-core
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "tiledbsoma"
+dynamic = ["version"]
+description = "Python API for efficient storage and retrieval of single-cell data using TileDB"
+readme = "README.md"
+authors = [
+    {name = "TileDB, Inc.", email = "help@tiledb.io"}
+]
+maintainers = [
+    {name = "TileDB, Inc.", email = "help@tiledb.io"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: Unix",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "anndata>=0.10.1",
+    "attrs>=22.2",
+    "more-itertools",
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "scanpy>=1.9.2",
+    "scipy",
+    # Note: the somacore version is also in .pre-commit-config.yaml
+    "somacore==1.0.29",
+    "typing-extensions>=4.5.0",  # Note "-" even though `import typing_extensions`
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "dask",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "sparse",
+    "typeguard==4.4.2",
+    "types-setuptools",
+    "more-itertools",
+    "hypothesis",
+    "deepdiff",
+]
+spatial-io = [
+    "geopandas",
+    "tifffile",
+    "pillow",
+    "spatialdata>=0.2.5",
+    "xarray",
+    "dask",
+]
+all = [
+    "black",
+    "dask",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "sparse",
+    "typeguard==4.4.2",
+    "types-setuptools",
+    "more-itertools",
+    "hypothesis",
+    "deepdiff",
+    "geopandas",
+    "tifffile",
+    "pillow",
+    "spatialdata>=0.2.5",
+    "xarray",
+]
+
+[project.urls]
+Homepage = "https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/python"
+
+# ============================================================================
+# scikit-build-core configuration
+# Integrates CMake build with Python packaging
+# ============================================================================
+[tool.scikit-build]
+cmake.version = ">=3.21"
+cmake.build-type = "Release"
+# Wheel installation configuration
+wheel.install-dir = "tiledbsoma"
+wheel.packages = ["src/tiledbsoma"]
+wheel.exclude = ["*.cc", "*.h", "*.hpp"]
+# Build configuration
+logging.level = "INFO"
+build.targets = ["pytiledbsoma"]
+minimum-version = "0.10"
+
+[tool.scikit-build.cmake.define]
+# CMake options passed to the build
+CMAKE_BUILD_TYPE = "Release"
+BUILD_LIBTILEDBSOMA = "ON"  # Build libtiledbsoma from source using vcpkg
+
+[tool.scikit-build.metadata.version]
+# Version is dynamically read from VERSION file (generated during build)
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+regex = "(?P<value>.+)"
+
+# ============================================================================
+# cibuildwheel configuration
+# Multi-platform wheel building for CI/CD
+# ============================================================================
+[tool.cibuildwheel]
+# Target Python versions
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*"]
+skip = ["*-win32", "*-manylinux_i686", "*-musllinux_*"]
+# Build and test configuration
+build-verbosity = 3
+test-command = "python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'"
+test-requires = ["pytest"]
+
+[tool.cibuildwheel.linux]
+# Use manylinux_2_28 for better compatibility with modern dependencies
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+# Install system dependencies and bootstrap vcpkg
+before-all = [
+    "yum install -y git ninja-build perl-IPC-Cmd zip autoconf automake libtool pkg-config",
+    "bash {project}/scripts/setup_build_env.sh",
+]
+# Generate VERSION file before building
+before-build = [
+    "python {project}/apis/python/_get_version.py > {project}/apis/python/VERSION",
+]
+# Environment variables for vcpkg build
+# VCPKG_FORCE_SYSTEM_BINARIES=1 for Linux ARM64 compatibility
+environment = {VCPKG_FORCE_SYSTEM_BINARIES="${CIBW_VCPKG_FORCE_SYSTEM_BINARIES:-1}"}
+
+[tool.cibuildwheel.macos]
+# Set minimum macOS deployment target for compatibility
+# Configurable via CIBW_MACOSX_DEPLOYMENT_TARGET environment variable
+environment = {MACOSX_DEPLOYMENT_TARGET="${CIBW_MACOSX_DEPLOYMENT_TARGET:-13.3}"}
+# Install system dependencies and bootstrap vcpkg
+before-all = [
+    "brew update || true",
+    "brew install automake llvm ninja git || true",
+    "bash {project}/scripts/setup_build_env.sh",
+]
+# Generate VERSION file before building
+before-build = [
+    "python {project}/apis/python/_get_version.py > {project}/apis/python/VERSION",
+]
+
+[tool.cibuildwheel.windows]
+# Install system dependencies and bootstrap vcpkg
+before-all = [
+    "choco install ninja cmake git -y",
+    "powershell -ExecutionPolicy Bypass -File {project}\\scripts\\setup_build_env.ps1",
+]
+# Generate VERSION file before building
+before-build = [
+    "python {project}\\apis\\python\\_get_version.py > {project}\\apis\\python\\VERSION",
+]
 
 [tool.mypy]
 show_error_codes = true
