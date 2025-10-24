@@ -6,10 +6,33 @@ on:
       - "libtiledbsoma/**"
       - ".github/workflows/ci-pr-cpp.yml"
       - ".github/workflows/test-cpp.yml"
+      - ".github/workflows/build-cpp.yml" 
   workflow_dispatch:
 
 jobs:
+  
+  build-cpp-release:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/build-cpp.yml 
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'release' 
+
+  build-cpp-asan:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest] 
+    uses: ./.github/workflows/build-cpp.yml 
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'asan' 
+
   cpp-tests:
+    needs: [build-cpp-release, build-cpp-asan]
     strategy:
       fail-fast: true
       matrix:

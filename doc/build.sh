@@ -62,6 +62,17 @@ if [ -n "$use_venv" ]; then
     source "$venv_dir/bin/activate" || die "could not activate virtualenv"
 fi
 
+# Setup vcpkg if building C++ components
+if [ ! -d "vcpkg" ]; then
+    echo "Setting up vcpkg..."
+    git clone https://github.com/microsoft/vcpkg.git vcpkg
+    ./vcpkg/bootstrap-vcpkg.sh
+fi
+
+# Export the toolchain file path
+export CMAKE_TOOLCHAIN_FILE="$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake"
+echo "CMAKE_TOOLCHAIN_FILE set to: $CMAKE_TOOLCHAIN_FILE"
+
 if [ -n "$reinstall" ] || [ -n "$made_venv" ]; then
   pip install -r doc/requirements_doc.txt || die "could not install doc dependencies"
   pushd "$ext_dir"

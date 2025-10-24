@@ -66,11 +66,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
 
-if(SPDLOG_LINK_SHARED)
-  target_link_libraries(TILEDB_SOMA_OBJECTS PUBLIC spdlog::spdlog)
-else()
-  target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
-endif()
+target_link_libraries(TILEDB_SOMA_OBJECTS PUBLIC spdlog::spdlog)
 
 target_compile_definitions(TILEDB_SOMA_OBJECTS
   PRIVATE
