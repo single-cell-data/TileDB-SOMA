@@ -87,14 +87,13 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             if entry.soma is None:
                 from . import _factory  # Delayed binding to resolve circular import.
 
-                uri = entry.uri
-                mode = self.mode
-                context = self.context
-                timestamp = self.tiledb_timestamp_ms
-                clib_type = entry.wrapper_type.clib_type
-
-                wrapper = _tdb_handles.open_handle_wrapper(uri, mode, context, timestamp, clib_type)
-                entry.soma = _factory.reify_handle(wrapper)
+                entry.soma = _factory._open_soma_object(
+                    uri=entry.uri,
+                    mode=self.mode,
+                    context=self.context,
+                    tiledb_timestamp=self.tiledb_timestamp_ms,
+                    clib_type=entry.wrapper_type.clib_type,
+                )
 
                 # Since we just opened this object, we own it and should close it.
                 self._close_stack.enter_context(entry.soma)

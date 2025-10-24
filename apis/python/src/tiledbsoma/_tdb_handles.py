@@ -58,54 +58,6 @@ def _open_mode_to_clib_mode(mode: options.OpenMode) -> clib.OpenMode:
     raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
 
 
-def open_handle_wrapper(
-    uri: str,
-    mode: options.OpenMode,
-    context: SOMATileDBContext,
-    timestamp: OpenTimestamp | None,
-    clib_type: str | None = None,
-) -> Wrapper[RawHandle]:
-    """Determine whether the URI is an array or group, and open it."""
-    timestamp_ms = context._open_timestamp_ms(timestamp)
-
-    type_to_class_ = {
-        "somadataframe": DataFrameWrapper,
-        "somapointclouddataframe": PointCloudDataFrameWrapper,
-        "somageometrydataframe": GeometryDataFrameWrapper,
-        "somadensendarray": DenseNDArrayWrapper,
-        "somasparsendarray": SparseNDArrayWrapper,
-        "somacollection": CollectionWrapper,
-        "somaexperiment": ExperimentWrapper,
-        "somameasurement": MeasurementWrapper,
-        "somascene": SceneWrapper,
-        "somamultiscaleimage": MultiscaleImageWrapper,
-    }
-
-    if clib_type is None or clib_type.lower() in ["somaarray", "somagroup"]:
-        try:
-            open_mode = _open_mode_to_clib_mode(mode)
-            handle = clib.SOMAObject.open(
-                uri=uri,
-                mode=open_mode,
-                context=context.native_context,
-                timestamp=(0, timestamp_ms),
-                clib_type=clib_type,
-            )
-        except Exception as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise
-        try:
-            return type_to_class_[handle.type.lower()].open_from_handle(handle, uri=uri, mode=mode, context=context)
-        except KeyError:
-            raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
-
-    try:
-        return type_to_class_[clib_type.lower()].open(uri=uri, mode=mode, context=context, timestamp=timestamp_ms)
-    except KeyError:
-        raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
-
-
 @attrs.define(eq=False, hash=False, slots=False)
 class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     """Wrapper for TileDB handles to manage lifecycle and metadata.
