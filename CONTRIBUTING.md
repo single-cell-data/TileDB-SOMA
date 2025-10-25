@@ -18,7 +18,7 @@ Thanks for your interest in TileDB-SOMA. The notes below give some pointers for 
 
 - [Please follow these instructions to build from source](https://docs.tiledb.com/developer/tiledbsoma/installation)
 
-- Make changes locally, then rebuild as appropriate for the level of changes (e.g.: `make` for `libtilebsc` or `python setup.py develop` for `apis/python`).
+- Make changes locally, then rebuild as appropriate for the level of changes (e.g.: `make` for `libtiledbsoma` or `pip install -e apis/python` for `apis/python`).
 
 - Make sure to run `make check`, or `pytest` to verify changes against tests (add new tests where applicable).
 

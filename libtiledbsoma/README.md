@@ -51,9 +51,7 @@ pip install -v -e apis/python
 pytest apis/python
 ```
 
-This approach leverages the build-system defined in [pyproject.toml](../apis/python/pyproject.toml) to reduce the number of dependencies required to build `tiledbsoma`.
-
-> **Note** - Running `python setup.py develop` is not supported.
+This approach leverages the build-system defined in [pyproject.toml](../apis/python/pyproject.toml) (using scikit-build-core) to manage the C++ build integration and reduce the number of dependencies required to build `tiledbsoma`.
 
 ______________________________________________________________________
 

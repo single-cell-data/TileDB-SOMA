@@ -49,10 +49,14 @@ option(TILEDB_WERROR "Enables the -Werror flag during compilation." OFF)
 option(TILEDB_REMOVE_DEPRECATIONS "If true, do not build deprecated APIs." OFF)
 option(TILEDB_SERIALIZATION "If true, enables building with support for query serialization" ON)
 option(TILEDB_VERBOSE "If true, sets default logging to verbose for TileDB" OFF)
-option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" OFF)
-option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
 option(TILEDB_SANITIZER "Sanitizer to use in TILEDB. ")
+
+# ============================================================================
+# General Build Options
+# ============================================================================
+option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" OFF)
+option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 
 # Enable compiler cache to speed up recompilation
 find_program(CCACHE_FOUND ccache)
