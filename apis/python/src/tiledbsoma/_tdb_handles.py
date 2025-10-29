@@ -2,17 +2,13 @@
 #
 # Licensed under the MIT License.
 
-"""Abstractions to more easily manage read and write access to TileDB data.
-
-``open``, ``ArrayWrapper.open``, ``GroupWrapper.open`` are the important parts.
-"""
+"""Abstractions to more easily manage read and write access to TileDB data."""
 
 from __future__ import annotations
 
-import abc
 import enum
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
-from typing import Any, Generic, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 import attrs
 import numpy as np
@@ -20,9 +16,8 @@ from somacore import options
 from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
-from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
-from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
+from ._exception import SOMAError
+from ._types import METADATA_TYPES, Metadatum
 
 AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
@@ -56,180 +51,6 @@ def _open_mode_to_clib_mode(mode: options.OpenMode) -> clib.OpenMode:
     if mode == "d":
         return clib.OpenMode.soma_delete
     raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
-
-
-@attrs.define(eq=False, hash=False, slots=False)
-class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
-    """Wrapper for TileDB handles to manage lifecycle and metadata.
-
-    Callers may read and use (non-underscored) members but should never set
-    attributes on instances.
-    """
-
-    uri: str
-    mode: options.OpenMode
-    context: SOMATileDBContext
-    timestamp_ms: int
-    _handle: _RawHdl_co
-    closed: bool = attrs.field(default=False, init=False)
-    clib_type: str | None = None
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-        timestamp: OpenTimestamp | None,
-    ) -> Self:
-        if mode not in ("r", "w", "d"):
-            raise ValueError(f"Invalid open mode {mode!r}")
-        timestamp_ms = context._open_timestamp_ms(timestamp)
-
-        try:
-            tdb_handle = cls._opener(uri, mode, context, timestamp_ms)
-        except (RuntimeError, SOMAError) as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise SOMAError(tdbe) from tdbe
-        return cls.open_from_handle(tdb_handle, uri=uri, mode=mode, context=context)
-
-    @classmethod
-    def open_from_handle(
-        cls, clib_handle: clib.SOMAObject, *, uri: str, mode: options.OpenMode, context: SOMATileDBContext
-    ) -> Self:
-        timestamp = context._open_timestamp_ms(clib_handle.timestamp)
-        try:
-            wrapper = cls(uri, mode, context, timestamp, clib_handle)
-        except RuntimeError as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise
-        return wrapper
-
-    @classmethod
-    @abc.abstractmethod
-    def _opener(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-        timestamp: int,
-    ) -> _RawHdl_co:
-        """Opens and returns a TileDB object specific to this type."""
-        raise NotImplementedError
-
-
-AnyWrapper = Wrapper[RawHandle]
-"""Non-instantiable type representing any Handle."""
-
-
-class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
-    """Base class for Pybind11 SOMAGroupWrapper handles."""
-
-    _WRAPPED_TYPE: type[_SOMAObjectType]
-
-    clib_type = "SOMAGroup"
-
-    @classmethod
-    def _opener(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-        timestamp: int,
-    ) -> clib.SOMAGroup:
-        open_mode = _open_mode_to_clib_mode(mode)
-        return cls._WRAPPED_TYPE.open(
-            uri,
-            mode=open_mode,
-            context=context.native_context,
-            timestamp=(0, timestamp),
-        )
-
-
-class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
-    """Wrapper around a Pybind11 CollectionWrapper handle."""
-
-    _WRAPPED_TYPE = clib.SOMACollection
-
-
-class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
-    """Wrapper around a Pybind11 ExperimentWrapper handle."""
-
-    _WRAPPED_TYPE = clib.SOMAExperiment
-
-
-class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
-    """Wrapper around a Pybind11 MeasurementWrapper handle."""
-
-    _WRAPPED_TYPE = clib.SOMAMeasurement
-
-
-class MultiscaleImageWrapper(SOMAGroupWrapper[clib.SOMAMultiscaleImage]):
-    """Wrapper around a Pybind11 MultiscaleImage handle."""
-
-    _WRAPPED_TYPE = clib.SOMAMultiscaleImage
-
-
-class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
-    """Wrapper around a Pybind11 SceneWrapper handle."""
-
-    _WRAPPED_TYPE = clib.SOMAScene
-
-
-class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
-    """Base class for Pybind11 SOMAArrayWrapper handles."""
-
-    _WRAPPED_TYPE: type[_SOMAObjectType]
-
-    clib_type = "SOMAArray"
-
-    @classmethod
-    def _opener(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-        timestamp: int,
-    ) -> clib.SOMAArray:
-        open_mode = _open_mode_to_clib_mode(mode)
-        return cls._WRAPPED_TYPE.open(
-            uri,
-            mode=open_mode,
-            context=context.native_context,
-            timestamp=(0, timestamp),
-        )
-
-
-class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
-    """Wrapper around a Pybind11 SOMADataFrame handle."""
-
-    _WRAPPED_TYPE = clib.SOMADataFrame
-
-
-class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):
-    """Wrapper around a Pybind11 SOMAPointCloudDataFrame handle."""
-
-    _WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
-
-
-class GeometryDataFrameWrapper(SOMAArrayWrapper[clib.SOMAGeometryDataFrame]):
-    """Wrapper around a Pybind11 SOMAGeometryDataFrame handle."""
-
-    _WRAPPED_TYPE = clib.SOMAGeometryDataFrame
-
-
-class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
-    """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
-
-    _WRAPPED_TYPE = clib.SOMADenseNDArray
-
-
-class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
-    """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
-
-    _WRAPPED_TYPE = clib.SOMASparseNDArray
 
 
 class _DictMod(enum.Enum):

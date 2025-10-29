@@ -39,7 +39,6 @@ from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 _Obj = TypeVar("_Obj", bound="SOMAObject")
-_Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 
 
 @overload
