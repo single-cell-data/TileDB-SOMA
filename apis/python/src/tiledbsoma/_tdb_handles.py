@@ -119,25 +119,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError
 
-    def close(self) -> None:
-        if self.closed:
-            return
-        self._handle.close()
-        self.closed = True
-
-    def __repr__(self) -> str:
-        closed_str = " (closed)" if self.closed else ""
-        return f"<{type(self).__name__} {self.mode} on {self.uri!r}{closed_str}>"
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, *_: Any) -> None:  # noqa: ANN401
-        self.close()
-
-    def __del__(self) -> None:
-        self.close()
-
 
 AnyWrapper = Wrapper[RawHandle]
 """Non-instantiable type representing any Handle."""
