@@ -115,6 +115,147 @@ std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view
     }
 }
 
+ArrowBuffer::ArrowBuffer(const std::shared_ptr<ColumnBuffer>& buffer, bool large_offsets) {
+    if (buffer->is_var()) {
+        size_t data_byte_size = buffer->offsets()[buffer->size()];
+        data_.resize(data_byte_size);
+
+        if (large_offsets) {
+            size_t offset_byte_size = (buffer->size() + 1) * sizeof(int64_t);
+            large_offsets_.resize(buffer->size() + 1);
+            std::memcpy(large_offsets_.data(), buffer->offsets().data(), offset_byte_size);
+        } else {
+            small_offsets_.resize(buffer->size() + 1);
+            auto offsets = buffer->offsets();
+            for (size_t i = 0; i < offsets.size(); ++i) {
+                small_offsets_[i] = static_cast<int32_t>(offsets[i]);
+            }
+        }
+        
+        std::memcpy(data_.data(), buffer->data<void*>().data(), data_byte_size);
+    } else {
+        if (buffer->type() == TILEDB_BOOL) {
+            size_t data_byte_size = (buffer->size() + 7) / 8;
+
+            data_.resize(data_byte_size);
+            buffer->data_to_bitmap();
+
+            std::memcpy(data_.data(), buffer->data<void*>().data(), data_byte_size);
+        } else {
+            size_t data_byte_size = buffer->size() * tiledb::impl::type_size(buffer->type());
+
+            data_.resize(data_byte_size);
+
+            std::memcpy(data_.data(), buffer->data<void*>().data(), data_byte_size);
+        }
+    }
+
+    if (buffer->is_nullable()) {
+        buffer->validity_to_bitmap();
+        auto bitmap_size = (buffer->size() + 7) / 8;
+
+        validity_.resize(bitmap_size);
+        std::memcpy(validity_.data(), buffer->validity().data(), bitmap_size);
+    }
+
+    length = buffer->size();
+}
+
+ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
+    Context ctx = enumeration.context();
+
+    const void* data;
+    uint64_t data_size;
+    ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    data_.resize(data_size);
+    std::memcpy(data_.data(), data, data_size);
+
+    switch (enumeration.type()) {
+        case TILEDB_CHAR:
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKT:
+        case TILEDB_GEOM_WKB: {
+                const void* offsets;
+                uint64_t offsets_size;
+                ctx.handle_error(tiledb_enumeration_get_offsets(ctx.ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+                size_t count = offsets_size / sizeof(uint64_t);
+
+                if (large_offsets) {
+                    large_offsets_.resize(count + 1);
+                    std::memcpy(large_offsets_.data(), offsets, offsets_size);
+                    large_offsets_[count] = data_size;
+                } else {
+                    small_offsets_.resize(count + 1);
+                    std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), count);
+                    for (size_t i = 0; i < count; ++i) {
+                        small_offsets_[i] = static_cast<int32_t>(offsets_v[i]);
+                    }
+                    small_offsets_[count] = static_cast<int32_t>(data_size);
+                }
+
+                length = count;
+            }
+            break;
+        case TILEDB_BOOL: {
+                data_.resize(1);
+                std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
+                size_t count = data_size / sizeof(bool);
+
+                // Represent the Boolean vector with, at most, the last two
+                // bits. In Arrow, Boolean values are LSB packed
+                uint8_t packed_data = 0;
+                for (size_t i = 0; i < count; ++i)
+                    packed_data |= (data_v[i] << i);
+
+                std::memcpy(data_.data(), &packed_data, 1);
+                length = count;
+            }
+            break;
+        case TILEDB_INT8:
+            length = data_size / sizeof(int8_t);
+            break;
+        case TILEDB_UINT8:
+            length = data_size / sizeof(uint8_t);
+            break;
+        case TILEDB_INT16:
+            length = data_size / sizeof(int16_t);
+            break;
+        case TILEDB_UINT16:
+            length = data_size / sizeof(uint16_t);
+            break;
+        case TILEDB_INT32:
+            length = data_size / sizeof(int32_t);
+            break;
+        case TILEDB_UINT32:
+            length = data_size / sizeof(uint32_t);
+            break;
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_INT64:
+            length = data_size / sizeof(int64_t);
+            break;
+        case TILEDB_UINT64:
+            length = data_size / sizeof(uint64_t);
+            break;
+        case TILEDB_FLOAT32:
+            length = data_size / sizeof(float_t);
+            break;
+        case TILEDB_FLOAT64:
+            length = data_size / sizeof(double_t);
+            break;
+        default:
+            throw TileDBSOMAError(
+                fmt::format(
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                    tiledb::impl::type_to_str(enumeration.type())));
+    }
+}
+
 /**************************
  * External API
  **************************/
@@ -194,13 +335,13 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
-    auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
+    auto arrow_buffer = static_cast<PrivateArrowBuffer*>(array->private_data);
     if (arrow_buffer != nullptr) {
-        LOG_TRACE(
-            fmt::format(
-                "[ArrowAdapter] release_array {} use_count={}",
-                arrow_buffer->buffer_->name(),
-                arrow_buffer->buffer_.use_count()));
+        // LOG_TRACE(
+        //     fmt::format(
+        //         "[ArrowAdapter] release_array {} use_count={}",
+        //         arrow_buffer->buffer_->name(),
+        //         arrow_buffer->buffer_.use_count()));
 
         // Delete the ArrowBuffer, which was allocated with new.
         // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
@@ -245,12 +386,12 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         // Dictionary arrays are allocated differently than data arrays
         // We need to free the buffers one at a time, then we can call the
         // release schema to continue the cleanup properly
-        for (int64_t i = 0; i < array->dictionary->n_buffers; ++i) {
-            if (array->dictionary->buffers[i] != nullptr) {
-                free(const_cast<void*>(array->dictionary->buffers[i]));
-                array->dictionary->buffers[i] = nullptr;
-            }
-        }
+        // for (int64_t i = 0; i < array->dictionary->n_buffers; ++i) {
+        //     if (array->dictionary->buffers[i] != nullptr) {
+        //         free(const_cast<void*>(array->dictionary->buffers[i]));
+        //         array->dictionary->buffers[i] = nullptr;
+        //     }
+        // }
 
         LOG_TRACE("[ArrowAdapter] release_array array->dict release");
 
@@ -591,8 +732,10 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     auto sch = schema.get();
     auto arr = array.get();
 
-    auto coltype = to_arrow_format(column->type()).data();
+    auto coltype = to_arrow_format(column->type(), true).data();
     auto natype = to_nanoarrow_type(coltype);
+
+    std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>> enmr_map;
 
     if (natype == NANOARROW_TYPE_TIMESTAMP) {
         ArrowSchemaInit(sch);
@@ -611,6 +754,21 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     // this will be 3 for char vecs and 2 for enumerations
     int n_buffers = column->is_var() ? 3 : 2;
 
+    exitIfError(ArrowArrayInitFromSchema(arr, sch, NULL), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
+    array->length = column->size();
+
+    if (column->is_nullable()) {
+        schema->flags |= ARROW_FLAG_NULLABLE;
+
+        // Count nulls
+        for (size_t i = 0; i < column->size(); ++i) {
+            array->null_count += column->validity()[i] == 0;
+        }
+    } else {
+        schema->flags &= ~ARROW_FLAG_NULLABLE;
+    }
+
     // Create an ArrowBuffer to manage the lifetime of `column`.
     // - `arrow_buffer` holds shared_ptr to `column`, increments
     //   the use count and keeps the ColumnBuffer data alive.
@@ -619,11 +777,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     //   `arrow_buffer` is deleted, which decrements the the
     //   `column` use count. When the `column` use count reaches
     //   0, the ColumnBuffer data will be deleted.
-    auto arrow_buffer = new ArrowBuffer(column);
-
-    exitIfError(ArrowArrayInitFromSchema(arr, sch, NULL), "Bad array init");
-    exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
-    array->length = column->size();
+    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column));
 
     LOG_TRACE(
         fmt::format(
@@ -656,38 +810,26 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
     assert(array->buffers != nullptr);
     array->buffers[0] = nullptr;                                   // validity addressed below
-    array->buffers[n_buffers - 1] = column->data<void*>().data();  // data
+    array->buffers[n_buffers - 1] = arrow_buffer->buffer_->data_.data();
     if (n_buffers == 3) {
-        array->buffers[1] = column->offsets().data();  // offsets
+        array->buffers[1] = arrow_buffer->buffer_->large_offsets_.data();
     }
 
     if (column->is_nullable()) {
-        schema->flags |= ARROW_FLAG_NULLABLE;  // it is also set by default
-
-        // Count nulls
-        for (size_t i = 0; i < column->size(); ++i) {
-            array->null_count += column->validity()[i] == 0;
-        }
-
-        // Convert validity bytemap to a bitmap in place
-        column->validity_to_bitmap();
-        array->buffers[0] = column->validity().data();
-    } else {
-        schema->flags &= ~ARROW_FLAG_NULLABLE;  // as ArrowSchemaInitFromType
-                                                // leads to NULLABLE set
+        array->buffers[0] = arrow_buffer->buffer_->validity_.data();
     }
 
     if (column->is_ordered()) {
         schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
     }
 
-    // Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean
-    if (column->type() == TILEDB_BOOL) {
-        column->data_to_bitmap();
-    }
-
     auto enmr = column->get_enumeration_info();
     if (enmr.has_value()) {
+        if (!enmr_map.contains(enmr->name())) {
+            enmr_map.insert(std::make_pair(enmr->name(), std::make_shared<ArrowBuffer>(enmr.value(), !downcast_dict_of_large_var)));
+        }
+
+        PrivateArrowBuffer*  enmr_buffer = new PrivateArrowBuffer(enmr_map.at(enmr->name()));
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
@@ -708,20 +850,44 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
 
         exitIfError(ArrowArrayInitFromSchema(dict_arr, dict_sch, NULL), "Bad dict array init");
         exitIfError(ArrowArrayAllocateChildren(dict_arr, 0), "Bad array children alloc");
+        dict_arr->release = &release_array;
 
         // The release function should be the default nanoarrow release
         // function. The dictionary buffers should be released by the parent
         // array release function that we provide. The arrow array as
         // the owner of new buffers should be responsible for clean-up.
-        if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
-            enmr->type() == TILEDB_BLOB) {
-            dict_arr->length = _set_var_dictionary_buffers(
-                enmr.value(), enmr->context(), dict_arr->buffers, downcast_dict_of_large_var);
-        } else if (enmr->type() == TILEDB_BOOL) {
-            dict_arr->length = _set_bool_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
-        } else {
-            dict_arr->length = _set_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
+        // if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
+        //     enmr->type() == TILEDB_BLOB) {
+        //     dict_arr->length = _set_var_dictionary_buffers(
+        //         enmr.value(), enmr->context(), dict_arr->buffers, downcast_dict_of_large_var);
+        // } else if (enmr->type() == TILEDB_BOOL) {
+        //     dict_arr->length = _set_bool_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
+        // } else {
+        //     dict_arr->length = _set_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
+        // }
+
+        bool is_var_enum = enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR || enmr->type() == TILEDB_BLOB;
+        int n_buffers_enum = is_var_enum ? 3 : 2;
+
+        dict_arr->n_buffers = n_buffers_enum;
+        dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buffers_enum);
+        assert(dict_arr->buffers != nullptr);
+
+        dict_arr->buffers[0] = nullptr;
+        dict_arr->buffers[dict_arr->n_buffers - 1] = enmr_buffer->buffer_->data_.data();
+        if (is_var_enum) {
+            if (downcast_dict_of_large_var) {
+                dict_arr->buffers[1] = enmr_buffer->buffer_->small_offsets_.data();
+            } else {
+                dict_arr->buffers[1] = enmr_buffer->buffer_->large_offsets_.data();
+            }
         }
+
+        dict_arr->length = enmr_buffer->buffer_->length;
+        if (dict_arr->private_data != nullptr) {  // as we use nanoarrow's init
+            free(dict_arr->private_data);         // free what was allocated before
+        }  // assigning our ArrowBuffer pointer
+        dict_arr->private_data = (void*)enmr_buffer;
 
         schema->dictionary = dict_sch;
         array->dictionary = dict_arr;
