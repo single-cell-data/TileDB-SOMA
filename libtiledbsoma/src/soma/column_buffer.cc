@@ -104,7 +104,7 @@ ColumnBuffer::ColumnBuffer(
     LOG_DEBUG(
         fmt::format("[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var_, is_nullable_));
     if (use_resize) {
-        // Calling reserve and then accessing the data without having initialized 
+        // Calling reserve and then accessing the data without having initialized
         // memory is UB but resize increases resident memory footprint
         data_.resize(num_bytes);
         if (is_var_) {
