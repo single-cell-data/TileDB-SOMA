@@ -33,6 +33,7 @@ from ._types import NTuple, OpenTimestamp
 from ._util import from_clib_result_order
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
+from .options._util import build_clib_platform_config
 
 if TYPE_CHECKING:
     try:
@@ -227,7 +228,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         carrow_type = pyarrow_to_carrow_type(type)
-        plt_cfg = _util.build_clib_platform_config(platform_config)
+        plt_cfg = build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMASparseNDArray.create(

@@ -26,6 +26,7 @@ from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+from .options._util import build_clib_platform_config
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
@@ -184,7 +185,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         carrow_type = pyarrow_to_carrow_type(type)
-        plt_cfg = _util.build_clib_platform_config(platform_config)
+        plt_cfg = build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMADenseNDArray.create(

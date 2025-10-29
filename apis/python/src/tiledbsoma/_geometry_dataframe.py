@@ -46,6 +46,7 @@ from ._spatial_util import (
 )
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
+from .options._util import build_clib_platform_config
 
 _UNBATCHED = options.BatchSize()
 
@@ -261,7 +262,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
-        plt_cfg = _util.build_clib_platform_config(platform_config)
+        plt_cfg = build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMAGeometryDataFrame.create(

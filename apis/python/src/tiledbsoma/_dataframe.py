@@ -42,6 +42,7 @@ from ._types import (
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
+from .options._util import build_clib_platform_config
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[tuple[Any, Any], list[Any], None]
@@ -309,7 +310,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
-        plt_cfg = _util.build_clib_platform_config(platform_config)
+        plt_cfg = build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMADataFrame.create(
