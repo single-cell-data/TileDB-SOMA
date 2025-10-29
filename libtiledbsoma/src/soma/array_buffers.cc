@@ -71,6 +71,8 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
 
             return (dim.type() == TILEDB_STRING_ASCII || dim.type() == TILEDB_STRING_UTF8) ? sizeof(uint64_t) : tiledb::impl::type_size(dim.type());
         }
+
+        throw TileDBSOMAError(fmt::format("[ArrayBuffers] MIssing column name '{}'", name));
     }) / 8) * 8;
 
     for (const auto& name : names) {

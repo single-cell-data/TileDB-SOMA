@@ -852,20 +852,6 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
         exitIfError(ArrowArrayAllocateChildren(dict_arr, 0), "Bad array children alloc");
         dict_arr->release = &release_array;
 
-        // The release function should be the default nanoarrow release
-        // function. The dictionary buffers should be released by the parent
-        // array release function that we provide. The arrow array as
-        // the owner of new buffers should be responsible for clean-up.
-        // if (enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
-        //     enmr->type() == TILEDB_BLOB) {
-        //     dict_arr->length = _set_var_dictionary_buffers(
-        //         enmr.value(), enmr->context(), dict_arr->buffers, downcast_dict_of_large_var);
-        // } else if (enmr->type() == TILEDB_BOOL) {
-        //     dict_arr->length = _set_bool_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
-        // } else {
-        //     dict_arr->length = _set_dictionary_buffers(enmr.value(), enmr->context(), dict_arr->buffers);
-        // }
-
         bool is_var_enum = enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR || enmr->type() == TILEDB_BLOB;
         int n_buffers_enum = is_var_enum ? 3 : 2;
 
