@@ -15,7 +15,7 @@ from typing_extensions import Self
 
 from . import _constants, _tdb_handles
 from . import pytiledbsoma as clib
-from ._exception import SOMAError
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
@@ -31,20 +31,6 @@ class SOMAObject(somacore.SOMAObject):
     Lifecycle:
         Maturing.
     """
-
-    _wrapper_type: (
-        type[_tdb_handles.DataFrameWrapper]
-        | type[_tdb_handles.DenseNDArrayWrapper]
-        | type[_tdb_handles.SparseNDArrayWrapper]
-        | type[_tdb_handles.CollectionWrapper]
-        | type[_tdb_handles.ExperimentWrapper]
-        | type[_tdb_handles.MeasurementWrapper]
-        | type[_tdb_handles.SceneWrapper]
-        | type[_tdb_handles.MultiscaleImageWrapper]
-        | type[_tdb_handles.PointCloudDataFrameWrapper]
-        | type[_tdb_handles.GeometryDataFrameWrapper]
-    )
-    """Class variable of the Wrapper class used to open this object type."""
 
     _handle_type: _tdb_handles.RawHandle
     """Class variable of the clib class handle used to open this object type."""
@@ -95,13 +81,33 @@ class SOMAObject(somacore.SOMAObject):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
-        return cls(handle, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
+        open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
+        if mode not in ("r", "w", "d"):
+            raise ValueError(f"Invalid open mode {mode!r}")
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+
+        try:
+            handle = cls._handle_type.open(
+                uri,
+                mode=open_mode,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+
+        except (RuntimeError, SOMAError) as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise SOMAError(tdbe) from tdbe
+        return cls(
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+        )
 
     def __init__(
         self,
-        handle: _tdb_handles.Wrapper[_tdb_handles.RawHandle],
+        handle: _tdb_handles.RawHandle,
         *,
+        uri: str,
+        context: SOMATileDBContext,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ) -> None:
         """Internal-only common initializer steps.
@@ -109,8 +115,8 @@ class SOMAObject(somacore.SOMAObject):
         This function is internal; users should open TileDB SOMA objects using
         the :meth:`create` and :meth:`open` factory class methods.
         """
-        if not isinstance(handle, self._wrapper_type):
-            raise TypeError("Internal error: Unexpected handle type {type(handle)}. Expected {self._wrapper_type}.")
+        if not isinstance(handle, self._handle_type):
+            raise TypeError("Internal error: Unexpected handle type {type(handle)}. Expected {self._handle_type}.")
         self._close_stack = ExitStack()
         """An exit stack to manage closing handles owned by this object.
 
@@ -130,10 +136,10 @@ class SOMAObject(somacore.SOMAObject):
                 f" Directly calling `{name}(...)` is intended for TileDB SOMA"
                 f" internal use only.",
             )
-        self._handle = handle._handle
-        self._context = handle.context
-        self._uri = handle.uri
-        self._timestamp_ms = handle.timestamp_ms
+        self._handle = handle
+        self._context = context
+        self._uri = uri
+        self._timestamp_ms = self._context._open_timestamp_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle)
         self._check_required_metadata()

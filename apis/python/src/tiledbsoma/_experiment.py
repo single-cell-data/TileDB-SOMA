@@ -13,7 +13,6 @@ import attrs
 import pyarrow as pa
 from somacore import experiment, options, query
 
-from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
@@ -79,7 +78,6 @@ class Experiment(
     """
 
     __slots__ = ()
-    _wrapper_type = _tdb_handles.ExperimentWrapper
     _handle_type = clib.SOMAExperiment
 
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {

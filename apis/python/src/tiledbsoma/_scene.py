@@ -17,14 +17,14 @@ from somacore import (
 )
 from typing_extensions import Self
 
-from . import _funcs, _tdb_handles
+from . import _funcs
 from . import pytiledbsoma as clib
 from ._collection import CollectionBase
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
-from ._exception import SOMAError, map_exception_for_create
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
@@ -56,7 +56,6 @@ class Scene(
     """
 
     __slots__ = ("_coord_space",)
-    _wrapper_type = _tdb_handles.SceneWrapper
     _handle_type = clib.SOMAScene
 
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
@@ -125,12 +124,24 @@ class Scene(
                 axis_units=axis_units,
                 timestamp=(0, timestamp_ms),
             )
-            return cls(
-                cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
-                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-            )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            handle = clib.SOMAScene.open(
+                uri,
+                mode=clib.OpenMode.soma_write,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+
+        except (RuntimeError, SOMAError) as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise SOMAError(tdbe) from tdbe
+        return cls(
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+        )
 
     def _parse_special_metadata(self) -> None:
         coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)

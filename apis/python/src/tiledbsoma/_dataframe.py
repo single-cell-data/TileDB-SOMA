@@ -26,11 +26,10 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._coordinate_selection import CoordinateValueFilters
-from ._exception import SOMAError, map_exception_for_create
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
-from ._tdb_handles import DataFrameWrapper
 from ._types import (
     NPFInfo,
     NPFloating,
@@ -140,7 +139,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         it must be ``None``.
     """
 
-    _wrapper_type = DataFrameWrapper
     _handle_type = clib.SOMADataFrame
 
     @classmethod
@@ -324,10 +322,21 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
-        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            handle = clib.SOMADataFrame.open(
+                uri,
+                mode=clib.OpenMode.soma_write,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+
+        except (RuntimeError, SOMAError) as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise SOMAError(tdbe) from tdbe
         return cls(
-            handle,
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
         )
 
     def keys(self) -> tuple[str, ...]:
@@ -437,7 +446,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             Maturing.
         """
         self._verify_open_for_reading()
-        # if is it in read open mode, then it is a DataFrameWrapper
         return int(self._handle.count)
 
     @property

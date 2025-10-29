@@ -21,6 +21,7 @@ from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
 from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
+from .options import SOMATileDBContext
 
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)
@@ -56,10 +57,13 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
 
     def __init__(
         self,
-        handle: _tdb_handles.SOMAGroupWrapper[Any],
+        handle: _tdb_handles.RawHandle,
+        *,
+        uri: str,
+        context: SOMATileDBContext,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
-        super().__init__(handle, **kwargs)
+        super().__init__(handle, uri=uri, context=context, **kwargs)
         self._contents = {
             name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
         }

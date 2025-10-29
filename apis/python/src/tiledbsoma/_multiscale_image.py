@@ -103,7 +103,6 @@ class MultiscaleImage(
         "_has_channel_axis",
         "_levels",
     )
-    _wrapper_type = _tdb_handles.MultiscaleImageWrapper
     _handle_type = clib.SOMAMultiscaleImage
 
     _level_prefix: Final = "soma_level_"
@@ -221,12 +220,16 @@ class MultiscaleImage(
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
-            handle_wrapper = _tdb_handles.MultiscaleImageWrapper.open(uri, "w", context, tiledb_timestamp)
-            metadata = _tdb_handles.MetadataWrapper.from_handle(handle_wrapper._handle)
+            handle = clib.SOMAMultiscaleImage.open(
+                uri, mode=clib.OpenMode.soma_write, context=context.native_context, timestamp=(0, timestamp_ms)
+            )
+            metadata = _tdb_handles.MetadataWrapper.from_handle(handle)
             metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
             metadata._write()
             multiscale = cls(
-                handle_wrapper,
+                handle,
+                uri=uri,
+                context=context,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
         except SOMAError as e:

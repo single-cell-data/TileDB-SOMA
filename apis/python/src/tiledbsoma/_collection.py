@@ -21,15 +21,12 @@ import somacore.collection
 from somacore import options
 from typing_extensions import Self
 
-from . import _funcs, _tdb_handles
+from . import _funcs
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import (
-    SOMAError,
-    map_exception_for_create,
-)
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._funcs import typeguard_ignore
 from ._soma_group import SOMAGroup
 from ._soma_object import SOMAObject
@@ -99,21 +96,31 @@ class CollectionBase(
         """
         context = _validate_soma_tiledb_context(context)
         try:
-            wrapper = cast("_tdb_handles.SOMAGroupWrapper[Any]", cls._wrapper_type)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
-                soma_type=wrapper._WRAPPED_TYPE.__name__,
+                soma_type=cls._handle_type.__name__,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
-            handle = wrapper.open(uri, "w", context, tiledb_timestamp)
-            return cls(
-                handle,
-                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-            )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
+
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            handle = cls._handle_type.open(
+                uri,
+                mode=clib.OpenMode.soma_write,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+        except (RuntimeError, SOMAError) as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise SOMAError(tdbe) from tdbe
+        return cls(
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+        )
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
@@ -482,7 +489,6 @@ class Collection(CollectionBase[CollectionElementType], somacore.Collection[Coll
 
     __slots__ = ()
 
-    _wrapper_type = _tdb_handles.CollectionWrapper
     _handle_type = clib.SOMACollection
 
 
