@@ -16,10 +16,10 @@ import pytest
 import somacore
 from numpy.testing import assert_array_equal
 from pandas.api.types import union_categoricals
-from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
+from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 from tests._util import raises_no_typeguard
 
@@ -40,10 +40,14 @@ def arrow_schema():
 
     return _schema
 
-@pytest.mark.parametrize("cfg", [
-    pytest.param({"soma.read.use_memory_pool": "false"}, id="default_mem_alloc"),
-    pytest.param({"soma.read.use_memory_pool": "true"}, id="experimental_mem_alloc")
-])
+
+@pytest.mark.parametrize(
+    "cfg",
+    [
+        pytest.param({"soma.read.use_memory_pool": "false"}, id="default_mem_alloc"),
+        pytest.param({"soma.read.use_memory_pool": "true"}, id="experimental_mem_alloc"),
+    ],
+)
 def test_dataframe(tmp_path, arrow_schema, cfg):
     uri = tmp_path.as_posix()
     # Create
@@ -396,10 +400,14 @@ def test_delete_cells_exceptions(tmp_path):
         with pytest.raises(ValueError):
             soma_df.delete_cells((slice(3, 1),))
 
-@pytest.mark.parametrize("cfg", [
-    pytest.param({"soma.read.use_memory_pool": "false"}, id="default_mem_alloc"),
-    pytest.param({"soma.read.use_memory_pool": "true"}, id="experimental_mem_alloc")
-])
+
+@pytest.mark.parametrize(
+    "cfg",
+    [
+        pytest.param({"soma.read.use_memory_pool": "false"}, id="default_mem_alloc"),
+        pytest.param({"soma.read.use_memory_pool": "true"}, id="experimental_mem_alloc"),
+    ],
+)
 def test_dataframe_with_enumeration(tmp_path, cfg):
     schema = pa.schema(
         [
@@ -2374,6 +2382,7 @@ def test_read_indexing(tmp_path, io):
         else:
             table = next(sdf.read(**read_kwargs)).to_pandas()
             assert table["A"].to_list() == io["A"]
+
 
 @pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
 def test_write_categorical_types(tmp_path, cfg):
