@@ -57,7 +57,7 @@ struct ArrowBuffer {
 };
 
 struct PrivateArrowBuffer {
-    PrivateArrowBuffer(std::shared_ptr<ArrowBuffer> buffer)
+    PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
         : buffer_(buffer) {
     }
 

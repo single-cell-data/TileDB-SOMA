@@ -20,7 +20,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 bool ArrayBuffers::use_memory_pool(const std::shared_ptr<tiledb::Array>& array) {
-    size_t use_memory_pool = false;
+    bool use_memory_pool = false;
     auto config = array->config();
     if (config.contains(CONFIG_KEY_USE_MEMORY_POOL)) {
         use_memory_pool = config.get(CONFIG_KEY_USE_MEMORY_POOL) == "true";
@@ -82,7 +82,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
                                 tiledb::impl::type_size(dim.type());
                  }
 
-                 throw TileDBSOMAError(fmt::format("[ArrayBuffers] MIssing column name '{}'", name));
+                 throw TileDBSOMAError(fmt::format("[ArrayBuffers] Missing column name '{}'", name));
              }) /
          8) *
         8;
