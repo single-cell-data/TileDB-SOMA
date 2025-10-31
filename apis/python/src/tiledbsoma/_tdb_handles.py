@@ -202,10 +202,9 @@ class MetadataWrapper(MutableMapping[str, Any]):
             )
 
     def __repr__(self) -> str:
-        prefix = f"{type(self).__name__}({self.owner})"  # TODO: Before merging add repr to handles
         if self.owner.closed:
-            return f"<{prefix}>"
-        return f"<{prefix} {self.cache}>"
+            return f"<{type(self).__name__}(<{type(self.owner).__name__} (closed)>)>"
+        return f"<{type(self).__name__}(<{type(self.owner).__name__} (self.owner.mode)>) {self.cache}>"
 
 
 def _check_metadata_type(key: str, obj: Metadatum) -> None:
