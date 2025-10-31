@@ -43,49 +43,74 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
         }
     }
 
+    size_t factor = 1;
+    if (config.contains(CONFIG_KEY_VAR_SIZED_FACTOR)) {
+        auto value_str = config.get(CONFIG_KEY_VAR_SIZED_FACTOR);
+        try {
+            factor = std::stoull(value_str);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[ArrayBuffers] Error parsing {}: '{}' ({})", CONFIG_KEY_VAR_SIZED_FACTOR, value_str, e.what()));
+        }
+    }
+
     ArraySchema schema = array->schema();
     // Split memory budget to each column depending on the byte size of each columns element
     // Var sized columns will be allocated the same as an 8 byte datatype
 
     // Ensure minimum buffer size is multiple of 8
-    size_t memory_budget_unit =
-        (memory_budget /
-         std::transform_reduce(
-             names.begin(),
-             names.end(),
-             0L,
-             std::plus{},
-             [&](auto name) {
-                 // Check if column is a TileDB attribute
-                 if (schema.has_attribute(name)) {
-                     Attribute attr = schema.attribute(name);
+    size_t memory_budget_unit = (memory_budget /
+                                 std::transform_reduce(
+                                     names.begin(),
+                                     names.end(),
+                                     0L,
+                                     std::plus{},
+                                     [&](auto name) {
+                                         size_t weight = 0;
 
-                     if (!attr.variable_sized() && attr.cell_val_num() != 1) {
-                         throw TileDBSOMAError("[ArrayBuffers] Values per cell > 1 is not supported: " + name);
-                     }
+                                         // Check if column is a TileDB attribute
+                                         if (schema.has_attribute(name)) {
+                                             Attribute attr = schema.attribute(name);
 
-                     return attr.variable_sized() ? sizeof(uint64_t) : tiledb::impl::type_size(attr.type());
-                 }
-                 // Else check if column is a TileDB dimension
-                 else if (schema.domain().has_dimension(name)) {
-                     Dimension dim = schema.domain().dimension(name);
+                                             if (!attr.variable_sized() && attr.cell_val_num() != 1) {
+                                                 throw TileDBSOMAError(
+                                                     "[ArrayBuffers] Values per cell > 1 is not supported: " + name);
+                                             }
 
-                     bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM || dim.type() == TILEDB_STRING_ASCII ||
-                                   dim.type() == TILEDB_STRING_UTF8;
+                                             weight += attr.nullable() ? 1 : 0;
+                                             // If column has variable size add the offset array in the column budget
+                                             weight += attr.variable_sized() ? sizeof(uint64_t) * (1 + 2 * factor) :
+                                                                               tiledb::impl::type_size(attr.type());
 
-                     if (!is_var && dim.cell_val_num() != 1) {
-                         throw TileDBSOMAError("[ArrayBuffers] Values per cell > 1 is not supported: " + name);
-                     }
+                                             return weight;
+                                         }
+                                         // Else check if column is a TileDB dimension
+                                         else if (schema.domain().has_dimension(name)) {
+                                             Dimension dim = schema.domain().dimension(name);
 
-                     return (dim.type() == TILEDB_STRING_ASCII || dim.type() == TILEDB_STRING_UTF8) ?
-                                sizeof(uint64_t) :
-                                tiledb::impl::type_size(dim.type());
-                 }
+                                             bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM ||
+                                                           dim.type() == TILEDB_STRING_ASCII ||
+                                                           dim.type() == TILEDB_STRING_UTF8;
 
-                 throw TileDBSOMAError(fmt::format("[ArrayBuffers] Missing column name '{}'", name));
-             }) /
-         8) *
-        8;
+                                             if (!is_var && dim.cell_val_num() != 1) {
+                                                 throw TileDBSOMAError(
+                                                     "[ArrayBuffers] Values per cell > 1 is not supported: " + name);
+                                             }
+
+                                             weight += (dim.type() == TILEDB_STRING_ASCII ||
+                                                        dim.type() == TILEDB_STRING_UTF8) ?
+                                                           sizeof(uint64_t) * (1 + 2 * factor) :
+                                                           tiledb::impl::type_size(dim.type());
+
+                                             return weight;
+                                         }
+
+                                         throw TileDBSOMAError(
+                                             fmt::format("[ArrayBuffers] Missing column name '{}'", name));
+                                     }) /
+                                 8) *
+                                8;
 
     for (const auto& name : names) {
         names_.push_back(name);
@@ -93,10 +118,11 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
         if (schema.has_attribute(name)) {
             Attribute attr = schema.attribute(name);
 
-            size_t column_budget = (attr.variable_sized() ? sizeof(uint64_t) : tiledb::impl::type_size(attr.type())) *
+            size_t column_budget = (attr.variable_sized() ? sizeof(uint64_t) * 2 * factor :
+                                                            tiledb::impl::type_size(attr.type())) *
                                    memory_budget_unit;
-            size_t num_cells = attr.variable_sized() ? column_budget / sizeof(uint64_t) :
-                                                       column_budget / tiledb::impl::type_size(attr.type());
+
+            size_t num_cells = memory_budget_unit;
 
             auto enum_name = AttributeExperimental::get_enumeration_name(schema.context(), attr);
             std::optional<Enumeration> enumeration = std::nullopt;
@@ -128,10 +154,9 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
                           dim.type() == TILEDB_STRING_UTF8;
 
             // Ensure buffer size is multiple of 8
-            size_t column_budget = (is_var ? sizeof(uint64_t) : tiledb::impl::type_size(dim.type())) *
+            size_t column_budget = (is_var ? sizeof(uint64_t) * 2 * factor : tiledb::impl::type_size(dim.type())) *
                                    memory_budget_unit;
-            size_t num_cells = is_var ? column_budget / sizeof(uint64_t) :
-                                        column_budget / tiledb::impl::type_size(dim.type());
+            size_t num_cells = memory_budget_unit;
 
             buffers_.insert(
                 std::make_pair(
