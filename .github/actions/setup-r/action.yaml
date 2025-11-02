@@ -32,14 +32,6 @@ runs:
           https://tiledb-inc.r-universe.dev
           https://bnprks.r-universe.dev/
 
-    - name: P3M Bioconductor
-      run: |
-        echo 'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")' | \
-          tee -a "${HOME}/.Rprofile"
-        echo 'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
-          tee -a "${HOME}/.Rprofile"
-      shell: bash
-
     - name: R Package Type (macOS)
       if: ${{ inputs.os == 'macos-latest' }}
       run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
