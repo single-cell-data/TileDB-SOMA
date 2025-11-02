@@ -34,7 +34,7 @@ runs:
 
     - name: Configure Bioconductor
       run: |
-        echo 'utils::setRepositories(ind = 1:3)' | \
+        echo 'utils::setRepositories(ind = 1:3, addURLs = getOption("repos"))' | \
           tee -a "${HOME}/.Rprofile"
       shell: bash
 
