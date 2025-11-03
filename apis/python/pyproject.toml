@@ -128,4 +128,5 @@ markers = [
     "slow: mark test as slow",
     "spatialdata: test of SpatialData integration",
     "medium_runner: tests that are too large for the MacOS GitHub runners",
+    "carrara: carrara-related tests",
 ]
