@@ -32,11 +32,9 @@ runs:
           https://tiledb-inc.r-universe.dev
           https://bnprks.r-universe.dev/
 
-    - name: P3M Bioconductor
+    - name: Configure Bioconductor
       run: |
-        echo 'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")' | \
-          tee -a "${HOME}/.Rprofile"
-        echo 'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
+        echo 'utils::setRepositories(ind = 1:3, addURLs = getOption("repos"))' | \
           tee -a "${HOME}/.Rprofile"
       shell: bash
 
