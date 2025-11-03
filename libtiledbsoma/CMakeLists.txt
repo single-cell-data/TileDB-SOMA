@@ -31,6 +31,9 @@ option(TILEDBSOMA_BUILD_STATIC "Build a static library; otherwise, shared librar
 option(TILEDBSOMA_ENABLE_TESTING "Enable tests" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." OFF)
 
+# TileDB-SOMA VCPKG options
+option(TILEDBSOMA_FETCH_VCPKG "Download and install vcpkg. Ignored if CMAKE_TOOLCHAIN_FILE or ENV{VCPKG_ROOT} is set." OFF)
+
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
 option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP install dir." OFF)
@@ -53,6 +56,31 @@ option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and 
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
 option(TILEDB_SANITIZER "Sanitizer to use in TILEDB. ")
+
+# Set the CMake toolchain file and possibly fetch vcpkg.
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VCPKG_ROOT})
+    set(CMAKE_TOOLCHAIN_FILE
+      "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "Vcpkg toolchain file"
+    )
+  elseif(NOT (DEFINED ENV{TILEDB_DISABLE_AUTO_VCPKG} OR TILEDB_DISABLE_AUTO_VCPKG))
+    if (TILEDBSOMA_FETCH_VCPKG)
+      # Inspired from https://github.com/Azure/azure-sdk-for-cpp/blob/azure-core_1.10.3/cmake-modules/AzureVcpkg.cmake
+      message("TILEDBSOMA_FETCH_VCPKG is enabled. Fetching a local copy of vcpkg.")
+      set(VCPKG_COMMIT_STRING ea2a964f9303270322cf3f2d51c265ba146c422d) # 2025-04-01
+      message("Vcpkg commit string used: ${VCPKG_COMMIT_STRING}")
+      include(FetchContent)
+      FetchContent_Declare(
+        vcpkg
+        GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
+        GIT_TAG        ${VCPKG_COMMIT_STRING}
+      )
+      FetchContent_MakeAvailable(vcpkg)
+      set(CMAKE_TOOLCHAIN_FILE "${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    endif()
+  endif()
+endif()
 
 # Enable compiler cache to speed up recompilation
 find_program(CCACHE_FOUND ccache)
