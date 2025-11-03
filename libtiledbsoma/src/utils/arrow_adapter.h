@@ -54,6 +54,7 @@ struct ArrowBuffer {
     std::vector<std::byte> validity_;
 
     size_t length;
+    std::string name;
 };
 
 struct PrivateArrowBuffer {

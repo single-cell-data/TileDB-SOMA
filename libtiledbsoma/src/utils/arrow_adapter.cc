@@ -159,6 +159,7 @@ ArrowBuffer::ArrowBuffer(const std::shared_ptr<ColumnBuffer>& buffer, bool large
     }
 
     length = buffer->size();
+    name = buffer->name();
 }
 
 ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
@@ -253,6 +254,8 @@ ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
                     "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
                     tiledb::impl::type_to_str(enumeration.type())));
     }
+
+    name = enumeration.name();
 }
 
 /**************************
@@ -336,11 +339,11 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 void ArrowAdapter::release_array(struct ArrowArray* array) {
     auto arrow_buffer = static_cast<PrivateArrowBuffer*>(array->private_data);
     if (arrow_buffer != nullptr) {
-        // LOG_TRACE(
-        //     fmt::format(
-        //         "[ArrowAdapter] release_array {} use_count={}",
-        //         arrow_buffer->buffer_->name(),
-        //         arrow_buffer->buffer_.use_count()));
+        LOG_TRACE(
+            fmt::format(
+                "[ArrowAdapter] release_array {} use_count={}",
+                arrow_buffer->buffer_->name,
+                arrow_buffer->buffer_.use_count()));
 
         // Delete the ArrowBuffer, which was allocated with new.
         // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
@@ -382,16 +385,6 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     }
 
     if (array->dictionary != nullptr) {
-        // Dictionary arrays are allocated differently than data arrays
-        // We need to free the buffers one at a time, then we can call the
-        // release schema to continue the cleanup properly
-        // for (int64_t i = 0; i < array->dictionary->n_buffers; ++i) {
-        //     if (array->dictionary->buffers[i] != nullptr) {
-        //         free(const_cast<void*>(array->dictionary->buffers[i]));
-        //         array->dictionary->buffers[i] = nullptr;
-        //     }
-        // }
-
         LOG_TRACE("[ArrowAdapter] release_array array->dict release");
 
         array->dictionary->release(array->dictionary);
