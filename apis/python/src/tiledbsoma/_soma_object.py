@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import MutableMapping
 from contextlib import ExitStack
-from typing import Any
+from typing import Any, ClassVar
 
 import somacore
 from somacore import options
@@ -32,7 +32,7 @@ class SOMAObject(somacore.SOMAObject):
         Maturing.
     """
 
-    _handle_type: _tdb_handles.RawHandle
+    _handle_type: ClassVar[_tdb_handles.RawHandle]
     """Class variable of the clib class handle used to open this object type."""
 
     __slots__ = ("_close_stack", "_context", "_handle", "_metadata", "_timestamp_ms", "_uri")
