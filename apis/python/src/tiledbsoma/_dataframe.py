@@ -139,6 +139,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         it must be ``None``.
     """
 
+    __slots__ = ()
     _handle_type = clib.SOMADataFrame
 
     @classmethod
