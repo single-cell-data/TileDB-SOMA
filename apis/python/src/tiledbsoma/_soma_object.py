@@ -82,8 +82,6 @@ class SOMAObject(somacore.SOMAObject):
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
-        if mode not in ("r", "w", "d"):
-            raise ValueError(f"Invalid open mode {mode!r}")
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
 
         try:
