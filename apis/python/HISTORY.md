@@ -8,8 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`.
+
 ### Changed
 
+- \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow.
 - \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add optional schema validation to `tiledbsoma.io.add_X_layer`, which will generate an error if the provided matrix does not match the Experiment shape. Validation is enabled by default, for any dataset created with SOMA 1.15 or later.
 
 ### Deprecated
