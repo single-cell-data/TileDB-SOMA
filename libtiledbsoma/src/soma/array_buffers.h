@@ -83,6 +83,11 @@ class ArrayBuffers {
         return buffers_.at(names_.front())->size();
     }
 
+    /**
+     * @brief Returns whether or not the experimental memory pool flag is enabled
+     * 
+     * @return bool memory pool feature flag status
+     */
     static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
 
    private:
