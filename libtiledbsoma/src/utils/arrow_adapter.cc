@@ -115,51 +115,51 @@ std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view
     }
 }
 
-ArrowBuffer::ArrowBuffer(const std::shared_ptr<ColumnBuffer>& buffer, bool large_offsets) {
-    if (buffer->is_var()) {
-        size_t data_byte_size = buffer->offsets()[buffer->size()];
+ArrowBuffer::ArrowBuffer(ColumnBuffer& buffer, bool large_offsets) {
+    if (buffer.is_var()) {
+        size_t data_byte_size = buffer.offsets()[buffer.size()];
         data_.resize(data_byte_size);
 
         if (large_offsets) {
-            size_t offset_byte_size = (buffer->size() + 1) * sizeof(int64_t);
-            large_offsets_.resize(buffer->size() + 1);
-            std::memcpy(large_offsets_.data(), buffer->offsets().data(), offset_byte_size);
+            size_t offset_byte_size = (buffer.size() + 1) * sizeof(int64_t);
+            large_offsets_.resize(buffer.size() + 1);
+            std::memcpy(large_offsets_.data(), buffer.offsets().data(), offset_byte_size);
         } else {
-            small_offsets_.resize(buffer->size() + 1);
-            auto offsets = buffer->offsets();
+            small_offsets_.resize(buffer.size() + 1);
+            auto offsets = buffer.offsets();
             for (size_t i = 0; i < offsets.size(); ++i) {
                 small_offsets_[i] = static_cast<int32_t>(offsets[i]);
             }
         }
 
-        std::memcpy(data_.data(), buffer->data<void*>().data(), data_byte_size);
+        std::memcpy(data_.data(), buffer.data<void*>().data(), data_byte_size);
     } else {
-        if (buffer->type() == TILEDB_BOOL) {
-            size_t data_byte_size = (buffer->size() + 7) / 8;
+        if (buffer.type() == TILEDB_BOOL) {
+            size_t data_byte_size = (buffer.size() + 7) / 8;
 
             data_.resize(data_byte_size);
-            buffer->data_to_bitmap();
+            buffer.data_to_bitmap();
 
-            std::memcpy(data_.data(), buffer->data<void*>().data(), data_byte_size);
+            std::memcpy(data_.data(), buffer.data<void*>().data(), data_byte_size);
         } else {
-            size_t data_byte_size = buffer->size() * tiledb::impl::type_size(buffer->type());
+            size_t data_byte_size = buffer.size() * tiledb::impl::type_size(buffer.type());
 
             data_.resize(data_byte_size);
 
-            std::memcpy(data_.data(), buffer->data<void*>().data(), data_byte_size);
+            std::memcpy(data_.data(), buffer.data<void*>().data(), data_byte_size);
         }
     }
 
-    if (buffer->is_nullable()) {
-        buffer->validity_to_bitmap();
-        auto bitmap_size = (buffer->size() + 7) / 8;
+    if (buffer.is_nullable()) {
+        buffer.validity_to_bitmap();
+        auto bitmap_size = (buffer.size() + 7) / 8;
 
         validity_.resize(bitmap_size);
-        std::memcpy(validity_.data(), buffer->validity().data(), bitmap_size);
+        std::memcpy(validity_.data(), buffer.validity().data(), bitmap_size);
     }
 
-    length = buffer->size();
-    name = buffer->name();
+    length = buffer.size();
+    name = buffer.name();
 }
 
 ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
@@ -769,7 +769,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     //   `arrow_buffer` is deleted, which decrements the the
     //   `column` use count. When the `column` use count reaches
     //   0, the ColumnBuffer data will be deleted.
-    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column));
+    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(*column));
 
     LOG_TRACE(
         fmt::format(
@@ -819,7 +819,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     if (enmr.has_value()) {
         if (!enmr_map.contains(enmr->name())) {
             enmr_map.insert(
-                std::make_pair(enmr->name(), std::make_shared<ArrowBuffer>(enmr.value(), !downcast_dict_of_large_var)));
+                std::make_pair(enmr->name(), std::make_shared<ArrowBuffer>(*enmr, !downcast_dict_of_large_var)));
         }
 
         PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enmr_map.at(enmr->name()));

@@ -149,7 +149,7 @@ void ManagedQuery::setup_read() {
     LOG_TRACE("[ManagedQuery] allocate new buffers");
     if (!buffers_) {
         if (ArrayBuffers::use_memory_pool(array_)) {
-            buffers_ = std::make_shared<ArrayBuffers>(columns_, array_);
+            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
             for (auto& name : columns_) {
                 LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
                 buffers_->at(name)->attach(*query_);

@@ -45,7 +45,7 @@ class SOMACoordinateSpace;
  *
  */
 struct ArrowBuffer {
-    ArrowBuffer(const std::shared_ptr<ColumnBuffer>& buffer, bool large_offsets = true);
+    ArrowBuffer(ColumnBuffer& buffer, bool large_offsets = true);
     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
     std::vector<std::byte> data_;

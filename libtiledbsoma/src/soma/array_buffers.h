@@ -33,7 +33,7 @@ class ArrayBuffers {
 
    public:
     ArrayBuffers() = default;
-    ArrayBuffers(const std::vector<std::string>& names, const std::shared_ptr<tiledb::Array>& array);
+    ArrayBuffers(const std::vector<std::string>& names, const tiledb::Array& array);
     ArrayBuffers(const ArrayBuffers&) = default;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;

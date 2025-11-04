@@ -29,9 +29,9 @@ bool ArrayBuffers::use_memory_pool(const std::shared_ptr<tiledb::Array>& array) 
     return use_memory_pool;
 }
 
-ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::shared_ptr<tiledb::Array>& array) {
+ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::Array& array) {
     size_t memory_budget = DEFAULT_ALLOC_BYTES;
-    auto config = array->config();
+    auto config = array.config();
     if (config.contains(CONFIG_KEY_MEMORY_BUDGET)) {
         auto value_str = config.get(CONFIG_KEY_MEMORY_BUDGET);
         try {
@@ -55,7 +55,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
         }
     }
 
-    ArraySchema schema = array->schema();
+    ArraySchema schema = array.schema();
     // Split memory budget to each column depending on the byte size of each columns element
     // Var sized columns will be allocated the same as an 8 byte datatype
 
@@ -128,7 +128,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const std::sha
             std::optional<Enumeration> enumeration = std::nullopt;
             bool is_ordered = false;
             if (enum_name.has_value()) {
-                auto enmr = ArrayExperimental::get_enumeration(schema.context(), *array, *enum_name);
+                auto enmr = ArrayExperimental::get_enumeration(schema.context(), array, *enum_name);
                 is_ordered = enmr.ordered();
                 enumeration = std::make_optional<Enumeration>(enmr);
             }
