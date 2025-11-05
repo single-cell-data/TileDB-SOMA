@@ -75,7 +75,11 @@ void load_soma_group(py::module& m) {
                 return py::cast(group.timestamp()->second);
             })
 
+        .def_property_readonly("type", &SOMAGroup::type)
+
         .def_property_readonly("meta", [](SOMAGroup& group) -> py::dict { return meta(group.get_metadata()); })
+
+        .def("get_metadata", py::overload_cast<const std::string&>(&SOMAGroup::get_metadata))
 
         .def("set_metadata", set_metadata, py::arg("key"), py::arg("value"), py::arg("force") = false)
 

@@ -69,7 +69,7 @@ from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, SOMAError
 from tiledbsoma._soma_array import SOMAArray
-from tiledbsoma._soma_object import AnySOMAObject, SOMAObject
+from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._tdb_handles import RawHandle
 from tiledbsoma._types import _INGEST_MODES, INGEST_MODES, IngestMode, NPNDArray, Path, _IngestMode
 from tiledbsoma.options import SOMATileDBContext
@@ -97,10 +97,10 @@ from ._registration import (
 from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
-_TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
+_TDBO = TypeVar("_TDBO", bound=SOMAObject)
 
 
-def add_metadata(obj: SOMAObject[Any], additional_metadata: AdditionalMetadata) -> None:
+def add_metadata(obj: SOMAObject, additional_metadata: AdditionalMetadata) -> None:
     if additional_metadata:
         obj.verify_open_for_writing()
         obj.metadata.update(additional_metadata)
@@ -854,7 +854,7 @@ def _from_anndata(
 def _maybe_set(
     coll: AnyTileDBCollection,
     key: str,
-    value: AnySOMAObject,
+    value: SOMAObject,
     *,
     use_relative_uri: bool | None,
 ) -> None:
