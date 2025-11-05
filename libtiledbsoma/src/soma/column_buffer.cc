@@ -91,7 +91,8 @@ ColumnBuffer::ColumnBuffer(
     bool is_var,
     bool is_nullable,
     std::optional<Enumeration> enumeration,
-    bool is_ordered)
+    bool is_ordered,
+    bool use_resize)
     : name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
@@ -102,15 +103,27 @@ ColumnBuffer::ColumnBuffer(
     , is_ordered_(is_ordered) {
     LOG_DEBUG(
         fmt::format("[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var_, is_nullable_));
-    // Call reserve() to allocate memory without initializing the contents.
-    // This reduce the time to allocate the buffer and reduces the
-    // resident memory footprint of the buffer.
-    data_.reserve(num_bytes);
-    if (is_var_) {
-        offsets_.reserve(num_cells + 1);  // extra offset for arrow
-    }
-    if (is_nullable_) {
-        validity_.reserve(num_cells);
+    if (use_resize) {
+        // Calling reserve and then accessing the data without having initialized
+        // memory is UB but resize increases resident memory footprint
+        data_.resize(num_bytes);
+        if (is_var_) {
+            offsets_.resize(num_cells + 1);  // extra offset for arrow
+        }
+        if (is_nullable_) {
+            validity_.resize(num_cells);
+        }
+    } else {
+        // Call reserve() to allocate memory without initializing the contents.
+        // This reduce the time to allocate the buffer and reduces the
+        // resident memory footprint of the buffer.
+        data_.reserve(num_bytes);
+        if (is_var_) {
+            offsets_.reserve(num_cells + 1);  // extra offset for arrow
+        }
+        if (is_nullable_) {
+            validity_.reserve(num_cells);
+        }
     }
 }
 

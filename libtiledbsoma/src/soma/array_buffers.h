@@ -26,8 +26,14 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 class ArrayBuffers {
+    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 28;
+    inline static const std::string CONFIG_KEY_USE_MEMORY_POOL = "soma.read.use_memory_pool";
+    inline static const std::string CONFIG_KEY_MEMORY_BUDGET = "soma.read.memory_budget";
+    inline static const std::string CONFIG_KEY_VAR_SIZED_FACTOR = "soma.read.var_size_factor";
+
    public:
     ArrayBuffers() = default;
+    ArrayBuffers(const std::vector<std::string>& names, const tiledb::Array& array);
     ArrayBuffers(const ArrayBuffers&) = default;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
@@ -76,6 +82,13 @@ class ArrayBuffers {
     uint64_t num_rows() const {
         return buffers_.at(names_.front())->size();
     }
+
+    /**
+     * @brief Returns whether or not the experimental memory pool flag is enabled
+     * 
+     * @return bool memory pool feature flag status
+     */
+    static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
 
    private:
     // A vector of column names that maintains the order the columns were added
