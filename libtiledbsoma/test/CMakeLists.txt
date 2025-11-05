@@ -11,7 +11,12 @@ add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 # SOMA unit test
 ############################################################
 
-find_package(Catch_EP REQUIRED)
+# Find Catch2 - use vcpkg if available, otherwise ExternalProject
+if(DEFINED CMAKE_TOOLCHAIN_FILE)
+  find_package(Catch2 CONFIG REQUIRED)
+else()
+  find_package(Catch_EP REQUIRED)
+endif()
 
 add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>

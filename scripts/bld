@@ -103,6 +103,15 @@ mkdir -p build
 
 if [ -z ${TILEDBSOMA_COVERAGE+x} ]; then TILEDBSOMA_COVERAGE=""; fi
 
+# Set up vcpkg environment variables
+if [ -n "${VCPKG_ROOT:-}" ]; then
+  export CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+  # On macOS, detect and set architecture if not already set
+  if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
+    export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
+  fi
+fi
+
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts} --preset vcpkg
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma

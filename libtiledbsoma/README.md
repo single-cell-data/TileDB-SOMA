@@ -4,6 +4,7 @@
 
 - C++20 compiler
 - Python 3.9+
+- vcpkg (for dependency management)
 
 Run these commands to setup a fresh Ubuntu 22.04 instance (tested on x86 and Arm):
 
@@ -21,6 +22,30 @@ ______________________________________________________________________
 git clone https://github.com/single-cell-data/TileDB-SOMA.git
 cd TileDB-SOMA
 ```
+
+______________________________________________________________________
+
+## Set up vcpkg
+
+This project uses [vcpkg](https://github.com/microsoft/vcpkg) to manage C++ dependencies (spdlog, fmt, catch2). You have two options:
+
+### Option 1: Use an existing vcpkg installation
+
+Set the `VCPKG_ROOT` environment variable to point to your vcpkg installation:
+
+```bash
+export VCPKG_ROOT=/path/to/vcpkg
+```
+
+### Option 2: Let CMake fetch vcpkg automatically
+
+If you don't have vcpkg installed, CMake can automatically fetch it for you. Set the `TILEDBSOMA_FETCH_VCPKG` option when configuring:
+
+```bash
+cmake -DTILEDBSOMA_FETCH_VCPKG=ON -B build -S libtiledbsoma --preset vcpkg
+```
+
+> **Note** - The build script (`scripts/bld`) automatically detects and uses vcpkg if `VCPKG_ROOT` is set in your environment.
 
 ______________________________________________________________________
 
@@ -116,16 +141,37 @@ ______________________________________________________________________
 
 ## Notes
 
-A build system with `libfmt`, `libspdlog`, or `tiledb` installed may conflict with the required
-versions for `tiledbsoma`. Suggestion is for you to not install these, and to let this project's
-superbuild install compatiable versions for you.
+### Dependency Management
 
-Specifically, uninstall the `libfmt-dev` and `libspdlog-dev` packages (or perhaps named `spdlog` and `fmt`, depending
-on the OS). As well, uninstall the `tiledb` package if you have that separately installed.
+This project uses a **hybrid dependency management approach**:
 
-As a pro-tip: check the following is gone (and manually remove if necessary) `/usr/lib/*/cmake/spdlog/spdlogConfig.cmake`
+- **vcpkg** provides: `spdlog`, `fmt`, and `catch2` (defined in `vcpkg.json`)
+- **Superbuild** provides: `TileDB` (not available in vcpkg, built via ExternalProject)
 
-If you do have reason to have `fmt` and `spdlog` installed, the following is a known-good configuration on Ubuntu 22.04:
+This hybrid approach ensures:
+
+- Common C++ libraries come from vcpkg for consistency and easier version management
+- TileDB is built from source or downloaded as a prebuilt binary via the superbuild system
+
+### System Package Conflicts
+
+If you have system-installed versions of `libfmt`, `libspdlog`, or `tiledb`, they may conflict with the versions required by `tiledbsoma`. The build system prioritizes vcpkg-provided packages, but conflicts can still occur.
+
+**Recommendation**: Uninstall system packages for these dependencies and let the build system manage them:
+
+```bash
+# On Ubuntu/Debian
+sudo apt remove libfmt-dev libspdlog-dev  # or spdlog, fmt depending on OS
+sudo apt remove libtiledb-dev  # if installed
+```
+
+As a pro-tip: check the following is gone (and manually remove if necessary):
+
+```bash
+/usr/lib/*/cmake/spdlog/spdlogConfig.cmake
+```
+
+If you do have reason to have `fmt` and `spdlog` installed system-wide, the following is a known-good configuration on Ubuntu 22.04:
 
 ```
 $ dpkg -l | egrep "lib(spdlog|fmt)" | cut -c-80
