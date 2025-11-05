@@ -20,7 +20,7 @@ from tiledbsoma._soma_object import SOMAObject
 Printable = Union[io.TextIOWrapper, io.StringIO]
 printableStdout = cast("Printable", sys.stdout)
 
-_SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)  # type: ignore[type-arg]
+_SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)
 
 
 def get_experiment_shapes(

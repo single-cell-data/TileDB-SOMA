@@ -160,8 +160,9 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 }
 
 void SOMAGroup::close() {
-    if (group_->query_type() == TILEDB_WRITE)
+    if (cache_group_ != nullptr) {
         cache_group_->close();
+    }
     group_->close();
     metadata_.clear();
 }

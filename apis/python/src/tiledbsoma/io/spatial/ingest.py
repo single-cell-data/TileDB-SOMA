@@ -49,7 +49,7 @@ from tiledbsoma import (
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from tiledbsoma._exception import AlreadyExistsError, SOMAError
-from tiledbsoma._soma_object import AnySOMAObject
+from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._types import IngestMode
 from tiledbsoma.io import conversions
 from tiledbsoma.io._common import AdditionalMetadata
@@ -545,6 +545,7 @@ def from_visium(
                             tissue_uri,
                             image_paths,
                             image_channel_first=image_channel_first,
+                            coord_space=coord_space,
                             use_relative_uri=use_relative_uri,
                             **ingest_platform_ctx,
                         ) as tissue_image:
@@ -578,12 +579,9 @@ def from_visium(
                                     image_name,
                                     transform=ScaleTransform(("x", "y"), ("x", "y"), updated_scales),
                                 )
-                            tissue_image.coordinate_space = CoordinateSpace(
-                                (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels")),  # type: ignore[arg-type]
-                            )
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
-                with _create_or_open_collection(Collection[AnySOMAObject], obsl_uri, **ingest_ctx) as obsl:
+                with _create_or_open_collection(Collection[SOMAObject], obsl_uri, **ingest_ctx) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
                     # Write spot data and add to the scene.
@@ -606,7 +604,7 @@ def from_visium(
                         loc.coordinate_space = coord_space
 
                 varl_uri = _util.uri_joinpath(scene_uri, "varl")
-                with _create_or_open_collection(Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx) as varl:
+                with _create_or_open_collection(Collection[Collection[SOMAObject]], varl_uri, **ingest_ctx) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 
     logging.log_io(
@@ -898,6 +896,7 @@ def _create_visium_tissue_images(
     image_paths: list[tuple[str, Path, float | None]],
     *,
     image_channel_first: bool,
+    coord_space: Sequence[str] | CoordinateSpace = ("x", "y"),
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
@@ -932,6 +931,7 @@ def _create_visium_tissue_images(
             data_axis_order=data_axis_order,
             context=context,
             platform_config=platform_config,
+            coordinate_space=coord_space,
         )
 
     # Add additional metadata.
