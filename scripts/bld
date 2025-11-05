@@ -106,8 +106,12 @@ if [ -z ${TILEDBSOMA_COVERAGE+x} ]; then TILEDBSOMA_COVERAGE=""; fi
 # Set up vcpkg environment variables
 if [ -n "${VCPKG_ROOT:-}" ]; then
   export CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-  # On macOS, detect and set architecture if not already set
-  if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
+fi
+
+# On macOS, detect and set architecture if not already set (needed for vcpkg)
+if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
+  # Set architecture if either VCPKG_ROOT or CMAKE_TOOLCHAIN_FILE is set (vcpkg usage)
+  if [ -n "${VCPKG_ROOT:-}" ] || [ -n "${CMAKE_TOOLCHAIN_FILE:-}" ]; then
     export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
   fi
 fi

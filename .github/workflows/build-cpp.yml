@@ -27,6 +27,14 @@ jobs:
         run: |
           ./vcpkg/bootstrap-vcpkg.sh
           echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+          
+      - name: Set macOS architecture
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          # Detect architecture (arm64 for Apple Silicon, x86_64 for Intel)
+          ARCH=$(uname -m)
+          echo "CMAKE_OSX_ARCHITECTURES=$ARCH" >> $GITHUB_ENV
+          echo "Set CMAKE_OSX_ARCHITECTURES=$ARCH"
 
       # --- Conditional ASAN Triplet ---
       - name: Set ASAN Triplet for OS
