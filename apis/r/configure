@@ -17,11 +17,18 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
         pkglibs=`pkg-config --libs tiledb tiledbsoma`
+        
+        ## Extract library paths for rpath
+        libdirs=`pkg-config --libs-only-L tiledb tiledbsoma | sed 's/-L//g'`
+        rpath=""
+        for libdir in $libdirs; do
+            rpath="$rpath -Wl,-rpath,$libdir"
+        done
 
-        ## substitute them in (leaving @tiledb_rpath@ and @cxx20_macos@ alone for now)
+        ## substitute them in
         sed -e "s|@tiledb_include@|$pkgcflags |" \
             -e "s|@tiledb_libs@|$pkglibs|" \
-            -e "s|@tiledb_rpath@||" \
+            -e "s|@tiledb_rpath@|$rpath|" \
             -e "s|@cxx20_macos@||" \
             src/Makevars.in > src/Makevars
 
