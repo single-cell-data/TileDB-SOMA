@@ -48,10 +48,10 @@ struct ArrowBuffer {
     ArrowBuffer(ColumnBuffer& buffer, bool large_offsets = true);
     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::vector<std::byte> data_;
-    std::vector<int64_t> large_offsets_;
-    std::vector<int32_t> small_offsets_;
-    std::vector<std::byte> validity_;
+    std::unique_ptr<std::byte[]> data_;
+    std::unique_ptr<int64_t[]> large_offsets_;
+    std::unique_ptr<int32_t[]> small_offsets_;
+    std::unique_ptr<std::byte[]> validity_;
 
     size_t length;
     std::string name;
