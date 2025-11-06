@@ -1,0 +1,7 @@
+{
+  "dependencies": [
+    "spdlog",
+    "fmt",
+    "catch2"
+  ]
+}
