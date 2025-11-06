@@ -11,6 +11,7 @@ on:
       - "apis/python/**"
       - "!**.md"
       - '.github/workflows/python-remote-storage.yml'
+      - ".github/workflows/build-cpp.yml" # <-- The only build file
   workflow_dispatch:
 
 env:
@@ -19,13 +20,24 @@ env:
   TILEDB_REST_UNITTEST_TOKEN: ${{ secrets.TILEDB_REST_UNITTEST_TOKEN}}
 
 jobs:
+  build-cpp-release:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    uses: ./.github/workflows/build-cpp.yml 
+    with:
+      os: ${{ matrix.os }}
+      build_type: 'release'
+
   ci:
+    needs: build-cpp-release
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: linux
-            os: ubuntu-24.04
+            os: ubuntu-latest
             python_version: 3.9 # Should match TileDB-Cloud version
             cc: gcc-13
             cxx: g++-13
@@ -39,7 +51,7 @@ jobs:
         run: echo "matrix.os:" ${{ matrix.os }}
 
       - name: Linux CPU info
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: cat /proc/cpuinfo
 
       - name: Set up Python ${{ matrix.python_version }}
@@ -54,6 +66,11 @@ jobs:
         with:
           fetch-depth: 0  # ensure we get all tags to inform package version determination
 
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-build-release-${{ matrix.os }}
+      
       - name: Log pip dependencies
         run: pip list
 

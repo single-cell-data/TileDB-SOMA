@@ -21,11 +21,15 @@ jobs:
   catch2:
     runs-on: ${{ inputs.os }}
     steps:
-      - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-build-release-${{ inputs.os }}
 
-      - name: Build libtiledbsoma
-        run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --no-tiledb-deprecated=true --werror=true
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
 
       - name: Run C++ tests
         run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
@@ -43,29 +47,15 @@ jobs:
     if: ${{ inputs.run_asan }}
     runs-on: ${{ inputs.os }}
     steps:
-      - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
 
-      - name: Install pre-built libtiledb
-        run: |
-          mkdir -p external
-            # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.1/tiledb-linux-x86_64-2.29.1-9a6284d.tar.gz
-          tar -C external -xzf tiledb-*.tar.gz
-          ls external/lib/
+      - uses: actions/checkout@v4
+      - name: Download C++ ASAN build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-build-asan-${{ inputs.os }}
 
-      - name: Build and install libtiledbsoma
-        run: |
-          cmake -S libtiledbsoma -B build \
-            -D CMAKE_BUILD_TYPE=ASAN \
-            -D CMAKE_PREFIX_PATH=$(pwd)/external/ \
-            -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
-            -D OVERRIDE_INSTALL_PREFIX=OFF \
-            -D DOWNLOAD_TILEDB_PREBUILT=OFF \
-            -D TILEDB_REMOVE_DEPRECATIONS=ON \
-            -D FORCE_BUILD_TILEDB=OFF
-          cmake --build build -j 2
-          ls external/lib/
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
 
       - name: Run C++ unittests
         run: ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
