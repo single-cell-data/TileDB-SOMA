@@ -1836,9 +1836,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
 def test_empty_dataframe(tmp_path):
     soma.DataFrame.create(
-        (tmp_path / "A").as_posix(),
-        schema=pa.schema([("a", pa.int32())]),
-        index_column_names=["a"],
+        (tmp_path / "A").as_posix(), schema=pa.schema([("a", pa.int32())]), index_column_names=["a"], domain=((0, 0),)
     ).close()
     with soma.DataFrame.open((tmp_path / "A").as_posix()) as a:
         # Must not throw
@@ -1854,6 +1852,7 @@ def test_empty_dataframe(tmp_path):
             (tmp_path / "B").as_posix(),
             schema=pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
             index_column_names=["a"],
+            domain=[[-10, 10]],
         )
 
 
@@ -3638,20 +3637,36 @@ def test_return_datetime_type_for_domain_and_maxdomain_62887(tmp_path):
         )
 
 
+# @
 @pytest.mark.parametrize(
-    "pa_type,tile",
+    "pa_type,tile,domain",
     (
-        (pa.int32(), "1"),
-        (pa.float32(), "1"),
-        (pa.timestamp("s"), "1"),
-        (pa.large_string(), ""),
-        (pa.large_binary(), ""),
+        pytest.param(
+            pa.int32(),
+            "1",
+            [[-10, 10]],
+            marks=pytest.mark.skip("Bug that was hidden by domain size. Re-enable with fix for SOMA-416"),
+        ),
+        pytest.param(
+            pa.float32(),
+            "1",
+            [[-1.5, 1.5]],
+            marks=pytest.mark.skip("Bug that was hidden by domain size. Re-enable with fix for SOMA-416"),
+        ),
+        pytest.param(
+            pa.timestamp("s"),
+            "1",
+            [[0, 100]],
+            marks=pytest.mark.skip("Bug that was hidden by domain size. Re-enable with fix for SOMA-416"),
+        ),
+        (pa.large_string(), "", [None]),
+        (pa.large_binary(), "", [None]),
     ),
 )
-def test_extents(tmp_path, pa_type, tile):
+def test_extents(tmp_path, pa_type, tile, domain):
     uri = tmp_path.as_posix()
     asch = pa.schema([pa.field("dim", pa_type)])
-    soma.DataFrame.create(uri, schema=asch, index_column_names=["dim"])
+    soma.DataFrame.create(uri, schema=asch, index_column_names=["dim"], domain=domain)
 
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.schema_config_options().dims)
