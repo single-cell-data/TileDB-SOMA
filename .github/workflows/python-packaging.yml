@@ -94,7 +94,7 @@ jobs:
         run: |
           set -e pipefail
           brew update
-          brew install automake llvm
+          brew install automake
 
       - name: "Setup for arm builds"
         # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
