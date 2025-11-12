@@ -168,14 +168,25 @@ def test_fuzz_SparseNDArray_create(
 ) -> None:
     try:
         fname = (tmp_path / uri).as_posix()
-        A = soma.SparseNDArray.create(
-            uri=fname,
-            type=type,
-            shape=shape,
-            platform_config=platform_config,
-            context=context,
-            tiledb_timestamp=tiledb_timestamp,
-        )
+        if None in shape:
+            with pytest.deprecated_call():
+                A = soma.SparseNDArray.create(
+                    uri=fname,
+                    type=type,
+                    shape=shape,
+                    platform_config=platform_config,
+                    context=context,
+                    tiledb_timestamp=tiledb_timestamp,
+                )
+        else:
+            A = soma.SparseNDArray.create(
+                uri=fname,
+                type=type,
+                shape=shape,
+                platform_config=platform_config,
+                context=context,
+                tiledb_timestamp=tiledb_timestamp,
+            )
         A.close()
 
         with soma.open(fname, context=context) as A:
@@ -194,17 +205,32 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
 
     @initialize(type=ndarray_datatype(), shape=sparse_array_shape(allow_none=False))
     def setup(self, type: pa.DataType, shape: tuple[int | None, ...]) -> None:
-        super().setup(
-            type,
-            shape,
-            soma.SparseNDArray.create(
-                self.uri,
-                type=type,
-                shape=shape,
-                context=self.context,
-                tiledb_timestamp=None,  # no time-travel for now
-            ),
-        )
+        if None in shape:
+            with pytest.deprecated_call():
+                super().setup(
+                    type,
+                    shape,
+                    soma.SparseNDArray.create(
+                        self.uri,
+                        type=type,
+                        shape=shape,
+                        context=self.context,
+                        tiledb_timestamp=None,  # no time-travel for now
+                    ),
+                )
+        else:
+            super().setup(
+                type,
+                shape,
+                soma.SparseNDArray.create(
+                    self.uri,
+                    type=type,
+                    shape=shape,
+                    context=self.context,
+                    tiledb_timestamp=None,  # no time-travel for now
+                ),
+            )
+
         self.data_ledger = Ledger[ArrowTableLedgerEntry](
             initial_entry=ArrowTableLedgerEntry(
                 data=self.schema.empty_table(),

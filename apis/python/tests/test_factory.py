@@ -23,6 +23,7 @@ def tiledb_object_uri(tmp_path, metadata_typename, encoding_version, soma_type):
         kwargs["shape"] = (100,)
     elif issubclass(soma_type, soma.DataFrame):
         kwargs["schema"] = pa.schema([("rows", pa.int64()), ("a", pa.int32()), ("b", pa.float32())])
+        kwargs["domain"] = ((0, 100),)
 
     soma_type.create(object_uri, tiledb_timestamp=1, **kwargs).close()
 
