@@ -124,7 +124,7 @@ def test_point_cloud_coordinate_space(tmp_path):
 
     asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
-    with soma.PointCloudDataFrame.create(uri, schema=asch) as ptc:
+    with soma.PointCloudDataFrame.create(uri, schema=asch, domain=((-10, 10), (-10, 10), (0, 1000))) as ptc:
         assert len(ptc.coordinate_space) == 2
         assert ptc.coordinate_space.axis_names == ("x", "y")
         assert ptc.coordinate_space.axes == (soma.Axis(name="x"), soma.Axis(name="y"))

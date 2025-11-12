@@ -224,7 +224,9 @@ def test_experiment_obs_type_constraint(tmp_path):
         se["obs"] = soma.DenseNDArray.create((tmp_path / "C").as_uri(), type=pa.float32(), shape=(10,))
     with pytest.raises(TypeError):
         se["obs"] = soma.Measurement.create((tmp_path / "D").as_uri())
-    se["obs"] = soma.DataFrame.create((tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())]))
+    se["obs"] = soma.DataFrame.create(
+        (tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())]), domain=((0, 100),)
+    )
 
 
 def test_experiment_ms_type_constraint(tmp_path):
@@ -238,10 +240,13 @@ def test_experiment_ms_type_constraint(tmp_path):
     with pytest.raises(TypeError):
         se["ms"] = soma.Measurement.create((tmp_path / "D").as_uri())
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame.create((tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())]))
+        se["ms"] = soma.DataFrame.create(
+            (tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())]), domain=((0, 100),)
+        )
     with pytest.raises(TypeError):
         se["ms"] = soma.DataFrame.create(
             (tmp_path / "F").as_uri(),
             schema=pa.schema([("A", pa.int32())]),
             index_column_names=["A"],
+            domain=((0, 100),),
         )

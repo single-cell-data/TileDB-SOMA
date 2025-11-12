@@ -112,9 +112,7 @@ def test_dataframe_unicode_value_filter(sample_dataframe_path):
 def test_dataframe_unicode_index(tmp_path, sample_arrow_table):
     """Verify round-trip of unicode in DataFrame index columns"""
     with soma.DataFrame.create(
-        tmp_path.as_posix(),
-        schema=sample_arrow_table.schema,
-        index_column_names=["unicode"],
+        tmp_path.as_posix(), schema=sample_arrow_table.schema, index_column_names=["unicode"], domain=(None,)
     ) as sdf:
         sdf.write(sample_arrow_table)
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:

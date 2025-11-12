@@ -54,7 +54,7 @@ def _make_object(name, uri):
             "string": ["apple", "ball", "cat", "dog", "egg"],
         }
         arrow_df = pa.Table.from_pydict(pydict)
-        return (soma.DataFrame, soma.DataFrame.create(uri, schema=arrow_df.schema))
+        return (soma.DataFrame, soma.DataFrame.create(uri, schema=arrow_df.schema, domain=((0, 100),)))
 
     if name == "sparsendarray":
         return (

@@ -40,6 +40,7 @@ def soma_object(request, tmp_path):
             uri,
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
+            domain=[[0, 10]],
         )
 
     elif class_name == "DenseNDArray":

@@ -123,7 +123,10 @@ anndata = "ad"
 scanpy = "sc"
 
 [tool.pytest.ini_options]
-filterwarnings = ["ignore:Support for spatial types is experimental"]
+filterwarnings = [
+    "ignore:Support for spatial types is experimental",
+    "ignore:.*this looks like a string-form forward reference imported from another module.*"
+]
 markers = [
     "slow: mark test as slow",
     "spatialdata: test of SpatialData integration",

@@ -286,6 +286,7 @@ def test_scene_point_cloud(tmp_path):
                 transform=transform,
                 schema=asch,
                 coordinate_space=elem_coord_space,
+                domain=((0, 100), (0, 100), (0, 1000)),
             )
 
         # Set scene coordinate space.
@@ -305,6 +306,7 @@ def test_scene_point_cloud(tmp_path):
                 transform=bad_transform,
                 schema=asch,
                 coordinate_space=elem_coord_space,
+                domain=((0, 100), (0, 100), (0, 1000)),
             )
 
         # Mismatch in transform output axes and point cloud axes.
@@ -320,6 +322,7 @@ def test_scene_point_cloud(tmp_path):
                 transform=bad_transform,
                 schema=asch,
                 coordinate_space=elem_coord_space,
+                domain=((0, 100), (0, 100), (0, 1000)),
             )
 
         # Add the point cloud dataframe.
@@ -329,6 +332,7 @@ def test_scene_point_cloud(tmp_path):
             transform=transform,
             schema=asch,
             coordinate_space=elem_coord_space,
+            domain=((0, 100), (0, 100), (0, 1000)),
         )
 
         # Check the transform.
@@ -356,7 +360,9 @@ def test_scene_set_transform_to_point_cloud(tmp_path, coord_transform, transform
         asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
         coord_space = soma.CoordinateSpace([soma.Axis(name="x_scene"), soma.Axis(name="y_scene")])
 
-        scene.add_new_point_cloud_dataframe("ptc", subcollection="obsl", transform=None, schema=asch)
+        scene.add_new_point_cloud_dataframe(
+            "ptc", subcollection="obsl", transform=None, schema=asch, domain=((0, 100), (0, 100), (0, 1000))
+        )
 
         transform = coord_transform(
             input_axes=("x_scene", "y_scene"),
@@ -647,7 +653,9 @@ def test_scene_geometry_dataframe(tmp_path, coord_transform, transform_kwargs):
         coord_space = soma.CoordinateSpace([soma.Axis(name="x_scene"), soma.Axis(name="y_scene")])
 
         # TODO replace with Scene.add_new_geometry_dataframe when implemented
-        scene["obsl"]["gdf"] = soma.GeometryDataFrame.create(gdf_uri, schema=asch)
+        scene["obsl"]["gdf"] = soma.GeometryDataFrame.create(
+            gdf_uri, schema=asch, domain=(((0, 100), (0, 100)), (0, 100))
+        )
 
         transform = coord_transform(
             input_axes=("x_scene", "y_scene"),
