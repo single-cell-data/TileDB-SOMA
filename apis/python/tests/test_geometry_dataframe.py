@@ -6,13 +6,12 @@ import shapely
 import tiledbsoma as soma
 
 
-@pytest.mark.parametrize("domain", [None, [[(-1000, 1000), (0, 100)], [0, 100]]])
-def test_geometry_domain(tmp_path, domain):
+def test_geometry_domain_deprecated(tmp_path):
     uri = tmp_path.as_uri()
 
     asch = pa.schema([("quality", pa.float32())])
 
-    with soma.GeometryDataFrame.create(uri, schema=asch, domain=domain) as geom:
+    with pytest.deprecated_call(), soma.GeometryDataFrame.create(uri, schema=asch, domain=None) as geom:
         soma_domain = geom.domain
 
         assert len(soma_domain) == 2
@@ -25,10 +24,33 @@ def test_geometry_domain(tmp_path, domain):
                 assert len(soma_domain[idx][1]) == 2
 
                 for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][0][axis_name] == (f64info.min if domain is None else domain[0][axis_idx][0])
+                    assert soma_domain[idx][0][axis_name] == f64info.min
 
                 for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][1][axis_name] == (f64info.max if domain is None else domain[0][axis_idx][1])
+                    assert soma_domain[idx][1][axis_name] == f64info.max
+
+
+def test_geometry_domain(tmp_path):
+    uri = tmp_path.as_uri()
+    domain = [[(-1000, 1000), (0, 100)], [0, 100]]
+
+    asch = pa.schema([("quality", pa.float32())])
+
+    with soma.GeometryDataFrame.create(uri, schema=asch, domain=domain) as geom:
+        soma_domain = geom.domain
+
+        assert len(soma_domain) == 2
+
+        for idx, name in enumerate(geom.index_column_names):
+            if name == "soma_geometry":
+                assert len(soma_domain[idx][0]) == 2
+                assert len(soma_domain[idx][1]) == 2
+
+                for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
+                    assert soma_domain[idx][0][axis_name] == domain[0][axis_idx][0]
+
+                for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
+                    assert soma_domain[idx][1][axis_name] == domain[0][axis_idx][1]
 
 
 def test_geometry_coordinate_space(tmp_path):
@@ -36,7 +58,7 @@ def test_geometry_coordinate_space(tmp_path):
 
     asch = pa.schema([("quality", pa.float32())])
 
-    with soma.GeometryDataFrame.create(uri, schema=asch) as geom:
+    with soma.GeometryDataFrame.create(uri, schema=asch, domain=[[(-100, 100), (-100, 100)], [0, 100]]) as geom:
         assert len(geom.coordinate_space) == 2
         assert geom.coordinate_space.axis_names == ("x", "y")
         assert geom.coordinate_space.axes == (soma.Axis(name="x"), soma.Axis(name="y"))
@@ -113,7 +135,9 @@ def test_geometry_basic_spatial_read(tmp_path):
 
 def test_delete_cells_not_implemented(tmp_path):
     uri = tmp_path.as_uri()
-    with soma.GeometryDataFrame.create(uri, schema=pa.schema([("quality", pa.float32())])) as geom:
+    with soma.GeometryDataFrame.create(
+        uri, schema=pa.schema([("quality", pa.float32())]), domain=[[(0, 100), (0, 100)], [0, 10]]
+    ) as geom:
         geom.close()
 
     with soma.GeometryDataFrame.open(uri, mode="d") as geom:
