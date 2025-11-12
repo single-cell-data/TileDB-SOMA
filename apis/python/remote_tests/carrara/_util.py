@@ -43,3 +43,20 @@ def carrara_cleanup_asset(url: str) -> str:
         yield url
     finally:
         tiledb.client.assets.delete_asset(path, teamspace=teamspace, delete_storage=True)
+
+
+def s3_from_tiledb_uri(tiledb_uri: str) -> str:
+    """Given a tiledb URI, return the object's S3 URL.
+
+    This relies on the teamspace bucket being owned by the test user (see notes in conftest.py)"""
+
+    import tiledb.client
+
+    assert tiledb_uri.startswith("tiledb://")
+
+    _, teamspace, path = parse_tiledb_uri(tiledb_uri)
+    asset_info = tiledb.client.assets.get_asset(path, teamspace=teamspace)
+    s3_url = asset_info.uri
+    assert s3_url.startswith("s3://")
+
+    return s3_url

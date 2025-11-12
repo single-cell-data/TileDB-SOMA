@@ -12,8 +12,8 @@ import scipy.sparse as sp
 import tiledbsoma as soma
 import tiledb
 
-# Base Carrara URI used for all tests, AND its corresponding S3 location
-# in the teamspace bucket.
+# Base Carrara URI used for all tests. NB: the teamspace must be owned by the
+# test user, allowing access to the S3 path (using tiledb.client API).
 #
 PROFILE_NAME = os.getenv("CARRARA_TEST_PROFILE") or "qa"
 WORKSPACE_NAME = os.getenv("CARRARA_TEST_WORKSPACE") or "TileDB-Inc."

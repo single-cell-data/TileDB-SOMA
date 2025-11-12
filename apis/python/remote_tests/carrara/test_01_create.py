@@ -13,6 +13,7 @@ import pytest
 import tiledbsoma as soma
 import tiledb
 
+from ._util import s3_from_tiledb_uri
 from .conftest import BASE_URI
 
 
@@ -33,6 +34,12 @@ def test_dataframe_create(carrara_array_path: str, carrara_context: soma.SOMATil
     with soma.open(carrara_array_path) as A:
         assert tbl == A.read().concat()
 
+    with soma.open(s3_from_tiledb_uri(carrara_array_path)) as A:
+        assert A.soma_type == "SOMADataFrame"
+        assert A.domain == domain
+        assert A.schema == schema
+        assert tbl == A.read().concat()
+
 
 @pytest.mark.carrara
 def test_sparsendarray_create(carrara_array_path: str, carrara_context: soma.SOMATileDBContext) -> None:
@@ -44,12 +51,21 @@ def test_sparsendarray_create(carrara_array_path: str, carrara_context: soma.SOM
         assert A.shape == shape
         assert A.type == type
 
+    with soma.open(s3_from_tiledb_uri(carrara_array_path)) as A:
+        assert A.soma_type == "SOMASparseNDArray"
+        assert A.shape == shape
+        assert A.type == type
+
 
 @pytest.mark.parametrize("soma_cls", [soma.Collection, soma.Experiment, soma.Measurement])
 @pytest.mark.carrara
 def test_collection_create(soma_cls, carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     soma_cls.create(carrara_group_path, context=carrara_context).close()
     with soma.open(carrara_group_path, context=carrara_context) as C:
+        assert C.soma_type == soma_cls.soma_type
+        assert len(C) == 0
+
+    with soma.open(s3_from_tiledb_uri(carrara_group_path)) as C:
         assert C.soma_type == soma_cls.soma_type
         assert len(C) == 0
 
@@ -104,9 +120,22 @@ def test_collection_add_new(carrara_group_path: str, carrara_context: soma.SOMAT
         assert C["child7"].type == type_
         assert C["child7"].shape == shape
 
+    with tiledb.Group(carrara_group_path, ctx=carrara_context.tiledb_ctx) as G:
+        for chld in children:
+            assert G.is_relative(chld)
 
+    with soma.open(s3_from_tiledb_uri(carrara_group_path), context=carrara_context) as C:
+        assert set(C) == children
+
+    with soma.open(f"{s3_from_tiledb_uri(carrara_group_path)}/child5", context=carrara_context) as df:
+        assert df.soma_type == "SOMADataFrame"
+        assert df.schema == schema
+        assert df.domain == domain
+
+
+@pytest.mark.xfail(reason="Not yet working correctly on Carrara")
 @pytest.mark.carrara
-def test_collection_set(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_collection_setitem(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     type_ = pa.int8()
     shape = (1, 1, 1)
 
@@ -118,6 +147,9 @@ def test_collection_set(carrara_group_path: str, carrara_context: soma.SOMATileD
 
         M = soma.Measurement.create(f"{carrara_group_path}/measurement")
         C["measurement"] = M
+
+    # the underlying asset should always have the same path, regardless of member rename
+    assert soma.SparseNDArray.exists(f"{s3_from_tiledb_uri(carrara_group_path)}/sparse_ndarray")
 
     children = {"sparse_ndarray", "measurement"}
     with soma.open(carrara_group_path, context=carrara_context) as C:
@@ -131,6 +163,76 @@ def test_collection_set(carrara_group_path: str, carrara_context: soma.SOMATileD
         assert C["measurement"].soma_type == "SOMAMeasurement"
         assert len(C["measurement"]) == 0
 
+    with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
+        C["sparse_ndarray_newname"] = C["sparse_ndarray"]  # set is rename in Carrara
+
+    # the underlying asset should always have the same path, regardless of member rename
+    assert soma.SparseNDArray.exists(f"{s3_from_tiledb_uri(carrara_group_path)}/sparse_ndarray")
+
+    with soma.open(carrara_group_path, context=carrara_context) as C:
+        assert C["sparse_ndarray_newname"].uri == A.uri
+
+    # Creates fail because Carrara requires uniqueness on both name and path
+    with pytest.raises(soma.SOMAError):
+        _ = soma.SparseNDArray.create(f"{carrara_group_path}/sparse_ndarray", type=type_, shape=shape)  # uses A's path
+    with pytest.raises(soma.SOMAError):
+        _ = soma.SparseNDArray.create(
+            f"{carrara_group_path}/sparse_ndarray_newname", type=type_, shape=shape
+        )  # uses A's member name
+
+    # creating another object with the same path should fail
+    with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
+        with pytest.raises(soma.SOMAError):
+            # collide's with A's path name
+            _ = soma.SparseNDArray.create(f"{carrara_group_path}/sparse_ndarray", type=type_, shape=shape)
+
+        with pytest.raises(soma.SOMAError):
+            # collide's with A's member name
+            _ = soma.SparseNDArray.create(f"{carrara_group_path}/sparse_ndarray_newname", type=type_, shape=shape)
+
+
+@pytest.mark.carrara
+def test_abs_path_is_error(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+    soma.Collection.create(carrara_group_path, context=carrara_context).close()
+
+    with (
+        pytest.raises((tiledb.TileDBError, soma.SOMAError), match="URI does not start with tiledb://:"),
+        soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C,
+        soma.open(
+            "s3://cellxgene-census-public-us-west-2/cell-census/2024-07-01/soma/",
+            context=soma.SOMATileDBContext({"vfs.s3.region": "us-west-2"}),
+        ) as census,
+    ):
+        C.set("CZI_census", census, use_relative_uri=False)
+
+
+@pytest.mark.xfail(reason="Not yet working correctly on Carrara")
+@pytest.mark.carrara
+def test_collection_set(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+    type_ = pa.int8()
+    shape = (1, 1, 1)
+
+    soma.Collection.create(carrara_group_path, context=carrara_context).close()
+
+    with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
+        A = soma.SparseNDArray.create(f"{carrara_group_path}/sparse_ndarray_A", type=type_, shape=shape)
+        C.set("sparse_ndarray_newname", A, use_relative_uri=True)  # add member is rename in Carrara
+
+    with soma.Collection.open(carrara_group_path, mode="r", context=carrara_context) as C:
+        assert "sparse_ndarray_newname" in C
+        assert C["sparse_ndarray_newname"].soma_type == "SOMASparseNDArray"
+        assert C["sparse_ndarray_newname"].uri == A.uri
+
+    with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
+        with pytest.raises(Exception):
+            # same array with two names not allowed in Carrara
+            C.set("another_name", A)
+
+        B = soma.SparseNDArray.create(f"{carrara_group_path}/sparse_ndarray_A", type=type_, shape=shape)
+        with pytest.raises(Exception):
+            # absolute URLs are not allowed in Carrara
+            C.set("sparse_array_B", B, use_relative_uri=False)
+
 
 @pytest.mark.carrara
 def test_storage_path_generates_error(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
@@ -142,12 +244,15 @@ def test_storage_path_generates_error(carrara_group_path: str, carrara_context: 
         )
 
 
-NAME_REASON = "CLOUD-2323: Carrara names must contain only unaccented alphanumeric character, '.', '-', or '_'"
+URI_REASON = "CLOUD-2323: Carrara URIs must contain only unaccented alphanumeric character, '.', '-', or '_'"
+NAME_REASON = (
+    "CLOUD-2323: Carrara Group member names must contain only unaccented alphanumeric character, '.', '-', or '_'"
+)
 
 
 class TestPathEncoding:
     """
-    Carrara is currently very restritive in legal path segments and group member names:
+    Carrara is currently very restrictive in legal path segments and group member names:
 
         > name must begin with an unaccented alphanumeric character, '.', '-', or '_'
 
@@ -155,6 +260,52 @@ class TestPathEncoding:
     most object stores and file systems.
 
     Add tests, but skip them for now.
+    """
+
+    @pytest.fixture(scope="class", autouse=True)
+    def a_group(self, carrara_context: soma.SOMATileDBContext) -> Generator[soma.SOMACollection, None, None, None]:
+        path = f"{BASE_URI}/{uuid4()}"
+
+        soma.Collection.create(path, context=carrara_context).close()
+        yield path
+
+        try:
+            with tiledb.Group(path, mode="m") as G:
+                G.delete(recursive=True)
+        except tiledb.TileDBError:
+            pass
+
+    @pytest.mark.parametrize(
+        "key,idx",
+        [
+            ("hello", 0),
+            pytest.param("Γειά σου", 1, marks=pytest.mark.skip(reason=URI_REASON)),  # noqa RUF001
+            pytest.param("안녕하세요", 2, marks=pytest.mark.skip(reason=URI_REASON)),
+            ("h-e-l-l-o", 3),
+            ("hell.o", 4),
+            pytest.param("!hello", 5, marks=pytest.mark.skip(reason=URI_REASON)),
+            pytest.param("[hello]", 6, marks=pytest.mark.skip(reason=URI_REASON)),
+            pytest.param("hel//lo", 7, marks=pytest.mark.skip(reason=URI_REASON)),
+            pytest.param("hels3://bkt/lo", 8, marks=pytest.mark.skip(reason=URI_REASON)),
+            ("_", 9),
+            ("-", 10),
+            (".test", 11),
+        ],
+    )
+    @pytest.mark.carrara
+    def test_path_encoding(
+        self, key: str, idx: int, a_group: soma.SOMACollection, carrara_context: soma.SOMATileDBContext
+    ) -> None:
+        with soma.Collection.open(a_group, mode="w", context=carrara_context) as C:
+            C.add_new_sparse_ndarray(key, type=pa.int16(), shape=(11, 3, idx + 1))
+
+        with soma.open(a_group, context=carrara_context) as C:
+            assert C[key].shape == (11, 3, idx + 1), f"Mismatch on key={key}"
+
+
+class TestMemberNameEncoding:
+    """
+    Verify we can use non-ASCII member names.
     """
 
     @pytest.fixture(scope="class", autouse=True)
@@ -185,21 +336,29 @@ class TestPathEncoding:
             ("_", 9),
             ("-", 10),
             (".test", 11),
+            pytest.param("test!", 12, marks=pytest.mark.skip(reason=NAME_REASON)),
+            pytest.param("test[1]", 13, marks=pytest.mark.skip(reason=NAME_REASON)),
+            pytest.param("test(2)", 14, marks=pytest.mark.skip(reason=NAME_REASON)),
         ],
     )
     @pytest.mark.carrara
-    def test_path_encoding(
+    def test_member_name_encoding(
         self, key: str, idx: int, a_group: soma.SOMACollection, carrara_context: soma.SOMATileDBContext
     ) -> None:
         with soma.Collection.open(a_group, mode="w", context=carrara_context) as C:
-            C.add_new_sparse_ndarray(key, type=pa.int16(), shape=(11, 3, idx + 1))
+            A = soma.SparseNDArray.create(f"{a_group}/array_{idx}", type=pa.int16(), shape=(11, 3, idx + 1))
+
+        with soma.Collection.open(a_group, mode="w", context=carrara_context) as C:
+            C[key] = A
 
         with soma.open(a_group, context=carrara_context) as C:
+            assert key in C
             assert C[key].shape == (11, 3, idx + 1), f"Mismatch on key={key}"
 
 
 @pytest.mark.xfail(reason="CLOUD-2332")
-def test_name_noteq_path(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+@pytest.mark.carrara
+def test_name_not_eq_path(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     """Carrara group member name must be EQ to the final path segment. This restriction
     is unique to Carrara -- on all other storage subsystems, the URI and the Collection
     member name are independent.
