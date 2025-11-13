@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core>=0.10.0",
     "pybind11[global]>=2.10.0",
-    "cmake>=3.21,<4",  # CMake 4 builds are broken on ARM Linux: https://github.com/single-cell-data/TileDB-SOMA/issues/3890
+    # Note: cmake is injected by scikit-build-core, don't include it here
     "setuptools>=70.1",  # Needed for wheel metadata
     "setuptools-scm>=8.0.0",  # For dynamic version management
 ]
@@ -62,7 +62,8 @@ all = {file = ["requirements_dev.txt", "requirements_spatial.txt"]}
 build-dir = "build"
 
 [tool.scikit-build.cmake]
-minimum-version = "3.21"
+# CMake version requirement (use version instead of minimum-version for scikit-build-core >= 0.8)
+version = ">=3.21,<4"  # CMake 4 builds are broken on ARM Linux: https://github.com/single-cell-data/TileDB-SOMA/issues/3890
 
 [tool.scikit-build.cmake.define]
 # CMake build type - Release for production builds
@@ -132,9 +133,11 @@ before-all = [
 # Configure setuptools_scm to work with the project structure
 # The version will be derived from git tags automatically
 # Root directory is the repository root (not apis/python)
+# This allows setuptools_scm to find git tags from the repository root
 root = "../.."
 # Write version to a file for CMake to read and for runtime access
-write_to = "src/tiledbsoma/_version.py"
+# When root is set, write_to is relative to the root (repository root)
+write_to = "apis/python/src/tiledbsoma/_version.py"
 # Use git to find version (default behavior)
 # This will work with tags like "1.0.0", "v1.0.0", etc.
 fallback_version = "0.0.0+unknown"
