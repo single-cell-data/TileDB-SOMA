@@ -115,51 +115,51 @@ std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view
     }
 }
 
-ArrowBuffer::ArrowBuffer(ColumnBuffer& buffer, bool large_offsets) {
-    if (buffer.is_var()) {
-        size_t data_byte_size = buffer.offsets()[buffer.size()];
+ArrowBuffer::ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets) {
+    if (buffer->is_var()) {
+        size_t data_byte_size = buffer->offsets()[buffer->size()];
         data_ = std::make_unique_for_overwrite<std::byte[]>(data_byte_size);
 
         if (large_offsets) {
-            size_t offset_byte_size = (buffer.size() + 1) * sizeof(int64_t);
-            large_offsets_ = std::make_unique_for_overwrite<int64_t[]>(buffer.size() + 1);
-            std::memcpy(large_offsets_.get(), buffer.offsets().data(), offset_byte_size);
+            size_t offset_byte_size = (buffer->size() + 1) * sizeof(int64_t);
+            large_offsets_ = std::make_unique_for_overwrite<int64_t[]>(buffer->size() + 1);
+            std::memcpy(large_offsets_.get(), buffer->offsets().data(), offset_byte_size);
         } else {
-            small_offsets_ = std::make_unique_for_overwrite<int32_t[]>(buffer.size() + 1);
-            auto offsets = buffer.offsets();
+            small_offsets_ = std::make_unique_for_overwrite<int32_t[]>(buffer->is_var() + 1);
+            auto offsets = buffer->offsets();
             for (size_t i = 0; i < offsets.size(); ++i) {
                 small_offsets_[i] = static_cast<int32_t>(offsets[i]);
             }
         }
 
-        std::memcpy(data_.get(), buffer.data<void*>().data(), data_byte_size);
+        std::memcpy(data_.get(), buffer->data().data(), data_byte_size);
     } else {
-        if (buffer.type() == TILEDB_BOOL) {
-            size_t data_byte_size = (buffer.size() + 7) / 8;
+        if (buffer->type() == TILEDB_BOOL) {
+            size_t data_byte_size = (buffer->size() + 7) / 8;
 
             data_ = std::make_unique_for_overwrite<std::byte[]>(data_byte_size);
-            buffer.data_to_bitmap();
+            buffer->data_to_bitmap();
 
-            std::memcpy(data_.get(), buffer.data<void*>().data(), data_byte_size);
+            std::memcpy(data_.get(), buffer->data().data(), data_byte_size);
         } else {
-            size_t data_byte_size = buffer.size() * tiledb::impl::type_size(buffer.type());
+            size_t data_byte_size = buffer->size() * tiledb::impl::type_size(buffer->type());
 
             data_ = std::make_unique_for_overwrite<std::byte[]>(data_byte_size);
 
-            std::memcpy(data_.get(), buffer.data<void*>().data(), data_byte_size);
+            std::memcpy(data_.get(), buffer->data().data(), data_byte_size);
         }
     }
 
-    if (buffer.is_nullable()) {
-        buffer.validity_to_bitmap();
-        auto bitmap_size = (buffer.size() + 7) / 8;
+    if (buffer->is_nullable()) {
+        buffer->validity_to_bitmap();
+        auto bitmap_size = (buffer->size() + 7) / 8;
 
         validity_ = std::make_unique_for_overwrite<std::byte[]>(bitmap_size);
-        std::memcpy(validity_.get(), buffer.validity().data(), bitmap_size);
+        std::memcpy(validity_.get(), buffer->validity().data(), bitmap_size);
     }
 
-    length = buffer.size();
-    name = buffer.name();
+    length = buffer->size();
+    name = buffer->name();
 }
 
 ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
@@ -718,7 +718,7 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 }
 
 std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
-    std::shared_ptr<ColumnBuffer> column, bool downcast_dict_of_large_var) {
+    std::shared_ptr<ReadColumnBuffer> column, bool downcast_dict_of_large_var) {
     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
     auto sch = schema.get();
@@ -769,7 +769,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     //   `arrow_buffer` is deleted, which decrements the the
     //   `column` use count. When the `column` use count reaches
     //   0, the ColumnBuffer data will be deleted.
-    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(*column));
+    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column.get()));
 
     LOG_TRACE(
         fmt::format(
