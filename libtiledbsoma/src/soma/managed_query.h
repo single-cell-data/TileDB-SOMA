@@ -240,7 +240,7 @@ class ManagedQuery {
         buffers_->emplace(
             std::string(name),
             WriteColumnBuffer::create(
-                array_, name, num_elems, std::move(data), std::move(offsets), std::move(validity)));
+                array_, name, num_elems, std::move(data), std::move(offsets), std::move(validity), copy_buffers));
         buffers_->at(std::string(name))->attach(*query_, *subarray_);
     }
 
