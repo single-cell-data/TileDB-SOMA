@@ -55,8 +55,22 @@ cmake --build build -j $nproc
 
 Re-build:
 
-```bash
-cmake --build build/libtiledbsoma -j $nproc
+______________________________________________________________________
+
+## Set up a Python Virtual Environment
+
+Create a python virtual environment and install the developer dependencies:
+
+```
+python -m venv test/tiledbsoma
+source test/tiledbsoma/bin/activate
+pip install -e apis/python[dev]
+```
+
+Alternatively, you can install the package with all optional dependencies:
+
+```
+pip install -e apis/python[all]
 ```
 
 Test:

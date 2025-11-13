@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
+
+# set(PYBIND11_FINDPYTHON ON)
+
+
 project(tiledbsoma-python LANGUAGES CXX)
 
 # Set C++ standard
@@ -6,10 +10,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find pybind11
-find_package(pybind11 REQUIRED)
+# find_package(pybind11 REQUIRED)
 
 # Find Python
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+# find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 # Get version from setuptools_scm generated file or fallback
 # setuptools_scm writes version to src/tiledbsoma/_version.py if configured

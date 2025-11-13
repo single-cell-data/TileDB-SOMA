@@ -51,9 +51,48 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = {file = "requirements_dev.txt"}
-spatial-io = {file = "requirements_spatial.txt"}
-all = {file = ["requirements_dev.txt", "requirements_spatial.txt"]}
+# Development dependencies
+dev = [
+    "black",
+    "dask",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "sparse",
+    "typeguard==4.4.2",
+    "types-setuptools",
+    "more-itertools",
+    "hypothesis",
+    "deepdiff",
+]
+# Spatial I/O dependencies
+spatial-io = [
+    "geopandas",
+    "tifffile",
+    "pillow",
+    "spatialdata>=0.2.5",
+    "xarray",
+    "dask",
+]
+# All optional dependencies (dev + spatial-io)
+all = [
+    "black",
+    "dask",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "sparse",
+    "typeguard==4.4.2",
+    "types-setuptools",
+    "more-itertools",
+    "hypothesis",
+    "deepdiff",
+    "geopandas",
+    "tifffile",
+    "pillow",
+    "spatialdata>=0.2.5",
+    "xarray",
+]
 
 [tool.scikit-build]
 # CMake configuration
@@ -64,6 +103,8 @@ build-dir = "build"
 [tool.scikit-build.cmake]
 # CMake version requirement (use version instead of minimum-version for scikit-build-core >= 0.8)
 version = ">=3.21,<4"  # CMake 4 builds are broken on ARM Linux: https://github.com/single-cell-data/TileDB-SOMA/issues/3890
+# scikit-build-core automatically picks up CMAKE_TOOLCHAIN_FILE from environment
+# We set it in before-build hooks via setup_build_env.sh
 
 [tool.scikit-build.cmake.define]
 # CMake build type - Release for production builds
@@ -99,10 +140,18 @@ manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 
 # Install system dependencies and bootstrap vcpkg
+# Note: vcpkg is checked out inside the container since cibuildwheel only copies apis/python/
+# {project} is the temporary directory where cibuildwheel copies the package
 before-all = [
     "yum install -y git ninja-build perl-IPC-Cmd zip autoconf automake libtool pkg-config",
-    "bash {project}/apis/python/scripts/setup_build_env.sh",
+    "git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg",
+    "{project}/../vcpkg/bootstrap-vcpkg.sh",
 ]
+
+# Set up vcpkg environment before each build
+# This runs for each Python version and sets environment variables that persist to the build
+# We use eval to execute export commands from the script so they persist to the build step
+before-build = "export VCPKG_ROOT={project}/../vcpkg && {project}/apis/python/scripts/setup_build_env.sh"
 
 # Environment variables for vcpkg build
 environment = {VCPKG_FORCE_SYSTEM_BINARIES = "1"}
@@ -112,10 +161,13 @@ environment = {VCPKG_FORCE_SYSTEM_BINARIES = "1"}
 environment = {MACOSX_DEPLOYMENT_TARGET = "13.3"}
 
 # Install system dependencies and bootstrap vcpkg
+# Note: vcpkg is checked out inside the container since cibuildwheel only copies apis/python/
+# {project} is the temporary directory where cibuildwheel copies the package
 before-all = [
     "brew update || true",
     "brew install automake llvm ninja git || true",
-    "bash {project}/apis/python/scripts/setup_build_env.sh",
+    "git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg",
+    "{project}/../vcpkg/bootstrap-vcpkg.sh",
 ]
 
 [tool.cibuildwheel.windows]
@@ -136,7 +188,8 @@ before-all = [
 # This allows setuptools_scm to find git tags from the repository root
 root = "../.."
 # Write version to a file for CMake to read and for runtime access
-# When root is set, write_to is relative to the root (repository root)
+# When root is set, write_to is resolved relative to the root directory
+# So we need to specify the full path from the root
 write_to = "apis/python/src/tiledbsoma/_version.py"
 # Use git to find version (default behavior)
 # This will work with tags like "1.0.0", "v1.0.0", etc.

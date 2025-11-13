@@ -10,31 +10,39 @@ PYTHON_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${PYTHON_DIR}/../.." && pwd)"
 
 # Check if vcpkg is already set up
-if [ -n "${VCPKG_ROOT:-}" ]; then
-    echo "Using existing VCPKG_ROOT: ${VCPKG_ROOT}"
-    export CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-elif [ -n "${CMAKE_TOOLCHAIN_FILE:-}" ]; then
+if [ -n "${CMAKE_TOOLCHAIN_FILE:-}" ] && [ -f "${CMAKE_TOOLCHAIN_FILE}" ]; then
+    # CMAKE_TOOLCHAIN_FILE is already set and exists - use it
     echo "Using existing CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}"
     export VCPKG_ROOT="$(dirname "$(dirname "${CMAKE_TOOLCHAIN_FILE}")")"
+elif [ -n "${VCPKG_ROOT:-}" ] && [ -d "${VCPKG_ROOT}" ]; then
+    # VCPKG_ROOT is set and exists - use it
+    echo "Using existing VCPKG_ROOT: ${VCPKG_ROOT}"
+    export CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
 else
     # Try to find vcpkg in common locations
     if [ -d "${REPO_ROOT}/vcpkg" ]; then
         export VCPKG_ROOT="${REPO_ROOT}/vcpkg"
+    elif [ -d "${PYTHON_DIR}/../vcpkg" ]; then
+        # For cibuildwheel: vcpkg is cloned one level up from apis/python
+        export VCPKG_ROOT="${PYTHON_DIR}/../vcpkg"
     elif [ -d "${HOME}/vcpkg" ]; then
         export VCPKG_ROOT="${HOME}/vcpkg"
     else
         echo "Error: vcpkg not found. Please set VCPKG_ROOT or CMAKE_TOOLCHAIN_FILE environment variable."
+        echo "Searched locations:"
+        echo "  - ${REPO_ROOT}/vcpkg"
+        echo "  - ${PYTHON_DIR}/../vcpkg"
+        echo "  - ${HOME}/vcpkg"
         exit 1
     fi
     
     # Bootstrap vcpkg if needed
     if [ ! -f "${VCPKG_ROOT}/vcpkg" ] && [ ! -f "${VCPKG_ROOT}/vcpkg.exe" ]; then
         echo "Bootstrapping vcpkg..."
-        if [ "$(uname)" == "Darwin" ]; then
-            "${VCPKG_ROOT}/bootstrap-vcpkg.sh"
-        else
-            "${VCPKG_ROOT}/bootstrap-vcpkg.sh"
-        fi
+        "${VCPKG_ROOT}/bootstrap-vcpkg.sh" || {
+            echo "Error: Failed to bootstrap vcpkg"
+            exit 1
+        }
     fi
     
     export CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
@@ -65,6 +73,18 @@ fi
 # Set macOS architecture if on macOS
 if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
     export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
+fi
+
+# If -x flag is passed, output export commands instead of executing them
+# This allows the script to be sourced or eval'd to set environment variables
+if [ "${1:-}" = "-x" ]; then
+    echo "export VCPKG_ROOT=\"${VCPKG_ROOT}\""
+    echo "export CMAKE_TOOLCHAIN_FILE=\"${CMAKE_TOOLCHAIN_FILE}\""
+    echo "export VCPKG_TARGET_TRIPLET=\"${VCPKG_TARGET_TRIPLET}\""
+    if [ "$(uname)" == "Darwin" ] && [ -n "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
+        echo "export CMAKE_OSX_ARCHITECTURES=\"${CMAKE_OSX_ARCHITECTURES}\""
+    fi
+    exit 0
 fi
 
 echo "VCPKG_ROOT: ${VCPKG_ROOT}"
