@@ -74,13 +74,41 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
-          cache-dependency-path: ./apis/python/setup.py
+          cache-dependency-path: ./apis/python/pyproject.toml
+
+      - name: Set macOS architecture
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          ARCH=$(uname -m)
+          echo "CMAKE_OSX_ARCHITECTURES=$ARCH" >> $GITHUB_ENV
+          echo "Set CMAKE_OSX_ARCHITECTURES=$ARCH"
+
+      - name: Set vcpkg triplet
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            arch=$(uname -m)
+            if [ "$arch" == "aarch64" ]; then
+              echo "VCPKG_TARGET_TRIPLET=arm64-linux-release" >> $GITHUB_ENV
+            else
+              echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+            fi
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            arch=$(uname -m)
+            if [ "$arch" == "arm64" ]; then
+              echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
+            else
+              echo "VCPKG_TARGET_TRIPLET=x64-osx-release" >> $GITHUB_ENV
+            fi
+          fi
 
       - name: Install tiledbsoma
-        run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+        run: pip -v install -e apis/python[all] -C cmake.define.TILEDB_REMOVE_DEPRECATIONS=ON
         env:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
+          CMAKE_TOOLCHAIN_FILE: ${{ env.CMAKE_TOOLCHAIN_FILE }}
+          VCPKG_TARGET_TRIPLET: ${{ env.VCPKG_TARGET_TRIPLET }}
+          CMAKE_OSX_ARCHITECTURES: ${{ env.CMAKE_OSX_ARCHITECTURES || '' }}
 
       - name: Install dependencies
         run: pip install --prefer-binary pytest typeguard

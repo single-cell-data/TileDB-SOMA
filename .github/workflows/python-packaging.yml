@@ -25,12 +25,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip install --upgrade 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1' 'setuptools-scm>=8.0.0'
           pip list
 
       - name: Build sdist
         working-directory: apis/python
-        run: python setup.py sdist
+        run: python -m build --sdist
 
 
       - name: Upload sdist artifact to GitHub Actions storage
@@ -111,9 +111,38 @@ jobs:
           arch="${plat#*_}"
           echo "ARCH=$arch" >> $GITHUB_ENV
 
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Set vcpkg triplet and architecture
+        run: |
+          if [[ "${{ matrix.platform }}" == *"x86_64"* ]]; then
+            if [[ "${{ matrix.os }}" == *"macos"* ]]; then
+              echo "VCPKG_TARGET_TRIPLET=x64-osx-release" >> $GITHUB_ENV
+              echo "CMAKE_OSX_ARCHITECTURES=x86_64" >> $GITHUB_ENV
+            else
+              echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+            fi
+          elif [[ "${{ matrix.platform }}" == *"aarch64"* ]] || [[ "${{ matrix.platform }}" == *"arm64"* ]]; then
+            if [[ "${{ matrix.os }}" == *"macos"* ]]; then
+              echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
+              echo "CMAKE_OSX_ARCHITECTURES=arm64" >> $GITHUB_ENV
+            else
+              echo "VCPKG_TARGET_TRIPLET=arm64-linux-release" >> $GITHUB_ENV
+            fi
+          fi
+
       - name: Install dependencies
         run: |
-          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip install --upgrade 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1'
           pip list
 
       - name: Build wheels
@@ -129,7 +158,9 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CMAKE_OSX_ARCHITECTURES: ${{ env.arch || ''}}
+          CMAKE_TOOLCHAIN_FILE: ${{ env.CMAKE_TOOLCHAIN_FILE }}
+          VCPKG_TARGET_TRIPLET: ${{ env.VCPKG_TARGET_TRIPLET }}
+          CMAKE_OSX_ARCHITECTURES: ${{ env.CMAKE_OSX_ARCHITECTURES || '' }}
           MACOSX_DEPLOYMENT_TARGET: "13.3"
 
       - name: Check wheel name
