@@ -14,6 +14,7 @@
 #ifndef ARRAY_BUFFERS_H
 #define ARRAY_BUFFERS_H
 
+#include <concepts>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 #include <tiledb/tiledb>
@@ -44,7 +45,15 @@ class ArrayBuffers {
      * @param name Column name
      * @return std::shared_ptr<ColumnBuffer> Column buffer
      */
-    std::shared_ptr<ColumnBuffer> at(const std::string& name);
+    template <typename T = ColumnBuffer>
+        requires std::derived_from<T, ColumnBuffer>
+    std::shared_ptr<T> at(const std::string& name) {
+        if (!contains(name)) {
+            throw TileDBSOMAError("[ArrayBuffers] column '" + name + "' does not exist");
+        }
+
+        return std::dynamic_pointer_cast<T>(buffers_[name]);
+    }
 
     /**
      * @brief Return true if a buffer with the given name exists.
