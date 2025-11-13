@@ -65,14 +65,14 @@ TEST_CASE("ColumnBuffer: Create from array") {
     auto array = create_array(uri, ctx);
 
     {
-        auto buffers = ColumnBuffer::create(array, "d1");
+        auto buffers = VectorColumnBuffer::create(array, "d1");
         REQUIRE(buffers->name() == "d1");
         REQUIRE(buffers->is_var() == true);
         REQUIRE(buffers->is_nullable() == false);
     }
 
     {
-        auto buffers = ColumnBuffer::create(array, "a1");
+        auto buffers = VectorColumnBuffer::create(array, "a1");
         REQUIRE(buffers->name() == "a1");
         REQUIRE(buffers->is_var() == true);
         REQUIRE(buffers->is_nullable() == true);

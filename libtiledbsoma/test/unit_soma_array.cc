@@ -549,7 +549,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     std::memcpy((void*)d0_expected->buffers[1], &d0_data, sizeof(int64_t) * 8);
 
     auto a0_expected = arrow_array->children[1] = (ArrowArray*)malloc(sizeof(ArrowArray));
-    ;
+
     a0_expected->length = 8;
     a0_expected->null_count = 0;
     a0_expected->offset = 0;
