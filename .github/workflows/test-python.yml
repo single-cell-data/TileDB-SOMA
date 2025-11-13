@@ -67,7 +67,7 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
           cache: pip
-          cache-dependency-path: ./apis/python/setup.py
+          cache-dependency-path: ./apis/python/pyproject.toml
 
       - name: Install tiledbsoma
         # TILEDB_REMOVE_DEPRECATIONS is already set to ON in pyproject.toml

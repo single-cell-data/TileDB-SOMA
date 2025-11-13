@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1' 'setuptools-scm>=8.0.0'
+          pip install --upgrade 'build' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1' 'setuptools-scm>=8.0.0'
           pip list
 
       - name: Build sdist
@@ -153,15 +153,13 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
+          # Don't pass CMAKE_TOOLCHAIN_FILE from host - it will be set by setup_build_env.sh
+          # inside the container after vcpkg is bootstrapped
+          CIBW_ENVIRONMENT_LINUX: "VCPKG_FORCE_SYSTEM_BINARIES=1"
+          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=13.3"
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CMAKE_TOOLCHAIN_FILE: ${{ env.CMAKE_TOOLCHAIN_FILE }}
-          VCPKG_TARGET_TRIPLET: ${{ env.VCPKG_TARGET_TRIPLET }}
-          CMAKE_OSX_ARCHITECTURES: ${{ env.CMAKE_OSX_ARCHITECTURES || '' }}
-          MACOSX_DEPLOYMENT_TARGET: "13.3"
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl

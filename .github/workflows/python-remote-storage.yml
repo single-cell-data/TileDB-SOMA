@@ -59,7 +59,7 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
-          cache-dependency-path: ./apis/python/setup.py
+          cache-dependency-path: ./apis/python/pyproject.toml
 
       - name: Check out TileDB-SOMA
         uses: actions/checkout@v4

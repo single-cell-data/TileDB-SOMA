@@ -13,8 +13,8 @@ include src/tiledbsoma/*.h
 # Python package directory (includes all .py files and subdirectories)
 graft src/tiledbsoma
 
-# Requirements files
-include requirements_*.txt
+# Requirements files are now inlined in pyproject.toml
+# No need to include them separately
 
 # Exclude build artifacts and cache files
 prune src/tiledbsoma/__pycache__
