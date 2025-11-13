@@ -4,6 +4,8 @@
 
 ## Changed
 
+- Update TileDB core version to [2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2). ([#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309))
+
 ## Deprecated
 
 ## Removed
