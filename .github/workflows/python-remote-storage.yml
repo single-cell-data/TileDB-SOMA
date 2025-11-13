@@ -83,7 +83,8 @@ jobs:
         # run: pip install tiledbsoma==1.15.7
         #
         # From source:
-        run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+        # TILEDB_REMOVE_DEPRECATIONS is already set to ON in pyproject.toml
+        run: pip -v install -e apis/python[all]
         #
         env:
           CC: ${{ matrix.cc }}
