@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir -p external
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.1/tiledb-linux-x86_64-2.29.1-9a6284d.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-linux-x86_64-2.29.2-2cd33d3.tar.gz
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
 

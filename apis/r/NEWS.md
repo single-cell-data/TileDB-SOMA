@@ -1,3 +1,9 @@
+# tiledbsoma 2.1.1
+
+## Changed
+
+- Update TileDB core version to [2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2). ([#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309))
+
 # tiledbsoma 2.1.0
 
 This release adds support for ingestion of BPCells-backed `Seurat` objects in `write_soma()`, adds warnings for new deprecations, and updates the TileDB core version to 2.29.1.
