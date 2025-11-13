@@ -1,0 +1,67 @@
+# Open a SOMA Collection
+
+Factory function to open a [SOMA collection](SOMACollection.md) for
+reading (lifecycle: maturing).
+
+## Usage
+
+``` r
+SOMACollectionOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+)
+```
+
+## Arguments
+
+- uri:
+
+  URI for the TileDB object.
+
+- mode:
+
+  One of “`READ`” or “`WRITE`”.
+
+- platform_config:
+
+  Optional platform configuration.
+
+- tiledbsoma_ctx:
+
+  Optional SOMATileDBContext.
+
+- tiledb_timestamp:
+
+  Optional Datetime (POSIXct) for TileDB timestamp; defaults to the
+  current time. If not `NULL`, all members accessed through the
+  collection inherit the timestamp.
+
+## Value
+
+A [SOMA collection](SOMACollection.md) stored at `uri` opened in mode
+`mode`.
+
+## Examples
+
+``` r
+uri <- withr::local_tempfile(pattern = "soma-collection")
+
+(col <- SOMACollectionCreate(uri))
+#> <SOMACollection>
+#>   uri: /tmp/RtmpL4z3Qc/soma-collection28966f3cec27
+col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
+#> <SOMASparseNDArray>
+#>   uri: /tmp/RtmpL4z3Qc/soma-collection28966f3cec27/sparse
+#>   dimensions: soma_dim_0, soma_dim_1 
+#>   attributes: soma_data 
+col$close()
+
+(col <- SOMACollectionOpen(uri))
+#> <SOMACollection>
+#>   uri: /tmp/RtmpL4z3Qc/soma-collection28966f3cec27
+col$names()
+#> [1] "sparse"
+```

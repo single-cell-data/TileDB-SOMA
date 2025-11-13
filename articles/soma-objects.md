@@ -1,0 +1,902 @@
+# SOMA objects overview
+
+In this notebook, we’ll go through the various SOMA classes provided by
+the tiledbsoma package.
+
+``` r
+library(tiledbsoma)
+```
+
+## Example data
+
+Extract the bundled `SOMAExperiment` containing a subsetted version of
+the 10X genomics [PBMC
+dataset](https://satijalab.github.io/seurat-object/reference/pbmc_small.html)
+provided by `SeuratObject`. This will return a file path for the
+extracted dataset.
+
+``` r
+uri <- extract_dataset("soma-exp-pbmc-small")
+uri
+#> [1] "/tmp/RtmphYR7LJ/soma-exp-pbmc-small"
+```
+
+## `SOMAExperiment`
+
+The `SOMAExperiment` class represents the top-level container for
+experiments that include one or more measurements across set of
+observations (e.g., cells or biospecimens). It always contains at least
+two objects:
+
+1.  `obs`: A `SOMADataFrame` containing primary annotations on the
+    observations.
+2.  `ms`: A `SOMACollection` of the individual measurements (i.e.,
+    modalities).
+
+Open the `SOMAExperiment` using its file path and inspect the object:
+
+``` r
+experiment <- SOMAExperimentOpen(uri)
+experiment
+#> <SOMAExperiment>
+#>   uri: /tmp/RtmphYR7LJ/soma-exp-pbmc-small
+```
+
+Note that opening a `SOMAExperiment` (or any SOMA object) only returns a
+pointer to the object on disk. No data is actually read into memory
+until it’s requested. This is important as the full experiment may be
+too large to fit in memory.
+
+Each of the pre-defined fields within the `experiment` can be accessed
+using the `$` operator. For example, to access the `ms` field:
+
+``` r
+experiment$ms
+#> <SOMACollection>
+#>   uri: file:///tmp/RtmphYR7LJ/soma-exp-pbmc-small/ms
+```
+
+This returns the `SOMACollection` of measurements. We’ll take a closer
+look at this later.
+
+To access the `obs` field containing the observation annotations:
+
+``` r
+experiment$obs
+#> <SOMADataFrame>
+#>   uri: file:///tmp/RtmphYR7LJ/soma-exp-pbmc-small/obs
+#>   dimensions: soma_joinid 
+#>   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,...
+```
+
+## `SOMADataFrame`
+
+The `obs` field contains a `SOMADataFrame`, which is a multi-column
+table with a user-defined schema. The schema is expressed as an Arrow
+Schema, and defines the column names and value types.
+
+As an example, let’s inspect the schema of `obs`:
+
+``` r
+experiment$obs$schema()
+#> Schema
+#> soma_joinid: int64 not null
+#> orig.ident: dictionary<values=string, indices=int8>
+#> nCount_RNA: double
+#> nFeature_RNA: int32
+#> RNA_snn_res.0.8: dictionary<values=string, indices=int8>
+#> letter.idents: dictionary<values=string, indices=int8>
+#> groups: large_string
+#> RNA_snn_res.1: dictionary<values=string, indices=int8>
+#> obs_id: large_string
+```
+
+Note that `soma_joinid` is a field that exists in every `SOMADataFrame`
+and acts as a join key for other objects in the dataset.
+
+Again, when a SOMA object is accessed, only a pointer is returned and no
+data is read into memory. To load the data in memory, we call
+`read()$concat()`, which returns an [Arrow
+Table](https://arrow.apache.org/docs/r/reference/table.html) and is
+easily converted to a data frame by appending `$to_data_frame()`.
+
+``` r
+experiment$obs$read()$concat()
+#> Table
+#> 80 rows x 9 columns
+#> $soma_joinid <int64 not null>
+#> $orig.ident <dictionary<values=string, indices=int8>>
+#> $nCount_RNA <double>
+#> $nFeature_RNA <int32>
+#> $RNA_snn_res.0.8 <dictionary<values=string, indices=int8>>
+#> $letter.idents <dictionary<values=string, indices=int8>>
+#> $groups <large_string>
+#> $RNA_snn_res.1 <dictionary<values=string, indices=int8>>
+#> $obs_id <large_string>
+```
+
+The amount of data that can be read at once is determined by the
+`soma.init_buffer_bytes` configuration parameter, which, by default, is
+set to 16MB for each column. If the requested data is larger than this
+value an error will be thrown.
+
+If your system has more memory, you can increase this parameter to a
+larger value to read in more data at once. Alternatively, you can use
+the iterated reader, which retrieves data in chunks that are smaller
+than the `soma.init_buffer_bytes` parameter. The result of which is a
+list of Arrow Tables.
+
+``` r
+iterator <- experiment$obs$read()
+iterator$read_next()
+#> Table
+#> 80 rows x 9 columns
+#> $soma_joinid <int64 not null>
+#> $orig.ident <dictionary<values=string, indices=int8>>
+#> $nCount_RNA <double>
+#> $nFeature_RNA <int32>
+#> $RNA_snn_res.0.8 <dictionary<values=string, indices=int8>>
+#> $letter.idents <dictionary<values=string, indices=int8>>
+#> $groups <large_string>
+#> $RNA_snn_res.1 <dictionary<values=string, indices=int8>>
+#> $obs_id <large_string>
+```
+
+We can also select a subset of rows from the `SOMADataFrame` using the
+`coords` argument. This will retrieve only the required subset from disk
+to memory. In this example, we will select only the first 10 rows:
+
+*NOTE: The `coords` argument is 0-based.*
+
+``` r
+experiment$obs$read(coords = 0:9)$concat()
+#> Table
+#> 10 rows x 9 columns
+#> $soma_joinid <int64 not null>
+#> $orig.ident <dictionary<values=string, indices=int8>>
+#> $nCount_RNA <double>
+#> $nFeature_RNA <int32>
+#> $RNA_snn_res.0.8 <dictionary<values=string, indices=int8>>
+#> $letter.idents <dictionary<values=string, indices=int8>>
+#> $groups <large_string>
+#> $RNA_snn_res.1 <dictionary<values=string, indices=int8>>
+#> $obs_id <large_string>
+```
+
+As TileDB is a columnar format, we can also select a subset of the
+columns:
+
+``` r
+experiment$obs$read(0:9, column_names = c("obs_id", "nCount_RNA"))$concat()
+#> Table
+#> 10 rows x 2 columns
+#> $obs_id <large_string>
+#> $nCount_RNA <double>
+```
+
+Finally, we can use `value_filter` to retrieve a subset of rows that
+match a certain condition.
+
+``` r
+experiment$obs$read(value_filter = "nCount_RNA > 100")$concat()
+#> Table
+#> 62 rows x 9 columns
+#> $soma_joinid <int64 not null>
+#> $orig.ident <dictionary<values=string, indices=int8>>
+#> $nCount_RNA <double>
+#> $nFeature_RNA <int32>
+#> $RNA_snn_res.0.8 <dictionary<values=string, indices=int8>>
+#> $letter.idents <dictionary<values=string, indices=int8>>
+#> $groups <large_string>
+#> $RNA_snn_res.1 <dictionary<values=string, indices=int8>>
+#> $obs_id <large_string>
+```
+
+And of course, you can combine all of these arguments together to get at
+only the data you need.
+
+## `SOMACollection`
+
+A `SOMACollection` is a persistent container of named SOMA objects,
+stored as a mapping of string keys and SOMA object values. This is
+analogous to a named `list` in R.
+
+The `ms` member of a `SOMAExperiment` is implemented as a
+`SOMACollection`. Let’s take a look:
+
+``` r
+experiment$ms
+#> <SOMACollection>
+#>   uri: file:///tmp/RtmphYR7LJ/soma-exp-pbmc-small/ms
+```
+
+In this case, we have one member: `RNA`, which is a `SOMAMeasurement`. A
+specific measurement can be accessed by name with the
+[`get()`](https://rdrr.io/r/base/get.html) method:
+
+``` r
+experiment$ms$get("RNA")
+#> <SOMAMeasurement>
+#>   uri: file:///tmp/RtmphYR7LJ/soma-exp-pbmc-small/ms/RNA
+```
+
+## `SOMAMeasurement`
+
+A `SOMAMeasurement` is the unimodal container for a particular data type
+(in this case, RNA). It contains the following pre-defined fields:
+
+- `var`: A `SOMADataFrame` containing primary annotatinos on the
+  variables (i.e., features or genes).
+- `X`: A `SOMACollection` of 2D matrices containing the feature
+  measurements across the observations. Each matrix within `X` is
+  referred to as a layer.
+- `obsm`/`varm`: A `SOMACollection` of 2D matrices containing derived
+  results for the observations/features. Typically used to store
+  dimensionality reduction results.
+- `obsp`/`varp`: A `SOMACollection` of 2D pairwise matrices containing
+  derived results for the observations/features. Typically used to store
+  graphs or other pairwise relationships.
+
+## SOMASparseNDArray
+
+The matrix-like data structures contained within a `SOMAMeasurement`’s
+pre-defined fields are represented as `SOMASparseNDArray` objects.
+
+A `SOMASparseNDArray` is a sparse, N-dimensional array, with offset
+(zero-based) integer indexing on each dimension, and a user-defined
+schema, which includes:
+
+- the element type, expressed as an Arrow type, indicating the type of
+  data contained within the array, and
+- the shape of the array, i.e., the number of dimensions and the length
+  of each dimension.
+
+On disk, a sparse array encodes only the non-zero records. Elements that
+are not explicitly stored are assumed to be zeros.
+
+Let’s take a look at the `X` data matrices within the `RNA` measurement:
+
+``` r
+X <- experiment$ms$get("RNA")$X
+X
+#> <SOMACollection>
+#>   uri: file:///tmp/RtmphYR7LJ/soma-exp-pbmc-small/ms/RNA/X
+```
+
+This collection contains 3 layers corresponding to the raw, normalized,
+and scaled slots from the original Seurat object.
+
+Any of these `X` layers can be accessed using
+[`get()`](https://rdrr.io/r/base/get.html):
+
+``` r
+X_data <- X$get("data")
+X_data
+#> <SOMASparseNDArray>
+#>   uri: file:///tmp/RtmphYR7LJ/soma-exp-pbmc-small/ms/RNA/X/data
+#>   dimensions: soma_dim_0, soma_dim_1 
+#>   attributes: soma_data
+```
+
+This returns a `SOMASparseNDArray`. As we did before, we can inspect the
+array’s schema:
+
+``` r
+X_data$schema()
+#> Schema
+#> soma_dim_0: int64 not null
+#> soma_dim_1: int64 not null
+#> soma_data: double not null
+```
+
+We see there are two dimensions (`soma_dim_0` and `soma_dim_1`) and the
+`soma_data` attribute is of type `double`.
+
+Let’s look at the shape:
+
+``` r
+X_data$shape()
+#> integer64
+#> [1] 80  230
+```
+
+We can get the number of non-zero elements by calling `nnz()`:
+
+``` r
+X_data$nnz()
+#> [1] 4456
+```
+
+Let’s load the data as a sparse matrix into memory:
+
+*Note: We are reading the full matrix into memory and then subsetting it
+to the first 5 rows and 10 columns to truncate the output. This uses the
+zero-based underlying representation access but then accesses a
+one-based view as the sparse matrix functionality from package `Matrix`
+imposes this.*
+
+``` r
+X_data$read()$sparse_matrix()$concat()[1:5, 1:10]
+#> 5 x 10 sparse Matrix of class "dgTMatrix"
+#>                                                     
+#> [1,] . 4.968821 . .        . 4.968821 . . 6.062788 .
+#> [2,] . .        . 4.776153 . .        . . 6.714813 .
+#> [3,] . .        . .        . .        . . 7.143118 .
+#> [4,] . .        . .        . .        . . 6.932079 .
+#> [5,] . .        . 4.074201 . .        . . 5.161411 .
+```
+
+Similarly to `SOMADataFrame`s, `read()` method we can define coordinates
+to slice obtain a subset of the matrix from disk:
+
+``` r
+X_data$read(coords = list(soma_dim_0 = 0:4, soma_dim_1 = 0:9))$sparse_matrix()$concat()
+#> 80 x 230 sparse Matrix of class "dgTMatrix"
+#>                                                                                
+#>  [1,] . 4.968821 . .        . 4.968821 . . 6.062788 . . . . . . . . . . . . . .
+#>  [2,] . .        . 4.776153 . .        . . 6.714813 . . . . . . . . . . . . . .
+#>  [3,] . .        . .        . .        . . 7.143118 . . . . . . . . . . . . . .
+#>  [4,] . .        . .        . .        . . 6.932079 . . . . . . . . . . . . . .
+#>  [5,] . .        . 4.074201 . .        . . 5.161411 . . . . . . . . . . . . . .
+#>  [6,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#>  [7,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#>  [8,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#>  [9,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [10,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [11,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [12,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [13,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [14,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [15,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [16,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [17,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [18,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [19,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [20,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [21,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [22,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [23,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [24,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [25,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [26,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [27,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [28,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [29,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [30,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [31,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [32,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [33,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [34,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [35,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [36,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [37,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [38,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [39,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [40,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [41,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [42,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [43,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [44,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [45,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [46,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [47,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [48,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [49,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [50,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [51,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [52,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [53,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [54,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [55,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [56,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [57,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [58,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [59,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [60,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [61,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [62,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [63,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [64,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [65,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [66,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [67,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [68,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [69,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [70,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [71,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [72,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [73,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [74,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [75,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [76,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [77,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [78,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [79,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#> [80,] . .        . .        . .        . . .        . . . . . . . . . . . . . .
+#>                                                                                
+#>  [1,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [2,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [3,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [4,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [5,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [6,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [7,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [8,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [9,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [10,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [11,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [12,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [13,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [14,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [15,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [16,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [18,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [19,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [20,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [21,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [22,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [23,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [24,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [26,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [27,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [28,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [29,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [30,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [31,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [33,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [34,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [35,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [36,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [37,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [38,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [39,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [40,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [41,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [42,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [43,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [44,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [45,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [46,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [47,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [48,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [49,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [50,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [51,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [52,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [53,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [54,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [55,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [56,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [57,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [58,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [59,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [60,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [61,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [62,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [63,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [64,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [65,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [66,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [67,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [68,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [69,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [70,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [71,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [72,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [73,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [74,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [75,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [76,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [77,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [78,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [79,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [80,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>                                                                                
+#>  [1,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [2,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [3,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [4,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [5,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [6,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [7,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [8,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [9,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [10,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [11,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [12,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [13,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [14,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [15,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [16,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [18,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [19,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [20,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [21,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [22,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [23,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [24,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [26,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [27,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [28,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [29,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [30,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [31,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [33,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [34,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [35,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [36,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [37,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [38,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [39,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [40,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [41,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [42,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [43,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [44,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [45,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [46,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [47,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [48,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [49,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [50,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [51,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [52,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [53,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [54,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [55,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [56,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [57,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [58,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [59,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [60,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [61,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [62,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [63,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [64,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [65,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [66,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [67,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [68,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [69,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [70,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [71,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [72,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [73,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [74,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [75,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [76,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [77,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [78,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [79,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [80,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>                                                                                
+#>  [1,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [2,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [3,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [4,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [5,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [6,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [7,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [8,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [9,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [10,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [11,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [12,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [13,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [14,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [15,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [16,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [18,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [19,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [20,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [21,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [22,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [23,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [24,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [26,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [27,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [28,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [29,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [30,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [31,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [33,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [34,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [35,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [36,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [37,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [38,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [39,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [40,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [41,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [42,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [43,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [44,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [45,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [46,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [47,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [48,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [49,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [50,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [51,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [52,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [53,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [54,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [55,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [56,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [57,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [58,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [59,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [60,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [61,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [62,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [63,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [64,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [65,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [66,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [67,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [68,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [69,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [70,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [71,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [72,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [73,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [74,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [75,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [76,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [77,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [78,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [79,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [80,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>                                                                                
+#>  [1,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [2,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [3,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [4,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [5,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [6,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [7,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [8,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [9,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [10,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [11,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [12,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [13,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [14,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [15,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [16,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [18,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [19,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [20,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [21,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [22,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [23,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [24,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [26,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [27,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [28,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [29,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [30,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [31,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [33,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [34,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [35,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [36,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [37,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [38,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [39,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [40,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [41,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [42,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [43,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [44,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [45,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [46,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [47,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [48,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [49,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [50,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [51,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [52,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [53,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [54,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [55,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [56,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [57,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [58,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [59,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [60,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [61,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [62,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [63,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [64,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [65,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [66,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [67,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [68,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [69,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [70,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [71,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [72,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [73,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [74,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [75,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [76,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [77,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [78,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [79,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [80,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>                                                                                
+#>  [1,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [2,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [3,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [4,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [5,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [6,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [7,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [8,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>  [9,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [10,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [11,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [12,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [13,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [14,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [15,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [16,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [18,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [19,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [20,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [21,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [22,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [23,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [24,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [26,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [27,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [28,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [29,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [30,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [31,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [33,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [34,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [35,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [36,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [37,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [38,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [39,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [40,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [41,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [42,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [43,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [44,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [45,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [46,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [47,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [48,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [49,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [50,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [51,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [52,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [53,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [54,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [55,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [56,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [57,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [58,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [59,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [60,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [61,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [62,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [63,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [64,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [65,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [66,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [67,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [68,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [69,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [70,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [71,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [72,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [73,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [74,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [75,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [76,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [77,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [78,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [79,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#> [80,] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+#>                                                  
+#>  [1,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [2,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [3,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [4,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [5,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [6,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [7,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [8,] . . . . . . . . . . . . . . . . . . . . . .
+#>  [9,] . . . . . . . . . . . . . . . . . . . . . .
+#> [10,] . . . . . . . . . . . . . . . . . . . . . .
+#> [11,] . . . . . . . . . . . . . . . . . . . . . .
+#> [12,] . . . . . . . . . . . . . . . . . . . . . .
+#> [13,] . . . . . . . . . . . . . . . . . . . . . .
+#> [14,] . . . . . . . . . . . . . . . . . . . . . .
+#> [15,] . . . . . . . . . . . . . . . . . . . . . .
+#> [16,] . . . . . . . . . . . . . . . . . . . . . .
+#> [17,] . . . . . . . . . . . . . . . . . . . . . .
+#> [18,] . . . . . . . . . . . . . . . . . . . . . .
+#> [19,] . . . . . . . . . . . . . . . . . . . . . .
+#> [20,] . . . . . . . . . . . . . . . . . . . . . .
+#> [21,] . . . . . . . . . . . . . . . . . . . . . .
+#> [22,] . . . . . . . . . . . . . . . . . . . . . .
+#> [23,] . . . . . . . . . . . . . . . . . . . . . .
+#> [24,] . . . . . . . . . . . . . . . . . . . . . .
+#> [25,] . . . . . . . . . . . . . . . . . . . . . .
+#> [26,] . . . . . . . . . . . . . . . . . . . . . .
+#> [27,] . . . . . . . . . . . . . . . . . . . . . .
+#> [28,] . . . . . . . . . . . . . . . . . . . . . .
+#> [29,] . . . . . . . . . . . . . . . . . . . . . .
+#> [30,] . . . . . . . . . . . . . . . . . . . . . .
+#> [31,] . . . . . . . . . . . . . . . . . . . . . .
+#> [32,] . . . . . . . . . . . . . . . . . . . . . .
+#> [33,] . . . . . . . . . . . . . . . . . . . . . .
+#> [34,] . . . . . . . . . . . . . . . . . . . . . .
+#> [35,] . . . . . . . . . . . . . . . . . . . . . .
+#> [36,] . . . . . . . . . . . . . . . . . . . . . .
+#> [37,] . . . . . . . . . . . . . . . . . . . . . .
+#> [38,] . . . . . . . . . . . . . . . . . . . . . .
+#> [39,] . . . . . . . . . . . . . . . . . . . . . .
+#> [40,] . . . . . . . . . . . . . . . . . . . . . .
+#> [41,] . . . . . . . . . . . . . . . . . . . . . .
+#> [42,] . . . . . . . . . . . . . . . . . . . . . .
+#> [43,] . . . . . . . . . . . . . . . . . . . . . .
+#> [44,] . . . . . . . . . . . . . . . . . . . . . .
+#> [45,] . . . . . . . . . . . . . . . . . . . . . .
+#> [46,] . . . . . . . . . . . . . . . . . . . . . .
+#> [47,] . . . . . . . . . . . . . . . . . . . . . .
+#> [48,] . . . . . . . . . . . . . . . . . . . . . .
+#> [49,] . . . . . . . . . . . . . . . . . . . . . .
+#> [50,] . . . . . . . . . . . . . . . . . . . . . .
+#> [51,] . . . . . . . . . . . . . . . . . . . . . .
+#> [52,] . . . . . . . . . . . . . . . . . . . . . .
+#> [53,] . . . . . . . . . . . . . . . . . . . . . .
+#> [54,] . . . . . . . . . . . . . . . . . . . . . .
+#> [55,] . . . . . . . . . . . . . . . . . . . . . .
+#> [56,] . . . . . . . . . . . . . . . . . . . . . .
+#> [57,] . . . . . . . . . . . . . . . . . . . . . .
+#> [58,] . . . . . . . . . . . . . . . . . . . . . .
+#> [59,] . . . . . . . . . . . . . . . . . . . . . .
+#> [60,] . . . . . . . . . . . . . . . . . . . . . .
+#> [61,] . . . . . . . . . . . . . . . . . . . . . .
+#> [62,] . . . . . . . . . . . . . . . . . . . . . .
+#> [63,] . . . . . . . . . . . . . . . . . . . . . .
+#> [64,] . . . . . . . . . . . . . . . . . . . . . .
+#> [65,] . . . . . . . . . . . . . . . . . . . . . .
+#> [66,] . . . . . . . . . . . . . . . . . . . . . .
+#> [67,] . . . . . . . . . . . . . . . . . . . . . .
+#> [68,] . . . . . . . . . . . . . . . . . . . . . .
+#> [69,] . . . . . . . . . . . . . . . . . . . . . .
+#> [70,] . . . . . . . . . . . . . . . . . . . . . .
+#> [71,] . . . . . . . . . . . . . . . . . . . . . .
+#> [72,] . . . . . . . . . . . . . . . . . . . . . .
+#> [73,] . . . . . . . . . . . . . . . . . . . . . .
+#> [74,] . . . . . . . . . . . . . . . . . . . . . .
+#> [75,] . . . . . . . . . . . . . . . . . . . . . .
+#> [76,] . . . . . . . . . . . . . . . . . . . . . .
+#> [77,] . . . . . . . . . . . . . . . . . . . . . .
+#> [78,] . . . . . . . . . . . . . . . . . . . . . .
+#> [79,] . . . . . . . . . . . . . . . . . . . . . .
+#> [80,] . . . . . . . . . . . . . . . . . . . . . .
+```
