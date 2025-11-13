@@ -327,7 +327,7 @@ col <- SOMACollectionCreate(uri)
 #>  PPBP, IGLL5, VDAC3, CD1C, AKR1C3, PF4, MYL9, GNLY, TREML1, CA2 
 (ms <- write_soma(assay, "RNA", soma_parent = col))
 #> <SOMAMeasurement>
-#>   uri: /tmp/RtmpL4z3Qc/seurat-sub2896402d7512/RNA
+#>   uri: /tmp/Rtmphk3pZI/seurat-sub2a197fe37d62/RNA
 #>   arrays: var 
 #>   groups: X 
 
@@ -340,7 +340,7 @@ col <- SOMACollectionCreate(uri)
 #>  data, counts, scale.data 
 (ms5 <- write_soma(assay5, "RNA5", soma_parent = col))
 #> <SOMAMeasurement>
-#>   uri: /tmp/RtmpL4z3Qc/seurat-sub2896402d7512/RNA5
+#>   uri: /tmp/Rtmphk3pZI/seurat-sub2a197fe37d62/RNA5
 #>   arrays: var 
 #>   groups: X 
 
@@ -351,7 +351,7 @@ ms5$close()
 write_soma(tsne, soma_parent = ms)
 ms$obsm
 #> <SOMACollection>
-#>   uri: /tmp/RtmpL4z3Qc/seurat-sub2896402d7512/RNA/obsm
+#>   uri: /tmp/Rtmphk3pZI/seurat-sub2a197fe37d62/RNA/obsm
 #>   arrays: X_tsne 
 
 # Write a Seurat Graph
@@ -360,7 +360,7 @@ ms$obsm
 write_soma(snn, "snn", soma_parent = ms)
 ms$obsp
 #> <SOMACollection>
-#>   uri: /tmp/RtmpL4z3Qc/seurat-sub2896402d7512/RNA/obsp
+#>   uri: /tmp/Rtmphk3pZI/seurat-sub2a197fe37d62/RNA/obsp
 #>   arrays: snn 
 
 # Write a Seurat command log
@@ -374,11 +374,11 @@ ms$obsp
 write_soma(cmd, "NormalizeData.RNA", soma_parent = col)
 (logs <- col$get("seurat_commands"))
 #> <SOMACollection>
-#>   uri: /tmp/RtmpL4z3Qc/seurat-sub2896402d7512/seurat_commands
+#>   uri: /tmp/Rtmphk3pZI/seurat-sub2a197fe37d62/seurat_commands
 #>   arrays: NormalizeData.RNA 
 logs$get("NormalizeData.RNA")
 #> <SOMADataFrame>
-#>   uri: /tmp/RtmpL4z3Qc/seurat-sub2896402d7512/seurat_commands/NormalizeData.RNA
+#>   uri: /tmp/Rtmphk3pZI/seurat-sub2a197fe37d62/seurat_commands/NormalizeData.RNA
 #>   dimensions: soma_joinid 
 #>   attributes: values 
 

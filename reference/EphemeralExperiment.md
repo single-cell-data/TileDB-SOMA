@@ -81,7 +81,7 @@ The objects of this class are cloneable with this method.
 ``` r
 (exp <- EphemeralExperiment$new())
 #> <EphemeralExperiment>
-#>   uri: ephemeral-collection:0x55929d32aa68
+#>   uri: ephemeral-collection:0x5654d7636990
 exp$soma_type
 #> [1] "SOMAExperiment"
 
@@ -90,13 +90,13 @@ dir.create(dir, recursive = TRUE)
 
 (obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
 #> <SOMADataFrame>
-#>   uri: /tmp/RtmpL4z3Qc/obs289611251a7a/soma-dataframe-pbmc3k-processed-obs
+#>   uri: /tmp/Rtmphk3pZI/obs2a1925ca00fe/soma-dataframe-pbmc3k-processed-obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, seurat_annotations, percent.mt, RNA_snn... 
 exp$set(obs, "obs")
 exp$obs
 #> <SOMADataFrame>
-#>   uri: /tmp/RtmpL4z3Qc/obs289611251a7a/soma-dataframe-pbmc3k-processed-obs
+#>   uri: /tmp/Rtmphk3pZI/obs2a1925ca00fe/soma-dataframe-pbmc3k-processed-obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, seurat_annotations, percent.mt, RNA_snn... 
 ```
