@@ -1,6 +1,27 @@
+# Version files
 include RELEASE-VERSION version.py
+
+# Build scripts
+include _get_version.py
+include scripts/setup_build_env.sh
+include scripts/setup_build_env.ps1
+
+# C++ source files (needed for building)
 include src/tiledbsoma/*.cc
 include src/tiledbsoma/*.h
-graft dist_links
-prune dist_links/libtiledbsoma/test/__pycache__
+
+# Python package directory (includes all .py files and subdirectories)
+graft src/tiledbsoma
+
+# Requirements files
 include requirements_*.txt
+
+# Exclude build artifacts and cache files
+prune src/tiledbsoma/__pycache__
+prune src/tiledbsoma/*/__pycache__
+prune src/tiledbsoma/*/*/__pycache__
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude *.dylib
+global-exclude *.dll
+global-exclude *.pyd
