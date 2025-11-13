@@ -33,7 +33,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 using json = nlohmann::json;
 
-class ColumnBuffer;
+class ReadColumnBuffer;
 class SOMACoordinateSpace;
 
 /**
@@ -45,7 +45,7 @@ class SOMACoordinateSpace;
  *
  */
 struct ArrowBuffer {
-    ArrowBuffer(ColumnBuffer& buffer, bool large_offsets = true);
+    ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
     std::unique_ptr<std::byte[]> data_;
@@ -111,7 +111,7 @@ class ArrowAdapter {
      * std::unique_ptr<ArrowSchema>>
      */
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ColumnBuffer> column, bool downcast_dict_of_large_var = false);
+        std::shared_ptr<ReadColumnBuffer> column, bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
