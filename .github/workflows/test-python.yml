@@ -70,7 +70,8 @@ jobs:
           cache-dependency-path: ./apis/python/setup.py
 
       - name: Install tiledbsoma
-        run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+        # TILEDB_REMOVE_DEPRECATIONS is already set to ON in pyproject.toml
+        run: pip -v install -e apis/python[all]
         env:
           CC: ${{ inputs.cc }}
           CXX: ${{ inputs.cxx }}
