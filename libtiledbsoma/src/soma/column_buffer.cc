@@ -18,50 +18,9 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
-//===================================================================
-//= public static
-//===================================================================
+#pragma region ColumnBuffer
 
-std::shared_ptr<ColumnBuffer> ColumnBuffer::create(std::shared_ptr<Array> array, std::string_view name) {
-    auto schema = array->schema();
-    auto name_str = std::string(name);  // string for TileDB API
-
-    if (schema.has_attribute(name_str)) {
-        auto attr = schema.attribute(name_str);
-        auto type = attr.type();
-        bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
-        bool is_nullable = attr.nullable();
-        auto enum_name = AttributeExperimental::get_enumeration_name(schema.context(), attr);
-        std::optional<Enumeration> enumeration = std::nullopt;
-        bool is_ordered = false;
-        if (enum_name.has_value()) {
-            auto enmr = ArrayExperimental::get_enumeration(schema.context(), *array, *enum_name);
-            is_ordered = enmr.ordered();
-            enumeration = std::make_optional<Enumeration>(enmr);
-        }
-
-        if (!is_var && attr.cell_val_num() != 1) {
-            throw TileDBSOMAError("[ColumnBuffer] Values per cell > 1 is not supported: " + name_str);
-        }
-
-        return ColumnBuffer::alloc(
-            schema.context().config(), name_str, type, is_var, is_nullable, enumeration, is_ordered);
-
-    } else if (schema.domain().has_dimension(name_str)) {
-        auto dim = schema.domain().dimension(name_str);
-        auto type = dim.type();
-        bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM || dim.type() == TILEDB_STRING_ASCII ||
-                      dim.type() == TILEDB_STRING_UTF8;
-
-        if (!is_var && dim.cell_val_num() != 1) {
-            throw TileDBSOMAError("[ColumnBuffer] Values per cell > 1 is not supported: " + name_str);
-        }
-
-        return ColumnBuffer::alloc(schema.context().config(), name_str, type, is_var, false, std::nullopt, false);
-    }
-
-    throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
-}
+#pragma region public static
 
 void ColumnBuffer::to_bitmap(std::span<uint8_t> bytemap) {
     int i_dst = 0;
@@ -79,56 +38,47 @@ void ColumnBuffer::to_bitmap(std::span<uint8_t> bytemap) {
     }
 }
 
-//===================================================================
-//= public non-static
-//===================================================================
+#pragma endregion
+
+#pragma region public non-static
 
 ColumnBuffer::ColumnBuffer(
     std::string_view name,
     tiledb_datatype_t type,
     size_t num_cells,
-    size_t num_bytes,
+    size_t max_num_cells,
+    size_t data_size,
+    size_t max_data_size,
     bool is_var,
     bool is_nullable,
     std::optional<Enumeration> enumeration,
-    bool is_ordered,
-    bool use_resize)
-    : name_(name)
+    bool is_ordered)
+    : num_cells_(num_cells)
+    , data_size_(data_size)
+    , max_num_cells_(max_num_cells)
+    , max_data_size_(max_data_size)
+    , name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
-    , num_cells_(0)
     , is_var_(is_var)
     , is_nullable_(is_nullable)
     , enumeration_(enumeration)
     , is_ordered_(is_ordered) {
-    LOG_DEBUG(
-        fmt::format("[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var_, is_nullable_));
-    if (use_resize) {
-        // Calling reserve and then accessing the data without having initialized
-        // memory is UB but resize increases resident memory footprint
-        data_.resize(num_bytes);
-        if (is_var_) {
-            offsets_.resize(num_cells + 1);  // extra offset for arrow
-        }
-        if (is_nullable_) {
-            validity_.resize(num_cells);
-        }
-    } else {
-        // Call reserve() to allocate memory without initializing the contents.
-        // This reduce the time to allocate the buffer and reduces the
-        // resident memory footprint of the buffer.
-        data_.reserve(num_bytes);
-        if (is_var_) {
-            offsets_.reserve(num_cells + 1);  // extra offset for arrow
-        }
-        if (is_nullable_) {
-            validity_.reserve(num_cells);
-        }
-    }
+}
+
+ColumnBuffer::ColumnBuffer(
+    std::string_view name,
+    tiledb_datatype_t type,
+    size_t max_num_cells,
+    size_t max_data_size,
+    bool is_var,
+    bool is_nullable,
+    std::optional<Enumeration> enumeration,
+    bool is_ordered)
+    : ColumnBuffer(name, type, 0, max_num_cells, 0, max_data_size, is_var, is_nullable, enumeration, is_ordered) {
 }
 
 ColumnBuffer::~ColumnBuffer() {
-    LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
 }
 
 void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
@@ -144,42 +94,63 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
             "to attach to Query");
     }
 
-    // As of version 1.15.6 we were throwing here. However, we found a
-    // compatibility issue with pyarrow versions below 17. Thus we log and
-    // continue.
-    if (!validity_.empty() && is_dim) {
-        LOG_DEBUG(
-            fmt::format(
-                "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
-                "is being ignored",
-                name_));
-    }
-
     return use_subarray ? attach_subarray(*subarray) : attach_buffer(query);
 }
 
-void ColumnBuffer::attach_buffer(Query& query) {
-    // We cannot use:
-    // `set_data_buffer(const std::string& name, std::vector<T>& buf)`
-    // because data_ is allocated with reserve() and data_.size()
-    // does not represent the actual size of the buffer.
-    auto is_write = query.query_type() == TILEDB_WRITE;
+std::vector<std::vector<std::byte>> ColumnBuffer::binaries() const {
+    std::vector<std::vector<std::byte>> result;
 
-    auto data_sz = is_write ? data_size() : data_.capacity() / type_size_;
-    query.set_data_buffer(name_, (void*)data_.data(), data_sz);
+    auto data_ptr = data().data();
+    auto offsets_view = offsets();
+
+    for (size_t i = 0; i < num_cells_; ++i) {
+        size_t data_sz = offsets_view[i + 1] - offsets_view[i];
+
+        result.emplace_back(data_sz);
+        std::memcpy(result[0].data(), data_ptr + offsets_view[i], data_sz);
+    }
+
+    return result;
+}
+
+std::vector<std::string> ColumnBuffer::strings() const {
+    std::vector<std::string> result;
+    result.reserve(size());
+
+    auto data_ptr = data<char>().data();
+    auto offsets_view = offsets();
+
+    for (size_t i = 0; i < size(); ++i) {
+        result.emplace_back(data_ptr + offsets_view[i], offsets_view[i + 1] - offsets_view[i]);
+    }
+
+    return result;
+}
+
+std::string_view ColumnBuffer::string_view(size_t index) const {
+    auto data_ptr = data<char>().data();
+    auto offsets_view = offsets();
+
+    return std::string_view(data_ptr + offsets_view[index], offsets_view[index + 1] - offsets_view[index]);
+}
+
+#pragma endregion
+
+#pragma region private non-static
+
+void ColumnBuffer::attach_buffer(Query& query) {
+    query.set_data_buffer(name_, (void*)data().data(), max_data_size_ / type_size_);
     if (is_var_) {
         // Remove one offset for TileDB, which checks that the offsets and
         // validity buffers are the same size
-        auto offsets_sz = is_write ? offsets_.size() - 1 : offsets_.capacity() - 1;
-        query.set_offsets_buffer(name_, offsets_.data(), offsets_sz);
+        query.set_offsets_buffer(name_, const_cast<uint64_t*>(offsets().data()), max_num_cells_);
     }
     if (is_nullable_) {
-        auto validity_sz = is_write ? validity_.size() : validity_.capacity();
-        query.set_validity_buffer(name_, validity_.data(), validity_sz);
+        query.set_validity_buffer(name_, const_cast<uint8_t*>(validity().data()), max_num_cells_);
     }
 }
 
-void ColumnBuffer::attach_subarray(Subarray& subarray) {
+void ColumnBuffer::attach_subarray(Subarray& subarray) const {
     switch (type_) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
@@ -219,51 +190,262 @@ void ColumnBuffer::attach_subarray(Subarray& subarray) {
     }
 }
 
-size_t ColumnBuffer::update_size(const Query& query) {
-    auto [num_offsets, num_elements] = query.result_buffer_elements()[name_];
+#pragma endregion
+
+#pragma endregion
+
+#pragma region ReadColumnBuffer
+
+#pragma region public non-static
+
+ReadColumnBuffer::~ReadColumnBuffer() {
+}
+
+size_t ReadColumnBuffer::update_size(const Query& query) {
+    auto [num_offsets, num_elements] = query.result_buffer_elements()[std::string(name())];
 
     if (is_var()) {
         num_cells_ = num_offsets;
         // Set the extra offset value for arrow.
-        offsets_[num_offsets] = num_elements;
+        offsets()[num_offsets] = data_size_ = num_elements;
     } else {
         num_cells_ = num_elements;
+        data_size_ = num_elements * impl::type_size(type());
     }
 
     return num_cells_;
 }
 
-std::vector<std::vector<std::byte>> ColumnBuffer::binaries() {
-    std::vector<std::vector<std::byte>> result;
+#pragma endregion
 
-    for (size_t i = 0; i < num_cells_; i++) {
-        result.emplace_back(std::vector<std::byte>(data_.data() + offsets_[i], data_.data() + offsets_[i + 1]));
+#pragma endregion
+
+#pragma region CArrayColumnBuffer
+
+#pragma region public non-static
+
+CArrayColumnBuffer::CArrayColumnBuffer(
+    std::string_view name,
+    tiledb_datatype_t type,
+    size_t num_cells,
+    size_t num_bytes,
+    bool is_var,
+    bool is_nullable,
+    std::optional<Enumeration> enumeration,
+    bool is_ordered)
+    : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered) {
+    LOG_DEBUG(fmt::format("[CArrayColumnBuffer] '{}' {} bytes", name, num_bytes));
+
+    data_ = std::make_unique_for_overwrite<std::byte[]>(num_bytes);
+    if (is_var) {
+        offsets_ = std::make_unique_for_overwrite<uint64_t[]>(num_cells + 1);
     }
-
-    return result;
+    if (is_nullable) {
+        validity_ = std::make_unique_for_overwrite<uint8_t[]>(num_cells);
+    }
 }
 
-std::vector<std::string> ColumnBuffer::strings() {
-    std::vector<std::string> result;
-
-    for (size_t i = 0; i < num_cells_; i++) {
-        result.emplace_back(std::string(string_view(i)));
-    }
-
-    return result;
+CArrayColumnBuffer::~CArrayColumnBuffer() {
 }
 
-std::string_view ColumnBuffer::string_view(uint64_t index) {
-    auto start = offsets_[index];
-    auto len = offsets_[index + 1] - start;
-    return std::string_view((char*)(data_.data() + start), len);
+std::span<const std::byte> CArrayColumnBuffer::data() const {
+    return std::span<const std::byte>(data_.get(), data_size_);
+}
+
+std::span<std::byte> CArrayColumnBuffer::data() {
+    return std::span<std::byte>(data_.get(), data_size_);
+}
+
+std::span<const uint64_t> CArrayColumnBuffer::offsets() const {
+    if (!is_var()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Offsets buffer not defined for '{}'", name()));
+    }
+
+    return std::span<const uint64_t>(offsets_.get(), num_cells_ + 1);
+}
+
+std::span<uint64_t> CArrayColumnBuffer::offsets() {
+    if (!is_var()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Offsets buffer not defined for '{}'", name()));
+    }
+
+    return std::span<uint64_t>(offsets_.get(), num_cells_ + 1);
+}
+
+std::span<const uint8_t> CArrayColumnBuffer::validity() const {
+    if (!is_nullable()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Validity buffer not defined for '{}'", name()));
+    }
+
+    return std::span<const uint8_t>(validity_.get(), num_cells_);
+}
+
+std::span<uint8_t> CArrayColumnBuffer::validity() {
+    if (!is_nullable()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Validity buffer not defined for '{}'", name()));
+    }
+
+    return std::span<uint8_t>(validity_.get(), num_cells_);
+}
+
+#pragma endregion
+
+#pragma endregion
+
+#pragma region ViewColumnBuffer
+
+#pragma region public non-static
+
+WriteColumnBuffer::~WriteColumnBuffer() {
+}
+
+std::span<const std::byte> WriteColumnBuffer::data() const {
+    return data_;
+}
+
+std::span<const uint64_t> WriteColumnBuffer::offsets() const {
+    if (!is_var()) {
+        throw TileDBSOMAError(fmt::format("[WriteColumnBuffer] Offsets buffer not defined for '{}'", name()));
+    }
+
+    return offsets_;
+}
+
+std::span<const uint8_t> WriteColumnBuffer::validity() const {
+    if (!is_nullable()) {
+        throw TileDBSOMAError(fmt::format("[WriteColumnBuffer] Validity buffer not defined for '{}'", name()));
+    }
+
+    return validity_;
+}
+
+#pragma endregion
+
+#pragma endregion
+
+//===================================================================
+//= public static
+//===================================================================
+
+std::shared_ptr<ColumnBuffer> VectorColumnBuffer::create(std::shared_ptr<Array> array, std::string_view name) {
+    auto schema = array->schema();
+    auto name_str = std::string(name);  // string for TileDB API
+
+    if (schema.has_attribute(name_str)) {
+        auto attr = schema.attribute(name_str);
+        auto type = attr.type();
+        bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
+        bool is_nullable = attr.nullable();
+        auto enum_name = AttributeExperimental::get_enumeration_name(schema.context(), attr);
+        std::optional<Enumeration> enumeration = std::nullopt;
+        bool is_ordered = false;
+        if (enum_name.has_value()) {
+            auto enmr = ArrayExperimental::get_enumeration(schema.context(), *array, *enum_name);
+            is_ordered = enmr.ordered();
+            enumeration = std::make_optional<Enumeration>(enmr);
+        }
+
+        if (!is_var && attr.cell_val_num() != 1) {
+            throw TileDBSOMAError("[ColumnBuffer] Values per cell > 1 is not supported: " + name_str);
+        }
+
+        return VectorColumnBuffer::alloc(
+            schema.context().config(), name_str, type, is_var, is_nullable, enumeration, is_ordered);
+
+    } else if (schema.domain().has_dimension(name_str)) {
+        auto dim = schema.domain().dimension(name_str);
+        auto type = dim.type();
+        bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM || dim.type() == TILEDB_STRING_ASCII ||
+                      dim.type() == TILEDB_STRING_UTF8;
+
+        if (!is_var && dim.cell_val_num() != 1) {
+            throw TileDBSOMAError("[ColumnBuffer] Values per cell > 1 is not supported: " + name_str);
+        }
+
+        return VectorColumnBuffer::alloc(schema.context().config(), name_str, type, is_var, false, std::nullopt, false);
+    }
+
+    throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
+}
+
+//===================================================================
+//= public non-static
+//===================================================================
+
+VectorColumnBuffer::VectorColumnBuffer(
+    std::string_view name,
+    tiledb_datatype_t type,
+    size_t num_cells,
+    size_t num_bytes,
+    bool is_var,
+    bool is_nullable,
+    std::optional<Enumeration> enumeration,
+    bool is_ordered)
+    : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered) {
+    LOG_DEBUG(
+        fmt::format(
+            "[VectorColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var, is_nullable));
+    // Call reserve() to allocate memory without initializing the contents.
+    // This reduce the time to allocate the buffer and reduces the
+    // resident memory footprint of the buffer.
+    data_.reserve(num_bytes);
+    if (is_var) {
+        offsets_.reserve(num_cells + 1);  // extra offset for arrow
+    }
+    if (is_nullable) {
+        validity_.reserve(num_cells);
+    }
+}
+
+VectorColumnBuffer::~VectorColumnBuffer() {
+    LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name()));
+}
+
+std::span<const std::byte> VectorColumnBuffer::data() const {
+    return std::span<const std::byte>(data_.data(), data_size_);
+}
+
+std::span<std::byte> VectorColumnBuffer::data() {
+    return std::span<std::byte>(data_.data(), data_size_);
+}
+
+std::span<const uint64_t> VectorColumnBuffer::offsets() const {
+    if (!is_var()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Offsets buffer not defined for '{}'", name()));
+    }
+
+    return std::span<const uint64_t>(offsets_.data(), num_cells_);
+}
+
+std::span<uint64_t> VectorColumnBuffer::offsets() {
+    if (!is_var()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Offsets buffer not defined for '{}'", name()));
+    }
+
+    return std::span<uint64_t>(offsets_.data(), num_cells_);
+}
+
+std::span<const uint8_t> VectorColumnBuffer::validity() const {
+    if (!is_nullable()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Validity buffer not defined for '{}'", name()));
+    }
+
+    return std::span<const uint8_t>(validity_.data(), num_cells_);
+}
+
+std::span<uint8_t> VectorColumnBuffer::validity() {
+    if (!is_nullable()) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer] Validity buffer not defined for '{}'", name()));
+    }
+
+    return std::span<uint8_t>(validity_.data(), num_cells_);
 }
 
 //===================================================================
 //= private static
 //===================================================================
 
-std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
+std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
     Config config,
     std::string_view name,
     tiledb_datatype_t type,
@@ -296,7 +478,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     //   from the type size.
     size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) : num_bytes / tiledb::impl::type_size(type);
 
-    return std::make_shared<ColumnBuffer>(
+    return std::make_shared<VectorColumnBuffer>(
         name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered);
 }
 
