@@ -173,8 +173,8 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic", "[SOM
     {
         sdf = open(OpenMode::soma_read);
         auto mq = sdf->create_managed_query();
-        mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-        mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        REQUIRE_THROWS(mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr));
+        REQUIRE_THROWS(mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr));
         REQUIRE_THROWS(mq.submit_write());
         sdf->close();
     }
