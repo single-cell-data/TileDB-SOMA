@@ -505,10 +505,62 @@ def from_anndata(
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
 ) -> str:
-    """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
+    r"""Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
-    Usage is the same as ``from_h5ad`` except that you can use this function when the AnnData object
-    is already loaded into memory.
+    This function is similar to :func:`from_h5ad` except that it operates on an AnnData
+    object already loaded into memory, rather than reading from an ``.h5ad`` file on disk.
+
+    Measurement data is stored in a :class:`Measurement` in the experiment's
+    ``ms`` field, with the key provided by ``measurement_name``. Data elements
+    are available at the standard fields (``var``, ``X``, etc.). Unstructured
+    data from ``uns`` is partially supported (structured arrays and non-numeric
+    NDArrays are skipped), and is available at the measurement's ``uns`` key
+    (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
+
+    Args:
+        experiment_uri: The experiment to create or update.
+
+        anndata: An AnnData object already loaded into memory.
+
+        measurement_name: The name of the measurement to store data in.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to create this array. See
+          :func:`from_h5ad` for details.
+
+        obs_id_name/var_id_name: Column names to use for obs/var IDs in append mode.
+          See :func:`from_h5ad` for detailed behavior.
+
+        X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
+
+        raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
+
+        ingest_mode: One of ``"write"``, ``"resume"`` (deprecated), or ``"schema_only"``.
+          See :func:`from_h5ad` for details.
+
+        use_relative_uri: Whether to use relative URIs for nested objects.
+
+        X_kind: Matrix type for storing X data: ``DenseNDArray`` or ``SparseNDArray``.
+
+        registration_mapping: Pre-computed registration for multi-dataset ingestion.
+          For multi-dataset workflows, use :func:`register_anndatas` to create this mapping.
+          See :func:`from_h5ad` for usage examples.
+
+        uns_keys: Only ingest the specified top-level ``uns`` keys.
+          Default is to ingest all. Use ``uns_keys=[]`` to skip ``uns`` entirely.
+
+        additional_metadata: Optional metadata to add to the ``Experiment`` and all descendents.
+          See :func:`from_h5ad` for details and examples.
+
+
+    Returns:
+        The URI of the newly created experiment.
+
+    See Also:
+        :func:`from_h5ad` : Read an ``.h5ad`` file and write to a SOMA Experiment (includes
+          detailed documentation of all parameters and workflows).
+        :func:`register_anndatas` : Register multiple AnnData objects for multi-dataset ingestion.
 
     Lifecycle:
         Maturing.
