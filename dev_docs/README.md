@@ -51,12 +51,18 @@ ______________________________________________________________________
 
 ## Set up a Python Virtual Environment
 
-Create a python virtual environment and install the [developer requirements](../apis/python/requirements_dev.txt):
+Create a python virtual environment and install the developer dependencies:
 
 ```
 python -m venv test/tiledbsoma
 source test/tiledbsoma/bin/activate
-pip install -r apis/python/requirements_dev.txt
+pip install -e apis/python[dev]
+```
+
+Alternatively, you can install the package with all optional dependencies:
+
+```
+pip install -e apis/python[all]
 ```
 
 ______________________________________________________________________
