@@ -628,7 +628,6 @@ void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* arra
     // to the associated dictionary values and set the buffers to use the
     // dictionary values to write to disk. Note the specialized templates for
     // string and Boolean types below
-
     auto value_array = array->dictionary;
 
     T* valbuf;
@@ -637,21 +636,6 @@ void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* arra
     } else {
         valbuf = (T*)value_array->buffers[1];
     }
-    // std::vector<T> values(valbuf, valbuf + value_array->length);
-
-    // std::vector<int64_t> indexes = _get_index_vector(schema, array);
-
-    // std::vector<T> index_to_value;
-    // for (auto i : indexes) {
-    //     index_to_value.push_back(values[i]);
-    // }
-
-    // setup_write_column(
-    //     schema->name,
-    //     array->length,
-    //     (const void*)index_to_value.data(),
-    //     (uint64_t*)nullptr,
-    //     std::nullopt);  // validities are set by index column
 
     std::span<const T> values(valbuf, value_array->length);
 
