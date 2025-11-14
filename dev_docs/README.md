@@ -3,108 +3,79 @@
 ## System Dependencies
 
 - C++20 compiler
-- Python 3.9+
+- Python 3.9+ (for Python API)
+- R (for R API)
 - vcpkg (for dependency management)
 
-Run these commands to setup a fresh Ubuntu 22.04 instance (tested on x86 and Arm):
+## C++ Installation
 
-```
-sudo apt update
-sudo apt install -y g++ make pkg-config
-sudo apt install -y python3 python-is-python3 python3.10-venv python-dev-is-python3
-```
+Both the Python and R API are built on top of an internal C++ `libtiledbsoma` library that is built with CMake. The `libtiledbsoma` library uses [vcpkg](https://github.com/microsoft/vcpkg) to manage C++ dependencies (spdlog, fmt, catch2) except for the core TileDB library which is currently built with a Superbuild. You can also manually install the dependencies using standard CMake search paths, although this method is not actively tested.
 
-______________________________________________________________________
+_Note on system conflicts: If you have system-installed versions of `libfmt`, `libspdlog`, or `tiledb`, they may conflict with the versions required by `tiledbsoma`. The build system prioritizes vcpkg-provided packages, but conflicts can still occur._
 
-## Clone the source code
+### Dependencies
 
-```
-git clone https://github.com/single-cell-data/TileDB-SOMA.git
-cd TileDB-SOMA
-```
+TileDB core:
 
-______________________________________________________________________
+You can either manually install TileDB and add it to you CMake module search path (for example, by installing to `/usr/local/`) or you can let `libtiledbsoma` install TileDB-SOMA as part of a Superbuild architecture. If CMake does not find TileDB, it will build the full package itself. Make sure you have an appropriate version of TileDB installed when using a manual install.
 
-## Set up vcpkg
+vcpkg:
 
-This project uses [vcpkg](https://github.com/microsoft/vcpkg) to manage C++ dependencies (spdlog, fmt, catch2). You have two options:
+You can either use an existing installation of vcpkg or have CMake download vcpkg as part of the configuration step.
 
-### Option 1: Use an existing vcpkg installation
+To use an existing vcpkg installation, you can:
 
-Set the `VCPKG_ROOT` environment variable to point to your vcpkg installation:
+1. Set the environment variable `VCPKG_ROOT` to your vcpkg installation. For example, with bash:
+
+   ```
+   export VCPKG_ROOT=/path/to/vcpkg
+   ```
+
+OR
+
+2. Set the cached CMake variable `CMAKE_TOOLCHAIN_FILE` to the vcpkg toolchain. This can manually be passed to CMake or set with a CMake preset. See the [vcpkg documentation](https://learn.microsoft.com/en-us/vcpkg/users/buildsystems/cmake-integration#cmake_toolchain_file) for more information.
+
+To have CMake install vcpkg as part of the build enable the CMake option with `TILEDBSOMA_FETCH_VCPKG=ON` (this is `OFF` by default). This option will be ignored if either the `CMAKE_TOOLCHAIN_FILE` is set or the `VCPKG_ROOT` environment variable is defined.
+
+### Option 1: Build with CMake (recommended)
+
+The root CMake file for the `libtiledbsoma` library is located in the `libtiledb` subdirectory. This can be called used directly to build and install the C++ library. For example, you can build inside a `build` folder in the root TileDB-SOMA directory using bash by excuting the following commands. _Note: The non-standard re-build and install commands are an artifact of the superbuild architecture which will eventually be replaced._
+
+Configure:
 
 ```bash
-export VCPKG_ROOT=/path/to/vcpkg
+cmake -S libtiledbsoma -B build [... other options]
 ```
 
-### Option 2: Let CMake fetch vcpkg automatically
-
-If you don't have vcpkg installed, CMake can automatically fetch it for you. Set the `TILEDBSOMA_FETCH_VCPKG` option when configuring:
+Build:
 
 ```bash
-cmake -DTILEDBSOMA_FETCH_VCPKG=ON -B build -S libtiledbsoma --preset vcpkg
+cmake --build build -j $nproc
 ```
 
-> **Note** - The build script (`scripts/bld`) automatically detects and uses vcpkg if `VCPKG_ROOT` is set in your environment.
+Re-build:
 
-______________________________________________________________________
-
-## Set up a Python Virtual Environment
-
-Create a python virtual environment and install the [developer requirements](../apis/python/requirements_dev.txt):
-
-```
-python -m venv test/tiledbsoma
-source test/tiledbsoma/bin/activate
-pip install -r apis/python/requirements_dev.txt
+```bash
+cmake --build build/libtiledbsoma -j $nproc
 ```
 
-______________________________________________________________________
+Test:
 
-## Python-only Development
-
-Developers who do not need to modify the C++ code must use these build commands:
-
-```
-# remove old build artifacts
-make clean
-
-# build and install
-pip install -v -e apis/python
-
-# test
-pytest apis/python
+```bash
+ctest --test-dir build/libtiledbsoma/test
 ```
 
-This approach leverages the build-system defined in [pyproject.toml](../apis/python/pyproject.toml) to reduce the number of dependencies required to build `tiledbsoma`.
+Install:
 
-> **Note** - Running `python setup.py develop` is not supported.
-
-______________________________________________________________________
-
-## Python and C++ Development
-
-Developers who plan to modify the C++ code must use these build commands:
-
-```
-# clean, build, and install
-make install
-
-# test
-make test
+```bash
+cmake --build build -t install-libtiledbsoma
 ```
 
-> **Note** - These steps avoid issues when trying to use `cmake` from the [pyproject.toml](../apis/python/pyproject.toml) build-system overlay environment.
+### Option 2: Build with developer Makefile
 
-> **Note** - All CI and local builds of python, R, and C++ leverage the [../scripts/bld](../scripts/bld) build script, providing a common source for the build flows.
+The [Makefile](../Makefile) automates common developer use cases. This build process requires an existing installation of vcpkg.
 
-> **Note** - Common developer use cases are captured in the [Makefile](../Makefile) described below.
-
-### Developer Makefile
-
-The [Makefile](../Makefile) automates common developer use cases and promotes sharing of consistent build flows.
-
-```
+```bash
 Usage: make rule [options]
 
 Rules:
@@ -137,49 +108,40 @@ Examples:
     make update
 ```
 
-______________________________________________________________________
+## Python Installation
 
-## Notes
-
-### Dependency Management
-
-This project uses a **hybrid dependency management approach**:
-
-- **vcpkg** provides: `spdlog`, `fmt`, and `catch2` (defined in `vcpkg.json`)
-- **Superbuild** provides: `TileDB` (not available in vcpkg, built via ExternalProject)
-
-This hybrid approach ensures:
-
-- Common C++ libraries come from vcpkg for consistency and easier version management
-- TileDB is built from source or downloaded as a prebuilt binary via the superbuild system
-
-### System Package Conflicts
-
-If you have system-installed versions of `libfmt`, `libspdlog`, or `tiledb`, they may conflict with the versions required by `tiledbsoma`. The build system prioritizes vcpkg-provided packages, but conflicts can still occur.
-
-**Recommendation**: Uninstall system packages for these dependencies and let the build system manage them:
+The Python developer dependencies are stored in [apis/python/requirements_dev.txt](../apis/python/requirements_dev.txt). These dependencies are necessary for linting and running unit tests. Once the C++ libtiledbsoma library is installed, an editable python build can be installed with pip:
 
 ```bash
-# On Ubuntu/Debian
-sudo apt remove libfmt-dev libspdlog-dev  # or spdlog, fmt depending on OS
-sudo apt remove libtiledb-dev  # if installed
+pip install -e apis/python
 ```
 
-As a pro-tip: check the following is gone (and manually remove if necessary):
+The test suite can be run with pytest:
 
 ```bash
-/usr/lib/*/cmake/spdlog/spdlogConfig.cmake
+pytest apis/python/tests
 ```
 
-If you do have reason to have `fmt` and `spdlog` installed system-wide, the following is a known-good configuration on Ubuntu 22.04:
+See the [apis/python/pyproject.toml](../apis/python/pyproject.toml) for available marks for filtering the testing suite.
 
-```
-$ dpkg -l | egrep "lib(spdlog|fmt)" | cut -c-80
-ii  libfmt-dev:amd64                  8.1.1+ds1-2                             am
-ii  libfmt8:amd64                     8.1.1+ds1-2                             am
-ii  libspdlog-dev:amd64               1:1.9.2+ds-0.2                          am
-ii  libspdlog1:amd64                  1:1.9.2+ds-0.2                          am
+## R Installation
+
+Once the C++ libtiledbsoma library is installed, an R build can be installed using devtools. From the [apis/r](../apis/r/) directory run the following:
+
+Install dependencies:
+
+```bash
+Rscript -e 'remotes::install_deps(".", TRUE)'
 ```
 
-As for the `tiledb` package, if you have reason to have it installed as a separate package, please use the
-version matching `libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake`.
+Initial install:
+
+```bash
+Rscript -e 'devtools::install(upgrade=FALSE)'
+```
+
+Update:
+
+```bash
+Rscript -e 'devtools::load_all(recompile = TRUE)'
+```
