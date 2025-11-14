@@ -3,7 +3,6 @@
 Sample Dockerfiles that `pip install tiledbsoma` (including installing required system dependencies):
 
 - [ubuntu.dockerfile](ubuntu.dockerfile): Ubuntu 24.04 with `tiledbsoma` installed from PyPI
-- [ubuntu-src.dockerfile](ubuntu-src.dockerfile): Ubuntu 24.04 with `tiledbsoma` installed from source
 - [bookworm.dockerfile](bookworm.dockerfile): Debian 12, GCC 13, `pip install tiledbsoma==1.16.0`
 - [langchain.dockerfile](langchain.dockerfile): Debian 12, GCC 12, `pip install tiledbsoma==1.15.7`
 

@@ -19,8 +19,6 @@ jobs:
           - runs-on: ubuntu-24.04-arm
             suffix: ' ARM'
         img:
-          - name: Ubuntu src
-            file: ubuntu-src
           - name: Ubuntu 1.15.7
             file: ubuntu
             args: v=1.15.7
