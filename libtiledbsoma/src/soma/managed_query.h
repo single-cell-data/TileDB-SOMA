@@ -676,8 +676,7 @@ class ManagedQuery {
             buf = (UserType*)array->buffers[1] + array->offset;
         }
 
-        bool has_attr = schema_->has_attribute(schema->name);
-        if (has_attr && attr_has_enum(schema->name)) {
+        if (schema_->has_attribute(schema->name) && attr_has_enum(schema->name)) {
             // For columns with dictionaries, we need to set the data buffers to
             // the dictionary's indexes. If there were any new enumeration
             // values added, we need to extend and and evolve the TileDB
