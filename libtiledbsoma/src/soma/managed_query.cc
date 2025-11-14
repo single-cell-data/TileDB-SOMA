@@ -786,22 +786,53 @@ template <>
 void ManagedQuery::_cast_dictionary_values<bool>(ArrowSchema* schema, ArrowArray* array) {
     // Boolean types require special handling due to bit vs uint8_t
     // representation in Arrow vs TileDB respectively
+    std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(array->length);
+    std::span<uint8_t> data_view(reinterpret_cast<uint8_t*>(data_buffer.get()), array->length);
 
-    auto value_array = array->dictionary;
+    auto extract_values = [&]<typename T>() {
+        std::span<const T> indices(reinterpret_cast<const T*>(array->buffers[1]) + array->offset, array->length);
 
-    std::vector<int64_t> indexes = _get_index_vector(schema, array);
+        for (int64_t i = 0; i < array->length; ++i) {
+            data_view[i] = static_cast<uint8_t>(
+                ArrowBitGet((const uint8_t*)array->dictionary->buffers[1], indices[i] + array->dictionary->offset));
+        }
+    };
 
-    std::unique_ptr<std::byte[]> values = std::make_unique_for_overwrite<std::byte[]>(array->length);
-    std::span<uint8_t> values_view(reinterpret_cast<uint8_t*>(values.get()), array->length);
-    for (int64_t i = 0; i < value_array->length; ++i) {
-        values_view[i] = static_cast<uint8_t>(
-            ArrowBitGet((const uint8_t*)value_array->buffers[1] + value_array->offset, indexes[i]));
+    switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+        case TILEDB_INT8:
+            extract_values.template operator()<int8_t>();
+            break;
+        case TILEDB_UINT8:
+            extract_values.template operator()<uint8_t>();
+            break;
+        case TILEDB_INT16:
+            extract_values.template operator()<int16_t>();
+            break;
+        case TILEDB_UINT16:
+            extract_values.template operator()<uint16_t>();
+            break;
+        case TILEDB_INT32:
+            extract_values.template operator()<int32_t>();
+            break;
+        case TILEDB_UINT32:
+            extract_values.template operator()<uint32_t>();
+            break;
+        case TILEDB_INT64:
+            extract_values.template operator()<int64_t>();
+            break;
+        case TILEDB_UINT64:
+            extract_values.template operator()<uint64_t>();
+            break;
+        default:
+            throw TileDBSOMAError(
+                "Saw invalid index type when trying to promote indexes to "
+                "values");
     }
 
     setup_write_column(
         schema->name,
         array->length,
-        std::move(values),
+        std::move(data_buffer),
         (uint64_t*)nullptr,
         nullptr);  // validities are set by index column
 }
