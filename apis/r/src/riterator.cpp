@@ -246,7 +246,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
             tdbs::LOG_TRACE(ss.str());
         }
         // now buf is a shared_ptr to ColumnBuffer
-        auto buf = mq_data->get()->at(names[i]);
+        auto buf = mq_data->get()->at<tdbs::ReadColumnBuffer>(names[i]);
 
         // this is pair of array and schema pointer
         auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
