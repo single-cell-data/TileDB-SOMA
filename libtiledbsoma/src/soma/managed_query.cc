@@ -681,12 +681,12 @@ void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* arra
                 "values");
     }
 
-    setup_write_column(
-        schema->name,
-        array->length,
-        std::move(data_buffer),
-        (uint64_t*)nullptr,
-        nullptr);  // validities are set by index column
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = _cast_validity_buffer_ptr(array);
+    }
+
+    setup_write_column(schema->name, array->length, std::move(data_buffer), (uint64_t*)nullptr, std::move(validity));
 }
 
 template <>
@@ -774,12 +774,13 @@ void ManagedQuery::_cast_dictionary_values<std::string>(ArrowSchema* schema, Arr
         std::tie(data_buffer, offset_buffer) = extract_values.operator()<uint32_t>(schema, array);
     }
 
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = _cast_validity_buffer_ptr(array);
+    }
+
     setup_write_column(
-        schema->name,
-        array->length,
-        std::move(data_buffer),
-        std::move(offset_buffer),
-        nullptr);  // validities are set by index column
+        schema->name, array->length, std::move(data_buffer), std::move(offset_buffer), std::move(validity));
 }
 
 template <>
@@ -829,12 +830,12 @@ void ManagedQuery::_cast_dictionary_values<bool>(ArrowSchema* schema, ArrowArray
                 "values");
     }
 
-    setup_write_column(
-        schema->name,
-        array->length,
-        std::move(data_buffer),
-        (uint64_t*)nullptr,
-        nullptr);  // validities are set by index column
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = _cast_validity_buffer_ptr(array);
+    }
+
+    setup_write_column(schema->name, array->length, std::move(data_buffer), (uint64_t*)nullptr, std::move(validity));
 }
 
 template <>
