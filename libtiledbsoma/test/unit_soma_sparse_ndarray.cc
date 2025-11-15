@@ -93,8 +93,8 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     {
         snda->open(OpenMode::soma_read);
         auto mq = snda->create_managed_query();
-        mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
-        mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        REQUIRE_THROWS(mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr));
+        REQUIRE_THROWS(mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr));
         REQUIRE_THROWS(mq.submit_write());
         snda->close();
     }
