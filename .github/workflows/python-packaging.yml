@@ -29,8 +29,7 @@ jobs:
           pip list
 
       - name: Build sdist
-        working-directory: apis/python
-        run: python -m build --sdist
+        run: python -m build --sdist apis/python
 
 
       - name: Upload sdist artifact to GitHub Actions storage

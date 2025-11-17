@@ -188,46 +188,15 @@ before-all = [
     "brew install automake llvm ninja git || true",
 ]
 
-# Set up vcpkg environment before each build
-before-build = [
-    "bash -c 'if [ ! -d {project}/../vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg && {project}/../vcpkg/bootstrap-vcpkg.sh; fi'",
-    "bash -c 'if [ -d {project}/vcpkg_triplets ]; then cp -f {project}/vcpkg_triplets/*-release.cmake {project}/../vcpkg/triplets/; fi'",
-    "export VCPKG_ROOT={project}/../vcpkg",
-    "export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
-    "arch=$(uname -m); if [ \"$arch\" = \"arm64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-osx-release && export CMAKE_OSX_ARCHITECTURES=arm64; else export VCPKG_TARGET_TRIPLET=x64-osx-release && export CMAKE_OSX_ARCHITECTURES=x86_64; fi",
-]
-
-[tool.cibuildwheel.windows]
-# Install system dependencies and bootstrap vcpkg
-before-all = [
-    "choco install ninja cmake git -y",
-]
-
-# Set up vcpkg environment before each build
-before-build = [
-    "powershell -ExecutionPolicy Bypass -Command \"if (-not (Test-Path '{project}\\..\\vcpkg')) { git clone --depth 1 https://github.com/microsoft/vcpkg.git '{project}\\..\\vcpkg'; & '{project}\\..\\vcpkg\\bootstrap-vcpkg.bat' }\"",
-    "powershell -ExecutionPolicy Bypass -Command \"if (Test-Path '{project}\\vcpkg_triplets') { Copy-Item '{project}\\vcpkg_triplets\\*-release.cmake' '{project}\\..\\vcpkg\\triplets\\' -Force }\"",
-    "set VCPKG_ROOT={project}\\..\\vcpkg",
-    "set CMAKE_TOOLCHAIN_FILE={project}\\..\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
-    "set VCPKG_TARGET_TRIPLET=x64-windows-release",
-]
-
 # Note: Version is automatically derived from git tags via setuptools_scm
 # RELEASE-VERSION file can be generated as a fallback using _get_version.py
 # if git is not available (e.g., in sdist tarballs)
 
 [tool.setuptools_scm]
 # Configure setuptools_scm to work with the project structure
-# The version will be derived from git tags automatically
-# Root directory is the repository root (not apis/python)
-# This allows setuptools_scm to find git tags from the repository root
-root = "../.."
-# Write version to a file for CMake to read and for runtime access
-# When root is set, write_to is resolved relative to the root directory
-# So we need to specify the full path from the root
-write_to = "apis/python/src/tiledbsoma/_version.py"
-# Use git to find version (default behavior)
-# This will work with tags like "1.0.0", "v1.0.0", etc.
+write_to = "src/tiledbsoma/_version.py"
+# Use git to find version from tags
+# When building from sdist without git, use the fallback
 fallback_version = "0.0.0+unknown"
 
 [tool.mypy]
