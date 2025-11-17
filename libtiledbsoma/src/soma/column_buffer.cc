@@ -38,6 +38,22 @@ void ColumnBuffer::to_bitmap(std::span<uint8_t> bytemap) {
     }
 }
 
+void ColumnBuffer::to_bitmap(std::span<const uint8_t> bytemap, std::span<uint8_t> bitmap) {
+    size_t i_dst = 0;
+    for (size_t i_src = 0; i_src < bytemap.size(); ++i_src) {
+        // Overwrite every 8 bytes with a one-byte bitmap
+        if (i_src % 8 == 0) {
+            // Each bit in the bitmap corresponds to one byte in the bytemap
+            // Note: the bitmap must be byte-aligned (8 bits)
+            bitmap[i_dst] = 0;
+            for (size_t i = i_src; i < i_src + 8 && i < bytemap.size(); i++) {
+                bitmap[i_dst] |= bytemap[i] << (i % 8);
+            }
+            ++i_dst;
+        }
+    }
+}
+
 #pragma endregion
 
 #pragma region public non-static

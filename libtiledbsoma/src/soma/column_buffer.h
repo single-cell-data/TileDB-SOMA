@@ -39,6 +39,12 @@ class ColumnBuffer {
      */
     static void to_bitmap(std::span<uint8_t> bytemap);
 
+    /**
+     * @brief Convert a bytemap to a bitmap.
+     *
+     */
+    static void to_bitmap(std::span<const uint8_t> bytemap, std::span<uint8_t> bitmap);
+
     ColumnBuffer(
         std::string_view name,
         tiledb_datatype_t type,
@@ -365,6 +371,10 @@ class ReadColumnBuffer : public ColumnBuffer {
      */
     void validity_to_bitmap() {
         ColumnBuffer::to_bitmap(validity());
+    }
+
+    void validity_to_bitmap(std::span<uint8_t> bitmap) const {
+        ColumnBuffer::to_bitmap(validity(), bitmap);
     }
 
     using ColumnBuffer::data;
