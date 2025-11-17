@@ -1,6 +1,10 @@
 # Version files
 include RELEASE-VERSION version.py
 
+# Build configuration
+include CMakeLists.txt
+include pyproject.toml
+
 # Build scripts
 include _get_version.py
 include scripts/setup_build_env.sh
@@ -13,6 +17,9 @@ include src/tiledbsoma/*.h
 # Python package directory (includes all .py files and subdirectories)
 graft src/tiledbsoma
 
+# Include libtiledbsoma via dist_links (symlink to ../../libtiledbsoma)
+graft dist_links
+
 # Requirements files are now inlined in pyproject.toml
 # No need to include them separately
 
@@ -20,6 +27,8 @@ graft src/tiledbsoma
 prune src/tiledbsoma/__pycache__
 prune src/tiledbsoma/*/__pycache__
 prune src/tiledbsoma/*/*/__pycache__
+prune dist_links/libtiledbsoma/build
+prune dist_links/libtiledbsoma/test
 global-exclude *.py[cod]
 global-exclude *.so
 global-exclude *.dylib

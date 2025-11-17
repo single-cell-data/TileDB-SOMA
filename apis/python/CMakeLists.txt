@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.21)
 
-# set(PYBIND11_FINDPYTHON ON)
-
+# Set macOS architecture before project() to avoid vcpkg warnings
+if(APPLE AND NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+    # Detect system architecture
+    execute_process(
+        COMMAND uname -m
+        OUTPUT_VARIABLE DETECTED_ARCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(CMAKE_OSX_ARCHITECTURES "${DETECTED_ARCH}" CACHE STRING "macOS architecture")
+    message(STATUS "Auto-detected macOS architecture: ${CMAKE_OSX_ARCHITECTURES}")
+endif()
 
 project(tiledbsoma-python LANGUAGES CXX)
 
@@ -9,11 +18,11 @@ project(tiledbsoma-python LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find pybind11
-# find_package(pybind11 REQUIRED)
+# Find pybind11 - required for pybind11_add_module
+find_package(pybind11 REQUIRED)
 
 # Find Python
-# find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 # Get version from setuptools_scm generated file or fallback
 # setuptools_scm writes version to src/tiledbsoma/_version.py if configured
@@ -70,8 +79,12 @@ if(DEFINED CMAKE_OSX_ARCHITECTURES)
     )
 endif()
 
-# Forward vcpkg triplet if set
-if(DEFINED ENV{VCPKG_TARGET_TRIPLET})
+# Forward vcpkg triplet if set (from environment or CMake variable)
+if(VCPKG_TARGET_TRIPLET)
+    list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
+        -DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}
+    )
+elseif(DEFINED ENV{VCPKG_TARGET_TRIPLET})
     list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
         -DVCPKG_TARGET_TRIPLET=$ENV{VCPKG_TARGET_TRIPLET}
     )
@@ -85,9 +98,18 @@ ExternalProject_Add(
     SOURCE_DIR ${LIBTILEDBSOMA_SOURCE_DIR}
     BINARY_DIR ${LIBTILEDBSOMA_BINARY_DIR}
     CMAKE_ARGS ${LIBTILEDBSOMA_CMAKE_ARGS}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target install-libtiledbsoma -j
+    BUILD_COMMAND ""
     INSTALL_COMMAND ""
     BUILD_ALWAYS OFF
+)
+
+# Custom command to build and install libtiledbsoma after configuration
+ExternalProject_Add_Step(libtiledbsoma_ep build_and_install
+    COMMAND ${CMAKE_COMMAND} --build ${LIBTILEDBSOMA_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} --build ${LIBTILEDBSOMA_BINARY_DIR}/libtiledbsoma --target install
+    DEPENDEES configure
+    DEPENDERS build
+    ALWAYS OFF
 )
 
 # Note: We can't use find_package here because libtiledbsoma_ep hasn't built yet

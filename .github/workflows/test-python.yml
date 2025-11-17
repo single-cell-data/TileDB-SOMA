@@ -41,12 +41,18 @@ jobs:
         if: ${{ startsWith(inputs.os, 'macos-') == true }}
         run: sysctl -a | grep cpu
 
+      - name: "Setup system dependencies on Linux"
+        if: ${{ startsWith(inputs.os, 'ubuntu-') == true }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config autoconf automake libtool
+
       - name: "Brew setup on macOS"
         if: ${{ startsWith(inputs.os, 'macos-') == true }}
         run: |
           set -e pipefail
           brew update
-          brew install automake llvm
+          brew install automake llvm ninja
 
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
@@ -54,10 +60,38 @@ jobs:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
   
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=${{ github.workspace }}/vcpkg" >> $GITHUB_ENV
+
+      - name: Set vcpkg triplet
+        run: |
+          if [[ "${{ inputs.os }}" == *"ubuntu"* ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ inputs.os }}" == *"macos"* ]]; then
+            arch=$(uname -m)
+            if [ "$arch" = "arm64" ]; then
+              echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
+              echo "CMAKE_OSX_ARCHITECTURES=arm64" >> $GITHUB_ENV
+            else
+              echo "VCPKG_TARGET_TRIPLET=x64-osx-release" >> $GITHUB_ENV
+              echo "CMAKE_OSX_ARCHITECTURES=x86_64" >> $GITHUB_ENV
+            fi
+          fi
+  
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
           name: cpp-build-release-${{ inputs.os }}
+        continue-on-error: true
 
       - name: Set up test data
         run: make data

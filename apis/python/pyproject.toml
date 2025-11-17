@@ -100,6 +100,21 @@ all = [
 # The CMakeLists.txt uses ExternalProject to build libtiledbsoma with the vcpkg preset
 build-dir = "build"
 
+# Source distribution configuration
+# Note: vcpkg_triplets are generated dynamically in CI, not included in sdist
+sdist.include = [
+    "dist_links/libtiledbsoma/**",
+    "dist_links/scripts/**",
+    "scripts/**",
+]
+sdist.exclude = [
+    "dist_links/libtiledbsoma/build/**",
+    "dist_links/libtiledbsoma/test/**",
+    "dist_links/libtiledbsoma/vcpkg_installed/**",
+    "**/__pycache__/**",
+    "**/*.pyc",
+]
+
 [tool.scikit-build.cmake]
 # CMake version requirement (use version instead of minimum-version for scikit-build-core >= 0.8)
 version = ">=3.21,<4"  # CMake 4 builds are broken on ARM Linux: https://github.com/single-cell-data/TileDB-SOMA/issues/3890
@@ -111,6 +126,8 @@ version = ">=3.21,<4"  # CMake 4 builds are broken on ARM Linux: https://github.
 CMAKE_BUILD_TYPE = "Release"
 # Disable deprecated TileDB APIs
 TILEDB_REMOVE_DEPRECATIONS = "ON"
+# Forward vcpkg triplet to CMake if set via environment
+VCPKG_TARGET_TRIPLET = {env = "VCPKG_TARGET_TRIPLET", default = ""}
 
 [tool.scikit-build.metadata.version]
 # Dynamic version provider - uses setuptools_scm for git-based versioning
@@ -144,14 +161,17 @@ manylinux-aarch64-image = "manylinux_2_28"
 # {project} is the temporary directory where cibuildwheel copies the package
 before-all = [
     "yum install -y git ninja-build perl-IPC-Cmd zip autoconf automake libtool pkg-config",
-    "git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg",
-    "{project}/../vcpkg/bootstrap-vcpkg.sh",
 ]
 
 # Set up vcpkg environment before each build
 # This runs for each Python version and sets environment variables that persist to the build
-# We use eval to execute export commands from the script so they persist to the build step
-before-build = "export VCPKG_ROOT={project}/../vcpkg && {project}/apis/python/scripts/setup_build_env.sh"
+before-build = [
+    "bash -c 'if [ ! -d {project}/../vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg && {project}/../vcpkg/bootstrap-vcpkg.sh; fi'",
+    "bash -c 'if [ -d {project}/vcpkg_triplets ]; then cp -f {project}/vcpkg_triplets/*-release.cmake {project}/../vcpkg/triplets/; fi'",
+    "export VCPKG_ROOT={project}/../vcpkg",
+    "export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "arch=$(uname -m); if [ \"$arch\" = \"aarch64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-linux-release; else export VCPKG_TARGET_TRIPLET=x64-linux-release; fi",
+]
 
 # Environment variables for vcpkg build
 environment = {VCPKG_FORCE_SYSTEM_BINARIES = "1"}
@@ -166,15 +186,30 @@ environment = {MACOSX_DEPLOYMENT_TARGET = "13.3"}
 before-all = [
     "brew update || true",
     "brew install automake llvm ninja git || true",
-    "git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg",
-    "{project}/../vcpkg/bootstrap-vcpkg.sh",
+]
+
+# Set up vcpkg environment before each build
+before-build = [
+    "bash -c 'if [ ! -d {project}/../vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg && {project}/../vcpkg/bootstrap-vcpkg.sh; fi'",
+    "bash -c 'if [ -d {project}/vcpkg_triplets ]; then cp -f {project}/vcpkg_triplets/*-release.cmake {project}/../vcpkg/triplets/; fi'",
+    "export VCPKG_ROOT={project}/../vcpkg",
+    "export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "arch=$(uname -m); if [ \"$arch\" = \"arm64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-osx-release && export CMAKE_OSX_ARCHITECTURES=arm64; else export VCPKG_TARGET_TRIPLET=x64-osx-release && export CMAKE_OSX_ARCHITECTURES=x86_64; fi",
 ]
 
 [tool.cibuildwheel.windows]
 # Install system dependencies and bootstrap vcpkg
 before-all = [
     "choco install ninja cmake git -y",
-    "powershell -ExecutionPolicy Bypass -File {project}\\apis\\python\\scripts\\setup_build_env.ps1",
+]
+
+# Set up vcpkg environment before each build
+before-build = [
+    "powershell -ExecutionPolicy Bypass -Command \"if (-not (Test-Path '{project}\\..\\vcpkg')) { git clone --depth 1 https://github.com/microsoft/vcpkg.git '{project}\\..\\vcpkg'; & '{project}\\..\\vcpkg\\bootstrap-vcpkg.bat' }\"",
+    "powershell -ExecutionPolicy Bypass -Command \"if (Test-Path '{project}\\vcpkg_triplets') { Copy-Item '{project}\\vcpkg_triplets\\*-release.cmake' '{project}\\..\\vcpkg\\triplets\\' -Force }\"",
+    "set VCPKG_ROOT={project}\\..\\vcpkg",
+    "set CMAKE_TOOLCHAIN_FILE={project}\\..\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+    "set VCPKG_TARGET_TRIPLET=x64-windows-release",
 ]
 
 # Note: Version is automatically derived from git tags via setuptools_scm
