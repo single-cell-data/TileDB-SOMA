@@ -72,6 +72,7 @@ jobs:
           set(VCPKG_CRT_LINKAGE dynamic)
           set(VCPKG_LIBRARY_LINKAGE dynamic)
           set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
           EOF
           
           # arm64-linux-release
@@ -80,6 +81,7 @@ jobs:
           set(VCPKG_CRT_LINKAGE dynamic)
           set(VCPKG_LIBRARY_LINKAGE dynamic)
           set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
           EOF
           
           # x64-osx-release
@@ -106,8 +108,14 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             ./vcpkg/bootstrap-vcpkg.sh
           fi
-          # Copy custom triplets
-          cp -f apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/ || true
+          # Copy custom triplets and verify
+          echo "Copying triplets from apis/python/vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
+          cp -v apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          echo "Verifying triplets were copied:"
+          ls -la vcpkg/triplets/*-release.cmake
+          echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
+          grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
           echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
           echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
@@ -195,6 +203,7 @@ jobs:
           set(VCPKG_CRT_LINKAGE dynamic)
           set(VCPKG_LIBRARY_LINKAGE dynamic)
           set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
           EOF
           
           # arm64-linux-release
@@ -203,6 +212,7 @@ jobs:
           set(VCPKG_CRT_LINKAGE dynamic)
           set(VCPKG_LIBRARY_LINKAGE dynamic)
           set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
           EOF
           
           # x64-osx-release
@@ -232,6 +242,23 @@ jobs:
           EOF
           
           ls -la vcpkg_triplets/
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d vcpkg ]; then
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            ./vcpkg/bootstrap-vcpkg.sh
+          fi
+          # Copy custom triplets and verify
+          echo "Copying triplets from apis/python/vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
+          cp -v apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          echo "Verifying triplets were copied:"
+          ls -la vcpkg/triplets/*-release.cmake
+          echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
+          grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
+          echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
