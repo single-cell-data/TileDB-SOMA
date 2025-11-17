@@ -16,6 +16,7 @@
 
 #include <any>
 #include <concepts>
+#include <span>
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -48,10 +49,11 @@ struct ArrowBuffer {
     ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::unique_ptr<std::byte[]> data_;
-    std::unique_ptr<int64_t[]> large_offsets_;
-    std::unique_ptr<int32_t[]> small_offsets_;
-    std::unique_ptr<std::byte[]> validity_;
+    std::unique_ptr<std::byte[]> global_buffer_;
+    std::span<std::byte> data_;
+    std::span<int64_t> large_offsets_;
+    std::span<int32_t> small_offsets_;
+    std::span<uint8_t> validity_;
 
     size_t length;
     std::string name;
