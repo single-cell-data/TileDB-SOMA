@@ -69,8 +69,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
       "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       CACHE STRING "Vcpkg toolchain file"
     )
-  elseif(NOT (DEFINED ENV{TILEDB_DISABLE_AUTO_VCPKG} OR TILEDB_DISABLE_AUTO_VCPKG))
-    if (TILEDBSOMA_FETCH_VCPKG)
+  elseif (TILEDBSOMA_FETCH_VCPKG)
       # Inspired from https://github.com/Azure/azure-sdk-for-cpp/blob/azure-core_1.10.3/cmake-modules/AzureVcpkg.cmake
       message("TILEDBSOMA_FETCH_VCPKG is enabled. Fetching a local copy of vcpkg.")
       set(VCPKG_COMMIT_STRING ea2a964f9303270322cf3f2d51c265ba146c422d) # 2025-04-01
@@ -83,7 +82,6 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
       )
       FetchContent_MakeAvailable(vcpkg)
       set(CMAKE_TOOLCHAIN_FILE "${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
-    endif()
   endif()
 endif()
 
