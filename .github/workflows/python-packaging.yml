@@ -51,6 +51,77 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: "Setup for macOS"
+        if: ${{ startsWith(matrix.os, 'macos-') == true }}
+        run: |
+          set -e pipefail
+          brew update
+          brew install automake llvm
+
+      - name: Create custom vcpkg triplets for release builds
+        working-directory: apis/python
+        run: |
+          mkdir -p vcpkg_triplets
+          
+          # x64-linux-release
+          cat > vcpkg_triplets/x64-linux-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE x64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          EOF
+          
+          # arm64-linux-release
+          cat > vcpkg_triplets/arm64-linux-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE arm64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          EOF
+          
+          # x64-osx-release
+          cat > vcpkg_triplets/x64-osx-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE x64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_OSX_ARCHITECTURE x86_64)
+          EOF
+          
+          # arm64-osx-release
+          cat > vcpkg_triplets/arm64-osx-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE arm64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_OSX_ARCHITECTURE arm64)
+          EOF
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d vcpkg ]; then
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            ./vcpkg/bootstrap-vcpkg.sh
+          fi
+          # Copy custom triplets
+          cp -f apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/ || true
+          echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Set VCPKG_TARGET_TRIPLET
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-24.04" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "ubuntu-24.04-arm" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=arm64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-15-intel" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-osx-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-15" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
+          fi
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
         with:
