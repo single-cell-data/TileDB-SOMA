@@ -26,9 +26,9 @@ find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 # Get version from setuptools_scm generated file or fallback
 # setuptools_scm writes version to src/tiledbsoma/_version.py if configured
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/tiledbsoma/_version.py")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/_version.py")
     # Try to read version from setuptools_scm generated file
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/tiledbsoma/_version.py" VERSION_PY_CONTENT)
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/_version.py" VERSION_PY_CONTENT)
     string(REGEX MATCH "__version__ = \"([^\"]+)\"" _ "${VERSION_PY_CONTENT}")
     if(CMAKE_MATCH_1)
         set(VERSION_STRING "${CMAKE_MATCH_1}")
@@ -49,7 +49,18 @@ endif()
 
 # Build libtiledbsoma using ExternalProject
 # This will build libtiledbsoma and all its dependencies via vcpkg
-set(LIBTILEDBSOMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../libtiledbsoma")
+# Check for the sdist-vendored directory first
+set(LIBTDB_SDIST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dist_links/libtiledbsoma")
+
+if(EXISTS "${LIBTDB_SDIST_SOURCE_DIR}")
+    # We are in an sdist build. Use the vendored path.
+    message(STATUS "Using vendored libtiledbsoma source from sdist")
+    set(LIBTILEDBSOMA_SOURCE_DIR "${LIBTDB_SDIST_SOURCE_DIR}")
+else()
+    # We are in a dev (Git) build. Use the relative path.
+    message(STATUS "Using libtiledbsoma source from Git repo")
+    set(LIBTILEDBSOMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../libtiledbsoma")
+endif()
 set(LIBTILEDBSOMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/libtiledbsoma-build")
 set(LIBTILEDBSOMA_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install")
 
