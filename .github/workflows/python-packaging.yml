@@ -39,7 +39,7 @@ jobs:
           path: apis/python/dist/
 
   test_sdist:
-    name: Build source distribution
+    name: Test source distribution
     needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
@@ -108,16 +108,16 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             ./vcpkg/bootstrap-vcpkg.sh
           fi
-          # Copy custom triplets and verify
+          # Copy custom triplets using absolute path
           echo "Copying triplets from apis/python/vcpkg_triplets/ to vcpkg/triplets/"
-          ls -la apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
-          cp -v apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          ls -la $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
           echo "Verifying triplets were copied:"
           ls -la vcpkg/triplets/*-release.cmake
           echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
           grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
-          echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
-          echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       - name: Set VCPKG_TARGET_TRIPLET
         run: |
@@ -189,9 +189,6 @@ jobs:
           arch="${plat#*_}"
           echo "ARCH=$arch" >> $GITHUB_ENV
 
-      # vcpkg setup is now handled by cibuildwheel via pyproject.toml
-      # No need to bootstrap vcpkg here as it will be done per build
-
       - name: Create custom vcpkg triplets for release builds
         working-directory: apis/python
         run: |
@@ -241,16 +238,16 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             ./vcpkg/bootstrap-vcpkg.sh
           fi
-          # Copy custom triplets and verify
+          # Copy custom triplets using absolute path
           echo "Copying triplets from apis/python/vcpkg_triplets/ to vcpkg/triplets/"
-          ls -la apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
-          cp -v apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          ls -la $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
           echo "Verifying triplets were copied:"
           ls -la vcpkg/triplets/*-release.cmake
           echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
           grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
-          echo $(pwd)/vcpkg 
-          echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+          echo "vcpkg location: $GITHUB_WORKSPACE/vcpkg"
+          ls -l $GITHUB_WORKSPACE/vcpkg
 
       - name: Install dependencies
         run: |
@@ -266,17 +263,17 @@ jobs:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
           CIBW_ENVIRONMENT_LINUX: >
-            VCPKG_ROOT={package_dir}/../../vcpkg
-            CMAKE_TOOLCHAIN_FILE={package_dir}/../../vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
+            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
             VCPKG_FORCE_SYSTEM_BINARIES=1
           CIBW_ENVIRONMENT_MACOS: >
-            VCPKG_ROOT={package_dir}/../../vcpkg
-            CMAKE_TOOLCHAIN_FILE={package_dir}/../../vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
+            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
             CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
-          # Note: vcpkg is bootstrapped inside containers via before-build hooks in pyproject.toml
-          # The triplets are generated in the "Create custom vcpkg triplets" step above
+          # Note: vcpkg is bootstrapped before cibuildwheel runs
+          # The triplets are generated and copied in the steps above
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl
