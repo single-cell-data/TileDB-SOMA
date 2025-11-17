@@ -249,7 +249,7 @@ jobs:
           ls -la vcpkg/triplets/*-release.cmake
           echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
           grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
-          echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
+          echo $(pwd)/vcpkg 
           echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       - name: Install dependencies
