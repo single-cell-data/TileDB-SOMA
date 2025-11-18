@@ -172,8 +172,8 @@ before-build = [
 ]
 
 # Custom repair command to handle bundled libraries
-# Tell auditwheel where to find our bundled libraries (in tiledbsoma subdirectory)
-repair-wheel-command = "auditwheel repair --lib-sdir tiledbsoma -w {dest_dir} {wheel}"
+# auditwheel will bundle external dependencies into .libs/ and patch RPATH
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
 # Bootstrap vcpkg (cibuildwheel runs in isolated environments)
