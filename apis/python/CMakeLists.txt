@@ -271,21 +271,34 @@ set_target_properties(pytiledbsoma PROPERTIES
 # Install the extension module
 install(TARGETS pytiledbsoma DESTINATION tiledbsoma)
 
-# Install shared libraries
+# Debug: Check if libraries exist before installing
+if(APPLE)
+    message(STATUS "Checking for: ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledbsoma.dylib")
+elseif(UNIX)
+    message(STATUS "Checking for: ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledbsoma.so")
+    message(STATUS "Checking for: ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledbsoma.so")
+endif()
+
+# Install shared libraries - try both lib and lib64 locations
 if(APPLE)
     install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledbsoma.dylib
         DESTINATION tiledbsoma
-        OPTIONAL
     )
 elseif(UNIX)
-    install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledbsoma.so
-        DESTINATION tiledbsoma
-        OPTIONAL
-    )
-    install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledbsoma.so
-        DESTINATION tiledbsoma
-        OPTIONAL
-    )
+    # Install from whichever location exists (lib or lib64)
+    install(CODE "
+        if(EXISTS \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledbsoma.so\")
+            file(INSTALL \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledbsoma.so\" 
+                 DESTINATION \"\${CMAKE_INSTALL_PREFIX}/tiledbsoma\")
+            message(STATUS \"Installed libtiledbsoma.so from lib/\")
+        elseif(EXISTS \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledbsoma.so\")
+            file(INSTALL \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledbsoma.so\" 
+                 DESTINATION \"\${CMAKE_INSTALL_PREFIX}/tiledbsoma\")
+            message(STATUS \"Installed libtiledbsoma.so from lib64/\")
+        else()
+            message(FATAL_ERROR \"Could not find libtiledbsoma.so in ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib or ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64\")
+        endif()
+    ")
 elseif(WIN32)
     install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/bin/tiledbsoma.dll
         DESTINATION tiledbsoma
@@ -298,21 +311,24 @@ if(NOT DEFINED ENV{TILEDB_PATH})
     if(APPLE)
         install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.dylib
             DESTINATION tiledbsoma
-            OPTIONAL
         )
     elseif(UNIX)
-        install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.so
-            DESTINATION tiledbsoma
-            OPTIONAL
-        )
-        install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledb.so
-            DESTINATION tiledbsoma
-            OPTIONAL
-        )
+        install(CODE "
+            if(EXISTS \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.so\")
+                file(INSTALL \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.so\" 
+                     DESTINATION \"\${CMAKE_INSTALL_PREFIX}/tiledbsoma\")
+                message(STATUS \"Installed libtiledb.so from lib/\")
+            elseif(EXISTS \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledb.so\")
+                file(INSTALL \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64/libtiledb.so\" 
+                     DESTINATION \"\${CMAKE_INSTALL_PREFIX}/tiledbsoma\")
+                message(STATUS \"Installed libtiledb.so from lib64/\")
+            else()
+                message(FATAL_ERROR \"Could not find libtiledb.so in ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib or ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64\")
+            endif()
+        ")
     elseif(WIN32)
         install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/bin/tiledb.dll
             DESTINATION tiledbsoma
-            OPTIONAL
         )
     endif()
 endif()

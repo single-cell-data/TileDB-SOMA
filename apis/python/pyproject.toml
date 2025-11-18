@@ -107,6 +107,7 @@ include = [
     "dist_links/scripts/**",
     "scripts/**",
     "vcpkg_triplets/**",
+    "src/tiledbsoma/_version.py",  # Include generated version file
 ]
 exclude = [
     "dist_links/libtiledbsoma/build/**",
@@ -187,9 +188,11 @@ before-build = [
 [tool.setuptools_scm]
 # Configure setuptools_scm to work with the project structure
 write_to = "src/tiledbsoma/_version.py"
-# Use git to find version from tags
-# When building from sdist without git, use the fallback
+# Use git to find version from tags when available
+# When building from sdist, use the version from PKG-INFO/METADATA
 fallback_version = "0.0.0+unknown"
+# Ensure version file is included in sdist and used when building from sdist
+version_file = "src/tiledbsoma/_version.py"
 
 [tool.mypy]
 show_error_codes = true
