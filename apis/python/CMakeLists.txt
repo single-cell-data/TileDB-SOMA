@@ -311,12 +311,14 @@ elseif(WIN32)
 endif()
 
 # Install TileDB shared libraries if not provided externally
+# Note: On macOS, delocate-wheel will automatically bundle dylib dependencies,
+# so we don't need to install them manually (would cause duplication)
 if(NOT DEFINED ENV{TILEDB_PATH})
     if(APPLE)
-        install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.dylib
-            DESTINATION tiledbsoma
-        )
+        # macOS: Skip installing libtiledb.dylib - delocate-wheel will handle it
+        message(STATUS "Skipping libtiledb.dylib install on macOS - delocate-wheel will bundle it automatically")
     elseif(UNIX)
+        # Linux: Must install libtiledb.so - auditwheel needs it in place
         install(CODE "
             if(EXISTS \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.so\")
                 file(INSTALL \"${LIBTILEDBSOMA_INSTALL_PREFIX}/lib/libtiledb.so\" 
