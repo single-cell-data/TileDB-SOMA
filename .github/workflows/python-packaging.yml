@@ -165,8 +165,20 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for setuptools_scm
-          fetch-tags: true  # Required for setuptools_scm
+          fetch-depth: 0
+          fetch-tags: true
+      
+      - name: "DEBUG: Show pyproject.toml contents"
+        run: |
+          echo "--- Displaying apis/python/pyproject.toml ---"
+          cat apis/python/pyproject.toml
+          echo "----------------------------------------------"
+
+      - name: "DEBUG: Clear GHA Cache (if any)"
+        uses: actions/cache/delete@v4
+        with:
+          key: vcpkg-cache # Update this key if you use a different one
+        continue-on-error: true
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -174,29 +186,27 @@ jobs:
           set -e pipefail
           brew update
           brew install automake llvm
-          # This step is still needed if vcpkg (run by before-build)
-          # requires these host tools.
 
       - name: "Setup for arm builds"
-        # This is still valuable, as it passes config *to* cibuildwheel
         if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
         run: |
           echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-      
+
       - name: Install cibuildwheel and dependencies
         run: |
           pip install --upgrade 'cibuildwheel>=2.19.0' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.1 # Using the action is fine
+        uses: pypa/cibuildwheel@v3.1.1
         with:
           package-dir: apis/python/
           output-dir: wheelhouse
         env:
-          # This tells cibuildwheel *which* job to run
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
-          CIBW_BUILD_VERBOSITY: 3
+          CIBW_BUILD_VERBITY: 3
+          CIBW_PRINT_ENV: "1"
+
           CIBW_ENVIRONMENT_LINUX: >
             VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
             CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -207,7 +217,6 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
             CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
-          
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl

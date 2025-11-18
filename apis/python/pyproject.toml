@@ -165,11 +165,11 @@ manylinux-aarch64-image = "manylinux_2_28"
 # Bootstrap vcpkg inside the container (containers are isolated from host)
 # {project} is the temporary directory where cibuildwheel copies the package
 before-build = [
-    "bash -c 'if [ ! -d {project}/../vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg && {project}/../vcpkg/bootstrap-vcpkg.sh; fi'",
-    "bash -c 'if [ -d {project}/vcpkg_triplets ]; then cp -f {project}/vcpkg_triplets/*-release.cmake {project}/../vcpkg/triplets/; fi'",
-    "bash -c 'export VCPKG_ROOT={project}/../vcpkg && export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake && export VCPKG_FORCE_SYSTEM_BINARIES=1 && arch=$(uname -m) && if [ \"$arch\" = \"aarch64\" ]; then TRIPLET=arm64-linux-release; else TRIPLET=x64-linux-release; fi && if [ -f {project}/dist_links/libtiledbsoma/vcpkg.json ]; then {project}/../vcpkg/vcpkg install --manifest {project}/dist_links/libtiledbsoma/vcpkg.json --triplet $TRIPLET; elif [ -f {project}/../../libtiledbsoma/vcpkg.json ]; then {project}/../vcpkg/vcpkg install --manifest {project}/../../libtiledbsoma/vcpkg.json --triplet $TRIPLET; fi'",
-    "export VCPKG_ROOT={project}/../vcpkg",
-    "export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "bash -c 'if [ ! -d {project}/vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/vcpkg && {project}/vcpkg/bootstrap-vcpkg.sh; fi'",
+    "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
+    "bash -c 'export VCPKG_ROOT={project}/vcpkg && export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake && export VCPKG_FORCE_SYSTEM_BINARIES=1 && arch=$(uname -m) && if [ \"$arch\" = \"aarch64\" ]; then TRIPLET=arm64-linux-release; else TRIPLET=x64-linux-release; fi && if [ -f {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json --triplet $TRIPLET; elif [ -f {project}/../../libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/../../libtiledbsoma/vcpkg.json --triplet $TRIPLET; fi'",
+    "export VCPKG_ROOT={project}/vcpkg",
+    "export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake",
     "export VCPKG_FORCE_SYSTEM_BINARIES=1",
     "arch=$(uname -m); if [ \"$arch\" = \"aarch64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-linux-release; else export VCPKG_TARGET_TRIPLET=x64-linux-release; fi",
 ]
@@ -195,12 +195,13 @@ environment = {MACOSX_DEPLOYMENT_TARGET = "13.3"}
 # Bootstrap vcpkg (cibuildwheel runs in isolated environments)
 # {project} is the temporary directory where cibuildwheel copies the package
 before-build = [
-    "bash -c 'if [ ! -d {project}/../vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg && {project}/../vcpkg/bootstrap-vcpkg.sh; fi'",
-    "bash -c 'if [ -d {project}/vcpkg_triplets ]; then cp -f {project}/vcpkg_triplets/*-release.cmake {project}/../vcpkg/triplets/; fi'",
-    "bash -c 'export VCPKG_ROOT={project}/../vcpkg && export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake && arch=$(uname -m) && if [ \"$arch\" = \"arm64\" ]; then TRIPLET=arm64-osx-release && export CMAKE_OSX_ARCHITECTURES=arm64; else TRIPLET=x64-osx-release && export CMAKE_OSX_ARCHITECTURES=x86_64; fi && if [ -f {project}/dist_links/libtiledbsoma/vcpkg.json ]; then {project}/../vcpkg/vcpkg install --manifest {project}/dist_links/libtiledbsoma/vcpkg.json --triplet $TRIPLET; elif [ -f {project}/../../libtiledbsoma/vcpkg.json ]; then {project}/../vcpkg/vcpkg install --manifest {project}/../../libtiledbsoma/vcpkg.json --triplet $TRIPLET; fi'",
-    "export VCPKG_ROOT={project}/../vcpkg",
-    "export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
-    "arch=$(uname -m); if [ \"$arch\" = \"arm64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-osx-release && export CMAKE_OSX_ARCHITECTURES=arm64; else export VCPKG_TARGET_TRIPLET=x64-osx-release && export CMAKE_OSX_ARCHITECTURES=x86_64; fi",
+    "bash -c 'if [ ! -d {project}/vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/vcpkg && {project}/vcpkg/bootstrap-vcpkg.sh; fi'",
+    "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
+    "bash -c 'export VCPKG_ROOT={project}/vcpkg && export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake && export VCPKG_FORCE_SYSTEM_BINARIES=1 && arch=$(uname -m) && if [ \"$arch\" = \"aarch64\" ]; then TRIPLET=arm64-linux-release; else TRIPLET=x64-linux-release; fi && if [ -f {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json --triplet $TRIPLET; elif [ -f {project}/../../libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/../../libtiledbsoma/vcpkg.json --triplet $TRIPLET; fi'",
+    "export VCPKG_ROOT={project}/vcpkg",
+    "export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "export VCPKG_FORCE_SYSTEM_BINARIES=1",
+    "arch=$(uname -m); if [ \"$arch\" = \"aarch64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-linux-release; else export VCPKG_TARGET_TRIPLET=x64-linux-release; fi",
 ]
 
 # Note: Version is automatically derived from git tags via setuptools_scm
