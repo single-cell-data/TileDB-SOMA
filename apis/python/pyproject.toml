@@ -127,7 +127,8 @@ version = ">=3.21,<4"  # CMake 4 builds are broken on ARM Linux: https://github.
 CMAKE_BUILD_TYPE = "Release"
 # Disable deprecated TileDB APIs
 TILEDB_REMOVE_DEPRECATIONS = "ON"
-# Forward vcpkg triplet to CMake if set via environment
+# Forward vcpkg configuration to CMake
+CMAKE_TOOLCHAIN_FILE = {env = "CMAKE_TOOLCHAIN_FILE", default = ""}
 VCPKG_TARGET_TRIPLET = {env = "VCPKG_TARGET_TRIPLET", default = ""}
 
 [tool.scikit-build.metadata.version]
