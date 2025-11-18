@@ -189,12 +189,18 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
-          # Platform-specific environment variables
+          # Platform-specific environment variables - note: paths are evaluated inside the container
           CIBW_ENVIRONMENT_LINUX: >
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
+            VCPKG_ROOT=/project/vcpkg
+            CMAKE_TOOLCHAIN_FILE=/project/vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_FORCE_SYSTEM_BINARIES=1
           CIBW_ENVIRONMENT_MACOS: >
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
             CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
+            MACOSX_DEPLOYMENT_TARGET=13.3
+            VCPKG_ROOT="$(pwd)/vcpkg"
+            CMAKE_TOOLCHAIN_FILE="$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl

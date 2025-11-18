@@ -170,11 +170,6 @@ before-build = [
     "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
 ]
 
-# Set environment variables for the build
-# Note: {project} is expanded by cibuildwheel to the temp directory path
-# VCPKG_TARGET_TRIPLET is set via workflow environment for platform-specific builds
-environment = { VCPKG_ROOT="{project}/vcpkg", CMAKE_TOOLCHAIN_FILE="{project}/vcpkg/scripts/buildsystems/vcpkg.cmake", VCPKG_FORCE_SYSTEM_BINARIES="1" }
-
 [tool.cibuildwheel.macos]
 # Bootstrap vcpkg (cibuildwheel runs in isolated environments)
 # {project} is the temporary directory where cibuildwheel copies the package
@@ -183,9 +178,7 @@ before-build = [
     "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
 ]
 
-# Set environment variables for the build
-# Platform-specific variables (VCPKG_TARGET_TRIPLET, CMAKE_OSX_ARCHITECTURES) set via workflow
-environment = { MACOSX_DEPLOYMENT_TARGET = "13.3", VCPKG_ROOT="{project}/vcpkg", CMAKE_TOOLCHAIN_FILE="{project}/vcpkg/scripts/buildsystems/vcpkg.cmake" }
+# Environment variables set in workflow via CIBW_ENVIRONMENT_MACOS
 
 # Note: Version is automatically derived from git tags via setuptools_scm
 # RELEASE-VERSION file can be generated as a fallback using _get_version.py
