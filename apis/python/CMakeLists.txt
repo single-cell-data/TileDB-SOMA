@@ -236,16 +236,6 @@ if(APPLE)
     list(APPEND CXX_FLAGS "-D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2")
 endif()
 
-# RPATH configuration for shared libraries
-if(UNIX AND NOT APPLE)
-    list(APPEND CXX_FLAGS "-Wl,-rpath,${LIBTILEDBSOMA_INSTALL_PREFIX}/lib")
-    list(APPEND CXX_FLAGS "-Wl,-rpath,${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64")
-endif()
-
-if(APPLE)
-    list(APPEND CXX_FLAGS "-Wl,-rpath,${LIBTILEDBSOMA_INSTALL_PREFIX}/lib")
-endif()
-
 # Create Python extension module
 pybind11_add_module(
     pytiledbsoma
@@ -262,10 +252,24 @@ target_link_libraries(pytiledbsoma PRIVATE tiledbsoma)
 # Set compiler flags
 target_compile_options(pytiledbsoma PRIVATE ${CXX_FLAGS})
 
-# Set C++ standard
+# Set C++ standard and RPATH for finding bundled libraries
+if(APPLE)
+    # macOS uses @loader_path instead of $ORIGIN
+    set(RPATH_ORIGIN "@loader_path")
+else()
+    # Linux uses $ORIGIN
+    set(RPATH_ORIGIN "$ORIGIN")
+endif()
+
 set_target_properties(pytiledbsoma PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
+    # Set RPATH to look in same directory as extension module
+    BUILD_RPATH "${LIBTILEDBSOMA_INSTALL_PREFIX}/lib;${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH_USE_LINK_PATH FALSE
+    BUILD_WITH_INSTALL_RPATH FALSE
+    SKIP_BUILD_RPATH FALSE
 )
 
 # Install the extension module

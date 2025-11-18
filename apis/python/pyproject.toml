@@ -171,6 +171,10 @@ before-build = [
     "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
 ]
 
+# Custom repair command to handle bundled libraries
+# Tell auditwheel where to find our bundled libraries (in tiledbsoma subdirectory)
+repair-wheel-command = "auditwheel repair --lib-sdir tiledbsoma -w {dest_dir} {wheel}"
+
 [tool.cibuildwheel.macos]
 # Bootstrap vcpkg (cibuildwheel runs in isolated environments)
 # {project} is the temporary directory where cibuildwheel copies the package
@@ -178,6 +182,9 @@ before-build = [
     "bash -c 'if [ ! -d {project}/vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/vcpkg && {project}/vcpkg/bootstrap-vcpkg.sh; fi'",
     "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
 ]
+
+# Custom repair command for macOS (delocate handles dylib bundling)
+repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
 
 # Environment variables set in workflow via CIBW_ENVIRONMENT_MACOS
 
