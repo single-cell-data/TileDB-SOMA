@@ -76,9 +76,20 @@ set(LIBTILEDBSOMA_CMAKE_ARGS
     -DOVERRIDE_INSTALL_PREFIX=OFF
     -DTILEDB_REMOVE_DEPRECATIONS=ON
     -DSUPERBUILD=ON
-    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 )
+
+# Forward compilers if explicitly set
+if(CMAKE_C_COMPILER)
+    list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    )
+endif()
+
+if(CMAKE_CXX_COMPILER)
+    list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    )
+endif()
 
 if(NINJA_FOUND)
     list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
@@ -86,6 +97,7 @@ if(NINJA_FOUND)
     )
 endif()
 
+# Forward CMAKE_TOOLCHAIN_FILE - critical for vcpkg
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
     list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -114,23 +126,45 @@ elseif(DEFINED ENV{VCPKG_TARGET_TRIPLET})
     )
 endif()
 
+# Forward VCPKG_FORCE_SYSTEM_BINARIES for ARM builds
+if(DEFINED ENV{VCPKG_FORCE_SYSTEM_BINARIES})
+    list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
+        -DVCPKG_FORCE_SYSTEM_BINARIES=$ENV{VCPKG_FORCE_SYSTEM_BINARIES}
+    )
+endif()
+
+# Prepare environment for ExternalProject (to pass vcpkg environment)
+set(LIBTILEDBSOMA_ENV_VARS "")
+if(DEFINED ENV{VCPKG_ROOT})
+    list(APPEND LIBTILEDBSOMA_ENV_VARS "VCPKG_ROOT=$ENV{VCPKG_ROOT}")
+endif()
+if(DEFINED ENV{VCPKG_FORCE_SYSTEM_BINARIES})
+    list(APPEND LIBTILEDBSOMA_ENV_VARS "VCPKG_FORCE_SYSTEM_BINARIES=$ENV{VCPKG_FORCE_SYSTEM_BINARIES}")
+endif()
+
 # Build libtiledbsoma as ExternalProject
 # Note: We configure libtiledbsoma with SUPERBUILD=ON so it builds TileDB via superbuild
 # while using vcpkg for other dependencies (spdlog, fmt, catch2)
+# Use CONFIGURE_COMMAND to pass environment variables during configuration
 ExternalProject_Add(
     libtiledbsoma_ep
     SOURCE_DIR ${LIBTILEDBSOMA_SOURCE_DIR}
     BINARY_DIR ${LIBTILEDBSOMA_BINARY_DIR}
-    CMAKE_ARGS ${LIBTILEDBSOMA_CMAKE_ARGS}
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${LIBTILEDBSOMA_ENV_VARS}
+        ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR}
+        ${LIBTILEDBSOMA_CMAKE_ARGS}
+        -S ${LIBTILEDBSOMA_SOURCE_DIR}
+        -B ${LIBTILEDBSOMA_BINARY_DIR}
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
     BUILD_ALWAYS OFF
 )
 
 # Custom command to build and install libtiledbsoma after configuration
+# Pass environment variables for vcpkg
 ExternalProject_Add_Step(libtiledbsoma_ep build_and_install
-    COMMAND ${CMAKE_COMMAND} --build ${LIBTILEDBSOMA_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} --build ${LIBTILEDBSOMA_BINARY_DIR}/libtiledbsoma --target install
+    COMMAND ${CMAKE_COMMAND} -E env ${LIBTILEDBSOMA_ENV_VARS} ${CMAKE_COMMAND} --build ${LIBTILEDBSOMA_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E env ${LIBTILEDBSOMA_ENV_VARS} ${CMAKE_COMMAND} --build ${LIBTILEDBSOMA_BINARY_DIR}/libtiledbsoma --target install
     DEPENDEES configure
     DEPENDERS build
     ALWAYS OFF
