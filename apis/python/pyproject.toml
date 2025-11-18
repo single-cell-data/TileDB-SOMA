@@ -196,8 +196,8 @@ repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest
 # Configure setuptools_scm to work with the project structure
 # Root is 2 levels up from apis/python (at repository root where .git is)
 root = "../.."
-# Write version file - path is relative to root
-write_to = "apis/python/src/tiledbsoma/_version.py"
+# Write version file - path is ALWAYS relative to pyproject.toml location, not root
+write_to = "src/tiledbsoma/_version.py"
 # Use git to find version from tags when available
 # When building from sdist, setuptools_scm will use the version from PKG-INFO
 fallback_version = "0.0.0+unknown"

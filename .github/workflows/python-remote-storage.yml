@@ -71,6 +71,24 @@ jobs:
         with:
           name: cpp-build-release-${{ matrix.os }}
       
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d vcpkg ]; then
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            ./vcpkg/bootstrap-vcpkg.sh
+          fi
+          echo "VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+          echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+          # Linux vcpkg needs this on non-Ubuntu systems or when system binaries are not available
+          echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
+      
+      - name: Copy vcpkg triplets
+        run: |
+          if [ -d apis/python/vcpkg_triplets ]; then
+            cp -f apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          fi
+      
       - name: Log pip dependencies
         run: pip list
 
