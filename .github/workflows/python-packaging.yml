@@ -197,6 +197,16 @@ jobs:
           # This tells cibuildwheel *which* job to run
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
+          CIBW_ENVIRONMENT_LINUX: >
+            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
+            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
+            VCPKG_FORCE_SYSTEM_BINARIES=1
+          CIBW_ENVIRONMENT_MACOS: >
+            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
+            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
+            CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
           
 
       - name: Check wheel name
