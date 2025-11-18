@@ -23,8 +23,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(pybind11 REQUIRED)
 find_package(Ninja)
 
-# Find Python
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+# Find Python - Use Development.Module (not Development) for manylinux compatibility
+# Development.Module only requires headers/metadata, not Python_LIBRARIES
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 # Get version from setuptools_scm generated file or fallback
 # setuptools_scm writes version to src/tiledbsoma/_version.py if configured
