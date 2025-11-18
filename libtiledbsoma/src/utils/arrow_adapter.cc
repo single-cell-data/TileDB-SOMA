@@ -802,8 +802,8 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     if (column->is_nullable()) {
         schema->flags |= ARROW_FLAG_NULLABLE;
 
-        array->null_count = ArrowBitCountSet(arrow_buffer->buffer_->validity_.data(), 0, column->size());
-
+        array->null_count = arrow_buffer->buffer_->length -
+                            ArrowBitCountSet(arrow_buffer->buffer_->validity_.data(), 0, column->size());
         // Count nulls
         // for (size_t i = 0; i < column->size(); ++i) {
         //     array->null_count += column->validity()[i] == 0;
