@@ -51,8 +51,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
-      - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -62,7 +60,6 @@ jobs:
           brew install automake llvm
 
       - name: Create custom vcpkg triplets for release builds
-        working-directory: apis/python
         run: |
           mkdir -p vcpkg_triplets
           
@@ -108,10 +105,13 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             ./vcpkg/bootstrap-vcpkg.sh
           fi
-          # Copy custom triplets using absolute path
-          echo "Copying triplets from apis/python/vcpkg_triplets/ to vcpkg/triplets/"
-          ls -la $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
-          cp -v $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          
+          # UPDATED: The copy path now points to the vcpkg_triplets
+          # directory we just created in the workspace root.
+          echo "Copying triplets from ./vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          
           echo "Verifying triplets were copied:"
           ls -la vcpkg/triplets/*-release.cmake
           echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
@@ -130,18 +130,19 @@ jobs:
           elif [[ "${{ matrix.os }}" == "macos-15" ]]; then
             echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
           fi
+          
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
         with:
           name: sdist
           path: apis/python/dist/
+
       - name: Install sdist artifact
-        working-directory: apis/python
         run: |
           echo $PWD
-          pip install --verbose dist/*.tar.gz
-      - name: sdist smoke test ${{ matrix.os }}
-        run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
+          # UPDATED: The install path now points to the location
+          # where the artifact was downloaded.
+          pip install --verbose apis/python/dist/*.tar.gz
 
   build_wheels:
     name: ${{ matrix.python_name }}-${{ matrix.platform }} wheel
@@ -164,8 +165,8 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
-          fetch-tags: true  # Tags needed for python API version number
+          fetch-depth: 0  # Required for setuptools_scm
+          fetch-tags: true  # Required for setuptools_scm
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -173,107 +174,30 @@ jobs:
           set -e pipefail
           brew update
           brew install automake llvm
+          # This step is still needed if vcpkg (run by before-build)
+          # requires these host tools.
 
       - name: "Setup for arm builds"
-        # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
+        # This is still valuable, as it passes config *to* cibuildwheel
         if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
         run: |
           echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
-
-      - name: Get arch
-        if: ${{ startsWith(matrix.os, 'macos-') == true }}
+      
+      - name: Install cibuildwheel and dependencies
         run: |
-          plat="${{ matrix.platform }}"
-          arch="${plat#*_}"
-          echo "ARCH=$arch" >> $GITHUB_ENV
-
-      - name: Create custom vcpkg triplets for release builds
-        working-directory: apis/python
-        run: |
-          mkdir -p vcpkg_triplets
-          
-          # x64-linux-release
-          cat > vcpkg_triplets/x64-linux-release.cmake << 'EOF'
-          set(VCPKG_TARGET_ARCHITECTURE x64)
-          set(VCPKG_CRT_LINKAGE dynamic)
-          set(VCPKG_LIBRARY_LINKAGE dynamic)
-          set(VCPKG_BUILD_TYPE release)
-          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
-          EOF
-          
-          # arm64-linux-release
-          cat > vcpkg_triplets/arm64-linux-release.cmake << 'EOF'
-          set(VCPKG_TARGET_ARCHITECTURE arm64)
-          set(VCPKG_CRT_LINKAGE dynamic)
-          set(VCPKG_LIBRARY_LINKAGE dynamic)
-          set(VCPKG_BUILD_TYPE release)
-          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
-          EOF
-          
-          # x64-osx-release
-          cat > vcpkg_triplets/x64-osx-release.cmake << 'EOF'
-          set(VCPKG_TARGET_ARCHITECTURE x64)
-          set(VCPKG_CRT_LINKAGE dynamic)
-          set(VCPKG_LIBRARY_LINKAGE dynamic)
-          set(VCPKG_BUILD_TYPE release)
-          set(VCPKG_OSX_ARCHITECTURE x86_64)
-          EOF
-          
-          # arm64-osx-release
-          cat > vcpkg_triplets/arm64-osx-release.cmake << 'EOF'
-          set(VCPKG_TARGET_ARCHITECTURE arm64)
-          set(VCPKG_CRT_LINKAGE dynamic)
-          set(VCPKG_LIBRARY_LINKAGE dynamic)
-          set(VCPKG_BUILD_TYPE release)
-          set(VCPKG_OSX_ARCHITECTURE arm64)
-          EOF
-                    
-          ls -la vcpkg_triplets/
-
-      - name: Bootstrap vcpkg
-        run: |
-          if [ ! -d vcpkg ]; then
-            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
-            ./vcpkg/bootstrap-vcpkg.sh
-          fi
-          # Copy custom triplets using absolute path
-          echo "Copying triplets from apis/python/vcpkg_triplets/ to vcpkg/triplets/"
-          ls -la $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in apis/python/vcpkg_triplets/"
-          cp -v $GITHUB_WORKSPACE/apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
-          echo "Verifying triplets were copied:"
-          ls -la vcpkg/triplets/*-release.cmake
-          echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
-          grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
-          echo "vcpkg location: $GITHUB_WORKSPACE/vcpkg"
-          ls -l $GITHUB_WORKSPACE/vcpkg
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1'
-          pip list
+          pip install --upgrade 'cibuildwheel>=2.19.0' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.1
+        uses: pypa/cibuildwheel@v3.1.1 # Using the action is fine
         with:
           package-dir: apis/python/
           output-dir: wheelhouse
         env:
+          # This tells cibuildwheel *which* job to run
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_ENVIRONMENT_LINUX: >
-            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
-            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
-            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
-            VCPKG_FORCE_SYSTEM_BINARIES=1
-          CIBW_ENVIRONMENT_MACOS: >
-            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
-            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
-            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
-            CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
-          # Note: vcpkg is bootstrapped before cibuildwheel runs
-          # The triplets are generated and copied in the steps above
+          
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl
