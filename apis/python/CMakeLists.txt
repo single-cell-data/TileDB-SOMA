@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
+cmake_policy(SET CMP0148 NEW) 
 
 # Set macOS architecture before project() to avoid vcpkg warnings
 if(APPLE AND NOT DEFINED CMAKE_OSX_ARCHITECTURES)
@@ -20,6 +21,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find pybind11 - required for pybind11_add_module
 find_package(pybind11 REQUIRED)
+find_package(Ninja)
 
 # Find Python
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
@@ -73,8 +75,15 @@ set(LIBTILEDBSOMA_CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX=${LIBTILEDBSOMA_INSTALL_PREFIX}
     -DOVERRIDE_INSTALL_PREFIX=OFF
     -DTILEDB_REMOVE_DEPRECATIONS=ON
-    -DSUPERBUILD=ON
+    -DSUPERBUILD=ON-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 )
+
+if(NINJA_FOUND)
+    list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
+        -DCMAKE_MAKE_PROGRAM=${NINJA_EXECUTABLE}
+    )
+endif()
 
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
     list(APPEND LIBTILEDBSOMA_CMAKE_ARGS
