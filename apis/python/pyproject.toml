@@ -101,12 +101,12 @@ all = [
 build-dir = "build"
 
 # Source distribution configuration
-# Note: vcpkg_triplets are generated dynamically in CI, not included in sdist
 [tool.scikit-build.sdist]
 include = [
     "dist_links/libtiledbsoma/**",
     "dist_links/scripts/**",
     "scripts/**",
+    "vcpkg_triplets/**",
 ]
 exclude = [
     "dist_links/libtiledbsoma/build/**",
@@ -157,52 +157,34 @@ test-requires = ["pytest"]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 
-# # Install system dependencies
-# before-all = [
-#     "yum install -y ninja-build perl-IPC-Cmd zip autoconf automake libtool pkg-config git",
-# ]
+# Install system dependencies required by vcpkg (runs once per container)
+before-all = [
+    "yum install -y zip unzip tar curl ninja-build perl-IPC-Cmd autoconf automake libtool pkg-config",
+]
 
 # Bootstrap vcpkg inside the container (containers are isolated from host)
 # {project} is the temporary directory where cibuildwheel copies the package
 before-build = [
     "bash -c 'if [ ! -d {project}/vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/vcpkg && {project}/vcpkg/bootstrap-vcpkg.sh; fi'",
     "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
-    "bash -c 'export VCPKG_ROOT={project}/vcpkg && export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake && export VCPKG_FORCE_SYSTEM_BINARIES=1 && arch=$(uname -m) && if [ \"$arch\" = \"aarch64\" ]; then TRIPLET=arm64-linux-release; else TRIPLET=x64-linux-release; fi && if [ -f {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json --triplet $TRIPLET; elif [ -f {project}/../../libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/../../libtiledbsoma/vcpkg.json --triplet $TRIPLET; fi'",
-    "export VCPKG_ROOT={project}/vcpkg",
-    "export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-    "export VCPKG_FORCE_SYSTEM_BINARIES=1",
-    "arch=$(uname -m); if [ \"$arch\" = \"aarch64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-linux-release; else export VCPKG_TARGET_TRIPLET=x64-linux-release; fi",
 ]
 
-# Set up vcpkg environment before each build
-# This runs for each Python version and sets environment variables that persist to the build
-before-build = [
-    "bash -c 'if [ ! -d {project}/../vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/../vcpkg && {project}/../vcpkg/bootstrap-vcpkg.sh; fi'",
-    "bash -c 'if [ -d {project}/vcpkg_triplets ]; then cp -f {project}/vcpkg_triplets/*-release.cmake {project}/../vcpkg/triplets/; fi'",
-    "export VCPKG_ROOT={project}/../vcpkg",
-    "export CMAKE_TOOLCHAIN_FILE={project}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
-    "arch=$(uname -m); if [ \"$arch\" = \"aarch64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-linux-release; else export VCPKG_TARGET_TRIPLET=x64-linux-release; fi",
-]
-
-# Environment variables for vcpkg build
-environment = {VCPKG_FORCE_SYSTEM_BINARIES = "1"}
+# Set environment variables for the build
+# Note: {project} is expanded by cibuildwheel to the temp directory path
+# VCPKG_TARGET_TRIPLET is set via workflow environment for platform-specific builds
+environment = { VCPKG_ROOT="{project}/vcpkg", CMAKE_TOOLCHAIN_FILE="{project}/vcpkg/scripts/buildsystems/vcpkg.cmake", VCPKG_FORCE_SYSTEM_BINARIES="1" }
 
 [tool.cibuildwheel.macos]
-# Set minimum macOS deployment target for compatibility
-environment = {MACOSX_DEPLOYMENT_TARGET = "13.3"}
-
-
 # Bootstrap vcpkg (cibuildwheel runs in isolated environments)
 # {project} is the temporary directory where cibuildwheel copies the package
 before-build = [
     "bash -c 'if [ ! -d {project}/vcpkg ]; then git clone --depth 1 https://github.com/microsoft/vcpkg.git {project}/vcpkg && {project}/vcpkg/bootstrap-vcpkg.sh; fi'",
     "bash -c 'if [ -d {project}/apis/python/vcpkg_triplets ]; then cp -f {project}/apis/python/vcpkg_triplets/*-release.cmake {project}/vcpkg/triplets/; fi'",
-    "bash -c 'export VCPKG_ROOT={project}/vcpkg && export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake && export VCPKG_FORCE_SYSTEM_BINARIES=1 && arch=$(uname -m) && if [ \"$arch\" = \"aarch64\" ]; then TRIPLET=arm64-linux-release; else TRIPLET=x64-linux-release; fi && if [ -f {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/apis/python/dist_links/libtiledbsoma/vcpkg.json --triplet $TRIPLET; elif [ -f {project}/../../libtiledbsoma/vcpkg.json ]; then {project}/vcpkg/vcpkg install --manifest {project}/../../libtiledbsoma/vcpkg.json --triplet $TRIPLET; fi'",
-    "export VCPKG_ROOT={project}/vcpkg",
-    "export CMAKE_TOOLCHAIN_FILE={project}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-    "export VCPKG_FORCE_SYSTEM_BINARIES=1",
-    "arch=$(uname -m); if [ \"$arch\" = \"aarch64\" ]; then export VCPKG_TARGET_TRIPLET=arm64-linux-release; else export VCPKG_TARGET_TRIPLET=x64-linux-release; fi",
 ]
+
+# Set environment variables for the build
+# Platform-specific variables (VCPKG_TARGET_TRIPLET, CMAKE_OSX_ARCHITECTURES) set via workflow
+environment = { MACOSX_DEPLOYMENT_TARGET = "13.3", VCPKG_ROOT="{project}/vcpkg", CMAKE_TOOLCHAIN_FILE="{project}/vcpkg/scripts/buildsystems/vcpkg.cmake" }
 
 # Note: Version is automatically derived from git tags via setuptools_scm
 # RELEASE-VERSION file can be generated as a fallback using _get_version.py

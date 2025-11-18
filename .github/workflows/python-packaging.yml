@@ -45,7 +45,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
@@ -87,7 +87,8 @@ jobs:
           set(VCPKG_CRT_LINKAGE dynamic)
           set(VCPKG_LIBRARY_LINKAGE dynamic)
           set(VCPKG_BUILD_TYPE release)
-          set(VCPKG_OSX_ARCHITECTURE x86_64)
+          set(VCPKG_OSX_ARCHITECTURES x86_64)
+          set(VCPKG_OSX_DEPLOYMENT_TARGET "13.0")
           EOF
           
           # arm64-osx-release
@@ -96,7 +97,8 @@ jobs:
           set(VCPKG_CRT_LINKAGE dynamic)
           set(VCPKG_LIBRARY_LINKAGE dynamic)
           set(VCPKG_BUILD_TYPE release)
-          set(VCPKG_OSX_ARCHITECTURE arm64)
+          set(VCPKG_OSX_ARCHITECTURES arm64)
+          set(VCPKG_OSX_DEPLOYMENT_TARGET "13.0")
           EOF
 
       - name: Bootstrap vcpkg
@@ -167,18 +169,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      
-      - name: "DEBUG: Show pyproject.toml contents"
-        run: |
-          echo "--- Displaying apis/python/pyproject.toml ---"
-          cat apis/python/pyproject.toml
-          echo "----------------------------------------------"
-
-      - name: "DEBUG: Clear GHA Cache (if any)"
-        uses: actions/cache/delete@v4
-        with:
-          key: vcpkg-cache # Update this key if you use a different one
-        continue-on-error: true
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -187,15 +177,9 @@ jobs:
           brew update
           brew install automake llvm
 
-      - name: "Setup for arm builds"
-        if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
-        run: |
-          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
-          echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-
       - name: Install cibuildwheel and dependencies
         run: |
-          pip install --upgrade 'cibuildwheel>=2.19.0' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1'
+          pip install --upgrade 'cibuildwheel>=2.19.0' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1' 'setuptools-scm>=8.0.0'
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
@@ -204,17 +188,11 @@ jobs:
           output-dir: wheelhouse
         env:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
-          CIBW_BUILD_VERBITY: 3
-          CIBW_PRINT_ENV: "1"
-
+          CIBW_BUILD_VERBOSITY: 3
+          # Platform-specific environment variables
           CIBW_ENVIRONMENT_LINUX: >
-            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
-            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
-            VCPKG_FORCE_SYSTEM_BINARIES=1
           CIBW_ENVIRONMENT_MACOS: >
-            VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg
-            CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake
             VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
             CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
 
@@ -248,9 +226,9 @@ jobs:
             os: ubuntu-22.04
           - wheel_suffix: manylinux_2_28_aarch64
             os: ubuntu-22.04-arm
-          - wheel_suffix: macosx_13_0_x86_64
+          - wheel_suffix: macosx_13_3_x86_64
             os: macos-15-intel
-          - wheel_suffix: macosx_13_0_arm64
+          - wheel_suffix: macosx_13_3_arm64
             os: macos-15
           - python_name: "cp39"
             python_version: "3.9"
@@ -291,9 +269,9 @@ jobs:
         # TODO: more thorough local smoke test
 
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python_version[0] }} bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
