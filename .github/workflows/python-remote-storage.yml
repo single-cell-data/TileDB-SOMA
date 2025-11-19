@@ -69,7 +69,7 @@ jobs:
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ matrix.os }}
+          name: cpp-build-Release-${{ matrix.os }}
 
       - name: Log pip dependencies
         run: pip list

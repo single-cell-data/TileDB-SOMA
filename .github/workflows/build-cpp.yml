@@ -71,8 +71,7 @@ jobs:
 
       - name: Build and install libtiledbsoma
         run: |
-          cmake -S libtiledbsoma -B build -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} \
-              -DTILEDBSOMA_ENABLE_WERROR=ON -DTILEDB_REMOVE_DEPRECATIONS=ON --preset $PRESET_NAME
+          ./scripts/bld --preset $PRESET_NAME --no-tiledb-deprecated=true --werror=true --build ${{ inputs.build_type }}
           cmake --build build -j 2
 
       # --- Dynamic Artifact Name ---
