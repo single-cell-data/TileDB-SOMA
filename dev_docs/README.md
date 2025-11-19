@@ -159,3 +159,51 @@ Update:
 ```bash
 Rscript -e 'devtools::load_all(recompile = TRUE)'
 ```
+
+# Custom vcpkg Triplets for TileDB-SOMA
+
+This directory contains custom vcpkg triplets for building Python wheels with optimized release configurations.
+
+## Purpose
+
+These triplets configure vcpkg to build dependencies (TileDB, spdlog, etc.) in release-only mode with dynamic linking, which is optimal for distributing Python wheels.
+
+## Available Triplets
+
+- `x64-linux-release.cmake` - Linux x86_64 release build
+- `arm64-linux-release.cmake` - Linux ARM64 release build
+- `x64-osx-release.cmake` - macOS x86_64 (Intel) release build with deployment target 13.0
+- `arm64-osx-release.cmake` - macOS ARM64 (Apple Silicon) release build with deployment target 13.0
+
+All triplets are configured with:
+
+- **Build Type**: Release only (no debug symbols, optimized builds)
+- **CRT Linkage**: Dynamic (runtime library linked dynamically)
+- **Library Linkage**: Dynamic (shared libraries for easier wheel bundling)
+- **macOS Deployment Target**: 13.0 (compatibility with macOS Ventura and later)
+
+## Usage
+
+### CI Builds
+
+The triplets are automatically used during CI builds:
+
+1. Included in source distributions (sdist) via `pyproject.toml`
+1. Copied to vcpkg during the `before-build` step in `cibuildwheel`
+1. Referenced via the `VCPKG_TARGET_TRIPLET` environment variable
+
+### Local Development
+
+For local wheel builds, the triplets are used automatically if building from a source distribution (sdist).
+
+If building from the git repository, you can use them by:
+
+1. Setting `VCPKG_TARGET_TRIPLET` environment variable:
+
+   ```bash
+   export VCPKG_TARGET_TRIPLET=x64-linux-release  # or arm64-osx-release, etc.
+   ```
+
+1. The build system will automatically copy them to vcpkg during the build
+
+For local development/debugging, you can also use vcpkg's default triplets (e.g., `x64-linux`) which include debug symbols.

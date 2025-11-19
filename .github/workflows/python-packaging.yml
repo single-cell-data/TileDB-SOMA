@@ -110,8 +110,6 @@ jobs:
             ./vcpkg/bootstrap-vcpkg.sh
           fi
           
-          # UPDATED: The copy path now points to the vcpkg_triplets
-          # directory we just created in the workspace root.
           echo "Copying triplets from ./vcpkg_triplets/ to vcpkg/triplets/"
           ls -la $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./vcpkg_triplets/"
           cp -v $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake vcpkg/triplets/
@@ -144,8 +142,6 @@ jobs:
       - name: Install sdist artifact
         run: |
           echo $PWD
-          # UPDATED: The install path now points to the location
-          # where the artifact was downloaded.
           pip install --verbose apis/python/dist/*.tar.gz
 
   build_wheels:
@@ -169,8 +165,8 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: 0 # Required to fetch tags: https://github.com/actions/checkout/issues/2199
+          fetch-tags: true # Tags needed for python API version number
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -277,7 +273,7 @@ jobs:
         # TODO: more thorough local smoke test
 
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-22.04' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
           docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
