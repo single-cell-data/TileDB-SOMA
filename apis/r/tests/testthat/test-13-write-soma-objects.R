@@ -404,14 +404,15 @@ test_that("write_soma.IterableMatrix mechanics", {
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
-  mat <- create_sparse_matrix_with_int_dims(nrows = 1610, ncols = 560)
+  mat <- create_sparse_matrix_with_int_dims(nrows = 1610L, ncols = 560L)
   ctx <- SOMATileDBContext$new(c(
     soma.init_buffer_bytes = Sys.getenv(
       "TILEDB_SOMA_INIT_BUFFER_BYTES",
       unset = "33554432"
     )
   ))
-  for (fmt in c("memory", "10x", "anndata", "dir", "hdf5")) {
+  formats <- c("memory", "10x", "anndata", "dir", "hdf5")
+  for (fmt in formats) {
     bpmat <- write_bpcells(mat, dirname = uri, format = fmt)
     expect_no_condition(smat <- write_soma(
       bpmat,
@@ -428,7 +429,7 @@ test_that("write_soma.IterableMatrix mechanics", {
     expect_equal(smat$shape(), dim(bpmat), info = fmt)
   }
   # Test transposition
-  for (fmt in c("memory", "10x", "anndata", "dir", "hdf5")) {
+  for (fmt in formats) {
     bpmat <- write_bpcells(mat, dirname = uri, format = fmt)
     tfmt <- sprintf("%s-transposed", fmt)
     expect_no_condition(smat <- write_soma(
@@ -450,7 +451,7 @@ test_that("write_soma.IterableMatrix mechanics", {
   ctx <- SOMATileDBContext$new(c(
     soma.init_buffer_bytes = as.character(2L * (1024L ^ 2L))
   ))
-  for (fmt in c("memory", "10x", "anndata", "dir", "hdf5")) {
+  for (fmt in formats) {
     bpmat <- write_bpcells(mat, dirname = uri, format = fmt)
     cfmt <- sprintf("%s-chunked", fmt)
     expect_no_condition(smat <- write_soma(
@@ -477,7 +478,7 @@ test_that("write_soma.IterableMatrix registration", {
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
-  mat <- create_sparse_matrix_with_int_dims(nrows = 1610, ncols = 560)
+  mat <- create_sparse_matrix_with_int_dims(nrows = 1610L, ncols = 560L)
   ctx <- SOMATileDBContext$new(c(
     soma.init_buffer_bytes = Sys.getenv(
       "TILEDB_SOMA_INIT_BUFFER_BYTES",
@@ -489,6 +490,7 @@ test_that("write_soma.IterableMatrix registration", {
   for (i in seq_along(formats)) {
     collection$reopen("WRITE")
     fmt <- formats[i]
+    info <- sprintf("registration: %s", fmt)
     bpmat <- write_bpcells(mat, dirname = uri, format = fmt)
     expect_no_condition(smat <- write_soma(
       bpmat,
@@ -498,15 +500,15 @@ test_that("write_soma.IterableMatrix registration", {
       tiledbsoma_ctx = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
-    expect_true(smat$exists(), info = fmt)
-    expect_identical(smat$uri, file.path(collection$uri, fmt), info = fmt)
+    expect_true(smat$exists(), info = info)
+    expect_identical(smat$uri, file.path(collection$uri, fmt), info = info)
 
     smat$close()
     collection$reopen("READ")
 
     expect_s3_class(collection, "SOMACollection")
-    expect_identical(collection$length(), i, info = fmt)
-    expect_identical(collection$names(), formats[1:i], info = fmt)
+    expect_identical(collection$length(), i, info = info)
+    expect_identical(collection$names(), formats[1:i], info = info)
     expect_s3_class(cmat <- collection$get(fmt), "SOMASparseNDArray")
     expect_s4_class(mat <- cmat$read()$sparse_matrix()$concat(), "dgTMatrix")
     expect_identical(as.matrix(mat), as.matrix(unname(mat)))
@@ -526,7 +528,45 @@ test_that("write_soma.IterableMatrix registration", {
     ))
     expect_error(write_soma(bpmat, "uri", soma_parent = NULL, key = "knex"))
   }
+})
 
+test_that("write_soma.IterableMatrix integrity", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("BPCells")
+  uri <- tempfile(pattern = "write-soma-bpcells-integrity")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  mat <- create_sparse_matrix_with_int_dims(nrows = 1610L, ncols = 560L)
+  ctx <- SOMATileDBContext$new(c(
+    soma.init_buffer_bytes = Sys.getenv(
+      "TILEDB_SOMA_INIT_BUFFER_BYTES",
+      unset = "33554432"
+    )
+  ))
+  for (fmt in c("memory", "10x", "anndata", "dir", "hdf5")) {
+    info <- sprintf("integrity: %s", fmt)
+    bpmat <- write_bpcells(mat, dirname = uri, format = fmt)
+    stopifnot(all.equal(
+      target = suppressMessages(suppressWarnings(as.matrix(bpmat))),
+      current = as.matrix(mat),
+      check.attributes = FALSE
+    ))
+    expect_no_condition(smat <- write_soma(
+      bpmat,
+      uri = fmt,
+      soma_parent = collection,
+      key = fmt,
+      tiledbsoma_ctx = ctx
+    ))
+    expect_s3_class(smat, "SOMASparseNDArray")
+    expect_true(smat$exists(), info = info)
+    expect_equal(smat$shape(), dim(bpmat), info = info)
+    smat$reopen("READ")
+    expect_s4_class(rmat <- smat$read()$sparse_matrix()$concat(), "dgTMatrix")
+    expect_identical(dim(rmat), dim(mat), info = info)
+    expect_identical(as.matrix(rmat), as.matrix(mat), info = info)
+  }
 })
 
 test_that("get_{some,tiledb}_object_type", {
