@@ -42,11 +42,11 @@ jobs:
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
-  
+
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ inputs.os }}
+          name: cpp-build-Release-${{ inputs.os }}
 
       - name: Restore Permissions
         run: chmod +x build/libtiledbsoma/test/*
@@ -76,14 +76,14 @@ jobs:
     runs-on: ${{ inputs.os }}
 
     steps:
-    
+
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ inputs.os }}
+          name: cpp-build-Release-${{ inputs.os }}
 
       - name: Restore Permissions
         run: chmod +x build/libtiledbsoma/test/*
