@@ -76,6 +76,7 @@ class ColumnBuffer {
      * @param is_nullable Column can contain null values
      * @param enumeration Optional Enumeration associated with column
      * @param is_ordered Optional Enumeration is ordered
+     * @param use_resize Optional Use `resize` for memory allocation 
      */
     ColumnBuffer(
         std::string_view name,
@@ -85,7 +86,8 @@ class ColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        bool use_resize = false);
 
     ColumnBuffer() = delete;
     ColumnBuffer(const ColumnBuffer&) = delete;

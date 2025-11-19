@@ -28,7 +28,7 @@ from ._dataframe import (
     _find_extent_for_domain,
     _revise_domain_for_extent,
 )
-from ._exception import SOMAError, map_exception_for_create
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
@@ -37,11 +37,11 @@ from ._spatial_util import (
     coordinate_space_to_json,
     process_spatial_df_region,
 )
-from ._tdb_handles import PointCloudDataFrameWrapper
 from ._types import OpenTimestamp
 from ._util import validate_create_uri
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
+from .options._util import build_clib_platform_config
 
 _UNBATCHED = options.BatchSize()
 
@@ -59,7 +59,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
     """
 
     __slots__ = ("_coord_space",)
-    _wrapper_type = PointCloudDataFrameWrapper
+    _handle_type = clib.SOMAPointCloudDataFrame
 
     @classmethod
     def create(
@@ -232,7 +232,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
-        plt_cfg = _util.build_clib_platform_config(platform_config)
+        plt_cfg = build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMAPointCloudDataFrame.create(
@@ -248,9 +248,21 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            handle = clib.SOMAPointCloudDataFrame.open(
+                uri,
+                mode=clib.OpenMode.soma_write,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+
+        except (RuntimeError, SOMAError) as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise SOMAError(tdbe) from tdbe
         return cls(
-            cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
         )
 
     def _parse_special_metadata(self) -> None:
@@ -274,7 +286,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
     def count(self) -> int:
         """Returns the number of rows in the dataframe."""
         self._verify_open_for_reading()
-        # if is it in read open mode, then it is a PointCloudDataFrameWrapper
         return int(self._handle.count)
 
     def delete_cells(

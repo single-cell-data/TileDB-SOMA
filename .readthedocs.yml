@@ -7,6 +7,11 @@ build:
   os: ubuntu-24.04
   tools:
     python: "3.11"
+  apt_packages:
+    - build-essential
+    - cmake
+    - git
   commands:
     - pip install --upgrade pip
-    - doc/build.sh -r -V  # install deps, don't make a venv
+    - git clone https://github.com/microsoft/vcpkg.git vcpkg && ./vcpkg/bootstrap-vcpkg.sh
+    - CMAKE_TOOLCHAIN_FILE=$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake doc/build.sh -r -V

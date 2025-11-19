@@ -45,10 +45,24 @@ class SOMACoordinateSpace;
  *
  */
 struct ArrowBuffer {
-    ArrowBuffer(std::shared_ptr<ColumnBuffer> buffer)
-        : buffer_(buffer) {};
+    ArrowBuffer(ColumnBuffer& buffer, bool large_offsets = true);
+    ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::shared_ptr<ColumnBuffer> buffer_;
+    std::vector<std::byte> data_;
+    std::vector<int64_t> large_offsets_;
+    std::vector<int32_t> small_offsets_;
+    std::vector<std::byte> validity_;
+
+    size_t length;
+    std::string name;
+};
+
+struct PrivateArrowBuffer {
+    PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
+        : buffer_(buffer) {
+    }
+
+    std::shared_ptr<ArrowBuffer> buffer_;
 };
 
 template <typename T>

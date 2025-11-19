@@ -19,6 +19,7 @@ from pandas.api.types import union_categoricals
 from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
+from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 from tests._util import raises_no_typeguard
 
@@ -40,7 +41,14 @@ def arrow_schema():
     return _schema
 
 
-def test_dataframe(tmp_path, arrow_schema):
+@pytest.mark.parametrize(
+    "cfg",
+    [
+        pytest.param({"soma.read.use_memory_pool": "false"}, id="default_mem_alloc"),
+        pytest.param({"soma.read.use_memory_pool": "true"}, id="experimental_mem_alloc"),
+    ],
+)
+def test_dataframe(tmp_path, arrow_schema, cfg):
     uri = tmp_path.as_posix()
     # Create
     asch = arrow_schema()
@@ -87,7 +95,7 @@ def test_dataframe(tmp_path, arrow_schema):
     with soma.DataFrame.open(uri, "r") as sdf, pytest.raises(soma.SOMAError):
         sdf.write(rb)
 
-    with soma.DataFrame.open(uri) as sdf:
+    with soma.DataFrame.open(uri, context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         assert sdf.count == 5
         assert len(sdf) == 5
 
@@ -393,7 +401,14 @@ def test_delete_cells_exceptions(tmp_path):
             soma_df.delete_cells((slice(3, 1),))
 
 
-def test_dataframe_with_enumeration(tmp_path):
+@pytest.mark.parametrize(
+    "cfg",
+    [
+        pytest.param({"soma.read.use_memory_pool": "false"}, id="default_mem_alloc"),
+        pytest.param({"soma.read.use_memory_pool": "true"}, id="experimental_mem_alloc"),
+    ],
+)
+def test_dataframe_with_enumeration(tmp_path, cfg):
     schema = pa.schema(
         [
             pa.field("myint", pa.dictionary(pa.int64(), pa.large_string())),
@@ -413,7 +428,7 @@ def test_dataframe_with_enumeration(tmp_path):
         data["myfloat"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
 
-    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         df = sdf.read().concat()
         assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
         assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
@@ -427,7 +442,8 @@ def test_dataframe_with_enumeration(tmp_path):
 # write mode.
 @pytest.mark.parametrize("ordered", [True, False])
 @pytest.mark.parametrize("mode", ["r", "w"])
-def test_get_enumeration_values(tmp_path, ordered, mode):
+@pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
+def test_get_enumeration_values(tmp_path, ordered, mode, cfg):
     uri = tmp_path.as_posix()
 
     schema = pa.schema(
@@ -501,7 +517,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         sdf.write(arrow_data)
     t2 = int(time.time() * 1000)
 
-    with soma.DataFrame.open(uri, mode) as sdf:
+    with soma.DataFrame.open(uri, mode, context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(KeyError):
@@ -531,7 +547,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_data)
 
-    with soma.DataFrame.open(uri, mode) as sdf:
+    with soma.DataFrame.open(uri, mode, context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(KeyError):
@@ -569,7 +585,8 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
 
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
 @pytest.mark.parametrize("name", ["pbmc3k_unprocessed", "pbmc3k_processed"])
-def test_get_enumeration_values_historical(version, name):
+@pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
+def test_get_enumeration_values_historical(version, name, cfg):
     """Checks that experiments written by older versions are still readable,
     in the particular form of doing an outgest."""
 
@@ -580,7 +597,7 @@ def test_get_enumeration_values_historical(version, name):
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
 
-    with soma.Experiment.open(uri) as exp:
+    with soma.Experiment.open(uri, context=SOMATileDBContext(tiledb_config=cfg)) as exp:
         if name == "pbmc3k_unprocessed":
             values = exp.obs.get_enumeration_values(["orig.ident", "seurat_annotations"])
 
@@ -1819,9 +1836,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
 def test_empty_dataframe(tmp_path):
     soma.DataFrame.create(
-        (tmp_path / "A").as_posix(),
-        schema=pa.schema([("a", pa.int32())]),
-        index_column_names=["a"],
+        (tmp_path / "A").as_posix(), schema=pa.schema([("a", pa.int32())]), index_column_names=["a"], domain=((0, 0),)
     ).close()
     with soma.DataFrame.open((tmp_path / "A").as_posix()) as a:
         # Must not throw
@@ -1837,6 +1852,7 @@ def test_empty_dataframe(tmp_path):
             (tmp_path / "B").as_posix(),
             schema=pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
             index_column_names=["a"],
+            domain=[[-10, 10]],
         )
 
 
@@ -2367,7 +2383,8 @@ def test_read_indexing(tmp_path, io):
             assert table["A"].to_list() == io["A"]
 
 
-def test_write_categorical_types(tmp_path):
+@pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
+def test_write_categorical_types(tmp_path, cfg):
     """
     Verify that write path accepts categoricals
     """
@@ -2434,7 +2451,7 @@ def test_write_categorical_types(tmp_path):
         )
         sdf.write(pa.Table.from_pandas(df))
 
-    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
@@ -2467,7 +2484,8 @@ def test_write_categorical_types(tmp_path):
 
 
 @pytest.mark.parametrize("index_type", [pa.int8(), pa.int16(), pa.int32(), pa.int64()])
-def test_write_categorical_dim_extend(tmp_path, index_type):
+@pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
+def test_write_categorical_dim_extend(tmp_path, index_type, cfg):
     """
     Introduce new categorical values in each subsequent write.
     """
@@ -2516,12 +2534,13 @@ def test_write_categorical_dim_extend(tmp_path, index_type):
     df2.string = pd.Categorical(df2.string, categories=uc.categories)
     expected_df = pd.concat((df1, df2), ignore_index=True)
 
-    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         data = sdf.read().concat()
         assert expected_df.compare(data.to_pandas()).empty
 
 
-def test_result_order(tmp_path):
+@pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
+def test_result_order(tmp_path, cfg):
     # cf. https://docs.tiledb.com/main/background/key-concepts-and-data-format#data-layout
     schema = pa.schema(
         [
@@ -2543,7 +2562,7 @@ def test_result_order(tmp_path):
         }
         sdf.write(pa.Table.from_pydict(data))
 
-    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
         table = sdf.read(result_order="row-major").concat().to_pandas()
         assert table["soma_joinid"].to_list() == list(range(16))
 
@@ -3618,20 +3637,36 @@ def test_return_datetime_type_for_domain_and_maxdomain_62887(tmp_path):
         )
 
 
+# @
 @pytest.mark.parametrize(
-    "pa_type,tile",
+    "pa_type,tile,domain",
     (
-        (pa.int32(), "1"),
-        (pa.float32(), "1"),
-        (pa.timestamp("s"), "1"),
-        (pa.large_string(), ""),
-        (pa.large_binary(), ""),
+        pytest.param(
+            pa.int32(),
+            "1",
+            [[-10, 10]],
+            marks=pytest.mark.skip("Bug that was hidden by domain size. Re-enable with fix for SOMA-416"),
+        ),
+        pytest.param(
+            pa.float32(),
+            "1",
+            [[-1.5, 1.5]],
+            marks=pytest.mark.skip("Bug that was hidden by domain size. Re-enable with fix for SOMA-416"),
+        ),
+        pytest.param(
+            pa.timestamp("s"),
+            "1",
+            [[0, 100]],
+            marks=pytest.mark.skip("Bug that was hidden by domain size. Re-enable with fix for SOMA-416"),
+        ),
+        (pa.large_string(), "", [None]),
+        (pa.large_binary(), "", [None]),
     ),
 )
-def test_extents(tmp_path, pa_type, tile):
+def test_extents(tmp_path, pa_type, tile, domain):
     uri = tmp_path.as_posix()
     asch = pa.schema([pa.field("dim", pa_type)])
-    soma.DataFrame.create(uri, schema=asch, index_column_names=["dim"])
+    soma.DataFrame.create(uri, schema=asch, index_column_names=["dim"], domain=domain)
 
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.schema_config_options().dims)

@@ -40,6 +40,7 @@ def soma_object(request, tmp_path):
             uri,
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
+            domain=[[0, 10]],
         )
 
     elif class_name == "DenseNDArray":
@@ -293,7 +294,7 @@ def test_metadata_bad_key(soma_object, bad_key):
     soma_object.metadata[bad_key] = "test_value"
 
     with pytest.raises(soma.SOMAError):
-        soma_object._handle_wrapper.metadata._write()
+        soma_object._metadata._write()
 
 
 @pytest.mark.parametrize(
@@ -317,4 +318,4 @@ def test_metadata_bad_string_value(soma_object, bad_value):
     soma_object.metadata["test_key"] = bad_value
 
     with pytest.raises(soma.SOMAError):
-        soma_object._handle_wrapper.metadata._write()
+        soma_object._metadata._write()

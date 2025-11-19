@@ -39,6 +39,17 @@ jobs:
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
+          fetch-tags: true  # Tags used for Python package version.
+  
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-build-release-${{ inputs.os }}
+
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
 
       - name: Show matrix OS
         run: echo "inputs.os:" ${{ inputs.os }}
@@ -48,7 +59,7 @@ jobs:
             os: ${{ inputs.os }}}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
-            extra-packages: any::rcmdcheck
+            extra-packages: any::rcmdcheck, any::nanoarrow
 
       - uses: r-lib/actions/check-r-package@v2
         with:
@@ -56,23 +67,38 @@ jobs:
           build_args: '"--no-manual"'
           error-on: '"error"'
           working-directory: 'apis/r/'
-
+        env:
+          PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
+          LDFLAGS: "-Wl,-rpath,${{ github.workspace }}/dist/lib -Wl,-rpath,${{ github.workspace }}/build/vcpkg_installed/lib"
 
   test-coverage:
     if: ${{ inputs.report_codecov }}
     runs-on: ${{ inputs.os }}
 
     steps:
-      - uses: actions/checkout@v4
+    
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-build-release-${{ inputs.os }}
+
+      - name: Restore Permissions
+        run: chmod +x build/libtiledbsoma/test/*
 
       - uses: ./.github/actions/setup-r
         with:
             os: ${{ inputs.os }}}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
-            extra-packages: any::covr, any::xml2
+            extra-packages: any::covr, any::xml2, any::nanoarrow
 
       - name: Test coverage
+        env:
+          PKG_CONFIG_PATH: ${{ github.workspace }}/dist/lib/pkgconfig:${{ github.workspace }}/build/vcpkg_installed/lib/pkgconfig
+          LDFLAGS: "-Wl,-rpath,${{ github.workspace }}/dist/lib -Wl,-rpath,${{ github.workspace }}/build/vcpkg_installed/lib"
         run: |
           cov <- covr::package_coverage(
             path = "apis/r",

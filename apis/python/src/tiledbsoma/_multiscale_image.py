@@ -34,7 +34,7 @@ from ._constants import (
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
-from ._soma_object import AnySOMAObject
+from ._soma_object import SOMAObject
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
@@ -84,7 +84,7 @@ class _MultiscaleImageMetadata:
 
 class MultiscaleImage(
     SOMAGroup[DenseNDArray],
-    somacore.MultiscaleImage[DenseNDArray, AnySOMAObject],
+    somacore.MultiscaleImage[DenseNDArray, SOMAObject],
 ):
     """A multiscale image represented as a collection of images at multiple resolution levels.
 
@@ -104,7 +104,7 @@ class MultiscaleImage(
         "_has_channel_axis",
         "_levels",
     )
-    _wrapper_type = _tdb_handles.MultiscaleImageWrapper
+    _handle_type = clib.SOMAMultiscaleImage
 
     _level_prefix: Final = "soma_level_"
 
@@ -222,10 +222,16 @@ class MultiscaleImage(
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
-            handle = _tdb_handles.MultiscaleImageWrapper.open(uri, "w", context, tiledb_timestamp)
-            handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
+            handle = clib.SOMAMultiscaleImage.open(
+                uri, mode=clib.OpenMode.soma_write, context=context.native_context, timestamp=(0, timestamp_ms)
+            )
+            metadata = _tdb_handles.MetadataWrapper.from_handle(handle)
+            metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
+            metadata._write()
             multiscale = cls(
                 handle,
+                uri=uri,
+                context=context,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
         except SOMAError as e:
@@ -622,7 +628,7 @@ class MultiscaleImage(
 
     def levels(self) -> dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
-        return {level.name: (self._contents[level.name].entry.uri, level.shape) for level in self._levels}
+        return {level.name: (self._contents[level.name].uri, level.shape) for level in self._levels}
 
     @property
     def level_count(self) -> int:
@@ -654,7 +660,7 @@ class MultiscaleImage(
         """
         if isinstance(level, int):
             level = self._levels[level].name
-        return self._contents[level].entry.uri
+        return self._contents[level].uri
 
     @property
     def nchannels(self) -> int:
