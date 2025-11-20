@@ -35,6 +35,7 @@ using namespace tiledb;
 using json = nlohmann::json;
 
 class ReadColumnBuffer;
+class ArrayBuffers;
 class SOMACoordinateSpace;
 
 /**
@@ -105,6 +106,14 @@ class ArrowAdapter {
     static void release_array(struct ArrowArray* array);
 
     static bool _isstr(const char* format);
+
+    /**
+     * @brief Convert ArrayBuffer to an list of Arrow arrays.
+     *
+     * @return std::vector<std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>>
+     */
+    static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
+        std::shared_ptr<ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
 
     /**
      * @brief Convert ColumnBuffer to an Arrow array.
