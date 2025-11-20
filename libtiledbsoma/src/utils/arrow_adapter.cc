@@ -118,73 +118,49 @@ std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view
 }
 
 ArrowBuffer::ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets) {
-    // Compute total size for all buffers as well the offsets for each section within each buffer
-    // Each buffer section should be 64-bit aligned
-
-    size_t data_byte_size = 0;
-    size_t offset_byte_size = 0;
-    size_t validity_byte_size = 0;
-
-    size_t offsets_byte_offset = 0;
-    size_t validity_byte_offset = 0;
-
-    if (buffer->is_var()) {
-        data_byte_size = buffer->offsets()[buffer->size()];
-
-        if (large_offsets) {
-            offset_byte_size = (buffer->size() + 1) * sizeof(int64_t);
-        } else {
-            offset_byte_size = (buffer->size() + 1) * sizeof(int32_t);
-        }
-
-        offsets_byte_offset = ((data_byte_size + 7) / 8) * 8;
-        validity_byte_offset = ((offsets_byte_offset + offset_byte_size + 7) / 8) * 8;
-    } else {
-        if (buffer->type() == TILEDB_BOOL) {
-            data_byte_size = (buffer->size() + 7) / 8;
-        } else {
-            data_byte_size = buffer->size() * tiledb::impl::type_size(buffer->type());
-        }
-
-        validity_byte_offset = ((data_byte_size + 7) / 8) * 8;
-    }
-
-    if (buffer->is_nullable()) {
-        validity_byte_size = (buffer->size() + 7) / 8;
-    }
-
     // Allocate global buffer
-    global_buffer_ = std::make_unique_for_overwrite<std::byte[]>(validity_byte_offset + validity_byte_size);
-
-    data_ = std::span<std::byte>(global_buffer_.get(), data_byte_size);
-
     if (buffer->is_var()) {
+        data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(buffer->offsets()[buffer->size()]);
+        offset_buffer_ = std::make_unique_for_overwrite<std::byte[]>(
+            (buffer->size() + 1) * (large_offsets ? sizeof(int64_t) : sizeof(int32_t)));
+
+        data_ = std::span<std::byte>(data_buffer_.get(), buffer->offsets()[buffer->size()]);
+
         if (large_offsets) {
-            large_offsets_ = std::span<int64_t>(
-                reinterpret_cast<int64_t*>(global_buffer_.get() + offsets_byte_offset), buffer->size() + 1);
-            std::memcpy(large_offsets_.data(), buffer->offsets().data(), offset_byte_size);
+            large_offsets_ = std::span<int64_t>(reinterpret_cast<int64_t*>(offset_buffer_.get()), buffer->size() + 1);
+            std::memcpy(large_offsets_.data(), buffer->offsets().data(), large_offsets_.size_bytes());
         } else {
-            small_offsets_ = std::span<int32_t>(
-                reinterpret_cast<int32_t*>(global_buffer_.get() + offsets_byte_offset), buffer->size() + 1);
+            small_offsets_ = std::span<int32_t>(reinterpret_cast<int32_t*>(offset_buffer_.get()), buffer->size() + 1);
             auto offsets = buffer->offsets();
             for (size_t i = 0; i < offsets.size(); ++i) {
                 small_offsets_[i] = static_cast<int32_t>(offsets[i]);
             }
         }
 
-        std::memcpy(data_.data(), buffer->data().data(), data_byte_size);
+        std::memcpy(data_.data(), buffer->data().data(), data_.size_bytes());
     } else {
         if (buffer->type() == TILEDB_BOOL) {
+            size_t data_byte_size = (buffer->size() + 7) / 8;
+
+            data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_byte_size);
+            data_ = std::span<std::byte>(data_buffer_.get(), data_byte_size);
+
             ColumnBuffer::to_bitmap(
-                buffer->data<uint8_t>(), std::span<uint8_t>(reinterpret_cast<uint8_t*>(data_.data()), data_.size()));
+                buffer->data<uint8_t>(), std::span<uint8_t>(reinterpret_cast<uint8_t*>(data_.data()), data_byte_size));
         } else {
-            std::memcpy(data_.data(), buffer->data().data(), data_byte_size);
+            data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(buffer->data_size());
+            data_ = std::span<std::byte>(data_buffer_.get(), buffer->data_size());
+
+            std::memcpy(data_.data(), buffer->data().data(), data_.size_bytes());
         }
     }
 
     if (buffer->is_nullable()) {
-        validity_ = std::span<uint8_t>(
-            reinterpret_cast<uint8_t*>(global_buffer_.get() + validity_byte_offset), validity_byte_size);
+        size_t validity_byte_size = (buffer->size() + 7) / 8;
+
+        validity_buffer_ = std::make_unique_for_overwrite<std::byte[]>(validity_byte_size);
+        validity_ = std::span<uint8_t>(reinterpret_cast<uint8_t*>(validity_buffer_.get()), validity_byte_size);
+
         buffer->validity_to_bitmap(validity_);
     }
 
@@ -195,15 +171,17 @@ ArrowBuffer::ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets) {
 ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
     Context ctx = enumeration.context();
 
-    size_t data_byte_size = 0;
-    size_t offsets_byte_size = 0;
-    size_t offsets_byte_offset = 0;
-
     const void* offsets;
     uint64_t offsets_size;
 
     const void* data;
-    ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data, &data_byte_size));
+    uint64_t data_size;
+    ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_size);
+    data_ = std::span<std::byte>(data_buffer_.get(), data_size);
+
+    std::memcpy(data_.data(), data, data_.size_bytes());
 
     switch (enumeration.type()) {
         case TILEDB_CHAR:
@@ -215,55 +193,26 @@ ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
             ctx.handle_error(
                 tiledb_enumeration_get_offsets(ctx.ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
 
-            size_t count = offsets_size / sizeof(uint64_t);
-
-            if (large_offsets) {
-                offsets_byte_size = (count + 1) * sizeof(int64_t);
-            } else {
-                offsets_byte_size = (count + 1) * sizeof(int32_t);
-            }
-
-            offsets_byte_offset = ((data_byte_size + 7) / 8) * 8;
-        } break;
-        case TILEDB_BOOL:
-            offsets_byte_offset = 1;
-            break;
-        default:
-            offsets_byte_offset = data_byte_size;
-    }
-
-    global_buffer_ = std::make_unique_for_overwrite<std::byte[]>(offsets_byte_offset + offsets_byte_size);
-
-    data_ = std::span<std::byte>(global_buffer_.get(), data_byte_size);
-    std::memcpy(data_.data(), data, data_byte_size);
-
-    switch (enumeration.type()) {
-        case TILEDB_CHAR:
-        case TILEDB_STRING_ASCII:
-        case TILEDB_STRING_UTF8:
-        case TILEDB_BLOB:
-        case TILEDB_GEOM_WKT:
-        case TILEDB_GEOM_WKB: {
             length = offsets_size / sizeof(uint64_t);
+            offset_buffer_ = std::make_unique_for_overwrite<std::byte[]>(
+                (length + 1) * (large_offsets ? sizeof(int64_t) : sizeof(int_least32_t)));
 
             if (large_offsets) {
-                large_offsets_ = std::span<int64_t>(
-                    reinterpret_cast<int64_t*>(global_buffer_.get() + offsets_byte_offset), length + 1);
+                large_offsets_ = std::span<int64_t>(reinterpret_cast<int64_t*>(offset_buffer_.get()), length + 1);
                 std::memcpy(large_offsets_.data(), offsets, offsets_size);
-                large_offsets_[length] = data_byte_size;
+                large_offsets_[length] = static_cast<int64_t>(data_size);
             } else {
-                small_offsets_ = std::span<int32_t>(
-                    reinterpret_cast<int32_t*>(global_buffer_.get() + offsets_byte_offset), length + 1);
+                small_offsets_ = std::span<int32_t>(reinterpret_cast<int32_t*>(offset_buffer_.get()), length + 1);
                 std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), length);
                 for (size_t i = 0; i < length; ++i) {
                     small_offsets_[i] = static_cast<int32_t>(offsets_v[i]);
                 }
-                small_offsets_[length] = static_cast<int32_t>(data_byte_size);
+                small_offsets_[length] = static_cast<int32_t>(data_size);
             }
         } break;
         case TILEDB_BOOL: {
-            std::span<const bool> data_v(static_cast<const bool*>(data), data_byte_size);
-            length = data_byte_size / sizeof(bool);
+            std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
+            length = data_size / sizeof(bool);
 
             // Represent the Boolean vector with, at most, the last two
             // bits. In Arrow, Boolean values are LSB packed
@@ -287,7 +236,7 @@ ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
         case TILEDB_UINT64:
         case TILEDB_FLOAT32:
         case TILEDB_FLOAT64:
-            length = data_byte_size / impl::type_size(enumeration.type());
+            length = data_size / impl::type_size(enumeration.type());
             break;
         default:
             throw TileDBSOMAError(
