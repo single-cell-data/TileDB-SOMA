@@ -43,15 +43,11 @@ std::map<std::string, SOMAGroupEntry> create_member_cache(Group& group) {
                 return "SOMAArray";
             case Object::Type::Group:
                 return "SOMAGroup";
-            case Object::Type::Invalid:
-                throw TileDBSOMAError(
-                    fmt::format(
-                        "Failed to open SOMA object. Member '{}' is not for a valid TileDB group or array.",
-                        group_member.to_str()));
             default:
                 throw TileDBSOMAError(
                     fmt::format(
-                        "Failed to open SOMA object. Unable to resolve the TileDB object type of member '{}'.",
+                        "Internal error: Failed to open SOMA object. Unable to resolve the TileDB object type of "
+                        "member '{}'.",
                         group_member.to_str()));
         }
     };
