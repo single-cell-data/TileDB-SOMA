@@ -615,49 +615,6 @@ class ManagedQuery {
     template <typename T>
     void _cast_dictionary_values(ArrowSchema* schema, ArrowArray* array);
 
-    std::vector<int64_t> _get_index_vector(ArrowSchema* schema, ArrowArray* array) {
-        auto index_type = ArrowAdapter::to_tiledb_format(schema->format);
-
-        switch (index_type) {
-            case TILEDB_INT8: {
-                int8_t* idxbuf = (int8_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT8: {
-                uint8_t* idxbuf = (uint8_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_INT16: {
-                int16_t* idxbuf = (int16_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT16: {
-                uint16_t* idxbuf = (uint16_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_INT32: {
-                int32_t* idxbuf = (int32_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT32: {
-                uint32_t* idxbuf = (uint32_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_INT64: {
-                int64_t* idxbuf = (int64_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT64: {
-                uint64_t* idxbuf = (uint64_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            default:
-                throw TileDBSOMAError(
-                    "Saw invalid index type when trying to promote indexes to "
-                    "values");
-        }
-    }
-
     template <typename UserType>
     bool _cast_column_aux(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
@@ -702,6 +659,7 @@ class ManagedQuery {
                 setup_write_column(
                     schema->name, array->length, buf, (uint64_t*)nullptr, _cast_validity_buffer_ptr(array));
             } else {
+                // throw TileDBSOMAError("Type missmatch for column '" + std::string(schema->name) + "'");
                 // Casting is needed and casted data ownership should pass to the column
 
                 std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(

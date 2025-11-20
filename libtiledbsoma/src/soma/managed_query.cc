@@ -1390,10 +1390,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
                 "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
                 "null values are not supported"));
     }
-    std::optional<std::vector<uint8_t>> validities = std::nullopt;
-    if (index_array != nullptr) {
-        validities = _cast_validity_buffer(index_array);
-    }
 
     // Get all the enumeration values in the passed-in column
     std::vector<ValueType> enum_values_in_write;
