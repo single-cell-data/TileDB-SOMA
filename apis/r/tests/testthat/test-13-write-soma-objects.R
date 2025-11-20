@@ -544,7 +544,8 @@ test_that("write_soma.IterableMatrix integrity", {
       unset = "33554432"
     )
   ))
-  for (fmt in c("memory", "10x", "anndata", "dir", "hdf5")) {
+  formats <- c("memory", "10x", "anndata", "dir", "hdf5")
+  for (fmt in formats) {
     info <- sprintf("integrity: %s", fmt)
     bpmat <- write_bpcells(mat, dirname = uri, format = fmt)
     stopifnot(all.equal(
@@ -566,6 +567,61 @@ test_that("write_soma.IterableMatrix integrity", {
     expect_s4_class(rmat <- smat$read()$sparse_matrix()$concat(), "dgTMatrix")
     expect_identical(dim(rmat), dim(mat), info = info)
     expect_identical(as.matrix(rmat), as.matrix(mat), info = info)
+  }
+
+  # Empty chunks
+  stride <- .block_size(n = ncol(mat), tiledbsoma_ctx = ctx)
+  nchunks <- ceiling(x = nrow(x = mat) / stride)
+  cases <- list(
+    trailing = rbind(
+      mat,
+      create_sparse_matrix_with_int_dims(
+        nrows = (stride * nchunks) - nrow(x = mat),
+        ncols = ncol(x = mat)
+      ),
+      Matrix::Matrix(
+        data = 0L,
+        nrow = stride %/% 3L,
+        ncol = ncol(x = mat),
+        sparse = TRUE
+      )
+    ),
+    middle = rbind(
+      mat[seq.int(from = 1L, to = stride), , drop = FALSE],
+      Matrix::Matrix(0L, nrow = stride, ncol = ncol(x = mat), sparse = TRUE),
+      mat[seq.int(from = stride + 1L, to = nrow(x = mat)), , drop = FALSE]
+    ),
+    leading = rbind(
+      Matrix::Matrix(0L, nrow = stride, ncol = ncol(x = mat), sparse = TRUE),
+      mat
+    )
+  )
+  for (i in seq_along(along.with = cases)) {
+    mm <- cases[[i]]
+    for (fmt in formats) {
+      info <- sprintf(fmt = "%s empty: %s", names(x = cases)[i], fmt)
+      key <- sprintf(fmt = "%s-%s", names(x = cases)[i], fmt)
+      bpmat <- write_bpcells(mm, dirname = uri, format = fmt)
+      stopifnot(all.equal(
+        target = suppressMessages(suppressWarnings(as.matrix(bpmat))),
+        current = as.matrix(mm),
+        check.attributes = FALSE
+      ))
+      expect_no_condition(smat <- write_soma(
+        bpmat,
+        uri = key,
+        soma_parent = collection,
+        key = key,
+        tiledbsoma_ctx = ctx
+      ))
+      expect_s3_class(smat, "SOMASparseNDArray")
+      expect_true(smat$exists(), info = info)
+      expect_equal(smat$shape(), dim(bpmat), info = info)
+      smat$reopen("READ")
+      expect_s4_class(rmat <- smat$read()$sparse_matrix()$concat(), "dgTMatrix")
+      expect_identical(dim(rmat), dim(mm), info = info)
+      expect_identical(as.matrix(rmat), as.matrix(mm), info = info)
+    }
   }
 })
 
