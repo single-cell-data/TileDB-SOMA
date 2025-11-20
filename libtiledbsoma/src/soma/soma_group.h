@@ -303,11 +303,6 @@ class SOMAGroup : public SOMAObject {
      */
     static Config _set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp);
 
-    /**
-     * Fills the metadata and member-to-uri caches upon opening the array.
-     */
-    void fill_caches();
-
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
 
