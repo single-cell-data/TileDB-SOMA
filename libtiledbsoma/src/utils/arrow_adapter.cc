@@ -12,7 +12,9 @@
  */
 
 #include <ranges>
+#include <thread>
 
+#include "../soma/array_buffers.h"
 #include "../soma/column_buffer.h"
 #include "arrow_adapter.h"
 #include "logger.h"
@@ -754,6 +756,28 @@ std::pair<Attribute, std::optional<Enumeration>> ArrowAdapter::tiledb_attribute_
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK)
         throw TileDBSOMAError(fmt::format("ArrowAdapter: Arrow Error {} ", msg));
+}
+
+std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> ArrowAdapter::buffer_to_arrow(
+    std::shared_ptr<ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
+    std::vector<std::future<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>>> arrow_columns;
+
+    for (const auto& name : buffer->names()) {
+        arrow_columns.emplace_back(
+            std::async(
+                std::launch::async,
+                ArrowAdapter::to_arrow,
+                buffer->at<ReadColumnBuffer>(name),
+                downcast_dict_of_large_var));
+    }
+
+    std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> columns;
+
+    for (auto& arrow_column : arrow_columns) {
+        columns.push_back(std::move(arrow_column.get()));
+    }
+
+    return columns;
 }
 
 std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
