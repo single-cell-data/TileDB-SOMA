@@ -257,6 +257,20 @@ class ColumnBuffer {
         return is_ordered_;
     }
 
+    /**
+     * @brief Return the percentage of the data buffer that is filled.
+     */
+    double_t data_load_factor() const {
+        return static_cast<double_t>(data_size_) / max_data_size_;
+    }
+
+    /**
+     * @brief The percentage of the offset and validity buffers that is filled if any.
+     */
+    double_t cell_load_factor() const {
+        return static_cast<double_t>(num_cells_) / max_num_cells_;
+    }
+
    protected:
     size_t num_cells_;
 
