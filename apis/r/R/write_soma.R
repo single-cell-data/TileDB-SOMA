@@ -389,6 +389,8 @@ write_soma.IterableMatrix <- function(
         next
       }
       array$.write_coordinates(data.frame(
+        # The `idx[slice@i + 1L] - 1L` re-indexes the chunks local coords
+        # back to the global coords of `x`
         soma_dim_0 = bit64::as.integer64(idx[slice@i + 1L] - 1L),
         soma_dim_1 = bit64::as.integer64(slice@j),
         soma_data = if (inherits(type, c("Int16", "Int32"))) {
