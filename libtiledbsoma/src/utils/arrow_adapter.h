@@ -50,7 +50,6 @@ struct ArrowBuffer {
     ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::unique_ptr<std::byte[]> global_buffer_;
     std::span<std::byte> data_;
     std::span<int64_t> large_offsets_;
     std::span<int32_t> small_offsets_;
@@ -58,6 +57,11 @@ struct ArrowBuffer {
 
     size_t length;
     std::string name;
+
+   private:
+    std::unique_ptr<std::byte[]> data_buffer_;
+    std::unique_ptr<std::byte[]> offset_buffer_;
+    std::unique_ptr<std::byte[]> validity_buffer_;
 };
 
 struct PrivateArrowBuffer {
