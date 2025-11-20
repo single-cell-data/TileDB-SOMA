@@ -71,7 +71,7 @@ class ColumnBuffer {
     ColumnBuffer(const ColumnBuffer&) = delete;
     ColumnBuffer(ColumnBuffer&&) = default;
 
-    ~ColumnBuffer();
+    virtual ~ColumnBuffer();
 
     void attach(Query& query, std::optional<Subarray> subarray = std::nullopt);
 
@@ -329,6 +329,10 @@ class ColumnBuffer {
 class ReadColumnBuffer : public ColumnBuffer {
    public:
     using ColumnBuffer::ColumnBuffer;
+
+    ReadColumnBuffer() = delete;
+    ReadColumnBuffer(const ReadColumnBuffer&) = delete;
+    ReadColumnBuffer(ReadColumnBuffer&&) = default;
 
     virtual ~ReadColumnBuffer();
 
