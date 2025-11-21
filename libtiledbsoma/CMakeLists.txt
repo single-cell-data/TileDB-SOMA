@@ -20,7 +20,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 set(TILEDBSOMA_CMAKE_INPUTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake/inputs")
 
 # Check for and set environment variables.
-if (NOT DEFINED TILEDBSOMA_ENABLE_WERROR AND DEFINED $ENV{TILEDBSSOMA_ENABLE_WERROR})
+if (NOT DEFINED TILEDBSOMA_ENABLE_WERROR AND DEFINED $ENV{TILEDBSOMA_ENABLE_WERROR})
   set(TILEDBSOMA_ENABLE_WERROR "$ENV{TILEDBSOMA_ENABLE_WERROR}")
 endif()
 
@@ -36,11 +36,10 @@ option(TILEDBSOMA_FETCH_VCPKG "Download and install vcpkg. Ignored if CMAKE_TOOL
 
 # Superbuild option - enabled when using vcpkg to build TileDB (TileDB is not in vcpkg)
 # When using vcpkg, superbuild only builds TileDB; other deps come from vcpkg
-if(DEFINED CMAKE_TOOLCHAIN_FILE)
-  option(SUPERBUILD "If true, perform a superbuild (builds TileDB only when using vcpkg)." ON)
-else()
-  option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
-endif()
+# If true, perform a superbuild.
+# - If vcpkg is used, this builds only TileDB.
+# - Otherwise, it builds all missing dependencies.
+option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
 option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP install dir." OFF)
 option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." OFF)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)

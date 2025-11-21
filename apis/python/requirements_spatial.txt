@@ -1,6 +1,0 @@
-geopandas
-tifffile
-pillow
-spatialdata>=0.2.5
-xarray
-dask
