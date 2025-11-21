@@ -19,6 +19,49 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+//==================================================================
+// helper functions
+//==================================================================
+
+std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
+    std::map<std::string, MetadataValue> metadata_cache{};
+    for (uint64_t idx = 0; idx < group.metadata_num(); ++idx) {
+        std::string key;
+        tiledb_datatype_t value_type;
+        uint32_t value_num;
+        const void* value;
+        group.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
+        metadata_cache[key] = MetadataValue(value_type, value_num, value);
+    }
+    return metadata_cache;
+}
+
+std::map<std::string, SOMAGroupEntry> create_member_cache(Group& group) {
+    auto get_object_type_string = [](tiledb::Object& group_member) {
+        switch (group_member.type()) {
+            case Object::Type::Array:
+                return "SOMAArray";
+            case Object::Type::Group:
+                return "SOMAGroup";
+            default:
+                throw TileDBSOMAError(
+                    fmt::format(
+                        "Internal error: Failed to open SOMA object. Unable to resolve the TileDB object type of "
+                        "member '{}'.",
+                        group_member.to_str()));
+        }
+    };
+
+    std::map<std::string, SOMAGroupEntry> member_cache{};
+    for (uint64_t i = 0; i < group.member_count(); ++i) {
+        auto mem = group.member(i);
+        std::string soma_type = get_object_type_string(mem);
+        std::string key = mem.name().has_value() ? mem.name().value() : mem.uri();
+        member_cache[key] = SOMAGroupEntry(mem.uri(), soma_type);
+    }
+    return member_cache;
+}
+
 //===================================================================
 //= public static
 //===================================================================
@@ -93,7 +136,11 @@ SOMAGroup::SOMAGroup(
         std::string(uri),
         mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE,
         _set_timestamp(ctx, timestamp));
-    fill_caches();
+    cache_group_ = (group_->query_type() == TILEDB_READ) ?
+                       group_ :
+                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+    metadata_ = create_metadata_cache(*cache_group_);
+    members_map_ = create_member_cache(*cache_group_);
 }
 
 SOMAGroup::SOMAGroup(
@@ -120,33 +167,11 @@ SOMAGroup::SOMAGroup(
                     query_type_str));
         }
     }
-    fill_caches();
-}
-
-void SOMAGroup::fill_caches() {
-    if (group_->query_type() == TILEDB_WRITE) {
-        cache_group_ = std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    } else {
-        cache_group_ = group_;
-    }
-
-    for (uint64_t idx = 0; idx < cache_group_->metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        cache_group_->get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-        MetadataValue mdval(value_type, value_num, value);
-        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-        metadata_.insert(mdpair);
-    }
-
-    for (uint64_t i = 0; i < cache_group_->member_count(); ++i) {
-        auto mem = cache_group_->member(i);
-        std::string soma_type = util::soma_type_from_tiledb_type(mem.type());
-        std::string key = mem.name().has_value() ? mem.name().value() : mem.uri();
-        members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);
-    }
+    cache_group_ = (group_->query_type() == TILEDB_READ) ?
+                       group_ :
+                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+    metadata_ = create_metadata_cache(*cache_group_);
+    members_map_ = create_member_cache(*cache_group_);
 }
 
 void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
@@ -156,7 +181,11 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     // Note: both OpenMode.write and OpenMode.del should be opened in
     // TILEDB_WRITE mode.
     group_->open(mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE);
-    fill_caches();
+    cache_group_ = (group_->query_type() == TILEDB_READ) ?
+                       group_ :
+                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+    metadata_ = create_metadata_cache(*cache_group_);
+    members_map_ = create_member_cache(*cache_group_);
 }
 
 void SOMAGroup::close() {
