@@ -160,7 +160,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             raise SOMAError(f"replacing key {key!r} is unsupported")
         clib_collection = self._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
-        if self.context.data_protocol(self.uri) == "tiledbv2":
+        if self.context.is_tiledbv2_uri(self.uri):
             clib_collection.add(
                 uri=uri,
                 uri_type=relative_type,

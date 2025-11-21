@@ -357,10 +357,12 @@ def sanitize_key(key: str, data_protocol: DataProtocol) -> str:
         if "/" in key:
             raise ValueError(f"{key} is not a supported name - must not contain slash (/)")
         sanitized_name = key
-    else:
+    elif data_protocol == "tiledbv2":
         safe_puncuation = "-_.()^!@+={}~'"
         safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
         sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+    else:
+        raise ValueError(f"Unknown data protocol {data_protocol}")
 
     # Ensure that the final key is valid
     if sanitized_name in ["..", "."]:

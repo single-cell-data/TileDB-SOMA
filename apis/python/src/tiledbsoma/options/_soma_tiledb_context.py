@@ -351,16 +351,23 @@ class SOMATileDBContext(ContextBase):
         return int(time.time() * 1000)
 
     def data_protocol(self, uri: str) -> DataProtocol:
-        """Return the data model in use for this URI and context.
+        """Return the data protocol in use for this URI and context.
 
         Return value will be a data model identifier. Currently one of:
-        * `tiledbv2` - the original data model, supported on all storage platforms except Carrara
-        * `tiledbv3` - the new, and currently Carrara-specific data model.
+        * `tiledbv2` - the legacy data model, supported on all storage platforms except Carrara
+        * `tiledbv3` - the new, and currently Carrara-specific, data model.
 
         See <<LINK>> for more information on the difference between the supported
         data models.
 
         Returns: str
+
+        ---
+
+        IMPORTANT: the API signature may change slightly in the near future
+        to align with TileDB-Py.
+
+        In addition, the implementation will evolve to use a new Core API.
         """
         if not uri.startswith("tiledb://"):
             return "tiledbv2"
@@ -372,7 +379,7 @@ class SOMATileDBContext(ContextBase):
         # The current methodology to distinguish between these is to look at the run-time
         # environment, and determine if we are running on Cloud or Carrara.
         #
-        # NB: this method may change.
+        # NB: this method will change shortly to use a new Core API.
 
         CLOUD_DEPLOYMENTS = {"https://api.tiledb.com", "https://api.dev.tiledb.io"}
         if self.native_context.config()["rest.server_address"] in CLOUD_DEPLOYMENTS:
@@ -380,7 +387,12 @@ class SOMATileDBContext(ContextBase):
 
         return "tiledbv3"
 
+    def is_tiledbv2_uri(self, uri: str) -> bool:
+        """Return True if the URI will use `tiledbv2` semantics."""
+        return self.data_protocol(uri) == "tiledbv2"
+
     def is_tiledbv3_uri(self, uri: str) -> bool:
+        """Return True if the URI will use `tiledbv3` semantics."""
         return self.data_protocol(uri) == "tiledbv3"
 
 
