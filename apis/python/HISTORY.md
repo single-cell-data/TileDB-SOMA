@@ -4,6 +4,10 @@ All notable changes to the Python TileDB-SOMA project will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Release 2.1.2]
+
+Only R API updates in this release.
+
 ## [Release 2.1.1]
 
 ### Changed
