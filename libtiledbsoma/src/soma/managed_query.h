@@ -654,31 +654,11 @@ class ManagedQuery {
                 enmr,
                 se);
         } else {
-            if constexpr (std::is_same_v<UserType, DiskType>) {
-                // No casting is needed
-                setup_write_column(
-                    schema->name, array->length, buf, (uint64_t*)nullptr, _cast_validity_buffer_ptr(array));
-            } else {
-                // throw TileDBSOMAError("Type missmatch for column '" + std::string(schema->name) + "'");
-                // Casting is needed and casted data ownership should pass to the column
-
-                std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(
-                    array->length * sizeof(DiskType));
-
-                std::span<UserType> original_data_buffer_view(buf, array->length);
-                std::span<DiskType> data_buffer_view(reinterpret_cast<DiskType*>(data_buffer.get()), array->length);
-
-                for (int64_t i = 0; i < array->length; ++i) {
-                    data_buffer_view[i] = static_cast<DiskType>(original_data_buffer_view[i]);
-                }
-
-                setup_write_column(
-                    schema->name,
-                    array->length,
-                    std::move(data_buffer),
-                    (uint64_t*)nullptr,
-                    _cast_validity_buffer_ptr(array));
+            if constexpr (!std::is_same_v<UserType, DiskType>) {
+                throw TileDBSOMAError("Type mismatch for column '" + std::string(schema->name) + "'");
             }
+
+            setup_write_column(schema->name, array->length, buf, (uint64_t*)nullptr, _cast_validity_buffer_ptr(array));
 
             // Return false because we do not extend the enumeration
             return false;
