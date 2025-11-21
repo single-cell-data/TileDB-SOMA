@@ -723,7 +723,7 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
     std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> columns;
 
     for (auto& arrow_column : arrow_columns) {
-        columns.push_back(std::move(arrow_column.get()));
+        columns.push_back(arrow_column.get());
     }
 
     return columns;
