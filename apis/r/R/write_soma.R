@@ -376,8 +376,7 @@ write_soma.IterableMatrix <- function(
     shape = shape,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
-    tiledb_timestamp = Sys.time()
+    tiledbsoma_ctx = tiledbsoma_ctx
   )
   # TODO: Add support for resume-mode
   if (!is.null(x)) {
@@ -390,7 +389,9 @@ write_soma.IterableMatrix <- function(
         next
       }
       array$.write_coordinates(data.frame(
-        soma_dim_0 = bit64::as.integer64(slice@i),
+        # The `idx[slice@i + 1L] - 1L` re-indexes the chunks local coords
+        # back to the global coords of `x`
+        soma_dim_0 = bit64::as.integer64(idx[slice@i + 1L] - 1L),
         soma_dim_1 = bit64::as.integer64(slice@j),
         soma_data = if (inherits(type, c("Int16", "Int32"))) {
           as.integer(slice@x)
