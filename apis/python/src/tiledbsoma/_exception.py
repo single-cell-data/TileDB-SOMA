@@ -109,3 +109,13 @@ def map_exception_for_create(e: SOMAError, uri: str) -> Exception:
     if is_domain_setting_error(e):
         return ValueError(e)
     return e
+
+
+class UnsupportedOperationError(SOMAError):
+    """Raised when a operation is unsupported on the current data model.
+
+    For example, Collection.__setitem__ is unsupported on the TileDB Carrara data model, and
+    will raise this error.
+
+    Lifecycle: Experimental
+    """

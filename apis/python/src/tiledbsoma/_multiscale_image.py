@@ -41,6 +41,7 @@ from ._spatial_util import (
     process_image_region,
 )
 from ._types import OpenTimestamp
+from ._util import validate_create_uri
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -168,6 +169,7 @@ class MultiscaleImage(
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
 
         # Create the coordinate space.
         if isinstance(coordinate_space, CoordinateSpace):

@@ -38,6 +38,7 @@ from ._spatial_util import (
     process_spatial_df_region,
 )
 from ._types import OpenTimestamp
+from ._util import validate_create_uri
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._util import build_clib_platform_config
@@ -137,6 +138,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         index_column_names = (*axis_names, SOMA_JOINID)
 
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
         schema = _canonicalize_schema(schema, index_column_names)
 
         # SOMA-to-core mappings:
