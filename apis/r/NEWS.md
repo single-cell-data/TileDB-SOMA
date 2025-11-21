@@ -1,5 +1,7 @@
 # Unreleased
 
+**Action required:** Users who ingested BPCells data with version 2.1.0 must re-ingest with this version to ensure data correctness.
+
 ## Added
 
 ## Changed
@@ -11,6 +13,8 @@
 ## Removed
 
 ## Fixed
+
+- Addressed bug in BPCells ingestion, where data ingested in an iterated manner would only be written at the top of the array. Ingestion now proceeds down the array for each iteration. ([#4317](https://github.com/single-cell-data/TileDB-SOMA/pull/4317))
 
 ## Security
 
