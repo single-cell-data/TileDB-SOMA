@@ -244,7 +244,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         "myfloat": [1.0, 2.5, 4.0, 5.5],
     }
 
-    data = pa.Table.from_pydict(data_dict)
+    data = pa.Table.from_pydict(data_dict, schema=schema)
 
     domain_slots = {
         "soma_joinid": soma_joinid_domain,
@@ -307,7 +307,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
     # Test writes out of bounds, before resize
     offset = shape_at_create if has_soma_joinid_dim else 100
     data_dict["soma_joinid"] = [e + offset for e in data_dict["soma_joinid"]]
-    data = pa.Table.from_pydict(data_dict)
+    data = pa.Table.from_pydict(data_dict, schema=schema)
 
     with tiledbsoma.DataFrame.open(uri, "w") as sdf:
         if has_soma_joinid_dim:
@@ -355,7 +355,7 @@ def test_domain_mods(tmp_path):
         "mybool": [True, False, True, True],
     }
 
-    data = pa.Table.from_pydict(data_dict)
+    data = pa.Table.from_pydict(data_dict, schema=schema)
 
     with tiledbsoma.DataFrame.create(
         uri,

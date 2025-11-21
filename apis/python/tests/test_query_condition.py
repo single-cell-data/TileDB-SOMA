@@ -76,7 +76,7 @@ def test_query_with_combo_none_condition(tmp_path, soma_pd_condition):
     pydict["int"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["bool"] = [True, True, True, False, True, False, None, False, None, None]
     pydict["ord"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
-    data = pa.Table.from_pydict(pydict)
+    data = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
 
     with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
         sdf.write(data)
@@ -125,7 +125,7 @@ def test_query_with_none_condition(tmp_path, soma_pd_condition):
     pydict["int"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["bool"] = [True, True, True, False, True, False, None, False, None, None]
     pydict["ord"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
-    data = pa.Table.from_pydict(pydict)
+    data = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
 
     with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
         sdf.write(data)

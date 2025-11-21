@@ -3193,7 +3193,7 @@ def test_nullable(tmp_path):
     pydict["yes-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["yes-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["yes-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    data = pa.Table.from_pydict(pydict)
+    data = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
 
     with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
         sdf.write(data)
@@ -3442,7 +3442,7 @@ def test_arrow_table_sliced_writer(tmp_path):
         pa.array([False, True], type=pa.bool_()),
     )
 
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
 
     domain = [[0, len(table) - 1]]
 
@@ -3512,7 +3512,7 @@ def test_arrow_table_validity_with_slicing(tmp_path):
         np.datetime64(9, "s"),
     ]
     pydict["myenum"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
 
     # As of version 1.15.6 we were throwing in this case. However, we found
     # a compatibility issue with pyarrow versions below 17. Thus this is
@@ -3523,7 +3523,8 @@ def test_arrow_table_validity_with_slicing(tmp_path):
     #        A.write(table)
 
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
+    print(table)
 
     with soma.DataFrame.open(uri, "w") as A:
         A.write(table)
