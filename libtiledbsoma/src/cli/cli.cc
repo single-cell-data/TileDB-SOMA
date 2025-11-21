@@ -78,7 +78,7 @@ void test_arrow(const std::string& uri) {
             "Read complete with {} obs and {} cols", obs_data->get()->num_rows(), obs_data->get()->names().size()));
     std::vector<std::string> names = obs_data->get()->names();
     for (auto nm : names) {
-        auto buf = obs_data->get()->at(nm);
+        auto buf = obs_data->get()->at<ReadColumnBuffer>(nm);
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
         ArrowSchema* schema = pp.second.get();
         tdbs::LOG_INFO(

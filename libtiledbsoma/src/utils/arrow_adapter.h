@@ -16,6 +16,7 @@
 
 #include <any>
 #include <concepts>
+#include <span>
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -33,7 +34,8 @@ namespace tiledbsoma {
 using namespace tiledb;
 using json = nlohmann::json;
 
-class ColumnBuffer;
+class ReadColumnBuffer;
+class ArrayBuffers;
 class SOMACoordinateSpace;
 
 /**
@@ -45,16 +47,21 @@ class SOMACoordinateSpace;
  *
  */
 struct ArrowBuffer {
-    ArrowBuffer(ColumnBuffer& buffer, bool large_offsets = true);
+    ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::vector<std::byte> data_;
-    std::vector<int64_t> large_offsets_;
-    std::vector<int32_t> small_offsets_;
-    std::vector<std::byte> validity_;
+    std::span<std::byte> data_;
+    std::span<int64_t> large_offsets_;
+    std::span<int32_t> small_offsets_;
+    std::span<uint8_t> validity_;
 
     size_t length;
     std::string name;
+
+   private:
+    std::unique_ptr<std::byte[]> data_buffer_;
+    std::unique_ptr<std::byte[]> offset_buffer_;
+    std::unique_ptr<std::byte[]> validity_buffer_;
 };
 
 struct PrivateArrowBuffer {
@@ -105,13 +112,21 @@ class ArrowAdapter {
     static bool _isstr(const char* format);
 
     /**
+     * @brief Convert ArrayBuffer to an list of Arrow arrays.
+     *
+     * @return std::vector<std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>>
+     */
+    static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
+        std::shared_ptr<ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
+
+    /**
      * @brief Convert ColumnBuffer to an Arrow array.
      *
      * @return std::pair<std::unique_ptr<ArrowArray>,
      * std::unique_ptr<ArrowSchema>>
      */
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ColumnBuffer> column, bool downcast_dict_of_large_var = false);
+        std::shared_ptr<ReadColumnBuffer> column, bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
