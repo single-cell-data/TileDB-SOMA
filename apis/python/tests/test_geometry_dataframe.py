@@ -86,7 +86,7 @@ def test_geometry_basic_read(tmp_path):
             [0.0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
         ]
         pydict["soma_joinid"] = [1, 2]
-        pydict["quality"] = [4.1, 5.2]
+        pydict["quality"] = pa.array([4.1, 5.2], type=pa.float32())
 
         rb = pa.Table.from_pydict(pydict)
         geom.from_outlines(rb)
@@ -117,7 +117,7 @@ def test_geometry_basic_spatial_read(tmp_path):
             [2.0, 0, 2, 1, 3, 1, 3, 0, 2, 0],
         ]
         pydict["soma_joinid"] = [1, 2]
-        pydict["quality"] = [4.1, 5.2]
+        pydict["quality"] = pa.array([4.1, 5.2], type=pa.float32())
 
         rb = pa.Table.from_pydict(pydict)
         geom.from_outlines(rb)

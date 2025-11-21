@@ -47,7 +47,7 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
     uri = tmp_path.as_posix()
     expect_error = cap_nbytes == 1 and num_rows > 0  # Not enough room for even one row
 
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
     domain = [[0, max(1, len(table) - 1)]]
 
     with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
