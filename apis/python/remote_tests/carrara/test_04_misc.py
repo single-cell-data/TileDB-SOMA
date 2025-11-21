@@ -8,6 +8,7 @@ import anndata as ad
 import pyarrow as pa
 
 import tiledbsoma as soma
+import tiledbsoma.io
 
 
 def test_open(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:

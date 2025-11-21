@@ -16,7 +16,7 @@ from somacore import ContextBase
 from typing_extensions import Self
 
 from tiledbsoma import pytiledbsoma as clib
-from tiledbsoma._types import OpenTimestamp
+from tiledbsoma._types import DataProtocol, OpenTimestamp
 from tiledbsoma._util import ms_to_datetime, to_timestamp_ms
 
 try:
@@ -349,6 +349,39 @@ class SOMATileDBContext(ContextBase):
         if self.timestamp_ms is not None and self.timestamp_ms != 0:
             return self.timestamp_ms
         return int(time.time() * 1000)
+
+    def data_protocol(self, uri: str) -> DataProtocol:
+        """Return the data model in use for this URI and context.
+
+        Return value will be a data model identifier. Currently one of:
+        * `tiledbv2` - the original data model, supported on all storage platforms except Carrara
+        * `tiledbv3` - the new, and currently Carrara-specific data model.
+
+        See <<LINK>> for more information on the difference between the supported
+        data models.
+
+        Returns: str
+        """
+        if not uri.startswith("tiledb://"):
+            return "tiledbv2"
+
+        # The original, absolute-only, URIs had the format:
+        #     tiledb://ORG/UUID
+        # The new URIs are:
+        #     tiledb://WORKSPACE/TEAMSPACE/optional-path-elements/
+        # The current methodology to distinguish between these is to look at the run-time
+        # environment, and determine if we are running on Cloud or Carrara.
+        #
+        # NB: this method may change.
+
+        CLOUD_DEPLOYMENTS = {"https://api.tiledb.com", "https://api.dev.tiledb.io"}
+        if self.native_context.config()["rest.server_address"] in CLOUD_DEPLOYMENTS:
+            return "tiledbv2"
+
+        return "tiledbv3"
+
+    def is_tiledbv3_uri(self, uri: str) -> bool:
+        return self.data_protocol(uri) == "tiledbv3"
 
 
 def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:  # noqa: ANN401

@@ -22,10 +22,10 @@ from somacore import options
 
 from . import pytiledbsoma as clib
 from ._exception import SOMAError
-from ._types import OpenTimestamp, Slice, is_slice_of
+from ._types import DataProtocol, OpenTimestamp, Slice, is_slice_of
 
 if TYPE_CHECKING:
-    pass
+    from .options._soma_tiledb_context import SOMATileDBContext
 
 
 def get_start_stamp() -> float:
@@ -52,36 +52,9 @@ def is_local_path(path: str) -> bool:
     return "://" not in path
 
 
-def is_tiledb_carrara_uri(uri: str) -> bool:
-    """Carrara-style tiledb:// URIs support relative path operations.
-
-    The original, absolute-only, URIs had the format:
-
-        tiledb://ORG/UUID
-
-    The new URIs are:
-
-        tiledb://WORKSPACE/TEAMSPACE/optional-path-elements/
-
-    The current methodology to distinguish between these is to look at the run-time
-    environment, and determine if we are running on Cloud or Carrara.
-
-    NB: this method may change.
-    """
-    if not uri.startswith("tiledb://"):
-        return False
-
-    # Circular reference breaker. Ugly, temporary, hopefully.
-    from .options._soma_tiledb_context import SOMATileDBContext
-
-    CLOUD_DEPLOYMENTS = {"https://api.tiledb.com", "https://api.dev.tiledb.io"}
-    context = SOMATileDBContext()
-    return context.native_context.config()["rest.server_address"] not in CLOUD_DEPLOYMENTS
-
-
-def validate_create_uri(uri: str) -> None:
+def validate_create_uri(uri: str, context: SOMATileDBContext) -> None:
     """If the URI is a Carrara URI, perform early error checks for improved UX."""
-    if not is_tiledb_carrara_uri(uri):
+    if not context.is_tiledbv3_uri(uri):
         return
 
     # Storage URIs not supported - they are Cloud-only
@@ -376,11 +349,18 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-def sanitize_key(key: str) -> str:
+def sanitize_key(key: str, data_protocol: DataProtocol) -> str:
     # Encode everything outside of the safe characters set
-    safe_puncuation = "-_.()^!@+={}~'"
-    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
-    sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+
+    if data_protocol == "tiledbv3":
+        # Carrara data model supports anything exclusive of '/'
+        if "/" in key:
+            raise ValueError(f"{key} is not a supported name - must not contain slash (/)")
+        sanitized_name = key
+    else:
+        safe_puncuation = "-_.()^!@+={}~'"
+        safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+        sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
 
     # Ensure that the final key is valid
     if sanitized_name in ["..", "."]:

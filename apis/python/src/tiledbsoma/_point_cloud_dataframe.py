@@ -105,7 +105,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             Experimental.
         """
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
-        validate_create_uri(uri)
 
         axis_dtype: pa.DataType | None = None
 
@@ -139,6 +138,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         index_column_names = (*axis_names, SOMA_JOINID)
 
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
         schema = _canonicalize_schema(schema, index_column_names)
 
         # SOMA-to-core mappings:

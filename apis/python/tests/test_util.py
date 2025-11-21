@@ -1,12 +1,12 @@
 import pytest
 from somacore import ResultOrder
 
+import tiledbsoma as soma
 import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._util import (
     dense_index_to_shape,
     dense_indices_to_shape,
     is_relative_uri,
-    is_tiledb_carrara_uri,
     make_relative_path,
     sanitize_key,
     slice_to_numeric_range,
@@ -27,11 +27,15 @@ def carrara_mode(monkeypatch, _carrara_mode):
 
 
 @pytest.mark.parametrize("_carrara_mode", [True, False])
-def test_is_tiledb_carrara_uri(carrara_mode):
-    assert carrara_mode == is_tiledb_carrara_uri("tiledb://foo/bar")
-    assert not is_tiledb_carrara_uri("s3://foo/bar")
-    assert not is_tiledb_carrara_uri("bar")
-    assert not is_tiledb_carrara_uri("file://foo/bar")
+def test_is_tiledbv3_uri(carrara_mode):
+    ctx = soma.SOMATileDBContext()
+
+    assert carrara_mode == ctx.is_tiledbv3_uri("tiledb://foo/bar")
+    assert ctx.data_protocol("tiledb://foo/bar") == ("tiledbv3" if carrara_mode else "tiledbv2")
+
+    for uri in ["s3://foo/bar", "bar", "file://foo/bar"]:
+        assert not ctx.is_tiledbv3_uri(uri)
+        assert ctx.data_protocol(uri) == "tiledbv2"
 
 
 def test_is_relative_uri() -> None:
@@ -337,10 +341,10 @@ def test_slice_to_range_bad(start_stop, domain, exc):
     ),
 )
 def test_sanitize_paths(key, sanitized):
-    assert sanitized == sanitize_key(key)
+    assert sanitized == sanitize_key(key, "tiledbv2")
 
 
 @pytest.mark.parametrize("key", ("..", "."))
 def test_invalid_sanitize_paths(key):
     with pytest.raises(ValueError):
-        assert sanitize_key(key)
+        assert sanitize_key(key, "tiledbv2")

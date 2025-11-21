@@ -135,7 +135,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             Maturing.
         """
         context = _validate_soma_tiledb_context(context)
-        validate_create_uri(uri)
+        validate_create_uri(uri, context)
 
         index_column_schema = []
         index_column_data = {}

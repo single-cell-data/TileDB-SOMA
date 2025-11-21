@@ -17,10 +17,10 @@ from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib
-from ._exception import SOMAError, is_does_not_exist_error
+from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
-from ._util import is_relative_uri, is_tiledb_carrara_uri, make_relative_path, sanitize_key, uri_joinpath
+from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
 from .options import SOMATileDBContext
 
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
@@ -160,13 +160,13 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             raise SOMAError(f"replacing key {key!r} is unsupported")
         clib_collection = self._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
-
-        clib_collection.add(
-            uri=uri,
-            uri_type=relative_type,
-            name=key,
-            soma_type=soma_object.soma_type,
-        )
+        if self.context.data_protocol(self.uri) == "tiledbv2":
+            clib_collection.add(
+                uri=uri,
+                uri_type=relative_type,
+                name=key,
+                soma_type=soma_object.soma_type,
+            )
         self._contents[key] = _CachedElement(uri=soma_object.uri, tiledb_type=None, soma=soma_object)
         self._mutated_keys.add(key)
 
@@ -221,6 +221,13 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
         child_uri = self._new_child_uri(key=key, user_uri=user_uri)
+
+        if self.context.is_tiledbv3_uri(self.uri) and (not child_uri.relative or key != child_uri.add_uri):
+            # Carrara data model requires relative URI, and that member name == member uri
+            raise UnsupportedOperationError(
+                "TileDB Carrara data model requires Collection member name and uri to be equal."
+            )
+
         child = factory(child_uri.full_uri)
         # The resulting element may not be the right type for this collection,
         # but we can't really handle that within the type system.
@@ -234,7 +241,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         return child
 
     def _new_child_uri(self, *, key: str, user_uri: str | None) -> _ChildURI:
-        maybe_relative_uri = user_uri or sanitize_key(key)
+        maybe_relative_uri = user_uri or sanitize_key(key, data_protocol=self.context.data_protocol(self.uri))
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.
             return _ChildURI(
@@ -242,7 +249,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                 full_uri=maybe_relative_uri,
                 relative=False,
             )
-        if not self.uri.startswith("tiledb://") or is_tiledb_carrara_uri(self.uri):
+        if not self.uri.startswith("tiledb://") or self.context.is_tiledbv3_uri(self.uri):
             # We don't need to post-process anything - URI schema handles relative paths.
             return _ChildURI(
                 add_uri=maybe_relative_uri,
@@ -314,12 +321,16 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             Maturing.
         """
         uri_to_add = value.uri
+        if self.context.is_tiledbv3_uri(uri_to_add):
+            raise UnsupportedOperationError(
+                "TileDB Carrara data model does not support the set or __setitem__ operation on this object."
+            )
+
         # The SOMA API supports use_relative_uri in [True, False, None].
         # The TileDB-Py API supports use_relative_uri in [True, False].
         # Map from the former to the latter -- and also honor our somacore contract for None --
         # using the following rule.
-        if use_relative_uri is None and value.uri.startswith("tiledb://") and not is_tiledb_carrara_uri(value.uri):
-            # Carrara uses relative URIs
+        if use_relative_uri is None and value.uri.startswith("tiledb://"):
             # TileDB-Cloud does not use relative URIs, ever.
             use_relative_uri = False
 

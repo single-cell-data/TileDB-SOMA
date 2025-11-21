@@ -23,7 +23,6 @@ import tiledb
 from ._util import get_asset_info
 
 
-@pytest.mark.xfail(reason="Delete semantics are undefined/surprising")
 @pytest.mark.carrara
 def test_collection_delete_member_by_name(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     """
@@ -32,8 +31,6 @@ def test_collection_delete_member_by_name(carrara_group_path: str, carrara_conte
     2. add members
     3. remove one of the members from the parent
     4. verify that
-
-    Semantics are currently ambiguous/undefined, so it is marked xfail.
     """
     soma.Collection.create(carrara_group_path, context=carrara_context).close()
     with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
@@ -49,10 +46,9 @@ def test_collection_delete_member_by_name(carrara_group_path: str, carrara_conte
     with soma.open(carrara_group_path, context=carrara_context) as C:
         assert set(C) == {"collection"}
 
-    tiledb.Array.delete_array(f"{carrara_group_path}/array", ctx=carrara_context.tiledb_ctx)
+    assert not tiledb.array_exists(f"{carrara_group_path}/array", ctx=carrara_context.tiledb_ctx)
 
 
-@pytest.mark.xfail(reason="CLOUD-2326, delete semantics are undefined/surprising")
 @pytest.mark.carrara
 def test_collection_delete_member_object(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
     """
@@ -77,5 +73,5 @@ def test_collection_delete_member_object(carrara_group_path: str, carrara_contex
     with soma.open(carrara_group_path, context=carrara_context) as C:
         assert set(C) == {"collection"}
 
-    # verify that the object still exists on the storage layer
-    assert soma.SparseNDArra.exists(array_asset_info.uri, context=carrara_context)
+    # verify that the object does not exist on the storage layer
+    assert not soma.SparseNDArray.exists(array_asset_info["uri"], context=carrara_context)

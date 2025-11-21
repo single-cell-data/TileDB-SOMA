@@ -210,7 +210,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
-        validate_create_uri(uri)
+        validate_create_uri(uri, context)
 
         # SOMA-to-core mappings:
         #

@@ -17,7 +17,7 @@ import tiledb
 #
 PROFILE_NAME = os.getenv("CARRARA_TEST_PROFILE") or "qa"
 WORKSPACE_NAME = os.getenv("CARRARA_TEST_WORKSPACE") or "TileDB-Inc."
-TEAMSPACE_NAME = os.getenv("CARRARA_TEST_TEAMSPACE") or "Bruce"
+TEAMSPACE_NAME = os.getenv("CARRARA_TEST_TEAMSPACE") or "bruce-uat"
 TEST_FOLDER = os.getenv("CARRARA_TEST_FOLDER") or "remote_test"
 BASE_URI = f"tiledb://{WORKSPACE_NAME}/{TEAMSPACE_NAME}/{TEST_FOLDER}"
 

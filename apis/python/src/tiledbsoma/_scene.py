@@ -105,7 +105,7 @@ class Scene(
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         context = _validate_soma_tiledb_context(context)
-        validate_create_uri(uri)
+        validate_create_uri(uri, context)
 
         if coordinate_space is None:
             axis_names = None

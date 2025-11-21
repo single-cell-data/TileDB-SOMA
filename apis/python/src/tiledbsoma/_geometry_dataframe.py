@@ -106,7 +106,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             Experimental.
         """
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
-        validate_create_uri(uri)
 
         # Get coordinate space axis data.
         if isinstance(coordinate_space, CoordinateSpace):
@@ -122,6 +121,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         )
 
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
         schema = _canonicalize_schema(schema, index_column_names, [SOMA_JOINID, SOMA_GEOMETRY])
 
         # SOMA-to-core mappings:

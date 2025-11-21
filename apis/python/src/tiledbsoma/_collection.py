@@ -96,7 +96,7 @@ class CollectionBase(
             Maturing.
         """
         context = _validate_soma_tiledb_context(context)
-        validate_create_uri(uri)
+        validate_create_uri(uri, context)
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
