@@ -77,4 +77,4 @@ def test_remote_version(conftest_tiledb_cloud_login):
 
     output = tiledb.cloud.udf.exec(remote_version)
     assert "tiledbsoma" in output
-    assert output["tiledbsoma"].startswith("1.")
+    assert output["tiledbsoma"].startswith("2.")
