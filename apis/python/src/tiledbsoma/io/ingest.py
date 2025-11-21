@@ -912,6 +912,9 @@ def _maybe_set(
     use_relative_uri: bool | None,
 ) -> None:
     coll.verify_open_for_writing()
+    if coll.context.is_tiledbv3_uri(coll.uri):
+        return
+
     try:
         coll.set(key, value, use_relative_uri=use_relative_uri)
     except SOMAError:
