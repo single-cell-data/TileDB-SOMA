@@ -142,20 +142,25 @@ class SOMAArray(SOMAObject):
         if not batches:
             return
 
-        layout = clib.ResultOrder.unordered if sort_coords else clib.ResultOrder.globalorder
+        array_schema = self.schema
+        for name in values.schema.names:
+            if name not in array_schema.names:
+                raise ValueError(
+                    f"Cannot write data. Field '{name}' in the input data is not a column in this {self._handle_type.__name__}."
+                )
+        batch_schema = pa.schema([array_schema.field_by_name(name) for name in values.schema.names])
 
-        if layout == clib.ResultOrder.unordered:
-            # Finalize for each batch
+        if sort_coords:
+            # Finalize each batch as it is written.
             for batch in batches:
                 mq = ManagedQuery(self)._handle
-                mq.set_layout(layout)
-                mq.submit_batch(batch)
+                mq.set_layout(clib.ResultOrder.unordered)
+                mq.submit_batch(batch.cast(batch_schema, safe=True))
                 mq.finalize()
-
-        else:  # globalorder
-            # Only finalize at the last batch
+        else:
+            # Single global order query - only finalize at the end.
             mq = ManagedQuery(self)._handle
-            mq.set_layout(layout)
+            mq.set_layout(clib.ResultOrder.globalorder)
             for batch in batches[:-1]:
-                mq.submit_batch(batch)
+                mq.submit_batch(batch.cast(batch_schema, safe=True))
             mq.submit_and_finalize_batch(batches[-1])

@@ -419,11 +419,6 @@ def test_dataframe_with_enumeration(tmp_path, cfg):
     with soma.DataFrame.create(tmp_path.as_posix(), schema=schema, domain=[[0, 5]]) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["myint"] = ["a", "bb", "ccc", "bb", "a"]
-        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
-        with pytest.raises(soma.SOMAError):
-            sdf.write(pa.Table.from_pydict(data))
-
         data["myint"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
         data["myfloat"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
