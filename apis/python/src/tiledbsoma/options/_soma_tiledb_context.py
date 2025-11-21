@@ -360,7 +360,15 @@ class SOMATileDBContext(ContextBase):
         See <<LINK>> for more information on the difference between the supported
         data models.
 
-        Returns: str
+        Args:
+            uri:
+                An object URI
+
+        Returns:
+            The protocol identifier, currently one of `tiledbv2` or `tiledbv3`
+
+        Lifecycle:
+            Experimental.
 
         ---
 
