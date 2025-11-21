@@ -11,7 +11,7 @@ on:
       - '.github/workflows/ci-pr-r.yml'
       - '.github/workslows/test-r.yml'
       - '.github/actions/setup-r/**'
-      - ".github/workflows/build-cpp.yml" 
+      - ".github/workflows/build-cpp.yml"
   workflow_dispatch:
 
 
@@ -21,10 +21,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml 
+    uses: ./.github/workflows/build-cpp.yml
     with:
       os: ${{ matrix.os }}
-      build_type: 'release' 
+      build_type: 'Release'
 
   r-tests:
     needs: build-cpp-release

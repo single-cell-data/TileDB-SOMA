@@ -25,10 +25,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml 
+    uses: ./.github/workflows/build-cpp.yml
     with:
       os: ${{ matrix.os }}
-      build_type: 'release'
+      build_type: 'Release'
 
   ci:
     needs: build-cpp-release
@@ -69,8 +69,8 @@ jobs:
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ matrix.os }}
-      
+          name: cpp-build-Release-${{ matrix.os }}
+
       - name: Log pip dependencies
         run: pip list
 
