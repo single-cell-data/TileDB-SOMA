@@ -91,7 +91,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cpp-build-release-${{ inputs.os }}
-        continue-on-error: true
 
       - name: Set up test data
         run: make data
@@ -104,7 +103,6 @@ jobs:
           cache-dependency-path: ./apis/python/pyproject.toml
 
       - name: Install tiledbsoma
-        # TILEDB_REMOVE_DEPRECATIONS is already set to ON in pyproject.toml
         run: pip -v install -e apis/python[all]
         env:
           CC: ${{ inputs.cc }}

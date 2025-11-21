@@ -27,27 +27,26 @@ find_package(Ninja)
 # Development.Module only requires headers/metadata, not Python_LIBRARIES
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
-# Get version from setuptools_scm generated file or fallback
-# setuptools_scm writes version to src/tiledbsoma/_version.py if configured
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/_version.py")
-    # Try to read version from setuptools_scm generated file
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/_version.py" VERSION_PY_CONTENT)
-    string(REGEX MATCH "__version__ = \"([^\"]+)\"" _ "${VERSION_PY_CONTENT}")
-    if(CMAKE_MATCH_1)
-        set(VERSION_STRING "${CMAKE_MATCH_1}")
-        message(STATUS "Package version (from setuptools_scm): ${VERSION_STRING}")
-    else()
-        set(VERSION_STRING "0.0.0.dev0")
-        message(WARNING "Could not parse version from _version.py, using default")
+# Get version from scikit-build-core or setuptools_scm
+# scikit-build-core passes the version via SKBUILD_PROJECT_VERSION
+if(DEFINED SKBUILD_PROJECT_VERSION)
+    set(VERSION_STRING "${SKBUILD_PROJECT_VERSION}")
+    message(STATUS "Package version (from scikit-build-core): ${VERSION_STRING}")
+    
+    # Validate that setuptools_scm worked (version should not be unknown)
+    if(VERSION_STRING MATCHES "0\\.0\\.0\\+unknown")
+        message(FATAL_ERROR "setuptools_scm failed to determine version. Version is '${VERSION_STRING}'. "
+                "This likely means git tags are not available or the repository structure is incorrect.")
     endif()
 elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/RELEASE-VERSION")
-    # Fallback to RELEASE-VERSION file if it exists (matches version.py convention)
+    # Fallback to RELEASE-VERSION file if it exists (for non-scikit-build builds)
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/RELEASE-VERSION" VERSION_STRING)
     string(STRIP "${VERSION_STRING}" VERSION_STRING)
-    message(STATUS "Package version (from RELEASE-VERSION file): ${VERSION_STRING}")
+    message(STATUS "Package version (from RELEASE-VERSION): ${VERSION_STRING}")
 else()
+    # This should only happen in legacy builds or manual CMake invocations
     set(VERSION_STRING "0.0.0.dev0")
-    message(WARNING "No version file found, using default version")
+    message(WARNING "No version available. If building via pip/cibuildwheel, this indicates a problem.")
 endif()
 
 # Build libtiledbsoma using ExternalProject
@@ -304,11 +303,6 @@ elseif(UNIX)
             message(FATAL_ERROR \"Could not find libtiledbsoma.so in ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib or ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64\")
         endif()
     ")
-elseif(WIN32)
-    install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/bin/tiledbsoma.dll
-        DESTINATION tiledbsoma
-        OPTIONAL
-    )
 endif()
 
 # Install TileDB shared libraries if not provided externally
@@ -333,10 +327,6 @@ if(NOT DEFINED ENV{TILEDB_PATH})
                 message(FATAL_ERROR \"Could not find libtiledb.so in ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib or ${LIBTILEDBSOMA_INSTALL_PREFIX}/lib64\")
             endif()
         ")
-    elseif(WIN32)
-        install(FILES ${LIBTILEDBSOMA_INSTALL_PREFIX}/bin/tiledb.dll
-            DESTINATION tiledbsoma
-        )
     endif()
 endif()
 

@@ -125,7 +125,6 @@ jobs:
           fi
 
       - name: Install tiledbsoma
-        # TILEDB_REMOVE_DEPRECATIONS is already set to ON in pyproject.toml
         run: pip -v install -e apis/python[all]
 
       - name: Show Python package versions
