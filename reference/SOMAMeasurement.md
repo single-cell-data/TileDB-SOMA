@@ -126,7 +126,7 @@ sch <- arrow::infer_schema(var)
 
 (ms <- SOMAMeasurementCreate(uri))
 #> <SOMAMeasurement>
-#>   uri: /tmp/RtmpAWfQXW/soma-measurement27b11d479e36
+#>   uri: /tmp/Rtmph7sDG6/soma-measurement275b206778e7
 sdf <- ms$add_new_dataframe(
   "var",
   sch,
@@ -139,10 +139,10 @@ ms$close()
 
 (ms <- SOMAMeasurementOpen(uri))
 #> <SOMAMeasurement>
-#>   uri: /tmp/RtmpAWfQXW/soma-measurement27b11d479e36
+#>   uri: /tmp/Rtmph7sDG6/soma-measurement275b206778e7
 ms$var
 #> <SOMADataFrame>
-#>   uri: file:///tmp/RtmpAWfQXW/soma-measurement27b11d479e36/var
+#>   uri: file:///tmp/Rtmph7sDG6/soma-measurement275b206778e7/var
 #>   dimensions: soma_joinid 
 #>   attributes: var_id 
 ```

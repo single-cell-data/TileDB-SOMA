@@ -42,7 +42,7 @@ for writing (lifecycle: maturing)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a SOMA Data Frame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-2.1/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.1.2rc0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrameCreate.Rd</code></div>
     </div>
 
@@ -145,7 +145,7 @@ if it already exists, simply open it for writing.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> nCount: int32</span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu">SOMADataFrameCreate</span><span class="op">(</span><span class="va">uri</span>, <span class="va">sch</span>, domain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_joinid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpAWfQXW/soma-data-frame27b11630d40e</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmph7sDG6/soma-data-frame275b10d017c9</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: group, nCount </span>
 <span class="r-in"><span><span class="va">sdf</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/as_arrow_table.html" class="external-link">as_arrow_table</a></span><span class="op">(</span><span class="va">df</span>, schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -153,7 +153,7 @@ if it already exists, simply open it for writing.</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADataFrameOpen.html">SOMADataFrameOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpAWfQXW/soma-data-frame27b11630d40e</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmph7sDG6/soma-data-frame275b10d017c9</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: group, nCount </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">sdf</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

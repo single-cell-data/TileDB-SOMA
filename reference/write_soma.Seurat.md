@@ -252,10 +252,10 @@ uri <- write_soma(pbmc_small, uri)
 
 (exp <- SOMAExperimentOpen(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/RtmpAWfQXW/pbmc-small27b1292db060
+#>   uri: /tmp/Rtmph7sDG6/pbmc-small275b712ac567
 exp$obs
 #> <SOMADataFrame>
-#>   uri: file:///tmp/RtmpAWfQXW/pbmc-small27b1292db060/obs
+#>   uri: file:///tmp/Rtmph7sDG6/pbmc-small275b712ac567/obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,... 
 exp$get("uns")$get("seurat_commands")$names()
@@ -266,10 +266,10 @@ exp$get("uns")$get("seurat_commands")$names()
 #>  [9] "ScaleData.RNA"            "ScoreJackStraw.pca"      
 (ms <- exp$ms$get("RNA"))
 #> <SOMAMeasurement>
-#>   uri: file:///tmp/RtmpAWfQXW/pbmc-small27b1292db060/ms/RNA
+#>   uri: file:///tmp/Rtmph7sDG6/pbmc-small275b712ac567/ms/RNA
 ms$var
 #> <SOMADataFrame>
-#>   uri: file:///tmp/RtmpAWfQXW/pbmc-small27b1292db060/ms/RNA/var
+#>   uri: file:///tmp/Rtmph7sDG6/pbmc-small275b712ac567/ms/RNA/var
 #>   dimensions: soma_joinid 
 #>   attributes: vst.mean, vst.variance, vst.variance.expected, vst.variance.standardized, vst... 
 ms$X$names()
