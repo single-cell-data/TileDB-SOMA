@@ -1,5 +1,17 @@
 # Changelog
 
+## tiledbsoma 2.1.2
+
+**Action required:** Users who ingested BPCells data with version 2.1.0
+or 2.1.1 must re-ingest with this version to ensure data correctness.
+
+### Fixed
+
+- Addressed bug in BPCells ingestion, where data ingested in an iterated
+  manner would only be written at the top of the array. Ingestion now
+  proceeds down the array for each iteration.
+  ([\#4317](https://github.com/single-cell-data/TileDB-SOMA/pull/4317))
+
 ## tiledbsoma 2.1.1
 
 ### Changed
@@ -7,6 +19,10 @@
 - Update TileDB core version to
   [2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
   ([\#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309))
+
+### Deprecated
+
+### Removed
 
 ## tiledbsoma 2.1.0
 

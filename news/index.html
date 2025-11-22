@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,15 +40,29 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.1.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-2.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.1.2" id="tiledbsoma-212">tiledbsoma 2.1.2<a class="anchor" aria-label="anchor" href="#tiledbsoma-212"></a></h2>
+<p><strong>Action required:</strong> Users who ingested BPCells data with version 2.1.0 or 2.1.1 must re-ingest with this version to ensure data correctness.</p>
+<div class="section level3">
+<h3 id="fixed-2-1-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2-1-2"></a></h3>
+<ul><li>Addressed bug in BPCells ingestion, where data ingested in an iterated manner would only be written at the top of the array. Ingestion now proceeds down the array for each iteration. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4317" class="external-link">#4317</a>)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.1.1" id="tiledbsoma-211">tiledbsoma 2.1.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-211"></a></h2>
 <div class="section level3">
 <h3 id="changed-2-1-1">Changed<a class="anchor" aria-label="anchor" href="#changed-2-1-1"></a></h3>
 <ul><li>Update TileDB core version to <a href="https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2" class="external-link">2.29.2</a>. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4309" class="external-link">#4309</a>)</li>
 </ul></div>
+<div class="section level3">
+<h3 id="deprecated-2-1-1">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-2-1-1"></a></h3>
+</div>
+<div class="section level3">
+<h3 id="removed-2-1-1">Removed<a class="anchor" aria-label="anchor" href="#removed-2-1-1"></a></h3>
+</div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.1.0" id="tiledbsoma-210">tiledbsoma 2.1.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-210"></a></h2>

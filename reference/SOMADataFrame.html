@@ -13,7 +13,7 @@ other objects, such as SOMASparseNDArray (lifecycle: maturing)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ other objects, such as SOMASparseNDArray (lifecycle: maturing)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.1.1/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-2.1/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrame.Rd</code></div>
     </div>
 
@@ -516,7 +516,7 @@ detected, else a description of the error. Otherwise, invisibly returns
 <span class="r-out co"><span class="r-pr">#&gt;</span> nCount: int32</span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADataFrameCreate.html">SOMADataFrameCreate</a></span><span class="op">(</span><span class="va">uri</span>, <span class="va">sch</span>, domain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_joinid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmphk3pZI/soma-data-frame2a1945e0e79d</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpAWfQXW/soma-data-frame27b1df5a02f</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: group, nCount </span>
 <span class="r-in"><span><span class="va">sdf</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/as_arrow_table.html" class="external-link">as_arrow_table</a></span><span class="op">(</span><span class="va">df</span>, schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -524,7 +524,7 @@ detected, else a description of the error. Otherwise, invisibly returns
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADataFrameOpen.html">SOMADataFrameOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmphk3pZI/soma-data-frame2a1945e0e79d</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpAWfQXW/soma-data-frame27b1df5a02f</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: group, nCount </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">sdf</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

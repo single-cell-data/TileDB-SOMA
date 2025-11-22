@@ -52,13 +52,13 @@ dir.create(dir, recursive = TRUE)
 uri <- extract_dataset("soma-exp-pbmc-small", dir)
 (exp <- SOMAOpen(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmphk3pZI/soma-open2a19129faba0/soma-exp-pbmc-small
+#>   uri: /tmp/RtmpAWfQXW/soma-open27b14745710e/soma-exp-pbmc-small
 
 
 uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs", dir)
 (obs <- SOMAOpen(uri))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmphk3pZI/soma-open2a19129faba0/soma-dataframe-pbmc3k-processed-obs
+#>   uri: /tmp/RtmpAWfQXW/soma-open27b14745710e/soma-dataframe-pbmc3k-processed-obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, seurat_annotations, percent.mt, RNA_snn... 
 ```

@@ -15,7 +15,7 @@ show_package_versions()
 
 ``` r
 show_package_versions()
-#> tiledbsoma:    2.1.1
+#> tiledbsoma:    2.1.2
 #> tiledb-r:      0.33.1.1
 #> tiledb core:   2.29.1
 #> libtiledbsoma: 2.29.1
