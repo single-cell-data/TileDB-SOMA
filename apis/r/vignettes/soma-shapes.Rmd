@@ -167,7 +167,8 @@ tbl <- arrow::arrow_table(
     soma_joinid = c(soma_joinid),
     mystring = c(mystring),
     myint = c(myint),
-    myfloat = c(myfloat)
+    myfloat = c(myfloat),
+    schema = asch
 )
 ```
 
