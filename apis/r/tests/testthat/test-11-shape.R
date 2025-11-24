@@ -466,7 +466,7 @@ test_that("SOMASparseNDArray shape", {
     ndarray <- SOMASparseNDArrayOpen(uri, "WRITE")
     soma_dim_0 <- c(2, 3)
     soma_dim_1 <- c(4, 5)
-    soma_data <- c(60, 70)
+    soma_data <- arrow::arrow_array(c(60, 70), element_type)
     sm <- Matrix::sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
     ndarray$write(sm)
     ndarray$close()
