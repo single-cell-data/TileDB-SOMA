@@ -16,7 +16,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/single-cell-data/TileDB-SOMA/blob/2.1.2rc0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/single-cell-data/TileDB-SOMA/blob/2.1.2/DESCRIPTION)
 
 Hoffman P, Wolen A (2025). *tiledbsoma: 'TileDB' Stack of Matrices,
 Annotated ('SOMA')*. R package version 2.1.2,

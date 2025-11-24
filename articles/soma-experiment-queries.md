@@ -22,7 +22,7 @@ provided by SeuratObject. This will return a `SOMAExperiment` object.
 experiment <- load_dataset("soma-exp-pbmc-small")
 experiment
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpyhgo1p/soma-exp-pbmc-small
+#>   uri: /tmp/RtmphU8MZp/soma-exp-pbmc-small
 ```
 
 ## Querying basics
@@ -37,7 +37,7 @@ measurement: `"RNA"`.
 ``` r
 experiment$ms
 #> <SOMACollection>
-#>   uri: file:///tmp/Rtmpyhgo1p/soma-exp-pbmc-small/ms
+#>   uri: file:///tmp/RtmphU8MZp/soma-exp-pbmc-small/ms
 ```
 
 To use larger (or smaller) buffer sizes:

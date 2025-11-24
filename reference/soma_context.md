@@ -29,5 +29,5 @@ head(cfgvec <- as.vector(tiledb::tiledb_config())) # TileDB config as a vector
 #> filestore.buffer_size           profile_dir          profile_name 
 #>           "104857600"                    ""                    "" 
 (sctx <- soma_context(cfgvec))
-#> <pointer: 0x5619644435f0>
+#> <pointer: 0x556b9fa0c8a0>
 ```
