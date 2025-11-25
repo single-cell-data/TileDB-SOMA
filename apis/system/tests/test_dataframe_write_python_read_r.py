@@ -26,7 +26,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
         pydict["quux"] = [True, False, False, True, False]
-        rb = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field('soma_joinid', pa.int64())))
+        rb = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
         with soma.DataFrame.open(self.uri, "w") as sdf:
             sdf.write(rb)
 
