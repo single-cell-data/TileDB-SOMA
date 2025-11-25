@@ -7,6 +7,7 @@
 import importlib.metadata
 import platform
 import sys
+import warnings
 from re import fullmatch
 
 from .pytiledbsoma import expected_tiledb_version, tiledb_version
@@ -79,9 +80,10 @@ def _verify_expected_tiledb_version() -> None:
     expected = expected_tiledb_version()
     found = tiledb_version()
     if found != expected:
-        raise RuntimeError(
+        warnings.warn(
             f"TileDB version mismatch - expected version {expected}, but found {found}. This should not occur, and"
             " is likely the result of a corrupted package installation. Recommend uninstalling/reinstalling the"
             " tiledbsoma package. Alternatively, if you are using a Python virtual environment (e.g., conda)"
             " remove and reinstall the Python virtual environment.",
+            stacklevel=2,
         )
