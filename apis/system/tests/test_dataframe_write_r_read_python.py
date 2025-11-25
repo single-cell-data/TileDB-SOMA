@@ -30,7 +30,7 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
             baz = c("apple", "ball", "cat", "dog", "egg"),
             quux = c(TRUE, FALSE, FALSE, TRUE, FALSE)
         )
-        tbl <- arrow_table(df)
+        tbl <- arrow_table(df, schema = sdf$schema())
         sdf$write(tbl)
         """
         self.execute_R_script(base_script)
