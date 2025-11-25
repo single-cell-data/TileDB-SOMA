@@ -8,8 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- \[[#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309)\] Update [TileDB core to 2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
-
 ### Changed
 
 - \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add optional schema validation to `tiledbsoma.io.add_X_layer`, which will generate an error if the provided matrix does not match the Experiment shape. Validation is enabled by default, for any dataset created with SOMA 1.15 or later.
@@ -23,6 +21,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 ### Security
+
+## [Release 2.1.2]
+
+Only R API updates in this release.
+
+## [Release 2.1.1]
+
+### Changed
+
+- \[[#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309)\] Update [TileDB core to 2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
 
 ## [Release 2.1.0]
 
