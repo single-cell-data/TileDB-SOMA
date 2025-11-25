@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- \[[#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309)\] Update [TileDB core to 2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
 - \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`.
 
 ### Changed
@@ -25,6 +24,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 ### Security
+
+## [Release 2.1.2]
+
+Only R API updates in this release.
+
+## [Release 2.1.1]
+
+### Changed
+
+- \[[#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309)\] Update [TileDB core to 2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
 
 ## [Release 2.1.0]
 
