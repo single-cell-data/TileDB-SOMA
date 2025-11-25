@@ -280,6 +280,12 @@ install(FILES
   DESTINATION "include/tiledbsoma/nlohmann"
 )
 
+install(DIRECTORY
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/thread_pool
+  DESTINATION "include"
+  FILES_MATCHING PATTERN "*.h"
+)
+
 
 # ###########################################################
 # API symbol exports
