@@ -8,7 +8,7 @@
 
 ## Changed
 
-- Update TileDB core version to [2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2). ([#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309))
+- Update TileDB core version to [2.30.0](TBD). # TODO: update with link on actual release
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 
 ## Deprecated
