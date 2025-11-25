@@ -85,5 +85,6 @@ def _verify_expected_tiledb_version() -> None:
             " is likely the result of a corrupted package installation. Recommend uninstalling/reinstalling the"
             " tiledbsoma package. Alternatively, if you are using a Python virtual environment (e.g., conda)"
             " remove and reinstall the Python virtual environment.",
+            RuntimeWarning,
             stacklevel=2,
         )
