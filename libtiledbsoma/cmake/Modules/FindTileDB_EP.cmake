@@ -30,72 +30,61 @@ else()
     endif()
 
     # Try to download prebuilt artifacts unless the user specifies to build from source.
-    # The TileDB Embedded version specified here will be linked to the libtiledbsoma native lib
-    # loaded by the Python and R tiledbsoma packages. Those packages -also- use TileDB-Py and
-    # TileDB-R, each of which links their own 'copy' of TileDB Embedded, whose version we don't
-    # control here. Ideally the TileDB Embedded versions should match! The show_package_versions()
-    # helper function in each package can help to diagnose any mismatch.
     # NB When updating the pinned URLs here, please also update in file apis/r/tools/get_tarball.R
     if(DOWNLOAD_TILEDB_PREBUILT)
         if (WIN32) # Windows
+          message(STATUS "Downloding TileDB windows-x86_64 binary")
           SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-windows-x86_64-2.29.2-2cd33d3.zip")
           SET(DOWNLOAD_SHA1 "5dbe87d66ea3840cb40aa96f7211a0e1b5c9d314")
         elseif(APPLE) # OSX
-
-          # Status quo as of 2023-05-18:
-          # * GitHub Actions does not have MacOS arm64 hardware available -- tracked at
-          #   https://github.com/github/roadmap/issues/528
-          # * The best we can do is cross-compile for arm64 while actually running on x86_64
-          # * When we're invoked from python setup.py:
-          #   o CMAKE_OSX_ARCHITECTURES is x86_64 or arm64
-          #   o CMAKE_SYSTEM_PROCESSOR is x86_64 in either case
-          #   o We must download the tiledb artifacts for the cross-compile architecture (x86_64 or arm64)
-          #   o Therefore we must respect CMAKE_OSX_ARCHITECTURES not CMAKE_SYSTEM_PROCESSOR
-          # * When we're invoked from R configure and src/Makevars.in:
-          #   o CMAKE_OSX_ARCHITECTURES is unset
-          #   o CMAKE_SYSTEM_PROCESSOR is x86_64
-
           if (CMAKE_OSX_ARCHITECTURES STREQUAL x86_64)
+            message(STATUS "Downloding TileDB macos-x86_64 binary")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-macos-x86_64-2.29.2-2cd33d3.tar.gz")
             SET(DOWNLOAD_SHA1 "ef68c7d86ae36b6126baf1ad824b4cae320a8ca1")
           elseif (CMAKE_OSX_ARCHITECTURES STREQUAL arm64)
+            message(STATUS "Downloding TileDB macos-arm64 binary")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-macos-arm64-2.29.2-2cd33d3.tar.gz")
             SET(DOWNLOAD_SHA1 "c9cdc34f91d0d9cc6374974c7f9ede5133ff820a")
           elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64|amd64)|(^i.86$)")
+            message(STATUS "Downloding TileDB macos-x86_64 binary")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-macos-x86_64-2.29.2-2cd33d3.tar.gz")
             SET(DOWNLOAD_SHA1 "ef68c7d86ae36b6126baf1ad824b4cae320a8ca1")
           elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+            message(STATUS "Downloding TileDB macos-arm64 binary")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-macos-arm64-2.29.2-2cd33d3.tar.gz")
             SET(DOWNLOAD_SHA1 "c9cdc34f91d0d9cc6374974c7f9ede5133ff820a")
           endif()
 
         else() # Linux
           if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)")
+            message(STATUS "Downloding TileDB linux-arm64 binary")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-linux-arm64-2.29.2-2cd33d3.tar.gz")
             SET(DOWNLOAD_SHA1 "c175d860e0e4b42ae630f136724934c65c20bdd9")
           else()
+            message(STATUS "Downloding TileDB linux-x86_64 binary")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.29.2/tiledb-linux-x86_64-2.29.2-2cd33d3.tar.gz")
             SET(DOWNLOAD_SHA1 "6c962b090c51506be9979294a21b65031a54e12e")
           endif()
         endif()
 
         ExternalProject_Add(ep_tiledb
-                PREFIX "externals"
-                URL ${DOWNLOAD_URL}
-                URL_HASH SHA1=${DOWNLOAD_SHA1}
-                CONFIGURE_COMMAND ""
-                BUILD_COMMAND ""
-                UPDATE_COMMAND ""
-                PATCH_COMMAND ""
-                TEST_COMMAND ""
-                INSTALL_COMMAND
-                    ${CMAKE_COMMAND} -E copy_directory ${EP_BASE}/src/ep_tiledb ${EP_INSTALL_PREFIX}
-                LOG_DOWNLOAD TRUE
-                LOG_CONFIGURE FALSE
-                LOG_BUILD FALSE
-                LOG_INSTALL FALSE
-                )
+          PREFIX "externals"
+          URL ${DOWNLOAD_URL}
+          URL_HASH SHA1=${DOWNLOAD_SHA1}
+          CONFIGURE_COMMAND ""
+          BUILD_COMMAND ""
+          UPDATE_COMMAND ""
+          PATCH_COMMAND ""
+          TEST_COMMAND ""
+          INSTALL_COMMAND
+            ${CMAKE_COMMAND} -E copy_directory ${EP_BASE}/src/ep_tiledb ${EP_INSTALL_PREFIX}
+          LOG_DOWNLOAD TRUE
+          LOG_CONFIGURE FALSE
+          LOG_BUILD FALSE
+          LOG_INSTALL FALSE
+        )
     else() # Build from source
+        message(STATUS "Downloading TileDB source package")
         ExternalProject_Add(ep_tiledb
           PREFIX "externals"
           URL "https://github.com/TileDB-Inc/TileDB/archive/2.29.2.zip"
@@ -123,7 +112,7 @@ else()
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
           UPDATE_COMMAND ""
           INSTALL_COMMAND
-            ${CMAKE_COMMAND} --build . --target install-tiledb
+            ${CMAKE_COMMAND} --build . --target install
           LOG_DOWNLOAD TRUE
           LOG_CONFIGURE TRUE
           LOG_BUILD TRUE
@@ -133,6 +122,8 @@ else()
 
     list(APPEND FORWARD_EP_CMAKE_ARGS -DEP_TILEDB_BUILT=TRUE)
     list(APPEND EXTERNAL_PROJECTS ep_tiledb)
+    message(STATUS "Finished adding TileDB external project")
+
   else()
     message(FATAL_ERROR "Unable to find TileDB library.")
   endif()
