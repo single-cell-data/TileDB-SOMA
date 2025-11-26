@@ -136,7 +136,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
             buffers_.insert(
                 std::make_pair(
                     name,
-                    std::make_shared<ColumnBuffer>(
+                    std::make_shared<CArrayColumnBuffer>(
                         name,
                         attr.type(),
                         num_cells,
@@ -161,17 +161,10 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
             buffers_.insert(
                 std::make_pair(
                     name,
-                    std::make_shared<ColumnBuffer>(
+                    std::make_shared<CArrayColumnBuffer>(
                         name, dim.type(), num_cells, column_budget, is_var, false, std::nullopt, false)));
         }
     }
-}
-
-std::shared_ptr<ColumnBuffer> ArrayBuffers::at(const std::string& name) {
-    if (!contains(name)) {
-        throw TileDBSOMAError(fmt::format("[ArrayBuffers] column '{}' does not exist", name));
-    }
-    return buffers_[name];
 }
 
 void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<ColumnBuffer> buffer) {
