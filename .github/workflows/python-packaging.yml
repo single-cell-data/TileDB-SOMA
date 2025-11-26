@@ -16,7 +16,7 @@ jobs:
   build_cpp_release:
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
     uses: ./.github/workflows/build-cpp.yml
     with:
       os: ${{ matrix.os }}
@@ -24,29 +24,20 @@ jobs:
 
   build_sdist:
     name: Build source distribution
-    needs: build_cpp_release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
-
-      - name: Download pre-built C++ library
-        uses: actions/download-artifact@v4
-        with:
-          name: cpp-build-Release-ubuntu-24.04
-
       - name: Install dependencies
         run: |
           pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
           pip list
-
       - name: Build sdist
         working-directory: apis/python
         run: python setup.py sdist
-
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
@@ -55,17 +46,21 @@ jobs:
 
   test_sdist:
     name: Build source distribution
-    needs: build_sdist
+    needs: [build_sdist, build_cpp_release]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
         python_version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
+      - name: Download pre-built C++ library
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-build-Release-${{ matrix.os }}
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
         with:
@@ -225,7 +220,7 @@ jobs:
         # TODO: more thorough local smoke test
 
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
           docker run -v $(pwd):/mnt python:${{ matrix.python_version[0] }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
