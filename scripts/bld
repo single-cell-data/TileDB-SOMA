@@ -110,10 +110,7 @@ fi
 
 # On macOS, detect and set architecture if not already set (needed for vcpkg)
 if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
-  # Set architecture if either VCPKG_ROOT or CMAKE_TOOLCHAIN_FILE is set (vcpkg usage)
-  if [ -n "${VCPKG_ROOT:-}" ] || [ -n "${CMAKE_TOOLCHAIN_FILE:-}" ]; then
-    export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
-  fi
+  export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
 fi
 
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts} --preset vcpkg
