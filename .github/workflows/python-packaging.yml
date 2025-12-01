@@ -32,7 +32,6 @@ jobs:
         working-directory: apis/python
         run: python setup.py sdist
 
-
       - name: Upload sdist artifact to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
@@ -40,28 +39,69 @@ jobs:
           path: apis/python/dist/
 
   test_sdist:
-    name: Build source distribution
+    name: Test source distribution
     needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
         python_version: ["3.9", "3.10", "3.11", "3.12"]
+
     steps:
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
+
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
         with:
           name: sdist
           path: apis/python/dist/
+
+      - name: "Setup for macOS"
+        if: ${{ startsWith(matrix.os, 'macos-') == true }}
+        run: |
+          set -e pipefail
+          brew update
+          brew install automake llvm
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d vcpkg ]; then
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            ./vcpkg/bootstrap-vcpkg.sh
+          fi
+
+          echo "Copying triplets from ./vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+
+          echo "Verifying triplets were copied:"
+          ls -la vcpkg/triplets/*-release.cmake
+          echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
+          grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
+          echo "VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Set VCPKG_TARGET_TRIPLET
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-24.04" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "ubuntu-24.04-arm" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=arm64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-15-intel" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-osx-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-15" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
+          fi
+
       - name: Install sdist artifact
         working-directory: apis/python
         run: |
           echo $PWD
           pip install --verbose dist/*.tar.gz
+
       - name: sdist smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
 
@@ -124,8 +164,19 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
+          # Platform-specific environment variables - note: paths are evaluated inside the container
+          CIBW_ENVIRONMENT_LINUX: >
+            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
+            VCPKG_ROOT=/project/vcpkg
+            CMAKE_TOOLCHAIN_FILE=/project/vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_FORCE_SYSTEM_BINARIES=1
+          CIBW_ENVIRONMENT_MACOS: >
+            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
+            CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
+            MACOSX_DEPLOYMENT_TARGET=13.3
+            VCPKG_ROOT="$(pwd)/vcpkg"
+            CMAKE_TOOLCHAIN_FILE="$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake"
           CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
