@@ -260,15 +260,30 @@ if sys.platform == "darwin":
     CXX_FLAGS.append("-D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2")
 
 if os.name == "posix" and sys.platform != "darwin":
-    LIB_DIRS.append(str(tiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
-    LIB_DIRS.append(str(tiledbsoma_dir / "lib64"))
-    LIB_DIRS.append(str(tiledb_dir / "lib" / "x86_64-linux-gnu"))
-    LIB_DIRS.append(str(tiledb_dir / "lib64"))
-    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib' / 'x86_64-linux-gnu'!s}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib64'!s}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib' / 'x86_64-linux-gnu'!s}")
-    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib64'!s}")
+    # Detect architecture for multiarch library paths
+    arch = platform.machine()
+    if arch == "x86_64":
+        multiarch_dir = "x86_64-linux-gnu"
+    elif arch in ("aarch64", "arm64"):
+        multiarch_dir = "aarch64-linux-gnu"
+    else:
+        multiarch_dir = f"{arch}-linux-gnu"
 
+    # Add both generic lib dirs and architecture-specific ones
+    LIB_DIRS.append(str(tiledbsoma_dir / "lib"))
+    LIB_DIRS.append(str(tiledbsoma_dir / "lib64"))
+    LIB_DIRS.append(str(tiledbsoma_dir / "lib" / multiarch_dir))
+    LIB_DIRS.append(str(tiledb_dir / "lib"))
+    LIB_DIRS.append(str(tiledb_dir / "lib64"))
+    LIB_DIRS.append(str(tiledb_dir / "lib" / multiarch_dir))
+
+    # Add rpaths
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib64'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledbsoma_dir / 'lib' / multiarch_dir!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib64'!s}")
+    CXX_FLAGS.append(f"-Wl,-rpath,{tiledb_dir / 'lib' / multiarch_dir!s}")
 # ----------------------------------------------------------------
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
 # be at top level, outside any if-block

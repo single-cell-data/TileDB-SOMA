@@ -65,6 +65,12 @@ jobs:
           set -e pipefail
           brew update
           brew install automake llvm
+      
+      - name: Copy triplets to vcpkg
+        working-directory: apis/python
+        run: |
+          mkdir -p tiledbsoma_extracted
+          tar -xzvf dist/*.tar.gz -C tiledbsoma_extracted
 
       - name: Bootstrap vcpkg
         run: |
@@ -73,10 +79,9 @@ jobs:
             ./vcpkg/bootstrap-vcpkg.sh
           fi
 
-          ls -la $GITHUB_WORKSPACE/
-          echo "Copying triplets from ./vcpkg_triplets/ to vcpkg/triplets/"
-          ls -la $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./vcpkg_triplets/"
-          cp -v $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+          echo "Copying triplets from ./tiledbsoma*/vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la $GITHUB_WORKSPACE/apis/python/tiledbsoma_extracted/tiledbsoma*/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./apis/python/dist/vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/apis/python/tiledbsoma_extracted/tiledbsoma*/vcpkg_triplets/*-release.cmake vcpkg/triplets/
 
           echo "Verifying triplets were copied:"
           ls -la vcpkg/triplets/*-release.cmake
@@ -98,11 +103,15 @@ jobs:
           fi
 
       - name: Install sdist artifact
-        working-directory: apis/python
         run: |
           echo $PWD
-          pip install --verbose dist/*.tar.gz
+          pip install --verbose apis/python/dist/*.tar.gz
 
+      - name: Show TileDB configure log
+        if: failure()
+        run: |
+          cat /tmp/pip-req-build-*/dist_links/build/externals/src/ep_tiledb-stamp/ep_tiledb-configure-*.log || echo "Log file not found"
+          
       - name: sdist smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
 
