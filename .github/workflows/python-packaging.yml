@@ -73,10 +73,10 @@ jobs:
             ./vcpkg/bootstrap-vcpkg.sh
           fi
 
-          echo "Copying triplets from ./apis/python/dist/vcpkg_triplets/ to vcpkg/triplets/"
-          ls -la $GITHUB_WORKSPACE/apis/python/dist/
-          ls -la $GITHUB_WORKSPACE/apis/python/dist/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./apis/python/vcpkg_triplets/"
-          cp -v $GITHUB_WORKSPACE/apis/python/distvcpkg_triplets/*-release.cmake vcpkg/triplets/
+          ls -la $GITHUB_WORKSPACE/
+          echo "Copying triplets from ./vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake vcpkg/triplets/
 
           echo "Verifying triplets were copied:"
           ls -la vcpkg/triplets/*-release.cmake

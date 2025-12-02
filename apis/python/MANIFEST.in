@@ -4,3 +4,4 @@ include src/tiledbsoma/*.h
 graft dist_links
 prune dist_links/libtiledbsoma/test/__pycache__
 include requirements_*.txt
+include vcpkg_triplets/*
