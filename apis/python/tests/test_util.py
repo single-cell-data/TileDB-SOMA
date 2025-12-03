@@ -52,8 +52,6 @@ def test_is_relative_uri() -> None:
     assert not is_relative_uri("gs://foo/A")
     assert not is_relative_uri("tiledb://foo/")
 
-    # TODO: if `tiledb` has a relative syntax (unknown), add a test.
-
 
 def test_uri_joinpath_posix():
     # absolute base
