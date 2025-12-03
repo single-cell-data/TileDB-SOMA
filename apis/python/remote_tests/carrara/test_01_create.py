@@ -3,7 +3,7 @@ Basic object creation with Carrara URIs
 
 TODO:
 1. set item - and equivalent code paths should error
-2. test that with an open collection, after a create, the colleciton contains the object
+2. test that an open collection, after a create, the collection contains the object
 """
 
 from __future__ import annotations

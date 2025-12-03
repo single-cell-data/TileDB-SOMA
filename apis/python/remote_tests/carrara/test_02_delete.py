@@ -6,10 +6,6 @@ Carrara semantics differ from S3/Posix/et al in the following:
   in-accessible via tiledb URIs, requiring direct storage system access to delete/cleanup (if desired).
 - ...
 
-TODO:
-- delete member from collection, with and without member object deletion
-- move a member to a new group
-etc
 """
 
 from __future__ import annotations
