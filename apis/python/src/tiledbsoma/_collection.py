@@ -32,6 +32,7 @@ from ._soma_group import SOMAGroup
 from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
+from ._util import validate_create_uri
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -95,6 +96,7 @@ class CollectionBase(
             Maturing.
         """
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(

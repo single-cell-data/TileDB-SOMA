@@ -22,7 +22,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, m
 from ._managed_query import ManagedQuery
 from ._read_iters import TableReadIter
 from ._types import OpenTimestamp, Slice
-from ._util import dense_indices_to_shape
+from ._util import dense_indices_to_shape, validate_create_uri
 from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
@@ -135,6 +135,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             Maturing.
         """
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
 
         index_column_schema = []
         index_column_data = {}

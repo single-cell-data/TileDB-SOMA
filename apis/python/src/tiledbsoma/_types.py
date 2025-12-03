@@ -94,3 +94,6 @@ if attempted, along with a reason why not."""
 class SOMABaseTileDBType(enum.Enum):
     SOMAArray = 1
     SOMAGroup = 2
+
+
+DataProtocol = Literal["tiledbv2", "tiledbv3"]
