@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime
 import pathlib
+import re
 import time
 import urllib.parse
 from concurrent.futures import Future
@@ -20,10 +21,11 @@ import somacore
 from somacore import options
 
 from . import pytiledbsoma as clib
-from ._types import OpenTimestamp, Slice, is_slice_of
+from ._exception import SOMAError
+from ._types import DataProtocol, OpenTimestamp, Slice, is_slice_of
 
 if TYPE_CHECKING:
-    pass
+    from .options._soma_tiledb_context import SOMATileDBContext
 
 
 def get_start_stamp() -> float:
@@ -48,6 +50,16 @@ def is_local_path(path: str) -> bool:
     if path.startswith("file://"):
         return True
     return "://" not in path
+
+
+def validate_create_uri(uri: str, context: SOMATileDBContext) -> None:
+    """If the URI is a Carrara URI, perform early error checks for improved UX."""
+    if not context.is_tiledbv3_uri(uri):
+        return
+
+    # Storage URIs not supported - they are Cloud-only
+    if re.match(r"^tiledb://.*/.*://.*$", uri):
+        raise SOMAError("Unsupported URI format - storage URI specification not supported on Carrara.")
 
 
 def make_relative_path(uri: str, relative_to: str) -> str:
@@ -89,7 +101,9 @@ def uri_joinpath(base: str, path: str) -> str:
         return base
 
     if not p_base.scheme or p_base.scheme == "file":
-        # if a file path, just use pathlib.
+        # if a file path, just use pathlib. This is significantly more
+        # permissive than it should be, given that `file://` URIs are
+        # only absolute.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
     else:
         if ".." in path:
@@ -335,11 +349,20 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-def sanitize_key(key: str) -> str:
+def sanitize_key(key: str, data_protocol: DataProtocol) -> str:
     # Encode everything outside of the safe characters set
-    safe_puncuation = "-_.()^!@+={}~'"
-    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
-    sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+
+    if data_protocol == "tiledbv3":
+        # Carrara data model supports anything exclusive of '/'
+        if "/" in key:
+            raise ValueError(f"{key} is not a supported name - must not contain slash (/)")
+        sanitized_name = key
+    elif data_protocol == "tiledbv2":
+        safe_puncuation = "-_.()^!@+={}~'"
+        safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+        sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+    else:
+        raise ValueError(f"Unknown data protocol {data_protocol}")
 
     # Ensure that the final key is valid
     if sanitized_name in ["..", "."]:

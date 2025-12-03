@@ -41,6 +41,7 @@ from ._spatial_util import (
     process_spatial_df_region,
 )
 from ._types import OpenTimestamp
+from ._util import validate_create_uri
 from .options import SOMATileDBContext
 from .options._util import build_clib_platform_config
 
@@ -120,6 +121,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         )
 
         context = _validate_soma_tiledb_context(context)
+        validate_create_uri(uri, context)
         schema = _canonicalize_schema(schema, index_column_names, [SOMA_JOINID, SOMA_GEOMETRY])
 
         # SOMA-to-core mappings:
