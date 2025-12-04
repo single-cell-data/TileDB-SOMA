@@ -45,4 +45,24 @@ std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
     }
     return thread_pool_;
 }
+
+std::string SOMAContext::data_protocol(const std::string& uri) const {
+    // The original, absolute-only, URIs had the format:
+    //     tiledb://ORG/UUID
+    // The new URIs are:
+    //     tiledb://WORKSPACE/TEAMSPACE/optional-path-elements/
+    // The current methodology to distinguish between these is to look at the run-time
+    // environment, and determine if we are running on Cloud or Carrara.
+    //
+    // NB: this method will change shortly to use a new Core API.
+    if (!uri.starts_with("tiledb://")) {
+        return "tiledbv2";
+    }
+    auto server_address = ctx_->config().get("rest.server_address");
+    if (server_address == "https://api.tiledb.com" || server_address == "https://api.dev.tiledb.io") {
+        return "tiledbv2";
+    }
+    return "tiledbv3";
+}
+
 }  // namespace tiledbsoma
