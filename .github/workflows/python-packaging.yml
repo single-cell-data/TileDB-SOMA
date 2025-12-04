@@ -189,12 +189,24 @@ jobs:
             MACOSX_DEPLOYMENT_TARGET=13.3
             VCPKG_ROOT="$(pwd)/vcpkg"
             CMAKE_TOOLCHAIN_FILE="$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
-          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CMAKE_OSX_ARCHITECTURES: ${{ env.arch || ''}}
-          MACOSX_DEPLOYMENT_TARGET: "13.3"
+          CIBW_BEFORE_ALL_LINUX: |
+            yum install -y curl zip unzip tar
+          CIBW_BEFORE_BUILD_LINUX: |
+            if [ ! -d /project/vcpkg ]; then 
+              git clone --depth 1 https://github.com/microsoft/vcpkg.git /project/vcpkg && 
+              /project/vcpkg/bootstrap-vcpkg.sh
+            fi &&
+            if [ -d /project/apis/python/vcpkg_triplets ]; then 
+              cp -f /project/apis/python/vcpkg_triplets/*-release.cmake /project/vcpkg/triplets/
+            fi
+          CIBW_BEFORE_BUILD_MACOS: |
+            if [ ! -d "$(pwd)/vcpkg" ]; then 
+              git clone --depth 1 https://github.com/microsoft/vcpkg.git "$(pwd)/vcpkg" && 
+              "$(pwd)/vcpkg/bootstrap-vcpkg.sh"
+            fi &&
+            if [ -d "$(pwd)/apis/python/vcpkg_triplets" ]; then 
+              cp -f "$(pwd)/apis/python/vcpkg_triplets/"*-release.cmake "$(pwd)/vcpkg/triplets/"
+            fi
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl
