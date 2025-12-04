@@ -113,7 +113,7 @@ if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
   export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
 fi
 
-TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts} --preset vcpkg
+TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
