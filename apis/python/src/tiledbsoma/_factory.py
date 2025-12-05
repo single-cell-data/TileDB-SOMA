@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import (
     TypeVar,
-    cast,
     no_type_check,
     overload,
 )
@@ -28,22 +27,18 @@ from . import (
     _multiscale_image,
     _point_cloud_dataframe,
     _scene,
-    _soma_object,
     _sparse_nd_array,
     _tdb_handles,
 )
-from ._constants import (
-    SOMA_OBJECT_TYPE_METADATA_KEY,
-)
-from ._exception import SOMAError
+from . import pytiledbsoma as clib
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._funcs import typeguard_ignore
-from ._soma_object import AnySOMAObject, SOMAObject
+from ._soma_object import SOMAObject
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-_Obj = TypeVar("_Obj", bound="_soma_object.AnySOMAObject")
-_Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
+_Obj = TypeVar("_Obj", bound="SOMAObject")
 
 
 @overload
@@ -54,7 +49,7 @@ def open(
     soma_type: str | None = None,
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
-) -> AnySOMAObject: ...
+) -> SOMAObject: ...
 
 
 @overload
@@ -73,10 +68,10 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: type[SOMAObject] | str | None = None,  # type: ignore[type-arg]
+    soma_type: type[SOMAObject] | str | None = None,
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
-) -> AnySOMAObject:
+) -> SOMAObject:
     """Opens a TileDB SOMA object.
 
     Args:
@@ -122,8 +117,7 @@ def open(
     """
     if soma_type is None:
         context = _validate_soma_tiledb_context(context)
-        handle = _tdb_handles.open_handle_wrapper(uri=uri, mode=mode, context=context, timestamp=tiledb_timestamp)
-        return reify_handle(handle)
+        return _open_soma_object(uri, mode, context, tiledb_timestamp)
 
     if isinstance(soma_type, str):
         soma_type_name = soma_type
@@ -132,7 +126,7 @@ def open(
     else:
         raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
 
-    obj: AnySOMAObject = _type_name_to_cls(soma_type_name).open(
+    obj: SOMAObject = _type_name_to_cls(soma_type_name).open(
         uri=uri, mode=mode, context=context, tiledb_timestamp=tiledb_timestamp
     )
     if soma_type and obj.soma_type.lower() != soma_type_name.lower():
@@ -141,22 +135,47 @@ def open(
     return obj
 
 
-@typeguard_ignore
-def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
+def _open_soma_object(
+    uri: str,
+    mode: options.OpenMode,
+    context: SOMATileDBContext,
+    tiledb_timestamp: OpenTimestamp | None,
+    clib_type: str | None = None,
+) -> SOMAObject:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
-    typename = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
-    cls = _type_name_to_cls(typename)
-    if not isinstance(hdl, cls._wrapper_type):
-        raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)} cannot be converted to a {typename}")
-    return cast(
-        "_soma_object.SOMAObject[_Wrapper]",
-        cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
-    )
+    if clib_type is None or clib_type.lower() in ["somaarray", "somagroup"]:
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
+        try:
+            handle = clib.SOMAObject.open(
+                uri=uri,
+                mode=open_mode,
+                context=context.native_context,
+                timestamp=(0, timestamp_ms),
+                clib_type=clib_type,
+            )
+        except Exception as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise
+        try:
+            cls: type[SOMAObject] = _type_name_to_cls(handle.type.lower())
+            return cls(
+                handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+            )
+        except KeyError:
+            raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
+
+    try:
+        cls = _type_name_to_cls(clib_type.lower())
+    except KeyError:
+        raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
+    return cls.open(uri=uri, mode=mode, context=context, tiledb_timestamp=timestamp_ms)
 
 
 @no_type_check
-def _type_name_to_cls(type_name: str) -> type[AnySOMAObject]:
-    type_map: dict[str, type[AnySOMAObject]] = {
+def _type_name_to_cls(type_name: str) -> type[SOMAObject]:
+    type_map: dict[str, type[SOMAObject]] = {
         t.soma_type.lower(): t
         for t in (
             _collection.Collection,

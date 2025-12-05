@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import datetime
+import enum
 import pathlib
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Union, get_args
@@ -88,3 +89,8 @@ METADATA_TYPES = (bytes, float, int, str)
 StatusAndReason = tuple[bool, str]
 """Information for whether an upgrade-shape or resize would succeed
 if attempted, along with a reason why not."""
+
+
+class SOMABaseTileDBType(enum.Enum):
+    SOMAArray = 1
+    SOMAGroup = 2

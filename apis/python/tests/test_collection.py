@@ -384,9 +384,9 @@ def test_cascading_close(tmp_path: pathlib.Path):
     un_corvid.close()
     assert un_corvid.closed
 
-    all_elements: list[_soma_object.AnySOMAObject] = []
+    all_elements: list[_soma_object.SOMAObject] = []
 
-    def crawl(obj: _soma_object.AnySOMAObject):
+    def crawl(obj: _soma_object.SOMAObject):
         all_elements.append(obj)
         if isinstance(obj, _collection.CollectionBase):
             for val in obj.values():
