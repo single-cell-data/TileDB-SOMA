@@ -4,6 +4,12 @@ All notable changes to the Python TileDB-SOMA project will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Release 2.2.0]
+
+### Changed
+
+- \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add optional schema validation to `tiledbsoma.io.add_X_layer`, which will generate an error if the provided matrix does not match the Experiment shape. Validation is enabled by default, for any dataset created with SOMA 1.15 or later.
+
 ## [Release 2.1.2]
 
 Only R API updates in this release.

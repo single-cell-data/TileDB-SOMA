@@ -4,6 +4,7 @@ import contextlib
 import gc
 import json
 import random
+import shutil
 from copy import deepcopy
 from pathlib import Path
 
@@ -15,6 +16,7 @@ import pytest
 import scipy
 import somacore
 from anndata import AnnData
+from packaging.version import Version
 from scipy.sparse import csr_matrix
 
 import tiledbsoma
@@ -23,7 +25,7 @@ from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
 
-from ._util import TESTDATA, assert_adata_equal, make_pd_df
+from ._util import ROOT_DATA_DIR, TESTDATA, assert_adata_equal, make_pd_df
 
 
 @pytest.fixture
@@ -470,6 +472,115 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
         tiledbsoma.io.add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
+
+
+@pytest.mark.parametrize(
+    "matrix_type, offset",
+    [
+        ("obsm", (1, 0)),
+        ("obsm", (-1, 0)),
+        ("obsm", (0, 0)),  # Should succeed without raising errors
+        ("varm", (1, 0)),
+        ("varm", (-1, 0)),
+        ("varm", (0, 0)),
+        ("obsp", (1, 0)),
+        ("obsp", (0, 1)),
+        ("obsp", (-1, 0)),
+        ("obsp", (0, 0)),
+        ("varp", (1, 0)),
+        ("varp", (0, 1)),
+        ("varp", (-1, 0)),
+        ("varp", (0, 0)),
+    ],
+)
+@pytest.mark.parametrize("version", ["1.14.5", "1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7", "1.16.1"])
+@pytest.mark.parametrize(
+    "name_and_expected_shape",
+    [["pbmc3k_unprocessed", (2700, 13714)], ["pbmc3k_processed", (2638, 1838)]],
+)
+@pytest.mark.medium_runner
+def test_matrix_shape_enforcement(soma_tiledb_context, version, name_and_expected_shape, tmp_path, matrix_type, offset):
+    """Test shape validation for all matrix collection types."""
+    output_path = tmp_path.as_posix()
+    name, expected_shape = name_and_expected_shape
+    original_path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(original_path)
+    if not Path(uri).is_dir():
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
+        )
+
+    shutil.copytree(uri, output_path, dirs_exist_ok=True)
+    n_obs = expected_shape[0]
+    n_vars = expected_shape[1]
+
+    # Determine expected shape based on matrix type
+    shape_map = {
+        "obsm": (n_obs, 5),
+        "varm": (n_vars, 5),
+        "obsp": (n_obs, n_obs),
+        "varp": (n_vars, n_vars),
+    }
+    base_shape = shape_map[matrix_type]
+    bad_shape = (max(1, base_shape[0] + offset[0]), max(1, base_shape[1] + offset[1]))
+
+    # Create invalid matrix
+    bad_matrix = csr_matrix((bad_shape[0], bad_shape[1])) if matrix_type in ["obsp", "varp"] else np.ones(bad_shape)
+
+    if Version(version) >= Version("1.15"):
+        if offset != (0, 0):
+            # Should raise error of invalid shape for observation/variable size
+            with (
+                _factory.open(output_path, "w") as exp,
+                pytest.raises(tiledbsoma.SOMAError, match=r"Matrix .* must match the .* size"),
+            ):
+                tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
+        else:
+            # Should pass the validation without errors
+            with _factory.open(output_path, "w") as exp:
+                tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
+    else:
+        # pre-1.15 versions are not being checked for schema validation.
+        if offset == (0, 0):
+            with _factory.open(output_path, "w") as exp:
+                tiledbsoma.io.add_matrix_to_collection(exp, "RNA", matrix_type, "bad", bad_matrix)
+        else:
+            # TODO: _maybe_soma_joinid_shape returns max-domain for pre-1.14 instead of None
+            # https://github.com/single-cell-data/TileDB-SOMA/pull/4258#discussion_r2429676202
+            pass
+
+
+@pytest.mark.parametrize(
+    "offset",
+    [
+        (1, 0),
+        (0, 1),
+        (1, 1),
+    ],
+)
+def test_matrix_X_layer_enforcement(conftest_pbmc_small, tmp_path, offset):
+    """Test shape validation for all matrix collection types."""
+    output_path = tmp_path.as_posix()
+    original = conftest_pbmc_small.copy()
+
+    # Create SOMA experiment
+    tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
+    assert_adata_equal(original, conftest_pbmc_small)
+
+    # Determine expected shape based on matrix type
+    shape_map = conftest_pbmc_small.n_obs, conftest_pbmc_small.n_vars
+    base_shape = shape_map
+    bad_shape = (max(1, base_shape[0] + offset[0]), max(1, base_shape[1] + offset[1]))
+
+    # Create invalid matrix
+    bad_matrix = np.ones(bad_shape)
+
+    # Should raise error for invalid shape
+    with (
+        _factory.open(output_path, "w") as exp,
+        pytest.raises(tiledbsoma.SOMAError, match=r"Matrix .* shape .* is incompatible with target shape *."),
+    ):
+        tiledbsoma.io.add_X_layer(exp, "RNA", "bad", bad_matrix, schema_validation=True)
 
 
 def test_export_anndata(conftest_pbmc_small, tmp_path):
