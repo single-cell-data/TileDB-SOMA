@@ -27,13 +27,15 @@ ArrayArrowBufferStorage::ArrayArrowBufferStorage(tiledb_datatype_t type, size_t 
 
     if (nullable) {
         validity_buffer_ = std::make_unique_for_overwrite<std::byte[]>((length + 7) / 8);
+    } else {
+        null_count_ = 0;
     }
 }
 
 ArrayArrowBufferStorage::ArrayArrowBufferStorage(
     tiledb_datatype_t offset_type, size_t length, size_t data_size, bool nullable) {
     length_ = length;
-    data_size_ = data_size_;
+    data_size_ = data_size;
     offsets_size_ = (length + 1) * tiledb::impl::type_size(offset_type);
 
     data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_size_);
@@ -41,6 +43,8 @@ ArrayArrowBufferStorage::ArrayArrowBufferStorage(
 
     if (nullable) {
         validity_buffer_ = std::make_unique_for_overwrite<std::byte[]>((length + 7) / 8);
+    } else {
+        null_count_ = 0;
     }
 }
 

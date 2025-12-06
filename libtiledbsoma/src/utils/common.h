@@ -50,7 +50,7 @@ class NoInitAlloc {
 
     // Override construct to skip initialization
     template <typename U, typename... Args>
-    void construct(U* p, Args&&...) noexcept {
+    void construct([[maybe_unused]] U* p, Args&&...) noexcept {
         // No initialization occurs
     }
 

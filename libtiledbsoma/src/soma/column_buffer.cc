@@ -89,14 +89,14 @@ ColumnBuffer::ColumnBuffer(
     , data_size_(data_size)
     , max_num_cells_(max_num_cells)
     , max_data_size_(max_data_size)
+    , mode_(mode)
     , name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
     , is_var_(is_var)
     , is_nullable_(is_nullable)
     , enumeration_(enumeration)
-    , is_ordered_(is_ordered)
-    , mode_(mode) {
+    , is_ordered_(is_ordered) {
 }
 
 ColumnBuffer::ColumnBuffer(
