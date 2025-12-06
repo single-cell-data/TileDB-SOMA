@@ -57,6 +57,7 @@ void load_soma_array(py::module& m) {
             "__exit__",
             [](SOMAArray& array, py::object exc_type, py::object exc_value, py::object traceback) { array.close(); })
 
+        .def_property_readonly("type", &SOMAArray::type)
         .def("close", &SOMAArray::close)
         .def_property_readonly("closed", [](SOMAArray& array) -> bool { return not array.is_open(); })
         .def_property_readonly(
