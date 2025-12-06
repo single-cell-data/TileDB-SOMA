@@ -239,6 +239,8 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
 
     arr->length = 0;  // initial value
 
+    auto pp_vector = tdbs::ArrowAdapter::buffer_to_arrow(mq_data.value(), true);
+
     for (size_t i = 0; i < ncol; i++) {
         {
             std::stringstream ss;
@@ -249,7 +251,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         auto buf = mq_data->get()->at<tdbs::ReadColumnBuffer>(names[i]);
 
         // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
+        auto pp = pp_vector[i];
 
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
