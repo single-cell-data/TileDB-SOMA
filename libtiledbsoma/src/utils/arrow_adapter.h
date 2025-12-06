@@ -46,31 +46,32 @@ class SOMACoordinateSpace;
  * automatically decrement the use count of the ColumnBuffer's shared pointer.
  *
  */
-struct ArrowBuffer {
-    ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
-    ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
+// struct ArrowBuffer {
+//     ArrowBuffer(CArrayColumnBuffer* buffer, bool large_offsets = true);
+//     ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
+//     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::span<std::byte> data_;
-    std::span<int64_t> large_offsets_;
-    std::span<int32_t> small_offsets_;
-    std::span<uint8_t> validity_;
+//     std::span<std::byte> data_;
+//     std::span<int64_t> large_offsets_;
+//     std::span<int32_t> small_offsets_;
+//     std::span<uint8_t> validity_;
 
-    size_t length;
-    std::string name;
+//     size_t length;
+//     std::string name;
 
-   private:
-    std::unique_ptr<std::byte[]> data_buffer_;
-    std::unique_ptr<std::byte[]> offset_buffer_;
-    std::unique_ptr<std::byte[]> validity_buffer_;
-};
+//    private:
+//     std::unique_ptr<std::byte[]> data_buffer_;
+//     std::unique_ptr<std::byte[]> offset_buffer_;
+//     std::unique_ptr<std::byte[]> validity_buffer_;
+// };
 
-struct PrivateArrowBuffer {
-    PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
-        : buffer_(buffer) {
-    }
+// struct PrivateArrowBuffer {
+//     PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
+//         : buffer_(buffer) {
+//     }
 
-    std::shared_ptr<ArrowBuffer> buffer_;
-};
+//     std::shared_ptr<ArrowBuffer> buffer_;
+// };
 
 template <typename T>
 using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
@@ -126,7 +127,9 @@ class ArrowAdapter {
      * std::unique_ptr<ArrowSchema>>
      */
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ReadColumnBuffer> column, bool downcast_dict_of_large_var = false);
+        std::shared_ptr<ReadColumnBuffer> column,
+        const std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>>& enumerations,
+        bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
