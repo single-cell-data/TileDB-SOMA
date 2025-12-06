@@ -21,14 +21,15 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
-#include "nanoarrow/nanoarrow.hpp"
 #include "../common.h"
+#include "nanoarrow/nanoarrow.hpp"
 
 namespace tiledbsoma {
 
 class IArrowBufferStorage {
    public:
-    virtual ~IArrowBufferStorage() {}
+    virtual ~IArrowBufferStorage() {
+    }
 
     virtual std::span<const std::byte> data() const = 0;
     virtual std::span<const std::byte> offsets() const = 0;
