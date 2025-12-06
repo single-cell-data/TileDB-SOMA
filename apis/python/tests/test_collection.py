@@ -138,6 +138,7 @@ def soma_object(request, tmp_path):
             uri,
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
+            domain=[[0, 100]],
         )
 
     elif class_name == "DenseNDArray":
@@ -336,8 +337,7 @@ def test_cascading_close(tmp_path: pathlib.Path):
         kabosu = shiba.add_new_sparse_ndarray("kabosu", type=pa.uint8(), shape=(10,))
         mutt = dog.add_new_collection("mutt")
         louis = mutt.add_new_dataframe(
-            "louis",
-            schema=pa.schema((("soma_joinid", pa.int64()), ("stripes", pa.large_string()))),
+            "louis", schema=pa.schema((("soma_joinid", pa.int64()), ("stripes", pa.large_string()))), domain=[[0, 1000]]
         )
 
         # A mix of collections we own and collections we don't own
@@ -418,7 +418,7 @@ def test_collection_entries_from_methods(tmp_path):
         coll.add_new_collection("experiment", soma.Experiment)
         coll.add_new_collection("measurement", soma.Measurement)
         coll.add_new_collection("collection")
-        coll.add_new_dataframe("dataframe", schema=pa.schema([pa.field("myint", pa.int64())]))
+        coll.add_new_dataframe("dataframe", schema=pa.schema([pa.field("myint", pa.int64())]), domain=[[0, 100]])
         coll.add_new_dense_ndarray("dense", type=pa.float64(), shape=(100, 100))
         coll.add_new_sparse_ndarray("sparse", type=pa.float64(), shape=(100, 100))
 
@@ -582,7 +582,7 @@ def test_issue919(tmp_path):
         with soma.Collection.create(uri, context=context) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
-            expt.add_new_dataframe("df", schema=schema, index_column_names=["soma_joinid"])
+            expt.add_new_dataframe("df", schema=schema, index_column_names=["soma_joinid"], domain=[[0, 100]])
 
         with soma.Collection.open(uri, context=context) as c:
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
