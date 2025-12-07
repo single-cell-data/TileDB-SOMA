@@ -110,34 +110,4 @@ Enumeration get_enumeration(
     }
 }
 
-/**
- * Maps core Array/Group type enums to SOMA-style strings "SOMAArray" and
- * "SOMAGroup". Throws if the input value is neither one of those.
- */
-std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type) {
-    switch (tiledb_type) {
-        case Object::Type::Array:
-            return "SOMAArray";
-        case Object::Type::Group:
-            return "SOMAGroup";
-        case Object::Type::Invalid:
-            throw TileDBSOMAError(
-                fmt::format(
-                    "[SOMAObject::open] Saw TileDB type Invalid ({}), which is "
-                    "neither Array ({}) nor Group ({})",
-                    static_cast<int>(tiledb_type),
-                    static_cast<int>(Object::Type::Array),
-                    static_cast<int>(Object::Type::Group)));
-        default:
-            throw TileDBSOMAError(
-                fmt::format(
-                    "[SOMAObject::open] Saw unrecognized TileDB type ({}), which "
-                    "is neither Array ({}) nor Group ({}) nor Invalid ({})",
-                    static_cast<int>(tiledb_type),
-                    static_cast<int>(Object::Type::Array),
-                    static_cast<int>(Object::Type::Group),
-                    static_cast<int>(Object::Type::Invalid)));
-    }
-}
-
 };  // namespace tiledbsoma::util
