@@ -71,6 +71,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
     std::string_view uri,
     std::string_view soma_type,
     std::optional<TimestampRange> timestamp) {
+    ctx->validate_create_uri(uri);
     try {
         Group::create(*ctx->tiledb_ctx(), std::string(uri));
 

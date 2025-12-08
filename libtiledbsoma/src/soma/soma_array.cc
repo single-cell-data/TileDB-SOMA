@@ -97,6 +97,9 @@ Array SOMAArray::_create(
     std::string_view soma_type,
     std::optional<std::string_view> soma_schema,
     std::optional<TimestampRange> timestamp) {
+    // Validate Carrara URIs.
+    ctx->validate_create_uri(uri);
+
     // Create TileDB array.
     Array::create(std::string(uri), schema);
 
