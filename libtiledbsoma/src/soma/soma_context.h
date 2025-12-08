@@ -66,6 +66,13 @@ class SOMAContext {
      */
     std::string data_protocol(const std::string& uri) const;
 
+    /**
+     * Throws a TileDBSOMA error for tiledbv3 URIs with an invalid format.
+     *
+     * @param uri The URI to validate.
+     */
+    void validate_create_uri(const std::string_view uri) const;
+
    private:
     //===================================================================
     //= private non-static
