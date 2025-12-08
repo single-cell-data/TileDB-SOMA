@@ -78,17 +78,17 @@ uri <- withr::local_tempfile(pattern = "soma-collection")
 
 (col <- SOMACollectionCreate(uri))
 #> <SOMACollection>
-#>   uri: /tmp/RtmpgbdEWv/soma-collection276a1a5ca6f
+#>   uri: /tmp/RtmpGLiMsW/soma-collection2bb74cc208a9
 col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/RtmpgbdEWv/soma-collection276a1a5ca6f/sparse
+#>   uri: /tmp/RtmpGLiMsW/soma-collection2bb74cc208a9/sparse
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 col$close()
 
 (col <- SOMACollectionOpen(uri))
 #> <SOMACollection>
-#>   uri: /tmp/RtmpgbdEWv/soma-collection276a1a5ca6f
+#>   uri: /tmp/RtmpGLiMsW/soma-collection2bb74cc208a9
 col$names()
 #> [1] "sparse"
 ```

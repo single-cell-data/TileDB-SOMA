@@ -112,12 +112,12 @@ The objects of this class are cloneable with this method.
 ``` r
 (ms <- EphemeralMeasurement$new())
 #> <EphemeralMeasurement>
-#>   uri: ephemeral-collection:0x556b8544cb78
+#>   uri: ephemeral-collection:0x561acb04e678
 ms$soma_type
 #> [1] "SOMAMeasurement"
 
 ms$set(EphemeralCollection$new(), "X")
 ms$X
 #> <EphemeralCollection>
-#>   uri: ephemeral-collection:0x556b960448a0
+#>   uri: ephemeral-collection:0x561adac83020
 ```
