@@ -1,3 +1,9 @@
+# tiledbsoma 2.2.0
+
+## Changed
+
+- Update TileDB core version to [2.30.0](https://github.com/TileDB-Inc/TileDB/releases/tag/2.30.0). ([#4324](https://github.com/single-cell-data/TileDB-SOMA/pull/4324))
+
 # tiledbsoma 2.1.2
 
 **Action required:** Users who ingested BPCells data with version 2.1.0 or 2.1.1 must re-ingest with this version to ensure data correctness.
