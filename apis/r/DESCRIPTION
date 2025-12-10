@@ -48,7 +48,7 @@ Imports:
     Rcpp,
     rlang (>= 1.1.5),
     stats,
-    tiledb (>= 0.33.1),
+    tiledb (>= 0.34.0),
     tools,
     lifecycle,
     utils

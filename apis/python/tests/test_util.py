@@ -1,8 +1,6 @@
 import pytest
 from somacore import ResultOrder
 
-import tiledbsoma as soma
-import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._util import (
     dense_index_to_shape,
     dense_indices_to_shape,
@@ -12,30 +10,6 @@ from tiledbsoma._util import (
     slice_to_numeric_range,
     uri_joinpath,
 )
-
-
-@pytest.fixture
-def carrara_mode(monkeypatch, _carrara_mode):
-    # The current implementation determines "mode" by looking at the server API URL. Cough, cough...
-    rest_server_address = "https://api.something-else.com" if _carrara_mode else "https://api.tiledb.com"
-    with monkeypatch.context() as mp:
-        mp.setattr(
-            "tiledbsoma.options._soma_tiledb_context._default_global_native_context",
-            lambda: clib.SOMAContext({"rest.server_address": rest_server_address}),
-        )
-        yield _carrara_mode
-
-
-@pytest.mark.parametrize("_carrara_mode", [True, False])
-def test_is_tiledbv3_uri(carrara_mode):
-    ctx = soma.SOMATileDBContext()
-
-    assert carrara_mode == ctx.is_tiledbv3_uri("tiledb://foo/bar")
-    assert ctx.data_protocol("tiledb://foo/bar") == ("tiledbv3" if carrara_mode else "tiledbv2")
-
-    for uri in ["s3://foo/bar", "bar", "file://foo/bar"]:
-        assert not ctx.is_tiledbv3_uri(uri)
-        assert ctx.data_protocol(uri) == "tiledbv2"
 
 
 def test_is_relative_uri() -> None:
@@ -81,28 +55,6 @@ def test_uri_joinpath_object_store(scheme):
         assert uri_joinpath(f"{scheme}://A/B/", "../C/")
 
 
-@pytest.mark.parametrize("_carrara_mode", [True, False])
-def test_uri_joinpath_tiledb(carrara_mode):
-    if not carrara_mode:
-        # old-style CLOUD URI
-        assert uri_joinpath("tiledb://acct/", "A") == "tiledb://acct/A"
-        assert uri_joinpath("tiledb://acct/", "A/B") == "tiledb://acct/A/B"
-
-        assert uri_joinpath("tiledb://acct/s3://bucket/C", "D") == "tiledb://acct/s3://bucket/C/D"
-        assert uri_joinpath("tiledb://acct/gs://bucket/C", "D") == "tiledb://acct/gs://bucket/C/D"
-
-        with pytest.raises(ValueError):
-            assert uri_joinpath("tiledb://acct/A/", "../B/")
-
-    else:
-        # New-style Carrara URI
-        assert uri_joinpath("tiledb://ws/ts", "A") == "tiledb://ws/ts/A"
-        assert uri_joinpath("tiledb://ws/ts/", "A") == "tiledb://ws/ts/A"
-        assert uri_joinpath("tiledb://ws/ts", "A/") == "tiledb://ws/ts/A/"
-        assert uri_joinpath("tiledb://ws/ts/", "A/") == "tiledb://ws/ts/A/"
-        assert uri_joinpath("tiledb://ws/ts/A", "B") == "tiledb://ws/ts/A/B"
-
-
 def test_make_relative_path_posix():
     assert make_relative_path("/A/B/C", "/A/B/") == "C"
     assert make_relative_path("/A/B/C/", "/A/B/") == "C"
@@ -128,40 +80,6 @@ def test_make_relative_path_object_store(scheme):
         make_relative_path(f"{scheme}:/A/B/C/", "/A/B/")
     with pytest.raises(ValueError, match="is not in the subpath of"):
         make_relative_path(f"{scheme}://A/C/D/", f"{scheme}://A/B/")
-
-
-@pytest.mark.parametrize("_carrara_mode", [True, False])
-def test_make_relative_path_tiledb(carrara_mode):
-    if not carrara_mode:  # CLOUD OG style
-        # this is an unsupported usage, tested here to confirm we preserve original behavior, such as it is...
-        assert make_relative_path("tiledb://A/B/C", "tiledb://A/B/") == "C"
-        assert make_relative_path("tiledb://A/B/C/", "tiledb://A/B/") == "C"
-        assert make_relative_path("tiledb://A/B/C", "tiledb://A/B") == "C"
-        assert make_relative_path("tiledb://A/B/C/", "tiledb://A/B") == "C"
-        assert make_relative_path("tiledb://A/B/s3:/D/E/F", "tiledb://A/B/s3://D/E/") == "F"
-
-        with pytest.raises(ValueError, match="different scheme"):
-            make_relative_path("/A/B/C/", "tiledb://A/B/")
-        with pytest.raises(ValueError, match="different scheme"):
-            make_relative_path("tiledb:/A/B/C/", "/A/B/")
-        with pytest.raises(ValueError, match="is not in the subpath of"):
-            make_relative_path("tiledb://A/C/D/", "tiledb://A/B/")
-        with pytest.raises(ValueError, match="is not in the subpath of"):
-            make_relative_path("tiledb://A/B/C/s3://D/E/F/", "tiledb://A/B/s3://D/E/")
-
-    else:  # new-flavor
-        assert make_relative_path("tiledb://A/B/C", "tiledb://A/B/") == "C"
-        assert make_relative_path("tiledb://A/B/C/", "tiledb://A/B/") == "C"
-        assert make_relative_path("tiledb://A/B/C", "tiledb://A/B") == "C"
-        assert make_relative_path("tiledb://A/B/C/", "tiledb://A/B") == "C"
-        assert make_relative_path("tiledb://A/B/C/D", "tiledb://A/B/C") == "D"
-
-        with pytest.raises(ValueError, match="different scheme"):
-            make_relative_path("/A/B/C/", "tiledb://A/B/")
-        with pytest.raises(ValueError, match="different scheme"):
-            make_relative_path("tiledb:/A/B/C/", "/A/B/")
-        with pytest.raises(ValueError, match="is not in the subpath of"):
-            make_relative_path("tiledb://A/C/D/", "tiledb://A/B/")
 
 
 @pytest.mark.parametrize(
