@@ -56,7 +56,7 @@ std::string SOMAContext::data_protocol(const std::string& uri) const {
             return "tiledbv3";
         default:
             throw TileDBSOMAError(
-                "Internal error: unrecognized TileDB data protocol. Currently only 'tiledbv2' and 'tiledbv2' are "
+                "Internal error: unrecognized TileDB data protocol. Currently only 'tiledbv2' and 'tiledbv3' are "
                 "recognized.");
     }
 }
@@ -71,14 +71,14 @@ void SOMAContext::validate_create_uri(const std::string_view uri) const {
             break;
         default:
             throw TileDBSOMAError(
-                "Internal error: unrecognized TileDB data protocol. Currently only 'tiledbv2' and 'tiledbv2' are "
+                "Internal error: unrecognized TileDB data protocol. Currently only 'tiledbv2' and 'tiledbv3' are "
                 "recognized.");
     }
 
     std::regex storage_uri_regex("^tiledb://.*/.*://.*$", std::regex_constants::ECMAScript);
     if (std::regex_match(uri.data(), storage_uri_regex)) {
         throw TileDBSOMAError(
-            std::format("Unsupported URI format '{}'. This format is not support on TileDB Carrara.", uri));
+            std::format("Unsupported URI format '{}'. This format is not supported on TileDB Carrara.", uri));
     }
 }
 
