@@ -33,6 +33,7 @@ void load_soma_context(py::module& m) {
         .def(py::init<>())
         .def(py::init<std::map<std::string, std::string>>())
         .def("config", &SOMAContext::tiledb_config)
-        .def("tiledb_ctx", &SOMAContext::tiledb_ctx);
+        .def("tiledb_ctx", &SOMAContext::tiledb_ctx)
+        .def("data_protocol", &SOMAContext::data_protocol);
 };
 }  // namespace libtiledbsomacpp

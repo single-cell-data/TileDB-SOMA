@@ -377,23 +377,8 @@ class SOMATileDBContext(ContextBase):
 
         In addition, the implementation will evolve to use a new Core API.
         """
-        if not uri.startswith("tiledb://"):
-            return "tiledbv2"
-
-        # The original, absolute-only, URIs had the format:
-        #     tiledb://ORG/UUID
-        # The new URIs are:
-        #     tiledb://WORKSPACE/TEAMSPACE/optional-path-elements/
-        # The current methodology to distinguish between these is to look at the run-time
-        # environment, and determine if we are running on Cloud or Carrara.
-        #
-        # NB: this method will change shortly to use a new Core API.
-
-        CLOUD_DEPLOYMENTS = {"https://api.tiledb.com", "https://api.dev.tiledb.io"}
-        if self.native_context.config()["rest.server_address"] in CLOUD_DEPLOYMENTS:
-            return "tiledbv2"
-
-        return "tiledbv3"
+        protocol: DataProtocol = self.native_context.data_protocol(uri)
+        return protocol
 
     def is_tiledbv2_uri(self, uri: str) -> bool:
         """Return True if the URI will use `tiledbv2` semantics."""
