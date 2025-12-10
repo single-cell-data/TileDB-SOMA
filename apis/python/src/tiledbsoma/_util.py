@@ -6,13 +6,12 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-import re
 import time
 import urllib.parse
 from concurrent.futures import Future
 from itertools import zip_longest
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -21,11 +20,7 @@ import somacore
 from somacore import options
 
 from . import pytiledbsoma as clib
-from ._exception import SOMAError
 from ._types import DataProtocol, OpenTimestamp, Slice, is_slice_of
-
-if TYPE_CHECKING:
-    from .options._soma_tiledb_context import SOMATileDBContext
 
 
 def get_start_stamp() -> float:
@@ -50,16 +45,6 @@ def is_local_path(path: str) -> bool:
     if path.startswith("file://"):
         return True
     return "://" not in path
-
-
-def validate_create_uri(uri: str, context: SOMATileDBContext) -> None:
-    """If the URI is a Carrara URI, perform early error checks for improved UX."""
-    if not context.is_tiledbv3_uri(uri):
-        return
-
-    # Storage URIs not supported - they are Cloud-only
-    if re.match(r"^tiledb://.*/.*://.*$", uri):
-        raise SOMAError("Unsupported URI format - storage URI specification not supported on Carrara.")
 
 
 def make_relative_path(uri: str, relative_to: str) -> str:
