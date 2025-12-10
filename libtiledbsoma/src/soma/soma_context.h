@@ -59,7 +59,7 @@ class SOMAContext {
     std::shared_ptr<ThreadPool>& thread_pool();
 
     /**
-     * Returns the TileDB data protocol for to use at a requested URI.
+     * Returns the TileDB data protocol for use at a requested URI.
      *
      * @param uri The URI to get the data protocol for.
      * @returns A string description of the data protocol associated with the URI.
