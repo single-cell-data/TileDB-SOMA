@@ -1,14 +1,11 @@
 # Unreleased
 
-**Action required:** Users who ingested BPCells data with version 2.1.0 must re-ingest with this version to ensure data correctness.
-
 ## Added
 
 - Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 
 ## Changed
 
-- Update TileDB core version to [2.30.0](https://github.com/TileDB-Inc/TileDB/releases/tag/2.30.0). ([#4324](https://github.com/single-cell-data/TileDB-SOMA/pull/4324))
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 
 ## Deprecated
@@ -17,9 +14,13 @@
 
 ## Fixed
 
-- Addressed bug in BPCells ingestion, where data ingested in an iterated manner would only be written at the top of the array. Ingestion now proceeds down the array for each iteration. ([#4317](https://github.com/single-cell-data/TileDB-SOMA/pull/4317))
-
 ## Security
+
+# tiledbsoma 2.2.0
+
+## Changed
+
+- Update TileDB core version to [2.30.0](https://github.com/TileDB-Inc/TileDB/releases/tag/2.30.0). ([#4324](https://github.com/single-cell-data/TileDB-SOMA/pull/4324))
 
 # tiledbsoma 2.1.2
 
