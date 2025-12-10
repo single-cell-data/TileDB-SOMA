@@ -9,7 +9,8 @@ test_that("`reopen()` works on arrays", {
         schema = arrow::infer_schema(data.frame(
           soma_joinid = bit64::integer64(),
           int = integer()
-        ))
+        )),
+        domain = list(soma_joinid = c(1L, shape[1L]))
       ),
       SOMASparseNDArray = SOMASparseNDArrayCreate(
         uri,
