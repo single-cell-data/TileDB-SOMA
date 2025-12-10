@@ -16,9 +16,9 @@ show_package_versions()
 ``` r
 show_package_versions()
 #> tiledbsoma:    2.1.2
-#> tiledb-r:      0.33.1.1
-#> tiledb core:   2.29.1
-#> libtiledbsoma: 2.29.1
+#> tiledb-r:      0.34.0
+#> tiledb core:   2.30.0
+#> libtiledbsoma: 2.30.0
 #> R:             R version 4.5.2 (2025-10-31)
 #> OS:            Ubuntu 24.04.3 LTS
 ```

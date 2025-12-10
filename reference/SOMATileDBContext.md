@@ -354,6 +354,6 @@ ctx$get("sm.mem.reader.sparse_global_order.ratio_array_data")
 ctx$to_tiledb_context()
 #> An object of class "tiledb_ctx"
 #> Slot "ptr":
-#> <pointer: 0x561ada555f70>
+#> <pointer: 0x55b6142d73f0>
 #> 
 ```
