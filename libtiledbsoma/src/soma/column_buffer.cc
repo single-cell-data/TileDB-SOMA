@@ -301,8 +301,9 @@ CArrayColumnBuffer::CArrayColumnBuffer(
     bool is_var,
     bool is_nullable,
     std::optional<Enumeration> enumeration,
-    bool is_ordered)
-    : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered) {
+    bool is_ordered,
+    MemoryMode mode)
+    : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode) {
     LOG_DEBUG(fmt::format("[CArrayColumnBuffer] '{}' {} bytes", name, num_bytes));
 
     data_ = std::make_unique_for_overwrite<std::byte[]>(num_bytes);
@@ -538,7 +539,8 @@ VectorColumnBuffer::VectorColumnBuffer(
     bool is_var,
     bool is_nullable,
     std::optional<Enumeration> enumeration,
-    bool is_ordered)
+    bool is_ordered,
+    MemoryMode mode)
     : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered) {
     LOG_DEBUG(
         fmt::format(
@@ -697,6 +699,8 @@ std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
         }
     }
 
+    MemoryMode mode = ColumnBuffer::memory_mode(config);
+
     // bool is_dense = schema.array_type() == TILEDB_DENSE;
     // if (is_dense) {
     //     // TODO: Handle dense arrays similar to tiledb python module
@@ -710,7 +714,7 @@ std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
     size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) : num_bytes / tiledb::impl::type_size(type);
 
     return std::make_shared<VectorColumnBuffer>(
-        name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered);
+        name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode);
 }
 
 }  // namespace tiledbsoma

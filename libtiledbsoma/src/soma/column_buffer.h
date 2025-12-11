@@ -436,7 +436,8 @@ class CArrayColumnBuffer : public ReadColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     CArrayColumnBuffer() = delete;
     CArrayColumnBuffer(const CArrayColumnBuffer&) = delete;
@@ -514,7 +515,8 @@ class VectorColumnBuffer : public ReadColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     VectorColumnBuffer() = delete;
     VectorColumnBuffer(const VectorColumnBuffer&) = delete;
