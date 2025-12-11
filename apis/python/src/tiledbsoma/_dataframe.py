@@ -781,7 +781,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        del batch_size  # Currently unused.
+        if batch_size != _UNBATCHED:
+            raise NotImplementedError("The 'batch_size' parameter is not yet implemented.")
+
         _util.check_unpartitioned(partitions)
         self._verify_open_for_reading()
 

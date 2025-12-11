@@ -332,7 +332,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
               ``slice(2,None)`` or ``slice(None,4)``.
             * Negative indexing is unsupported.
         """
-        del batch_size  # Currently unused.
+        if batch_size != _UNBATCHED:
+            raise NotImplementedError("The 'batch_size' parameter is not yet implemented.")
+
         self._verify_open_for_reading()
         _util.check_unpartitioned(partitions)
 
