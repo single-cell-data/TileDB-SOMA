@@ -348,6 +348,9 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                 Defaults to ``()``, meaning no constraint -- all IDs.
             column_names: the named columns to read and return.
                 Defaults to ``None``, meaning no constraint -- all column names.
+            batch_size: The size of batches that should be returned from a read.
+                Note: This parameter is not yet implemented and will raise
+                :class:`NotImplementedError` if set to a non-default value.
             partitions: If present, specifies that this is part of
                 a partitioned read, and which part of the data to include.
             result_order: the order to return results, specified as a
