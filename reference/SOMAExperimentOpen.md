@@ -56,7 +56,7 @@ sch <- arrow::infer_schema(obs)
 
 (exp <- SOMAExperimentCreate(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpf7VWBj/soma-experiment2b795020e64a
+#>   uri: /tmp/Rtmpqg2whH/soma-experiment2b786d4fb8f1
 sdf <- exp$add_new_dataframe(
   "obs",
   sch,
@@ -69,10 +69,10 @@ exp$close()
 
 (exp <- SOMAExperimentOpen(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpf7VWBj/soma-experiment2b795020e64a
+#>   uri: /tmp/Rtmpqg2whH/soma-experiment2b786d4fb8f1
 exp$obs
 #> <SOMADataFrame>
-#>   uri: file:///tmp/Rtmpf7VWBj/soma-experiment2b795020e64a/obs
+#>   uri: file:///tmp/Rtmpqg2whH/soma-experiment2b786d4fb8f1/obs
 #>   dimensions: soma_joinid 
 #>   attributes: obs_id 
 ```

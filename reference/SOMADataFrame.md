@@ -499,7 +499,7 @@ df <- data.frame(
 #> nCount: int32
 (sdf <- SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 100))))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpf7VWBj/soma-data-frame2b793a36b69
+#>   uri: /tmp/Rtmpqg2whH/soma-data-frame2b7870c64af7
 #>   dimensions: soma_joinid 
 #>   attributes: group, nCount 
 sdf$write(arrow::as_arrow_table(df, schema = sch))
@@ -507,7 +507,7 @@ sdf$close()
 
 (sdf <- SOMADataFrameOpen(uri))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpf7VWBj/soma-data-frame2b793a36b69
+#>   uri: /tmp/Rtmpqg2whH/soma-data-frame2b7870c64af7
 #>   dimensions: soma_joinid 
 #>   attributes: group, nCount 
 head(as.data.frame(sdf$read()$concat()))
