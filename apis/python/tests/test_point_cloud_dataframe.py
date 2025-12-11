@@ -896,3 +896,35 @@ def test_delete_cells_exceptions(tmp_path):
             points.delete_cells((slice(3, 1),))
         with pytest.raises(TypeError):
             points.delete_cells((("one", "five"),))
+
+
+def test_point_cloud_dataframe_batch_size_not_implemented(tmp_path):
+    uri = (tmp_path / "test_pc_df").as_posix()
+    schema = pa.schema([
+        ("soma_joinid", pa.int64()),
+        ("x", pa.float64()),
+        ("y", pa.float64()),
+        ("z", pa.float64()),
+    ])
+
+    with soma.PointCloudDataFrame.create(
+        uri,
+        schema=schema,
+        index_column_names=["soma_joinid"],
+        axis_names=("x", "y", "z"),
+        domain=((0.0, 10.0), (0.0, 10.0), (0.0, 10.0)),
+    ) as pc_df:
+        data = pa.Table.from_pydict({
+            "soma_joinid": [0, 1],
+            "x": [1.0, 2.0],
+            "y": [3.0, 4.0],
+            "z": [5.0, 6.0],
+        })
+        pc_df.write(data)
+
+    with soma.PointCloudDataFrame.open(uri) as pc_df:
+        result = pc_df.read().concat()
+        assert result.num_rows == 2
+
+        with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
+            list(pc_df.read(batch_size=soma.options.BatchSize(count=10)))

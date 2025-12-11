@@ -4092,3 +4092,19 @@ def test_gow_mixed_idxes(tmp_path):
         df = A.read().concat().to_pandas()
 
     assert df.equals(expected_df)
+
+
+def test_dataframe_batch_size_not_implemented(tmp_path):
+    uri = (tmp_path / "test_df").as_posix()
+    schema = pa.schema({"soma_joinid": pa.int64(), "value": pa.int64()})
+
+    with soma.DataFrame.create(uri, schema=schema, index_column_names=["soma_joinid"], domain=[[0, 2]]) as df:
+        data = pa.Table.from_pydict({"soma_joinid": [0, 1, 2], "value": [10, 20, 30]})
+        df.write(data)
+
+    with soma.DataFrame.open(uri) as df:
+        result = df.read().concat()
+        assert result.num_rows == 3
+
+        with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
+            list(df.read(batch_size=somacore.options.BatchSize(count=10)))

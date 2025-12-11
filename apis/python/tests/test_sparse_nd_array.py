@@ -2114,3 +2114,18 @@ def test_delete_cells_exceptions(tmp_path):
             array.delete_cells(tuple())
         with pytest.raises(soma.SOMAError):
             array.delete_cells((pa.array((1.3, 2.0), type=pa.float64()),))
+
+
+def test_sparse_nd_array_batch_size_not_implemented(tmp_path):
+    uri = (tmp_path / "test_sparse").as_posix()
+
+    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10, 10)) as arr:
+        data = pa.SparseCOOTensor.from_dense_numpy(np.array([[1, 0], [0, 2]], dtype=np.int64))
+        arr.write(data)
+
+    with soma.SparseNDArray.open(uri) as arr:
+        result = arr.read().coos().concat()
+        assert result is not None
+
+        with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
+            list(arr.read(batch_size=soma.options.BatchSize(count=10)).coos())
