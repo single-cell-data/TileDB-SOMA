@@ -57,7 +57,7 @@ jobs:
         with:
           name: sdist
           path: apis/python/dist/
-      - name: Install numba to prevent building from source
+      - name: Install older version of numba to prevent building from source on osx-64 (no wheels for numba 0.63+)
         if: ${{ matrix.os == 'macos-15-intel' }}
         run: pip install numba==0.60.0
       - name: Install sdist artifact
