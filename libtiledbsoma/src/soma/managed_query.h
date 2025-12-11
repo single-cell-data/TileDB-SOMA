@@ -223,26 +223,24 @@ class ManagedQuery {
      * @param offsets Pointer to the offsets buffer
      * @param validity Vector of validity buffer casted to uint8
      */
-    template <typename T>
+    template <typename DataStorage, typename OffsetStorage>
+        requires is_data_buffer<DataStorage> && is_offset_buffer<OffsetStorage>
     void setup_write_column(
         std::string_view name,
         uint64_t num_elems,
-        const void* data,
-        T* offsets,
-        std::optional<std::vector<uint8_t>> validity = std::nullopt) {
-        // Ensure the offset type is either uint32_t* or uint64_t*
-        static_assert(
-            std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>,
-            "offsets must be either uint32_t* or uint64_t*");
-
+        DataStorage data,
+        OffsetStorage offsets,
+        std::unique_ptr<uint8_t[]> validity = nullptr,
+        bool copy_buffers = false) {
         // Create the ArrayBuffers as necessary
         if (buffers_ == nullptr) {
             buffers_ = std::make_shared<ArrayBuffers>();
         }
 
-        auto column = ColumnBuffer::create(array_, name);
-        column->set_data(num_elems, data, offsets, validity);
-        buffers_->emplace(std::string(name), column);
+        buffers_->emplace(
+            std::string(name),
+            WriteColumnBuffer::create(
+                array_, name, num_elems, std::move(data), std::move(offsets), std::move(validity), copy_buffers));
         buffers_->at(std::string(name))->attach(*query_, *subarray_);
     }
 
@@ -306,7 +304,7 @@ class ManagedQuery {
     template <typename T>
     std::span<T> data(const std::string& name) {
         check_column_name(name);
-        return buffers_->at(name)->data<T>();
+        return buffers_->at<ReadColumnBuffer>(name)->data<T>();
     }
 
     /**
@@ -317,7 +315,7 @@ class ManagedQuery {
      */
     const std::span<uint8_t> validity(const std::string& name) {
         check_column_name(name);
-        return buffers_->at(name)->validity();
+        return buffers_->at<ReadColumnBuffer>(name)->validity();
     }
 
     /**
@@ -441,7 +439,7 @@ class ManagedQuery {
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
-        Enumeration enmr,
+        Enumeration& enmr,
         ArraySchemaEvolution& se);
 
     /**
@@ -459,7 +457,7 @@ class ManagedQuery {
         ArrowArray* value_array,
         const std::string& column_name,
         bool deduplicate,
-        Enumeration enmr,
+        Enumeration& enmr,
         ArraySchemaEvolution& se);
 
     /**
@@ -617,49 +615,6 @@ class ManagedQuery {
     template <typename T>
     void _cast_dictionary_values(ArrowSchema* schema, ArrowArray* array);
 
-    std::vector<int64_t> _get_index_vector(ArrowSchema* schema, ArrowArray* array) {
-        auto index_type = ArrowAdapter::to_tiledb_format(schema->format);
-
-        switch (index_type) {
-            case TILEDB_INT8: {
-                int8_t* idxbuf = (int8_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT8: {
-                uint8_t* idxbuf = (uint8_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_INT16: {
-                int16_t* idxbuf = (int16_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT16: {
-                uint16_t* idxbuf = (uint16_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_INT32: {
-                int32_t* idxbuf = (int32_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT32: {
-                uint32_t* idxbuf = (uint32_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_INT64: {
-                int64_t* idxbuf = (int64_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            case TILEDB_UINT64: {
-                uint64_t* idxbuf = (uint64_t*)array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
-            }
-            default:
-                throw TileDBSOMAError(
-                    "Saw invalid index type when trying to promote indexes to "
-                    "values");
-        }
-    }
-
     template <typename UserType>
     bool _cast_column_aux(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
@@ -678,8 +633,7 @@ class ManagedQuery {
             buf = (UserType*)array->buffers[1] + array->offset;
         }
 
-        bool has_attr = schema_->has_attribute(schema->name);
-        if (has_attr && attr_has_enum(schema->name)) {
+        if (schema_->has_attribute(schema->name) && attr_has_enum(schema->name)) {
             // For columns with dictionaries, we need to set the data buffers to
             // the dictionary's indexes. If there were any new enumeration
             // values added, we need to extend and and evolve the TileDB
@@ -700,17 +654,11 @@ class ManagedQuery {
                 enmr,
                 se);
         } else {
-            // In the general case, we can just cast the values and set the
-            // write buffers
-            std::vector<UserType> orig_vals(buf, buf + array->length);
-            std::vector<DiskType> casted_values(orig_vals.begin(), orig_vals.end());
+            if constexpr (!std::is_same_v<UserType, DiskType>) {
+                throw TileDBSOMAError("Type mismatch for column '" + std::string(schema->name) + "'");
+            }
 
-            setup_write_column(
-                schema->name,
-                casted_values.size(),
-                (const void*)casted_values.data(),
-                (uint64_t*)nullptr,
-                _cast_validity_buffer(array));
+            setup_write_column(schema->name, array->length, buf, (uint64_t*)nullptr, _cast_validity_buffer_ptr(array));
 
             // Return false because we do not extend the enumeration
             return false;
@@ -723,7 +671,7 @@ class ManagedQuery {
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
-        Enumeration enmr,
+        Enumeration& enmr,
         ArraySchemaEvolution& se);
 
     /**
@@ -757,7 +705,7 @@ class ManagedQuery {
         ArrowArray* index_array,    // null for extend-enum, non-null for write
         const std::string& column_name,
         bool deduplicate,
-        Enumeration enmr,
+        Enumeration& enmr,
         ArraySchemaEvolution& se);
 
     /**
@@ -769,7 +717,7 @@ class ManagedQuery {
         ArrowArray* value_array,
         const std::string& column_name,
         bool deduplicate,
-        Enumeration enmr,
+        Enumeration& enmr,
         ArraySchemaEvolution& se);
 
     /**
@@ -894,8 +842,8 @@ class ManagedQuery {
     template <typename ValueType>
     void _remap_indexes(
         std::string name,
-        Enumeration extended_enmr,
-        std::vector<ValueType> enum_values_in_write,
+        Enumeration& extended_enmr,
+        const std::vector<ValueType>& enum_values_in_write,
         ArrowSchema* index_schema,
         ArrowArray* index_array) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -928,52 +876,49 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view>
     void _remap_indexes_aux(
-        std::string column_name,
-        Enumeration extended_enmr,
-        std::vector<ValueType> enum_values_in_write,
+        const std::string& column_name,
+        Enumeration& extended_enmr,
+        const std::vector<ValueType>& enum_values_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
-        std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(index_array);
+        std::unique_ptr<uint8_t[]> validities = _cast_validity_buffer_ptr(index_array);
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
             idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
         } else {
             idxbuf = (IndexType*)index_array->buffers[1] + index_array->offset;
         }
-        std::vector<IndexType> original_indexes(idxbuf, idxbuf + index_array->length);
-
-        std::vector<IndexType> shifted_indexes(original_indexes.size());
-        for (size_t i = 0; i < original_indexes.size(); i++) {
-            IndexType oi = original_indexes[i];
-            if (validities.has_value() && !validities.value()[i]) {
-                shifted_indexes[i] = oi;
-            } else {
-                shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi]).value();
-            }
-        }
+        std::span<const IndexType> original_indexes(idxbuf, index_array->length);
 
         // Cast the user passed-in index type to be what is on-disk before we
         // set the write buffers. Here we identify the on-disk type.
         auto attr = schema_->attribute(column_name);
         switch (attr.type()) {
             case TILEDB_INT8:
-                return _cast_shifted_indexes<IndexType, int8_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, int8_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_UINT8:
-                return _cast_shifted_indexes<IndexType, uint8_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, uint8_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_INT16:
-                return _cast_shifted_indexes<IndexType, int16_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, int16_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_UINT16:
-                return _cast_shifted_indexes<IndexType, uint16_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, uint16_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_INT32:
-                return _cast_shifted_indexes<IndexType, int32_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, int32_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_UINT32:
-                return _cast_shifted_indexes<IndexType, uint32_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, uint32_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_INT64:
-                return _cast_shifted_indexes<IndexType, int64_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, int64_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             case TILEDB_UINT64:
-                return _cast_shifted_indexes<IndexType, uint64_t>(column_name, shifted_indexes, index_array);
+                return _cast_indexes<ValueType, IndexType, uint64_t>(
+                    column_name, enum_values_in_write, std::move(validities), original_indexes, extended_enmr);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -981,75 +926,42 @@ class ManagedQuery {
         }
     }
 
-    template <typename ValueType, typename IndexType>
-        requires(!std::same_as<ValueType, std::string_view>)
-    void _remap_indexes_aux(
+    template <typename ValueType, typename UserIndexType, typename DiskIndexType>
+    void _cast_indexes(
         std::string column_name,
-        Enumeration extended_enmr,
-        std::vector<ValueType> enum_values_in_write,
-        ArrowArray* index_array) {
-        // Get the user passed-in dictionary indexes
-        std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(index_array);
-        IndexType* idxbuf;
-        if (index_array->n_buffers == 3) {
-            idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
-        } else {
-            idxbuf = (IndexType*)index_array->buffers[1] + index_array->offset;
-        }
-        std::vector<IndexType> original_indexes(idxbuf, idxbuf + index_array->length);
+        const std::vector<ValueType>& enum_values,
+        std::unique_ptr<uint8_t[]> validity_buffer,
+        std::span<const UserIndexType> original_indexes,
+        Enumeration& enumeration) {
+        std::unique_ptr<std::byte[]> indexes_buffer = std::make_unique_for_overwrite<std::byte[]>(
+            original_indexes.size() * sizeof(DiskIndexType));
+
+        std::span<uint8_t> validity(validity_buffer.get(), validity_buffer ? original_indexes.size() : 0);
+        std::span<DiskIndexType> shifted_indexes(
+            reinterpret_cast<DiskIndexType*>(indexes_buffer.get()), original_indexes.size());
 
         // Shift the dictionary indexes to match the on-disk extended
-        // enumerations
-        std::vector<IndexType> shifted_indexes(original_indexes.size());
+        // enumerations and cast to the on-disk type
         for (size_t i = 0; i < original_indexes.size(); i++) {
-            IndexType oi = original_indexes[i];
-            if (validities.has_value() && !validities.value()[i]) {
-                shifted_indexes[i] = oi;
+            UserIndexType oi = original_indexes[i];
+            if (!validity.empty() && !validity[i]) {
+                shifted_indexes[i] = static_cast<DiskIndexType>(oi);
             } else {
-                shifted_indexes[i] = extended_enmr.index_of(enum_values_in_write[oi]).value();
+                if constexpr (std::is_same_v<ValueType, std::string_view>) {
+                    shifted_indexes[i] = static_cast<DiskIndexType>(enumeration.index_of(enum_values[oi]).value());
+                } else {
+                    shifted_indexes[i] = static_cast<DiskIndexType>(
+                        enumeration.index_of<ValueType>(enum_values[oi]).value());
+                }
             }
         }
-
-        // Cast the user passed-in index type to be what is on-disk before we
-        // set the write buffers. Here we identify the on-disk type.
-        auto attr = schema_->attribute(column_name);
-        switch (attr.type()) {
-            case TILEDB_INT8:
-                return _cast_shifted_indexes<IndexType, int8_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_UINT8:
-                return _cast_shifted_indexes<IndexType, uint8_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_INT16:
-                return _cast_shifted_indexes<IndexType, int16_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_UINT16:
-                return _cast_shifted_indexes<IndexType, uint16_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_INT32:
-                return _cast_shifted_indexes<IndexType, int32_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_UINT32:
-                return _cast_shifted_indexes<IndexType, uint32_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_INT64:
-                return _cast_shifted_indexes<IndexType, int64_t>(column_name, shifted_indexes, index_array);
-            case TILEDB_UINT64:
-                return _cast_shifted_indexes<IndexType, uint64_t>(column_name, shifted_indexes, index_array);
-            default:
-                throw TileDBSOMAError(
-                    "Saw invalid enumeration index type when trying to extend"
-                    "enumeration");
-        }
-    }
-
-    template <typename UserIndexType, typename DiskIndexType>
-    void _cast_shifted_indexes(
-        std::string column_name, std::vector<UserIndexType> shifted_indexes, ArrowArray* index_array) {
-        // Cast the user passed-in index type to be what is on-disk and
-        // set the write buffers
-        std::vector<DiskIndexType> casted_indexes(shifted_indexes.begin(), shifted_indexes.end());
 
         setup_write_column(
             column_name,
-            casted_indexes.size(),
-            (const void*)casted_indexes.data(),
+            original_indexes.size(),
+            std::move(indexes_buffer),
             (uint64_t*)nullptr,
-            _cast_validity_buffer(index_array));
+            std::move(validity_buffer));
     }
 
     /**
@@ -1101,6 +1013,17 @@ class ManagedQuery {
     std::vector<uint8_t> _bool_data_bits_to_bytes(ArrowSchema* schema, ArrowArray* array);
 
     /**
+     * @brief Take an arrow schema and array containing bool
+     * data in bits and return a vector containing the uint8_t
+     * representation
+     *
+     * @param schema the ArrowSchema which must be format 'b'
+     * @param array the ArrowArray holding Boolean data
+     * @return std::vector<uint8_t>
+     */
+    std::unique_ptr<uint8_t[]> _bool_data_bits_to_bytes_ptr(ArrowSchema* schema, ArrowArray* array);
+
+    /**
      * @brief Take a validity buffer (in bits) and shift according to the
      * offset. This function returns a copy of the shifted bitmap as a
      * std::vector<uint8_t>. If the validity buffer is null, then return a
@@ -1110,6 +1033,17 @@ class ManagedQuery {
      * @return std::optional<std::vector<uint8_t>>
      */
     std::optional<std::vector<uint8_t>> _cast_validity_buffer(ArrowArray* array);
+
+    /**
+     * @brief Take a validity buffer (in bits) and shift according to the
+     * offset. This function returns a copy of the shifted bitmap as a
+     * std::unique_ptr<uint8_t[]>. If the validity buffer is null, then return a
+     * nullptr.
+     *
+     * @param array the ArrowArray holding offset to shift
+     * @return std::unique_ptr<uint8_t[]>
+     */
+    std::unique_ptr<uint8_t[]> _cast_validity_buffer_ptr(ArrowArray* array);
 
     template <typename T>
     std::vector<T> _enumeration_values_view(Enumeration& enumeration);
@@ -1176,7 +1110,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se);
 
 template <>
@@ -1191,7 +1125,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se);
 
 template <>
@@ -1200,7 +1134,7 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details<std::string, std::s
     ArrowArray* value_array,
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se);
 
 template <>

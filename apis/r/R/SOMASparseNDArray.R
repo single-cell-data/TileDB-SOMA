@@ -298,13 +298,8 @@ SOMASparseNDArray <- R6::R6Class(
         stop("The data column must be of type '", rt, "', got '", vrt, "'")
       }
 
-      # Build our Arrow table and schema
-      fields <- c(
-        lapply(dnames, arrow::field, type = arrow::int64()),
-        arrow::field(attrn, private$.type)
-      )
-      sch <- do.call(arrow::schema, fields)
-      tbl <- arrow::as_arrow_table(values, schema = sch)
+      # Build our Arrow table
+      tbl <- arrow::as_arrow_table(values, schema = self$schema())
 
       # Write via libtiledbsoma
       soma_debug("[SOMASparseNDArray$.write_coordinates] writing arrow table")

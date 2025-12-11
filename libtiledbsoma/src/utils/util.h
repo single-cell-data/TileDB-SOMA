@@ -62,6 +62,17 @@ std::string rstrip_uri(std::string_view uri);
  */
 std::optional<std::vector<uint8_t>> bitmap_to_uint8(const uint8_t* bitmap, size_t length, size_t offset = 0);
 
+/**
+ * @brief Take a bitmap and return a unique_ptr pointing to the uint8_t
+ * representation. If the bitmap is null, then return a nullptr.
+ *
+ * @param bitmap Pointer to the start of the bitmap
+ * @param length Total number of elements
+ * @param offset Optionally offset the data
+ * @return std::unique_ptr<uint8_t[]>
+ */
+std::unique_ptr<uint8_t[]> bitmap_to_uint8_ptr(const uint8_t* bitmap, size_t length, size_t offset = 0);
+
 std::shared_ptr<SOMAColumn> find_column_by_name(
     std::span<const std::shared_ptr<SOMAColumn>> columns, std::string_view name);
 
