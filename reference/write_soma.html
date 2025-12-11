@@ -11,7 +11,7 @@ R \(\rightarrow\) SOMA interface."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,7 +129,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span><span class="va">uri</span> <span class="op">&lt;-</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempfile</a></span><span class="op">(</span>pattern <span class="op">=</span> <span class="st">"character"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">letters</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/character2c5c5c8e709</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/character2b7953798acc</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: values </span>
 <span class="r-in"><span></span></span>
@@ -183,7 +183,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">obs</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/data-frame2c5c653de219</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/data-frame2b79244c72a8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,... </span>
 <span class="r-in"><span></span></span>
@@ -196,7 +196,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">25L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">5L</span>, ncol <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">mat</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, sparse <span class="op">=</span> <span class="cn">FALSE</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADenseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/matrix2c5c3fcd2f55</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/matrix2b791bca03cf</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span></span></span>
@@ -206,7 +206,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/Matrix.html" class="external-link">Matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">25L</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">5L</span>, ncol <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">mat</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, sparse <span class="op">=</span> <span class="cn">FALSE</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADenseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/s4-matrix2c5c350ace9e</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/s4-matrix2b794ce44047</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span></span></span>
@@ -216,7 +216,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/rsparsematrix.html" class="external-link">rsparsematrix</a></span><span class="op">(</span><span class="fl">5L</span>, <span class="fl">5L</span>, <span class="fl">0.3</span>, repr <span class="op">=</span> <span class="st">"T"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">mat</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMASparseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/tsparse-matrix2c5c5f78118c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/tsparse-matrix2b793a415a40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span></span></span>
@@ -227,7 +227,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/rsparsematrix.html" class="external-link">rsparsematrix</a></span><span class="op">(</span><span class="fl">5L</span>, <span class="fl">5L</span>, <span class="fl">0.3</span>, repr <span class="op">=</span> <span class="st">"C"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">mat</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMASparseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/csparse-matrix2c5cb9e0461</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/csparse-matrix2b79b7cabdb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span></span></span>
@@ -238,7 +238,7 @@ the data contained in <code>x</code>.</p>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/rsparsematrix.html" class="external-link">rsparsematrix</a></span><span class="op">(</span><span class="fl">5L</span>, <span class="fl">5L</span>, <span class="fl">0.3</span>, repr <span class="op">=</span> <span class="st">"R"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu">write_soma</span><span class="op">(</span><span class="va">mat</span>, <span class="va">uri</span>, soma_parent <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMASparseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmp7iHJBt/rsparse-matrix2c5cb4edf8b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpf7VWBj/rsparse-matrix2b791381c3b3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span></span></span>

@@ -19,14 +19,14 @@ Source:
 [`DESCRIPTION`](https://github.com/single-cell-data/TileDB-SOMA/blob/release-2.2/DESCRIPTION)
 
 Hoffman P, Wolen A (2025). *tiledbsoma: 'TileDB' Stack of Matrices,
-Annotated ('SOMA')*. R package version 2.1.2,
+Annotated ('SOMA')*. R package version 2.2.0,
 <https://single-cell-data.github.io/TileDB-SOMA/>.
 
     @Manual{,
       title = {tiledbsoma: 'TileDB' Stack of Matrices, Annotated ('SOMA')},
       author = {Paul Hoffman and Aaron Wolen},
       year = {2025},
-      note = {R package version 2.1.2},
+      note = {R package version 2.2.0},
       url = {https://single-cell-data.github.io/TileDB-SOMA/},
     }
 

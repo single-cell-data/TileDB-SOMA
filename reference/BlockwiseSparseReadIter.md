@@ -136,7 +136,7 @@ dir <- withr::local_tempfile(pattern = "blockwise-matrix")
 dir.create(dir, recursive = TRUE)
 (exp <- load_dataset("soma-exp-pbmc-small", dir))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmp7iHJBt/blockwise-matrix2c5c14a0a100/soma-exp-pbmc-small
+#>   uri: /tmp/Rtmpf7VWBj/blockwise-matrix2b79122813a0/soma-exp-pbmc-small
 qry <- exp$axis_query("RNA")
 xqry <- qry$X("data")
 
