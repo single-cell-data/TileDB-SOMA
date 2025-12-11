@@ -155,7 +155,7 @@ void load_managed_query(py::module& m) {
                 py::gil_scoped_release release;
                 try {
                     mq.setup_write_column(
-                        name, data.size(), (const void*)data_info.ptr, static_cast<uint64_t*>(nullptr), nullptr, true);
+                        name, data.size(), (const void*)data_info.ptr, static_cast<uint64_t*>(nullptr), nullptr, false);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
