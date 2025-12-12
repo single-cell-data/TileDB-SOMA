@@ -7,6 +7,7 @@ import pyarrow as pa
 import pytest
 import shapely
 import typeguard
+from somacore.options import BatchSize
 
 import tiledbsoma as soma
 
@@ -160,7 +161,7 @@ def test_point_cloud_bad_read_spatial_region(tmp_path):
                 region_coord_space=soma.CoordinateSpace((soma.Axis(name="x"), soma.Axis(name="y"))),
             )
 
-        # The input axes of the transorm must match the axes of the coordinate
+        # The input axes of the transform must match the axes of the coordinate
         # space the requested region is defined in
         with pytest.raises(ValueError):
             ptc.read_spatial_region(
@@ -899,32 +900,25 @@ def test_delete_cells_exceptions(tmp_path):
 
 
 def test_point_cloud_dataframe_batch_size_not_implemented(tmp_path):
-    uri = (tmp_path / "test_pc_df").as_posix()
-    schema = pa.schema([
-        ("soma_joinid", pa.int64()),
-        ("x", pa.float64()),
-        ("y", pa.float64()),
-        ("z", pa.float64()),
-    ])
+    uri = (tmp_path / "pc_df").as_posix()
+    asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
     with soma.PointCloudDataFrame.create(
         uri,
-        schema=schema,
-        index_column_names=["soma_joinid"],
-        axis_names=("x", "y", "z"),
-        domain=((0.0, 10.0), (0.0, 10.0), (0.0, 10.0)),
+        schema=asch,
+        domain=[[-10000, 10000], [-10000, 10000], [0, 10]],
     ) as pc_df:
-        data = pa.Table.from_pydict({
-            "soma_joinid": [0, 1],
-            "x": [1.0, 2.0],
-            "y": [3.0, 4.0],
-            "z": [5.0, 6.0],
-        })
-        pc_df.write(data)
+        pydict = {}
+        pydict["soma_joinid"] = [1, 2, 3, 4, 5]
+        pydict["x"] = [10, 20, 30, 40, 50]
+        pydict["y"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+
+        rb = pa.Table.from_pydict(pydict)
+        pc_df.write(rb)
 
     with soma.PointCloudDataFrame.open(uri) as pc_df:
         result = pc_df.read().concat()
-        assert result.num_rows == 2
+        assert result.num_rows == 5
 
         with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
-            list(pc_df.read(batch_size=soma.options.BatchSize(count=10)))
+            list(pc_df.read(batch_size=BatchSize(count=10)))
