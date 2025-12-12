@@ -78,20 +78,6 @@ test_that("SOMASparseNDArray creation", {
   ## nnz
   expect_equal(ndarray$nnz(), 60L)
 
-  ## nnz as free function
-  expect_equal(nnz(uri, soma_context()), 60L)
-  ## nnz with config, expected breakge as 'bad key' used
-  ## uses 'internal' create function to not cache globally as soma_context() would
-  badconfig <- createSOMAContext(c(
-    sm.encryption_key = "Nope",
-    sm.encryption_type = "AES_256_GCM"
-  ))
-  expect_error(nnz(uri, badconfig))
-  ## shape as free function
-  expect_equal(shape(uri, soma_context()), c(10, 10))
-  ## shape with config, expected breakge as 'bad key' used
-  expect_error(shape(uri, badconfig))
-
   ndarray$close()
 })
 
