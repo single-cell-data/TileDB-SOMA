@@ -320,12 +320,13 @@ def test_experiment_query_combo(soma_experiment):
 def test_experiment_query_batch_size(soma_experiment):
     """
     batch_size is currently not supported by this implementation of SOMA.
-    This test merely verifies that the batch_size parameter is accepted
-    but as a no-op.
+    This test verifies that using batch_size raises NotImplementedError.
     """
-    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
-        tbls = query.obs(batch_size=options.BatchSize(count=100))
-        assert len(list(tbls)) == 1  # batch_size currently not implemented
+    with (
+        ExperimentAxisQuery(soma_experiment, "RNA") as query,
+        pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"),
+    ):
+        list(query.obs(batch_size=options.BatchSize(count=100)))
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(10, 10)])

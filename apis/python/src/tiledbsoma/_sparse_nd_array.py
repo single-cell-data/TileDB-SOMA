@@ -305,6 +305,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
                 `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
                 defining the region to read.
+            batch_size:
+                The size of batches that should be returned from a read. Note:
+                This parameter is not yet implemented and will raise
+                :class:`NotImplementedError` if set to a non-default value.
 
         Returns:
             A :class:`SparseNDArrayRead` to access result iterators in various formats.
@@ -332,7 +336,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
               ``slice(2,None)`` or ``slice(None,4)``.
             * Negative indexing is unsupported.
         """
-        del batch_size  # Currently unused.
+        if batch_size != _UNBATCHED:
+            raise NotImplementedError("The 'batch_size' parameter is not yet implemented.")
+
         self._verify_open_for_reading()
         _util.check_unpartitioned(partitions)
 
