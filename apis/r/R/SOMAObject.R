@@ -71,7 +71,6 @@ SOMAObject <- R6::R6Class(
         # warning("'tiledbsoma_ctx' is deprecated, use 'soma_context' instead")
         # Set the old context
         private$.tiledbsoma_ctx <- tiledbsoma_ctx
-        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
         # Also plumb through to the new context
         if (!is.null(soma_context)) {
           warning(
@@ -87,7 +86,6 @@ SOMAObject <- R6::R6Class(
       } else {
         tiledbsoma_ctx <- SOMATileDBContext$new()
         private$.tiledbsoma_ctx <- tiledbsoma_ctx
-        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
       }
 
       # TODO: re-enable once new UX is worked out
@@ -348,10 +346,6 @@ SOMAObject <- R6::R6Class(
     # @field .tiledbsoma_ctx ...
     #
     .tiledbsoma_ctx = NULL,
-
-    # @field .tiledb_ctx ...
-    #
-    .tiledb_ctx = NULL,
 
     # @field .tiledb_timestamp ...
     #
