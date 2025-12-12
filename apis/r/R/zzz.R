@@ -91,7 +91,7 @@ NULL
 soma_context <- function(config) {
   ## if a new config is given always create a new object
   if (!missing(config)) {
-    somactx <- createSOMAContext(config)
+    somactx <- create_soma_context(config)
     .pkgenv[["somactx"]] <- somactx
   }
 
@@ -101,9 +101,9 @@ soma_context <- function(config) {
   ## if no values was cached, create a new one with either empty or given config
   if (is.null(somactx)) {
     if (missing(config)) {
-      somactx <- createSOMAContext()
+      somactx <- create_soma_context()
     } else {
-      somactx <- createSOMAContext(config)
+      somactx <- create_soma_context(config)
     }
     .pkgenv[["somactx"]] <- somactx
   }

@@ -11,17 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// createSOMAContext
-Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_createSOMAContext(SEXP configSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(createSOMAContext(config));
-    return rcpp_result_gen;
-END_RCPP
-}
 // createSchemaFromArrow
 void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp, bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
 RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP sparseSEXP, SEXP datatypeSEXP, SEXP pclstSEXP, SEXP ctxxpSEXP, SEXP tsvecSEXP) {
@@ -956,9 +945,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// create_soma_context
+Rcpp::XPtr<somactx_wrap_t> create_soma_context(Rcpp::Nullable<Rcpp::CharacterVector> config);
+RcppExport SEXP _tiledbsoma_create_soma_context(SEXP configSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
+    rcpp_result_gen = Rcpp::wrap(create_soma_context(config));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_tiledbsoma_createSOMAContext", (DL_FUNC) &_tiledbsoma_createSOMAContext, 1},
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 9},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 7},
     {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
@@ -1035,6 +1034,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledb_datatype_max_value", (DL_FUNC) &_tiledbsoma_tiledb_datatype_max_value, 1},
     {"_tiledbsoma_get_soma_object_type", (DL_FUNC) &_tiledbsoma_get_soma_object_type, 2},
     {"_tiledbsoma_get_tiledb_object_type", (DL_FUNC) &_tiledbsoma_get_tiledb_object_type, 2},
+    {"_tiledbsoma_create_soma_context", (DL_FUNC) &_tiledbsoma_create_soma_context, 1},
     {NULL, NULL, 0}
 };
 
