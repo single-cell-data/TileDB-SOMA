@@ -22,6 +22,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include "../utils/arrow/arrow_buffer.h"
 #include "../utils/arrow_adapter.h"
 #include "../utils/common.h"
 #include "logger_public.h"
@@ -30,6 +31,8 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
+
+enum class MemoryMode { PERFORMANCE, EFFICIENCY };
 
 class ColumnBuffer {
    public:
@@ -45,6 +48,11 @@ class ColumnBuffer {
      */
     static void to_bitmap(std::span<const uint8_t> bytemap, std::span<uint8_t> bitmap);
 
+    static MemoryMode memory_mode(const Config& config);
+
+    inline static const MemoryMode DEFAULT_MEMORY_MODE = MemoryMode::PERFORMANCE;
+    inline static const std::string CONFIG_KEY_MEMORY_MODE = "soma.memory_mode";
+
     ColumnBuffer(
         std::string_view name,
         tiledb_datatype_t type,
@@ -55,7 +63,8 @@ class ColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     ColumnBuffer(
         std::string_view name,
@@ -65,7 +74,8 @@ class ColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     ColumnBuffer() = delete;
     ColumnBuffer(const ColumnBuffer&) = delete;
@@ -271,6 +281,8 @@ class ColumnBuffer {
         return static_cast<double_t>(num_cells_) / max_num_cells_;
     }
 
+    virtual std::unique_ptr<IArrowBufferStorage> export_buffers();
+
    protected:
     size_t num_cells_;
 
@@ -281,6 +293,8 @@ class ColumnBuffer {
 
     // Data size which is calculated different for var vs non-var
     size_t max_data_size_;
+
+    MemoryMode mode_;
 
    private:
     void attach_buffer(Query& query);
@@ -422,7 +436,8 @@ class CArrayColumnBuffer : public ReadColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     CArrayColumnBuffer() = delete;
     CArrayColumnBuffer(const CArrayColumnBuffer&) = delete;
@@ -437,6 +452,11 @@ class CArrayColumnBuffer : public ReadColumnBuffer {
     std::span<const std::byte> data() const override;
     std::span<const uint64_t> offsets() const override;
     std::span<const uint8_t> validity() const override;
+
+    std::unique_ptr<std::byte[]> release_data();
+    std::unique_ptr<uint64_t[]> release_offsets();
+
+    std::unique_ptr<IArrowBufferStorage> export_buffers() override;
 
    private:
     std::unique_ptr<std::byte[]> data_;
@@ -495,7 +515,8 @@ class VectorColumnBuffer : public ReadColumnBuffer {
         bool is_var = false,
         bool is_nullable = false,
         std::optional<Enumeration> enumeration = std::nullopt,
-        bool is_ordered = false);
+        bool is_ordered = false,
+        MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     VectorColumnBuffer() = delete;
     VectorColumnBuffer(const VectorColumnBuffer&) = delete;
@@ -510,6 +531,8 @@ class VectorColumnBuffer : public ReadColumnBuffer {
     std::span<std::byte> data() override;
     std::span<uint64_t> offsets() override;
     std::span<uint8_t> validity() override;
+
+    std::unique_ptr<IArrowBufferStorage> export_buffers() override;
 
    private:
     //===================================================================
@@ -542,13 +565,13 @@ class VectorColumnBuffer : public ReadColumnBuffer {
     //===================================================================
 
     // Data buffer.
-    std::vector<std::byte> data_;
+    std::vector<std::byte, NoInitAlloc<std::byte>> data_;
 
     // Offsets buffer (optional).
-    std::vector<uint64_t> offsets_;
+    std::vector<uint64_t, NoInitAlloc<uint64_t>> offsets_;
 
     // Validity buffer (optional).
-    std::vector<uint8_t> validity_;
+    std::vector<uint8_t, NoInitAlloc<uint8_t>> validity_;
 };
 
 class WriteColumnBuffer : public ColumnBuffer {

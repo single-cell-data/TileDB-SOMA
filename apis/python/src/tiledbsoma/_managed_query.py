@@ -30,6 +30,7 @@ class ManagedQuery:
     _array: SOMAArray
     _platform_config: options.PlatformConfig | None = None
     _handle: clib.ManagedQuery = attrs.field(init=False)
+    _ref_store: list[object] = attrs.field(init=False, default=[])
 
     def __attrs_post_init__(self) -> None:
         array_handle = self._array._handle
@@ -218,3 +219,25 @@ class ManagedQuery:
             column.set_dim_points_double_array(self._handle, [coord])
         else:
             raise ValueError(f"Unsupported spatial coordinate type. Expected slice or float, found {type(coord)}")
+
+    def set_column_data(self, dim_name: str, data: np.typing.NDArray) -> None:
+        # store a reference to the data being written
+        # libtiledbsoma will try not to copy any data to temporary buffers when writing data but the user is free
+        # to pass temporary data objects to write. Submitting the write buffer to TileDB can happen after the
+        # lifespan of the temporary object so ManagedQuery need to preserve a reference to each data object until
+        # the query is submitted
+        self._ref_store.append(data)
+
+        self._handle.set_column_data(dim_name, data)
+
+    def submit_write(self) -> None:
+        self._handle.submit_write()
+
+        # clear stored data objects
+        self._ref_store.clear()
+
+    def submit_and_finalize(self) -> None:
+        self._handle.submit_and_finalize()
+
+        # clear stored data objects
+        self._ref_store.clear()
