@@ -213,7 +213,7 @@ mat[1:3, 1:5]
 
 (arr <- SOMASparseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/Rtmpqg2whH/soma-sparse-array2b7838953d2e
+#>   uri: /tmp/Rtmpza3ZZa/soma-sparse-array2be25d4fb9ab
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 arr$write(mat)
@@ -221,7 +221,7 @@ arr$close()
 
 (arr <- SOMASparseNDArrayOpen(uri))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/Rtmpqg2whH/soma-sparse-array2b7838953d2e
+#>   uri: /tmp/Rtmpza3ZZa/soma-sparse-array2be25d4fb9ab
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 m2 <- arr$read()$sparse_matrix()$concat()
