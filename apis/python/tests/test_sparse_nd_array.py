@@ -17,6 +17,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
+from somacore.options import BatchSize
 
 import tiledbsoma as soma
 from tiledbsoma import _factory
@@ -2128,4 +2129,4 @@ def test_sparse_nd_array_batch_size_not_implemented(tmp_path):
         assert result is not None
 
         with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
-            list(arr.read(batch_size=soma.options.BatchSize(count=10)).coos())
+            list(arr.read(batch_size=BatchSize(count=10)).coos())
