@@ -162,8 +162,6 @@ SOMADenseNDArray <- R6::R6Class(
         private$.type <- self$schema()[["soma_data"]]$type
       }
 
-      arr <- private$.tiledb_array
-      tiledb::query_layout(arr) <- "COL_MAJOR"
       soma_debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
       tbl <- arrow::arrow_table(soma_data = values, schema = arrsch)

@@ -53,13 +53,6 @@ SOMAArrayBase <- R6::R6Class(
       # Set the mode of the array
       private$.mode <- match.arg(mode)
 
-      # TODO: remove this
-      private$.tiledb_array <- tiledb::tiledb_array(
-        uri = self$uri,
-        ctx = self$tiledbsoma_ctx$context(),
-        query_layout = "UNORDERED"
-      )
-
       if (is.null(self$tiledb_timestamp)) {
         soma_debug(sprintf(
           "[SOMAArrayBase$open] Opening %s '%s' in %s mode",
@@ -67,10 +60,6 @@ SOMAArrayBase <- R6::R6Class(
           self$uri,
           self$mode()
         ))
-        private$.tiledb_array <- tiledb::tiledb_array_open(
-          private$.tiledb_array,
-          type = self$mode()
-        )
       } else {
         soma_debug(sprintf(
           "[SOMAArrayBase$open] Opening %s '%s' in %s mode at (%s)",
@@ -79,15 +68,7 @@ SOMAArrayBase <- R6::R6Class(
           mode,
           self$tiledb_timestamp %||% "now"
         ))
-        private$.tiledb_array <- tiledb::tiledb_array_open_at(
-          private$.tiledb_array,
-          type = self$mode(),
-          timestamp = self$tiledb_timestamp
-        )
       }
-
-      ## TODO -- cannot do here while needed for array case does not work for data frame case
-      # private$.type <- arrow_type_from_tiledb_type(tdbtype)
 
       private$.update_metadata_cache(TRUE)
 
@@ -105,11 +86,6 @@ SOMAArrayBase <- R6::R6Class(
         self$uri
       ))
       private$.mode <- NULL
-      if (inherits(private$.tiledb_array, "tiledb_array")) {
-        tiledb::tiledb_array_close(private$.tiledb_array)
-      }
-
-      private$.tiledb_array <- NULL
 
       return(invisible(self))
     },
@@ -280,8 +256,6 @@ SOMAArrayBase <- R6::R6Class(
     }
   ),
   private = list(
-    .tiledb_array = NULL,
-
     write_object_type_metadata = function() {
       # private$.check_open_for_write()
 
