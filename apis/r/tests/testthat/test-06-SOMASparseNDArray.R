@@ -22,7 +22,6 @@ test_that("SOMASparseNDArray creation", {
 
   # Verify the array is still open for write
   expect_equal(ndarray$mode(), "WRITE")
-  # expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   ndarray <- SOMASparseNDArrayOpen(uri)
