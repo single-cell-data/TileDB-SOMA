@@ -2,6 +2,7 @@ import numpy as np
 import pyarrow as pa
 import pytest
 import shapely
+from somacore.options import BatchSize
 
 import tiledbsoma as soma
 
@@ -157,26 +158,21 @@ def test_delete_cells_not_implemented(tmp_path):
             geom.delete_cells((slice(None, None),))
 
 
-def test_geometry_dataframe_batch_size_not_implemented(tmp_path):
-    from shapely import geometry
+def test_geometry_dataframe_batch_size_not_implemented(geom_dataframe):
+    data = {
+        "soma_geometry": [
+            [0.0, 0, 0, 1, 1, 0, 0, 0],
+            [0.0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+        ],
+        "soma_joinid": [1, 2],
+        "quality": [4.1, 5.2],
+    }
 
-    uri = (tmp_path / "test_geom_df").as_posix()
-    schema = pa.schema([
-        ("soma_joinid", pa.int64()),
-        ("soma_geometry", pa.binary()),
-    ])
-
-    with soma.GeometryDataFrame.create(uri, schema=schema, index_column_names=["soma_joinid"]) as geom_df:
-        point = geometry.Point(1.0, 2.0)
-        data = pa.Table.from_pydict({
-            "soma_joinid": [0, 1],
-            "soma_geometry": [point.wkb, point.wkb],
-        })
-        geom_df.write(data)
+    uri = geom_dataframe(data=data)
 
     with soma.GeometryDataFrame.open(uri) as geom_df:
         result = geom_df.read().concat()
         assert result.num_rows == 2
 
         with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
-            list(geom_df.read(batch_size=soma.options.BatchSize(count=10)))
+            list(geom_df.read(batch_size=BatchSize(count=10)))
