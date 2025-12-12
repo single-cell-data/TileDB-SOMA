@@ -6,6 +6,28 @@ import shapely
 import tiledbsoma as soma
 
 
+@pytest.fixture
+def geom_dataframe(tmp_path):
+    """Factory fixture for creating GeometryDataFrame."""
+
+    def _make(schema=None, domain=None, data=None, subdir="geom_df"):
+        if schema is None:
+            schema = pa.schema([("quality", pa.float32())])
+        if domain is None:
+            domain = [[(-10, 10), (-10, 10)], [0, 100]]
+
+        uri = (tmp_path / subdir).as_uri()
+
+        with soma.GeometryDataFrame.create(uri, schema=schema, domain=domain) as geom:
+            if data is not None:
+                rb = pa.Table.from_pydict(data)
+                geom.from_outlines(rb)
+
+        return uri
+
+    return _make
+
+
 def test_geometry_domain_deprecated(tmp_path):
     uri = tmp_path.as_uri()
 
@@ -72,24 +94,19 @@ def test_geometry_coordinate_space(tmp_path):
         assert geom.coordinate_space[1] == soma.Axis(name="y", unit="in")
 
 
-def test_geometry_basic_read(tmp_path):
-    uri = tmp_path.as_uri()
-
-    asch = pa.schema([("quality", pa.float32())])
+def test_geometry_basic_read(geom_dataframe):
     triangle = shapely.Polygon([(0, 0), (0, 1), (1, 0), (0, 0)])
     rect = shapely.Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
 
-    with soma.GeometryDataFrame.create(uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]) as geom:
-        pydict = {}
-        pydict["soma_geometry"] = [
+    data = {
+        "soma_geometry": [
             [0.0, 0, 0, 1, 1, 0, 0, 0],
             [0.0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-        ]
-        pydict["soma_joinid"] = [1, 2]
-        pydict["quality"] = [4.1, 5.2]
-
-        rb = pa.Table.from_pydict(pydict)
-        geom.from_outlines(rb)
+        ],
+        "soma_joinid": [1, 2],
+        "quality": [4.1, 5.2],
+    }
+    uri = geom_dataframe(data=data)
 
     with soma.GeometryDataFrame.open(uri) as geom:
         result = geom.read().concat()
@@ -105,22 +122,16 @@ def test_geometry_basic_read(tmp_path):
         )
 
 
-def test_geometry_basic_spatial_read(tmp_path):
-    uri = tmp_path.as_uri()
-
-    asch = pa.schema([("quality", pa.float32())])
-
-    with soma.GeometryDataFrame.create(uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]) as geom:
-        pydict = {}
-        pydict["soma_geometry"] = [
+def test_geometry_basic_spatial_read(geom_dataframe):
+    data = {
+        "soma_geometry": [
             [0.0, 0, 0, 1, 1, 0, 0, 0],
             [2.0, 0, 2, 1, 3, 1, 3, 0, 2, 0],
-        ]
-        pydict["soma_joinid"] = [1, 2]
-        pydict["quality"] = [4.1, 5.2]
-
-        rb = pa.Table.from_pydict(pydict)
-        geom.from_outlines(rb)
+        ],
+        "soma_joinid": [1, 2],
+        "quality": [4.1, 5.2],
+    }
+    uri = geom_dataframe(data=data)
 
     with soma.GeometryDataFrame.open(uri) as geom:
         result = geom.read_spatial_region(region=[0.5, 0.5, 1.5, 1.5]).data.concat()
