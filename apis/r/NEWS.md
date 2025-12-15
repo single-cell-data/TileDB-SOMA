@@ -10,9 +10,14 @@
 
 ## Deprecated
 
+- The function `soma_context` is deprecated. Use class `SOMAObject` instead.
+- The parameter `tiledbsoma_ctx` is deprecated in all functions/methods that use it. Use the parameter `soma_context` instead.
+
 ## Removed
 
 ## Fixed
+
+- The SOMA Context is only cached as an environment variable when the function `soma_context` is called directly. ([TBD](TBD))
 
 ## Security
 

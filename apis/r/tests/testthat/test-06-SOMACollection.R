@@ -13,7 +13,7 @@ test_that("SOMACollection basics", {
   expect_match(
     get_tiledb_object_type(
       collection$uri,
-      collection$.__enclos_env__$private$.soma_context
+      collection$.__enclos_env__$private$.soma_context$handle
     ),
     "GROUP"
   )

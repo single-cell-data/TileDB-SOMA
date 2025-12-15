@@ -1,0 +1,35 @@
+#' SOMA Context
+#'
+#' Context map for TileDB-SOMA objects
+#'
+#' @export
+#'
+#'
+SOMAContext <- R6::R6Class(
+  classname = "SOMAContext",
+  public = list(
+    #' @template param-config
+    #'
+    #' @return An instantiated \code{SOMATileDBContext} object
+    #'
+    initialize = function(config = NULL) {
+      config["sm.mem.reader.sparse_global_order.ratio_array_data"] <- "0.3"
+      private$.handle <- create_soma_context(config)
+    }
+  ),
+  active = list(
+    #' @field handle External pointer to the C++ interface
+    #'
+    handle = function(value) {
+      if (!missing(x = value)) {
+        stop("Field `handle` is read-only", call. = FALSE)
+      }
+      return(private$.handle)
+    }
+  ),
+  private = list(
+    # @field Internal 'external pointer' for C++ interface ...
+    #
+    .handle = NULL
+  )
+)

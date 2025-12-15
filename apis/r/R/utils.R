@@ -60,6 +60,46 @@ uns_hint <- function(type = c("1d", "2d")) {
   return(hint)
 }
 
+get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
+  if (!is.null(tiledbsoma_ctx)) {
+    .deprecate(
+        what=what,
+        when="2.3.0",
+        details="Use `soma_context` instead."
+    )
+  }
+  if (is.null(soma_context)) {
+    if (is.null(tiledbsoma_ctx)) {
+        context <- .pkgenv[["somactx"]]
+        if (is.null(context)) {
+            return(SOMAContext$new())
+        } else {
+            return(context)
+        }
+    }
+    if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
+      stop(
+        "'tiledbsoma_ctx' must be a SOMATileDBContext object",
+        call. = FALSE
+      )
+    }
+    return(SOMAContext$new(config = unlist(tiledbsoma_ctx$to_list())))
+  }
+  if (!is.null(tiledbsoma_ctx)) {
+    warning(
+      "Both 'soma_context' and 'tiledbsoma_ctx' were provided, using 'soma_context' only"
+    )
+  }
+  if (!inherits(x = soma_context, what = 'SOMAContext')) {
+    stop(
+      "'soma_context' must be a SOMAContext object",
+      call. = FALSE
+    )
+  }
+  return(soma_context)
+}
+
+
 #' Generate a Block Size for Matrix Iteration
 #'
 #' Generate block sizes for matrix iteration; the block sizes are calculated
@@ -437,7 +477,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   dimname <- x$dimnames()[axis + 1L]
   sr <- mq_setup(
     uri = x$uri,
-    soma_context(),
+    x$soma_context$handle,
     colnames = dimname,
     timestamprange = x$.tiledb_timestamp_range
   )

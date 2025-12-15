@@ -20,14 +20,14 @@ test_that("SOMATileDBContext plumb-through", {
       uri,
       internal_use_only = "allowed_use",
       tiledbsoma_ctx = ctx,
-      soma_context = soma_context()
+      soma_context = create_soma_context()
     )
   )
   group$create(internal_use_only = "allowed_use")
   group$close()
 })
 
-test_that("Existence proof: soma_context()", {
+test_that("Existence proof: create_soma_context()", {
   skip_if(
     TRUE,
     message = "Disabling tests until new-style contexts are plubmed through factories"
@@ -48,7 +48,7 @@ test_that("Existence proof: soma_context()", {
     grp2 <- TileDBGroup$new(
       uri,
       internal_use_only = "allowed_use",
-      soma_context = soma_context(
+      soma_context = create_soma_context(
         config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true")
       )
     ),

@@ -521,8 +521,10 @@ write_soma.Seurat <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
 ) {
+  soma_context = get_soma_context(soma_context, tiledbsoma_ctx, what="Seurat.write_soma(tiledbsoma_ctx)")
   # Allow writing `soma_` prefixed columns to SOMADataFrames
   # (normally disallowed as a reserved prefix)
   op <- options(tiledbsoma.write_soma.internal = TRUE)
@@ -558,7 +560,8 @@ write_soma.Seurat <- function(
     uri = uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
@@ -571,7 +574,8 @@ write_soma.Seurat <- function(
     uri = file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   withCallingHandlers(
     expr = .register_soma_object(expms, soma_parent = experiment, key = "ms"),

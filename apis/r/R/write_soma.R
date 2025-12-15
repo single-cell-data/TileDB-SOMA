@@ -30,7 +30,8 @@ write_soma <- function(
   uri,
   ...,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
 ) {
   UseMethod(generic = "write_soma", object = x)
 }
@@ -93,6 +94,7 @@ write_soma.character <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   sdf <- write_soma(
@@ -105,6 +107,7 @@ write_soma.character <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context,
     relative = relative
   )
   sdf$set_metadata(uns_hint("1d"))
@@ -166,6 +169,7 @@ write_soma.data.frame <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -269,7 +273,8 @@ write_soma.data.frame <- function(
     domain = domain,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   # Write values
   if (ingest_mode %in% c("resume")) {
@@ -322,6 +327,7 @@ write_soma.IterableMatrix <- function(
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -376,7 +382,8 @@ write_soma.IterableMatrix <- function(
     shape = shape,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   # TODO: Add support for resume-mode
   if (!is.null(x)) {

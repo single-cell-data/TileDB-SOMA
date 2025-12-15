@@ -84,29 +84,9 @@ NULL
 #'
 #' @export
 #'
-#' @examplesIf requireNamespace("tiledb", quietly = TRUE)
-#' head(cfgvec <- as.vector(tiledb::tiledb_config())) # TileDB config as a vector
-#' (sctx <- soma_context(cfgvec))
-#'
-soma_context <- function(config) {
-  ## if a new config is given always create a new object
-  if (!missing(config)) {
-    somactx <- create_soma_context(config)
-    .pkgenv[["somactx"]] <- somactx
-  }
-
-  ## access config
-  somactx <- .pkgenv[["somactx"]]
-
-  ## if no values was cached, create a new one with either empty or given config
-  if (is.null(somactx)) {
-    if (missing(config)) {
-      somactx <- create_soma_context()
-    } else {
-      somactx <- create_soma_context(config)
-    }
-    .pkgenv[["somactx"]] <- somactx
-  }
-
-  return(somactx)
+soma_context <- function(config = NULL) {
+  .deprecate(when = "2.3.0", what = "soma_context", details = "Use new `SOMAContext` class instead.")
+  context <- SOMAContext$new(config)
+  .pkgenv[["somactx"]] <- context
+  return(SOMAContext$new(config))
 }
