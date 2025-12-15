@@ -187,9 +187,6 @@ SOMADataFrame <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(values)$export_to_c(naap, nasp)
-
-      # df <- as.data.frame(values)[schema_names]
-      # arr <- private$.tiledb_array
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,

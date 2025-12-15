@@ -80,7 +80,6 @@ test_that("Basic mechanics", {
 
   # Verify the array is still open for write
   expect_equal(sdf$mode(), "WRITE")
-  # expect_true(tiledb::tiledb_array_is_open(sdf$object))
   sdf$close()
 
   # Read back the data (ignore attributes)
@@ -459,7 +458,7 @@ test_that("int64 values are stored correctly", {
 })
 
 test_that("creation with ordered factors", {
-  skip_if_not_installed("tiledb", "0.21.0")
+  skip_if(get_tiledb_version(compact = TRUE) < "2.17.0")
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-ordered")
   n <- 10L
@@ -500,9 +499,8 @@ test_that("creation with ordered factors", {
   expect_named(lvls, "ord")
   expect_identical(lvls$ord, levels(df$ord))
   expect_identical(sdf$levels("ord"), levels(df$ord))
-
   expect_s3_class(
-    ord <- sdf$.__enclos_env__$private$.tiledb_array[]$ord,
+    ord <- sdf$read(column_names = "ord")$concat()$to_data_frame()$ord,
     c("ordered", "factor"),
     exact = TRUE
   )
@@ -517,7 +515,7 @@ test_that("creation with ordered factors", {
 })
 
 test_that("explicit casting of ordered factors to regular factors", {
-  skip_if_not_installed("tiledb", "0.21.0")
+  skip_if(get_tiledb_version(compact = TRUE) < "2.17.0")
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-unordered")
   n <- 10L
@@ -543,7 +541,7 @@ test_that("explicit casting of ordered factors to regular factors", {
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
   expect_s3_class(
-    ord <- sdf$.__enclos_env__$private$.tiledb_array[]$ord,
+    ord <- sdf$read(column_names = "ord")$concat()$to_data_frame()$ord,
     c("ordered", "factor"),
     exact = TRUE
   )
@@ -1081,7 +1079,7 @@ test_that("SOMADataFrame can be updated from a data frame", {
 })
 
 test_that("missing levels in enums", {
-  skip_if_not_installed("tiledb", "0.21.0")
+  skip_if(get_tiledb_version(compact = TRUE) < "2.17.0")
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-missing-levels")
   n <- 10L
