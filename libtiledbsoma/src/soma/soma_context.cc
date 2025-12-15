@@ -13,6 +13,8 @@
 #include <regex>
 #include <thread>
 
+#include <format>
+
 #include <thread_pool/thread_pool.h>
 #include "../utils/common.h"
 #include "../utils/logger.h"
@@ -32,7 +34,7 @@ std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
                 concurrency = std::stoull(value_str);
             } catch (const std::exception& e) {
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "[SOMAContext] Error parsing {}: '{}' ({}) - must be a "
                         "postive integer.",
                         CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL,

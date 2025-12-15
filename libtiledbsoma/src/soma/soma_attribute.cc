@@ -11,8 +11,10 @@
  *   This file defines the SOMAAttribute class.
  */
 
-#include "soma_attribute.h"
+#include <format>
+
 #include "../utils/logger.h"
+#include "soma_attribute.h"
 
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
@@ -31,7 +33,7 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
 
     if (attribute_names.size() != 1) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMAAttribute][deserialize] Invalid number of attributes. "
                 "Epected 1, got {}",
                 attribute_names.size()));
@@ -63,7 +65,7 @@ std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
 
 void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_set_dim_points] Column with name {} is not an index "
             "column",
             name()));
@@ -71,7 +73,7 @@ void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
 
 void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_set_dim_ranges] Column with name {} is not an index "
             "column",
             name()));
@@ -79,7 +81,7 @@ void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
 
 void SOMAAttribute::_set_current_domain_slot(NDRectangle&, std::span<const std::any>) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
             "an index column",
             name()));
@@ -88,7 +90,7 @@ void SOMAAttribute::_set_current_domain_slot(NDRectangle&, std::span<const std::
 std::pair<bool, std::string> SOMAAttribute::_can_set_current_domain_slot(
     std::optional<NDRectangle>&, std::span<const std::any>) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
             "an index column",
             name()));
@@ -96,7 +98,7 @@ std::pair<bool, std::string> SOMAAttribute::_can_set_current_domain_slot(
 
 std::any SOMAAttribute::_core_domain_slot() const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_core_domain_slot] Column with name {} is not an "
             "index column",
             name()));
@@ -104,7 +106,7 @@ std::any SOMAAttribute::_core_domain_slot() const {
 
 std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
             "index column",
             name()));
@@ -112,7 +114,7 @@ std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
 
 std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, Array&) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
             "index column",
             name()));
@@ -120,7 +122,7 @@ std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, Array&) c
 
 std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, Array&) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
             "an index column",
             name()));
@@ -128,7 +130,7 @@ std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, Array&) co
 
 std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
             "an index column",
             name()));
@@ -137,7 +139,7 @@ std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
 std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
     const SOMAContext&, Array&, enum Domainish, bool) const {
     throw TileDBSOMAError(
-        fmt::format(
+        std::format(
             "[SOMAAttribute][arrow_domain_slot] Column with name {} is not an "
             "index column",
             name()));

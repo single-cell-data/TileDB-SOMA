@@ -11,6 +11,8 @@
  * This file defines the performing TileDB queries.
  */
 
+#include <format>
+
 #include "managed_query.h"
 
 #include <tiledb/array_experimental.h>
@@ -79,7 +81,7 @@ void ManagedQuery::set_layout(ResultOrder layout) {
             break;
         default:
             throw std::invalid_argument(
-                fmt::format("[ManagedQuery] invalid ResultOrder({}) passed", static_cast<int>(layout)));
+                std::format("[ManagedQuery] invalid ResultOrder({}) passed", static_cast<int>(layout)));
     }
 
     layout_ = layout;
@@ -103,7 +105,7 @@ void ManagedQuery::select_columns(const std::vector<std::string>& names, bool if
     for (auto& name : names) {
         // Name is not an attribute or dimension.
         if (!schema_->has_attribute(name) && !schema_->domain().has_dimension(name)) {
-            LOG_WARN(fmt::format("[TileDB-SOMA::ManagedQuery] [{}] Invalid column selected: {}", name_, name));
+            LOG_WARN(std::format("[TileDB-SOMA::ManagedQuery] [{}] Invalid column selected: {}", name_, name));
         } else {
             columns_.push_back(name);
         }
@@ -151,13 +153,13 @@ void ManagedQuery::setup_read() {
         if (ArrayBuffers::use_memory_pool(array_)) {
             buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
             for (auto& name : columns_) {
-                LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
+                LOG_DEBUG(std::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
                 buffers_->at(name)->attach(*query_);
             }
         } else {
             buffers_ = std::make_shared<ArrayBuffers>();
             for (auto& name : columns_) {
-                LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
+                LOG_DEBUG(std::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
                 buffers_->emplace(name, ColumnBuffer::create(array_, name));
                 buffers_->at(name)->attach(*query_);
             }
@@ -230,23 +232,23 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     });
 
     if (query_future_.valid()) {
-        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Waiting for query", name_));
         query_future_.wait();
-        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Done waiting for query", name_));
 
         auto retval = query_future_.get();
         if (!retval.succeeded()) {
-            throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED: {}", name_, retval.message()));
+            throw TileDBSOMAError(std::format("[ManagedQuery] [{}] Query FAILED: {}", name_, retval.message()));
         }
 
     } else {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+        throw TileDBSOMAError(std::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
     }
 
     auto status = query_->query_status();
 
     if (status == Query::Status::FAILED) {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
+        throw TileDBSOMAError(std::format("[ManagedQuery] [{}] Query FAILED", name_));
     }
 
     // If the query was ever incomplete, the result buffers contents are not
@@ -261,13 +263,13 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
         num_cells = buffers_->at(name)->update_size(*query_);
-        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+        throw TileDBSOMAError(std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
     return buffers_;
@@ -321,7 +323,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
     array_shape = schema.domain().dimension(0).domain<int64_t>();
     subarray_->add_range(0, array_shape.first, array_shape.second);
     LOG_TRACE(
-        fmt::format(
+        std::format(
             "[ManagedQuery] Add full range to dense subarray dim0 = ({}, {})", array_shape.first, array_shape.second));
 
     // Set the subarray for range slicing
@@ -341,7 +343,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomai
     for (const auto& dim : schema.domain().dimensions()) {
         std::string dim_name = dim.name();
         if (subarray_range_set_[dim_name]) {
-            LOG_TRACE(fmt::format("[ManagedQuery] _fill_in_subarrays continue {}", dim_name));
+            LOG_TRACE(std::format("[ManagedQuery] _fill_in_subarrays continue {}", dim_name));
             continue;
         }
 
@@ -349,11 +351,11 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomai
         // Per the spec DenseNDArray must only have dims named
         // soma_dim_{i} with i=0,1,2,...,n-1, of type int64.
         if (dim_name.rfind("soma_dim_", 0) != 0) {
-            throw TileDBSOMAError(fmt::format("found dense array with unexpected dim name {}", dim_name));
+            throw TileDBSOMAError(std::format("found dense array with unexpected dim name {}", dim_name));
         }
         if (dim.type() != TILEDB_INT64) {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "expected dense arrays to have int64 dims; got {} for {}",
                     tiledb::impl::to_str(dim.type()),
                     dim_name));
@@ -366,7 +368,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomai
         int64_t hi = cd_hi;
 
         LOG_TRACE(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape dim "
                 "name {} current domain ({}, {})",
                 dim_name,
@@ -376,7 +378,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomai
         if (is_read) {
             auto [dom_lo, dom_hi] = schema.domain().dimension(0).domain<int64_t>();
             LOG_TRACE(
-                fmt::format(
+                std::format(
                     "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
                     "dim name {} non-empty domain ({}, {})",
                     dim_name,
@@ -391,7 +393,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomai
         }
 
         LOG_TRACE(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape dim "
                 "name {} select ({}, {})",
                 dim_name,
@@ -410,23 +412,23 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     }
 
     if (query_future_.valid()) {
-        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Waiting for query", name_));
         query_future_.wait();
-        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Done waiting for query", name_));
 
         auto retval = query_future_.get();
         if (!retval.succeeded()) {
-            throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED: {}", name_, retval.message()));
+            throw TileDBSOMAError(std::format("[ManagedQuery] [{}] Query FAILED: {}", name_, retval.message()));
         }
 
     } else {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+        throw TileDBSOMAError(std::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
     }
 
     auto status = query_->query_status();
 
     if (status == Query::Status::FAILED) {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
+        throw TileDBSOMAError(std::format("[ManagedQuery] [{}] Query FAILED", name_));
     }
 
     // If the query was ever incomplete, the result buffers contents are not
@@ -441,13 +443,13 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
         num_cells = buffers_->at(name)->update_size(*query_);
-        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+        throw TileDBSOMAError(std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
     return buffers_;
@@ -456,7 +458,7 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
 void ManagedQuery::check_column_name(const std::string& name) {
     if (!buffers_->contains(name)) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] Column '{}' is not available in the query "
                 "results.",
                 name));
@@ -567,7 +569,7 @@ bool ManagedQuery::_cast_column(ArrowSchema* schema, ArrowArray* array, ArraySch
             return _cast_column_aux<double>(schema, array, se);
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "Saw invalid TileDB user type when attempting to cast table: "
                     "{}",
                     tiledb::impl::type_to_str(user_type)));
@@ -614,7 +616,7 @@ void ManagedQuery::_promote_indexes_to_values(ArrowSchema* schema, ArrowArray* a
             return _cast_dictionary_values<double>(schema, array);
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "Saw invalid TileDB value type when attempting to promote "
                     "indexes to values: {}",
                     tiledb::impl::type_to_str(value_type)));
@@ -745,7 +747,7 @@ bool ManagedQuery::_cast_column_aux<std::string>(ArrowSchema* schema, ArrowArray
 
     if (array->n_buffers != 3) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] internal error: Arrow-table string column should "
                 "have 3 buffers; got {}",
                 array->n_buffers));
@@ -897,7 +899,7 @@ bool ManagedQuery::_extend_and_write_enumeration(
                 value_schema, value_array, index_schema, index_array, enmr, se);
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_type)));
     }
 }
@@ -988,7 +990,7 @@ bool ManagedQuery::_extend_enumeration(
 
     if (value_type_in_schema != value_type_in_data) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "extend_enumeration: data type '{}' != schema type '{}'",
                 tiledb::impl::type_to_str(value_type_in_data),
                 tiledb::impl::type_to_str(value_type_in_schema)));
@@ -1033,7 +1035,7 @@ bool ManagedQuery::_extend_enumeration(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "ArrowAdapter: Unsupported TileDB enumeration datatype: {} ",
                     tiledb::impl::type_to_str(value_type_in_schema)));
     }
@@ -1086,7 +1088,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     if (value_array->n_buffers != 3) {
         throw std::invalid_argument(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
                 "expected values n_buffers == 3; got {}",
                 value_array->n_buffers));
@@ -1094,7 +1096,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     if (value_array->null_count != 0) {
         throw std::invalid_argument(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
                 "null values are not supported"));
     }
@@ -1144,7 +1146,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     if (enum_values_in_write.size() != unique_values_in_write.size()) {
         // std::range_error maps to Python ValueError
         throw std::range_error(
-            fmt::format(
+            std::format(
                 "[extend_enumeration] new values provided for column '{}' must "
                 "be unique within themselves, irrespective of the deduplicate flag",
                 column_name));
@@ -1195,7 +1197,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     //      throw otherwise).
     if (!deduplicate && enum_values_to_add.size() != enum_values_in_write.size()) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[extend_enumeration] one or more values provided are already "
                 "present in the enumeration for column '{}', and deduplicate was "
                 "not specified",
@@ -1266,7 +1268,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         // is intended to be user-facing. Here is a low-level check before we
         // dereference buffers[1] and buffers[2].
         throw std::invalid_argument(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
                 "internal coding error: expected n_buffers == 2; got {}",
                 value_array->n_buffers));
@@ -1274,7 +1276,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     if (value_array->null_count != 0) {
         throw std::invalid_argument(
-            fmt::format(
+            std::format(
                 "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
                 "null values are not supported"));
     }
@@ -1310,7 +1312,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     if (enum_values_in_write.size() != unique_values_in_write.size()) {
         // std::range_error maps to Python ValueError
         throw std::range_error(
-            fmt::format(
+            std::format(
                 "[extend_enumeration] new values provided for column '{}' must "
                 "be unique within themselves, irrespective of the deduplicate flag",
                 column_name));
@@ -1394,7 +1396,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     //      throw otherwise).
     if (!deduplicate && enum_values_to_add.size() != enum_values_in_write.size()) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[extend_enumeration] one or more values provided are already "
                 "present in the enumeration for column '{}', and deduplicate was "
                 "not specified",
@@ -1436,7 +1438,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 std::vector<uint8_t> ManagedQuery::_bool_data_bits_to_bytes(ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "_cast_bit_to_uint8 expected column format to be 'b' but saw "
                 "{}",
                 schema->format));

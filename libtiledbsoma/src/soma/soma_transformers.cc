@@ -4,6 +4,8 @@
 #include "../geometry/operators/io/write.h"
 #include "../utils/logger.h"
 
+#include <format>
+
 namespace tiledbsoma {
 OutlineTransformer::OutlineTransformer(SOMACoordinateSpace coordinate_space)
     : coordinate_space(coordinate_space) {
@@ -43,7 +45,7 @@ ArrowTable OutlineTransformer::apply(managed_unique_ptr<ArrowArray> array, manag
 
     if (soma_gometry_index == -1) {
         throw std::runtime_error(
-            fmt::format("[OutlineTransformer][apply] Missing schema child with name {}", SOMA_GEOMETRY_COLUMN_NAME));
+            std::format("[OutlineTransformer][apply] Missing schema child with name {}", SOMA_GEOMETRY_COLUMN_NAME));
     }
 
     array = ArrowAdapter::arrow_array_remove_at_index(std::move(array), soma_gometry_index);

@@ -11,6 +11,8 @@
  *   This file defines the SOMAColumn class.
  */
 
+#include <format>
+
 #include "soma_column.h"
 
 #include "../utils/logger.h"
@@ -39,7 +41,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
     if (soma_type == "SOMAGeometryDataFrame") {
         if (metadata.count(TILEDB_SOMA_SCHEMA_KEY) == 0) {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMAArray][fill_columns] Missing required metadata key '{}' "
                     "from SOMAGeometryDataFrame '{}'",
                     TILEDB_SOMA_SCHEMA_KEY,
@@ -53,7 +55,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
 
         if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
                     TILEDB_SOMA_SCHEMA_COL_KEY,
                     TILEDB_SOMA_SCHEMA_KEY));
@@ -79,7 +81,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                     col = SOMAGeometryColumn::deserialize(column, ctx, array, metadata);
                     break;
                 default:
-                    throw TileDBSOMAError(fmt::format("[SOMAColumn][deserialize] Unknown column type {}", type));
+                    throw TileDBSOMAError(std::format("[SOMAColumn][deserialize] Unknown column type {}", type));
             }
 
             if (col) {
@@ -172,7 +174,7 @@ std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::st
             return std::pair<std::string, std::string>("", "");
         } else {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMAColumn][core_current_domain_slot] unexpected current "
                     "domain returnd ({}, {})",
                     current_domain.first,
@@ -193,7 +195,7 @@ std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::st
             return std::pair<std::string, std::string>("", "");
         } else {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMAColumn][core_current_domain_slot] unexpected current "
                     "domain returnd ({}, {})",
                     current_domain.first,
