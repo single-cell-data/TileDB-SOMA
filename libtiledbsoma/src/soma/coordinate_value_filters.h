@@ -14,10 +14,10 @@
 #ifndef TILEDBSOMA_COORDINATE_VALUE_FILTERS_H
 #define TILEDBSOMA_COORDINATE_VALUE_FILTERS_H
 
+#include <format>
 #include <memory>
 #include <optional>
 #include <span>
-#include <sstream>
 #include <vector>
 
 #include <tiledb/tiledb.h>
@@ -68,13 +68,15 @@ class CoordinateValueFilters {
             }
             auto domain = col->domain_slot<T>(*ctx_, *array_, domain_kind_);
             if (!selection.has_overlap(domain)) {
-                // Use sstream beacuse we don't want to include fmt directly in external header.
-                std::stringstream ss;
-                ss << "Non-overlapping slice [" << selection.start.value_or(domain.first) << ", "
-                   << selection.stop.value_or(domain.second) << "] on column '" << col->name()
-                   << "'. Slice must overlap the current column domain [" << domain.first << ", " << domain.second
-                   << "].";
-                throw std::out_of_range(ss.str());
+                throw std::out_of_range(
+                    std::format(
+                        "Non-overlapping slice [{}, {}] on column '{}'. Slice must overlap the current column domain "
+                        "[{}, {}].",
+                        selection.start.value_or(domain.first),
+                        selection.stop.value_or(domain.second),
+                        col->name(),
+                        domain.first,
+                        domain.second));
             }
         }
         add_coordinate_query_condition(
@@ -108,11 +110,13 @@ class CoordinateValueFilters {
             }
             auto domain = col->domain_slot<T>(*ctx_, *array_, domain_kind_);
             if (!selection.is_subset(domain)) {
-                // Use sstream beacuse we don't want to include fmt directly in external header.
-                std::stringstream ss;
-                ss << "Out-of-bounds coordinates found on column '" << col->name()
-                   << "'. Coordinates must be inside column domain [" << domain.first << ", " << domain.second << "].";
-                throw std::out_of_range(ss.str());
+                throw std::out_of_range(
+                    std::format(
+                        "Out-of-bounds coordinates found on column '{}'. Coordinates must be inside column domain [{}, "
+                        "{}].",
+                        col->name(),
+                        domain.first,
+                        domain.second));
             }
         }
         return add_coordinate_query_condition(
