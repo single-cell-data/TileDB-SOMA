@@ -13,8 +13,9 @@
 
 #include "utils/util.h"
 #include <cstring>
+#include <format>
 #include "logger.h"
-#include "utils/logger.h"  // for fmt::format
+#include "utils/logger.h"  // for std::format
 
 namespace tiledbsoma::util {
 
@@ -71,7 +72,7 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
 
     if (column_it == columns.end()) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[ArrowAdapter][tiledb_schema_from_arrow_schema] Index column "
                 "'{}' missing",
                 name));
@@ -101,7 +102,7 @@ Enumeration get_enumeration(
             return ArrayExperimental::get_enumeration(*ctx, *arr, old_way);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[get_enumeration] Could not find enumeration with name '{} or "
                     "'{}'",
                     new_way,

@@ -13,6 +13,7 @@
  */
 
 #include "soma_factory.h"
+#include <format>
 
 #include <tiledb/tiledb>
 #include "../utils/logger.h"
@@ -31,7 +32,7 @@ std::string get_soma_type_metadata_value(
         case Object::Type::Group:
             return get_soma_type_metadata_value_from_group(uri, ctx, timestamp);
         default:
-            throw TileDBSOMAError(fmt::format("The object at URI '{}' is not a valid TileDB array or group.", uri));
+            throw TileDBSOMAError(std::format("The object at URI '{}' is not a valid TileDB array or group.", uri));
     }
 }
 
@@ -47,7 +48,7 @@ std::string get_soma_type_metadata_value_from_array(
     auto has_soma_type = array.has_metadata(SOMA_OBJECT_TYPE_KEY, &value_type);
     if (!has_soma_type) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "Cannot get the SOMA type of the TileDB array at URI '{}'. Missing the required metadata key '{}' for "
                 "the SOMA type.",
                 uri,
@@ -59,7 +60,7 @@ std::string get_soma_type_metadata_value_from_array(
         const char* actual_type = nullptr;
         tiledb_datatype_to_str(value_type, &actual_type);
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "Cannot get the SOMA type of the TileDB array at URI '{}'. Metadata for '{}' has datatype '{}'. "
                 "Expected datatype '{}'.",
                 uri,
@@ -79,7 +80,7 @@ std::string get_soma_type_metadata_value_from_group(
     if (timestamp.has_value()) {
         if (timestamp->first > timestamp->second) {
             throw std::invalid_argument(
-                fmt::format(
+                std::format(
                     "Invalid timestamp range. Timestamp start is greater than timestamp end. Timestamp start={}, "
                     "timestamp end={}.",
                     timestamp->first,
@@ -95,7 +96,7 @@ std::string get_soma_type_metadata_value_from_group(
     auto has_soma_type = group.has_metadata(SOMA_OBJECT_TYPE_KEY, &value_type);
     if (!has_soma_type) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "Cannot get the SOMA type of the TileDB group at URI '{}'. Missing the required metadata key '{}' for "
                 "the SOMA type.",
                 uri,
@@ -107,7 +108,7 @@ std::string get_soma_type_metadata_value_from_group(
         const char* actual_type = nullptr;
         tiledb_datatype_to_str(value_type, &actual_type);
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "Cannot get the SOMA type of the TileDB group at URI '{}'. Metadata for '{}' has datatype '{}'. "
                 "Expected datatype '{}'.",
                 uri,

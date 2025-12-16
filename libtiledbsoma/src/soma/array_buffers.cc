@@ -11,8 +11,10 @@
  * This file defines the ArrayBuffers class.
  */
 
-#include "array_buffers.h"
+#include <format>
+
 #include "../utils/logger.h"
+#include "array_buffers.h"
 #include "column_buffer.h"
 
 namespace tiledbsoma {
@@ -38,7 +40,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
             memory_budget = std::stoull(value_str);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[ArrayBuffers] Error parsing {}: '{}' ({})", CONFIG_KEY_MEMORY_BUDGET, value_str, e.what()));
         }
     }
@@ -50,7 +52,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
             factor = std::stoull(value_str);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[ArrayBuffers] Error parsing {}: '{}' ({})", CONFIG_KEY_VAR_SIZED_FACTOR, value_str, e.what()));
         }
     }
@@ -107,7 +109,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
                                          }
 
                                          throw TileDBSOMAError(
-                                             fmt::format("[ArrayBuffers] Missing column name '{}'", name));
+                                             std::format("[ArrayBuffers] Missing column name '{}'", name));
                                      }) /
                                  8) *
                                 8;
@@ -169,14 +171,14 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
 
 std::shared_ptr<ColumnBuffer> ArrayBuffers::at(const std::string& name) {
     if (!contains(name)) {
-        throw TileDBSOMAError(fmt::format("[ArrayBuffers] column '{}' does not exist", name));
+        throw TileDBSOMAError(std::format("[ArrayBuffers] column '{}' does not exist", name));
     }
     return buffers_[name];
 }
 
 void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<ColumnBuffer> buffer) {
     if (contains(name)) {
-        throw TileDBSOMAError(fmt::format("[ArrayBuffers] column '{}' already exists", name));
+        throw TileDBSOMAError(std::format("[ArrayBuffers] column '{}' already exists", name));
     }
     names_.push_back(name);
     buffers_.emplace(name, buffer);

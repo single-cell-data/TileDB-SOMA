@@ -14,7 +14,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
-
+#include <format>
 #include <numeric>
 #include <span>
 
@@ -163,18 +163,7 @@ void count_rows_(
                     for (size_t n = 0; n < Ai_view.size(); n++) {
                         auto row = Ai_view[n];
                         if ((row < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row)) [[unlikely]] {
-                            // std::format isn't until C++ 20, and including
-                            // utils/logger.h or spdlog/fmt/fmt.h is fiddly
-                            // inside of a header file (fastercsx.h). For
-                            // the moment (release-1.15, with C++ 17, as of
-                            // 2025-01-10), we use stringstream.
-                            // This is all temporary, this-branch-only, and
-                            // will go away entirely once we have
-                            // https://github.com/single-cell-data/TileDB-SOMA/issues/3154
-                            // resolved.
-                            std::stringstream ss;
-                            ss << "First coordinate " << row << " out of range " << n_row << ".";
-                            throw std::out_of_range(ss.str());
+                            throw std::out_of_range(std::format("First coordinate {} out of range {}.", row, n_row));
                         }
                         counts[row]++;
                     }
@@ -196,9 +185,7 @@ void count_rows_(
             for (size_t n = 0; n < Ai_view.size(); n++) {
                 auto row = Ai_view[n];
                 if ((row < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row)) [[unlikely]] {
-                    std::stringstream ss;
-                    ss << "First coordinate " << row << " out of range " << n_row << ".";
-                    throw std::out_of_range(ss.str());
+                    throw std::out_of_range(std::format("First coordinate {} out of range {}.", row, n_row));
                 }
                 Bp[row]++;
             }
@@ -240,9 +227,7 @@ void compress_coo_inner_left_(
 
         const auto dest = Bp[row];
         if ((Aj_[n] < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col)) [[unlikely]] {
-            std::stringstream ss;
-            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col << ".";
-            throw std::out_of_range(ss.str());
+            throw std::out_of_range(std::format("Second coordinate {} out of range {}.", Aj_[n], n_col));
         }
         Bj[dest] = Aj_[n];
         Bd[dest] = Ad_[n];
@@ -270,9 +255,7 @@ void compress_coo_inner_right_(
         Bp[row]--;
         const auto dest = Bp[row];
         if ((Aj_[n] < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col)) [[unlikely]] {
-            std::stringstream ss;
-            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col << ".";
-            throw std::out_of_range(ss.str());
+            throw std::out_of_range(std::format("Second coordinate {} out of range {}.", Aj_[n], n_col));
         }
 
         Bj[dest] = Aj_[n];

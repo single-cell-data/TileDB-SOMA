@@ -14,10 +14,10 @@
 #ifndef TILEDBSOMA_VALUE_FILTER_H
 #define TILEDBSOMA_VALUE_FILTER_H
 
+#include <format>
 #include <memory>
 #include <optional>
 #include <span>
-#include <sstream>
 #include <vector>
 
 #include <tiledb/tiledb.h>
@@ -93,10 +93,8 @@ class ValueFilter {
     static ValueFilter create_from_points(
         const Context& ctx, const std::string& column_name, PointSelection<T> values) {
         if (values.points.empty()) {
-            // Use sstream beacuse we don't want to include fmt directly in external header.
-            std::stringstream ss;
-            ss << "Cannot set coordinates on column '" << column_name << "'. No coordinates provided.";
-            throw std::invalid_argument(ss.str());
+            throw std::invalid_argument(
+                std::format("Cannot set coordinates on column '{}'. No coordinates provided.", column_name));
         }
         if constexpr (std::is_same_v<T, std::string>) {
             // Using C API because C++ API only supports std::vector, not std::span.

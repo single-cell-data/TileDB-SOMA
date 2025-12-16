@@ -12,8 +12,9 @@
  */
 
 #include "soma_group.h"
+#include <format>
 #include "../soma/logger_public.h"
-#include "../utils/logger.h"  // for fmt::format
+#include "../utils/logger.h"  // for std::format
 #include "../utils/util.h"
 
 namespace tiledbsoma {
@@ -45,7 +46,7 @@ std::map<std::string, SOMAGroupEntry> create_member_cache(Group& group) {
                 return "SOMAGroup";
             default:
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "Internal error: Failed to open SOMA object. Unable to resolve the TileDB object type of "
                         "member '{}'.",
                         group_member.to_str()));
@@ -161,7 +162,7 @@ SOMAGroup::SOMAGroup(
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(group_->query_type(), &query_type_str);
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "Internal error: SOMAGroup constructor does not accept a "
                     "TileDB group opened in mode '{}'. The group must be opened in "
                     "either read or write mode.",

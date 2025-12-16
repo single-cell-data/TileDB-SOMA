@@ -1,8 +1,8 @@
-#include <Rcpp.h>                   // for R interface to C++
-#include <nanoarrow/r.h>            // for C interface to Arrow (via R package)
-#include <RcppInt64>                // for fromInteger64
+#include <Rcpp.h>         // for R interface to C++
+#include <nanoarrow/r.h>  // for C interface to Arrow (via R package)
+#include <RcppInt64>      // for fromInteger64
+#include <format>
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow
-#include <sstream>
 #include <type_traits>
 
 // we currently get deprecation warnings by default which are noisy
@@ -67,16 +67,12 @@ SEXP soma_array_reader(
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
-    std::stringstream ss;
-    ss << "[soma_array_reader] Reading from " << uri;
-    tdbs::LOG_INFO(ss.str());
+    tdbs::LOG_INFO(std::format("[soma_array_reader] Reading from {}", uri));
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
-        std::stringstream ss;
-        ss << "[soma_array_reader] Selecting " << column_names.size() << " columns";
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::LOG_DEBUG(std::format("[soma_array_reader] Selecting {} columns", column_names.size()));
     }
 
     auto tdb_result_order = get_tdb_result_order(result_order);
@@ -85,9 +81,7 @@ SEXP soma_array_reader(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
     if (timestamprange.isNotNull()) {
         Rcpp::DatetimeVector vec(timestamprange);
-        std::stringstream ss;
-        ss << "[soma_array_reader] timestamp range (" << vec[0] << ", " << vec[1] << ")";
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::LOG_DEBUG(std::format("[soma_array_reader] timestamp range ({}, {})", vec[0], vec[1]));
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
@@ -104,10 +98,12 @@ SEXP soma_array_reader(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        std::stringstream ss;
-        ss << "[soma_array_reader] Dimension " << dim.name() << " type " << tiledb::impl::to_str(dim.type())
-           << " extent " << dim.tile_extent_to_str();
-        tdbs::LOG_INFO(ss.str());
+        tdbs::LOG_INFO(
+            std::format(
+                "[soma_array_reader] Dimension {} type {} extent {}",
+                dim.name(),
+                tiledb::impl::to_str(dim.type()),
+                dim.tile_extent_to_str()));
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
@@ -143,12 +139,12 @@ SEXP soma_array_reader(
             "or using iterated partial reads.",
             uri);
     }
-    {
-        std::stringstream ss;
-        ss << "[soma_array_reader] Read complete with " << sr_data->get()->num_rows() << " rows and "
-           << sr_data->get()->names().size() << " cols";
-        tdbs::LOG_INFO(ss.str());
-    }
+    tdbs::LOG_INFO(
+        std::format(
+            "[soma_array_reader] Read complete with {} rows and {} cols",
+            sr_data->get()->num_rows(),
+            sr_data->get()->names().size()));
+
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
     // Schema first
@@ -166,11 +162,8 @@ SEXP soma_array_reader(
 
     arr->length = 0;  // initial value
     for (size_t i = 0; i < ncol; i++) {
-        {
-            std::stringstream ss;
-            ss << "[soma_array_reader] Accessing '" << names[i] << "' at pos " << i;
-            tdbs::LOG_INFO(ss.str());
-        }
+        tdbs::LOG_INFO(std::format("[soma_array_reader] Accessing '{}' at pos {}", names[i], i));
+
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
 
@@ -182,16 +175,13 @@ SEXP soma_array_reader(
         // pp.first.get(), sizeof(ArrowArray));
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
-        {
-            std::stringstream ss;
-            ss << "[soma_array_reader] Incoming name " << std::string(pp.second->name) << " length "
-               << pp.first->length;
-            tdbs::LOG_INFO(ss.str());
-        }
+
+        tdbs::LOG_INFO(
+            std::format(
+                "[soma_array_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length));
+
         if (pp.first->length > arr->length) {
-            std::stringstream ss;
-            ss << "[soma_array_reader] Setting array length to " << pp.first->length;
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::LOG_DEBUG(std::format("[soma_array_reader] Setting array length to {}", pp.first->length));
             arr->length = pp.first->length;
         }
     }
@@ -437,10 +427,12 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     exitIfError(ArrowSchemaAllocateChildren(sch, lib_retval->n_children), "Bad schema children alloc");
 
     for (size_t i = 0; i < static_cast<size_t>(lib_retval->n_children); i++) {
-        std::stringstream ss;
-        ss << "[c_schema] Accessing name '" << std::string(lib_retval->children[i]->name) << "' format '"
-           << std::string(lib_retval->children[i]->format) << "' at position " << i;
-        tdbs::LOG_INFO(ss.str());
+        tdbs::LOG_INFO(
+            std::format(
+                "[c_schema] Accessing name '{}' format '{}' at position {}",
+                lib_retval->children[i]->name,
+                lib_retval->children[i]->format,
+                i));
         ArrowSchemaMove(lib_retval->children[i], sch->children[i]);
     }
 

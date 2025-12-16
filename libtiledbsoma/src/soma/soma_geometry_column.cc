@@ -12,6 +12,7 @@
  */
 
 #include "soma_geometry_column.h"
+#include <format>
 #include "../utils/logger.h"
 
 namespace tiledbsoma {
@@ -39,14 +40,14 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
 
     if (dimension_names.size() % 2 != 0) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMAGeometryColumn][deserialize] Invalid number of dimensions: "
                 "expected number divisible by 2, got {}",
                 dimension_names.size()));
     }
     if (attribute_names.size() != 1) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMAGeometryColumn][deserialize] Invalid number of attributes: "
                 "expected 1, got {}",
                 attribute_names.size()));
@@ -61,7 +62,7 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
 
     if (!metadata.contains(SOMA_COORDINATE_SPACE_KEY)) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMAGeometryColumn][deserialize] Missing required '{}' "
                 "metadata key.",
                 SOMA_COORDINATE_SPACE_KEY));
@@ -87,7 +88,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
 
     if (type_metadata.compare("WKB") != 0) {
         throw std::invalid_argument(
-            fmt::format(
+            std::format(
                 "Unkwown type metadata for `{}`: Expected 'WKB', got '{}'", SOMA_GEOMETRY_COLUMN_NAME, type_metadata));
     }
 
@@ -111,7 +112,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     const PlatformConfig& platform_config) {
     if (coordinate_space.size() != dim_configs.size()) {
         throw std::invalid_argument(
-            fmt::format(
+            std::format(
                 "Mismatched number of dimensions on column '{}'. The coordinate space has '{}' axes, but input for "
                 "'{}' "
                 "dimensions was provide.",
@@ -186,7 +187,7 @@ void SOMAGeometryColumn::_set_current_domain_slot(
     NDRectangle& rectangle, std::span<const std::any> new_current_domain) const {
     if (TDB_DIM_PER_SPATIAL_AXIS * new_current_domain.size() != dimensions.size()) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMAGeometryColumn] Dimension - Current Domain mismatch. "
                 "Expected current domain of size {}, found {}",
                 dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS,
@@ -208,7 +209,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
     std::optional<NDRectangle>& rectangle, std::span<const std::any> new_current_domain) const {
     if (new_current_domain.size() != dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMADimension][_can_set_current_domain_slot] Expected current "
                 "domain "
                 "size is 2, found {}",
@@ -219,7 +220,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
         auto range = std::any_cast<std::array<double_t, 2>>(new_current_domain[i]);
 
         if (range[0] > range[1]) {
-            return std::pair(false, fmt::format("index-column name {}: new lower > new upper", dimensions[i].name()));
+            return std::pair(false, std::format("index-column name {}: new lower > new upper", dimensions[i].name()));
         }
 
         auto dimension_min = dimensions[i];
@@ -232,7 +233,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
             if (range[0] > range_min[0]) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name {}: new lower > old lower (downsize "
                         "is unsupported)",
                         dimension_min.name()));
@@ -240,7 +241,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
             if (range[0] > range_max[0]) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name {}: new lower > old lower (downsize "
                         "is unsupported)",
                         dimension_max.name()));
@@ -248,7 +249,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
             if (range[1] < range_min[1]) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name {}: new upper < old upper (downsize "
                         "is unsupported)",
                         dimension_min.name()));
@@ -256,7 +257,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
             if (range[1] < range_max[1]) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name {}: new upper < old upper (downsize "
                         "is unsupported)",
                         dimension_max.name()));
@@ -267,11 +268,11 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
 
             if (range[0] > core_domain.first[i]) {
                 return std::pair(
-                    false, fmt::format("index-column name {}: new lower < limit lower", dimension_min.name()));
+                    false, std::format("index-column name {}: new lower < limit lower", dimension_min.name()));
             }
             if (range[1] < core_domain.second[i]) {
                 return std::pair(
-                    false, fmt::format("index-column name {}: new upper > limit upper", dimension_min.name()));
+                    false, std::format("index-column name {}: new upper > limit upper", dimension_min.name()));
             }
         }
     }
@@ -472,7 +473,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
         } break;
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMAGeometryColumn][arrow_domain_slot] dim {} has unhandled "
                     "extended type "
                     "{}",

@@ -12,6 +12,7 @@
  */
 
 #include "platform_config.h"
+#include <format>
 #include "nlohmann/json.hpp"
 
 #include "../utils/common.h"
@@ -39,7 +40,7 @@ tiledb_layout_t get_order_from_string(std::string order) {
     try {
         return convert_order[order];
     } catch (const std::out_of_range& e) {
-        throw TileDBSOMAError(fmt::format("Invalid order {} passed to PlatformConfig", order));
+        throw TileDBSOMAError(std::format("Invalid order {} passed to PlatformConfig", order));
     }
 }
 
@@ -155,7 +156,7 @@ json get_filter_list_json(tiledb::FilterList filter_list) {
                 break;
             default:
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "Internal error: unrecognized filter type '{}'", tiledb::Filter::to_str(filter.filter_type())));
         }
         filter_list_as_json.emplace_back(filter_as_json);
@@ -224,7 +225,7 @@ void set_filter_option(Filter filter, std::string option_name, json value) {
             filter.set_option(option, value.get<uint8_t>());
             break;
         default:
-            throw TileDBSOMAError(fmt::format("Invalid option {} passed to filter", option_name));
+            throw TileDBSOMAError(std::format("Invalid option {} passed to filter", option_name));
     }
 }
 
@@ -262,7 +263,7 @@ void append_to_filter_list(FilterList filter_list, json value, std::shared_ptr<C
             filter_list.add_filter(filter);
         }
     } catch (std::out_of_range& e) {
-        throw TileDBSOMAError(fmt::format("Invalid filter {} passed to PlatformConfig", std::string(value)));
+        throw TileDBSOMAError(std::format("Invalid filter {} passed to PlatformConfig", std::string(value)));
     }
 }
 

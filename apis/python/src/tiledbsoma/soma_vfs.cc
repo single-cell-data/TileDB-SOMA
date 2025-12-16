@@ -14,6 +14,7 @@
 
 #include "common.h"
 
+#include <format>
 #include <streambuf>
 
 namespace libtiledbsomacpp {
@@ -47,10 +48,7 @@ class SOMAFileHandle {
         , buf_(SOMAFilebuf(vfs_))
         , ctx_(ctx) {
         if (buf_.open(uri, openmode_) == nullptr) {
-            // No std::format in C++17, and fmt::format is overkill here
-            std::stringstream ss;
-            ss << "URI " << uri << " is not a valid URI";
-            TPY_ERROR_LOC(ss.str());
+            TPY_ERROR_LOC(std::format("URI {} is not a valid URI", uri));
         }
     }
 

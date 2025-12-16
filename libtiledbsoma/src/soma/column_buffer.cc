@@ -11,8 +11,10 @@
  * This file defines the a ColumBuffer class.
  */
 
-#include "column_buffer.h"
+#include <format>
+
 #include "../utils/logger.h"
+#include "column_buffer.h"
 
 namespace tiledbsoma {
 
@@ -102,7 +104,7 @@ ColumnBuffer::ColumnBuffer(
     , enumeration_(enumeration)
     , is_ordered_(is_ordered) {
     LOG_DEBUG(
-        fmt::format("[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var_, is_nullable_));
+        std::format("[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var_, is_nullable_));
     if (use_resize) {
         // Calling reserve and then accessing the data without having initialized
         // memory is UB but resize increases resident memory footprint
@@ -128,7 +130,7 @@ ColumnBuffer::ColumnBuffer(
 }
 
 ColumnBuffer::~ColumnBuffer() {
-    LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
+    LOG_TRACE(std::format("[ColumnBuffer] release '{}'", name_));
 }
 
 void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
@@ -149,7 +151,7 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     // continue.
     if (!validity_.empty() && is_dim) {
         LOG_DEBUG(
-            fmt::format(
+            std::format(
                 "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
                 "is being ignored",
                 name_));
@@ -280,7 +282,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
             num_bytes = std::stoull(value_str);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(
-                fmt::format("[ColumnBuffer] Error parsing {}: '{}' ({})", CONFIG_KEY_INIT_BYTES, value_str, e.what()));
+                std::format("[ColumnBuffer] Error parsing {}: '{}' ({})", CONFIG_KEY_INIT_BYTES, value_str, e.what()));
         }
     }
 
