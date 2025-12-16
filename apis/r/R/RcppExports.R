@@ -386,3 +386,11 @@ create_soma_context <- function(config = NULL) {
     .Call(`_tiledbsoma_create_soma_context`, config)
 }
 
+get_config_from_soma_context <- function(soma_context) {
+    .Call(`_tiledbsoma_get_config_from_soma_context`, soma_context)
+}
+
+get_data_protocol_from_soma_context <- function(soma_context, uri) {
+    .Call(`_tiledbsoma_get_data_protocol_from_soma_context`, soma_context, uri)
+}
+

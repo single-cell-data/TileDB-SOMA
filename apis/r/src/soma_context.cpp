@@ -7,7 +7,6 @@
 
 // [[Rcpp::export]]
 Rcpp::XPtr<somactx_wrap_t> create_soma_context(Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
-    // if we hae a config, use it
     std::shared_ptr<tiledbsoma::SOMAContext> somactx;
     if (config.isNotNull()) {
         std::map<std::string, std::string> smap;
@@ -26,4 +25,22 @@ Rcpp::XPtr<somactx_wrap_t> create_soma_context(Rcpp::Nullable<Rcpp::CharacterVec
     auto ptr = new somactx_wrap_t(somactx);
     auto xp = make_xptr<somactx_wrap_t>(ptr);
     return xp;
+}
+
+// [[Rcpp::export]]
+Rcpp::CharacterVector get_config_from_soma_context(Rcpp::XPtr<somactx_wrap_t> soma_context) {
+    auto tiledb_context = soma_context->ctxptr->tiledb_ctx();
+    Rcpp::CharacterVector keys{};
+    Rcpp::CharacterVector values{};
+    for (const auto& [k, v] : tiledb_context->config()) {
+        keys.push_back(k);
+        values.push_back(v);
+    }
+    values.attr("names") = keys;
+    return values;
+}
+
+// [[Rcpp::export]]
+std::string get_data_protocol_from_soma_context(Rcpp::XPtr<somactx_wrap_t> soma_context, const std::string& uri) {
+    return soma_context->ctxptr->data_protocol(uri);
 }

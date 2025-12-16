@@ -956,6 +956,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_config_from_soma_context
+Rcpp::CharacterVector get_config_from_soma_context(Rcpp::XPtr<somactx_wrap_t> soma_context);
+RcppExport SEXP _tiledbsoma_get_config_from_soma_context(SEXP soma_contextSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_config_from_soma_context(soma_context));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_data_protocol_from_soma_context
+std::string get_data_protocol_from_soma_context(Rcpp::XPtr<somactx_wrap_t> soma_context, const std::string& uri);
+RcppExport SEXP _tiledbsoma_get_data_protocol_from_soma_context(SEXP soma_contextSEXP, SEXP uriSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_data_protocol_from_soma_context(soma_context, uri));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 9},
@@ -1035,6 +1058,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_get_soma_object_type", (DL_FUNC) &_tiledbsoma_get_soma_object_type, 2},
     {"_tiledbsoma_get_tiledb_object_type", (DL_FUNC) &_tiledbsoma_get_tiledb_object_type, 2},
     {"_tiledbsoma_create_soma_context", (DL_FUNC) &_tiledbsoma_create_soma_context, 1},
+    {"_tiledbsoma_get_config_from_soma_context", (DL_FUNC) &_tiledbsoma_get_config_from_soma_context, 1},
+    {"_tiledbsoma_get_data_protocol_from_soma_context", (DL_FUNC) &_tiledbsoma_get_data_protocol_from_soma_context, 2},
     {NULL, NULL, 0}
 };
 
