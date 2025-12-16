@@ -387,7 +387,7 @@ write_soma.IterableMatrix <- function(
   )
   # TODO: Add support for resume-mode
   if (!is.null(x)) {
-    stride <- .block_size(ncol(x), tiledbsoma_ctx = array$tiledbsoma_ctx)
+    stride <- .block_size(ncol(x), array$soma_context)
     strider <- CoordsStrider$new(start = 1L, end = nrow(x), stride = stride)
     while (strider$has_next()) {
       idx <- as.integer(strider$next_element())

@@ -405,7 +405,7 @@ test_that("write_soma.IterableMatrix mechanics", {
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
   mat <- create_sparse_matrix_with_int_dims(nrows = 1610L, ncols = 560L)
-  ctx <- SOMATileDBContext$new(c(
+  ctx <- SOMAContext$new(c(
     soma.init_buffer_bytes = Sys.getenv(
       "TILEDB_SOMA_INIT_BUFFER_BYTES",
       unset = "33554432"
@@ -418,7 +418,7 @@ test_that("write_soma.IterableMatrix mechanics", {
       bpmat,
       uri = fmt,
       soma_parent = collection,
-      tiledbsoma_ctx = ctx
+      soma_context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = fmt)
@@ -437,7 +437,7 @@ test_that("write_soma.IterableMatrix mechanics", {
       uri = tfmt,
       soma_parent = collection,
       transpose = TRUE,
-      tiledbsoma_ctx = ctx
+      soma_context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = tfmt)
@@ -448,7 +448,7 @@ test_that("write_soma.IterableMatrix mechanics", {
     expect_equal(smat$shape(), rev(dim(bpmat)), info = tfmt)
   }
   # Test chunking
-  ctx <- SOMATileDBContext$new(c(
+  ctx <- SOMAContext$new(c(
     soma.init_buffer_bytes = as.character(2L * (1024L ^ 2L))
   ))
   for (fmt in formats) {
@@ -458,7 +458,7 @@ test_that("write_soma.IterableMatrix mechanics", {
       bpmat,
       uri = cfmt,
       soma_parent = collection,
-      tiledbsoma_ctx = ctx
+      soma_context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = cfmt)
@@ -479,7 +479,7 @@ test_that("write_soma.IterableMatrix registration", {
   on.exit(collection$close(), add = TRUE)
 
   mat <- create_sparse_matrix_with_int_dims(nrows = 1610L, ncols = 560L)
-  ctx <- SOMATileDBContext$new(c(
+  ctx <- SOMAContext$new(c(
     soma.init_buffer_bytes = Sys.getenv(
       "TILEDB_SOMA_INIT_BUFFER_BYTES",
       unset = "33554432"
@@ -497,7 +497,7 @@ test_that("write_soma.IterableMatrix registration", {
       uri = fmt,
       soma_parent = collection,
       key = fmt,
-      tiledbsoma_ctx = ctx
+      soma_context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = info)
@@ -538,7 +538,7 @@ test_that("write_soma.IterableMatrix integrity", {
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
   mat <- create_sparse_matrix_with_int_dims(nrows = 1610L, ncols = 560L)
-  ctx <- SOMATileDBContext$new(c(
+  ctx <- SOMAContext$new(c(
     soma.init_buffer_bytes = Sys.getenv(
       "TILEDB_SOMA_INIT_BUFFER_BYTES",
       unset = "33554432"
@@ -558,7 +558,7 @@ test_that("write_soma.IterableMatrix integrity", {
       uri = fmt,
       soma_parent = collection,
       key = fmt,
-      tiledbsoma_ctx = ctx
+      soma_context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = info)
@@ -570,7 +570,7 @@ test_that("write_soma.IterableMatrix integrity", {
   }
 
   # Empty chunks
-  stride <- .block_size(n = ncol(mat), tiledbsoma_ctx = ctx)
+  stride <- .block_size(n = ncol(mat), soma_context = ctx)
   nchunks <- ceiling(x = nrow(x = mat) / stride)
   cases <- list(
     trailing = rbind(
@@ -612,7 +612,7 @@ test_that("write_soma.IterableMatrix integrity", {
         uri = key,
         soma_parent = collection,
         key = key,
-        tiledbsoma_ctx = ctx
+        soma_context = ctx
       ))
       expect_s3_class(smat, "SOMASparseNDArray")
       expect_true(smat$exists(), info = info)

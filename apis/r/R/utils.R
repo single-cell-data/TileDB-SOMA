@@ -137,31 +137,26 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #'
 #' # Generate a block size to iterate across the obs axis
 #' # `n` is the number of entries on the static axis, not the iterated axis
-#' .block_size(n = n_var, tiledbsoma_ctx = ctx)
+#' .block_size(n = n_var, soma_context = ctx)
 #'
-.block_size <- function(n, tiledbsoma_ctx = NULL) {
+.block_size <- function(n, soma_context) {
   if (!rlang::is_integerish(n, n = 1L, finite = TRUE) || n <= 0L) {
     rlang::abort("'n' must be a single, finite, positive integer value")
   }
-  if (!(is.null(tiledbsoma_ctx) || inherits(tiledbsoma_ctx, "SOMATileDBContext"))) {
-    rlang::abort("'tiledbsoma_ctx' must be a SOMATileDBContext object")
+  if (!inherits(soma_context, "SOMAContext")) {
+    rlang::abort("'soma_context' must be a SOMAContext object")
   }
-  default <- 33554432
-  # If no context was provided, use the default value
-  bytes <- if (is.null(tiledbsoma_ctx)) {
-    default
-  } else {
-    # Try to pull the "soma.init_buffer_bytes" option from the context
-    # If it doesn't exist, use the default value
-    # If it does, but is not numeric, throw an error
-    tryCatch(
-      expr = as.numeric(tiledbsoma_ctx$get(
-        "soma.init_buffer_bytes",
-        default = default
-      )),
-      warning = stop
-    )
+
+  # Try to get the "soma.init_buffer_bytes option from the context.
+  # - If it wasn't set, then use a default value.
+  # - If it was set but isn't numeric, then throw an error.
+  bytes <- 33554432 # default value - over-write if value in config
+  config <- soma_context$get_config()
+  bytes_key = "soma.init_buffer_bytes"
+  if (bytes_key %in% names(config)) {
+    bytes <- tryCatch(expr = as.numeric(config[bytes_key], warning = stop))
   }
+
   # Calculate the blocks size assuming we're working with numeric matrices
   # Not integer or logical
   num_bytes <- utils::object.size(numeric(1L))
