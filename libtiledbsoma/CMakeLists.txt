@@ -101,6 +101,8 @@ set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
 # Build with fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
+
 # Set default builds/configuration to be Release.
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (is_multi_config)
@@ -126,7 +128,8 @@ if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
 
   # Set minimum macOS version to enable certain C++20 features
-  set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
+  set(VCPKG_OSX_DEPLOYMENT_TARGET "11.0")
 
   # Don't allow macOS .frameworks to be used for dependencies.
   set(CMAKE_FIND_FRAMEWORK NEVER)
