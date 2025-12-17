@@ -228,8 +228,8 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 
 test_that("Dimension Point and Ranges Bounds", {
   skip_if(!extended_tests() || covr_tests())
-  ctx <- tiledbsoma::SOMATileDBContext$new()
-  human_experiment <- load_dataset("soma-exp-pbmc-small", tiledbsoma_ctx = ctx)
+  ctx <- tiledbsoma::SOMAContext$new()
+  human_experiment <- load_dataset("soma-exp-pbmc-small", soma_context = ctx)
   X <- human_experiment$ms$get("RNA")$X$get("data")
   expect_equal(X$shape(), c(80, 230))
 

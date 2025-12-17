@@ -9,7 +9,8 @@
 #' @template param-dots-method
 #' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
 #' configuration}.
-#' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}.
+#' @param tiledbsoma_ctx Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.
+#' @param soma_context Optional \code{\link{SOMAContext}}.
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
 #' the data contained in \code{x}.
@@ -467,6 +468,7 @@ write_soma.matrix <- function(
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -499,6 +501,7 @@ write_soma.matrix <- function(
       shape = shape,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context,
       relative = relative
     ))
   }
@@ -544,7 +547,8 @@ write_soma.matrix <- function(
     type = type %||% arrow::infer_type(x),
     shape = shape %||% dim(x),
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   # Write values
   array$write(x)
@@ -632,6 +636,7 @@ write_soma.TsparseMatrix <- function(
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -684,6 +689,7 @@ write_soma.TsparseMatrix <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context,
     tiledb_timestamp = Sys.time()
   )
   # Write values

@@ -105,7 +105,7 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #' Generate block sizes for matrix iteration; the block sizes are calculated
 #' while keeping one axis static and chunking on the alternate axis
 #'
-#' \code{tiledbsoma_ctx} is an option available to \code{write_soma()}; we can
+#' \code{soma_context} is an option available to \code{write_soma()}; we can
 #' use the options in the context to determine how much memory we can use from
 #' the option \dQuote{\code{soma.init_buffer_bytes}}. A default value of
 #' \eqn{33,554,432} bytes is used when no context is provided, or the context
@@ -113,7 +113,7 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #' for \pkg{tiledbsoma}
 #'
 #' @param n Number of entries on the static (non-iterated) axis
-#' @param tiledbsoma_ctx A \code{SOMATileDBContext} object
+#' @param soma_context A \code{SOMAContext} object
 #'
 #' @return Number of entries on the alternate axis to chunk
 #'
@@ -131,7 +131,7 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #' n_var <- ncol(mat)
 #'
 #' # Use a context to limit tp half a megabyte
-#' ctx <- SOMATileDBContext$new(c(
+#' ctx <- SOMAContext$new(c(
 #'   soma.init_buffer_bytes = as.character(0.5 * (1024L ^ 2L))
 #' ))
 #'
