@@ -12,7 +12,8 @@ object to a SOMA}
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
 )
 }
 \arguments{

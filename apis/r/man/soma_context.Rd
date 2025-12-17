@@ -4,7 +4,7 @@
 \alias{soma_context}
 \title{Create and cache a SOMA Context Object}
 \usage{
-soma_context(config)
+soma_context(config = NULL)
 }
 \arguments{
 \item{config}{A named character vector with \dQuote{key} and \dQuote{value}
@@ -16,11 +16,5 @@ of \code{SOMAContext}.
 }
 \description{
 Create and cache a SOMA Context Object
-}
-\examples{
-\dontshow{if (requireNamespace("tiledb", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-head(cfgvec <- as.vector(tiledb::tiledb_config())) # TileDB config as a vector
-(sctx <- soma_context(cfgvec))
-\dontshow{\}) # examplesIf}
 }
 \keyword{internal}

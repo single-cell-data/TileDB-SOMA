@@ -4,7 +4,14 @@
 \alias{write_soma}
 \title{Write a SOMA Object from an \R Object}
 \usage{
-write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
+write_soma(
+  x,
+  uri,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
+)
 }
 \arguments{
 \item{x}{An object.}
