@@ -221,6 +221,7 @@ write_soma.DimReduc <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
@@ -272,7 +273,8 @@ write_soma.DimReduc <- function(
       uri = file_path(soma_parent$uri, "obsm"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   } else if (isTRUE(relative)) {
     SOMACollectionOpen(uri = file_path(soma_parent$uri, "obsm"), mode = "WRITE")
@@ -299,7 +301,8 @@ write_soma.DimReduc <- function(
     ingest_mode = ingest_mode,
     shape = demb,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
 
   # Add feature loadings
@@ -347,7 +350,8 @@ write_soma.DimReduc <- function(
         uri = file_path(soma_parent$uri, "varm"),
         ingest_mode = ingest_mode,
         platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
+        tiledbsoma_ctx = tiledbsoma_ctx,
+        soma_context = soma_context
       )
     } else if (isTRUE(relative)) {
       SOMACollectionOpen(
@@ -386,7 +390,8 @@ write_soma.DimReduc <- function(
       ingest_mode = ingest_mode,
       shape = dload,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   }
 
@@ -412,6 +417,7 @@ write_soma.Graph <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
@@ -427,7 +433,8 @@ write_soma.Graph <- function(
       uri = file_path(soma_parent$uri, "obsp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   } else if (isTRUE(relative)) {
     SOMACollectionOpen(uri = file_path(soma_parent$uri, "obsp"), mode = "WRITE")
@@ -469,7 +476,8 @@ write_soma.Graph <- function(
     ingest_mode = ingest_mode,
     shape = shape,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
 
   return(invisible(soma_parent))
@@ -594,7 +602,8 @@ write_soma.Seurat <- function(
             soma_parent = expms,
             ingest_mode = ingest_mode,
             platform_config = platform_config,
-            tiledbsoma_ctx = tiledbsoma_ctx
+            tiledbsoma_ctx = tiledbsoma_ctx,
+            soma_context = soma_context
           ),
           soma_parent = expms,
           key = measurement
@@ -623,7 +632,8 @@ write_soma.Seurat <- function(
     key = 'obs',
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
 
   # Write dimensional reductions (obsm/varm)
@@ -685,7 +695,8 @@ write_soma.Seurat <- function(
         nfeatures = nfeatures,
         ingest_mode = ingest_mode,
         platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
+        tiledbsoma_ctx = tiledbsoma_ctx,
+        soma_context = soma_context
       ),
       error = err_to_warn
     )
@@ -721,7 +732,8 @@ write_soma.Seurat <- function(
         soma_parent = ms,
         ingest_mode = ingest_mode,
         platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
+        tiledbsoma_ctx = tiledbsoma_ctx,
+        soma_context = soma_context
       ),
       error = err_to_warn
     )
@@ -742,7 +754,8 @@ write_soma.Seurat <- function(
     uri = file_path(experiment$uri, "uns"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   withCallingHandlers(
     expr = .register_soma_object(expuns, soma_parent = experiment, key = "uns"),
@@ -759,7 +772,8 @@ write_soma.Seurat <- function(
       soma_parent = expuns,
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   }
 
@@ -785,6 +799,7 @@ write_soma.SeuratCommand <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
@@ -814,7 +829,8 @@ write_soma.SeuratCommand <- function(
       uri = logs_uri,
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
     soma_parent$add_new_collection(logs, key)
     logs
@@ -881,6 +897,7 @@ write_soma.SeuratCommand <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context,
     relative = relative
   )
 

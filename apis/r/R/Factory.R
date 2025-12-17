@@ -28,9 +28,9 @@
 #'   if it already exists, simply open it for writing.
 #' }
 #' @param platform_config Optional platform configuration.
-#' @param tiledbsoma_ctx Optional SOMATileDBContext.
+#' @param tiledbsoma_ctx Optional (DEPRECATED) SOMATileDBContext.
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp.
-#' @param soma_context Optional SOMAContext.
+#' @param soma_context Optional TileDB SOMA context.
 #'
 #' @return A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
 #' \code{uri} opened for writing.

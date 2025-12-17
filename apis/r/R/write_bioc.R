@@ -25,6 +25,7 @@ write_soma.DataFrame <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   # Check for compound non-atomic/factor types
@@ -46,6 +47,7 @@ write_soma.DataFrame <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context,
     relative = relative
   ))
 }
@@ -80,6 +82,7 @@ write_soma.Hits <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 ) {
   return(write_soma(
@@ -93,6 +96,7 @@ write_soma.Hits <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context,
     relative = relative
   ))
 }
@@ -160,7 +164,8 @@ write_soma.SingleCellExperiment <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
 ) {
   check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
@@ -183,13 +188,15 @@ write_soma.SingleCellExperiment <- function(
     ...,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   experiment <- SOMAExperimentOpen(
     uri = uri,
     mode = "WRITE",
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   on.exit(expr = experiment$close(), add = TRUE, after = FALSE)
 
@@ -206,7 +213,8 @@ write_soma.SingleCellExperiment <- function(
       uri = file_path(ms$uri, "obsm"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "obsm"), mode = "WRITE")
@@ -232,7 +240,8 @@ write_soma.SingleCellExperiment <- function(
         c(shape[2L], ncol(SingleCellExperiment::reducedDim(x, rd)))
       },
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   }
 
@@ -242,7 +251,8 @@ write_soma.SingleCellExperiment <- function(
       uri = file_path(ms$uri, "obsp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "obsp"), mode = "WRITE")
@@ -268,7 +278,8 @@ write_soma.SingleCellExperiment <- function(
         rep_len(shape[2L], length.out = 2L)
       },
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   }
 
@@ -278,7 +289,8 @@ write_soma.SingleCellExperiment <- function(
       uri = file_path(ms$uri, "varp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "varp"), mode = "WRITE")
@@ -304,7 +316,8 @@ write_soma.SingleCellExperiment <- function(
         rep_len(shape[1L], length.out = 2L)
       },
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   }
 
@@ -372,7 +385,8 @@ write_soma.SummarizedExperiment <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
 ) {
   check_package("SummarizedExperiment", "1.28.0")
   stopifnot(
@@ -399,7 +413,8 @@ write_soma.SummarizedExperiment <- function(
     uri = uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
@@ -414,7 +429,8 @@ write_soma.SummarizedExperiment <- function(
     key = "obs",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
 
   # Write assays
@@ -423,7 +439,8 @@ write_soma.SummarizedExperiment <- function(
     file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   withCallingHandlers(
     expr = .register_soma_object(expms, soma_parent = experiment, key = "ms"),
@@ -434,7 +451,8 @@ write_soma.SummarizedExperiment <- function(
     uri = ms_uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
@@ -443,7 +461,8 @@ write_soma.SummarizedExperiment <- function(
       uri = file_path(ms$uri, "X"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "X"), mode = "WRITE")
@@ -466,7 +485,8 @@ write_soma.SummarizedExperiment <- function(
       ingest_mode = ingest_mode,
       shape = rev(shape),
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     )
   }
 
@@ -483,7 +503,8 @@ write_soma.SummarizedExperiment <- function(
     key = "var",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    soma_context = soma_context
   )
 
   withCallingHandlers(
