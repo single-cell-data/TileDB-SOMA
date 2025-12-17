@@ -20,6 +20,11 @@ SOMATileDBContext <- R6::R6Class(
     #' @return An instantiated \code{SOMATileDBContext} object
     #'
     initialize = function(config = NULL, cached = TRUE) {
+      .deprecate(
+        what="SOMATileDBContext$new()",
+        when="2.3.0",
+        details="Use `SOMAContext` instead."
+      )
       config <- config %||% character()
       # Identify options that are SOMA-specific
       soma_opts <- which(names(config) %in% names(.SOMA_CONTEXTS()))

@@ -1,4 +1,4 @@
-test_that("SOMATileDBContext plumb-through", {
+test_that("SOMAContext plumb-through", {
   skip_if(!extended_tests())
 
   uri <- tempfile("new-group")
@@ -62,7 +62,7 @@ test_that("Existence proof: create_soma_context()", {
   expect_type(grp2$names(), "character")
 })
 
-test_that("Existence proof: SOMATileDBContext", {
+test_that("Existence proof: SOMAContext", {
   skip_if(!extended_tests() || covr_tests())
   skip_on_ci()
 

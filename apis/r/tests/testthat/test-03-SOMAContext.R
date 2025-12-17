@@ -70,11 +70,11 @@ test_that("SOMAContext set config with ratio_array_data", {
 
 test_that("SOMAContext from default SOMATileDBContext", {
   # Create context.
-  tiledbsoma_ctx <- SOMATileDBContext$new()
   with_mocked_bindings(
     .tiledbsoma_deprecation_version = function() "2.3.0",
     .deprecation_stage = function(when) "deprecate",
     {
+      lifecycle::expect_deprecated(tiledbsoma_ctx <- SOMATileDBContext$new())
       lifecycle::expect_deprecated(context <- get_soma_context(NULL, tiledbsoma_ctx, what="get_soma_context()"))
     }
   )
@@ -101,11 +101,11 @@ test_that("SOMAContext from SOMATileDBContext with config", {
     extra.first_key = expected_value1,
     extra.second_key = expected_value2
   )
-  tiledbsoma_ctx <- SOMATileDBContext$new(config=input_config)
   with_mocked_bindings(
     .tiledbsoma_deprecation_version = function() "2.3.0",
     .deprecation_stage = function(when) "deprecate",
     {
+      lifecycle::expect_deprecated(tiledbsoma_ctx <- SOMATileDBContext$new(config=input_config))
       lifecycle::expect_deprecated(context <- get_soma_context(NULL, tiledbsoma_ctx, what="get_soma_context()"))
     }
   )
@@ -135,11 +135,11 @@ test_that("SOMAContext from SOMATileDBContext with ratio_array_data", {
     extra.first_key = expected_value1,
     extra.second_key = expected_value2
   )
-  tiledbsoma_ctx <- SOMATileDBContext$new(config=input_config)
   with_mocked_bindings(
     .tiledbsoma_deprecation_version = function() "2.3.0",
     .deprecation_stage = function(when) "deprecate",
     {
+      lifecycle::expect_deprecated(tiledbsoma_ctx <- SOMATileDBContext$new(config=input_config))
       lifecycle::expect_deprecated(context <- get_soma_context(NULL, tiledbsoma_ctx, what="get_soma_context(tiledbsoma_ctx)"))
     }
   )
@@ -168,7 +168,13 @@ test_that("Set and get context from environment (deprecated)", {
     extra.first_key = expected_value1,
     extra.second_key = expected_value2
   )
-  tiledbsoma::soma_context(config=input_config)
+  with_mocked_bindings(
+    .tiledbsoma_deprecation_version = function() "2.3.0",
+    .deprecation_stage = function(when) "deprecate",
+    {
+       lifecycle::expect_deprecated(tiledbsoma::soma_context(config=input_config))
+    }
+  )
   context <- get_soma_context(NULL, NULL, what="get_soma_context(tiledbsoma_ctx)")
 
   # Check config.
