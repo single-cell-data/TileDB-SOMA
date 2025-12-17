@@ -99,6 +99,7 @@
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 )
 
@@ -115,6 +116,7 @@
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 )
 
@@ -130,6 +132,7 @@
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   relative = TRUE
 )
 }
@@ -163,7 +166,9 @@ exists, simply open it for writing.
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
+
+\item{soma_context}{Optional \code{\link{SOMAContext}}.}
 
 \item{relative}{\strong{[Internal use only]} Is \code{uri}
 relative or absolute.}
