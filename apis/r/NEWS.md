@@ -10,14 +10,16 @@
 
 ## Deprecated
 
-- The function `soma_context` is deprecated. Use class `SOMAObject` instead.
-- The parameter `tiledbsoma_ctx` is deprecated in all functions/methods that use it. Use the parameter `soma_context` instead.
+- The function `soma_context` is deprecated. Use class `SOMAContext` instead. ([TBD](TBD))
+- The parameter `tiledbsoma_ctx` is deprecated in all functions/methods that use it. Use the parameter `soma_context` instead. ([TBD](TBD))
+- `SOMATileDBContext` is deprecated. Use class `SOMAContext` instead. ([TBD](TBD))
 
 ## Removed
 
 ## Fixed
 
 - The SOMA Context is only cached as an environment variable when the function `soma_context` is called directly. ([TBD](TBD))
+- `SOMATileDBContext` no longer replaces `sm.mem.reader.sparse_global_order.ratio_array_data` when set in the input config. ([TBD](TBD))
 
 ## Security
 

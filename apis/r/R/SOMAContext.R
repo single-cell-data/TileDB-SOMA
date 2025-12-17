@@ -14,7 +14,7 @@ SOMAContext <- R6::R6Class(
     #'
     initialize = function(config = NULL) {
       ratio_array_data_key = "sm.mem.reader.sparse_global_order.ratio_array_data"
-      if (is.null(config) %||% !(ratio_array_data_key %in% names(config))) {
+      if (is.null(config) || !(ratio_array_data_key %in% names(config))) {
         config[ratio_array_data_key] <- "0.3"
       }
       private$.handle <- create_soma_context(config)
