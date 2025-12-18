@@ -8,14 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- \[[#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309)\] Update [TileDB core to 2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
 - \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`.
 
 ### Changed
 
 - \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow.
-- \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add optional schema validation to `tiledbsoma.io.add_X_layer`, which will generate an error if the provided matrix does not match the Experiment shape. Validation is enabled by default, for any dataset created with SOMA 1.15 or later.
-- \[[#4293](https://github.com/single-cell-data/TileDB-SOMA/pull/4293)\] The `SOMAObject` class is no longer a generic class over the handle `Wrapper` internal class.
 - \[[#4294](https://github.com/single-cell-data/TileDB-SOMA/pull/4294)\] Use vcpkg instead of custom superbuild, for installing libtiledbsoma and its dependencies. Changes in CI workflows to use the prebuilt libtiledbsoma.
 
 ### Deprecated
@@ -25,6 +22,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 ### Security
+
+## [Release 2.2.0]
+
+### Changed
+
+- \[[#4324](https://github.com/single-cell-data/TileDB-SOMA/pull/4324)\] Update TileDB core version to [2.30.0](https://github.com/TileDB-Inc/TileDB/releases/tag/2.30.0).
+- \[[#4293](https://github.com/single-cell-data/TileDB-SOMA/pull/4293)\] The `SOMAObject` class is no longer a generic class over the handle `Wrapper` internal class.
+- \[[#4258](https://github.com/single-cell-data/TileDB-SOMA/pull/4258)\] Add optional schema validation to `tiledbsoma.io.add_X_layer`, which will generate an error if the provided matrix does not match the Experiment shape. Validation is enabled by default, for any dataset created with SOMA 1.15 or later.
+
+## [Release 2.1.2]
+
+Only R API updates in this release.
+
+## [Release 2.1.1]
+
+### Changed
+
+- \[[#4309](https://github.com/single-cell-data/TileDB-SOMA/pull/4309)\] Update [TileDB core to 2.29.2](https://github.com/TileDB-Inc/TileDB/releases/tag/2.29.2).
 
 ## [Release 2.1.0]
 

@@ -25,10 +25,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]
-    uses: ./.github/workflows/build-cpp.yml 
+    uses: ./.github/workflows/build-cpp.yml
     with:
       os: ${{ matrix.os }}
-      build_type: 'release'
+      build_type: 'Release'
 
   ci:
     needs: build-cpp-release
@@ -69,8 +69,8 @@ jobs:
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ matrix.os }}
-      
+          name: cpp-build-Release-${{ matrix.os }}
+
       - name: Bootstrap vcpkg
         run: |
           if [ ! -d vcpkg ]; then
@@ -82,13 +82,13 @@ jobs:
           echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
           # Linux vcpkg needs this on non-Ubuntu systems or when system binaries are not available
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-      
+
       - name: Copy vcpkg triplets
         run: |
           if [ -d apis/python/vcpkg_triplets ]; then
             cp -f apis/python/vcpkg_triplets/*-release.cmake vcpkg/triplets/
           fi
-      
+
       - name: Log pip dependencies
         run: pip list
 

@@ -58,6 +58,21 @@ class SOMAContext {
 
     std::shared_ptr<ThreadPool>& thread_pool();
 
+    /**
+     * Returns the TileDB data protocol for use at a requested URI.
+     *
+     * @param uri The URI to get the data protocol for.
+     * @returns A string description of the data protocol associated with the URI.
+     */
+    std::string data_protocol(const std::string& uri) const;
+
+    /**
+     * Throws a TileDBSOMA error for tiledbv3 URIs with an invalid format.
+     *
+     * @param uri The URI to validate.
+     */
+    void validate_create_uri(const std::string_view uri) const;
+
    private:
     //===================================================================
     //= private non-static

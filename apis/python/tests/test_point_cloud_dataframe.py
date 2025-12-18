@@ -7,6 +7,7 @@ import pyarrow as pa
 import pytest
 import shapely
 import typeguard
+from somacore.options import BatchSize
 
 import tiledbsoma as soma
 
@@ -160,7 +161,7 @@ def test_point_cloud_bad_read_spatial_region(tmp_path):
                 region_coord_space=soma.CoordinateSpace((soma.Axis(name="x"), soma.Axis(name="y"))),
             )
 
-        # The input axes of the transorm must match the axes of the coordinate
+        # The input axes of the transform must match the axes of the coordinate
         # space the requested region is defined in
         with pytest.raises(ValueError):
             ptc.read_spatial_region(
@@ -896,3 +897,28 @@ def test_delete_cells_exceptions(tmp_path):
             points.delete_cells((slice(3, 1),))
         with pytest.raises(TypeError):
             points.delete_cells((("one", "five"),))
+
+
+def test_point_cloud_dataframe_batch_size_not_implemented(tmp_path):
+    uri = (tmp_path / "pc_df").as_posix()
+    asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
+
+    with soma.PointCloudDataFrame.create(
+        uri,
+        schema=asch,
+        domain=[[-10000, 10000], [-10000, 10000], [0, 10]],
+    ) as pc_df:
+        pydict = {}
+        pydict["soma_joinid"] = [1, 2, 3, 4, 5]
+        pydict["x"] = [10, 20, 30, 40, 50]
+        pydict["y"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+
+        rb = pa.Table.from_pydict(pydict)
+        pc_df.write(rb)
+
+    with soma.PointCloudDataFrame.open(uri) as pc_df:
+        result = pc_df.read().concat()
+        assert result.num_rows == 5
+
+        with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
+            list(pc_df.read(batch_size=BatchSize(count=10)))

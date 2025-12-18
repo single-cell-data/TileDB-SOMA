@@ -11,7 +11,7 @@ import urllib.parse
 from concurrent.futures import Future
 from itertools import zip_longest
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -20,10 +20,7 @@ import somacore
 from somacore import options
 
 from . import pytiledbsoma as clib
-from ._types import OpenTimestamp, Slice, is_slice_of
-
-if TYPE_CHECKING:
-    pass
+from ._types import DataProtocol, OpenTimestamp, Slice, is_slice_of
 
 
 def get_start_stamp() -> float:
@@ -89,7 +86,9 @@ def uri_joinpath(base: str, path: str) -> str:
         return base
 
     if not p_base.scheme or p_base.scheme == "file":
-        # if a file path, just use pathlib.
+        # if a file path, just use pathlib. This is significantly more
+        # permissive than it should be, given that `file://` URIs are
+        # only absolute.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
     else:
         if ".." in path:
@@ -335,11 +334,20 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-def sanitize_key(key: str) -> str:
+def sanitize_key(key: str, data_protocol: DataProtocol) -> str:
     # Encode everything outside of the safe characters set
-    safe_puncuation = "-_.()^!@+={}~'"
-    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
-    sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+
+    if data_protocol == "tiledbv3":
+        # Carrara data model supports anything exclusive of '/'
+        if "/" in key:
+            raise ValueError(f"{key} is not a supported name - must not contain slash (/)")
+        sanitized_name = key
+    elif data_protocol == "tiledbv2":
+        safe_puncuation = "-_.()^!@+={}~'"
+        safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+        sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+    else:
+        raise ValueError(f"Unknown data protocol {data_protocol}")
 
     # Ensure that the final key is valid
     if sanitized_name in ["..", "."]:

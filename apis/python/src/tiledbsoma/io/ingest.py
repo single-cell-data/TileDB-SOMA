@@ -674,6 +674,7 @@ def _from_anndata(
 
     # Must be done first, to create the parent directory.
     experiment = _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx)
+    data_protocol = experiment.context.data_protocol(experiment.uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
@@ -707,7 +708,7 @@ def _from_anndata(
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
-        measurement_uri = _util.uri_joinpath(experiment_ms_uri, _util.sanitize_key(measurement_name))
+        measurement_uri = _util.uri_joinpath(experiment_ms_uri, _util.sanitize_key(measurement_name, data_protocol))
         with _create_or_open_collection(
             Measurement,
             measurement_uri,
@@ -765,7 +766,7 @@ def _from_anndata(
                 if has_X:
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(X_layer_name)),
+                        _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(X_layer_name, data_protocol)),
                         anndata.X,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
@@ -776,7 +777,7 @@ def _from_anndata(
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(layer_name)),
+                        _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(layer_name, data_protocol)),
                         layer,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
@@ -793,7 +794,7 @@ def _from_anndata(
                 ) -> None:
                     ad_val = getattr(anndata, ad_key)
                     if len(ad_val.keys()) > 0:  # do not create an empty collection
-                        ad_val_uri = _util.uri_joinpath(measurement_uri, _util.sanitize_key(ad_key))
+                        ad_val_uri = _util.uri_joinpath(measurement_uri, _util.sanitize_key(ad_key, data_protocol))
                         with _create_or_open_collection(
                             Collection,
                             ad_val_uri,
@@ -814,7 +815,7 @@ def _from_anndata(
                                     # consider a use-dense flag at the tiledbsoma.io API
                                     # DenseNDArray,
                                     SparseNDArray,
-                                    _util.uri_joinpath(ad_val_uri, _util.sanitize_key(key)),
+                                    _util.uri_joinpath(ad_val_uri, _util.sanitize_key(key, data_protocol)),
                                     conversions.to_tiledb_supported_array_type(key, val),
                                     axis_0_mapping=axis_0_mapping,
                                     axis_1_mapping=axis_1_mapping_,
@@ -881,7 +882,7 @@ def _from_anndata(
 
                             with _create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(raw_X_uri, _util.sanitize_key(raw_X_layer_name)),
+                                _util.uri_joinpath(raw_X_uri, _util.sanitize_key(raw_X_layer_name, data_protocol)),
                                 anndata.raw.X,
                                 axis_0_mapping=joinid_maps.obs_axis,
                                 axis_1_mapping=joinid_maps.var_axes["raw"],
@@ -911,6 +912,9 @@ def _maybe_set(
     use_relative_uri: bool | None,
 ) -> None:
     coll.verify_open_for_writing()
+    if coll.context.is_tiledbv3_uri(coll.uri):
+        return
+
     try:
         coll.set(key, value, use_relative_uri=use_relative_uri)
     except SOMAError:
@@ -1900,11 +1904,12 @@ def add_matrix_to_collection(
     # tiledb://namespace/uuid.  When the caller passes a creation URI (which
     # they must) via exp.uri, we need to follow that.
     extend_creation_uri = exp.uri.startswith("tiledb://")
+    data_protocol = exp.context.data_protocol(exp.uri)
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
-            coll_uri = f"{exp.uri}/ms/{_util.sanitize_key(measurement_name)}/{_util.sanitize_key(collection_name)}"
+            coll_uri = f"{exp.uri}/ms/{_util.sanitize_key(measurement_name, data_protocol)}/{_util.sanitize_key(collection_name, data_protocol)}"
         else:
-            coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
+            coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name, data_protocol))
 
         if schema_validation:
             _validate_matrix_to_collection(exp, meas, collection_name, matrix_name, matrix_data)
@@ -1921,7 +1926,7 @@ def add_matrix_to_collection(
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
 
         with coll:
-            matrix_uri = _util.uri_joinpath(coll_uri, _util.sanitize_key(matrix_name))
+            matrix_uri = _util.uri_joinpath(coll_uri, _util.sanitize_key(matrix_name, data_protocol))
 
             with _create_from_matrix(
                 SparseNDArray,
@@ -2628,9 +2633,10 @@ def _ingest_uns_dict(
     level: int = 0,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
+    data_protocol = parent.context.data_protocol(parent.uri)
     with _create_or_open_collection(
         Collection,
-        _util.uri_joinpath(parent.uri, _util.sanitize_key(parent_key)),
+        _util.uri_joinpath(parent.uri, _util.sanitize_key(parent_key, data_protocol)),
         ingestion_params=ingestion_params,
         context=context,
         additional_metadata=additional_metadata,
@@ -2696,10 +2702,12 @@ def _ingest_uns_node(
         )
         return
 
+    data_protocol = coll.context.data_protocol(coll.uri)
+
     if isinstance(value, pd.DataFrame):
         num_rows = value.shape[0]
         with _write_dataframe(
-            _util.uri_joinpath(coll.uri, _util.sanitize_key(key)),
+            _util.uri_joinpath(coll.uri, _util.sanitize_key(key, data_protocol)),
             # _write_dataframe modifies passed DataFrame in-place (adding a "soma_joinid" index)
             value.copy(),
             None,
@@ -2826,7 +2834,9 @@ def _ingest_uns_1d_string_array(
     )
     df.set_index("soma_joinid", inplace=True)
 
-    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
+    data_protocol = coll.context.data_protocol(coll.uri)
+
+    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key, data_protocol))
     with _write_dataframe_impl(
         df,
         df_uri,
@@ -2873,7 +2883,8 @@ def _ingest_uns_2d_string_array(
     df = pd.DataFrame(data=data)
     df.set_index("soma_joinid", inplace=True)
 
-    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
+    data_protocol = coll.context.data_protocol(coll.uri)
+    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key, data_protocol))
     with _write_dataframe_impl(
         df,
         df_uri,
@@ -2903,7 +2914,8 @@ def _ingest_uns_ndarray(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
-    arr_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
+    data_protocol = coll.context.data_protocol(coll.uri)
+    arr_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key, data_protocol))
 
     if any(e <= 0 for e in value.shape):
         msg = f"Skipped {arr_uri} (uns ndarray): zero in shape {value.shape}"

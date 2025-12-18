@@ -4,37 +4,82 @@ from somacore import ResultOrder
 from tiledbsoma._util import (
     dense_index_to_shape,
     dense_indices_to_shape,
+    is_relative_uri,
+    make_relative_path,
     sanitize_key,
     slice_to_numeric_range,
     uri_joinpath,
 )
 
 
-def test_uri_joinpath_file():
+def test_is_relative_uri() -> None:
+    assert is_relative_uri("A")
+    assert is_relative_uri("A/B")
+    assert is_relative_uri("~")
+    assert is_relative_uri("./A/B")
+    assert is_relative_uri("../A/B")
+
+    assert not is_relative_uri("file:///A")  # file: only supports absolute paths
+    assert not is_relative_uri("file://./A")  # file: only supports absolute paths
+
+    assert not is_relative_uri("s3://foo/A")
+    assert not is_relative_uri("gs://foo/A")
+    assert not is_relative_uri("tiledb://foo/")
+
+
+def test_uri_joinpath_posix():
+    # absolute base
     assert uri_joinpath("/A/", "B") == "/A/B"
     assert uri_joinpath("/A/", "/B") == "/B"
     assert uri_joinpath("/A/B", "C") == "/A/B/C"
     assert uri_joinpath("/A/B/", "C") == "/A/B/C"
     assert uri_joinpath("/A/B/", "../C/") == "/A/B/../C"
 
+    # relative base
+    assert uri_joinpath("A/", "B") == "A/B"
+    assert uri_joinpath("A/", "/B") == "/B"
+    assert uri_joinpath("A/B", "C") == "A/B/C"
+    assert uri_joinpath("A/B/", "C") == "A/B/C"
+    assert uri_joinpath("A/B/", "../C/") == "A/B/../C"
 
-def test_uri_joinpath_s3():
-    assert uri_joinpath("s3://bucket/", "A") == "s3://bucket/A"
-    assert uri_joinpath("s3://bucket/A", "B/") == "s3://bucket/A/B/"
-    assert uri_joinpath("s3://bucket/A/", "B") == "s3://bucket/A/B"
-    assert uri_joinpath("s3://bucket/A/", "B/") == "s3://bucket/A/B/"
-    assert uri_joinpath("s3://bucket/A", "/B/") == "s3://bucket/B/"
+
+@pytest.mark.parametrize("scheme", ["s3", "gs"])
+def test_uri_joinpath_object_store(scheme):
+    assert uri_joinpath(f"{scheme}://bucket/", "A") == f"{scheme}://bucket/A"
+    assert uri_joinpath(f"{scheme}://bucket/A", "B/") == f"{scheme}://bucket/A/B/"
+    assert uri_joinpath(f"{scheme}://bucket/A/", "B") == f"{scheme}://bucket/A/B"
+    assert uri_joinpath(f"{scheme}://bucket/A/", "B/") == f"{scheme}://bucket/A/B/"
+    assert uri_joinpath(f"{scheme}://bucket/A", "/B/") == f"{scheme}://bucket/B/"
 
     with pytest.raises(ValueError):
-        assert uri_joinpath("s3://A/B/", "../C/")
+        assert uri_joinpath(f"{scheme}://A/B/", "../C/")
 
 
-def test_uri_joinpath_tiledb():
-    assert uri_joinpath("tiledb://acct/", "A") == "tiledb://acct/A"
-    assert uri_joinpath("tiledb://acct/s3://bucket/C", "D") == "tiledb://acct/s3://bucket/C/D"
+def test_make_relative_path_posix():
+    assert make_relative_path("/A/B/C", "/A/B/") == "C"
+    assert make_relative_path("/A/B/C/", "/A/B/") == "C"
+    assert make_relative_path("/A/B/C", "/A/B") == "C"
+    assert make_relative_path("/A/B/C/", "/A/B") == "C"
 
-    with pytest.raises(ValueError):
-        assert uri_joinpath("tiledb://acct/A/", "../B/")
+    with pytest.raises(ValueError, match="different scheme"):
+        make_relative_path("/A/B/C/", "s3://A/B/")
+    with pytest.raises(ValueError, match="is not in the subpath of"):
+        make_relative_path("A/B/C/", "/A/B/")
+
+
+@pytest.mark.parametrize("scheme", ["s3", "gs"])
+def test_make_relative_path_object_store(scheme):
+    assert make_relative_path(f"{scheme}://A/B/C", f"{scheme}://A/B/") == "C"
+    assert make_relative_path(f"{scheme}://A/B/C/", f"{scheme}://A/B/") == "C"
+    assert make_relative_path(f"{scheme}://A/B/C", f"{scheme}://A/B") == "C"
+    assert make_relative_path(f"{scheme}://A/B/C/", f"{scheme}://A/B") == "C"
+
+    with pytest.raises(ValueError, match="different scheme"):
+        make_relative_path("/A/B/C/", f"{scheme}://A/B/")
+    with pytest.raises(ValueError, match="different scheme"):
+        make_relative_path(f"{scheme}:/A/B/C/", "/A/B/")
+    with pytest.raises(ValueError, match="is not in the subpath of"):
+        make_relative_path(f"{scheme}://A/C/D/", f"{scheme}://A/B/")
 
 
 @pytest.mark.parametrize(
@@ -212,10 +257,10 @@ def test_slice_to_range_bad(start_stop, domain, exc):
     ),
 )
 def test_sanitize_paths(key, sanitized):
-    assert sanitized == sanitize_key(key)
+    assert sanitized == sanitize_key(key, "tiledbv2")
 
 
 @pytest.mark.parametrize("key", ("..", "."))
 def test_invalid_sanitize_paths(key):
     with pytest.raises(ValueError):
-        assert sanitize_key(key)
+        assert sanitize_key(key, "tiledbv2")

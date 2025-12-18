@@ -442,6 +442,8 @@ def from_visium(
     start_time = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
     with _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx) as experiment:
+        data_protocol = experiment.context.data_protocol(experiment.uri)
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
         df_uri = _util.uri_joinpath(experiment_uri, "obs")
@@ -476,7 +478,7 @@ def from_visium(
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas
-            measurement_uri = _util.uri_joinpath(experiment_ms_uri, _util.sanitize_key(measurement_name))
+            measurement_uri = _util.uri_joinpath(experiment_ms_uri, _util.sanitize_key(measurement_name, data_protocol))
             with _create_or_open_collection(Measurement, measurement_uri, **ingest_ctx) as measurement:
                 _maybe_set(ms, measurement_name, measurement, use_relative_uri=use_relative_uri)
 
@@ -513,7 +515,7 @@ def from_visium(
                 measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
                 with _create_or_open_collection(Collection, measurement_X_uri, **ingest_ctx) as x:
                     _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
-                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(X_layer_name))
+                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(X_layer_name, data_protocol))
                     with _write_X_layer(
                         X_kind,
                         X_layer_uri,
@@ -529,7 +531,7 @@ def from_visium(
         spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
         with _create_or_open_collection(Collection[Scene], spatial_uri, **ingest_ctx) as spatial:
             _maybe_set(experiment, "spatial", spatial, use_relative_uri=use_relative_uri)
-            scene_uri = _util.uri_joinpath(spatial_uri, _util.sanitize_key(scene_name))
+            scene_uri = _util.uri_joinpath(spatial_uri, _util.sanitize_key(scene_name, data_protocol))
             with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
                 _maybe_set(spatial, scene_name, scene, use_relative_uri=use_relative_uri)
                 scene.coordinate_space = coord_space
@@ -540,7 +542,7 @@ def from_visium(
 
                     # Write image data and add to the scene.
                     if image_paths:
-                        tissue_uri = _util.uri_joinpath(img_uri, _util.sanitize_key(image_name))
+                        tissue_uri = _util.uri_joinpath(img_uri, _util.sanitize_key(image_name, data_protocol))
                         with _create_visium_tissue_images(
                             tissue_uri,
                             image_paths,

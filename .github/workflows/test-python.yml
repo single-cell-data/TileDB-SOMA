@@ -59,7 +59,7 @@ jobs:
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
-  
+
       - name: Checkout vcpkg
         uses: actions/checkout@v4
         with:
@@ -86,11 +86,11 @@ jobs:
               echo "CMAKE_OSX_ARCHITECTURES=x86_64" >> $GITHUB_ENV
             fi
           fi
-  
+
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v4
         with:
-          name: cpp-build-release-${{ inputs.os }}
+          name: cpp-build-Release-${{ inputs.os }}
 
       - name: Set up test data
         run: make data

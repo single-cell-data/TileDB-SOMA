@@ -745,6 +745,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             value_filter:
                 An optional [value filter] to apply to the results.
                 Defaults to no filter.
+            batch_size:
+                The size of batches that should be returned from a read. Note:
+                This parameter is not yet implemented and will raise
+                :class:`NotImplementedError` if set to a non-default value.
             partitions:
                 An optional :class:`ReadPartitions` hint to indicate
                 how results should be organized.
@@ -781,7 +785,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        del batch_size  # Currently unused.
+        if batch_size != _UNBATCHED:
+            raise NotImplementedError("The 'batch_size' parameter is not yet implemented.")
+
         _util.check_unpartitioned(partitions)
         self._verify_open_for_reading()
 
