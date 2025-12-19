@@ -103,7 +103,6 @@ SOMADataFrameCreate <- function(
 #' @param platform_config Optional platform configuration.
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp;
 #' defaults to the current time.
-#' @param soma_context Optional SOMAContext.
 #'
 #' @return A \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
 #' \code{uri} opened in mode \code{mode}.
