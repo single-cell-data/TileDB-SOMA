@@ -78,7 +78,7 @@ void SOMAContext::validate_create_uri(const std::string_view uri) const {
     std::regex storage_uri_regex("^tiledb://.*/.*://.*$", std::regex_constants::ECMAScript);
     if (std::regex_match(uri.data(), storage_uri_regex)) {
         throw TileDBSOMAError(
-            std::format("Unsupported URI format '{}'. This format is not supported on TileDB Carrara.", uri));
+            fmt::format("Unsupported URI format '{}'. This format is not supported on TileDB Carrara.", uri));
     }
 }
 
