@@ -88,7 +88,7 @@ SOMANDArrayBase <- R6::R6Class(
         sparse = sparse,
         datatype = if (sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
-        ctxxp = private$.soma_context,
+        ctxxp = private$.soma_context$handle,
         tsvec = self$.tiledb_timestamp_range
       )
       # private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
@@ -127,7 +127,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' shape feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_shape = function() {
-      has_current_domain(self$uri, private$.soma_context)
+      has_current_domain(self$uri, private$.soma_context$handle)
     },
 
     #' @description Increases the shape of the array as specified, up to the hard
@@ -157,7 +157,7 @@ SOMANDArrayBase <- R6::R6Class(
         new_shape = new_shape,
         function_name_for_messages = .name_of_function(),
         check_only = check_only,
-        ctxxp = private$.soma_context
+        ctxxp = private$.soma_context$handle
       )
 
       if (isTRUE(check_only)) {
@@ -199,7 +199,7 @@ SOMANDArrayBase <- R6::R6Class(
         new_shape = shape,
         function_name_for_messages = .name_of_function(),
         check_only = check_only,
-        ctxxp = private$.soma_context
+        ctxxp = private$.soma_context$handle
       )
       if (isTRUE(check_only)) {
         return(reason_string)

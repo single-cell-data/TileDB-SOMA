@@ -1,3 +1,16 @@
+# tiledbsoma 2.3.0
+
+## Deprecated
+
+- The function `soma_context` is deprecated. Use class `SOMAContext` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+- The parameter `tiledbsoma_ctx` is deprecated in all functions/methods that use it. Use the parameter `soma_context` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+- `SOMATileDBContext` is deprecated. Use class `SOMAContext` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+
+## Fixed
+
+- The SOMA Context is only cached as an environment variable when the function `soma_context` is called directly. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+- `SOMATileDBContext` no longer replaces `sm.mem.reader.sparse_global_order.ratio_array_data` when set in the input config. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+
 # tiledbsoma 2.2.0
 
 ## Changed

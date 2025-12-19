@@ -95,21 +95,21 @@ SOMAArrayBase <- R6::R6Class(
     #' @return \code{TRUE} if the underlying TileDB array allows duplicates;
     #' otherwise \code{FALSE}.
     #'
-    allows_duplicates = \() c_allows_dups(self$uri, private$.soma_context),
+    allows_duplicates = \() c_allows_dups(self$uri, private$.soma_context$handle),
 
     #' @description Is an array sparse?
     #'
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
     #' otherwise \code{FALSE}.
     #'
-    is_sparse = \() c_is_sparse(self$uri, private$.soma_context),
+    is_sparse = \() c_is_sparse(self$uri, private$.soma_context$handle),
 
     #' @description Retrieve the array schema as an Arrow schema
     #' (lifecycle: maturing).
     #'
     #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object.
     #'
-    schema = \() arrow::as_schema(c_schema(self$uri, private$.soma_context)),
+    schema = \() arrow::as_schema(c_schema(self$uri, private$.soma_context$handle)),
 
     #' @description Retrieve the array attributes.
     #'
@@ -133,13 +133,13 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    attributes = \() c_attributes(self$uri, private$.soma_context),
+    attributes = \() c_attributes(self$uri, private$.soma_context$handle),
 
     #' @description Retrieve attribute names (lifecycle: maturing).
     #'
     #' @return A character vector with the array's attribute names.
     #'
-    attrnames = \() c_attrnames(self$uri, private$.soma_context),
+    attrnames = \() c_attrnames(self$uri, private$.soma_context$handle),
 
     #' @description Retrieve the array dimensions (lifecycle: maturing)
     #'
@@ -164,13 +164,13 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    dimensions = \() c_domain(self$uri, private$.soma_context),
+    dimensions = \() c_domain(self$uri, private$.soma_context$handle),
 
     #' @description Retrieve dimension names (lifecycle: maturing).
     #'
     #' @return A character vector with the array's dimension names.
     #'
-    dimnames = \() c_dimnames(self$uri, private$.soma_context),
+    dimnames = \() c_dimnames(self$uri, private$.soma_context$handle),
 
     #' @description Retrieve the names of all columns, including dimensions and
     #' attributes (lifecycle: maturing).
@@ -195,7 +195,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    shape = \() bit64::as.integer64(shape(self$uri, private$.soma_context)),
+    shape = \() bit64::as.integer64(shape(self$uri, private$.soma_context$handle)),
 
     #' @description Retrieve the hard limit up to which the array may be resized
     #' using the \code{$resize()} method (lifecycle: maturing).
@@ -204,7 +204,7 @@ SOMAArrayBase <- R6::R6Class(
     #' the dimension.
     #'
     maxshape = \() {
-      bit64::as.integer64(maxshape(self$uri, private$.soma_context))
+      bit64::as.integer64(maxshape(self$uri, private$.soma_context$handle))
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -222,7 +222,7 @@ SOMAArrayBase <- R6::R6Class(
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            non_empty_domain(self$uri, private$.soma_context)
+            non_empty_domain(self$uri, private$.soma_context$handle)
           )
         )
       )
@@ -240,7 +240,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return A scalar with the number of dimensions.
     #'
-    ndim = \() ndim(self$uri, private$.soma_context),
+    ndim = \() ndim(self$uri, private$.soma_context$handle),
 
     #' @description Print-friendly representation of the object.
     #'

@@ -60,12 +60,52 @@ uns_hint <- function(type = c("1d", "2d")) {
   return(hint)
 }
 
+get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
+  if (!is.null(tiledbsoma_ctx)) {
+    .deprecate(
+        what=what,
+        when="2.3.0",
+        details="Use `soma_context` instead."
+    )
+  }
+  if (is.null(soma_context)) {
+    if (is.null(tiledbsoma_ctx)) {
+        context <- .pkgenv[["somactx"]]
+        if (is.null(context)) {
+            return(SOMAContext$new())
+        } else {
+            return(context)
+        }
+    }
+    if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
+      stop(
+        "'tiledbsoma_ctx' must be a SOMATileDBContext object",
+        call. = FALSE
+      )
+    }
+    return(SOMAContext$new(config = unlist(tiledbsoma_ctx$to_list())))
+  }
+  if (!is.null(tiledbsoma_ctx)) {
+    warning(
+      "Both 'soma_context' and 'tiledbsoma_ctx' were provided, using 'soma_context' only"
+    )
+  }
+  if (!inherits(x = soma_context, what = 'SOMAContext')) {
+    stop(
+      "'soma_context' must be a SOMAContext object",
+      call. = FALSE
+    )
+  }
+  return(soma_context)
+}
+
+
 #' Generate a Block Size for Matrix Iteration
 #'
 #' Generate block sizes for matrix iteration; the block sizes are calculated
 #' while keeping one axis static and chunking on the alternate axis
 #'
-#' \code{tiledbsoma_ctx} is an option available to \code{write_soma()}; we can
+#' \code{soma_context} is an option available to \code{write_soma()}; we can
 #' use the options in the context to determine how much memory we can use from
 #' the option \dQuote{\code{soma.init_buffer_bytes}}. A default value of
 #' \eqn{33,554,432} bytes is used when no context is provided, or the context
@@ -73,7 +113,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' for \pkg{tiledbsoma}
 #'
 #' @param n Number of entries on the static (non-iterated) axis
-#' @param tiledbsoma_ctx A \code{SOMATileDBContext} object
+#' @param soma_context A \code{SOMAContext} object
 #'
 #' @return Number of entries on the alternate axis to chunk
 #'
@@ -91,37 +131,32 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' n_var <- ncol(mat)
 #'
 #' # Use a context to limit tp half a megabyte
-#' ctx <- SOMATileDBContext$new(c(
+#' ctx <- SOMAContext$new(c(
 #'   soma.init_buffer_bytes = as.character(0.5 * (1024L ^ 2L))
 #' ))
 #'
 #' # Generate a block size to iterate across the obs axis
 #' # `n` is the number of entries on the static axis, not the iterated axis
-#' .block_size(n = n_var, tiledbsoma_ctx = ctx)
+#' .block_size(n = n_var, soma_context = ctx)
 #'
-.block_size <- function(n, tiledbsoma_ctx = NULL) {
+.block_size <- function(n, soma_context) {
   if (!rlang::is_integerish(n, n = 1L, finite = TRUE) || n <= 0L) {
     rlang::abort("'n' must be a single, finite, positive integer value")
   }
-  if (!(is.null(tiledbsoma_ctx) || inherits(tiledbsoma_ctx, "SOMATileDBContext"))) {
-    rlang::abort("'tiledbsoma_ctx' must be a SOMATileDBContext object")
+  if (!inherits(soma_context, "SOMAContext")) {
+    rlang::abort("'soma_context' must be a SOMAContext object")
   }
-  default <- 33554432
-  # If no context was provided, use the default value
-  bytes <- if (is.null(tiledbsoma_ctx)) {
-    default
-  } else {
-    # Try to pull the "soma.init_buffer_bytes" option from the context
-    # If it doesn't exist, use the default value
-    # If it does, but is not numeric, throw an error
-    tryCatch(
-      expr = as.numeric(tiledbsoma_ctx$get(
-        "soma.init_buffer_bytes",
-        default = default
-      )),
-      warning = stop
-    )
+
+  # Try to get the "soma.init_buffer_bytes option from the context.
+  # - If it wasn't set, then use a default value.
+  # - If it was set but isn't numeric, then throw an error.
+  bytes <- 33554432 # default value - over-write if value in config
+  config <- soma_context$get_config()
+  bytes_key = "soma.init_buffer_bytes"
+  if (bytes_key %in% names(config)) {
+    bytes <- tryCatch(expr = as.numeric(config[bytes_key], warning = stop))
   }
+
   # Calculate the blocks size assuming we're working with numeric matrices
   # Not integer or logical
   num_bytes <- utils::object.size(numeric(1L))
@@ -437,7 +472,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   dimname <- x$dimnames()[axis + 1L]
   sr <- mq_setup(
     uri = x$uri,
-    soma_context(),
+    x$soma_context$handle,
     colnames = dimname,
     timestamprange = x$.tiledb_timestamp_range
   )

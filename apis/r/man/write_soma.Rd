@@ -4,7 +4,14 @@
 \alias{write_soma}
 \title{Write a SOMA Object from an \R Object}
 \usage{
-write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
+write_soma(
+  x,
+  uri,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
+)
 }
 \arguments{
 \item{x}{An object.}
@@ -16,7 +23,9 @@ write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
+
+\item{soma_context}{Optional \code{\link{SOMAContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
