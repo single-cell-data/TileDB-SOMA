@@ -19,12 +19,11 @@ SOMAObject <- R6::R6Class(
     #' @param uri URI for the SOMA object
     #' @param ... Ignored
     #' @param platform_config Optional platform configuration
-    #' @param tiledbsoma_ctx Optional TileDB SOMA context
+    #' @param tiledbsoma_ctx Optional (DEPRECATED) TileDB SOMA context
     #' @param tiledb_timestamp Optional timestamp (\code{\link[base]{POSIXct}})
     #' to open the object at
-    #' @param soma_context A SOMA context as created by
-    #' \code{\link{soma_context}()}
-    #'
+    #' @param soma_context A \code{SOMAContext} object. Required internally but
+    #' automatically provided by factory functions.
     initialize = function(
       uri,
       ...,
@@ -60,46 +59,11 @@ SOMAObject <- R6::R6Class(
       private$.platform_config <- platform_config
 
       # Set the context
-      if (!is.null(x = tiledbsoma_ctx)) {
-        if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
-          stop(
-            "'tiledbsoma_ctx' must be a SOMATileDBContext object",
-            call. = FALSE
-          )
-        }
-        # TODO: Deprecate tiledbsoma_ctx in favor of soma_context
-        # warning("'tiledbsoma_ctx' is deprecated, use 'soma_context' instead")
-        # Set the old context
-        private$.tiledbsoma_ctx <- tiledbsoma_ctx
-        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
-        # Also plumb through to the new context
-        if (!is.null(soma_context)) {
-          warning(
-            "Both 'soma_context' and 'tiledbsoma_ctx' were provided,",
-            "using 'soma_context' only"
-          )
-        } else {
-          # why we named the parameter and function the same thing is beyond me
-          soma_context <- tiledbsoma::soma_context(
-            config = unlist(tiledbsoma_ctx$to_list())
-          )
-        }
-      } else {
-        tiledbsoma_ctx <- SOMATileDBContext$new()
-        private$.tiledbsoma_ctx <- tiledbsoma_ctx
-        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
-      }
-
-      # TODO: re-enable once new UX is worked out
-      # soma_context <- soma_context %||% soma_context()
-      # stopifnot(
-      #   "'soma_context' must be a pointer" = inherits(x = soma_context, what = 'externalptr')
-      # )
       if (is.null(soma_context)) {
-        private$.soma_context <- soma_context() # FIXME via factory and paramater_config
-      } else {
-        private$.soma_context <- soma_context
+        stop("Internal error: `soma_context` must be provided to SOMAObject$initialize.")
       }
+      private$.soma_context <- soma_context
+      private$.tiledbsoma_ctx <- tiledbsoma_ctx
 
       # Set the timestamp
       if (!is.null(tiledb_timestamp)) {
@@ -192,7 +156,7 @@ SOMAObject <- R6::R6Class(
         stop("Unknown object type", call. = FALSE)
       }
       return(
-        get_tiledb_object_type(self$uri, ctxxp = private$.soma_context) %in%
+        get_tiledb_object_type(self$uri, ctxxp = private$.soma_context$handle) %in%
           expected_type
       )
     },
@@ -254,7 +218,7 @@ SOMAObject <- R6::R6Class(
           valuesxp = value,
           type = class(value),
           is_array = inherits(self, "SOMAArrayBase"),
-          ctxxp = private$.soma_context,
+          ctxxp = private$.soma_context$handle,
           tsvec = self$.tiledb_timestamp_range
         )
         private$.metadata_cache[[key]] <- value
@@ -286,12 +250,26 @@ SOMAObject <- R6::R6Class(
       return(private$.platform_config)
     },
 
+    #' @field soma_context SOMAContext context object for TileDB operations
+    #'
+    soma_context = function(value) {
+      if (!missing(x = value)) {
+        private$.read_only_error("soma_context")
+      }
+      return(private$.soma_context)
+    },
+
     #' @field tiledbsoma_ctx SOMATileDBContext
     #'
     tiledbsoma_ctx = function(value) {
       if (!missing(x = value)) {
         private$.read_only_error("tiledbsoma_ctx")
       }
+      .deprecate(
+        what=sprintf("%s$tiledbsoma_ctx", class(self)[1L]),
+        when="2.3.0",
+        details=sprintf("Use `soma_context` instead.")
+      )
       return(private$.tiledbsoma_ctx)
     },
 
@@ -345,14 +323,6 @@ SOMAObject <- R6::R6Class(
     #
     .platform_config = NULL,
 
-    # @field .tiledbsoma_ctx ...
-    #
-    .tiledbsoma_ctx = NULL,
-
-    # @field .tiledb_ctx ...
-    #
-    .tiledb_ctx = NULL,
-
     # @field .tiledb_timestamp ...
     #
     .tiledb_timestamp = NULL,
@@ -360,6 +330,10 @@ SOMAObject <- R6::R6Class(
     # @field .soma_context ...
     #
     .soma_context = NULL,
+
+    # @field .tiledbsoma_ctx (DEPRECATED) ...
+    #
+    .tiledbsoma_ctx = NULL,
 
     # @field .soma_type ...
     #
@@ -474,7 +448,7 @@ SOMAObject <- R6::R6Class(
       private$.metadata_cache <- get_all_metadata(
         uri = self$uri,
         is_array = inherits(self, "SOMAArrayBase"),
-        ctxxp = private$.soma_context
+        ctxxp = private$.soma_context$handle
       ) %||%
         list()
 

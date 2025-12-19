@@ -9,6 +9,7 @@ SOMAOpen(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   tiledb_timestamp = NULL
 )
 }
@@ -19,7 +20,9 @@ SOMAOpen(
 
 \item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) SOMATileDBContext.}
+
+\item{soma_context}{Optional SOMAContext.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time. If not \code{NULL}, all members accessed

@@ -29,29 +29,6 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
     }
 }
 
-// [[Rcpp::export]]
-Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
-    // if we hae a config, use it
-    std::shared_ptr<tdbs::SOMAContext> somactx;
-    if (config.isNotNull()) {
-        std::map<std::string, std::string> smap;
-        auto config_vec = config.as();
-        auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
-        for (auto& name : config_names) {
-            std::string param = Rcpp::as<std::string>(name);
-            std::string value = Rcpp::as<std::string>(config_vec[param]);
-            smap[param] = value;
-        }
-        somactx = std::make_shared<tdbs::SOMAContext>(smap);
-    } else {
-        somactx = std::make_shared<tdbs::SOMAContext>();
-    }
-
-    auto ptr = new somactx_wrap_t(somactx);
-    auto xp = make_xptr<somactx_wrap_t>(ptr);
-    return xp;
-}
-
 //  ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
 //  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p,
 //  false);

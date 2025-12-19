@@ -4,7 +4,7 @@ test_that("DataFrame Factory", {
     unlink(uri, recursive = TRUE)
   }
 
-  ctx <- soma_context()
+  ctx <- create_soma_context()
 
   sch <- arrow::schema(
     arrow::field("soma_joinid", arrow::int64()),
