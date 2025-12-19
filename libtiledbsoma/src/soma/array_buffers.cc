@@ -55,6 +55,8 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
         }
     }
 
+    MemoryMode mode = ColumnBuffer::memory_mode(config);
+
     ArraySchema schema = array.schema();
     // Split memory budget to each column depending on the byte size of each columns element
     // Var sized columns will be allocated the same as an 8 byte datatype
@@ -144,7 +146,8 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
                         attr.variable_sized(),
                         attr.nullable(),
                         enumeration,
-                        is_ordered)));
+                        is_ordered,
+                        mode)));
         }
         // Else check if column is a TileDB dimension
         else if (schema.domain().has_dimension(name)) {
@@ -162,7 +165,7 @@ ArrayBuffers::ArrayBuffers(const std::vector<std::string>& names, const tiledb::
                 std::make_pair(
                     name,
                     std::make_shared<CArrayColumnBuffer>(
-                        name, dim.type(), num_cells, column_budget, is_var, false, std::nullopt, false)));
+                        name, dim.type(), num_cells, column_budget, is_var, false, std::nullopt, false, mode)));
         }
     }
 }

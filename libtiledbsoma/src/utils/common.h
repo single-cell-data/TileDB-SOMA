@@ -35,6 +35,41 @@ concept is_offset_buffer = std::same_as<T, std::unique_ptr<uint64_t[]>> ||
                             (std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint32_t> ||
                              std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint64_t>));
 
+template <typename T>
+class NoInitAlloc {
+   public:
+    using value_type = T;
+
+    T* allocate(size_t n) {
+        return static_cast<T*>(::operator new(n * sizeof(T)));
+    }
+
+    void deallocate(T* p, size_t n) noexcept {
+        ::operator delete(p, sizeof(T) * n);
+    }
+
+    // Override construct to skip initialization
+    template <typename U, typename... Args>
+    void construct([[maybe_unused]] U* p, Args&&...) noexcept {
+        // No initialization occurs
+    }
+
+    template <typename U>
+    void destroy(U* p) noexcept {
+        p->~U();
+    }
+};
+
+template <typename T, typename U>
+bool operator==(const NoInitAlloc<T>&, const NoInitAlloc<U>&) {
+    return true;
+}
+
+template <typename T, typename U>
+bool operator!=(const NoInitAlloc<T>&, const NoInitAlloc<U>&) {
+    return false;
+}
+
 constexpr std::string_view SOMA_JOINID = "soma_joinid";
 
 const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
