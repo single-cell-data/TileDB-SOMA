@@ -117,136 +117,136 @@ std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view
     }
 }
 
-ArrowBuffer::ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets) {
-    // Allocate global buffer
-    if (buffer->is_var()) {
-        data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(buffer->offsets()[buffer->size()]);
-        offset_buffer_ = std::make_unique_for_overwrite<std::byte[]>(
-            (buffer->size() + 1) * (large_offsets ? sizeof(int64_t) : sizeof(int32_t)));
+// ArrowBuffer::ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets) {
+//     // Allocate global buffer
+//     if (buffer->is_var()) {
+//         data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(buffer->offsets()[buffer->size()]);
+//         offset_buffer_ = std::make_unique_for_overwrite<std::byte[]>(
+//             (buffer->size() + 1) * (large_offsets ? sizeof(int64_t) : sizeof(int32_t)));
 
-        data_ = std::span<std::byte>(data_buffer_.get(), buffer->offsets()[buffer->size()]);
+//         data_ = std::span<std::byte>(data_buffer_.get(), buffer->offsets()[buffer->size()]);
 
-        if (large_offsets) {
-            large_offsets_ = std::span<int64_t>(reinterpret_cast<int64_t*>(offset_buffer_.get()), buffer->size() + 1);
-            std::memcpy(large_offsets_.data(), buffer->offsets().data(), large_offsets_.size_bytes());
-        } else {
-            small_offsets_ = std::span<int32_t>(reinterpret_cast<int32_t*>(offset_buffer_.get()), buffer->size() + 1);
-            auto offsets = buffer->offsets();
-            for (size_t i = 0; i < offsets.size(); ++i) {
-                small_offsets_[i] = static_cast<int32_t>(offsets[i]);
-            }
-        }
+//         if (large_offsets) {
+//             large_offsets_ = std::span<int64_t>(reinterpret_cast<int64_t*>(offset_buffer_.get()), buffer->size() + 1);
+//             std::memcpy(large_offsets_.data(), buffer->offsets().data(), large_offsets_.size_bytes());
+//         } else {
+//             small_offsets_ = std::span<int32_t>(reinterpret_cast<int32_t*>(offset_buffer_.get()), buffer->size() + 1);
+//             auto offsets = buffer->offsets();
+//             for (size_t i = 0; i < offsets.size(); ++i) {
+//                 small_offsets_[i] = static_cast<int32_t>(offsets[i]);
+//             }
+//         }
 
-        std::memcpy(data_.data(), buffer->data().data(), data_.size_bytes());
-    } else {
-        if (buffer->type() == TILEDB_BOOL) {
-            size_t data_byte_size = (buffer->size() + 7) / 8;
+//         std::memcpy(data_.data(), buffer->data().data(), data_.size_bytes());
+//     } else {
+//         if (buffer->type() == TILEDB_BOOL) {
+//             size_t data_byte_size = (buffer->size() + 7) / 8;
 
-            data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_byte_size);
-            data_ = std::span<std::byte>(data_buffer_.get(), data_byte_size);
+//             data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_byte_size);
+//             data_ = std::span<std::byte>(data_buffer_.get(), data_byte_size);
 
-            ColumnBuffer::to_bitmap(
-                buffer->data<uint8_t>(), std::span<uint8_t>(reinterpret_cast<uint8_t*>(data_.data()), data_byte_size));
-        } else {
-            data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(buffer->data_size());
-            data_ = std::span<std::byte>(data_buffer_.get(), buffer->data_size());
+//             ColumnBuffer::to_bitmap(
+//                 buffer->data<uint8_t>(), std::span<uint8_t>(reinterpret_cast<uint8_t*>(data_.data()), data_byte_size));
+//         } else {
+//             data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(buffer->data_size());
+//             data_ = std::span<std::byte>(data_buffer_.get(), buffer->data_size());
 
-            std::memcpy(data_.data(), buffer->data().data(), data_.size_bytes());
-        }
-    }
+//             std::memcpy(data_.data(), buffer->data().data(), data_.size_bytes());
+//         }
+//     }
 
-    if (buffer->is_nullable()) {
-        size_t validity_byte_size = (buffer->size() + 7) / 8;
+//     if (buffer->is_nullable()) {
+//         size_t validity_byte_size = (buffer->size() + 7) / 8;
 
-        validity_buffer_ = std::make_unique_for_overwrite<std::byte[]>(validity_byte_size);
-        validity_ = std::span<uint8_t>(reinterpret_cast<uint8_t*>(validity_buffer_.get()), validity_byte_size);
+//         validity_buffer_ = std::make_unique_for_overwrite<std::byte[]>(validity_byte_size);
+//         validity_ = std::span<uint8_t>(reinterpret_cast<uint8_t*>(validity_buffer_.get()), validity_byte_size);
 
-        buffer->validity_to_bitmap(validity_);
-    }
+//         buffer->validity_to_bitmap(validity_);
+//     }
 
-    length = buffer->size();
-    name = buffer->name();
-}
+//     length = buffer->size();
+//     name = buffer->name();
+// }
 
-ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
-    Context ctx = enumeration.context();
+// ArrowBuffer::ArrowBuffer(const Enumeration& enumeration, bool large_offsets) {
+//     Context ctx = enumeration.context();
 
-    const void* offsets;
-    uint64_t offsets_size;
+//     const void* offsets;
+//     uint64_t offsets_size;
 
-    const void* data;
-    uint64_t data_size;
-    ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
+//     const void* data;
+//     uint64_t data_size;
+//     ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
 
-    data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_size);
-    data_ = std::span<std::byte>(data_buffer_.get(), data_size);
+//     data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_size);
+//     data_ = std::span<std::byte>(data_buffer_.get(), data_size);
 
-    std::memcpy(data_.data(), data, data_.size_bytes());
+//     std::memcpy(data_.data(), data, data_.size_bytes());
 
-    switch (enumeration.type()) {
-        case TILEDB_CHAR:
-        case TILEDB_STRING_ASCII:
-        case TILEDB_STRING_UTF8:
-        case TILEDB_BLOB:
-        case TILEDB_GEOM_WKT:
-        case TILEDB_GEOM_WKB: {
-            ctx.handle_error(
-                tiledb_enumeration_get_offsets(ctx.ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+//     switch (enumeration.type()) {
+//         case TILEDB_CHAR:
+//         case TILEDB_STRING_ASCII:
+//         case TILEDB_STRING_UTF8:
+//         case TILEDB_BLOB:
+//         case TILEDB_GEOM_WKT:
+//         case TILEDB_GEOM_WKB: {
+//             ctx.handle_error(
+//                 tiledb_enumeration_get_offsets(ctx.ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
 
-            length = offsets_size / sizeof(uint64_t);
-            offset_buffer_ = std::make_unique_for_overwrite<std::byte[]>(
-                (length + 1) * (large_offsets ? sizeof(int64_t) : sizeof(int_least32_t)));
+//             length = offsets_size / sizeof(uint64_t);
+//             offset_buffer_ = std::make_unique_for_overwrite<std::byte[]>(
+//                 (length + 1) * (large_offsets ? sizeof(int64_t) : sizeof(int_least32_t)));
 
-            if (large_offsets) {
-                large_offsets_ = std::span<int64_t>(reinterpret_cast<int64_t*>(offset_buffer_.get()), length + 1);
-                std::memcpy(large_offsets_.data(), offsets, offsets_size);
-                large_offsets_[length] = static_cast<int64_t>(data_size);
-            } else {
-                small_offsets_ = std::span<int32_t>(reinterpret_cast<int32_t*>(offset_buffer_.get()), length + 1);
-                std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), length);
-                for (size_t i = 0; i < length; ++i) {
-                    small_offsets_[i] = static_cast<int32_t>(offsets_v[i]);
-                }
-                small_offsets_[length] = static_cast<int32_t>(data_size);
-            }
-        } break;
-        case TILEDB_BOOL: {
-            std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
-            length = data_size / sizeof(bool);
+//             if (large_offsets) {
+//                 large_offsets_ = std::span<int64_t>(reinterpret_cast<int64_t*>(offset_buffer_.get()), length + 1);
+//                 std::memcpy(large_offsets_.data(), offsets, offsets_size);
+//                 large_offsets_[length] = static_cast<int64_t>(data_size);
+//             } else {
+//                 small_offsets_ = std::span<int32_t>(reinterpret_cast<int32_t*>(offset_buffer_.get()), length + 1);
+//                 std::span<const uint64_t> offsets_v(static_cast<const uint64_t*>(offsets), length);
+//                 for (size_t i = 0; i < length; ++i) {
+//                     small_offsets_[i] = static_cast<int32_t>(offsets_v[i]);
+//                 }
+//                 small_offsets_[length] = static_cast<int32_t>(data_size);
+//             }
+//         } break;
+//         case TILEDB_BOOL: {
+//             std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
+//             length = data_size / sizeof(bool);
 
-            // Represent the Boolean vector with, at most, the last two
-            // bits. In Arrow, Boolean values are LSB packed
-            uint8_t packed_data = 0;
-            for (size_t i = 0; i < length; ++i)
-                packed_data |= (data_v[i] << i);
+//             // Represent the Boolean vector with, at most, the last two
+//             // bits. In Arrow, Boolean values are LSB packed
+//             uint8_t packed_data = 0;
+//             for (size_t i = 0; i < length; ++i)
+//                 packed_data |= (data_v[i] << i);
 
-            std::memcpy(data_.data(), &packed_data, 1);
-        } break;
-        case TILEDB_INT8:
-        case TILEDB_UINT8:
-        case TILEDB_INT16:
-        case TILEDB_UINT16:
-        case TILEDB_INT32:
-        case TILEDB_UINT32:
-        case TILEDB_DATETIME_SEC:
-        case TILEDB_DATETIME_MS:
-        case TILEDB_DATETIME_US:
-        case TILEDB_DATETIME_NS:
-        case TILEDB_INT64:
-        case TILEDB_UINT64:
-        case TILEDB_FLOAT32:
-        case TILEDB_FLOAT64:
-            length = data_size / impl::type_size(enumeration.type());
-            break;
-        default:
-            throw TileDBSOMAError(
-                fmt::format(
-                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
-                    tiledb::impl::type_to_str(enumeration.type())));
-    }
+//             std::memcpy(data_.data(), &packed_data, 1);
+//         } break;
+//         case TILEDB_INT8:
+//         case TILEDB_UINT8:
+//         case TILEDB_INT16:
+//         case TILEDB_UINT16:
+//         case TILEDB_INT32:
+//         case TILEDB_UINT32:
+//         case TILEDB_DATETIME_SEC:
+//         case TILEDB_DATETIME_MS:
+//         case TILEDB_DATETIME_US:
+//         case TILEDB_DATETIME_NS:
+//         case TILEDB_INT64:
+//         case TILEDB_UINT64:
+//         case TILEDB_FLOAT32:
+//         case TILEDB_FLOAT64:
+//             length = data_size / impl::type_size(enumeration.type());
+//             break;
+//         default:
+//             throw TileDBSOMAError(
+//                 fmt::format(
+//                     "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+//                     tiledb::impl::type_to_str(enumeration.type())));
+//     }
 
-    name = enumeration.name();
-}
+//     name = enumeration.name();
+// }
 
 /**************************
  * External API
@@ -332,7 +332,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         LOG_TRACE(
             fmt::format(
                 "[ArrowAdapter] release_array {} use_count={}",
-                arrow_buffer->buffer_->name,
+                arrow_buffer->buffer_->name(),
                 arrow_buffer->buffer_.use_count()));
 
         // Delete the ArrowBuffer, which was allocated with new.
@@ -709,20 +709,46 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 
 std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> ArrowAdapter::buffer_to_arrow(
     std::shared_ptr<ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
-    std::vector<std::future<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>>> arrow_columns;
+    std::vector<std::future<ArrowTable>> arrow_futures;
+    std::vector<std::future<std::pair<std::string, std::shared_ptr<ArrowBuffer>>>> enumeration_futures;
+    // Create a hashmap containing each enum to enable reusing the dictionaries accross multiple columns
+    std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>> enumerations;
+    std::unordered_set<std::string> unique_enumerations;
 
     for (const auto& name : buffer->names()) {
-        arrow_columns.emplace_back(
+        auto enumeration = buffer->at<ReadColumnBuffer>(name)->get_enumeration_info();
+
+        if (enumeration && !unique_enumerations.contains(enumeration->name())) {
+            enumeration_futures.emplace_back(
+                std::async(
+                    std::launch::async,
+                    [](const Enumeration& enumeration, bool large_offsets) {
+                        return std::make_pair<std::string, std::shared_ptr<ArrowBuffer>>(
+                            enumeration.name(), std::make_shared<ArrowBuffer>(enumeration, large_offsets));
+                    },
+                    enumeration.value(),
+                    !downcast_dict_of_large_var));
+            unique_enumerations.insert(enumeration->name());
+        }
+    }
+
+    for (auto& enumeration : enumeration_futures) {
+        enumerations.insert(enumeration.get());
+    }
+
+    for (const auto& name : buffer->names()) {
+        arrow_futures.emplace_back(
             std::async(
                 std::launch::async,
                 ArrowAdapter::to_arrow,
                 buffer->at<ReadColumnBuffer>(name),
+                enumerations,
                 downcast_dict_of_large_var));
     }
 
-    std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> columns;
+    std::vector<ArrowTable> columns;
 
-    for (auto& arrow_column : arrow_columns) {
+    for (auto& arrow_column : arrow_futures) {
         columns.push_back(arrow_column.get());
     }
 
@@ -730,7 +756,9 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
 }
 
 std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
-    std::shared_ptr<ReadColumnBuffer> column, bool downcast_dict_of_large_var) {
+    std::shared_ptr<ReadColumnBuffer> column,
+    const std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>>& enumerations,
+    bool downcast_dict_of_large_var) {
     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
     auto sch = schema.get();
@@ -738,8 +766,6 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
 
     auto coltype = to_arrow_format(column->type(), true).data();
     auto natype = to_nanoarrow_type(coltype);
-
-    std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>> enmr_map;
 
     if (natype == NANOARROW_TYPE_TIMESTAMP) {
         ArrowSchemaInit(sch);
@@ -760,7 +786,6 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
 
     exitIfError(ArrowArrayInitFromSchema(arr, sch, NULL), "Bad array init");
     exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
-    array->length = column->size();
 
     // Create an ArrowBuffer to manage the lifetime of `column`.
     // - `arrow_buffer` holds shared_ptr to `column`, increments
@@ -770,17 +795,13 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     //   `arrow_buffer` is deleted, which decrements the the
     //   `column` use count. When the `column` use count reaches
     //   0, the ColumnBuffer data will be deleted.
-    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column.get()));
+    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column->export_buffers(), column->name()));
+
+    array->length = arrow_buffer->buffer_->storage()->length();
 
     if (column->is_nullable()) {
         schema->flags |= ARROW_FLAG_NULLABLE;
-
-        array->null_count = arrow_buffer->buffer_->length -
-                            ArrowBitCountSet(arrow_buffer->buffer_->validity_.data(), 0, column->size());
-        // Count nulls
-        // for (size_t i = 0; i < column->size(); ++i) {
-        //     array->null_count += column->validity()[i] == 0;
-        // }
+        array->null_count = arrow_buffer->buffer_->storage()->null_count();
     } else {
         schema->flags &= ~ARROW_FLAG_NULLABLE;
     }
@@ -816,13 +837,13 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
     assert(array->buffers != nullptr);
     array->buffers[0] = nullptr;  // validity addressed below
-    array->buffers[n_buffers - 1] = arrow_buffer->buffer_->data_.data();
+    array->buffers[n_buffers - 1] = arrow_buffer->buffer_->storage()->data().data();
     if (n_buffers == 3) {
-        array->buffers[1] = arrow_buffer->buffer_->large_offsets_.data();
+        array->buffers[1] = arrow_buffer->buffer_->storage()->offsets().data();
     }
 
     if (column->is_nullable()) {
-        array->buffers[0] = arrow_buffer->buffer_->validity_.data();
+        array->buffers[0] = arrow_buffer->buffer_->storage()->validity().data();
     }
 
     if (column->is_ordered()) {
@@ -831,12 +852,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
 
     auto enmr = column->get_enumeration_info();
     if (enmr.has_value()) {
-        if (!enmr_map.contains(enmr->name())) {
-            enmr_map.insert(
-                std::make_pair(enmr->name(), std::make_shared<ArrowBuffer>(*enmr, !downcast_dict_of_large_var)));
-        }
-
-        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enmr_map.at(enmr->name()));
+        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enumerations.at(enmr->name()));
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
@@ -868,16 +884,12 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
         assert(dict_arr->buffers != nullptr);
 
         dict_arr->buffers[0] = nullptr;
-        dict_arr->buffers[dict_arr->n_buffers - 1] = enmr_buffer->buffer_->data_.data();
+        dict_arr->buffers[dict_arr->n_buffers - 1] = enmr_buffer->buffer_->storage()->data().data();
         if (is_var_enum) {
-            if (downcast_dict_of_large_var) {
-                dict_arr->buffers[1] = enmr_buffer->buffer_->small_offsets_.data();
-            } else {
-                dict_arr->buffers[1] = enmr_buffer->buffer_->large_offsets_.data();
-            }
+            dict_arr->buffers[1] = enmr_buffer->buffer_->storage()->offsets().data();
         }
 
-        dict_arr->length = enmr_buffer->buffer_->length;
+        dict_arr->length = enmr_buffer->buffer_->storage()->length();
         if (dict_arr->private_data != nullptr) {  // as we use nanoarrow's init
             free(dict_arr->private_data);         // free what was allocated before
         }  // assigning our ArrowBuffer pointer

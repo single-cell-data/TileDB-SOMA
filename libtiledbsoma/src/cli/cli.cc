@@ -76,10 +76,12 @@ void test_arrow(const std::string& uri) {
     tdbs::LOG_INFO(
         fmt::format(
             "Read complete with {} obs and {} cols", obs_data->get()->num_rows(), obs_data->get()->names().size()));
+
+    auto arrow_arrays = tdbs::ArrowAdapter::buffer_to_arrow(obs_data.value());
     std::vector<std::string> names = obs_data->get()->names();
-    for (auto nm : names) {
-        auto buf = obs_data->get()->at<ReadColumnBuffer>(nm);
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
+    for (size_t i = 0; i < names.size(); ++i) {
+        auto nm = names[i];
+        auto& pp = arrow_arrays[i];
         ArrowSchema* schema = pp.second.get();
         tdbs::LOG_INFO(
             fmt::format("Accessing '{}', retrieved '{}', n_children {}", nm, schema->name, schema->n_children));
