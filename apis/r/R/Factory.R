@@ -390,7 +390,6 @@ SOMACollectionCreate <- function(
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp;
 #' defaults to the current time. If not \code{NULL}, all members accessed
 #' through the collection inherit the timestamp.
-#' @param soma_context Optional SOMAContext.
 #'
 #' @return A \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
 #' \code{uri} opened in mode \code{mode}.
