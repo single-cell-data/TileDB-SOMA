@@ -26,7 +26,7 @@ SOMAContext <- R6::R6Class(
       return(get_config_from_soma_context(private$.handle))
     },
 
-    #' @param An URI for a SOMA object
+    #' @param uri A URI for a SOMA object
     #'
     #' @return The data protocol to use for the URI.
     #'

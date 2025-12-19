@@ -29,7 +29,7 @@ test_that("SOMAContext plumb-through", {
 test_that("Existence proof: create_soma_context()", {
   skip_if(
     TRUE,
-    message = "Disabling tests until new-style contexts are plubmed through factories"
+    message = "Disabling tests until new-style contexts are plumbed through factories"
   )
   skip_if(!extended_tests() || covr_tests())
   skip_on_ci()
