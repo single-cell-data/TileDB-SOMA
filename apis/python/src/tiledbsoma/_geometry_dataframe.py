@@ -500,8 +500,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             Experimental.
         """
         _util.check_type("values", values, (pa.Table,))
-
-        write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions",
@@ -542,7 +540,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
         """
         _util.check_type("values", values, (pa.Table, pa.RecordBatch))
-        write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions",
