@@ -148,7 +148,7 @@ class SOMAArray(SOMAObject):
                 raise ValueError(
                     f"Cannot write data. Field '{name}' in the input data is not a column in this {self._handle_type.__name__}."
                 )
-        batch_schema = pa.schema([array_schema.field_by_name(name) for name in values.schema.names])
+        batch_schema = pa.schema([array_schema.field(name) for name in values.schema.names])
 
         if sort_coords:
             # Finalize each batch as it is written.
