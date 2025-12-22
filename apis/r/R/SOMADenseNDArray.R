@@ -174,7 +174,7 @@ SOMADenseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.soma_context,
+        ctxxp = private$.soma_context$handle,
         arraytype = "SOMADenseNDArray",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range

@@ -12,7 +12,7 @@ test_that("SOMADenseNDArray creation", {
   expect_match(
     get_tiledb_object_type(
       ndarray$uri,
-      ndarray$.__enclos_env__$private$.soma_context
+      ndarray$.__enclos_env__$private$.soma_context$handle
     ),
     "ARRAY"
   )
@@ -156,22 +156,22 @@ test_that("platform_config is respected", {
 
   # Read back and check the array schema against the tiledb create options
   expect_equal(
-    c_capacity(dnda$uri, dnda$.__enclos_env__$private$.soma_context),
+    c_capacity(dnda$uri, dnda$.__enclos_env__$private$.soma_context$handle),
     8000L
   )
   expect_equal(
-    c_tile_order(dnda$uri, dnda$.__enclos_env__$private$.soma_context),
+    c_tile_order(dnda$uri, dnda$.__enclos_env__$private$.soma_context$handle),
     "COL_MAJOR"
   )
   expect_equal(
-    c_cell_order(dnda$uri, dnda$.__enclos_env__$private$.soma_context),
+    c_cell_order(dnda$uri, dnda$.__enclos_env__$private$.soma_context$handle),
     "ROW_MAJOR"
   )
 
   expect_length(
     coord_filters <- c_schema_filters(
       dnda$uri,
-      dnda$.__enclos_env__$private$.soma_context
+      dnda$.__enclos_env__$private$.soma_context$handle
     ),
     n = 3L
   )
@@ -185,7 +185,7 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   expect_length(
-    domain <- c_domain(dnda$uri, dnda$.__enclos_env__$private$.soma_context),
+    domain <- c_domain(dnda$uri, dnda$.__enclos_env__$private$.soma_context$handle),
     n = 2L
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
@@ -238,7 +238,7 @@ test_that("platform_config defaults", {
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
-    domain <- c_domain(dnda$uri, dnda$.__enclos_env__$private$.soma_context),
+    domain <- c_domain(dnda$uri, dnda$.__enclos_env__$private$.soma_context$handle),
     n = 2L
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))

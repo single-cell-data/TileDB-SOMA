@@ -72,8 +72,9 @@ extract_dataset <- function(name, dir = tempdir()) {
 
 #' @rdname example-datasets
 #'
-#' @param tiledbsoma_ctx Optional TileDB \dQuote{Context} object,
-#' which defaults to \code{NULL}.
+#' @param tiledbsoma_ctx Optional (DEPRECATED) TileDB \dQuote{Context} object
+#' that defaults to \code{NULL}.
+#' @param soma_context Optional SOMA context object that defaults to \code{NULL}.
 #'
 #' @return \code{load_dataset()}: returns a SOMA object.
 #'
@@ -88,30 +89,32 @@ extract_dataset <- function(name, dir = tempdir()) {
 #' exp$close()
 #' }
 #'
-load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL) {
+load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL, soma_context = NULL) {
   dataset_uri <- extract_dataset(name, dir)
 
   # Inspect the object's metadata
-  ctx <- soma_context()
+  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="load_dataset(tiledbsoma_ctx)")
   metadata <- get_all_metadata(
     dataset_uri,
     is_array = switch(
-      get_tiledb_object_type(dataset_uri, ctxxp = ctx),
+      get_tiledb_object_type(dataset_uri, ctxxp = soma_context$handle),
       ARRAY = TRUE,
       GROUP = FALSE,
       stop("The dataset is not a TileDB Array or Group", call. = FALSE)
     ),
-    ctxxp = ctx
+    ctxxp = soma_context$handle
   )
   return(switch(
     metadata$soma_object_type %||% "",
     SOMAExperiment = SOMAExperimentOpen(
       dataset_uri,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     ),
     SOMADataFrame = SOMADataFrameOpen(
       dataset_uri,
-      tiledbsoma_ctx = tiledbsoma_ctx
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      soma_context = soma_context
     ),
     stop("The dataset is an unsupported SOMA object", call. = FALSE)
   ))

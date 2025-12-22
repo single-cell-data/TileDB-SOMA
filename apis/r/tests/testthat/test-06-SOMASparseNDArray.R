@@ -6,7 +6,7 @@ test_that("SOMASparseNDArray creation", {
   expect_match(
     get_tiledb_object_type(
       ndarray$uri,
-      ndarray$.__enclos_env__$private$.soma_context
+      ndarray$.__enclos_env__$private$.soma_context$handle
     ),
     "ARRAY"
   )
@@ -77,20 +77,6 @@ test_that("SOMASparseNDArray creation", {
 
   ## nnz
   expect_equal(ndarray$nnz(), 60L)
-
-  ## nnz as free function
-  expect_equal(nnz(uri, soma_context()), 60L)
-  ## nnz with config, expected breakge as 'bad key' used
-  ## uses 'internal' create function to not cache globally as soma_context() would
-  badconfig <- createSOMAContext(c(
-    sm.encryption_key = "Nope",
-    sm.encryption_type = "AES_256_GCM"
-  ))
-  expect_error(nnz(uri, badconfig))
-  ## shape as free function
-  expect_equal(shape(uri, soma_context()), c(10, 10))
-  ## shape with config, expected breakge as 'bad key' used
-  expect_error(shape(uri, badconfig))
 
   ndarray$close()
 })
@@ -496,22 +482,22 @@ test_that("platform_config is respected", {
 
   # Read back and check the array schema against the tiledb create options
   expect_equal(
-    c_capacity(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    c_capacity(snda$uri, snda$.__enclos_env__$private$.soma_context$handle),
     8000L
   )
   expect_equal(
-    c_tile_order(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    c_tile_order(snda$uri, snda$.__enclos_env__$private$.soma_context$handle),
     "COL_MAJOR"
   )
   expect_equal(
-    c_cell_order(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    c_cell_order(snda$uri, snda$.__enclos_env__$private$.soma_context$handle),
     "ROW_MAJOR"
   )
 
   expect_length(
     coord_filters <- c_schema_filters(
       snda$uri,
-      snda$.__enclos_env__$private$.soma_context
+      snda$.__enclos_env__$private$.soma_context$handle
     ),
     n = 3L
   )
@@ -525,7 +511,7 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   expect_length(
-    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context$handle),
     n = 2L
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
@@ -578,7 +564,7 @@ test_that("platform_config defaults", {
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
-    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context$handle),
     n = 2L
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))

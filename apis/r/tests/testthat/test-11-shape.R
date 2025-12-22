@@ -69,9 +69,9 @@ test_that("SOMADataFrame shape", {
     # https://github.com/single-cell-data/TileDB-SOMA/pull/2953#discussion_r1746125089
     # sjid_shape <- sdf$.maybe_soma_joinid_shape()
     # sjid_maxshape <- sdf$.maybe_soma_joinid_maxshape()
-    soma_context <- soma_context()
-    sjid_shape <- maybe_soma_joinid_shape(sdf$uri, soma_context)
-    sjid_maxshape <- maybe_soma_joinid_maxshape(sdf$uri, soma_context)
+    soma_context_handle <- create_soma_context()
+    sjid_shape <- maybe_soma_joinid_shape(sdf$uri, soma_context_handle)
+    sjid_maxshape <- maybe_soma_joinid_maxshape(sdf$uri, soma_context_handle)
 
     if ("soma_joinid" %in% index_column_names) {
       # More testing to come on

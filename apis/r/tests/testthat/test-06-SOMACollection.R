@@ -13,7 +13,7 @@ test_that("SOMACollection basics", {
   expect_match(
     get_tiledb_object_type(
       collection$uri,
-      collection$.__enclos_env__$private$.soma_context
+      collection$.__enclos_env__$private$.soma_context$handle
     ),
     "GROUP"
   )
@@ -145,15 +145,13 @@ test_that("Platform config and context are respected by add_ methods", {
   cfg$set("tiledb", "test", "int_column", "float_column")
   cfg$get("tiledb", "test", "int_column")
 
-  ctx <- SOMATileDBContext$new()
-  ctx$set("int_column", "float_column")
-  ctx$get("int_column")
+  ctx <- SOMAContext$new(config = c(test_key = "test_value"))
 
   # Create an empty collection
   collection <- SOMACollectionCreate(
     uri = uri,
     platform_config = cfg,
-    tiledbsoma_ctx = ctx
+    soma_context = ctx
   )
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
@@ -173,10 +171,9 @@ test_that("Platform config and context are respected by add_ methods", {
     collection$get("sdf1")$platform_config$get("tiledb", "test", "int_column"),
     "float_column"
   )
-  expect_equal(
-    collection$get("sdf1")$tiledbsoma_ctx$get("int_column"),
-    "float_column"
-  )
+  output_config <- collection$get("sdf1")$soma_context$get_config()
+  expect_type(output_value <- output_config["test_key"], "character")
+  expect_equal(unname(output_value), "test_value")
 
   # Method-level config params override instance params
   collection <- collection$reopen("WRITE")

@@ -50,7 +50,7 @@ SOMACollectionBase <- R6::R6Class(
       private$.tiledb_group <- c_group_create(
         uri = self$uri,
         type = self$class(),
-        ctxxp = private$.soma_context,
+        ctxxp = private$.soma_context$handle,
         timestamp = self$.tiledb_timestamp_range
       )
 
@@ -131,7 +131,7 @@ SOMACollectionBase <- R6::R6Class(
       private$.tiledb_group <- c_group_open(
         uri = self$uri,
         type = self$mode(),
-        ctxxp = private$.soma_context,
+        ctxxp = private$.soma_context$handle,
         timestamp = self$.tiledb_timestamp_range
       )
 
@@ -386,6 +386,7 @@ SOMACollectionBase <- R6::R6Class(
         domain = domain,
         platform_config = platform_config %||% self$platform_config,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
+        soma_context = self$soma_context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
       self$set(sdf, key)
@@ -410,6 +411,7 @@ SOMACollectionBase <- R6::R6Class(
         shape = shape,
         platform_config = platform_config %||% self$platform_config,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
+        soma_context = self$soma_context,
         tiledb_timestamp = self$tiledb_timestamp
       )
       self$set(ndarr, key)
@@ -439,6 +441,7 @@ SOMACollectionBase <- R6::R6Class(
         shape = shape,
         platform_config = platform_config %||% self$platform_config,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
+        soma_context = self$soma_context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
       self$set(ndarr, key)
@@ -540,7 +543,7 @@ SOMACollectionBase <- R6::R6Class(
         c_group_open(
           uri = self$uri,
           type = "READ",
-          ctxxp = private$.soma_context %||% soma_context(),
+          ctxxp = private$.soma_context$handle %||% create_soma_context(),
           timestamp = self$.tiledb_timestamp_range
         )
       } else {
@@ -599,7 +602,7 @@ SOMACollectionBase <- R6::R6Class(
         # TODO: do we really need the type here?
         # Calling `get_tiledb_object_type()` on remote storage has a cost;
         # perhaps unnecessary to incur.
-        type = get_tiledb_object_type(object$uri, private$.soma_context),
+        type = get_tiledb_object_type(object$uri, private$.soma_context$handle),
         uri = object$uri,
         name = name,
         object = object
@@ -640,8 +643,9 @@ SOMACollectionBase <- R6::R6Class(
         c_group_open(
           uri = self$uri,
           type = "READ",
-          ctxxp = private$.soma_context %||% soma_context(),
+          ctxxp = private$.soma_context$handle %||% create_soma_context(),
           timestamp = self$.tiledb_timestamp_range
+
         )
       } else {
         private$.tiledb_group
@@ -690,7 +694,7 @@ SOMACollectionBase <- R6::R6Class(
       metadata <- get_all_metadata(
         uri,
         is_array = array,
-        ctxxp = private$.soma_context
+        ctxxp = private$.soma_context$handle
       )
       soma_type <- metadata$soma_object_type
       if (is.null(soma_type)) {
@@ -719,6 +723,7 @@ SOMACollectionBase <- R6::R6Class(
         mode = self$mode(),
         platform_config = self$platform_config,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
+        soma_context = self$soma_context,
         tiledb_timestamp = self$tiledb_timestamp
       ))
     },

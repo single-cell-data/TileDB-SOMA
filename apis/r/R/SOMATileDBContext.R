@@ -20,6 +20,11 @@ SOMATileDBContext <- R6::R6Class(
     #' @return An instantiated \code{SOMATileDBContext} object
     #'
     initialize = function(config = NULL, cached = TRUE) {
+      .deprecate(
+        what="SOMATileDBContext$new()",
+        when="2.3.0",
+        details="Use `SOMAContext` instead."
+      )
       config <- config %||% character()
       # Identify options that are SOMA-specific
       soma_opts <- which(names(config) %in% names(.SOMA_CONTEXTS()))
@@ -39,7 +44,10 @@ SOMATileDBContext <- R6::R6Class(
         "'config' must be named" = !length(config) ||
           is_named(config, allow_empty = FALSE)
       )
-      config["sm.mem.reader.sparse_global_order.ratio_array_data"] <- "0.3"
+      ratio_array_data_key = "sm.mem.reader.sparse_global_order.ratio_array_data"
+      if (is.null(config) || !(ratio_array_data_key %in% names(config))) {
+        config["sm.mem.reader.sparse_global_order.ratio_array_data"] <- "0.3"
+      }
       # Add the TileDB context
       cfg <- tiledb::tiledb_config()
       for (opt in names(config)) {

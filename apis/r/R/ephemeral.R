@@ -362,7 +362,6 @@ EphemeralCollectionBase <- R6::R6Class(
     # Override SOMAObject private fields
     .platform_config = NULL,
     .tiledbsoma_ctx = NULL,
-    .tiledb_ctx = NULL,
     .tiledb_timestamp = NULL,
     .soma_context = NULL,
     .mode = NULL,

@@ -1,11 +1,11 @@
-test_that("SOMATileDBContext plumb-through", {
+test_that("SOMAContext plumb-through", {
   skip_if(!extended_tests())
 
   uri <- tempfile("new-group")
-  ctx <- SOMATileDBContext$new()
+  ctx <- SOMAContext$new()
 
   expect_s3_class(
-    group <- SOMACollectionCreate(uri, tiledbsoma_ctx = ctx),
+    group <- SOMACollectionCreate(uri, soma_context = ctx),
     "SOMACollection"
   )
   group$close()
@@ -19,18 +19,17 @@ test_that("SOMATileDBContext plumb-through", {
     group <- TileDBGroup$new(
       uri,
       internal_use_only = "allowed_use",
-      tiledbsoma_ctx = ctx,
-      soma_context = soma_context()
+      soma_context = soma_context
     )
   )
   group$create(internal_use_only = "allowed_use")
   group$close()
 })
 
-test_that("Existence proof: soma_context()", {
+test_that("Existence proof: create_soma_context()", {
   skip_if(
     TRUE,
-    message = "Disabling tests until new-style contexts are plubmed through factories"
+    message = "Disabling tests until new-style contexts are plumbed through factories"
   )
   skip_if(!extended_tests() || covr_tests())
   skip_on_ci()
@@ -48,7 +47,7 @@ test_that("Existence proof: soma_context()", {
     grp2 <- TileDBGroup$new(
       uri,
       internal_use_only = "allowed_use",
-      soma_context = soma_context(
+      soma_context = create_soma_context(
         config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true")
       )
     ),
@@ -63,18 +62,18 @@ test_that("Existence proof: soma_context()", {
   expect_type(grp2$names(), "character")
 })
 
-test_that("Existence proof: SOMATileDBContext", {
+test_that("Existence proof: SOMAContext", {
   skip_if(!extended_tests() || covr_tests())
   skip_on_ci()
 
   uri <- "s3://cellxgene-census-public-us-west-2/cell-census/2024-07-01/soma/"
   expect_error(SOMACollectionOpen(uri))
 
-  ctx <- SOMATileDBContext$new(
+  ctx <- SOMAContext$new(
     config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true")
   )
   expect_s3_class(
-    grp2 <- SOMACollectionOpen(uri, tiledbsoma_ctx = ctx),
+    grp2 <- SOMACollectionOpen(uri, soma_context = ctx),
     class = 'SOMACollection'
   )
   on.exit(grp2$close(), add = TRUE, after = FALSE)

@@ -9,7 +9,8 @@ SOMASparseNDArrayOpen(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  soma_context = NULL
 )
 }
 \arguments{
@@ -19,10 +20,12 @@ SOMASparseNDArrayOpen(
 
 \item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) SOMATileDBContext.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time.}
+
+\item{soma_context}{Optional SOMAContext.}
 }
 \value{
 A \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} stored at

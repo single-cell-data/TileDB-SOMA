@@ -33,10 +33,11 @@ SOMAOpen <- function(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  soma_context = NULL,
   tiledb_timestamp = NULL
 ) {
-  ctx <- soma_context()
-  type <- get_tiledb_object_type(uri, ctxxp = ctx)
+  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMAOpen(tiledbsoma_ctx)")
+  type <- get_tiledb_object_type(uri, ctxxp = soma_context$handle)
   metadata <- get_all_metadata(
     uri,
     is_array = switch(
@@ -45,7 +46,7 @@ SOMAOpen <- function(
       GROUP = FALSE,
       stop("Unknown TileDB object type: ", dQuote(type), call. = FALSE)
     ),
-    ctxxp = ctx
+    ctxxp = soma_context$handle
   )
   if (is.null(metadata$soma_object_type)) {
     stop("URI ", sQuote(uri), " is not a TileDB SOMA object", call. = FALSE)
@@ -57,6 +58,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
+      soma_context = soma_context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -64,6 +66,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
+      soma_context = soma_context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -71,6 +74,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
+      soma_context = soma_context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -78,6 +82,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
+      soma_context = soma_context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -85,6 +90,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
+      soma_context = soma_context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -92,6 +98,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
+      soma_context = soma_context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),

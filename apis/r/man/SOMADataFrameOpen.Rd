@@ -20,13 +20,12 @@ SOMADataFrameOpen(
 
 \item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) SOMATileDBContext.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time.}
 
-\item{soma_context}{A SOMA context as created by
-\code{\link{soma_context}()}.}
+\item{soma_context}{Optional SOMAContext.}
 }
 \value{
 A \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at

@@ -12,7 +12,8 @@ object to a SOMA}
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  soma_context = NULL
 )
 }
 \arguments{
@@ -36,7 +37,9 @@ exists, simply open it for writing.
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
+
+\item{soma_context}{Optional \code{\link{SOMAContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from

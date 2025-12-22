@@ -7,7 +7,7 @@ test_that("example dataset access", {
   # Test that the dataset can be extracted
   dataset_uri <- extract_dataset("soma-exp-pbmc-small")
   expect_true(dir.exists(dataset_uri))
-  expect_match(get_tiledb_object_type(dataset_uri, soma_context()), "GROUP")
+  expect_match(get_tiledb_object_type(dataset_uri, create_soma_context()), "GROUP")
 
   # Test the datasets can be loaded
   exp <- load_dataset("soma-exp-pbmc-small")

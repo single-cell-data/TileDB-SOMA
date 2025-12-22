@@ -9,7 +9,8 @@ SOMACollectionOpen(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  soma_context = NULL
 )
 }
 \arguments{
@@ -19,11 +20,13 @@ SOMACollectionOpen(
 
 \item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) SOMATileDBContext.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time. If not \code{NULL}, all members accessed
 through the collection inherit the timestamp.}
+
+\item{soma_context}{Optional SOMAContext.}
 }
 \value{
 A \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
