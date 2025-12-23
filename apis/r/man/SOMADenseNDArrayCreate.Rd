@@ -11,7 +11,7 @@ SOMADenseNDArrayCreate(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 )
 }
 \arguments{
@@ -28,7 +28,7 @@ of each element in the array.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
 
-\item{soma_context}{Optional TileDB SOMA context.}
+\item{context}{Optional TileDB SOMA context.}
 }
 \value{
 A new \link[tiledbsoma:SOMADenseNDArray]{SOMA dense ND array}

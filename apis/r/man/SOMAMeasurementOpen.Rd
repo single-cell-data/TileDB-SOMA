@@ -10,7 +10,7 @@ SOMAMeasurementOpen(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 )
 }
 \arguments{
@@ -26,7 +26,7 @@ SOMAMeasurementOpen(
 defaults to the current time. If not \code{NULL}, all members accessed
 through the collection inherit the timestamp.}
 
-\item{soma_context}{Optional SOMAContext.}
+\item{context}{Optional TileDB SOMA context.}
 }
 \value{
 A \link[tiledbsoma:SOMAMeasurement]{SOMA measurement} stored at

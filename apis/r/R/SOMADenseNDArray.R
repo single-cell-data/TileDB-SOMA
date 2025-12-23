@@ -72,7 +72,7 @@ SOMADenseNDArray <- R6::R6Class(
         dim_points = coords,
         result_order = result_order,
         timestamprange = self$.tiledb_timestamp_range,
-        soma_context = private$.soma_context,
+        context = private$.context,
         loglevel = log_level
       )
 
@@ -174,7 +174,7 @@ SOMADenseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.soma_context$handle,
+        ctxxp = private$.context$handle,
         arraytype = "SOMADenseNDArray",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range

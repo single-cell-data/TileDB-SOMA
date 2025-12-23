@@ -30,7 +30,7 @@
 #' @param platform_config Optional platform configuration.
 #' @param tiledbsoma_ctx Optional (DEPRECATED) SOMATileDBContext.
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp.
-#' @param soma_context Optional TileDB SOMA context.
+#' @param context Optional TileDB SOMA context.
 #'
 #' @return A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
 #' \code{uri} opened for writing.
@@ -64,15 +64,15 @@ SOMADataFrameCreate <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   ingest_mode <- match.arg(ingest_mode)
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMADataFrameCreate(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMADataFrameCreate(tiledbsoma_ctx)")
   sdf <- SOMADataFrame$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
@@ -117,19 +117,19 @@ SOMADataFrameOpen <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   soma_debug(sprintf(
     "[SOMADataFrameOpen] uri %s ts (%s)",
     uri,
     tiledb_timestamp %||% "now"
   ))
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMADataFrameOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMADataFrameOpen(tiledbsoma_ctx)")
   sdf <- SOMADataFrame$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     tiledb_timestamp = tiledb_timestamp
   )
   sdf$open(mode)
@@ -176,15 +176,15 @@ SOMASparseNDArrayCreate <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   ingest_mode <- match.arg(ingest_mode)
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMASparseNDArrayCreate(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMASparseNDArrayCreate(tiledbsoma_ctx)")
   snda <- SOMASparseNDArray$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
@@ -221,15 +221,15 @@ SOMASparseNDArrayOpen <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMASparseNDArrayOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMASparseNDArrayOpen(tiledbsoma_ctx)")
   snda <- SOMASparseNDArray$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   snda$open(mode)
   return(snda)
@@ -270,19 +270,19 @@ SOMADenseNDArrayCreate <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   soma_debug(sprintf(
     "[SOMADenseNDArrayCreate] tstamp (%s)",
     tiledb_timestamp %||% "now"
   ))
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMADenseNDArrayCreate(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMADenseNDArrayCreate(tiledbsoma_ctx)")
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   dnda$create(type, shape, platform_config = platform_config)
   return(dnda)
@@ -309,15 +309,15 @@ SOMADenseNDArrayOpen <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMADenseNDArrayOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMADenseNDArrayOpen(tiledbsoma_ctx)")
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   dnda$open(mode)
   return(dnda)
@@ -356,16 +356,16 @@ SOMACollectionCreate <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   ingest_mode <- match.arg(ingest_mode)
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMACollectionCreate(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMACollectionCreate(tiledbsoma_ctx)")
   coll <- SOMACollection$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -403,15 +403,15 @@ SOMACollectionOpen <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMACollectionOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMACollectionOpen(tiledbsoma_ctx)")
   coll <- SOMACollection$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   coll$open(mode)
   return(coll)
@@ -462,16 +462,16 @@ SOMAMeasurementCreate <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   ingest_mode <- match.arg(ingest_mode)
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMAMeasurementCreate(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMAMeasurementCreate(tiledbsoma_ctx)")
   meas <- SOMAMeasurement$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -507,15 +507,15 @@ SOMAMeasurementOpen <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMAMeasurementOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMAMeasurementOpen(tiledbsoma_ctx)")
   meas <- SOMAMeasurement$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   meas$open(mode)
   return(meas)
@@ -566,16 +566,16 @@ SOMAExperimentCreate <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   ingest_mode <- match.arg(ingest_mode)
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMAExperimentCreate(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMAExperimentCreate(tiledbsoma_ctx)")
   exp <- SOMAExperiment$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -610,15 +610,15 @@ SOMAExperimentOpen <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMAExperimentOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMAExperimentOpen(tiledbsoma_ctx)")
   exp <- SOMAExperiment$new(
     uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
-    soma_context = soma_context
+    context = context
   )
   exp$open(mode)
   return(exp)

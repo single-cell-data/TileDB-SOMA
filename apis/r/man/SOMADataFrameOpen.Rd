@@ -10,7 +10,7 @@ SOMADataFrameOpen(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 )
 }
 \arguments{
@@ -25,7 +25,7 @@ SOMADataFrameOpen(
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time.}
 
-\item{soma_context}{Optional SOMAContext.}
+\item{context}{Optional TileDB SOMA context.}
 }
 \value{
 A \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at

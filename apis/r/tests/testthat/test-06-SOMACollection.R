@@ -13,7 +13,7 @@ test_that("SOMACollection basics", {
   expect_match(
     get_tiledb_object_type(
       collection$uri,
-      collection$.__enclos_env__$private$.soma_context$handle
+      collection$.__enclos_env__$private$.context$handle
     ),
     "GROUP"
   )
@@ -151,7 +151,7 @@ test_that("Platform config and context are respected by add_ methods", {
   collection <- SOMACollectionCreate(
     uri = uri,
     platform_config = cfg,
-    soma_context = ctx
+    context = ctx
   )
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
@@ -171,7 +171,7 @@ test_that("Platform config and context are respected by add_ methods", {
     collection$get("sdf1")$platform_config$get("tiledb", "test", "int_column"),
     "float_column"
   )
-  output_config <- collection$get("sdf1")$soma_context$get_config()
+  output_config <- collection$get("sdf1")$context$get_config()
   expect_type(output_value <- output_config["test_key"], "character")
   expect_equal(unname(output_value), "test_value")
 

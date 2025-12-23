@@ -64,7 +64,7 @@ A character vector with the current config options set on the context.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{An}}{URI for a SOMA object}
+\item{\code{uri}}{A URI for a SOMA object}
 }
 \if{html}{\out{</div>}}
 }

@@ -17,7 +17,7 @@
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -29,7 +29,7 @@
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -43,7 +43,7 @@
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -55,7 +55,7 @@
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -67,7 +67,7 @@
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 )
 }
@@ -98,7 +98,7 @@ configuration}.}
 
 \item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
 
-\item{soma_context}{Optional \code{\link{SOMAContext}}.}
+\item{context}{Optional \code{\link{SOMAContext}}.}
 
 \item{relative}{\strong{[Internal use only]} Is \code{uri}
 relative or absolute.}
