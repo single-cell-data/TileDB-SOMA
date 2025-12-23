@@ -10,7 +10,7 @@ write_soma(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL
+  context = NULL
 )
 }
 \arguments{
@@ -25,7 +25,7 @@ configuration}.}
 
 \item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
 
-\item{soma_context}{Optional \code{\link{SOMAContext}}.}
+\item{context}{Optional \code{\link{SOMAContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from

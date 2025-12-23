@@ -25,7 +25,7 @@ write_soma.DataFrame <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   # Check for compound non-atomic/factor types
@@ -47,7 +47,7 @@ write_soma.DataFrame <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     relative = relative
   ))
 }
@@ -82,7 +82,7 @@ write_soma.Hits <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   return(write_soma(
@@ -96,7 +96,7 @@ write_soma.Hits <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     relative = relative
   ))
 }
@@ -165,7 +165,7 @@ write_soma.SingleCellExperiment <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
@@ -189,14 +189,14 @@ write_soma.SingleCellExperiment <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   experiment <- SOMAExperimentOpen(
     uri = uri,
     mode = "WRITE",
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   on.exit(expr = experiment$close(), add = TRUE, after = FALSE)
 
@@ -214,7 +214,7 @@ write_soma.SingleCellExperiment <- function(
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "obsm"), mode = "WRITE")
@@ -241,7 +241,7 @@ write_soma.SingleCellExperiment <- function(
       },
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   }
 
@@ -252,7 +252,7 @@ write_soma.SingleCellExperiment <- function(
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "obsp"), mode = "WRITE")
@@ -279,7 +279,7 @@ write_soma.SingleCellExperiment <- function(
       },
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   }
 
@@ -290,7 +290,7 @@ write_soma.SingleCellExperiment <- function(
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "varp"), mode = "WRITE")
@@ -317,7 +317,7 @@ write_soma.SingleCellExperiment <- function(
       },
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   }
 
@@ -386,7 +386,7 @@ write_soma.SummarizedExperiment <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   check_package("SummarizedExperiment", "1.28.0")
   stopifnot(
@@ -414,7 +414,7 @@ write_soma.SummarizedExperiment <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
@@ -430,7 +430,7 @@ write_soma.SummarizedExperiment <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
 
   # Write assays
@@ -440,7 +440,7 @@ write_soma.SummarizedExperiment <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   withCallingHandlers(
     expr = .register_soma_object(expms, soma_parent = experiment, key = "ms"),
@@ -452,7 +452,7 @@ write_soma.SummarizedExperiment <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
@@ -462,7 +462,7 @@ write_soma.SummarizedExperiment <- function(
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   } else {
     SOMACollectionOpen(file_path(ms$uri, "X"), mode = "WRITE")
@@ -486,7 +486,7 @@ write_soma.SummarizedExperiment <- function(
       shape = rev(shape),
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   }
 
@@ -504,7 +504,7 @@ write_soma.SummarizedExperiment <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
 
   withCallingHandlers(

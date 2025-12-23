@@ -134,7 +134,7 @@ SOMADataFrame <- R6::R6Class(
         sparse = TRUE,
         datatype = "SOMADataFrame",
         pclst = tiledb_create_options$to_list(FALSE),
-        ctxxp = private$.soma_context$handle,
+        ctxxp = private$.context$handle,
         tsvec = self$.tiledb_timestamp_range
       )
 
@@ -191,7 +191,7 @@ SOMADataFrame <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.soma_context$handle,
+        ctxxp = private$.context$handle,
         arraytype = "SOMADataFrame",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range
@@ -259,7 +259,7 @@ SOMADataFrame <- R6::R6Class(
           args = list(
             expr = value_filter,
             schema = self$schema(),
-            somactx = private$.soma_context$handle
+            somactx = private$.context$handle
           )
         )
         value_filter <- parsed@ptr
@@ -281,7 +281,7 @@ SOMADataFrame <- R6::R6Class(
 
       sr <- mq_setup(
         uri = self$uri,
-        private$.soma_context$handle,
+        private$.context$handle,
         colnames = column_names,
         qc = value_filter,
         dim_points = coords,
@@ -440,7 +440,7 @@ SOMADataFrame <- R6::R6Class(
       ) {
         c_update_dataframe_schema(
           self$uri,
-          private$.soma_context$handle,
+          private$.context$handle,
           drop_cols_for_clib,
           Filter(Negate(is.null), add_cols_types_for_clib),
           Filter(Negate(is.null), add_cols_enum_value_types_for_clib),
@@ -476,7 +476,7 @@ SOMADataFrame <- R6::R6Class(
         "'simplify' must be TRUE or FALSE" = isTRUE(simplify) ||
           isFALSE(simplify)
       )
-      enums <- c_attributes_enumerated(self$uri, private$.soma_context$handle)
+      enums <- c_attributes_enumerated(self$uri, private$.context$handle)
       if (!any(enums)) {
         rlang::warn("No enumerated columns present")
         return(NULL)
@@ -492,7 +492,7 @@ SOMADataFrame <- R6::R6Class(
         X = column_names,
         FUN = c_attribute_enumeration_levels,
         uri = self$uri,
-        ctxxp = private$.soma_context$handle,
+        ctxxp = private$.context$handle,
         simplify = FALSE,
         USE.NAMES = TRUE
       )
@@ -540,7 +540,7 @@ SOMADataFrame <- R6::R6Class(
     domain = function() {
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(domain(
         self$uri,
-        private$.soma_context$handle
+        private$.context$handle
       )))))
     },
 
@@ -553,7 +553,7 @@ SOMADataFrame <- R6::R6Class(
     maxdomain = function() {
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(maxdomain(
         self$uri,
-        private$.soma_context$handle
+        private$.context$handle
       )))))
     },
 
@@ -565,7 +565,7 @@ SOMADataFrame <- R6::R6Class(
     #' domain feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_domain = function() {
-      has_current_domain(self$uri, private$.soma_context$handle)
+      has_current_domain(self$uri, private$.context$handle)
     },
 
     #' @description Increases the shape of the data frame on the
@@ -595,7 +595,7 @@ SOMADataFrame <- R6::R6Class(
         self$uri,
         new_shape,
         .name_of_function(),
-        private$.soma_context$handle
+        private$.context$handle
       )))
     },
 
@@ -628,7 +628,7 @@ SOMADataFrame <- R6::R6Class(
         pyarrow_domain_table$schema,
         .name_of_function(),
         check_only,
-        private$.soma_context$handle
+        private$.context$handle
       )
 
       if (isTRUE(check_only)) {
@@ -671,7 +671,7 @@ SOMADataFrame <- R6::R6Class(
         pyarrow_domain_table$schema,
         .name_of_function(),
         check_only,
-        private$.soma_context$handle
+        private$.context$handle
       )
 
       if (isTRUE(check_only)) {

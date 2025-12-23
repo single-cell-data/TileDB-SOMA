@@ -60,15 +60,15 @@ uns_hint <- function(type = c("1d", "2d")) {
   return(hint)
 }
 
-get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
+get_soma_context <- function(context, tiledbsoma_ctx, what = NULL) {
   if (!is.null(tiledbsoma_ctx)) {
     .deprecate(
         what=what,
         when="2.3.0",
-        details="Use `soma_context` instead."
+        details="Use `context` instead."
     )
   }
-  if (is.null(soma_context)) {
+  if (is.null(context)) {
     if (is.null(tiledbsoma_ctx)) {
         context <- .pkgenv[["somactx"]]
         if (is.null(context)) {
@@ -87,16 +87,16 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
   }
   if (!is.null(tiledbsoma_ctx)) {
     warning(
-      "Both 'soma_context' and 'tiledbsoma_ctx' were provided, using 'soma_context' only"
+      "Both 'context' and 'tiledbsoma_ctx' were provided, using 'context' only"
     )
   }
-  if (!inherits(x = soma_context, what = 'SOMAContext')) {
+  if (!inherits(x = context, what = 'SOMAContext')) {
     stop(
-      "'soma_context' must be a SOMAContext object",
+      "'context' must be a SOMAContext object",
       call. = FALSE
     )
   }
-  return(soma_context)
+  return(context)
 }
 
 
@@ -105,7 +105,7 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #' Generate block sizes for matrix iteration; the block sizes are calculated
 #' while keeping one axis static and chunking on the alternate axis
 #'
-#' \code{soma_context} is an option available to \code{write_soma()}; we can
+#' \code{context} is an option available to \code{write_soma()}; we can
 #' use the options in the context to determine how much memory we can use from
 #' the option \dQuote{\code{soma.init_buffer_bytes}}. A default value of
 #' \eqn{33,554,432} bytes is used when no context is provided, or the context
@@ -113,7 +113,7 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #' for \pkg{tiledbsoma}
 #'
 #' @param n Number of entries on the static (non-iterated) axis
-#' @param soma_context A \code{SOMAContext} object
+#' @param context A \code{SOMAContext} object
 #'
 #' @return Number of entries on the alternate axis to chunk
 #'
@@ -137,21 +137,21 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
 #'
 #' # Generate a block size to iterate across the obs axis
 #' # `n` is the number of entries on the static axis, not the iterated axis
-#' .block_size(n = n_var, soma_context = ctx)
+#' .block_size(n = n_var, context = ctx)
 #'
-.block_size <- function(n, soma_context) {
+.block_size <- function(n, context) {
   if (!rlang::is_integerish(n, n = 1L, finite = TRUE) || n <= 0L) {
     rlang::abort("'n' must be a single, finite, positive integer value")
   }
-  if (!inherits(soma_context, "SOMAContext")) {
-    rlang::abort("'soma_context' must be a SOMAContext object")
+  if (!inherits(context, "SOMAContext")) {
+    rlang::abort("'context' must be a SOMAContext object")
   }
 
   # Try to get the "soma.init_buffer_bytes option from the context.
   # - If it wasn't set, then use a default value.
   # - If it was set but isn't numeric, then throw an error.
   bytes <- 33554432 # default value - over-write if value in config
-  config <- soma_context$get_config()
+  config <- context$get_config()
   bytes_key = "soma.init_buffer_bytes"
   if (bytes_key %in% names(config)) {
     bytes <- tryCatch(expr = as.numeric(config[bytes_key], warning = stop))
@@ -472,7 +472,7 @@ get_soma_context <- function(soma_context, tiledbsoma_ctx, what = NULL) {
   dimname <- x$dimnames()[axis + 1L]
   sr <- mq_setup(
     uri = x$uri,
-    x$soma_context$handle,
+    x$context$handle,
     colnames = dimname,
     timestamprange = x$.tiledb_timestamp_range
   )

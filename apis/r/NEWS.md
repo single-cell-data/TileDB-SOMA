@@ -3,7 +3,7 @@
 ## Deprecated
 
 - The function `soma_context` is deprecated. Use class `SOMAContext` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
-- The parameter `tiledbsoma_ctx` is deprecated in all functions/methods that use it. Use the parameter `soma_context` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+- The parameter `tiledbsoma_ctx` is deprecated in all functions/methods that use it. Use the parameter `context` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
 - `SOMATileDBContext` is deprecated. Use class `SOMAContext` instead. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
 
 ## Fixed

@@ -10,7 +10,7 @@
 #' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
 #' configuration}.
 #' @param tiledbsoma_ctx Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.
-#' @param soma_context Optional \code{\link{SOMAContext}}.
+#' @param context Optional \code{\link{SOMAContext}}.
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
 #' the data contained in \code{x}.
@@ -32,7 +32,7 @@ write_soma <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL
+  context = NULL
 ) {
   UseMethod(generic = "write_soma", object = x)
 }
@@ -95,7 +95,7 @@ write_soma.character <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   sdf <- write_soma(
@@ -108,7 +108,7 @@ write_soma.character <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     relative = relative
   )
   sdf$set_metadata(uns_hint("1d"))
@@ -170,7 +170,7 @@ write_soma.data.frame <- function(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -275,7 +275,7 @@ write_soma.data.frame <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   # Write values
   if (ingest_mode %in% c("resume")) {
@@ -328,7 +328,7 @@ write_soma.IterableMatrix <- function(
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -384,11 +384,11 @@ write_soma.IterableMatrix <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   # TODO: Add support for resume-mode
   if (!is.null(x)) {
-    stride <- .block_size(ncol(x), array$soma_context)
+    stride <- .block_size(ncol(x), array$context)
     strider <- CoordsStrider$new(start = 1L, end = nrow(x), stride = stride)
     while (strider$has_next()) {
       idx <- as.integer(strider$next_element())
@@ -468,7 +468,7 @@ write_soma.matrix <- function(
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -501,7 +501,7 @@ write_soma.matrix <- function(
       shape = shape,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context,
+      context = context,
       relative = relative
     ))
   }
@@ -548,7 +548,7 @@ write_soma.matrix <- function(
     shape = shape %||% dim(x),
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   # Write values
   array$write(x)
@@ -636,7 +636,7 @@ write_soma.TsparseMatrix <- function(
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   stopifnot(
@@ -689,7 +689,7 @@ write_soma.TsparseMatrix <- function(
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context,
+    context = context,
     tiledb_timestamp = Sys.time()
   )
   # Write values
