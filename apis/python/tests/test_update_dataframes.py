@@ -307,55 +307,53 @@ def test_update_non_null_to_null(soma_tiledb_context, tmp_path, conftest_pbmc3k_
 
 
 @pytest.mark.medium_runner
-def test_enmr_add_drop_readd(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata):
+@pytest.mark.xfail("Bug reported in SOMA-792")
+def test_enmr_add_drop_read(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata):
     uri = tmp_path.as_posix()
 
-    # Add
+    # Create and check column.
     tiledbsoma.io.from_anndata(uri, conftest_pbmc3k_adata, measurement_name="RNA", context=soma_tiledb_context)
-
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema
         assert "louvain" in schema.names
         field = schema.field("louvain")
         assert pa.types.is_dictionary(field.type)
 
-    # Drop
+    # Create reference data.
     with tiledbsoma.Experiment.open(uri, "r") as exp:
-        obs = exp.obs.read().concat().to_pandas()
-    obs.drop(columns=["louvain"], inplace=True)
+        obs_data = exp.obs.read().concat().to_pandas()
+    obs_no_louvain = obs_data.drop(columns=["louvain"], inplace=False)
+    obs_diff_type = obs_data.drop(columns=["louvain"], inplace=False)
+    obs_diff_type["louvain"] = pd.Categorical(np.random.randint(1, 4, size=len(obs_data)))
 
+    # Drop data and check column.
     with tiledbsoma.Experiment.open(uri, "w") as exp:
-        tiledbsoma.io.update_obs(exp, obs)
-
+        tiledbsoma.io.update_obs(exp, obs_no_louvain)
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema
         assert "louvain" not in schema.names
 
-    # Add column with same name and same type
+    # Add column with same name and same type.
     with tiledbsoma.Experiment.open(uri, "w") as exp:
-        # Most importantly, we're implicitly checking for no throw here.
-        tiledbsoma.io.update_obs(exp, conftest_pbmc3k_adata.obs)
-
+        tiledbsoma.io.update_obs(exp, obs_data)
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema
         assert "louvain" in schema.names
+        field = schema.field("louvain")
         assert pa.types.is_dictionary(field.type)
 
-    # Drop
-    with tiledbsoma.Experiment.open(uri, "r") as exp:
-        obs = exp.obs.read().concat().to_pandas()
-    obs.drop(columns=["louvain"], inplace=True)
-
+    # Drop data and check column.
     with tiledbsoma.Experiment.open(uri, "w") as exp:
-        tiledbsoma.io.update_obs(exp, obs)
+        tiledbsoma.io.update_obs(exp, obs_no_louvain)
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        schema = exp.obs.schema
+        assert "louvain" not in schema.names
 
     # Add column with same name but different categorical type (str to int)
-    obs["louvain"] = pd.Categorical(np.random.randint(1, 4, size=len(obs)))
     with tiledbsoma.Experiment.open(uri, "w") as exp:
-        # Most importantly, we're implicitly checking for no throw here.
-        tiledbsoma.io.update_obs(exp, obs)
-
+        tiledbsoma.io.update_obs(exp, obs_diff_type)
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema
         assert "louvain" in schema.names
+        field = schema.field("louvain")
         assert pa.types.is_dictionary(field.type)
