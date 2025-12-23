@@ -363,7 +363,7 @@ EphemeralCollectionBase <- R6::R6Class(
     .platform_config = NULL,
     .tiledbsoma_ctx = NULL,
     .tiledb_timestamp = NULL,
-    .soma_context = NULL,
+    .context = NULL,
     .mode = NULL,
     .uri = character(1L),
 

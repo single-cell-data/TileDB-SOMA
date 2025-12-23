@@ -13,7 +13,7 @@ SOMADataFrameCreate(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 )
 }
 \arguments{
@@ -52,7 +52,7 @@ if it already exists, simply open it for writing.
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
 
-\item{soma_context}{Optional TileDB SOMA context.}
+\item{context}{Optional TileDB SOMA context.}
 }
 \value{
 A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at

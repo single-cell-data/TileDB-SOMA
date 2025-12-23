@@ -11,7 +11,7 @@ list_datasets()
 
 extract_dataset(name, dir = tempdir())
 
-load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL, soma_context = NULL)
+load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL, context = NULL)
 }
 \arguments{
 \item{name}{The name of the dataset.}
@@ -22,7 +22,7 @@ load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL, soma_context = NULL)
 \item{tiledbsoma_ctx}{Optional (DEPRECATED) TileDB \dQuote{Context} object
 that defaults to \code{NULL}.}
 
-\item{soma_context}{Optional SOMA context object that defaults to \code{NULL}.}
+\item{context}{Optional SOMA context object that defaults to \code{NULL}.}
 }
 \value{
 \code{list_datasets()}: returns a character vector of the

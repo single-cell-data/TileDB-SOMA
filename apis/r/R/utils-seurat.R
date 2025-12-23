@@ -153,7 +153,7 @@
   ingest_mode = 'write',
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   relative = TRUE
 ) {
   check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
@@ -205,7 +205,7 @@
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
   ms$set_metadata(.assay_version_hint(ifelse(v5, yes = 'v5', no = 'v3')))
   X <- if (!'X' %in% ms$names()) {
@@ -214,7 +214,7 @@
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      soma_context = soma_context
+      context = context
     )
   } else if (isTRUE(relative)) {
     SOMACollectionOpen(uri = file_path(ms$uri, 'X'), mode = 'WRITE')
@@ -269,7 +269,7 @@
               key = layer,
               platform_config = platform_config,
               tiledbsoma_ctx = tiledbsoma_ctx,
-              soma_context = soma_context
+              context = context
             )
             arr$set_metadata(type)
           },
@@ -352,7 +352,7 @@
           key = layer,
           platform_config = platform_config,
           tiledbsoma_ctx = tiledbsoma_ctx,
-          soma_context = soma_context
+          context = context
         ),
         error = function(err) {
           if (slot == 'data') {
@@ -381,7 +381,7 @@
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
-    soma_context = soma_context
+    context = context
   )
 
   # Check for any potentially-missed data

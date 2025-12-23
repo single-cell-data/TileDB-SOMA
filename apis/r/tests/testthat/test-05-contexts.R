@@ -5,7 +5,7 @@ test_that("SOMAContext plumb-through", {
   ctx <- SOMAContext$new()
 
   expect_s3_class(
-    group <- SOMACollectionCreate(uri, soma_context = ctx),
+    group <- SOMACollectionCreate(uri, context = ctx),
     "SOMACollection"
   )
   group$close()
@@ -19,7 +19,7 @@ test_that("SOMAContext plumb-through", {
     group <- TileDBGroup$new(
       uri,
       internal_use_only = "allowed_use",
-      soma_context = soma_context
+      context = ctx
     )
   )
   group$create(internal_use_only = "allowed_use")
@@ -47,7 +47,7 @@ test_that("Existence proof: create_soma_context()", {
     grp2 <- TileDBGroup$new(
       uri,
       internal_use_only = "allowed_use",
-      soma_context = create_soma_context(
+      context = create_soma_context(
         config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true")
       )
     ),
@@ -73,7 +73,7 @@ test_that("Existence proof: SOMAContext", {
     config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true")
   )
   expect_s3_class(
-    grp2 <- SOMACollectionOpen(uri, soma_context = ctx),
+    grp2 <- SOMACollectionOpen(uri, context = ctx),
     class = 'SOMACollection'
   )
   on.exit(grp2$close(), add = TRUE, after = FALSE)

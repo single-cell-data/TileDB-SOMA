@@ -18,7 +18,7 @@ Derived classes: \code{\link{SOMAArrayBase}},
 \describe{
 \item{\code{platform_config}}{Platform configuration}
 
-\item{\code{soma_context}}{SOMAContext context object for TileDB operations}
+\item{\code{context}}{SOMAContext context object for TileDB operations}
 
 \item{\code{tiledbsoma_ctx}}{SOMATileDBContext}
 
@@ -59,7 +59,7 @@ Create a new SOMA object. (lifecycle: maturing)
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -77,7 +77,8 @@ Create a new SOMA object. (lifecycle: maturing)
 \item{\code{tiledb_timestamp}}{Optional timestamp (\code{\link[base]{POSIXct}})
 to open the object at}
 
-\item{\code{soma_context}}{Optional SOMA context object that defaults to \code{NULL}}
+\item{\code{context}}{A \code{SOMAContext} object. Required internally but
+automatically provided by factory functions.}
 }
 \if{html}{\out{</div>}}
 }
