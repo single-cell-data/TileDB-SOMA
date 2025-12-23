@@ -16,8 +16,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
   uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
   expect_true(dir.exists(uri))
 
-  soma_context_handle <- create_soma_context()
-  sr <- mq_setup(uri, ctxxp = soma_context_handle, loglevel = "warn")
+  context_handle <- create_soma_context()
+  sr <- mq_setup(uri, ctxxp = context_handle, loglevel = "warn")
   expect_true(inherits(sr, "externalptr"))
 
   rl <- data.frame()
@@ -36,7 +36,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
   sr <- mq_setup(
     uri,
-    ctxxp = soma_context_handle,
+    ctxxp = context_handle,
     dim_points = list(soma_dim_0 = bit64::as.integer64(1))
   )
   expect_true(inherits(sr, "externalptr"))
@@ -58,7 +58,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
   sr <- mq_setup(
     uri,
-    ctxxp = soma_context_handle,
+    ctxxp = context_handle,
     dim_range = list(
       soma_dim_1 = cbind(bit64::as.integer64(1), bit64::as.integer64(2))
     )
@@ -79,7 +79,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
   ## test completeness predicate on shorter data
   uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-  sr <- mq_setup(uri, soma_context_handle)
+  sr <- mq_setup(uri, context_handle)
 
   expect_false(tiledbsoma:::mq_complete(sr))
   dat <- mq_next(sr)
@@ -110,7 +110,7 @@ test_that("Iterated Interface from SOMA Classes", {
   # against 16MB buffer size, and the particular provided input dataset.
   # The soma_context() is cached at the package level and passed that way
   # to the SOMADataFrame and SOMASparseNDArray classes
-  soma_context_handle <- soma_context(c(soma.init_buffer_bytes = as.character(16777216)))
+  context_handle <- soma_context(c(soma.init_buffer_bytes = as.character(16777216)))
 
   for (tc in test_cases) {
     sdf <- switch(
@@ -190,8 +190,8 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
   # against 16MB buffer size, and the particular provided input dataset.
   # The soma_context() is cached at the package level and passed that way
   # to the SOMADataFrame and SOMASparseNDArray classes
-  soma_context <- SOMAContext$new(c(soma.init_buffer_bytes = as.character(16777216)))
-  snda <- SOMASparseNDArrayOpen(uri, soma_context=soma_context)
+  context <- SOMAContext$new(c(soma.init_buffer_bytes = as.character(16777216)))
+  snda <- SOMASparseNDArrayOpen(uri, context=context)
 
   expect_true(inherits(snda, "SOMAArrayBase"))
 
@@ -229,18 +229,18 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 test_that("Dimension Point and Ranges Bounds", {
   skip_if(!extended_tests() || covr_tests())
   ctx <- tiledbsoma::SOMAContext$new()
-  human_experiment <- load_dataset("soma-exp-pbmc-small", soma_context = ctx)
+  human_experiment <- load_dataset("soma-exp-pbmc-small", context = ctx)
   X <- human_experiment$ms$get("RNA")$X$get("data")
   expect_equal(X$shape(), c(80, 230))
 
-  soma_context_handle <- create_soma_context()
+  context_handle <- create_soma_context()
 
   ## 'good case' with suitable dim points
   coords <- list(
     soma_dim_0 = bit64::as.integer64(0:5),
     soma_dim_1 = bit64::as.integer64(0:5)
   )
-  sr <- mq_setup(uri = X$uri, ctxxp = soma_context_handle, dim_points = coords)
+  sr <- mq_setup(uri = X$uri, ctxxp = context_handle, dim_points = coords)
 
   chunk <- mq_next(sr)
   at <- arrow::as_arrow_table(chunk)
@@ -254,7 +254,7 @@ test_that("Dimension Point and Ranges Bounds", {
     soma_dim_0 = matrix(bit64::as.integer64(c(1, 4)), 1),
     soma_dim_1 = matrix(bit64::as.integer64(c(1, 4)), 1)
   )
-  sr <- mq_setup(uri = X$uri, soma_context_handle, dim_ranges = ranges)
+  sr <- mq_setup(uri = X$uri, context_handle, dim_ranges = ranges)
 
   chunk <- mq_next(sr)
   at <- arrow::as_arrow_table(chunk)

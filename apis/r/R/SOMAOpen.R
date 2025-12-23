@@ -33,11 +33,11 @@ SOMAOpen <- function(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  soma_context = NULL,
+  context = NULL,
   tiledb_timestamp = NULL
 ) {
-  soma_context <- get_soma_context(soma_context, tiledbsoma_ctx, what="SOMAOpen(tiledbsoma_ctx)")
-  type <- get_tiledb_object_type(uri, ctxxp = soma_context$handle)
+  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMAOpen(tiledbsoma_ctx)")
+  type <- get_tiledb_object_type(uri, ctxxp = context$handle)
   metadata <- get_all_metadata(
     uri,
     is_array = switch(
@@ -46,7 +46,7 @@ SOMAOpen <- function(
       GROUP = FALSE,
       stop("Unknown TileDB object type: ", dQuote(type), call. = FALSE)
     ),
-    ctxxp = soma_context$handle
+    ctxxp = context$handle
   )
   if (is.null(metadata$soma_object_type)) {
     stop("URI ", sQuote(uri), " is not a TileDB SOMA object", call. = FALSE)
@@ -58,7 +58,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
-      soma_context = soma_context,
+      context = context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -66,7 +66,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
-      soma_context = soma_context,
+      context = context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -74,7 +74,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
-      soma_context = soma_context,
+      context = context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -82,7 +82,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
-      soma_context = soma_context,
+      context = context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -90,7 +90,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
-      soma_context = soma_context,
+      context = context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
@@ -98,7 +98,7 @@ SOMAOpen <- function(
       uri,
       mode = mode,
       platform_config = platform_config,
-      soma_context = soma_context,
+      context = context,
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),

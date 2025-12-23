@@ -418,7 +418,7 @@ test_that("write_soma.IterableMatrix mechanics", {
       bpmat,
       uri = fmt,
       soma_parent = collection,
-      soma_context = ctx
+      context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = fmt)
@@ -437,7 +437,7 @@ test_that("write_soma.IterableMatrix mechanics", {
       uri = tfmt,
       soma_parent = collection,
       transpose = TRUE,
-      soma_context = ctx
+      context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = tfmt)
@@ -458,7 +458,7 @@ test_that("write_soma.IterableMatrix mechanics", {
       bpmat,
       uri = cfmt,
       soma_parent = collection,
-      soma_context = ctx
+      context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = cfmt)
@@ -497,7 +497,7 @@ test_that("write_soma.IterableMatrix registration", {
       uri = fmt,
       soma_parent = collection,
       key = fmt,
-      soma_context = ctx
+      context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = info)
@@ -558,7 +558,7 @@ test_that("write_soma.IterableMatrix integrity", {
       uri = fmt,
       soma_parent = collection,
       key = fmt,
-      soma_context = ctx
+      context = ctx
     ))
     expect_s3_class(smat, "SOMASparseNDArray")
     expect_true(smat$exists(), info = info)
@@ -570,7 +570,7 @@ test_that("write_soma.IterableMatrix integrity", {
   }
 
   # Empty chunks
-  stride <- .block_size(n = ncol(mat), soma_context = ctx)
+  stride <- .block_size(n = ncol(mat), context = ctx)
   nchunks <- ceiling(x = nrow(x = mat) / stride)
   cases <- list(
     trailing = rbind(
@@ -612,7 +612,7 @@ test_that("write_soma.IterableMatrix integrity", {
         uri = key,
         soma_parent = collection,
         key = key,
-        soma_context = ctx
+        context = ctx
       ))
       expect_s3_class(smat, "SOMASparseNDArray")
       expect_true(smat$exists(), info = info)

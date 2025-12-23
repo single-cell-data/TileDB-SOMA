@@ -53,7 +53,7 @@ SOMASparseNDArray <- R6::R6Class(
 
       sr <- mq_setup(
         uri = self$uri,
-        private$.soma_context$handle,
+        private$.context$handle,
         dim_points = coords,
         result_order = result_order,
         timestamprange = self$.tiledb_timestamp_range,
@@ -213,7 +213,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return A scalar with the number of non-zero elements.
     #'
     nnz = function() {
-      nnz(self$uri, private$.soma_context$handle)
+      nnz(self$uri, private$.context$handle)
     },
 
     #' @description Write a COO table to the array.
@@ -315,7 +315,7 @@ SOMASparseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.soma_context$handle,
+        ctxxp = private$.context$handle,
         arraytype = "SOMASparseNDArray",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range
