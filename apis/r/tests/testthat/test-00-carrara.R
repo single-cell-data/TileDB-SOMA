@@ -101,5 +101,8 @@ test_that("SOMADataFrame creation", {
   expect_true(sdf0$exists())
 
   sdf1 <- SOMADataFrameOpen(uri)
-  expect_equivalent(sdf1$read()$concat(), expected = table)
+  expect_equal(sdf1$soma_type, "SOMADataFrame")
+  expect_equal(sdf1$domain(), domain)
+  expect_equal(sdf1$schema(), table$schema)
+  expect_equivalent(sdf1$read()$concat(), table)
 })
