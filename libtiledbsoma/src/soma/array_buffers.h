@@ -52,7 +52,13 @@ class ArrayBuffers {
             throw TileDBSOMAError("[ArrayBuffers] column '" + name + "' does not exist");
         }
 
-        return std::dynamic_pointer_cast<T>(buffers_[name]);
+        std::shared_ptr<T> casted_column = std::dynamic_pointer_cast<T>(buffers_[name]);
+
+        if (!casted_column) {
+            throw std::runtime_error("[ArrayBuffers][at] Dynamic cast failed for column '" + name + "'");
+        }
+
+        return casted_column;
     }
 
     /**
