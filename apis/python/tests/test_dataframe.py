@@ -3524,7 +3524,6 @@ def test_arrow_table_validity_with_slicing(tmp_path):
 
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
-    print(table)
 
     with soma.DataFrame.open(uri, "w") as A:
         A.write(table)
