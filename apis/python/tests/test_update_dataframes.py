@@ -307,7 +307,7 @@ def test_update_non_null_to_null(soma_tiledb_context, tmp_path, conftest_pbmc3k_
 
 
 @pytest.mark.medium_runner
-@pytest.mark.xfail("Bug reported in SOMA-792")
+@pytest.mark.xfail(reason="Bug reported in SOMA-792")
 def test_enmr_add_drop_read(soma_tiledb_context, tmp_path, conftest_pbmc3k_adata):
     uri = tmp_path.as_posix()
 
