@@ -349,12 +349,36 @@ SOMACollectionBase <- R6::R6Class(
     #' @param object SOMA collection object.
     #' @param key The key to be added.
     #'
+    #' @section Carrara (TileDB v3) behavior:
+    #'
+    #' For Carrara URIs, child objects created at nested URIs are automatically
+    #' added to the parent collection. Calling this method on an already-
+    #' registered child is a **no-op** for backward compatibility.
+    #'
     #' @return Returns \code{object}.
     #'
     add_new_collection = function(object, key) {
       if (!inherits(object, "SOMACollectionBase")) {
         stop("'object' must be a SOMA collection", call. = FALSE)
       }
+
+      # Handle Carrara URIs
+      if (self$soma_context$is_tiledbv3(self$uri)) {
+        # Validate name/uri match
+        if (basename(object$uri) != key) {
+          stop(
+            sprintf(
+              "Member name `%s` must match the final segment of the URI (`%s`) for Carrara collections.",
+              key,
+              basename(object$uri)
+            ),
+            call. = FALSE
+          )
+        }
+        # no-op if already present
+        if (key %in% self$names()) return(object)
+      }
+
       self$set(object, key)
       return(object)
     },
