@@ -34,7 +34,7 @@ SOMACollectionBase <- R6::R6Class(
         stop(
           paste(
             strwrap(private$.internal_use_only("create", "collection")),
-            collapse = '\n'
+            collapse = "\n"
           ),
           call. = FALSE
         )
@@ -108,7 +108,7 @@ SOMACollectionBase <- R6::R6Class(
         stop(
           paste(
             strwrap(private$.internal_use_only("open", "collection")),
-            collapse = '\n'
+            collapse = "\n"
           ),
           call. = FALSE
         )
@@ -181,12 +181,41 @@ SOMACollectionBase <- R6::R6Class(
         "'name' must be a single, non-empty string" = is.null(name) ||
           (is_scalar_character(name) && nzchar(name))
       )
-      relative <- relative %||% !startsWith(object$uri, "tiledb://")
+
+      private$.check_open_for_write()
+
+      # Default name to URI basename
+      name <- name %||% basename(object$uri)
+
+      # Handle Carrara URIs
+      if (self$soma_context$is_tiledbv3(self$uri)) {
+        # Validate name/uri match
+        if (basename(object$uri) != name) {
+          stop(
+            sprintf(
+              "Member name `%s` must match the final segment of the URI (`%s`) for Carrara collections.",
+              name,
+              basename(object$uri)
+            ),
+            call. = FALSE
+          )
+        }
+
+        # Force refresh member cache refresh since Carrara automatically adds
+        # children on creation, the local cache may be stale
+        private$.update_member_cache(force = TRUE)
+
+        # no-op if already present
+        if (name %in% names(private$.member_cache)) {
+          return(invisible(self))
+        }
+      }
+
+      # Determine whether to use relative URI
+      relative <- relative %||% is_relative_uri(object$uri)
       if (!(isTRUE(relative) || isFALSE(relative))) {
         stop("'relative' must be TRUE or FALSE", call. = FALSE)
       }
-
-      private$.check_open_for_write()
 
       # Make the URI relative before adding it
       uri <- if (relative) {
@@ -194,7 +223,7 @@ SOMACollectionBase <- R6::R6Class(
       } else {
         object$uri
       }
-      name <- name %||% basename(uri)
+
       soma_debug(sprintf(
         "[SOMACollectionBase$set] '%s' uri %s relative %s",
         name,
@@ -362,23 +391,6 @@ SOMACollectionBase <- R6::R6Class(
         stop("'object' must be a SOMA collection", call. = FALSE)
       }
 
-      # Handle Carrara URIs
-      if (self$soma_context$is_tiledbv3(self$uri)) {
-        # Validate name/uri match
-        if (basename(object$uri) != key) {
-          stop(
-            sprintf(
-              "Member name `%s` must match the final segment of the URI (`%s`) for Carrara collections.",
-              key,
-              basename(object$uri)
-            ),
-            call. = FALSE
-          )
-        }
-        # no-op if already present
-        if (key %in% self$names()) return(object)
-      }
-
       self$set(object, key)
       return(object)
     },
@@ -403,6 +415,10 @@ SOMACollectionBase <- R6::R6Class(
       domain,
       platform_config = NULL
     ) {
+      if (key %in% self$names()) {
+        stop(sprintf("Member '%s' already exists", key), call. = FALSE)
+      }
+
       sdf <- SOMADataFrameCreate(
         uri = file_path(self$uri, key),
         schema = schema,
@@ -413,7 +429,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      self$set(sdf, key)
+      self$set(sdf, name = key)
       return(sdf)
     },
 
@@ -429,6 +445,10 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns the newly-created array stored at \code{key}.
     #'
     add_new_dense_ndarray = function(key, type, shape, platform_config = NULL) {
+      if (key %in% self$names()) {
+        stop(sprintf("Member '%s' already exists", key), call. = FALSE)
+      }
+
       ndarr <- SOMADenseNDArrayCreate(
         uri = file_path(self$uri, key),
         type = type,
@@ -438,7 +458,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp
       )
-      self$set(ndarr, key)
+      self$set(ndarr, name = key)
       return(ndarr)
     },
 
@@ -459,6 +479,10 @@ SOMACollectionBase <- R6::R6Class(
       shape,
       platform_config = NULL
     ) {
+      if (key %in% self$names()) {
+        stop(sprintf("Member '%s' already exists", key), call. = FALSE)
+      }
+
       ndarr <- SOMASparseNDArrayCreate(
         uri = file_path(self$uri, key),
         type = type,
@@ -468,7 +492,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      self$set(ndarr, key)
+      self$set(ndarr, name = key)
       return(ndarr)
     },
 
@@ -669,7 +693,6 @@ SOMACollectionBase <- R6::R6Class(
           type = "READ",
           ctxxp = private$.context$handle %||% create_soma_context(),
           timestamp = self$.tiledb_timestamp_range
-
         )
       } else {
         private$.tiledb_group
