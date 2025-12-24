@@ -32,6 +32,12 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
+/**
+ * Enum describing the available memory management modes for converting a Column Buffer to an Arrow compatible struct.
+ * 
+ * PERFORMANCE: This mode transfers the allocated read buffers directly to the Arrow struct. This mode is faster to convert to an Arrow struct but may waste memory if the read buffers are larger than the read results.
+ * EFFICIENCY: This mode allocates a new set of buffers for the Arrow struct will the exact size of the read results and copies the data there. This mode is slower to convert to an Arrow struct but may improve memory utilization if the read buffers are larger than the read results.
+ */
 enum class MemoryMode { PERFORMANCE, EFFICIENCY };
 
 class ColumnBuffer {
