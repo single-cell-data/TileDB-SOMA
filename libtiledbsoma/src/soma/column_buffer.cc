@@ -62,7 +62,7 @@ MemoryMode ColumnBuffer::memory_mode(const Config& config) {
         } else if (value == "efficiency") {
             return MemoryMode::EFFICIENCY;
         } else {
-            LOG_WARN(fmt::format("[ColumnBuffer] Unknown memory mode specified '{}'. Default mode selected.", value));
+            throw TileDBSOMAError(fmt::format("[ColumnBuffer] Unknown memory mode specified '{}'", value));
         }
     }
 
