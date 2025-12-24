@@ -57,6 +57,11 @@ create_array_path <- function() {
   file.path(BASE_URI, paste0(UUIDgenerate(), "-tiledbsoma-r"))
 }
 
+create_group_path <- function() {
+  library(uuid)
+  file.path(BASE_URI, paste0(UUIDgenerate(), "-tiledbsoma-r-group"))
+}
+
 test_that("SOMAContext detects data protocol", {
   # Initialize with simple config
   ctx <- SOMAContext$new()
@@ -84,7 +89,6 @@ test_that("SOMAContext detects data protocol", {
 
 test_that("SOMADataFrame creation", {
   clean_env()
-  uri <- tempfile()
   uri <- create_array_path()
   table <- create_arrow_table()
   domain <- list(soma_joinid = c(0L, 10L))
@@ -105,4 +109,17 @@ test_that("SOMADataFrame creation", {
   expect_equal(sdf1$domain(), domain)
   expect_equal(sdf1$schema(), table$schema)
   expect_equivalent(sdf1$read()$concat(), table)
+})
+
+# TODO: Expand to Experiment and Measurements
+test_that("SOMACollection creation", {
+  clean_env()
+  uri <- create_group_path()
+  collection <- SOMACollectionCreate(uri = uri)
+  collection$close()
+
+  collection2 <- SOMACollectionOpen(uri)
+  # Using equivalence because soma_type returns a named string for collections
+  expect_equivalent(collection2$soma_type, "SOMACollection")
+  expect_equal(length(collection2$names()), 0)
 })
