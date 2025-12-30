@@ -10,8 +10,8 @@
  *
  *   This file defines the SOMADimension class.
  */
-
 #include "soma_dimension.h"
+#include <format>
 #include "../utils/logger.h"
 #include "utils/arrow_adapter.h"
 
@@ -33,7 +33,7 @@ std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
 
     if (dimension_names.size() != 1) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMADimension][deserialize] Invalid number of dimensions: "
                 "expected 1, got {}",
                 dimension_names.size()));
@@ -143,7 +143,7 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
                 platform_config);
         default:
             throw TileDBSOMAError(
-                fmt::format("ArrowAdapter: Unsupported TileDB dimension: {} ", tiledb::impl::type_to_str(tiledb_type)));
+                std::format("ArrowAdapter: Unsupported TileDB dimension: {} ", tiledb::impl::type_to_str(tiledb_type)));
     }
 }
 
@@ -219,7 +219,7 @@ void SOMADimension::_set_dim_points(ManagedQuery& query, const std::any& points)
             break;
         default:
             throw TileDBSOMAError(
-                fmt::format("[SOMADimension] Unknown dimension type {}", impl::type_to_str(dimension.type())));
+                std::format("[SOMADimension] Unknown dimension type {}", impl::type_to_str(dimension.type())));
     }
 }
 
@@ -284,14 +284,14 @@ void SOMADimension::_set_dim_ranges(ManagedQuery& query, const std::any& ranges)
             break;
         default:
             throw TileDBSOMAError(
-                fmt::format("[SOMADimension] Unknown dimension type {}", impl::type_to_str(dimension.type())));
+                std::format("[SOMADimension] Unknown dimension type {}", impl::type_to_str(dimension.type())));
     }
 }
 
 void SOMADimension::_set_current_domain_slot(NDRectangle& rectangle, std::span<const std::any> domain) const {
     if (domain.size() != 1) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMADimension][_set_current_domain_slot] Invalid domain size. "
                 "Expected 1, got {}",
                 domain.size()));
@@ -387,7 +387,7 @@ void SOMADimension::_set_current_domain_slot(NDRectangle& rectangle, std::span<c
                 rectangle.set_range(dimension.name(), "", "\x7f");
             } else {
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "[SOMADimension][_set_current_domain_slot] domain (\"{}\", "
                         "\"{}\") cannot be set for "
                         "string index columns: please use "
@@ -399,7 +399,7 @@ void SOMADimension::_set_current_domain_slot(NDRectangle& rectangle, std::span<c
         } break;
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMADimension][_set_current_domain_slot] Unknown datatype {}",
                     tiledb::impl::type_to_str(dimension.type())));
     }
@@ -409,7 +409,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
     std::optional<NDRectangle>& rectangle, std::span<const std::any> new_domain) const {
     if (new_domain.size() != 1) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMADimension][_can_set_current_domain_slot] Expected domain "
                 "size for '{}' is 1, found {}",
                 name(),
@@ -420,7 +420,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         if (new_dom[0] > new_dom[1]) {
             return std::pair(
                 false,
-                fmt::format(
+                std::format(
                     "index-column name '{}': new lower {} > new upper {}", dimension.name(), new_dom[0], new_dom[1]));
         }
 
@@ -436,7 +436,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             if (new_dom[0] > dom[0]) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name '{}': new lower {} > old lower {} "
                         "(downsize "
                         "is unsupported)",
@@ -447,7 +447,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             if (new_dom[1] < dom[1]) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name '{}': new upper {} < old upper {} "
                         "(downsize "
                         "is unsupported)",
@@ -461,7 +461,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             if (new_dom[0] < dom.first) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name '{}': new lower {} < limit lower {}",
                         dimension.name(),
                         new_dom[0],
@@ -470,7 +470,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             if (new_dom[1] > dom.second) {
                 return std::pair(
                     false,
-                    fmt::format(
+                    std::format(
                         "index-column name '{}': new upper {} > limit upper {}",
                         dimension.name(),
                         new_dom[1],
@@ -538,7 +538,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         }
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMADimension][_can_set_current_domain_slot] Unknown dataype "
                     "{}",
                     tiledb::impl::type_to_str(dimension.type())));
@@ -591,7 +591,7 @@ std::any SOMADimension::_core_domain_slot() const {
             return std::make_any<std::pair<double_t, double_t>>(dimension.domain<double_t>());
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMADimension][_core_domain_slot] Unknown dimension type {}",
                     impl::type_to_str(dimension.type())));
     }
@@ -646,7 +646,7 @@ std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
             return std::make_any<std::pair<std::string, std::string>>(array.non_empty_domain_var(dimension.name()));
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMADimension][_non_empty_domain_slot] Unknown dimension "
                     "type {}",
                     impl::type_to_str(dimension.type())));
@@ -800,7 +800,7 @@ std::any SOMADimension::_non_empty_domain_slot_opt(const SOMAContext& ctx, Array
             }
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMADimension][_non_empty_domain_slot] Unknown "
                     "dimension "
                     "type {}",
@@ -886,7 +886,7 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
         }
         default:
             throw TileDBSOMAError(
-                fmt::format("[SOMADimension] Unknown dimension type {}", impl::type_to_str(dimension.type())));
+                std::format("[SOMADimension] Unknown dimension type {}", impl::type_to_str(dimension.type())));
     }
 }
 
@@ -953,7 +953,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
             break;
         default:
             throw TileDBSOMAError(
-                fmt::format(
+                std::format(
                     "[SOMADimension][arrow_domain_slot] dim {} has unhandled "
                     "type "
                     "{}",

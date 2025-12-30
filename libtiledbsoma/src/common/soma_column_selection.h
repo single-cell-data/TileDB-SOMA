@@ -16,9 +16,9 @@
 #define SOMA_COLUMN_SELECTION_H
 
 #include <math.h>
+#include <format>
 #include <optional>
 #include <span>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <variant>
@@ -40,11 +40,11 @@ struct SliceSelection {
         : start{slice_start}
         , stop{slice_stop} {
         if (stop.has_value() && start.has_value() && stop.value() < start.value()) {
-            // Using sstream because we don't want to include fmt directly in external header.
-            std::stringstream ss;
-            ss << "Invalid slice [ " << start.value() << ", " << stop.value()
-               << "]. The lower bound must be less than or equal to the upper bound.";
-            throw std::invalid_argument(ss.str());
+            throw std::invalid_argument(
+                std::format(
+                    "Invalid slice [{}, {}]. The lower bound must be less than or equal to the upper bound.",
+                    start.value(),
+                    stop.value()));
         }
     }
 

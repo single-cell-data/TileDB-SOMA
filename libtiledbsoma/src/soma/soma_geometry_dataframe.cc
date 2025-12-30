@@ -12,6 +12,7 @@
  */
 
 #include "soma_geometry_dataframe.h"
+#include <format>
 #include "../utils/logger.h"
 #include "../utils/transformer.h"
 #include "../utils/util.h"
@@ -92,7 +93,7 @@ void SOMAGeometryDataFrame::initialize() {
 
     if (!coordinate_space_meta.has_value()) {
         throw TileDBSOMAError(
-            fmt::format(
+            std::format(
                 "[SOMAGeometryDataFrame][initialize] Missing required '{}' "
                 "metadata key.",
                 SOMA_COORDINATE_SPACE_KEY));

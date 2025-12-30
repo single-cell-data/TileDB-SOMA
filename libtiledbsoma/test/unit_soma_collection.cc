@@ -11,6 +11,8 @@
  * This file manages unit tests for the SOMACollection class
  */
 
+#include <format>
+
 #include "common.h"
 
 static const int64_t DIM_MAX = 999;
@@ -126,7 +128,6 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
 }
 
 TEST_CASE("SOMACollection: add SOMADataFrame") {
-    std::ostringstream section;
     TimestampRange ts(0, 2);
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-add-dataframe";

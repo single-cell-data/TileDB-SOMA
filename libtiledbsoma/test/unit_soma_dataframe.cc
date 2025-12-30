@@ -11,6 +11,8 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
+#include <format>
+
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -401,9 +403,7 @@ TEST_CASE_METHOD(
     // Both need testing. Each one adds a shape where there wasn't one
     // before. So we need to test one or the other on a given run.
     auto test_upgrade_domain = GENERATE(false, true);
-    std::ostringstream section;
-    section << "- test_upgrade_domain=" << test_upgrade_domain;
-    SECTION(section.str()) {
+    SECTION(std::format("- test_upgrade_domain={}", test_upgrade_domain)) {
         std::string suffix = test_upgrade_domain ? "true" : "false";
 
         set_up(std::make_shared<SOMAContext>(), "mem://unit-test-variant-indexed-dataframe-1-" + suffix);
@@ -611,9 +611,7 @@ TEST_CASE_METHOD(
     // Both need testing. Each one adds a shape where there wasn't one
     // before. So we need to test one or the other on a given run.
     auto test_upgrade_domain = GENERATE(false, true);
-    std::ostringstream section;
-    section << "- test_upgrade_domain=" << test_upgrade_domain;
-    SECTION(section.str()) {
+    SECTION(std::format("- test_upgrade_domain={}", test_upgrade_domain)) {
         std::string suffix = test_upgrade_domain ? "true" : "false";
         set_up(std::make_shared<SOMAContext>(), "mem://unit-test-variant-indexed-dataframe-2-" + suffix);
 
@@ -815,13 +813,9 @@ TEST_CASE_METHOD(
     "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
     "[SOMADataFrame]") {
     auto specify_domain = GENERATE(false, true);
-    std::ostringstream section;
-    section << "- specify_domain=" << specify_domain;
-    SECTION(section.str()) {
+    SECTION(std::format("- specify_domain={}", specify_domain)) {
         auto test_upgrade_domain = GENERATE(false, true);
-        std::ostringstream section3;
-        section << "- test_upgrade_domain=" << test_upgrade_domain;
-        SECTION(section3.str()) {
+        SECTION(std::format("- test_upgrade_domain={}", test_upgrade_domain)) {
             std::string suffix1 = specify_domain ? "true" : "false";
             std::string suffix2 = test_upgrade_domain ? "true" : "false";
             set_up(
@@ -1035,13 +1029,9 @@ TEST_CASE_METHOD(
     "SOMADataFrame: variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMADataFrame]") {
     auto specify_domain = GENERATE(false, true);
-    std::ostringstream section;
-    section << "- specify_domain=" << specify_domain;
-    SECTION(section.str()) {
+    SECTION(std::format("- specify_domain={}", specify_domain)) {
         auto test_upgrade_domain = GENERATE(false, true);
-        std::ostringstream section3;
-        section << "- test_upgrade_domain=" << test_upgrade_domain;
-        SECTION(section3.str()) {
+        SECTION(std::format("- test_upgrade_domain={}", test_upgrade_domain)) {
             std::string suffix1 = specify_domain ? "true" : "false";
             std::string suffix2 = test_upgrade_domain ? "true" : "false";
             set_up(

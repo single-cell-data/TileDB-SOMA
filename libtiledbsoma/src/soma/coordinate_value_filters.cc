@@ -13,6 +13,7 @@
 
 #include "coordinate_value_filters.h"
 
+#include <format>
 #include <numeric>
 #include "../tiledb_adapter/value_filter.h"
 #include "../utils/logger.h"
@@ -65,11 +66,12 @@ CoordinateValueFilters& CoordinateValueFilters::add_coordinate_query_condition(i
 /**Throws an error if using a string on a non-string column. */
 void CoordinateValueFilters::validate_string_column(std::shared_ptr<SOMAColumn> column) const {
     if (column->domain_type().value() != TILEDB_STRING_ASCII) {
-        std::stringstream ss;
         auto tiledb_type = tiledb::impl::type_to_str(column->domain_type().value());
-        ss << "Invalid coordinate on column '" << column->name() << "'. Cannot set string value on column with type "
-           << tiledb_type << ".";
-        throw std::invalid_argument(ss.str());
+        throw std::invalid_argument(
+            std::format(
+                "Invalid coordinate on column '{}'. Cannot set string value on column with type {}.",
+                column->name(),
+                tiledb_type));
     }
 }
 

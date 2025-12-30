@@ -1,3 +1,4 @@
+#include <format>
 #include <map>
 #include <string>
 #include <tiledb/tiledb>
@@ -33,7 +34,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (soma_type == "SOMAGroup") {
             tiledb_type = Object::Type::Group;
         } else {
-            throw TileDBSOMAError(fmt::format("Internal error: Invalid soma base type '{}'.", soma_type.value()));
+            throw TileDBSOMAError(std::format("Internal error: Invalid soma base type '{}'.", soma_type.value()));
         }
     } else {
         tiledb_type = Object::object(*ctx->tiledb_ctx(), std::string(uri)).type();
@@ -46,7 +47,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
 
             if (!array_type.has_value()) {
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "Unable to open the TileDB array at '{}'. The array is missing the required '{}' metadata "
                         "key.",
                         uri,
@@ -69,7 +70,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
                 return std::make_unique<SOMAGeometryDataFrame>(*array_);
             } else {
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "Unable to open the TileDB array at '{}' with unrecognized SOMA array type '{}'.",
                         uri,
                         array_->type().value()));
@@ -81,7 +82,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
 
             if (!group_type.has_value()) {
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "Unable to open the TileDB group at '{}'. The group is missing the required '{}' metadata "
                         "key.",
                         uri,
@@ -104,14 +105,14 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
                 return std::make_unique<SOMAMultiscaleImage>(*group_);
             } else {
                 throw TileDBSOMAError(
-                    fmt::format(
+                    std::format(
                         "Unable to open the TileDB group at '{}' with unrecognized SOMA group type '{}'.",
                         uri,
                         group_->type().value()));
             }
         }
         default:
-            throw TileDBSOMAError(fmt::format("The object at URI '{}' is not a valid TileDB array or group.", uri));
+            throw TileDBSOMAError(std::format("The object at URI '{}' is not a valid TileDB array or group.", uri));
     }
 }
 
