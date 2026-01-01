@@ -1,5 +1,10 @@
 # Carrara Test Configuration and Helpers -----------------------------------
 
+# Generate a unique ID for test assets
+generate_unique_id <- function(pattern = "") {
+  basename(tempfile(pattern = pattern))
+}
+
 # Skip carrara tests unless explicitly enabled via environment variable
 skip_if_no_carrara <- function() {
   if (Sys.getenv("SOMA_TEST_CARRARA", "false") != "true") {
@@ -38,13 +43,10 @@ get_base_uri <- function() {
 
 # Create a unique carrara array path with automatic cleanup
 carrara_array_path <- function(env = parent.frame()) {
-  if (!requireNamespace("uuid", quietly = TRUE)) {
-    stop("Package 'uuid' is required for carrara tests")
-  }
 
-  path <- file.path(
+  path <- file_path(
     get_base_uri(),
-    paste0(uuid::UUIDgenerate(), "-tiledbsoma-r")
+    generate_unique_id("tiledbsoma-r-")
   )
 
   # Register cleanup - delete array after test completes
@@ -65,13 +67,9 @@ carrara_array_path <- function(env = parent.frame()) {
 
 # Create a unique carrara group path with automatic cleanup
 carrara_group_path <- function(env = parent.frame()) {
-  if (!requireNamespace("uuid", quietly = TRUE)) {
-    stop("Package 'uuid' is required for carrara tests")
-  }
-
-  path <- file.path(
+  path <- file_path(
     get_base_uri(),
-    paste0(uuid::UUIDgenerate(), "-tiledbsoma-r-group")
+    generate_unique_id("tiledbsoma-r-group-")
   )
 
   # Recursively delete group after test completes
