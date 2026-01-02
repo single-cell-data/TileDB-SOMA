@@ -1,99 +1,4 @@
-# Carrara Test Configuration and Helpers -----------------------------------
-
-# Generate a unique ID for test assets
-generate_unique_id <- function(pattern = "") {
-  basename(tempfile(pattern = pattern))
-}
-
-# Skip carrara tests unless explicitly enabled via environment variable
-skip_if_no_carrara <- function() {
-  if (Sys.getenv("SOMA_TEST_CARRARA", "false") != "true") {
-    skip("Carrara tests not enabled. Set SOMA_TEST_CARRARA=true to run.")
-  }
-}
-
-# Read from environment variables or use defaults
-get_carrara_config <- function() {
-  list(
-    profile = Sys.getenv("CARRARA_TEST_PROFILE", "carrara"),
-    workspace = Sys.getenv("CARRARA_TEST_WORKSPACE", "TileDB-Inc-Staging"),
-    teamspace = Sys.getenv("CARRARA_TEST_TEAMSPACE", "aaron-dev"),
-    folder = Sys.getenv("CARRARA_TEST_FOLDER", "remote_test"),
-    rest_server = Sys.getenv(
-      "TILEDB_REST_SERVER_ADDRESS",
-      "https://api.staging.tiledb.io"
-    )
-  )
-}
-
-# Set carrara-related environment variables and unset existing TILEDB_REST_TOKEN
-with_carrara_env <- function(env = parent.frame()) {
-    withr::local_envvar(list(
-      CARRARA_PROFILE = get_carrara_config()$profile,
-      TILEDB_REST_SERVER_ADDRESS = get_carrara_config()$rest_server,
-      TILEDB_REST_TOKEN = NA_character_
-  ), .local_envir = env)
-}
-
-# Build base URI for carrara tests
-get_base_uri <- function() {
-  cfg <- get_carrara_config()
-  sprintf("tiledb://%s/%s/%s", cfg$workspace, cfg$teamspace, cfg$folder)
-}
-
-# Create a unique carrara array path with automatic cleanup
-carrara_array_path <- function(env = parent.frame()) {
-
-  path <- file_path(
-    get_base_uri(),
-    generate_unique_id("tiledbsoma-r-")
-  )
-
-  # Register cleanup - delete array after test completes
-  withr::defer(
-    {
-      tryCatch(
-        tiledb::tiledb_vfs_remove_dir(path),
-        error = function(e) {
-          message("Failed to cleanup carrara array: ", path)
-        }
-      )
-    },
-    envir = env
-  )
-
-  path
-}
-
-# Create a unique carrara group path with automatic cleanup
-carrara_group_path <- function(env = parent.frame()) {
-  path <- file_path(
-    get_base_uri(),
-    generate_unique_id("tiledbsoma-r-group-")
-  )
-
-  # Recursively delete group after test completes
-  # Note: tiledb-r requires this specific sequence of operations
-  withr::defer(
-    {
-      tryCatch(
-        {
-          grp <- tiledb::tiledb_group(path)
-          tiledb::tiledb_group_close(grp)
-          grp <- tiledb::tiledb_group_open(grp, type = "MODIFY_EXCLUSIVE")
-          tiledb::tiledb_group_delete(grp = grp, uri = path, recursive = TRUE)
-          tiledb::tiledb_group_close(grp)
-        },
-        error = function(e) {
-          message("Failed to cleanup carrara group: ", path)
-        }
-      )
-    },
-    envir = env
-  )
-
-  path
-}
+# Helper functions for Carrara tests --------------------------------------
 
 # Replacement helper that matches create_arrow_schema() and respects nullability
 create_arrow_table <- function(nrows = 10L, factors = FALSE) {
@@ -106,7 +11,7 @@ create_arrow_table <- function(nrows = 10L, factors = FALSE) {
   )
 }
 
-# Tests for Carrara ----------------------------------------------------------
+# Tests for Carrara Object Creation -----------------------------------------
 
 test_that("SOMAContext detects data protocol", {
   ctx <- SOMAContext$new()
@@ -292,6 +197,71 @@ test_that("SOMACollection add_new_* methods", {
   c7 <- collection$get("child7")
   expect_equal(c7$shape(), bit64::as.integer64(shape))
   c7$close()
+
+  collection$close()
+})
+
+test_that("SOMACollection path encoding validation", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  uri <- carrara_group_path()
+  SOMACollectionCreate(uri = uri)$close()
+
+  # Test names with special characters
+  test_names <- c(
+    "my collection",           # spaces
+    "data_αβγ",                # unicode
+    "test-data_v1",            # hyphens and underscores
+    "name.with.dots",          # dots
+    "CamelCaseName"            # mixed case
+  )
+
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+
+  # Create child collections with special character names
+  for (name in test_names) {
+    child_uri <- file.path(uri, name)
+    SOMACollectionCreate(child_uri)$close()
+  }
+
+  collection$close()
+
+  # Verify all collections were created and names preserved
+  collection <- SOMACollectionOpen(uri, mode = "READ")
+  expect_equal(collection$length(), length(test_names))
+  expect_setequal(collection$names(), test_names)
+
+  # Verify each collection can be opened and has correct type
+  for (name in test_names) {
+    child <- collection$get(name)
+    expect_equivalent(child$soma_type, "SOMACollection")
+    child$close()
+  }
+
+  collection$close()
+
+  # Test round-trip: create DataFrame with unicode name
+  unicode_df_uri <- file.path(uri, "dataframe_αβγ")
+  schema <- arrow::schema(
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+    arrow::field("value", arrow::int32())
+  )
+  domain <- list(soma_joinid = c(0L, 100L))
+
+  SOMADataFrameCreate(
+    uri = unicode_df_uri,
+    schema = schema,
+    domain = domain
+  )$close()
+
+  # Verify DataFrame with unicode name
+  collection <- SOMACollectionOpen(uri, mode = "READ")
+  expect_true("dataframe_αβγ" %in% collection$names())
+
+  df <- collection$get("dataframe_αβγ")
+  expect_equivalent(df$soma_type, "SOMADataFrame")
+  df$close()
 
   collection$close()
 })
