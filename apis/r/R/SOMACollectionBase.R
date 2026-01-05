@@ -568,6 +568,11 @@ SOMACollectionBase <- R6::R6Class(
     .update_member_cache = function(force = FALSE) {
       stopifnot(isTRUE(force) || isFALSE(force))
 
+      # Carrara URIs may have external changes due to auto-registration
+      if (self$soma_context$is_tiledbv3(self$uri)) {
+        force <- TRUE
+      }
+
       # Skip if we already have a member cache and don't want to update
       if (length(private$.member_cache) && !force) {
         return(invisible(NULL))
