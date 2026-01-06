@@ -27,9 +27,9 @@ from tests.ht._ht_util import (
         shape=ht_np.array_shapes(max_dims=1, max_side=127),
         unique=True,
     ),
-    context=st.one_of(st.from_type(soma.SOMATileDBContext), st.none()),
+    context=st.one_of(st.from_type(soma.SOMAContext), st.none()),
 )
-def test_IntIndexer_ndarray_lookup(data: npt.NDArray[Any], context: soma.SOMATileDBContext) -> None:
+def test_IntIndexer_ndarray_lookup(data: npt.NDArray[Any], context: soma.SOMAContext) -> None:
     assert np.array_equal(
         soma.IntIndexer(data=data, context=context).get_indexer(data),
         np.arange(0, len(data), dtype=np.int64),
@@ -50,7 +50,7 @@ def test_IntIndexer_ndarray_lookup(data: npt.NDArray[Any], context: soma.SOMATil
     ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
-def test_IntIndexer_arrow_lookup(data: pa.ChunkedArray, context: soma.SOMATileDBContext) -> None:
+def test_IntIndexer_arrow_lookup(data: pa.ChunkedArray, context: soma.SOMAContext) -> None:
     assert np.array_equal(
         soma.IntIndexer(data=data, context=context).get_indexer(data),
         np.arange(0, len(data), dtype=np.int64),
@@ -59,7 +59,7 @@ def test_IntIndexer_arrow_lookup(data: pa.ChunkedArray, context: soma.SOMATileDB
 
 @given(data=st.from_type(Union[np.ndarray[Any, Any], list[int]]))
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
-def test_fuzz_IntIndexer(data: npt.NDArray[Any], context: soma.SOMATileDBContext) -> None:
+def test_fuzz_IntIndexer(data: npt.NDArray[Any], context: soma.SOMAContext) -> None:
     if isinstance(data, list):
         ht.assume(len(data) > 0 and any(not isinstance(x, int) for x in data))
     elif isinstance(data, np.ndarray):
@@ -76,7 +76,7 @@ def test_fuzz_IntIndexer(data: npt.NDArray[Any], context: soma.SOMATileDBContext
     ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
-def test_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[np.int64], context: soma.SOMATileDBContext) -> None:
+def test_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[np.int64], context: soma.SOMAContext) -> None:
     indexer = clib.IntIndexer(context.native_context)
     indexer.map_locations(data)
 
@@ -91,7 +91,7 @@ def test_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[np.int64], cont
     ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
-def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], context: soma.SOMATileDBContext) -> None:
+def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], context: soma.SOMAContext) -> None:
     ht.assume((not isinstance(data, np.ndarray)) or data.dtype != np.int64 or data.ndim != 1)
 
     indexer = clib.IntIndexer(context.native_context)
@@ -108,7 +108,7 @@ def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], cont
     ),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
-def test_fuzz_pytiledbsoma_Indexer_get_indexer_general(data: Any, context: soma.SOMATileDBContext) -> None:
+def test_fuzz_pytiledbsoma_Indexer_get_indexer_general(data: Any, context: soma.SOMAContext) -> None:
     ht.assume((not isinstance(data, np.ndarray)) or data.dtype != np.int64 or data.ndim != 1)
 
     indexer = clib.IntIndexer(context.native_context)
