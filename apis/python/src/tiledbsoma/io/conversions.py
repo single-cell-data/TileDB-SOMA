@@ -18,8 +18,8 @@ from pandas.api.extensions import ExtensionDtype  # noqa - required to resolve p
 
 from tiledbsoma._fastercsx import CompressedMatrix
 from tiledbsoma._funcs import typeguard_ignore
+from tiledbsoma._soma_context import SOMAContext
 from tiledbsoma._types import NPNDArray, PDSeries
-from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, sp.sparray, PDSeries)
@@ -201,7 +201,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:  # noqa: ARG001
     return x
 
 
-def csr_from_coo_table(tbl: pa.Table, num_rows: int, num_cols: int, context: SOMATileDBContext) -> sp.csr_matrix:
+def csr_from_coo_table(tbl: pa.Table, num_rows: int, num_cols: int, context: SOMAContext) -> sp.csr_matrix:
     """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrix``."""
     return CompressedMatrix.from_soma(tbl, (num_rows, num_cols), "csr", True, context).to_scipy()
 

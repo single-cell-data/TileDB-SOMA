@@ -15,7 +15,7 @@ import pyarrow as pa
 import scipy.sparse
 from typing_extensions import TypeAlias
 
-from .options._soma_tiledb_context import SOMATileDBContext
+from ._soma_context import SOMAContext
 from .pytiledbsoma.fastercsx import compress_coo, copy_csx_to_dense, sort_csx_indices
 
 NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
@@ -50,7 +50,7 @@ class CompressedMatrix:
         format: Format,
         is_sorted: bool,
         no_duplicates: bool | None,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> None:
         """Construct from PJV format. Not intended for direct use - use instead the
         static factory methods `from_ijd`, `from_pjv` and `from_soma`.
@@ -77,7 +77,7 @@ class CompressedMatrix:
         shape: tuple[int, int],
         format: Format,
         make_sorted: bool,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> CompressedMatrix:
         """Factory method accepting COO points stored in IJD vectors."""
         i = i if isinstance(i, collections.abc.Sequence) else (i,)
@@ -107,7 +107,7 @@ class CompressedMatrix:
         shape: tuple[int, int],
         format: Format,
         make_sorted: bool,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> CompressedMatrix:
         """Factory method accepting a sequence of Arrow tables containing SOMA sparse matrix data.
 

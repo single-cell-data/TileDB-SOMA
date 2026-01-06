@@ -87,7 +87,7 @@ class SOMAContext:
         config: dict[str, str | float] | None = None,
         threadpool: ThreadPoolExecutor | None = None,
     ) -> None:
-        """Initializes a new SOMATileDBContext.
+        """Initializes a new SOMAContext.
 
         Args:
             config: A dictionary of TileDB configuration options to use, overriding the default configuration.

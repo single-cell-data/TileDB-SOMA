@@ -7,10 +7,9 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 
-from tiledbsoma import SOMAError
+from tiledbsoma import SOMAContext, SOMAError
 from tiledbsoma._indexer import IntIndexer
 from tiledbsoma.options import SOMATileDBContext
-from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
 @pytest.mark.parametrize(
@@ -21,7 +20,7 @@ from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_contex
     ],
 )
 def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.array):
-    context = _validate_soma_tiledb_context(SOMATileDBContext())
+    context = SOMAContext()
     with pytest.raises(SOMAError, match=r"There are duplicate keys."):
         IntIndexer(keys, context=context)
 
@@ -93,7 +92,7 @@ def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.arr
     ],
 )
 def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
-    context = _validate_soma_tiledb_context(SOMATileDBContext()) if contextual else None
+    context = SOMAContext() if contextual else None
     all_results = []
     num_threads = 10
 
