@@ -199,6 +199,14 @@ test_that("SOMACollection add_new_* methods", {
   c7$close()
 
   collection$close()
+
+  # Verify that all child URIs are relative
+  grp <- tiledb::tiledb_group(uri)
+  for (i in seq_len(tiledb::tiledb_group_member_count(grp)) - 1L) {
+    child_name <- tiledb::tiledb_group_member(grp, i)[3]
+    expect_true(tiledb::tiledb_group_is_relative(grp, child_name))
+  }
+  tiledb::tiledb_group_close(grp)
 })
 
 test_that("SOMACollection path encoding validation", {
