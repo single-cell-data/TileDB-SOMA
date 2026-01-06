@@ -46,7 +46,7 @@ def soma_tiledb_config() -> dict[str, Any] | None:
 @pytest.fixture(scope="module")
 def soma_tiledb_context(soma_tiledb_config: dict[str, Any] | None) -> tiledbsoma.SOMATileDBContext:
     """Fixture which builds a SOMATileDBContext based on a reasonable (i.e., small) default configuration."""
-    return tiledbsoma.SOMATileDBContext(tiledb_config=soma_tiledb_config)
+    return tiledbsoma.SOMAContext(config=soma_tiledb_config)
 
 
 @pytest.fixture
