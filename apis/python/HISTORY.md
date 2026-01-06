@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`.
+- \[[](<>)\] Add new `SOMAContext` class that replaces the `SOMATileDBContext` class.
 
 ### Changed
 
@@ -16,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - \[[#4294](https://github.com/single-cell-data/TileDB-SOMA/pull/4294)\] Use vcpkg instead of custom superbuild, for installing libtiledbsoma and its dependencies. Changes in CI workflows to use the prebuilt libtiledbsoma.
 
 ### Deprecated
+
+- \[[](<>)\] Deprecate `SOMATileDBContext` class in favor of the new `SOMAContext` class.
 
 ### Removed
 

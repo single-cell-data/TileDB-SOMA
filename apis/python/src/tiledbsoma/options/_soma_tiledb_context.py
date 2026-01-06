@@ -5,9 +5,9 @@
 from __future__ import annotations
 
 import datetime
-import functools
 import threading
 import time
+import warnings
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Literal, Optional, Union, cast
@@ -16,6 +16,7 @@ from somacore import ContextBase
 from typing_extensions import Self
 
 from tiledbsoma import pytiledbsoma as clib
+from tiledbsoma._soma_context import SOMAContext
 from tiledbsoma._types import DataProtocol, OpenTimestamp
 from tiledbsoma._util import ms_to_datetime, to_timestamp_ms
 
@@ -57,12 +58,6 @@ def _default_config(override: ConfigMap) -> ConfigDict:
     return cfg
 
 
-@functools.cache
-def _default_global_native_context() -> clib.SOMAContext:
-    """Lazily builds a default SOMAContext with the default config."""
-    return clib.SOMAContext({k: str(v) for k, v in _default_config({}).items()})
-
-
 def _maybe_timestamp_ms(input: OpenTimestamp | None) -> int | None:
     if input is None:
         return None
@@ -83,7 +78,7 @@ class SOMATileDBContext(ContextBase):
     a new ``SOMATileDBContext`` with new values.
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
 
     def __init__(
@@ -149,6 +144,8 @@ class SOMATileDBContext(ContextBase):
                 provided, a new ThreadPoolExecutor will be created with
                 default settings.
         """
+        warnings.warn("SOMATileDBContext is deprecated. Use SOMAContext instead.", DeprecationWarning, stacklevel=1)
+
         if tiledb_ctx is not None and tiledb_config is not None:
             raise ValueError("only one of tiledb_config or tiledb_ctx may be set when constructing a SOMATileDBContext")
 
@@ -177,6 +174,12 @@ class SOMATileDBContext(ContextBase):
 
         self._native_context: clib.SOMAContext | None = None
         """Lazily construct clib.SOMAContext."""
+
+    def _to_soma_context(self) -> SOMAContext:
+        context = SOMAContext(self.tiledb_config, self.threadpool)
+        if self._native_context is not None:
+            context._native_context = self._native_context
+        return context
 
     @property
     def timestamp_ms(self) -> int | None:
@@ -210,8 +213,10 @@ class SOMATileDBContext(ContextBase):
                     cfg = self._tiledb_ctx.config().dict()
                     self._native_context = clib.SOMAContext({k: str(v) for k, v in cfg.items()})
                 else:
-                    # The user did not provide settings so create a default
-                    self._native_context = _default_global_native_context()
+                    # The user did not provide settings so create a default - use SOMAContext to ensure there is
+                    # a single internal default.
+                    soma_context = SOMAContext.get_default()
+                    self._native_context = soma_context.native_context
 
         # else SOMAContext already exists
         return self._native_context
@@ -297,7 +302,7 @@ class SOMATileDBContext(ContextBase):
                 A threadpool to replace the current threadpool with.
 
         Lifecycle:
-            Maturing.
+            Deprecated.
 
         Examples:
             >>> context.replace(timestamp=1_512_658_800_000)  # UNIX millis
