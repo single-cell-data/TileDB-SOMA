@@ -571,7 +571,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             allows_duplicates=False,
         )
 
-    def _array_exists(self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None) -> bool:
+    def _array_exists(self, uri: str, context: soma.SOMAContext, tiledb_timestamp: int | None) -> bool:
         return soma.DataFrame.exists(uri, context=context, tiledb_timestamp=tiledb_timestamp)
 
     def _array_open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
