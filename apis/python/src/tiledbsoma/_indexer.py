@@ -13,6 +13,7 @@ import pyarrow as pa
 
 from tiledbsoma import pytiledbsoma as clib
 
+from ._soma_context import SOMAContext
 from ._types import PDSeries
 from .options import SOMATileDBContext
 
@@ -34,7 +35,7 @@ class IntIndexer:
         Maturing.
     """
 
-    def __init__(self, data: IndexerDataType, *, context: SOMATileDBContext | None = None) -> None:
+    def __init__(self, data: IndexerDataType, *, context: SOMAContext | SOMATileDBContext | None = None) -> None:
         """Initialize re-indexer for provided indices.
 
         Args:
@@ -46,7 +47,7 @@ class IntIndexer:
         Lifecycle:
             Maturing.
         """
-        self._context = context
+        self._context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
         self._reindexer = clib.IntIndexer() if self._context is None else clib.IntIndexer(self._context.native_context)
 
         # TODO: the map_locations interface does not accept chunked arrays. It would

@@ -42,6 +42,7 @@ from tiledbsoma import (
     MultiscaleImage,
     PointCloudDataFrame,
     Scene,
+    SOMAContext,
     SparseNDArray,
     _util,
     logging,
@@ -65,7 +66,6 @@ from tiledbsoma.io.ingest import (
     add_metadata,
 )
 from tiledbsoma.options import SOMATileDBContext
-from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 from ._util import TenXCountMatrixReader, _read_visium_software_version
@@ -228,7 +228,7 @@ def register_visium_datasets(
     visium_paths: Sequence[VisiumPaths | Path] | VisiumPaths | Path,
     *,
     measurement_name: str,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
 ) -> ExperimentAmbientLabelMapping:
     """Create registration for adding one or more Visium datasets to
     a single :class:`Experiment`.
@@ -237,8 +237,8 @@ def register_visium_datasets(
         experiment_uri: The experiment to append data to.
         visium_paths: A path or paths to Visium datasets.
         measurement_name: Name of the measurement to store data in.
-        context: Optional :class:`SOMATileDBContext` for opening the existing
-            :class:`Experiment`.
+        context: If provided, the :class:`SOMAContext` to use for TileDB operations. If not, provided the default
+            context will be used and possibly initialized.
     """
     raise NotImplementedError
 
@@ -249,7 +249,7 @@ def from_visium(
     measurement_name: str,
     scene_name: str,
     *,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     X_layer_name: str = "data",
     image_name: str = "tissue",
@@ -275,7 +275,8 @@ def from_visium(
         input_path: A path to the base directory storing SpaceRanger output or
             a ``VisiumPaths`` object.
         measurement_name: The name of the measurement to store data in.
-        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        context: If provided, the :class:`SOMAContext` to use for TileDB operations. If not,
+            provided the default context will be used and possibly initialized.
         platform_config: Platform-specific options used to specify TileDB options when
             creating and writing to SOMA objects.
         X_layer_name: SOMA array name for the ``X`` matrix.
@@ -361,7 +362,12 @@ def from_visium(
     # Check context and create keyword argument dicts.
     # - Create `ingest_ctx` for keyword args for creating SOMAGroup objects.
     # - Create `ingestion_platform_ctx` for keyword args for creating SOMAArray objects.
-    context = _validate_soma_tiledb_context(context)
+    if context is None:
+        context = SOMAContext.get_default()
+    elif isinstance(context, SOMATileDBContext):
+        context = context._to_soma_context()
+    elif not isinstance(context, SOMAContext):
+        raise TypeError(f"Unexpected type '{type(context)}' for context.")
     ingest_ctx: IngestCtx = {
         "context": context,
         "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
@@ -625,7 +631,7 @@ def _write_arrow_to_dataframe(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
 ) -> DataFrame:
     # Start timer
     start_time = _util.get_start_stamp()
@@ -671,7 +677,7 @@ def _write_X_layer(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata,
     platform_config: PlatformConfig | None,
-    context: SOMATileDBContext | None,
+    context: SOMAContext | SOMATileDBContext | None,
 ) -> _NDArr:
     start_time = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {uri}")
@@ -742,7 +748,7 @@ def _write_scene_presence_dataframe(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
 ) -> DataFrame:
     start_time = _util.get_start_stamp()
     logging.log_io(None, "START WRITING Presence matrix")
@@ -807,7 +813,7 @@ def _write_visium_spots(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
 ) -> PointCloudDataFrame:
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
@@ -876,7 +882,7 @@ def _create_or_open_scene(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: SOMATileDBContext | None,
+    context: SOMAContext | SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Scene:
     """Creates or opens a ``Scene`` and returns it open for writing."""
@@ -902,7 +908,7 @@ def _create_visium_tissue_images(
     coord_space: Sequence[str] | CoordinateSpace = ("x", "y"),
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
     ingestion_params: IngestionParams,  # noqa: ARG001
     use_relative_uri: bool | None = None,  # noqa: ARG001
 ) -> MultiscaleImage:

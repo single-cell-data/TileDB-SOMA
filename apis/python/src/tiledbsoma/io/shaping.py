@@ -26,7 +26,7 @@ _SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)
 def get_experiment_shapes(
     uri: str,
     *,
-    context: tiledbsoma.SOMATileDBContext | None = None,
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None = None,
 ) -> dict[str, Any]:
     """Returns the current shapes of the elements in the ``Experiment``.
 
@@ -92,7 +92,7 @@ def get_experiment_shapes(
 
     Args:
         uri: The URI of a SOMA :class:`Experiment`.
-        context: Optional :class:`SOMATileDBContext`.
+        context: Optional :class:`SOMAContext`.
         output_handle: The handle to print the output to.
 
     Returns: a nested Python dict.
@@ -121,7 +121,7 @@ def get_experiment_shapes(
 def show_experiment_shapes(
     uri: str,
     *,
-    context: tiledbsoma.SOMATileDBContext | None = None,
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = printableStdout,
 ) -> bool:
     """Outputs the current shapes of the elements in the ``Experiment``.
@@ -171,7 +171,7 @@ def show_experiment_shapes(
 
     Args:
         uri: The URI of a SOMA :class:`Experiment`.
-        context: Optional :class:`SOMATileDBContext`.
+        context: Optional :class:`SOMAContext`.
         output_handle: The handle to print the output to.
 
     Returns:
@@ -198,7 +198,7 @@ def upgrade_experiment_shapes(
     *,
     verbose: bool = False,
     check_only: bool = False,
-    context: tiledbsoma.SOMATileDBContext | None = None,
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = printableStdout,
 ) -> bool:
     """Upgrade the elements inside a SOMA ``Experiment`` to use the ``shape`` feature
@@ -250,7 +250,7 @@ def upgrade_experiment_shapes(
         verbose: If ``True``, produce per-array output as the upgrade runs.
         check_only: If ``True``,  don't apply the upgrades, but show what would
             be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext`.
+        context: Optional :class:`SOMAContext`.
 
     Returns:
         ``True`` if all upgrade operations succeed. ``False`` if any upgrade
@@ -290,7 +290,7 @@ def resize_experiment(
     nvars: dict[str, int],
     verbose: bool = False,
     check_only: bool = False,
-    context: tiledbsoma.SOMATileDBContext | None = None,
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = printableStdout,
 ) -> bool:
     """Resize the elements in the SOMA ``Experiment`` to fit the requested number
@@ -352,7 +352,7 @@ def resize_experiment(
         verbose: If ``True``, produce per-array output as the upgrade runs.
         check_only: If ``True``,  don't apply the upgrades, but show what would
             be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext`.
+        context: Optional :class:`SOMAContext`.
 
     Returns:
         ``True`` if all resize operations succeed. ``False`` if any resize operation
@@ -504,7 +504,7 @@ def _leaf_visitor_show_shapes(
     verbose: bool,
     check_only: bool,
     output_handle: Printable | None,
-    context: tiledbsoma.SOMATileDBContext | None,  # noqa: ARG001
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None,  # noqa: ARG001
 ) -> dict[str, Any]:
     retval = {"status": True}
     if isinstance(item, tiledbsoma.DataFrame):
@@ -641,7 +641,7 @@ def _leaf_visitor_upgrade(
     verbose: bool,
     check_only: bool,
     output_handle: Printable | None,
-    context: tiledbsoma.SOMATileDBContext | None,
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None,
 ) -> dict[str, Any]:
     retval = {"status": True}
 
@@ -763,7 +763,7 @@ def _leaf_visitor_resize(
     coll_name: str | None,
     verbose: bool,
     check_only: bool,
-    context: tiledbsoma.SOMATileDBContext | None,
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None,
     output_handle: Printable | None,
 ) -> dict[str, Any]:
     retval = {"status": True}
@@ -1003,7 +1003,7 @@ def _leaf_visitor_get_shapes(
     coll_name: str | None,  # noqa: ARG001
     verbose: bool,  # noqa: ARG001
     check_only: bool,  # noqa: ARG001
-    context: tiledbsoma.SOMATileDBContext | None,  # noqa: ARG001
+    context: tiledbsoma.SOMAContext | tiledbsoma.SOMATileDBContext | None,  # noqa: ARG001
     output_handle: Printable | None,  # noqa: ARG001
 ) -> dict[str, Any]:
     retval: dict[str, Any] = {}

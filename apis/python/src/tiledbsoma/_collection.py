@@ -28,12 +28,13 @@ from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._funcs import typeguard_ignore
+from ._soma_context import SOMAContext
 from ._soma_group import SOMAGroup
 from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
+from ._util import tiledb_timestamp_to_ms
 from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of SOMAObject
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
@@ -60,7 +61,7 @@ class CollectionBase(
         uri: str,
         *,
         platform_config: options.PlatformConfig | None = None,  # noqa: ARG003
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates and opens a new SOMA collection in storage.
@@ -77,9 +78,8 @@ class CollectionBase(
                 located in the ``{'tiledb': {'create': ...}}`` key,
                 or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
                 (Currently unused for collections.)
-            context:
-                If provided, the :class:`SOMATileDBContext` to use when creating and
-                opening this collection.
+            context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. Otherwise,
+                the default context will be used and possibly initialized.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -94,9 +94,15 @@ class CollectionBase(
         Lifecycle:
             Maturing.
         """
-        context = _validate_soma_tiledb_context(context)
+        if isinstance(context, SOMATileDBContext):
+            if tiledb_timestamp is None and context.timestamp_ms is not None:
+                tiledb_timestamp = context.timestamp_ms
+            context = context._to_soma_context()
+        elif context is None:
+            context = SOMAContext.get_default()
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
+
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
                 soma_type=cls._handle_type.__name__,
@@ -106,8 +112,8 @@ class CollectionBase(
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             handle = cls._handle_type.open(
                 uri,
                 mode=clib.OpenMode.soma_write,

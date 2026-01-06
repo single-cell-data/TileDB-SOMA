@@ -31,6 +31,7 @@ from ._dataframe import (
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
+from ._soma_context import SOMAContext
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
@@ -38,8 +39,8 @@ from ._spatial_util import (
     process_spatial_df_region,
 )
 from ._types import OpenTimestamp
+from ._util import tiledb_timestamp_to_ms
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._util import build_clib_platform_config
 
 _UNBATCHED = options.BatchSize()
@@ -69,7 +70,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         domain: Domain | None = None,
         platform_config: options.PlatformConfig | None = None,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new ``PointCloudDataFrame`` at the given URI.
@@ -136,7 +137,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     raise ValueError("All spatial axes must have the same datatype.")
         index_column_names = (*axis_names, SOMA_JOINID)
 
-        context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
 
         # SOMA-to-core mappings:
@@ -231,7 +231,13 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         plt_cfg = build_clib_platform_config(platform_config)
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        if isinstance(context, SOMATileDBContext):
+            if tiledb_timestamp is None and context.timestamp_ms is not None:
+                tiledb_timestamp = context.timestamp_ms
+            context = context._to_soma_context()
+        elif context is None:
+            context = SOMAContext.get_default()
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMAPointCloudDataFrame.create(
                 uri,
@@ -246,8 +252,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             handle = clib.SOMAPointCloudDataFrame.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
