@@ -33,10 +33,11 @@ from . import (
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._funcs import typeguard_ignore
+from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp
+from ._util import tiledb_timestamp_to_ms
 from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 _Obj = TypeVar("_Obj", bound="SOMAObject")
 
@@ -47,7 +48,7 @@ def open(
     mode: options.OpenMode = ...,
     *,
     soma_type: str | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
 ) -> SOMAObject: ...
 
@@ -58,7 +59,7 @@ def open(
     mode: options.OpenMode,
     *,
     soma_type: type[_Obj],
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
 ) -> _Obj: ...
 
@@ -69,7 +70,7 @@ def open(
     mode: options.OpenMode = "r",
     *,
     soma_type: type[SOMAObject] | str | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
 ) -> SOMAObject:
     """Opens a TileDB SOMA object.
@@ -88,7 +89,8 @@ def open(
             If the stored SOMA object is not of the correct type, an error will be
             raised.
         context:
-            If set, the :class:`SOMATileDBContext` data to use.
+            If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
+            provide the default context will be used and possibly initialized.
         tiledb_timestamp:
             If specified, overrides the default timestamp
             used to open this object. If unset, uses the timestamp provided by
@@ -116,7 +118,12 @@ def open(
         Maturing.
     """
     if soma_type is None:
-        context = _validate_soma_tiledb_context(context)
+        if isinstance(context, SOMATileDBContext):
+            if tiledb_timestamp is None and context.timestamp_ms is not None:
+                tiledb_timestamp = context.timestamp_ms
+            context = context._to_soma_context()
+        elif context is None:
+            context = SOMAContext.get_default()
         return _open_soma_object(uri, mode, context, tiledb_timestamp)
 
     if isinstance(soma_type, str):
@@ -138,13 +145,13 @@ def open(
 def _open_soma_object(
     uri: str,
     mode: options.OpenMode,
-    context: SOMATileDBContext,
+    context: SOMAContext,
     tiledb_timestamp: OpenTimestamp | None,
     clib_type: str | None = None,
 ) -> SOMAObject:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     if clib_type is None or clib_type.lower() in ["somaarray", "somagroup"]:
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
         try:
             handle = clib.SOMAObject.open(

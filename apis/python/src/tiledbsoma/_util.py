@@ -254,6 +254,14 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
     return dt.replace(microsecond=millis * 1000)
 
 
+def tiledb_timestamp_to_ms(tiledb_timestamp: OpenTimestamp | None) -> int:
+    if isinstance(tiledb_timestamp, datetime.datetime):
+        tiledb_timestamp = to_timestamp_ms(tiledb_timestamp)
+    if tiledb_timestamp is not None and tiledb_timestamp != 0:
+        return to_timestamp_ms(tiledb_timestamp)
+    return int(time.time() * 1000)
+
+
 def to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrder:
     result_order = options.ResultOrder(result_order)
     to_clib_result_order = {
