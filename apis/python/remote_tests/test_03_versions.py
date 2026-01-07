@@ -66,7 +66,8 @@ def test_dataframe_queries(conftest_context, uri_and_info):
     uri, _ = uri_and_info
     with tiledbsoma.Experiment.open(uri, context=conftest_context) as exp:
         qobs = (
-            exp.obs.read(
+            exp.obs
+            .read(
                 coords=[slice(0, 99)],
                 value_filter="nFeature_RNA > 1000",
                 column_names=["soma_joinid", "obs_id", "nFeature_RNA"],
@@ -77,7 +78,8 @@ def test_dataframe_queries(conftest_context, uri_and_info):
         assert qobs.shape == (22, 3)
 
         qvar = (
-            exp.ms["RNA"]
+            exp
+            .ms["RNA"]
             .var.read(
                 value_filter="var_id in ['ANXA1', 'IFI44', 'IFI44L', 'OAS1']",
             )

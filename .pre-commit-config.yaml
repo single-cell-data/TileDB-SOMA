@@ -1,14 +1,14 @@
 exclude: ^doc/source/
 repos:
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v21.1.2
+    rev: v21.1.8
     hooks:
     - id: clang-format
       types_or: [c++, c]
       files: 'libtiledbsoma/.*|apis/python/src/.*|apis/r/src/.*'
       exclude: 'libtiledbsoma/src/external/.*|apis/r/src/RcppExports.cpp'
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.10
     hooks:
     - id: ruff-check
       types_or: [ python, pyi ]
@@ -17,7 +17,7 @@ repos:
       types_or: [ python, pyi ]
       args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+    rev: v1.19.1
     hooks:
     - id: mypy
       additional_dependencies:
@@ -30,7 +30,7 @@ repos:
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false
   - repo: https://github.com/hukkin/mdformat
-    rev: 0.7.22  # Use the ref you want to point at
+    rev: 0.7.2  # Use the ref you want to point at
     hooks:
     - id: mdformat
       files: .*\.md|^apis/r/vignettes/.*\.Rmd

@@ -2165,14 +2165,15 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz  # noqa: ERA001
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: list[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
+    coords: list[slice] = [slice(None), slice(None)]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
         hi = min(extent, lo + bsz)
         coords[axis] = slice(lo, hi)
         total_nnz += matrix[tuple(coords)].nnz
-    return math.ceil(total_nnz / extent)
+    result: int = math.ceil(total_nnz / extent)
+    return result
 
 
 def _find_sparse_chunk_size_backed(
@@ -2421,7 +2422,7 @@ def _write_matrix_to_sparseNDArray(
             non_stride_axis = 1 - stride_axis
             chunk_size = math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis])
         else:
-            chunk_size = _find_sparse_chunk_size(  # type: ignore[unreachable]
+            chunk_size = _find_sparse_chunk_size(
                 matrix,
                 i,
                 stride_axis,

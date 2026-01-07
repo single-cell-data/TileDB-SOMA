@@ -125,7 +125,7 @@ This release is the first TileDB-SOMA release that follows our new versioning po
 
 - Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`
 - Use S3 method dispatch on `integer64` instead of directly calling the S3 methods
-- [c++] Replace `SOMAArray` read and write calls with `ManagedQuery` [#3678](https://github.com/single-cell-data/TileDB-SOMA/pull/3678)
+- \[c++\] Replace `SOMAArray` read and write calls with `ManagedQuery` [#3678](https://github.com/single-cell-data/TileDB-SOMA/pull/3678)
 - Remove `used_shape`, which was deprecated in 1.15 with scheduled removal in 1.16 [#3723](https://github.com/single-cell-data/TileDB-SOMA/pull/3723)
 
 # tiledbsoma 1.15.7
@@ -201,8 +201,8 @@ This release is the first TileDB-SOMA release that follows our new versioning po
 - Docstring audit for new shape [#3399](https://github.com/single-cell-data/TileDB-SOMA/pull/3399)
 - Add `check_only` support for domain/shape updates [#3400](https://github.com/single-cell-data/TileDB-SOMA/pull/3400)
 - Adjust blockwise + re-indexer to return condensed matrix, not full domain [#3395](https://github.com/single-cell-data/TileDB-SOMA/pull/3395)
-- [c++] Use core 2.27.0.rc5 [#3410](https://github.com/single-cell-data/TileDB-SOMA/pull/3410)
-- [c++] Use core 2.27.0 [#3422](https://github.com/single-cell-data/TileDB-SOMA/pull/3422)
+- \[c++\] Use core 2.27.0.rc5 [#3410](https://github.com/single-cell-data/TileDB-SOMA/pull/3410)
+- \[c++\] Use core 2.27.0 [#3422](https://github.com/single-cell-data/TileDB-SOMA/pull/3422)
 
 # tiledbsoma 1.14.5
 
