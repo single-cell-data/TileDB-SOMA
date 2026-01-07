@@ -78,6 +78,8 @@ set_default_context <- function(config = NULL) {
 #'
 #' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
 #'
+#' @export
+#'
 get_default_context <- function() {
   context <- .pkgenv[["somactx"]]
   if (is.null(context)) {
