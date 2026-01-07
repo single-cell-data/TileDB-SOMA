@@ -17,12 +17,7 @@ from scipy import sparse
 from somacore import AxisQuery, options
 
 import tiledbsoma as soma
-from tiledbsoma import (
-    Experiment,
-    ExperimentAxisQuery,
-    SOMATileDBContext,
-    pytiledbsoma,
-)
+from tiledbsoma import Experiment, ExperimentAxisQuery, SOMAContext, pytiledbsoma
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.experiment_query import X_as_series
@@ -543,7 +538,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     """
     from contextlib import closing
 
-    context = SOMATileDBContext()
+    context = SOMAContext()
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
 
     with soma_experiment.axis_query("RNA") as query:
@@ -854,7 +849,7 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
     pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=4))
     pool.submit.assert_not_called()
 
-    context = SOMATileDBContext(threadpool=pool)
+    context = SOMAContext(threadpool=pool)
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context=context)
 
     with soma_experiment.axis_query("RNA") as query:

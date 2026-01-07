@@ -247,7 +247,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
     cfg = {}
     if "cfg" in io:
         cfg = io["cfg"]
-    context = SOMATileDBContext(tiledb_config=cfg)
+    context = soma.SOMAContext(config=cfg)
 
     nr = 4
     nc = 6
@@ -387,26 +387,35 @@ def test_tile_extents(tmp_path):
 
 def test_timestamped_ops(tmp_path):
     # 2x2 array
-    with soma.DenseNDArray.create(
-        tmp_path.as_posix(),
-        type=pa.uint8(),
-        shape=(2, 2),
-        context=SOMATileDBContext(timestamp=1),
-    ) as a:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.DenseNDArray.create(
+            tmp_path.as_posix(),
+            type=pa.uint8(),
+            shape=(2, 2),
+            context=SOMATileDBContext(timestamp=1),
+        ) as a,
+    ):
         a.write(
             (slice(0, 1), slice(0, 1)),
             pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
         )
 
     # write 1 into top-left entry @ t=10
-    with soma.DenseNDArray.open(tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)) as a:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.DenseNDArray.open(tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)) as a,
+    ):
         a.write(
             (0, 0),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
 
     # write 1 into bottom-right entry @ t=20
-    with soma.DenseNDArray.open(uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)) as a:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.DenseNDArray.open(uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)) as a,
+    ):
         a.write(
             (1, 1),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
@@ -420,7 +429,10 @@ def test_timestamped_ops(tmp_path):
         ]
 
     # read @ t=15 & see only the writes up til then
-    with soma.DenseNDArray.open(tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)) as a:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.DenseNDArray.open(tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)) as a,
+    ):
         assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [
             [1, 0],
             [0, 0],
@@ -428,7 +440,8 @@ def test_timestamped_ops(tmp_path):
 
 
 def test_fixed_timestamp(tmp_path: pathlib.Path):
-    fixed_time = SOMATileDBContext(timestamp=999)
+    with pytest.warns(DeprecationWarning):
+        fixed_time = SOMATileDBContext(timestamp=999)
     with soma.DenseNDArray.create(
         tmp_path.as_posix(),
         type=pa.uint8(),
@@ -463,12 +476,15 @@ def test_read_to_unwritten_array(tmp_path, shape):
 def test_pass_configs(tmp_path):
     uri = tmp_path.as_posix()
 
-    with soma.DenseNDArray.create(
-        tmp_path.as_posix(),
-        type=pa.uint8(),
-        shape=(2, 2),
-        context=SOMATileDBContext(timestamp=1),
-    ) as a:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.DenseNDArray.create(
+            tmp_path.as_posix(),
+            type=pa.uint8(),
+            shape=(2, 2),
+            context=SOMATileDBContext(timestamp=1),
+        ) as a,
+    ):
         a.write(
             (slice(0, 2), slice(0, 2)),
             pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
@@ -478,7 +494,7 @@ def test_pass_configs(tmp_path):
     with soma.DenseNDArray.open(
         uri,
         "r",
-        context=soma.SOMATileDBContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
+        context=soma.SOMAContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
         # This errors out as 0 is not a valid value to set the total memory
         # budget or number of threads

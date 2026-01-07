@@ -19,7 +19,7 @@ from pandas.api.types import union_categoricals
 from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
-from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import SOMAContext
 
 from tests._util import raises_no_typeguard
 
@@ -95,7 +95,7 @@ def test_dataframe(tmp_path, arrow_schema, cfg):
     with soma.DataFrame.open(uri, "r") as sdf, pytest.raises(soma.SOMAError):
         sdf.write(rb)
 
-    with soma.DataFrame.open(uri, context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(uri, context=SOMAContext(config=cfg)) as sdf:
         assert sdf.count == 5
         assert len(sdf) == 5
 
@@ -423,7 +423,7 @@ def test_dataframe_with_enumeration(tmp_path, cfg):
         data["myfloat"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
 
-    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMAContext(config=cfg)) as sdf:
         df = sdf.read().concat()
         assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
         assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
@@ -439,6 +439,7 @@ def test_dataframe_with_enumeration(tmp_path, cfg):
 @pytest.mark.parametrize("mode", ["r", "w"])
 @pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
 def test_get_enumeration_values(tmp_path, ordered, mode, cfg):
+    context = SOMAContext(config=cfg)
     uri = tmp_path.as_posix()
 
     schema = pa.schema(
@@ -512,7 +513,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode, cfg):
         sdf.write(arrow_data)
     t2 = int(time.time() * 1000)
 
-    with soma.DataFrame.open(uri, mode, context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(uri, mode, context=context) as sdf:
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(KeyError):
@@ -542,7 +543,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode, cfg):
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_data)
 
-    with soma.DataFrame.open(uri, mode, context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(uri, mode, context=context) as sdf:
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(KeyError):
@@ -591,8 +592,9 @@ def test_get_enumeration_values_historical(version, name, cfg):
         raise RuntimeError(
             f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
         )
+    context = soma.SOMAContext(config=cfg)
 
-    with soma.Experiment.open(uri, context=SOMATileDBContext(tiledb_config=cfg)) as exp:
+    with soma.Experiment.open(uri, context=context) as exp:
         if name == "pbmc3k_unprocessed":
             values = exp.obs.get_enumeration_values(["orig.ident", "seurat_annotations"])
 
@@ -2446,7 +2448,7 @@ def test_write_categorical_types(tmp_path, cfg):
         )
         sdf.write(pa.Table.from_pandas(df))
 
-    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMAContext(config=cfg)) as sdf:
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
@@ -2529,7 +2531,7 @@ def test_write_categorical_dim_extend(tmp_path, index_type, cfg):
     df2.string = pd.Categorical(df2.string, categories=uc.categories)
     expected_df = pd.concat((df1, df2), ignore_index=True)
 
-    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMAContext(config=cfg)) as sdf:
         data = sdf.read().concat()
         assert expected_df.compare(data.to_pandas()).empty
 
@@ -2557,7 +2559,7 @@ def test_result_order(tmp_path, cfg):
         }
         sdf.write(pa.Table.from_pydict(data))
 
-    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMATileDBContext(tiledb_config=cfg)) as sdf:
+    with soma.DataFrame.open(tmp_path.as_posix(), context=SOMAContext(config=cfg)) as sdf:
         table = sdf.read(result_order="row-major").concat().to_pandas()
         assert table["soma_joinid"].to_list() == list(range(16))
 
@@ -3378,7 +3380,7 @@ def test_pass_configs(tmp_path, arrow_schema):
     with soma.DataFrame.open(
         uri,
         "r",
-        context=soma.SOMATileDBContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
+        context=soma.SOMAContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
         # This errors out as 0 is not a valid value to set the total memory
         # budget or number of threads
