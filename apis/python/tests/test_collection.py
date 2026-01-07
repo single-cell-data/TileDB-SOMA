@@ -584,13 +584,12 @@ def test_issue919(tmp_path):
     for i in range(25):
         uri = str(tmp_path / str(i))
 
-        context = SOMATileDBContext(timestamp=100)
-        with soma.Collection.create(uri, context=context) as c:
+        with soma.Collection.create(uri, tiledb_timestamp=100) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
             expt.add_new_dataframe("df", schema=schema, index_column_names=["soma_joinid"], domain=[[0, 100]])
 
-        with soma.Collection.open(uri, context=context) as c:
+        with soma.Collection.open(uri, tiledb_timestamp=100) as c:
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
             df = c["expt"]["df"].read().concat().to_pandas()
             assert len(df) == 0
@@ -598,7 +597,8 @@ def test_issue919(tmp_path):
 
 def test_context_timestamp(tmp_path: pathlib.Path):
     """Verifies that timestamps are inherited by collections."""
-    fixed_time = SOMATileDBContext(timestamp=123)
+    with pytest.warns(DeprecationWarning):
+        fixed_time = SOMATileDBContext(timestamp=123)
     with soma.Collection.create(tmp_path.as_uri(), context=fixed_time) as coll:
         assert coll.tiledb_timestamp_ms == 123
         sub = coll.add_new_collection("sub_1")
