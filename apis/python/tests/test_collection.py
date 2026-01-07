@@ -549,18 +549,24 @@ def test_timestamped_ops(tmp_path):
         ]
 
     # open A via collection @ t=25 => A should reflect first write only
-    with soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)) as sc:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)) as sc,
+    ):
         assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
             [0, 0],
             [0, 0],
         ]
 
     # open collection @ t=15 => A should not even be there
-    with soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)) as sc:
+    with (
+        pytest.warns(DeprecationWarning),
+        soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)) as sc,
+    ):
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
-    with pytest.raises(ValueError):
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError):
         SOMATileDBContext(timestamp=-1)
 
 

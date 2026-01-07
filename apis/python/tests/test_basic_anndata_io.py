@@ -1417,7 +1417,7 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 @pytest.mark.medium_runner
 def test_soma_file_handling_65831_65864():
-    context = tiledbsoma.SOMATileDBContext()
+    context = tiledbsoma.SOMAContext()
     if not TESTDATA.exists():
         raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
     fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(str(TESTDATA / "pbmc-small.h5ad"), context.native_context)

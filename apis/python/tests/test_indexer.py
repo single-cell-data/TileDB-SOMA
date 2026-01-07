@@ -9,7 +9,6 @@ import pytest
 
 from tiledbsoma import SOMAContext, SOMAError
 from tiledbsoma._indexer import IntIndexer
-from tiledbsoma.options import SOMATileDBContext
 
 
 @pytest.mark.parametrize(
@@ -117,7 +116,7 @@ def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
 
 
 def test_expected_errors() -> None:
-    context = SOMATileDBContext()
+    context = SOMAContext()
 
     # ndim != 1
     with pytest.raises(ValueError):
