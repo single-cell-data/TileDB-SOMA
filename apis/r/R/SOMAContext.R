@@ -52,3 +52,37 @@ SOMAContext <- R6::R6Class(
     .handle = NULL
   )
 )
+
+#' Create and return a global default context object
+#'
+#' It is recommended to call this method once before all other TileDB-SOMA R API calls. If the global context
+#' was already set, a warning will be raised. Setting a new default context will not change the context for
+#' TileDB-SOMA objects that were already created.
+#'
+#' @template param-config
+#'
+#' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
+#'
+#' @export
+#'
+set_default_context <- function(config = NULL) {
+  if (is.null(.pkgenv[["somactx"]])) {
+    warning("A default context was already created. Existing objects will not use the new default context.", call. = FALSE)
+  }
+  context <- SOMAContext$new(config)
+  .pkgenv[["somactx"]] <- context
+  return(context)
+}
+
+#' Returns the global default context, creating one if necessary
+#'
+#' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
+#'
+get_default_context <- function() {
+  context <- .pkgenv[["somactx"]]
+  if (is.null(context)) {
+    context <- SOMAContext$new()
+    .pkgenv[["somactx"]] <- context
+  }
+  return(context)
+}
