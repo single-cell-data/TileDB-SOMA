@@ -1137,7 +1137,7 @@ def test_empty_indexed_read(tmp_path):
 @pytest.fixture
 def a_soma_context() -> SOMAContext:
     return SOMAContext(
-        tiledb_config={
+        config={
             "soma.init_buffer_bytes": 128 * 1024**2,
             "tiledb.init_buffer_bytes": 128 * 1024**2,
         },
