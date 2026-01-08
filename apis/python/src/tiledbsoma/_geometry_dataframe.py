@@ -33,6 +33,7 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
+from ._managed_query import ManagedQuery
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
@@ -494,8 +495,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             Experimental.
         """
         _util.check_type("values", values, (pa.Table,))
-
-        write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions",
@@ -535,13 +534,43 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Returns: ``self``, to enable method chaining.
 
         """
-        outline_transformer = clib.OutlineTransformer(coordinate_space_to_json(self._coord_space))
-
-        for batch in values.to_batches():
-            self.write(
-                clib.TransformerPipeline(batch).transform(outline_transformer).asTable(),
-                platform_config=platform_config,
+        _util.check_type("values", values, (pa.Table, pa.RecordBatch))
+        if isinstance(platform_config, TileDBCreateOptions):
+            raise ValueError(
+                "As of TileDB-SOMA 1.13, the write method takes TileDBWriteOptions instead of TileDBCreateOptions",
             )
+        write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        if not write_options.sort_coords:
+            raise NotImplementedError("Support for writing outline geometries in global order is not yet implemented.")
+
+        array_schema = self.schema
+        for name in values.schema.names:
+            if name not in array_schema.names:
+                raise ValueError(
+                    f"Cannot write data. Field '{name}' in the input data is not a column in this {self._handle_type.__name__}."
+                )
+        batch_schema = pa.schema([
+            values.schema.field(name) if name == "soma_geometry" else array_schema.field(name)
+            for name in values.schema.names
+        ])
+
+        batches = values.to_batches()
+        if not batches:
+            return self
+
+        outline_transformer = clib.OutlineTransformer(coordinate_space_to_json(self._coord_space))
+        for batch in batches:
+            table = (
+                clib.TransformerPipeline(batch.cast(batch_schema, safe=True)).transform(outline_transformer).asTable()
+            )
+            for subbatch in table.to_batches():
+                mq = ManagedQuery(self)._handle
+                mq.set_layout(clib.ResultOrder.unordered)
+                mq.submit_batch(subbatch)
+                mq.finalize()
+
+        if write_options.consolidate_and_vacuum:
+            self._handle.consolidate_and_vacuum()
 
         return self
 
