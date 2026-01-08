@@ -2,7 +2,7 @@
 % Please edit documentation in R/SOMAContext.R
 \name{get_default_context}
 \alias{get_default_context}
-\title{Returns the global default context, creating one if necessary}
+\title{Returns the global default context}
 \usage{
 get_default_context()
 }
@@ -10,5 +10,5 @@ get_default_context()
 The context that will be used for TileDB-SOMA API when no context is provided by the user.
 }
 \description{
-Returns the global default context, creating one if necessary
+An error is raised if no default context is set.
 }

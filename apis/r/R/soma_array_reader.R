@@ -17,7 +17,10 @@
 #' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
-#' @param context Optional instance of a SOMA Context object
+#' @param context Optional \code{SOMAContext} object used for TileDB operations.
+#' If a context is not provided, then the default context will be used. Call
+#' \code{set_default_context} once before other SOMA operations to configure
+#' the default context.
 #' @return A List object with two pointers to Arrow array data and schema is returned
 #' @examples
 #' \dontrun{

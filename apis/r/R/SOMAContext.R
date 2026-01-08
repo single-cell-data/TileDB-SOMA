@@ -74,7 +74,9 @@ set_default_context <- function(config = NULL) {
   return(context)
 }
 
-#' Returns the global default context, creating one if necessary
+#' Returns the global default context
+#'
+#' An error is raised if no default context is set.
 #'
 #' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
 #'
@@ -83,8 +85,7 @@ set_default_context <- function(config = NULL) {
 get_default_context <- function() {
   context <- .pkgenv[["somactx"]]
   if (is.null(context)) {
-    context <- SOMAContext$new()
-    .pkgenv[["somactx"]] <- context
+    stop("No default context is set. Call `set_default_context` to initialize the context.", call. = FALSE)
   }
   return(context)
 }
