@@ -20,7 +20,8 @@ def combine_chunks(a: pa.ChunkedArray) -> pa.Array:
     if pa.types.is_dictionary(type):
         if pa.types.is_large_string(type.value_type):
             return (
-                a.cast(
+                a
+                .cast(
                     pa.dictionary(
                         index_type=type.index_type,
                         value_type=pa.string(),
@@ -33,7 +34,8 @@ def combine_chunks(a: pa.ChunkedArray) -> pa.Array:
 
         if pa.types.is_large_binary(type.value_type):
             return (
-                a.cast(
+                a
+                .cast(
                     pa.dictionary(
                         index_type=type.index_type,
                         value_type=pa.binary(),

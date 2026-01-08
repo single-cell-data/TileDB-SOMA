@@ -1208,7 +1208,8 @@ def test_blockwise_table_iter(
             size = max(5, min(A.shape[axis] // 3, 1000))  # shoot for 3 blocks, in range [5,1000]
             tbls = []
             for block, (tbl, joinids) in enumerate(
-                A.read(coords=coords, result_order=result_order)
+                A
+                .read(coords=coords, result_order=result_order)
                 .blockwise(
                     axis=axis,
                     size=size,
@@ -1253,7 +1254,8 @@ def test_blockwise_table_iter_size(a_random_sparse_nd_array: str, shape: tuple[i
         with soma.open(a_random_sparse_nd_array, mode="r") as A:
             assert shape == A.shape
             for block, (tbl, joinids) in enumerate(
-                A.read()
+                A
+                .read()
                 .blockwise(
                     axis=axis,
                     size=size,
@@ -1437,7 +1439,8 @@ def test_blockwise_scipy_iter(
             reindex_disable_on_axis = [minor_axis] if not reindex_sparse_axis else None
             results = []
             for sp, joinids in (
-                A.read(coords)
+                A
+                .read(coords)
                 .blockwise(
                     axis=axis,
                     size=size,
@@ -1574,7 +1577,8 @@ def test_blockwise_indices(
         for axis, reindex_disable_on_axis in itertools.product((0, 1), (None, [0], [1], [0, 1])):
             minor_axis = 1 - axis
             for block, (_, indices) in enumerate(
-                A.read(coords)
+                A
+                .read(coords)
                 .blockwise(
                     axis=axis,
                     size=size,
@@ -1594,7 +1598,8 @@ def test_blockwise_indices(
             for reindex_disable_on_axis in (None, [minor_axis]):
                 block = 0
                 for _, indices in (
-                    A.read(coords)
+                    A
+                    .read(coords)
                     .blockwise(
                         axis=axis,
                         size=size,
@@ -1643,7 +1648,8 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
         axis = 0
         size = 50
         tbls = (
-            A.read()
+            A
+            .read()
             .blockwise(
                 axis=axis,
                 size=size,
@@ -1664,7 +1670,8 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
         axis = 0
         size = 50
         arrs = (
-            A.read()
+            A
+            .read()
             .blockwise(
                 axis=axis,
                 size=size,

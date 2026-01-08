@@ -49,7 +49,8 @@ def test_experiment_obs_axis_delete_from_pbmc3k(
     # Grab the list of joinids we expect to be deleted
     with soma.Experiment.open(uri, mode="r", context=soma_tiledb_context) as exp:
         joinids = (
-            exp.obs.read(
+            exp.obs
+            .read(
                 coords=coords,
                 value_filter=value_filter,
                 column_names=["soma_joinid"],
@@ -125,7 +126,8 @@ def test_experiment_var_axis_delete_from_pbmc3k(
     # Grab the list of joinids we expect to be deleted
     with soma.Experiment.open(uri, mode="r", context=soma_tiledb_context) as exp:
         joinids = (
-            exp.ms[measurement_name]
+            exp
+            .ms[measurement_name]
             .var.read(
                 coords=coords,
                 value_filter=value_filter,

@@ -113,14 +113,16 @@ class ExperimentAmbientLabelMapping:
         )
         var_axes = {
             measurement_name: AxisIDMapping(
-                data=self.var_axes[measurement_name]
+                data=self
+                .var_axes[measurement_name]
                 .joinid_map.loc[_get_dataframe_joinid_index(adata.var, self.var_axes[measurement_name].field_name)]
                 .soma_joinid.to_numpy(),
             ),
         }
         if adata.raw is not None:
             var_axes["raw"] = AxisIDMapping(
-                data=self.var_axes["raw"]
+                data=self
+                .var_axes["raw"]
                 .joinid_map.loc[_get_dataframe_joinid_index(adata.raw.var, self.var_axes["raw"].field_name)]
                 .soma_joinid.to_numpy(),
             )

@@ -484,15 +484,15 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             if not isinstance(x_array, SparseNDArray):
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[chosen_x] = x_array
-        for _xname in list(X_layers):
-            if not isinstance(_xname, str) or not _xname:
+        for x_name in list(X_layers):
+            if not isinstance(x_name, str) or not x_name:
                 raise ValueError("X layer names must be specified as a string.")
-            if _xname not in x_collection:
+            if x_name not in x_collection:
                 raise ValueError("Unknown X layer name")
-            x_array = x_collection[_xname]
+            x_array = x_collection[x_name]
             if not isinstance(x_array, SparseNDArray):
                 raise NotImplementedError("Dense array unsupported")
-            all_x_arrays[_xname] = x_array
+            all_x_arrays[x_name] = x_array
 
         obs, var = tp.map(
             self._read_axis_dataframe,
@@ -508,7 +508,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         x_matrices = (
             {
-                _xname: (
+                x_name: (
                     tp.submit(
                         _read_as_csr,
                         layer,
@@ -524,7 +524,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                         **dask,
                     )
                 )
-                for _xname, layer in all_x_arrays.items()
+                for x_name, layer in all_x_arrays.items()
             }
             if (X_name is not None and X_name is not MISSING) or chosen_x is not None or X_layers
             else {}
@@ -898,7 +898,7 @@ def _read_as_csr(
             )
 
         return pa.Table.from_batches(
-            (_reindex(_batch) for _tbl in X.read(coords=(oids, vids)).tables() for _batch in _tbl.to_batches()),
+            (_reindex(batch) for tbl in X.read(coords=(oids, vids)).tables() for batch in tbl.to_batches()),
             schema=pa_schema,
         )
 

@@ -346,7 +346,8 @@ def _query_joinids(
 ) -> pa.Int64Array:
     with DataFrame.open(uri, context=context) as df:
         return (
-            df.read(coords, value_filter=value_filter, column_names=["soma_joinid"])
+            df
+            .read(coords, value_filter=value_filter, column_names=["soma_joinid"])
             .concat()
             .column("soma_joinid")
             .combine_chunks()

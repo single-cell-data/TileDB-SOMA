@@ -816,7 +816,8 @@ def _write_visium_spots(
     logging.log_io(None, "START WRITING loc")
     names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"] if major_version == 1 else None
     df = (
-        pd.read_csv(input_tissue_positions, names=names)
+        pd
+        .read_csv(input_tissue_positions, names=names)
         .rename(
             columns={
                 "barcode": id_column_name,
