@@ -96,7 +96,7 @@ test_that("SOMACollection add_new_* methods", {
   SOMACollectionCreate(uri = uri)$close()
 
   # child1: SOMACollection
-  child1_uri <- file.path(uri, "child1")
+  child1_uri <- file_path(uri, "child1")
   child1 <- SOMACollectionCreate(child1_uri)
 
   # For Carrara URIs children created at nested URIs are automatically added
@@ -229,7 +229,7 @@ test_that("SOMACollection path encoding validation", {
 
   # Create child collections with special character names
   for (name in test_names) {
-    child_uri <- file.path(uri, name)
+    child_uri <- file_path(uri, name)
     SOMACollectionCreate(child_uri)$close()
   }
 
@@ -272,4 +272,36 @@ test_that("SOMACollection path encoding validation", {
   df$close()
 
   collection$close()
+})
+
+test_that("SOMACollection reflects carrara's implicit member addition", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  uri <- carrara_group_path()
+  SOMACollectionCreate(uri)$close()
+
+  # Create an NDArray child directly (not using add_new_*)
+  child_uri <- file_path(uri, "sparse_ndarray_A")
+  SOMASparseNDArrayCreate(
+    uri = child_uri,
+    type = arrow::int32(),
+    shape = c(10, 10)
+  )$close()
+
+  # Open collection and verify implicit addition
+  collection <- SOMACollectionOpen(uri)
+  expect_true("sparse_ndarray_A" %in% collection$names())
+  expect_true(collection$get("sparse_ndarray_A")$exists())
+  collection$close()
+
+  # Carrara does not support the set() operation
+  array_A <- SOMASparseNDArrayOpen(child_uri)
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  expect_error(
+    collection$set(array_A, "sparse_ndarray_A"),
+    class = "unsupportedOperationError"
+  )
+  collection$close()
+  array_A$close()
 })

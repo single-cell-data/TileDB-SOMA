@@ -184,32 +184,20 @@ SOMACollectionBase <- R6::R6Class(
 
       private$.check_open_for_write()
 
+      # Carrara data model does not support set()
+      if (self$soma_context$is_tiledbv3(self$uri)) {
+        stop(errorCondition(
+          message = paste(
+            "TileDB Carrara data model does not support the set operation",
+            "on this object."
+          ),
+          class = "unsupportedOperationError",
+          call = NULL
+        ))
+      }
+
       # Default name to URI basename
       name <- name %||% basename(object$uri)
-
-      # Handle Carrara URIs
-      if (self$soma_context$is_tiledbv3(self$uri)) {
-        # Validate name/uri match
-        if (basename(object$uri) != name) {
-          stop(
-            sprintf(
-              "Member name `%s` must match the final segment of the URI (`%s`) for Carrara collections.",
-              name,
-              basename(object$uri)
-            ),
-            call. = FALSE
-          )
-        }
-
-        # Force refresh member cache refresh since Carrara automatically adds
-        # children on creation, the local cache may be stale
-        private$.update_member_cache(force = TRUE)
-
-        # no-op if already present
-        if (name %in% names(private$.member_cache)) {
-          return(invisible(self))
-        }
-      }
 
       # Determine whether to use relative URI
       relative <- relative %||% is_relative_uri(object$uri)
@@ -391,7 +379,7 @@ SOMACollectionBase <- R6::R6Class(
         stop("'object' must be a SOMA collection", call. = FALSE)
       }
 
-      self$set(object, key)
+      private$.set_element(object, key)
       return(object)
     },
 
@@ -429,7 +417,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      self$set(sdf, name = key)
+      private$.set_element(sdf, key)
       return(sdf)
     },
 
@@ -458,7 +446,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp
       )
-      self$set(ndarr, name = key)
+      private$.set_element(ndarr, key)
       return(ndarr)
     },
 
@@ -492,7 +480,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      self$set(ndarr, name = key)
+      private$.set_element(ndarr, key)
       return(ndarr)
     },
 
@@ -662,6 +650,41 @@ SOMACollectionBase <- R6::R6Class(
         object = object
       )
       private$.update_member_cache(force = TRUE)
+      return(invisible(self))
+    },
+
+    # @description Internal method to add a newly-created element to a
+    # collection. For Carrara (v3) URIs, children are auto-registered when
+    # created at a nested URI, so we only update the cache. For v2 URIs, we
+    # also register the member with the TileDB group.
+    #
+    # @param object A SOMA object
+    # @param name The key for the object
+    #
+    # @return Invisibly returns self
+    #
+    .set_element = function(object, name) {
+      if (self$soma_context$is_tiledbv3(self$uri)) {
+        # Carrara requires member name to match URI basename
+        if (basename(object$uri) != name) {
+          stop(
+            sprintf(
+              paste(
+                "Member name `%s` must match the final segment of the URI",
+                "(`%s`) for Carrara collections."
+              ),
+              name,
+              basename(object$uri)
+            ),
+            call. = FALSE
+          )
+        }
+        # Carrara: children are auto-registered, just update cache
+        private$.add_cache_member(name, object)
+      } else {
+        # v2: register with TileDB group
+        self$set(object, name)
+      }
       return(invisible(self))
     },
 
