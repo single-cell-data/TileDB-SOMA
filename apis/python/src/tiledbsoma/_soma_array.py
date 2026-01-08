@@ -10,7 +10,7 @@ import pyarrow as pa
 from . import pytiledbsoma as clib
 from ._managed_query import ManagedQuery
 from ._soma_object import SOMAObject
-from ._util import _cast_domainish
+from ._util import _cast_domainish, _cast_record_batch
 
 
 class SOMAArray(SOMAObject):
@@ -155,12 +155,12 @@ class SOMAArray(SOMAObject):
             for batch in batches:
                 mq = ManagedQuery(self)._handle
                 mq.set_layout(clib.ResultOrder.unordered)
-                mq.submit_batch(batch.cast(batch_schema, safe=True))
+                mq.submit_batch(_cast_record_batch(batch, batch_schema, safe=True))
                 mq.finalize()
         else:
             # Single global order query - only finalize at the end.
             mq = ManagedQuery(self)._handle
             mq.set_layout(clib.ResultOrder.globalorder)
             for batch in batches[:-1]:
-                mq.submit_batch(batch.cast(batch_schema, safe=True))
+                mq.submit_batch(_cast_record_batch(batch, batch_schema, safe=True))
             mq.submit_and_finalize_batch(batches[-1])
