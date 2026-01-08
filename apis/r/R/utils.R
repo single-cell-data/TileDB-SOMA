@@ -74,7 +74,7 @@ get_soma_context <- function(context, tiledbsoma_ctx, what = NULL) {
         if (is.null(context)) {
           return(set_default_context())
         }
-        reurn(context)
+        return(context)
     }
     if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
       stop(
