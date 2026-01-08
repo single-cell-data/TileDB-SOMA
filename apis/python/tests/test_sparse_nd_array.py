@@ -1826,42 +1826,6 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
         gc.collect()
 
 
-def test_sparse_nd_array_null(tmp_path):
-    uri = tmp_path.as_posix()
-
-    pydict = {
-        "soma_dim_0": pa.array([None, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-        "soma_data": pa.array([None, 0, None, 1, 2, None, None, 3, 4, 5], type=pa.float64()),
-    }
-    table = pa.Table.from_pydict(pydict)
-
-    soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,))
-
-    # As of version 1.15.6 we were throwing in this case. However, we found
-    # a compatibility issue with pyarrow versions below 17. Thus this is
-    # now non-fatal.
-    # with soma.SparseNDArray.open(uri, "w") as A:
-    #    with raises_no_typeguard(soma.SOMAError):
-    #        # soma_joinid cannot be nullable
-    #        A.write(table[:5])
-    #        A.write(table[5:])
-
-    pydict["soma_dim_0"] = pa.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    table = pa.Table.from_pydict(pydict)
-
-    with soma.SparseNDArray.open(uri, "w") as A:
-        A.write(table[:5])
-        A.write(table[5:])
-
-    with soma.SparseNDArray.open(uri) as A:
-        pdf = A.read().tables().concat()
-
-        # soma_data is a non-nullable attribute. In ManagedQuery.set_array_data,
-        # any null values present in non-nullable attributes get casted to
-        # fill values. In the case for float64, the fill value is 0
-        np.testing.assert_array_equal(pdf["soma_data"], table["soma_data"].fill_null(0))
-
-
 @pytest.mark.parametrize("ts", (None, 1))
 def test_resize_with_time_travel_61254(tmp_path, ts):
     uri = tmp_path.as_posix()

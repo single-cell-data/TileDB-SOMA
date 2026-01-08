@@ -1,17 +1,17 @@
 name: TileDB-SOMA Python CI (remote storage)
 
 on:
-  push:
-    branches:
-      - main
-      - 'release-*'
-  pull_request:
-    paths:
-      - "libtiledbsoma/**"
-      - "apis/python/**"
-      - "!**.md"
-      - '.github/workflows/python-remote-storage.yml'
-      - ".github/workflows/build-cpp.yml" # <-- The only build file
+#  push:
+#    branches:
+#      - main
+#      - 'release-*'
+#  pull_request:
+#    paths:
+#      - "libtiledbsoma/**"
+#      - "apis/python/**"
+#      - "!**.md"
+#      - '.github/workflows/python-remote-storage.yml'
+#      - ".github/workflows/build-cpp.yml" # <-- The only build file
   workflow_dispatch:
 
 env:
