@@ -93,3 +93,112 @@ test_that("SOMACollection relative URI behavior", {
   expect_equivalent(child_direct$soma_type, "SOMACollection")
   child_direct$close()
 })
+
+test_that("SOMACollection delete member by name", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  uri <- carrara_group_path()
+  SOMACollectionCreate(uri)$close()
+
+  # Add members to the collection
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$add_new_sparse_ndarray(
+    "array_to_delete",
+    type = arrow::int8(),
+    shape = c(10L)
+  )
+  collection$add_new_collection(
+    SOMACollectionCreate(file_path(uri, "collection_to_keep")),
+    "collection_to_keep"
+  )
+  collection$close()
+
+  # Verify both members exist
+  collection <- SOMACollectionOpen(uri, mode = "READ")
+  expect_setequal(collection$names(), c("array_to_delete", "collection_to_keep"))
+  collection$close()
+
+  # Delete the array member
+  collection <- SOMACollectionOpen(uri, mode = "DELETE")
+  collection$remove("array_to_delete")
+  collection$close()
+
+  # Verify only the collection remains
+  collection <- SOMACollectionOpen(uri, mode = "READ")
+  expect_equal(collection$names(), "collection_to_keep")
+  collection$close()
+})
+
+test_that("Invalid nested storage paths are rejected", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  uri <- carrara_group_path()
+
+  # Attempting to create objects with nested storage URIs should fail
+  expect_error(
+    SOMACollectionCreate(file_path(uri, "s3://bucket/path"))
+  )
+
+  expect_error(
+    SOMASparseNDArrayCreate(
+      uri = file_path(uri, "s3://bucket/array"),
+      type = arrow::float32(),
+      shape = c(10, 11)
+    )
+  )
+})
+
+test_that("Opening nested child paths directly works", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  uri <- carrara_group_path()
+  SOMACollectionCreate(uri)$close()
+
+  # Create nested structure: collection -> c1 -> c1.1 -> dnda1
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$add_new_sparse_ndarray("snda1", type = arrow::int8(), shape = c(10, 11))
+  collection$add_new_collection(
+    SOMACollectionCreate(file_path(uri, "c1")),
+    "c1"
+  )
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  c1 <- collection$get("c1")
+  c1$add_new_collection(
+    SOMACollectionCreate(file_path(c1$uri, "c1.1")),
+    "c1.1"
+  )
+  c1$close()
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  c1 <- collection$get("c1")
+  c1_1 <- c1$get("c1.1")
+  c1_1$add_new_dense_ndarray("dnda1", type = arrow::int64(), shape = c(100, 10))
+  c1_1$close()
+  c1$close()
+  collection$close()
+
+  # Verify we can open each nested path directly
+  expect_equivalent(SOMACollectionOpen(uri)$soma_type, "SOMACollection")
+  expect_equal(
+    SOMASparseNDArrayOpen(file_path(uri, "snda1"))$soma_type,
+    "SOMASparseNDArray"
+  )
+  expect_equivalent(
+    SOMACollectionOpen(file_path(uri, "c1"))$soma_type,
+    "SOMACollection"
+  )
+  expect_equivalent(
+    SOMACollectionOpen(file_path(uri, "c1/c1.1"))$soma_type,
+    "SOMACollection"
+  )
+  expect_equal(
+    SOMADenseNDArrayOpen(file_path(uri, "c1/c1.1/dnda1"))$soma_type,
+    "SOMADenseNDArray"
+  )
+})
