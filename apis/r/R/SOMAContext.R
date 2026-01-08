@@ -66,7 +66,7 @@ SOMAContext <- R6::R6Class(
 #' @export
 #'
 set_default_context <- function(config = NULL) {
-  if (is.null(.pkgenv[["somactx"]])) {
+  if (!is.null(.pkgenv[["somactx"]])) {
     warning("A default context was already created. Existing objects will not use the new default context.", call. = FALSE)
   }
   context <- SOMAContext$new(config)
