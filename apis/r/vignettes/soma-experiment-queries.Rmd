@@ -190,7 +190,7 @@ For a re-indexed and re-shaped sparse matrix see the section below.
 
 ## Export to an annotated re-indexed sparse matrix
 
-Any component of the queried `SOMAExperiment` can be exported to a \[sparse matrix\]\[Matrix::sparseMatrix-class\] using the `to_sparse_matrix()` method.
+Any component of the queried `SOMAExperiment` can be exported to a [sparse matrix][Matrix::sparseMatrix-class] using the `to_sparse_matrix()` method.
 
 For example, let's create a sparse matrix of the filtered expression data. We'll create a new query that returns a smaller subset of the data to make the output easier to read.
 

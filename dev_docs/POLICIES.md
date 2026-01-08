@@ -13,7 +13,7 @@ TileDB-SOMA also uses lifecycle tags to indicate the maturity of an interface. A
 
 If no tag is present, the state is `experimental`.
 
-> \[!NOTE\]
+> [!NOTE]
 > Prior to version 2.0, TileDB-SOMA had no explicit version policy. Versioning was most commonly `1.MAJOR.MINOR`,
 > where breaking changes would occur in `1.X` releases, and any other change could occur on `1.X.Y` versions.
 > Starting with `2.0.0`, versioning will be aligned with the SemVer `MAJOR.MINOR.PATCH` schema.

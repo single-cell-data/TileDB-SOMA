@@ -30,7 +30,7 @@ repos:
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false
   - repo: https://github.com/hukkin/mdformat
-    rev: 0.7.2  # Use the ref you want to point at
+    rev: 0.7.22  # Use the ref you want to point at
     hooks:
     - id: mdformat
       files: .*\.md|^apis/r/vignettes/.*\.Rmd
