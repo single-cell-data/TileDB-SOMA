@@ -157,7 +157,7 @@ jobs:
           - platform: macosx_x86_64
             os: macos-15-intel
           - platform: macosx_arm64
-            os: macos-15
+            os: macos-14
           - wheel_suffix: manylinux_2_28_x86_64
             os: ubuntu-22.04
           - wheel_suffix: manylinux_2_28_aarch64
@@ -165,7 +165,7 @@ jobs:
           - wheel_suffix: macosx_13_0_x86_64
             os: macos-15-intel
           - wheel_suffix: macosx_13_0_arm64
-            os: macos-15
+            os: macos-14
           - python_name: "cp39"
             python_version: "3.9"
           - python_name: "cp310"
