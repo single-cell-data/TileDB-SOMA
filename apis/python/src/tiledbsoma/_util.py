@@ -382,7 +382,8 @@ def _df_set_index(
             df.set_index(fallback_index_name, inplace=True)
             df.index.name = None
 
-def _cast_record_batch(batch: pa.RecordBatch, target_schema: pa.Schema, safe=None, options=None):
+
+def _cast_record_batch(batch: pa.RecordBatch, target_schema: pa.Schema, safe: bool = True) -> pa.RecordBatch:
     """Cast a pyarrow ``RecordBatch`` to another schema.
 
     ``RecordBatch.cast`` is added in pyarrow==1.16.0. If/when we upgrade our minimum version we can switch
@@ -401,10 +402,7 @@ def _cast_record_batch(batch: pa.RecordBatch, target_schema: pa.Schema, safe=Non
         column = batch.column(index)
         field = target_schema.field(index)
         if not field.nullable and column.null_count > 0:
-            raise ValueError(
-                f"Casting field {field.name!r} with null values to non-nullable"
-            )
-        casted = column.cast(field.type, safe=safe, options=options)
+            raise ValueError(f"Casting field {field.name!r} with null values to non-nullable")
+        casted = column.cast(field.type, safe=safe)
         newcols.append(casted)
     return pa.RecordBatch.from_arrays(newcols, schema=target_schema)
-

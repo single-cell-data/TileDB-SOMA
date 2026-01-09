@@ -567,7 +567,10 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         outline_transformer = clib.OutlineTransformer(coordinate_space_to_json(self._coord_space))
         for batch in batches:
             table = (
-                clib.TransformerPipeline(_cast_record_batch(batch, batch_schema, safe=True)).transform(outline_transformer).asTable()
+                clib
+                .TransformerPipeline(_cast_record_batch(batch, batch_schema, safe=True))
+                .transform(outline_transformer)
+                .asTable()
             )
             for subbatch in table.to_batches():
                 mq = ManagedQuery(self)._handle
