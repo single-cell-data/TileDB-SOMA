@@ -185,7 +185,7 @@ SOMACollectionBase <- R6::R6Class(
       private$.check_open_for_write()
 
       # Carrara data model does not support set()
-      if (self$soma_context$is_tiledbv3(self$uri)) {
+      if (self$context$is_tiledbv3(self$uri)) {
         stop(errorCondition(
           message = paste(
             "TileDB Carrara data model does not support the set operation",
@@ -558,7 +558,7 @@ SOMACollectionBase <- R6::R6Class(
 
       # Carrara URIs may have external changes due to auto-registration
       # but skip in DELETE mode to preserve uncommitted local changes
-      if (self$soma_context$is_tiledbv3(self$uri) && self$mode() != "DELETE") {
+      if (self$context$is_tiledbv3(self$uri) && self$mode() != "DELETE") {
         force <- TRUE
       }
 
@@ -664,7 +664,7 @@ SOMACollectionBase <- R6::R6Class(
     # @return Invisibly returns self
     #
     .set_element = function(object, name) {
-      if (self$soma_context$is_tiledbv3(self$uri)) {
+      if (self$context$is_tiledbv3(self$uri)) {
         # Carrara requires member name to match URI basename
         if (basename(object$uri) != name) {
           stop(
