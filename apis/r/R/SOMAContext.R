@@ -33,7 +33,6 @@ SOMAContext <- R6::R6Class(
     get_data_protocol = function(uri) {
       return(get_data_protocol_from_soma_context(private$.handle, uri))
     }
-
   ),
   active = list(
     #' @field handle External pointer to the C++ interface
@@ -44,7 +43,6 @@ SOMAContext <- R6::R6Class(
       }
       return(private$.handle)
     }
-
   ),
   private = list(
     # @field Internal 'external pointer' for C++ interface ...
@@ -56,18 +54,22 @@ SOMAContext <- R6::R6Class(
 #' Create and return a global default context object
 #'
 #' It is recommended to call this method once before all other TileDB-SOMA R API calls. If the global context
-#' was already set, a warning will be raised. Setting a new default context will not change the context for
-#' TileDB-SOMA objects that were already created.
+#' was already set, an error will be raised unless \code{replace=True}. Setting a new default context will not
+#' change the context for TileDB-SOMA objects that were already created.
 #'
 #' @template param-config
+#' @param replace Allow replacing an existing default context with a new default context
 #'
 #' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
 #'
 #' @export
 #'
-set_default_context <- function(config = NULL) {
-  if (!is.null(.pkgenv[["somactx"]])) {
-    warning("A default context was already created. Existing objects will not use the new default context.", call. = FALSE)
+set_default_context <- function(config = NULL, replace = FALSE) {
+  if (!replace && !is.null(.pkgenv[["somactx"]])) {
+    stop(
+      "A default context was already created. To replace the default context for new objects call again with `replace=True`.",
+      call. = FALSE
+    )
   }
   context <- SOMAContext$new(config)
   .pkgenv[["somactx"]] <- context
@@ -85,7 +87,10 @@ set_default_context <- function(config = NULL) {
 get_default_context <- function() {
   context <- .pkgenv[["somactx"]]
   if (is.null(context)) {
-    stop("No default context is set. Call `set_default_context` to initialize the context.", call. = FALSE)
+    stop(
+      "No default context is set. Call `set_default_context` to initialize the context.",
+      call. = FALSE
+    )
   }
   return(context)
 }
