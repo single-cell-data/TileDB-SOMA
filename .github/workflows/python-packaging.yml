@@ -23,14 +23,17 @@ jobs:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
 
+      - name: Install older version of numba to prevent building from source on osx-64 (no wheels for numba 0.63+)
+        if: ${{ matrix.os == 'macos-15-intel' }}
+        run: pip install numba==0.60.0
+
       - name: Install dependencies
         run: |
-          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+          pip install --upgrade 'build' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1' 'setuptools-scm>=8.0.0'
           pip list
 
       - name: Build sdist
-        working-directory: apis/python
-        run: python setup.py sdist
+        run: python -m build --sdist apis/python
 
 
       - name: Upload sdist artifact to GitHub Actions storage
@@ -40,30 +43,110 @@ jobs:
           path: apis/python/dist/
 
   test_sdist:
-    name: Build source distribution
+    name: Test source distribution
     needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
+
+      - name: "Setup for macOS"
+        if: ${{ startsWith(matrix.os, 'macos-') == true }}
+        run: |
+          set -e pipefail
+          brew update
+          brew install automake llvm
+
+      - name: Create custom vcpkg triplets for release builds
+        run: |
+          mkdir -p vcpkg_triplets
+
+          # x64-linux-release
+          cat > vcpkg_triplets/x64-linux-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE x64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
+          EOF
+
+          # arm64-linux-release
+          cat > vcpkg_triplets/arm64-linux-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE arm64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Linux)
+          EOF
+
+          # x64-osx-release
+          cat > vcpkg_triplets/x64-osx-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE x64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Darwin)
+          set(VCPKG_OSX_ARCHITECTURES x86_64)
+          set(VCPKG_OSX_DEPLOYMENT_TARGET "13.0")
+          EOF
+
+          # arm64-osx-release
+          cat > vcpkg_triplets/arm64-osx-release.cmake << 'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE arm64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          set(VCPKG_CMAKE_SYSTEM_NAME Darwin)
+          set(VCPKG_OSX_ARCHITECTURES arm64)
+          set(VCPKG_OSX_DEPLOYMENT_TARGET "13.0")
+          EOF
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d vcpkg ]; then
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            ./vcpkg/bootstrap-vcpkg.sh
+          fi
+
+          echo "Copying triplets from ./vcpkg_triplets/ to vcpkg/triplets/"
+          ls -la $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake || echo "WARNING: No triplets found in ./vcpkg_triplets/"
+          cp -v $GITHUB_WORKSPACE/vcpkg_triplets/*-release.cmake vcpkg/triplets/
+
+          echo "Verifying triplets were copied:"
+          ls -la vcpkg/triplets/*-release.cmake
+          echo "Verifying Linux triplets have VCPKG_CMAKE_SYSTEM_NAME:"
+          grep -H "VCPKG_CMAKE_SYSTEM_NAME" vcpkg/triplets/*-linux-release.cmake || echo "ERROR: Linux triplets missing VCPKG_CMAKE_SYSTEM_NAME"
+          echo "VCPKG_ROOT=$GITHUB_WORKSPACE/vcpkg" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+      - name: Set VCPKG_TARGET_TRIPLET
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-24.04" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "ubuntu-24.04-arm" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=arm64-linux-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-15-intel" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-osx-release" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-15" ]]; then
+            echo "VCPKG_TARGET_TRIPLET=arm64-osx-release" >> $GITHUB_ENV
+          fi
+
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
         with:
           name: sdist
           path: apis/python/dist/
+
       - name: Install sdist artifact
-        working-directory: apis/python
         run: |
           echo $PWD
-          pip install --verbose dist/*.tar.gz
-      - name: sdist smoke test ${{ matrix.os }}
-        run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
+          pip install --verbose apis/python/dist/*.tar.gz
 
   build_wheels:
     name: ${{ matrix.python_name }}-${{ matrix.platform }} wheel
@@ -86,8 +169,8 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
-          fetch-tags: true  # Tags needed for python API version number
+          fetch-depth: 0 # Required to fetch tags: https://github.com/actions/checkout/issues/2199
+          fetch-tags: true # Tags needed for python API version number
 
       - name: "Setup for macOS"
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -96,25 +179,9 @@ jobs:
           brew update
           brew install automake llvm
 
-      - name: "Setup for arm builds"
-        # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
-        if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
+      - name: Install cibuildwheel and dependencies
         run: |
-          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
-          echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
-
-      - name: Get arch
-        if: ${{ startsWith(matrix.os, 'macos-') == true }}
-        run: |
-          plat="${{ matrix.platform }}"
-          arch="${plat#*_}"
-          echo "ARCH=$arch" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
-          pip list
+          pip install --upgrade 'cibuildwheel>=2.19.0' 'scikit-build-core>=0.10.0' 'pybind11[global]>=2.10.0' 'cmake>=3.21,<4' 'setuptools>=70.1' 'setuptools-scm>=8.0.0'
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.1
@@ -124,13 +191,18 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
-          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
-          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CMAKE_OSX_ARCHITECTURES: ${{ env.arch || ''}}
-          MACOSX_DEPLOYMENT_TARGET: "13.3"
+          # Platform-specific environment variables - note: paths are evaluated inside the container
+          CIBW_ENVIRONMENT_LINUX: >
+            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'aarch64') && 'arm64-linux-release' || 'x64-linux-release' }}
+            VCPKG_ROOT=/project/vcpkg
+            CMAKE_TOOLCHAIN_FILE=/project/vcpkg/scripts/buildsystems/vcpkg.cmake
+            VCPKG_FORCE_SYSTEM_BINARIES=1
+          CIBW_ENVIRONMENT_MACOS: >
+            VCPKG_TARGET_TRIPLET=${{ endsWith(matrix.platform, 'arm64') && 'arm64-osx-release' || 'x64-osx-release' }}
+            CMAKE_OSX_ARCHITECTURES=${{ endsWith(matrix.platform, 'arm64') && 'arm64' || 'x86_64' }}
+            MACOSX_DEPLOYMENT_TARGET=13.3
+            VCPKG_ROOT="$(pwd)/vcpkg"
+            CMAKE_TOOLCHAIN_FILE="$(pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
       - name: Check wheel name
         run: ls -l ./wheelhouse/*.whl
@@ -176,6 +248,9 @@ jobs:
             python_version: "3.12"
           - python_name: "cp313"
             python_version: "3.13"
+        exclude:
+          - os: macos-15-intel
+            python_version: 3.13
       fail-fast: false
     steps:
       - name: Set up Python ${{ matrix.python_version }}
@@ -187,6 +262,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: wheel-${{ matrix.python_name }}-${{ matrix.platform }}
+
+
+      - name: Install numba to prevent building from source
+        if: ${{ matrix.os == 'macos-15-intel' }}
+        run: pip install numba==0.60.0
 
       - name: Install wheel
         run: |
@@ -207,7 +287,7 @@ jobs:
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python_version[0] }} bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
