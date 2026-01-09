@@ -79,6 +79,9 @@ apis/r/.Rproj*
 apis/r/*.Rproj
 apis/r/.Rhistory
 apis/r/tools/*.html
+apis/r/inst/tiledb/
+apis/r/inst/tiledbsoma/
+apis/r/tools/build_libtiledbsoma.sh
 
 # Coverage/codecov
 .coverage
