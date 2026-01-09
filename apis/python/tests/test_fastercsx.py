@@ -39,10 +39,10 @@ def rng() -> np.random.Generator:
 
 
 @pytest.fixture
-def context(concurrency: int | None) -> soma.SOMATileDBContext:
+def context(concurrency: int | None) -> soma.SOMAContext:
     if concurrency is None:
-        return soma.SOMATileDBContext()
-    return soma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
+        return soma.SOMAContext()
+    return soma.SOMAContext(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
 
 
 def assert_eq(sp: sparse.spmatrix | sparse.sparray, cm: fastercsx.CompressedMatrix) -> bool:
@@ -73,7 +73,7 @@ def test_from_ijd(
     shape: tuple[int, int],
     value_dtype: np.dtype[Any],
     format: Format,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
     rng: np.random.Generator,
 ) -> None:
     sp = sparse.random(shape[0], shape[1], density=0.01, dtype=value_dtype, random_state=rng)
@@ -104,7 +104,7 @@ def test_from_soma_array(
     shape: tuple[int, int],
     value_dtype: np.dtype[Any],
     format: Format,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
     rng: np.random.Generator,
 ) -> None:
     sp = sparse.random(
@@ -149,7 +149,7 @@ def test_from_soma_chunked_array(
     shape: tuple[int, int],
     value_dtype: np.dtype[Any],
     format: Format,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
     rng: np.random.Generator,
 ) -> None:
     sp = sparse.random(
@@ -189,7 +189,7 @@ def test_to_scipy(
     format: Format,
     sorted: bool,
     index: slice | None,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
     rng: np.random.Generator,
 ) -> None:
     sp = sparse.random(1000, 100, density=0.1, dtype=np.float32, random_state=rng, format="coo")
@@ -219,7 +219,7 @@ def test_to_numpy(
     sorted: bool,
     shape: tuple[int, int],
     index: slice | None,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
     rng: np.random.Generator,
 ) -> None:
     sp = sparse.random(
@@ -248,7 +248,7 @@ def test_to_numpy(
         assert np.array_equal(sp.tocsc()[:, index or slice(None)].toarray(), cm.to_numpy(index))
 
 
-def test_bad_arguments(context: soma.SOMATileDBContext, rng: np.random.Generator) -> None:
+def test_bad_arguments(context: soma.SOMAContext, rng: np.random.Generator) -> None:
     """Test various bad argument types/values are caught."""
     sp = sparse.random(970, 31, density=0.01, dtype=np.float32, random_state=rng)
 
@@ -302,7 +302,7 @@ def test_bad_arguments(context: soma.SOMATileDBContext, rng: np.random.Generator
             )
 
 
-def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -> None:
+def test_bad_shapes(context: soma.SOMAContext, rng: np.random.Generator) -> None:
     """Test bad/mismatched shape."""
     sp = sparse.identity(32, dtype=np.int8).tocoo()
     for shp in [
@@ -319,7 +319,7 @@ def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -
 def test_duplicates(
     format: Format,
     make_sorted: bool,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
     rng: np.random.Generator,
 ) -> None:
     shape = (10, 10)

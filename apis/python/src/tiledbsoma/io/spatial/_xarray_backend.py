@@ -26,7 +26,7 @@ except ImportError as err:
     warnings.warn("Experimental spatial exporter requires the xarray package.", stacklevel=1)
     raise err
 
-from tiledbsoma import DenseNDArray
+from tiledbsoma import DenseNDArray, SOMAContext
 from tiledbsoma.options._soma_tiledb_context import SOMATileDBContext
 
 from ._util import _str_to_int
@@ -38,14 +38,15 @@ class DenseNDArrayWrapper:
 
     Args:
         uri: Location of the :class:`DenseNDArray`.
-        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
+            provide the default context will be used and possibly initialized.
     """
 
     def __init__(
         self,
         uri: str,
         *,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
     ) -> None:
         self._array = DenseNDArray.open(uri, context=context)
         self._dtype: np.typing.DTypeLike = self._array.schema.field("soma_data").type.to_pandas_dtype()
@@ -117,7 +118,7 @@ def dense_nd_array_to_data_array(
     dim_names: tuple[str, ...],
     chunks: tuple[int, ...] | None = None,
     attrs: Mapping[str, Any] | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
 ) -> xr.DataArray:
     """Create a :class:`xarray.DataArray` that accesses a SOMA :class:`DenseNDarray`
     through dask.
@@ -129,7 +130,8 @@ def dense_nd_array_to_data_array(
             SOMA :class:`DenseNDArray`. If not provided, the tile size of the array
             will be used.
         attrs: The attributes (metadata) to set on the :class:`xarray.DataArray`.
-        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
+            provide the default context will be used and possibly initialized.
     """
     array_wrapper = DenseNDArrayWrapper(uri=uri, context=context)
 
