@@ -72,10 +72,9 @@ get_soma_context <- function(context, tiledbsoma_ctx, what = NULL) {
     if (is.null(tiledbsoma_ctx)) {
         context <- .pkgenv[["somactx"]]
         if (is.null(context)) {
-            return(SOMAContext$new())
-        } else {
-            return(context)
+          return(set_default_context())
         }
+        return(context)
     }
     if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
       stop(

@@ -30,7 +30,10 @@
 #' @param platform_config Optional platform configuration.
 #' @param tiledbsoma_ctx Optional (DEPRECATED) SOMATileDBContext.
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp.
-#' @param context Optional TileDB SOMA context.
+#' @param context Optional \code{SOMAContext} object used for TileDB operations.
+#' If a context is not provided, then the default context will be used. Call
+#' \code{set_default_context} once before other SOMA operations to configure
+#' the default context.
 #'
 #' @return A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
 #' \code{uri} opened for writing.

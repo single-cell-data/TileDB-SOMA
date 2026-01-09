@@ -98,7 +98,10 @@ configuration}.}
 
 \item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
 
-\item{context}{Optional \code{\link{SOMAContext}}.}
+\item{context}{Optional \code{SOMAContext} object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+\code{set_default_context} once before other SOMA operations to configure
+the default context.}
 
 \item{relative}{\strong{[Internal use only]} Is \code{uri}
 relative or absolute.}

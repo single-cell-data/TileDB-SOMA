@@ -74,7 +74,10 @@ extract_dataset <- function(name, dir = tempdir()) {
 #'
 #' @param tiledbsoma_ctx Optional (DEPRECATED) TileDB \dQuote{Context} object
 #' that defaults to \code{NULL}.
-#' @param context Optional SOMA context object that defaults to \code{NULL}.
+#' @param context Optional \code{SOMAContext} object used for TileDB operations.
+#' If a context is not provided, then the default context will be used. Call
+#' \code{set_default_context} once before other SOMA operations to configure
+#' the default context.
 #'
 #' @return \code{load_dataset()}: returns a SOMA object.
 #'

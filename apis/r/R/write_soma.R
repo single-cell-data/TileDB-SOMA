@@ -10,7 +10,10 @@
 #' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
 #' configuration}.
 #' @param tiledbsoma_ctx Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.
-#' @param context Optional \code{\link{SOMAContext}}.
+#' @param context Optional \code{SOMAContext} object used for TileDB operations.
+#' If a context is not provided, then the default context will be used. Call
+#' \code{set_default_context} once before other SOMA operations to configure
+#' the default context.
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
 #' the data contained in \code{x}.

@@ -77,8 +77,10 @@ Create a new SOMA object. (lifecycle: maturing)
 \item{\code{tiledb_timestamp}}{Optional timestamp (\code{\link[base]{POSIXct}})
 to open the object at}
 
-\item{\code{context}}{A \code{SOMAContext} object. Required internally but
-automatically provided by factory functions.}
+\item{\code{context}}{Optional \code{SOMAContext} object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+\code{set_default_context} once before other SOMA operations to configure
+the default context.}
 }
 \if{html}{\out{</div>}}
 }
