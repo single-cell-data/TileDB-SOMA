@@ -7,6 +7,14 @@
 Base class for objects containing persistent collection of SOMA
 objects, mapping string keys to any SOMA object (lifecycle: maturing).
 }
+\section{Carrara (TileDB v3) behavior}{
+
+
+For Carrara URIs, child objects created at nested URIs are automatically
+added to the parent collection. Calling this method on an already-
+registered child is a \strong{no-op} for backward compatibility.
+}
+
 \seealso{
 Derived classes: \code{\link{SOMACollection}},
 \code{\link{SOMAMeasurement}},

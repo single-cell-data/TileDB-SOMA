@@ -37,7 +37,7 @@ void apply_dim_points(
                     mq->select_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
                     std::stringstream ss;
                     ss << "[apply_dim_points] Applying dim point " << uv[i] << " on " << nm;
-                    tdbs::LOG_INFO(ss.str());
+                    tdbs::LOG_DEBUG(ss.str());
                     suitable = true;
                 }
             }
@@ -424,14 +424,14 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             ss << "[domainish] name {} format {} length {} lo {} hi {}" << std::string(arrow_schema->children[i]->name)
                << " format " << std::string(arrow_schema->children[i]->format) << " length "
                << arrow_array->children[i]->length << "lo " << lohi[0] << " hi " << lohi[1];
-            tdbs::LOG_INFO(ss.str());
+            tdbs::LOG_DEBUG(ss.str());
         } else {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
             std::stringstream ss;
             ss << "[domainish] name " << std::string(arrow_schema->children[i]->name) << " format "
                << std::string(arrow_schema->children[i]->format) << " length " << arrow_array->children[i]->length;
-            tdbs::LOG_INFO(ss.str());
+            tdbs::LOG_DEBUG(ss.str());
         }
 
         ArrowArrayMove(arrow_array->children[i], arr->children[i]);

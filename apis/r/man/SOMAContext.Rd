@@ -19,6 +19,8 @@ Context map for TileDB-SOMA objects
 \item \href{#method-SOMAContext-new}{\code{SOMAContext$new()}}
 \item \href{#method-SOMAContext-get_config}{\code{SOMAContext$get_config()}}
 \item \href{#method-SOMAContext-get_data_protocol}{\code{SOMAContext$get_data_protocol()}}
+\item \href{#method-SOMAContext-is_tiledbv2}{\code{SOMAContext$is_tiledbv2()}}
+\item \href{#method-SOMAContext-is_tiledbv3}{\code{SOMAContext$is_tiledbv3()}}
 \item \href{#method-SOMAContext-clone}{\code{SOMAContext$clone()}}
 }
 }
@@ -70,6 +72,44 @@ A character vector with the current config options set on the context.
 }
 \subsection{Returns}{
 The data protocol to use for the URI.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAContext-is_tiledbv2"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAContext-is_tiledbv2}{}}}
+\subsection{Method \code{is_tiledbv2()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAContext$is_tiledbv2(uri)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{uri}}{A URI for a SOMA object}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+TRUE if the URI will use \code{tiledbv2} semantics.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAContext-is_tiledbv3"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAContext-is_tiledbv3}{}}}
+\subsection{Method \code{is_tiledbv3()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAContext$is_tiledbv3(uri)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{uri}}{A URI for a SOMA object}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+TRUE if the URI will use \code{tiledbv3} semantics.
 }
 }
 \if{html}{\out{<hr>}}

@@ -3,10 +3,14 @@
 ## Added
 
 - Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
+- Added `SOMAContext$is_tiledbv2()` and `SOMAContext$is_tiledbv3()` methods to check the data protocol for a given URI.
+- Added Carrara (TileDB v3) support for collection classes. Child objects created at nested Carrara URIs are automatically registered with their parent collection.
 
 ## Changed
 
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
+- `SOMACollectionBase$set()` now throws an `unsupportedOperationError` for Carrara URIs since the Carrara data model does not support adding external objects to collections. Use `add_new_*` methods instead.
+- Reduced some internal diagnostic logging from INFO to DEBUG level.
 
 ## Deprecated
 
@@ -20,6 +24,8 @@
 
 - The SOMA Context is only cached as an environment variable when the function `soma_context` is called directly. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
 - `SOMATileDBContext` no longer replaces `sm.mem.reader.sparse_global_order.ratio_array_data` when set in the input config. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+- Fixed `SOMACollectionBase$remove()` incorrectly accessing `self$mode` instead of calling `self$mode()`.
+- Fixed collection member cache not properly handling DELETE mode.
 
 ## Security
 

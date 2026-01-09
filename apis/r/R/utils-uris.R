@@ -73,3 +73,14 @@ make_uri_relative <- function(uri, relative_to) {
     start = uri_scheme_remove(relative_to)
   )
 }
+
+#' Detects whether a provided URI is a child relative URI to the parent.
+#' @noRd
+is_relative_uri <- function(uri) {
+  stopifnot(is_scalar_character(uri))
+  return(
+    !grepl("://", uri, fixed = TRUE) &&
+      !startsWith(uri, "/") &&
+      !startsWith(uri, "~")
+  )
+}
