@@ -4,16 +4,18 @@
 \alias{set_default_context}
 \title{Create and return a global default context object}
 \usage{
-set_default_context(config = NULL)
+set_default_context(config = NULL, replace = FALSE)
 }
 \arguments{
 \item{config}{...}
+
+\item{replace}{Allow replacing an existing default context with a new default context}
 }
 \value{
 The context that will be used for TileDB-SOMA API when no context is provided by the user.
 }
 \description{
 It is recommended to call this method once before all other TileDB-SOMA R API calls. If the global context
-was already set, a warning will be raised. Setting a new default context will not change the context for
-TileDB-SOMA objects that were already created.
+was already set, an error will be raised unless \code{replace=True}. Setting a new default context will not
+change the context for TileDB-SOMA objects that were already created.
 }
