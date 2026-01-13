@@ -217,6 +217,8 @@ def register_h5ads(
         h5ad_file_names = [h5ad_file_names]
 
     if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         context = SOMAContext.get_default()
     elif isinstance(context, SOMATileDBContext):
         context = context._to_soma_context()
@@ -284,6 +286,8 @@ def register_anndatas(
         adatas = [adatas]
 
     if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         context = SOMAContext.get_default()
     elif isinstance(context, SOMATileDBContext):
         context = context._to_soma_context()
@@ -445,6 +449,8 @@ def from_h5ad(
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
 
     if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         context = SOMAContext.get_default()
     elif isinstance(context, SOMATileDBContext):
         context = context._to_soma_context()
@@ -660,6 +666,8 @@ def _from_anndata(
         filter_existing_obs_joinids = registration_mapping.obs_axis.allow_duplicate_ids
 
     if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         context = SOMAContext.get_default()
     elif isinstance(context, SOMATileDBContext):
         context = context._to_soma_context()

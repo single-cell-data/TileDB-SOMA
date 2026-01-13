@@ -46,12 +46,27 @@ def test_delete_config_entry():
     assert new_context.config == {"sm.mem.reader.sparse_global_order.ratio_array_data": "0.5"}
 
 
-def test_default_context():
+def test_default_context_not_set():
+    tiledbsoma.SOMAContext._default_context = None
+    with pytest.raises(RuntimeError):
+        tiledbsoma.SOMAContext.get_default()
+
+
+def test_default_conext_already_set():
+    tiledbsoma.SOMAContext._default_context = None
+    tiledbsoma.SOMAContext.set_default()
+    with pytest.raises(RuntimeError):
+        tiledbsoma.SOMAContext.set_default()
+
+
+def test_default_context_no_config():
     """Verifies that contexts are not shared when directly constructed."""
     tiledbsoma.SOMAContext._default_context = None
-    ctx1 = tiledbsoma.SOMAContext.get_default()
+    ctx1 = tiledbsoma.SOMAContext.set_default()
     ctx2 = tiledbsoma.SOMAContext.get_default()
+    ctx3 = tiledbsoma.SOMAContext.get_default()
     assert ctx1.native_context is ctx2.native_context
+    assert ctx2.native_context is ctx3.native_context
 
 
 def test_default_context_with_config():
@@ -67,19 +82,20 @@ def test_default_context_with_config():
 def test_change_default_context():
     tiledbsoma.SOMAContext._default_context = None
     ctx1 = tiledbsoma.SOMAContext.set_default()
-    with pytest.warns(UserWarning):
-        ctx2 = tiledbsoma.SOMAContext.set_default()
+    ctx2 = tiledbsoma.SOMAContext.set_default(replace=True)
     assert ctx1.native_context is not ctx2.native_context
 
 
 def test_not_shared_ctx():
     """Verifies that contexts are not shared when not appropriate."""
     tiledbsoma.SOMAContext._default_context = None
+    tiledbsoma.SOMAContext.set_default()
     ctx1 = tiledbsoma.SOMAContext.get_default()
     ctx2 = tiledbsoma.SOMAContext()
     ctx3 = tiledbsoma.SOMAContext()
     assert ctx1.native_context is not ctx2.native_context
     assert ctx2.native_context is not ctx3.native_context
+    assert ctx1.native_context is not ctx3.native_context
 
 
 def test_replace_config_after_construction():

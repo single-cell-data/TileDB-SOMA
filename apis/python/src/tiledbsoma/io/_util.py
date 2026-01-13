@@ -46,6 +46,8 @@ def read_h5ad(
 ) -> Iterator[ad.AnnData]:
     """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
     if ctx is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         ctx = SOMAContext.get_default()
     elif isinstance(ctx, SOMATileDBContext):
         ctx = ctx._to_soma_context()

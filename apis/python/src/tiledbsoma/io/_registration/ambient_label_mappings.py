@@ -196,11 +196,11 @@ class ExperimentAmbientLabelMapping:
             None
         """
         if context is None:
+            if not SOMAContext.has_default():
+                SOMAContext.set_default()
             context = SOMAContext.get_default()
         elif isinstance(context, SOMATileDBContext):
             context = context._to_soma_context()
-        elif not isinstance(context, SOMAContext):
-            raise TypeError(f"Unexpected type '{type(context)}' for context.")
 
         def _check_experiment_structure(exp: tiledbsoma.Experiment) -> None:
             # Verify that the experiment has been created correctly - check for existence of obs & var

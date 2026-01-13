@@ -59,6 +59,8 @@ def _update_context_and_timestamp(
             tiledb_timestamp = context.timestamp_ms
         return context._to_soma_context(), tiledb_timestamp
     if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         return SOMAContext.get_default(), tiledb_timestamp
     return context, tiledb_timestamp
 
@@ -231,6 +233,8 @@ class SOMATileDBContext(ContextBase):
                 else:
                     # The user did not provide settings so create a default - use SOMAContext to ensure there is
                     # a single internal default.
+                    if not SOMAContext.has_default():
+                        SOMAContext.set_default()
                     soma_context = SOMAContext.get_default()
                     self._native_context = soma_context.native_context
 
