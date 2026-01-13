@@ -29,7 +29,7 @@ get_carrara_config <- function() {
 # Set carrara-related environment variables and unset existing TILEDB_REST_TOKEN
 with_carrara_env <- function(env = parent.frame()) {
     withr::local_envvar(list(
-      CARRARA_PROFILE = get_carrara_config()$profile,
+      TILEDB_PROFILE_NAME = get_carrara_config()$profile,
       TILEDB_REST_SERVER_ADDRESS = get_carrara_config()$rest_server,
       TILEDB_REST_TOKEN = NA_character_
   ), .local_envir = env)
