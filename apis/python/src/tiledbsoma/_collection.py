@@ -34,7 +34,7 @@ from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
 from ._util import tiledb_timestamp_to_ms
-from .options import SOMATileDBContext
+from .options import SOMATileDBContext, _update_context_and_timestamp
 
 # A collection can hold any sub-type of SOMAObject
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
@@ -94,12 +94,7 @@ class CollectionBase(
         Lifecycle:
             Maturing.
         """
-        if isinstance(context, SOMATileDBContext):
-            if tiledb_timestamp is None and context.timestamp_ms is not None:
-                tiledb_timestamp = context.timestamp_ms
-            context = context._to_soma_context()
-        elif context is None:
-            context = SOMAContext.get_default()
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
 
         try:

@@ -40,7 +40,13 @@ from ._spatial_util import (
 )
 from ._types import OpenTimestamp
 from ._util import tiledb_timestamp_to_ms
-from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
+from .options import (
+    SOMATileDBContext,
+    TileDBCreateOptions,
+    TileDBDeleteOptions,
+    TileDBWriteOptions,
+    _update_context_and_timestamp,
+)
 from .options._util import build_clib_platform_config
 
 _UNBATCHED = options.BatchSize()
@@ -231,12 +237,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         plt_cfg = build_clib_platform_config(platform_config)
-        if isinstance(context, SOMATileDBContext):
-            if tiledb_timestamp is None and context.timestamp_ms is not None:
-                tiledb_timestamp = context.timestamp_ms
-            context = context._to_soma_context()
-        elif context is None:
-            context = SOMAContext.get_default()
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMAPointCloudDataFrame.create(
