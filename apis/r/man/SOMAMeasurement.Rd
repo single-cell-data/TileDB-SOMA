@@ -23,6 +23,23 @@ default platform configuration by passing a custom configuration to the
 \code{platform_config} argument.
 }
 
+\section{Carrara (TileDB v3) behavior}{
+
+
+When working with Carrara URIs (\verb{tiledb://workspace/teamspace/...}), child
+objects created at a URI nested under a parent collection are \strong{automatically
+added} as members of the parent. This means:
+
+\itemize{
+\item You do not need to call \code{add_new_collection()} after creating a child
+at a nested URI—the child is already a member.
+\item For backward compatibility, calling \code{add_new_collection()} on an
+already-registered child is a \strong{no-op} and will not cause an error.
+\item The member name must match the relative URI segment (e.g., creating
+at \code{parent_uri/child} automatically adds the child with key \code{"child"}).
+}
+}
+
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 uri <- withr::local_tempfile(pattern = "soma-measurement")

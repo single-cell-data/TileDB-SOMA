@@ -34,7 +34,7 @@ SOMACollectionBase <- R6::R6Class(
         stop(
           paste(
             strwrap(private$.internal_use_only("create", "collection")),
-            collapse = '\n'
+            collapse = "\n"
           ),
           call. = FALSE
         )
@@ -108,7 +108,7 @@ SOMACollectionBase <- R6::R6Class(
         stop(
           paste(
             strwrap(private$.internal_use_only("open", "collection")),
-            collapse = '\n'
+            collapse = "\n"
           ),
           call. = FALSE
         )
@@ -181,12 +181,29 @@ SOMACollectionBase <- R6::R6Class(
         "'name' must be a single, non-empty string" = is.null(name) ||
           (is_scalar_character(name) && nzchar(name))
       )
-      relative <- relative %||% !startsWith(object$uri, "tiledb://")
+
+      private$.check_open_for_write()
+
+      # Carrara data model does not support set()
+      if (self$context$is_tiledbv3(self$uri)) {
+        stop(errorCondition(
+          message = paste(
+            "TileDB Carrara data model does not support the set operation",
+            "on this object."
+          ),
+          class = "unsupportedOperationError",
+          call = NULL
+        ))
+      }
+
+      # Default name to URI basename
+      name <- name %||% basename(object$uri)
+
+      # Determine whether to use relative URI
+      relative <- relative %||% is_relative_uri(object$uri)
       if (!(isTRUE(relative) || isFALSE(relative))) {
         stop("'relative' must be TRUE or FALSE", call. = FALSE)
       }
-
-      private$.check_open_for_write()
 
       # Make the URI relative before adding it
       uri <- if (relative) {
@@ -194,7 +211,7 @@ SOMACollectionBase <- R6::R6Class(
       } else {
         object$uri
       }
-      name <- name %||% basename(uri)
+
       soma_debug(sprintf(
         "[SOMACollectionBase$set] '%s' uri %s relative %s",
         name,
@@ -269,7 +286,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}
     #'
     remove = function(name) {
-      if (self$mode == "WRITE") {
+      if (self$mode() == "WRITE") {
         .Deprecated(
           msg = sprintf(
             "Removing a member in %s mode is deprecated. Collection should be opened in %s mode.",
@@ -277,7 +294,7 @@ SOMACollectionBase <- R6::R6Class(
             sQuote("DELETE")
           )
         )
-      } else if (self$mode != "DELETE") {
+      } else if (self$mode() != "DELETE") {
         stop(
           "SOMA object is not opened in 'delete' mode; cannot remove member.",
           call. = FALSE
@@ -349,13 +366,20 @@ SOMACollectionBase <- R6::R6Class(
     #' @param object SOMA collection object.
     #' @param key The key to be added.
     #'
+    #' @section Carrara (TileDB v3) behavior:
+    #'
+    #' For Carrara URIs, child objects created at nested URIs are automatically
+    #' added to the parent collection. Calling this method on an already-
+    #' registered child is a **no-op** for backward compatibility.
+    #'
     #' @return Returns \code{object}.
     #'
     add_new_collection = function(object, key) {
       if (!inherits(object, "SOMACollectionBase")) {
         stop("'object' must be a SOMA collection", call. = FALSE)
       }
-      self$set(object, key)
+
+      private$.set_element(object, key)
       return(object)
     },
 
@@ -379,6 +403,10 @@ SOMACollectionBase <- R6::R6Class(
       domain,
       platform_config = NULL
     ) {
+      if (key %in% self$names()) {
+        stop(sprintf("Member '%s' already exists", key), call. = FALSE)
+      }
+
       sdf <- SOMADataFrameCreate(
         uri = file_path(self$uri, key),
         schema = schema,
@@ -389,7 +417,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      self$set(sdf, key)
+      private$.set_element(sdf, key)
       return(sdf)
     },
 
@@ -405,6 +433,10 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns the newly-created array stored at \code{key}.
     #'
     add_new_dense_ndarray = function(key, type, shape, platform_config = NULL) {
+      if (key %in% self$names()) {
+        stop(sprintf("Member '%s' already exists", key), call. = FALSE)
+      }
+
       ndarr <- SOMADenseNDArrayCreate(
         uri = file_path(self$uri, key),
         type = type,
@@ -414,7 +446,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp
       )
-      self$set(ndarr, key)
+      private$.set_element(ndarr, key)
       return(ndarr)
     },
 
@@ -435,6 +467,10 @@ SOMACollectionBase <- R6::R6Class(
       shape,
       platform_config = NULL
     ) {
+      if (key %in% self$names()) {
+        stop(sprintf("Member '%s' already exists", key), call. = FALSE)
+      }
+
       ndarr <- SOMASparseNDArrayCreate(
         uri = file_path(self$uri, key),
         type = type,
@@ -444,7 +480,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      self$set(ndarr, key)
+      private$.set_element(ndarr, key)
       return(ndarr)
     },
 
@@ -512,6 +548,7 @@ SOMACollectionBase <- R6::R6Class(
     .member_cache = NULL,
 
     # @description Update the member cache
+    # The member cache will always force update for the v3 data model.
     #
     # @param force \code{TRUE} or \code{FALSE}
     #
@@ -520,8 +557,14 @@ SOMACollectionBase <- R6::R6Class(
     .update_member_cache = function(force = FALSE) {
       stopifnot(isTRUE(force) || isFALSE(force))
 
+      # Carrara URIs may have external changes due to auto-registration
+      # but skip in DELETE mode to preserve uncommitted local changes
+      if (self$context$is_tiledbv3(self$uri) && self$mode() != "DELETE") {
+        force <- TRUE
+      }
+
       # Skip if we already have a member cache and don't want to update
-      if (length(private$.member_cache) && !force) {
+      if (!is.null(private$.member_cache) && !force) {
         return(invisible(NULL))
       }
 
@@ -531,8 +574,8 @@ SOMACollectionBase <- R6::R6Class(
         self$uri
       ))
 
-      # Get a read-handle for the group
-      handle <- if (self$mode() == "WRITE") {
+      # Get a read-handle for the group for write or delete mode
+      handle <- if (self$mode() != "READ") {
         soma_debug(sprintf(
           "[SOMACollectionBase$updating_member_cache] re-opening %s uri '%s' ctx null %s time null %s",
           self$class(),
@@ -572,7 +615,7 @@ SOMACollectionBase <- R6::R6Class(
       }
 
       # Close the read-handle if the group is open for writing
-      if (self$mode() == "WRITE") {
+      if (self$mode() != "READ") {
         c_group_close(xp = handle)
       }
 
@@ -611,6 +654,41 @@ SOMACollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
+    # @description Internal method to add a newly-created element to a
+    # collection. For Carrara (v3) URIs, children are auto-registered when
+    # created at a nested URI, so we only update the cache. For v2 URIs, we
+    # also register the member with the TileDB group.
+    #
+    # @param object A SOMA object
+    # @param name The key for the object
+    #
+    # @return Invisibly returns self
+    #
+    .set_element = function(object, name) {
+      if (self$context$is_tiledbv3(self$uri)) {
+        # Carrara requires member name to match URI basename
+        if (basename(object$uri) != name) {
+          stop(
+            sprintf(
+              paste(
+                "Member name `%s` must match the final segment of the URI",
+                "(`%s`) for Carrara collections."
+              ),
+              name,
+              basename(object$uri)
+            ),
+            call. = FALSE
+          )
+        }
+        # Carrara: children are auto-registered, just update cache
+        private$.add_cache_member(name, object)
+      } else {
+        # v2: register with TileDB group
+        self$set(object, name)
+      }
+      return(invisible(self))
+    },
+
     # @description Update the metadata cache
     #
     # @param force \code{TRUE} or \code{FALSE}
@@ -645,7 +723,6 @@ SOMACollectionBase <- R6::R6Class(
           type = "READ",
           ctxxp = private$.context$handle %||% create_soma_context(),
           timestamp = self$.tiledb_timestamp_range
-
         )
       } else {
         private$.tiledb_group
