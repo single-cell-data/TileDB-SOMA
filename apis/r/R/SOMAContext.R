@@ -53,14 +53,14 @@ SOMAContext <- R6::R6Class(
 
 #' Create and return a global default context object
 #'
-#' It is recommended to call this method once before all other TileDB-SOMA R API calls. If the global context
-#' was already set, an error will be raised unless \code{replace=True}. Setting a new default context will not
-#' change the context for TileDB-SOMA objects that were already created.
+#' If the global context was already set, an error will be raised unless
+#' \code{replace=True}. Setting a new default context will not change the
+#' context for TileDB-SOMA objects that were already created.
 #'
 #' @template param-config
 #' @param replace Allow replacing an existing default context with a new default context
 #'
-#' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
+#' @return Invisibly, the default default context object.
 #'
 #' @export
 #'
@@ -73,10 +73,19 @@ set_default_context <- function(config = NULL, replace = FALSE) {
   }
   context <- SOMAContext$new(config)
   .pkgenv[["somactx"]] <- context
-  return(context)
+  invisible(context)
 }
 
-#' Returns the global default context
+#' Get the Default SOMA Context
+#' 
+#' Retrieve the current default \code{\link{SOMAContext}} used by TileDB-SOMA
+#' operations.
+#'
+#' This function returns the context that was either:
+#' \itemize{
+#'   \item Explicitly set via \code{\link{set_default_context}}, or
+#'   \item Automatically created when a SOMA object was first created
+#' }
 #'
 #' An error is raised if no default context is set.
 #'
@@ -88,7 +97,7 @@ get_default_context <- function() {
   context <- .pkgenv[["somactx"]]
   if (is.null(context)) {
     stop(
-      "No default context is set. Call `set_default_context` to initialize the context.",
+      "No default context is set. Call `set_default_context()` to initialize the context.",
       call. = FALSE
     )
   }
