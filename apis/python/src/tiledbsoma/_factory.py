@@ -37,7 +37,7 @@ from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp
 from ._util import tiledb_timestamp_to_ms
-from .options import SOMATileDBContext
+from .options import SOMATileDBContext, _update_context_and_timestamp
 
 _Obj = TypeVar("_Obj", bound="SOMAObject")
 
@@ -118,12 +118,7 @@ def open(
         Maturing.
     """
     if soma_type is None:
-        if isinstance(context, SOMATileDBContext):
-            if tiledb_timestamp is None and context.timestamp_ms is not None:
-                tiledb_timestamp = context.timestamp_ms
-            context = context._to_soma_context()
-        elif context is None:
-            context = SOMAContext.get_default()
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         return _open_soma_object(uri, mode, context, tiledb_timestamp)
 
     if isinstance(soma_type, str):

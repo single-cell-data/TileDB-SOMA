@@ -19,7 +19,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
-from .options import SOMATileDBContext
+from .options import SOMATileDBContext, _update_context_and_timestamp
 
 
 class SOMAObject(somacore.SOMAObject):
@@ -78,12 +78,7 @@ class SOMAObject(somacore.SOMAObject):
         """
         del platform_config  # unused
 
-        if isinstance(context, SOMATileDBContext):
-            if tiledb_timestamp is None and context.timestamp_ms is not None:
-                tiledb_timestamp = context.timestamp_ms
-            context = context._to_soma_context()
-        elif context is None:
-            context = SOMAContext.get_default()
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
         try:
@@ -343,13 +338,7 @@ class SOMAObject(somacore.SOMAObject):
             Maturing.
         """
         check_type("uri", uri, (str,))
-
-        if isinstance(context, SOMATileDBContext):
-            if tiledb_timestamp is None and context.timestamp_ms is not None:
-                tiledb_timestamp = context.timestamp_ms
-            context = context._to_soma_context()
-        elif context is None:
-            context = SOMAContext.get_default()
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             with cls._handle_type.open(

@@ -24,7 +24,7 @@ from ._read_iters import TableReadIter
 from ._soma_context import SOMAContext
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape, tiledb_timestamp_to_ms
-from .options._soma_tiledb_context import SOMATileDBContext
+from .options._soma_tiledb_context import SOMATileDBContext, _update_context_and_timestamp
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 
@@ -183,12 +183,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = build_clib_platform_config(platform_config)
-        if context is None:
-            context = SOMAContext.get_default()
-        elif isinstance(context, SOMATileDBContext):
-            context = context._to_soma_context()
-        elif not isinstance(context, SOMAContext):
-            raise TypeError(f"Unexpected type '{type(context)}' for context.")
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMADenseNDArray.create(

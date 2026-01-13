@@ -31,7 +31,7 @@ from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseC
 from ._soma_context import SOMAContext
 from ._types import NTuple, OpenTimestamp
 from ._util import from_clib_result_order, tiledb_timestamp_to_ms
-from .options._soma_tiledb_context import SOMATileDBContext
+from .options._soma_tiledb_context import SOMATileDBContext, _update_context_and_timestamp
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 
@@ -226,12 +226,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = build_clib_platform_config(platform_config)
-        if isinstance(context, SOMATileDBContext):
-            if tiledb_timestamp is None and context.timestamp_ms is not None:
-                tiledb_timestamp = context.timestamp_ms
-            context = context._to_soma_context()
-        elif context is None:
-            context = SOMAContext.get_default()
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMASparseNDArray.create(

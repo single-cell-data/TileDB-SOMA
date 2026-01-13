@@ -47,6 +47,22 @@ ReplaceConfig = dict[str, Optional[ConfigVal]]
 """Replacing a value with ``None`` serves to delete that key."""
 
 
+def _update_context_and_timestamp(
+    context: SOMAContext | SOMATileDBContext | None, tiledb_timestamp: OpenTimestamp | None
+) -> tuple[SOMAContext, OpenTimestamp | None]:
+    """Helper function that returns the context and timestamp.
+
+    This function can be removed after the :class:`SOMATileDBContext` is deprecated.
+    """
+    if isinstance(context, SOMATileDBContext):
+        if tiledb_timestamp is None and context.timestamp_ms is not None:
+            tiledb_timestamp = context.timestamp_ms
+        return context._to_soma_context(), tiledb_timestamp
+    if context is None:
+        return SOMAContext.get_default(), tiledb_timestamp
+    return context, tiledb_timestamp
+
+
 def _default_config(override: ConfigMap) -> ConfigDict:
     """Returns a fresh dictionary with TileDB config values.
 
