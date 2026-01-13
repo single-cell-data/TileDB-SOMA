@@ -548,6 +548,7 @@ SOMACollectionBase <- R6::R6Class(
     .member_cache = NULL,
 
     # @description Update the member cache
+    # The member cache will always force update for the v3 data model.
     #
     # @param force \code{TRUE} or \code{FALSE}
     #
