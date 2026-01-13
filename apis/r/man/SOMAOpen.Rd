@@ -22,7 +22,10 @@ SOMAOpen(
 
 \item{tiledbsoma_ctx}{Optional (DEPRECATED) SOMATileDBContext.}
 
-\item{context}{Optional TileDB SOMA context.}
+\item{context}{Optional \code{SOMAContext} object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+\code{set_default_context} once before other SOMA operations to configure
+the default context.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time. If not \code{NULL}, all members accessed

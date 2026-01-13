@@ -39,7 +39,10 @@ configuration}.}
 
 \item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
 
-\item{context}{Optional \code{\link{SOMAContext}}.}
+\item{context}{Optional \code{SOMAContext} object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+\code{set_default_context} once before other SOMA operations to configure
+the default context.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
