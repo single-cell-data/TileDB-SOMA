@@ -22,8 +22,10 @@ SOMAObject <- R6::R6Class(
     #' @param tiledbsoma_ctx Optional (DEPRECATED) TileDB SOMA context
     #' @param tiledb_timestamp Optional timestamp (\code{\link[base]{POSIXct}})
     #' to open the object at
-    #' @param context A \code{SOMAContext} object. Required internally but
-    #' automatically provided by factory functions.
+    #' @param context Optional \code{SOMAContext} object used for TileDB operations.
+    #' If a context is not provided, then the default context will be used. Call
+    #' \code{set_default_context} once before other SOMA operations to configure
+    #' the default context.
     initialize = function(
       uri,
       ...,

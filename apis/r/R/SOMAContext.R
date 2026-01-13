@@ -62,3 +62,66 @@ SOMAContext <- R6::R6Class(
     .handle = NULL
   )
 )
+
+#' Set the Default Global Context
+#'
+#' Configure a default \code{\link{SOMAContext}} to be used by all TileDB-SOMA
+#' operations when no explicit context is provided.
+#'
+#' This function should be called once at the beginning of your session before
+#' opening any SOMA objects if you want to customize the TileDB context
+#' parameters that will apply to all subsequent operations. Otherwise, a default
+#' context will be created automatically with standard parameters when you first
+#' open a SOMA object.
+#'
+#' If the global context was already set, an error will be raised unless
+#' \code{replace=True}. Setting a new default context will not change the
+#' context for TileDB-SOMA objects that were already created.
+#'
+#' @template param-config
+#' @param replace Allow replacing the existing default context with new
+#' configuration parameters.
+#'
+#' @return Invisibly, the default default context object.
+#'
+#' @export
+#'
+set_default_context <- function(config = NULL, replace = FALSE) {
+  if (!replace && !is.null(.pkgenv[["somactx"]])) {
+    stop(
+      "A default context was already created. To replace the default context for new objects call again with `replace=True`.",
+      call. = FALSE
+    )
+  }
+  context <- SOMAContext$new(config)
+  .pkgenv[["somactx"]] <- context
+  invisible(context)
+}
+
+#' Get the Default SOMA Context
+#' 
+#' Retrieve the current default \code{\link{SOMAContext}} used by TileDB-SOMA
+#' operations.
+#'
+#' This function returns the context that was either:
+#' \itemize{
+#'   \item Explicitly set via \code{\link{set_default_context}}, or
+#'   \item Automatically created when a SOMA object was first created
+#' }
+#'
+#' An error is raised if no default context is set.
+#'
+#' @return The context that will be used for TileDB-SOMA API when no context is provided by the user.
+#'
+#' @export
+#'
+get_default_context <- function() {
+  context <- .pkgenv[["somactx"]]
+  if (is.null(context)) {
+    stop(
+      "No default context is set. Call `set_default_context()` to initialize the context.",
+      call. = FALSE
+    )
+  }
+  return(context)
+}
