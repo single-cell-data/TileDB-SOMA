@@ -15,6 +15,7 @@ create_arrow_table <- function(nrows = 10L, factors = FALSE) {
 
 test_that("SOMAContext detects data protocol", {
   skip_if_no_carrara()
+  with_carrara_env()
   ctx <- SOMAContext$new()
 
   expect_equal(ctx$get_data_protocol("s3://foo/bar"), "tiledbv2")
