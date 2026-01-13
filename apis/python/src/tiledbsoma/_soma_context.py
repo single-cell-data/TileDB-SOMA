@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import threading
-import warnings
 from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
@@ -39,13 +38,20 @@ class SOMAContext:
 
     @classmethod
     def set_default(
-        cls, config: dict[str, str | float] | None = None, threadpool: ThreadPoolExecutor | None = None
+        cls,
+        config: dict[str, str | float] | None = None,
+        threadpool: ThreadPoolExecutor | None = None,
+        replace: bool = False,
     ) -> Self:
         """Initializes and returns a global default context to use in SOMA operations.
 
-        It is recommended to call this once method before all other TileDB-SOMA python API. If the global context
-        was already set, a warning will be raised. Setting a new default context will not change the context for
-        TileDB-SOMA objects that were already created.
+        This method should be called once at the beginning of your session before opening any SOMA objects
+        if you want to customize the TileDB context parameters that will apply to all subsequent operations.
+        Otherwise, a default contxt will be created automatically with standard parameters when you first open
+        a SOMA object.
+
+        If the global context was already set, an error will be raised unless ``replace=True``. Setting a new
+        global default context will not change the context for TileDB-SOMA objects that were already created.
 
         Args:
             config: A dictionary of TileDB configuration options to use, overriding the default configuration.
@@ -53,23 +59,31 @@ class SOMAContext:
             threadpool: A threadpool to use for concurrent operations. If not provided, a new ThreadPoolExecutor will
                 be created with default settings.
 
+            replace: Allow an existing global default context to be replaced.
+
         Returns:
                 The global default context.
 
         Lifecycle:
             Experimental
         """
-        if cls._default_context is not None:
-            warnings.warn(
-                "A global context was already created. Existing objects will not use the new global context.",
-                stacklevel=1,
+        if not replace and cls._default_context is not None:
+            raise RuntimeError(
+                "A default context was already created. To replace the default context for new objects call this method"
+                " again with `replace=True`."
             )
         cls._default_context = cls(config=config, threadpool=threadpool)
         return cls._default_context
 
     @classmethod
     def get_default(cls) -> Self:
-        """Returns the global default context, creating one in necessary.
+        """Returns the current default context used by TileDB-SOMA operations.
+
+        This function returns the context that was either:
+
+        Raise:
+            RuntimeError:
+                If no default context is set.
 
         If no global default context is set, a new context will be created with default configuration options.
 
@@ -78,9 +92,15 @@ class SOMAContext:
 
         """
         if cls._default_context is None:
-            cls._default_context = cls()
-            return cls._default_context
+            raise RuntimeError(
+                "No default context is set. Call `SOMAContext.set_default(...)` to initialize the context."
+            )
         return cls._default_context
+
+    @classmethod
+    def has_default(cls) -> bool:
+        """Returns if the default context is set."""
+        return cls._default_context is not None
 
     def __init__(
         self,
