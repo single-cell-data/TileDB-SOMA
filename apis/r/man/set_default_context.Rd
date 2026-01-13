@@ -2,19 +2,30 @@
 % Please edit documentation in R/SOMAContext.R
 \name{set_default_context}
 \alias{set_default_context}
-\title{Create and return a global default context object}
+\title{Set the Default Global Context}
 \usage{
 set_default_context(config = NULL, replace = FALSE)
 }
 \arguments{
 \item{config}{...}
 
-\item{replace}{Allow replacing an existing default context with a new default context}
+\item{replace}{Allow replacing the existing default context with new
+configuration parameters.}
 }
 \value{
 Invisibly, the default default context object.
 }
 \description{
+Configure a default \code{\link{SOMAContext}} to be used by all TileDB-SOMA
+operations when no explicit context is provided.
+}
+\details{
+This function should be called once at the beginning of your session before
+opening any SOMA objects if you want to customize the TileDB context
+parameters that will apply to all subsequent operations. Otherwise, a default
+context will be created automatically with standard parameters when you first
+open a SOMA object.
+
 If the global context was already set, an error will be raised unless
 \code{replace=True}. Setting a new default context will not change the
 context for TileDB-SOMA objects that were already created.
