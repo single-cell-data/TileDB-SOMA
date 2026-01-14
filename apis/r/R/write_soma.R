@@ -818,6 +818,36 @@ write_soma.TsparseMatrix <- function(
   return(uri)
 }
 
+#' Register a SOMA Object to a Parent Collection
+#'
+#' @description
+#' Handles mode management for both parent and child, checks for existing keys,
+#' and applies appropriate relative/absolute URI handling.
+#'
+#' @details
+#' The function performs the following steps:
+#'
+#' 1. If `x` or `soma_parent` is closed, reopens it in `READ` mode (preserving
+#'   its timestamp).
+#' 1. Checks if `key` already exists in `soma_parent`. If it does, throws a
+#'   `existingKeyWarning` and returns early. This warning class can be
+#'   suppressed using `withCallingHandlers`.
+#' 1. Reopens `soma_parent` in `WRITE` mode.
+#' 1. Adds `x` to `soma_parent` via `SOMACollectionBase}$set()`.
+#' 1. Restores the original modes of both `x` and `soma_parent` on exit.
+#'
+#' For URIs with the `tiledb://` scheme, the `relative` argument is
+#' ignored and forced to `FALSE`.
+#'
+#' @param x A `SOMAArrayBase` or `SOMACollectionBase` object to be registered.
+#' @param soma_parent A `SOMACollectionBase` object that will contain `x`.
+#' @param key A non-empty character string serving as the name for `x` within
+#'   `soma_parent`.
+#' @param relative Whether to store the URI of `x` relative to `soma_parent`.
+#'   Defaults to `TRUE`. Ignored for `tiledb://` URIs.
+#'
+#' @noRd
+#'
 .register_soma_object <- function(x, soma_parent, key, relative = TRUE) {
   stopifnot(
     "'x' must be a SOMA object" = inherits(
