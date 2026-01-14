@@ -69,7 +69,7 @@ SEXP soma_array_reader(
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
     std::stringstream ss;
     ss << "[soma_array_reader] Reading from " << uri;
-    tdbs::LOG_INFO(ss.str());
+    tdbs::LOG_DEBUG(ss.str());
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
@@ -107,13 +107,13 @@ SEXP soma_array_reader(
         std::stringstream ss;
         ss << "[soma_array_reader] Dimension " << dim.name() << " type " << tiledb::impl::to_str(dim.type())
            << " extent " << dim.tile_extent_to_str();
-        tdbs::LOG_INFO(ss.str());
+        tdbs::LOG_DEBUG(ss.str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        tdbs::LOG_INFO("[soma_array_reader_impl] Applying query condition");
+        tdbs::LOG_DEBUG("[soma_array_reader_impl] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         mq.set_condition(*qcxp);
     }
@@ -147,7 +147,7 @@ SEXP soma_array_reader(
         std::stringstream ss;
         ss << "[soma_array_reader] Read complete with " << sr_data->get()->num_rows() << " rows and "
            << sr_data->get()->names().size() << " cols";
-        tdbs::LOG_INFO(ss.str());
+        tdbs::LOG_DEBUG(ss.str());
     }
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
@@ -169,7 +169,7 @@ SEXP soma_array_reader(
         {
             std::stringstream ss;
             ss << "[soma_array_reader] Accessing '" << names[i] << "' at pos " << i;
-            tdbs::LOG_INFO(ss.str());
+            tdbs::LOG_DEBUG(ss.str());
         }
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -186,7 +186,7 @@ SEXP soma_array_reader(
             std::stringstream ss;
             ss << "[soma_array_reader] Incoming name " << std::string(pp.second->name) << " length "
                << pp.first->length;
-            tdbs::LOG_INFO(ss.str());
+            tdbs::LOG_DEBUG(ss.str());
         }
         if (pp.first->length > arr->length) {
             std::stringstream ss;
@@ -440,7 +440,7 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
         std::stringstream ss;
         ss << "[c_schema] Accessing name '" << std::string(lib_retval->children[i]->name) << "' format '"
            << std::string(lib_retval->children[i]->format) << "' at position " << i;
-        tdbs::LOG_INFO(ss.str());
+        tdbs::LOG_DEBUG(ss.str());
         ArrowSchemaMove(lib_retval->children[i], sch->children[i]);
     }
 

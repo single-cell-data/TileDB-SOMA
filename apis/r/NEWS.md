@@ -4,6 +4,8 @@
 
 - A new `SOMAContext` method was added that replaces `SOMATileDBContext`. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
 - New methods `set_default_context` and `get_default_context` for setting and getting the `SOMAContext`. ([#4364](https://github.com/single-cell-data/TileDB-SOMA/pull/4364))
+- Added `SOMAContext$is_tiledbv2()` and `SOMAContext$is_tiledbv3()` methods to check the data protocol for a given URI.
+- Added Carrara (TileDB v3) support for collection classes. Child objects created at nested Carrara URIs are automatically registered with their parent collection.
 
 ## Deprecated
 
@@ -14,6 +16,8 @@
 ## Fixed
 
 - `SOMATileDBContext` no longer replaces `sm.mem.reader.sparse_global_order.ratio_array_data` when set in the input config. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
+- Fixed `SOMACollectionBase$remove()` incorrectly accessing `self$mode` instead of calling `self$mode()`.
+- Fixed collection member cache not properly handling DELETE mode.
 
 # tiledbsoma 2.2.0
 
