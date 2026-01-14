@@ -252,6 +252,28 @@ SOMACollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
+    #' @description Register an existing SOMA object as a member of this
+    #' collection. (lifecycle: experimental)
+    #'
+    #' For Carrara (TileDB v3) URIs, the object must have already been created
+    #' at a nested URI; this method validates the name/URI constraint and
+    #' updates the local cache. For v2 URIs, this calls [set()] to explicitly
+    #' register.
+    #'
+    #' @param object A `SOMAArrayBase` or `SOMACollectionBase` object.
+    #' @param name The key for the object within this collection.
+    #' @param relative Whether to store relative URIs (v2 only, ignored for
+    #'   Carrara).
+    #'
+    register_object = function(object, name, relative = TRUE) {
+      # Handle tiledb:// scheme - force relative to FALSE
+      if (identical(uri_scheme(object$uri), "tiledb")) {
+        relative <- FALSE
+      }
+      private$.set_element(object, name, relative = relative)
+      return(invisible(self))
+    },
+
     #' @description Retrieve a SOMA object by name. (lifecycle: maturing)
     #'
     #' @param name The name of the object to retrieve.
@@ -678,10 +700,11 @@ SOMACollectionBase <- R6::R6Class(
     #
     # @param object A SOMA object
     # @param name The key for the object
+    # @param relative Whether to store relative URIs (v2 only)
     #
     # @return Invisibly returns self
     #
-    .set_element = function(object, name) {
+    .set_element = function(object, name, relative = TRUE) {
       if (self$context$is_tiledbv3(self$uri)) {
         # Carrara requires member name to match URI basename
         if (basename(object$uri) != name) {
@@ -701,7 +724,7 @@ SOMACollectionBase <- R6::R6Class(
         private$.add_cache_member(name, object)
       } else {
         # v2: register with TileDB group
-        self$set(object, name)
+        self$set(object, name, relative = relative)
       }
       return(invisible(self))
     },

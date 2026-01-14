@@ -889,10 +889,6 @@ write_soma.TsparseMatrix <- function(
     return(invisible(NULL))
   }
   soma_parent$reopen("WRITE")
-  soma_parent$set(
-    x,
-    name = key,
-    relative = switch(uri_scheme(x$uri) %||% "", tiledb = FALSE, relative)
-  )
+  soma_parent$register_object(object = x, name = key, relative = relative)
   return(invisible(NULL))
 }
