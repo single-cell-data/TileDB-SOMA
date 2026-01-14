@@ -755,8 +755,8 @@ class WriteColumnBuffer : public ColumnBuffer {
     std::span<const uint8_t> validity() const override;
 
    private:
-    const std::byte* data_view_;
-    const uint64_t* offsets_view_;
+    const std::byte* data_view_ = nullptr;
+    const uint64_t* offsets_view_ = nullptr;
 
     std::unique_ptr<std::byte[]> data_buffer_;
     std::unique_ptr<uint64_t[]> offsets_buffer_;
