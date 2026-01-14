@@ -32,7 +32,7 @@ class SOMAContext:
         Experimental.
     """
 
-    __slots__ = ("_initial_config", "_lock", "_native_context", "threadpool")
+    __slots__ = ("_handle", "_lock", "threadpool")
 
     _default_context: Self | None = None
 
@@ -72,7 +72,7 @@ class SOMAContext:
                 "A default context was already created. To replace the default context for new objects call this method"
                 " again with `replace=True`."
             )
-        cls._default_context = cls(config=config, threadpool=threadpool)
+        cls._default_context = cls.create(config=config, threadpool=threadpool)
         return cls._default_context
 
     @classmethod
@@ -102,12 +102,13 @@ class SOMAContext:
         """Returns if the default context is set."""
         return cls._default_context is not None
 
-    def __init__(
-        self,
+    @classmethod
+    def create(
+        cls,
         config: dict[str, str | float] | None = None,
         threadpool: ThreadPoolExecutor | None = None,
-    ) -> None:
-        """Initializes a new SOMAContext.
+    ) -> Self:
+        """Create a new SOMAContext.
 
         Args:
             config: A dictionary of TileDB configuration options to use, overriding the default configuration.
@@ -118,31 +119,43 @@ class SOMAContext:
         Lifecylce:
             Maturing.
         """
+        config = {} if config is None else {key: str(val) for key, val in config.items()}
+        config.setdefault("sm.mem.reader.sparse_global_order.ratio_array_data", "0.3")
+        return cls(
+            clib.SOMAContext(config),
+            threadpool=threadpool,
+            _dont_call_this_use_create_instead="tiledbsoma-internal-code",
+        )
+
+    def __init__(
+        self,
+        handle: clib.SOMAContext,
+        *,
+        threadpool: ThreadPoolExecutor | None = None,
+        _dont_call_this_use_create_instead: str = "unset",
+    ) -> None:
+        """Internal-only initializer stpes.
+
+        This function is internal; users should create a TileDB-SOMA context using `meth`:create:.
+        """
+        if _dont_call_this_use_create_instead != "tiledbsoma-internal-code":
+            name = type(self).__name__
+            raise RuntimeError(
+                f"Directly calling `{name}(...)` is intended for TileDB-SOMA internal use only. Use `name.create(...)` "
+                f"create a {name}."
+            )
+
+        self._handle = handle
+        """Internal clib.SOMAContext."""
+
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
-
-        self._initial_config: dict[str, str] = {} if config is None else {key: str(val) for key, val in config.items()}
-        """A dictionary of configuration options to use for the SOMAContext."""
-
-        self._initial_config.setdefault("sm.mem.reader.sparse_global_order.ratio_array_data", "0.3")
 
         self.threadpool = threadpool or ThreadPoolExecutor()
         """User specified threadpool. If None, we'll instantiate one ourselves."""
 
-        self._native_context: clib.SOMAContext | None = None
-        """Lazily construct clib.SOMAContext."""
-
-    @property
-    def native_context(self) -> clib.SOMAContext:
-        """The C++ SOMAContext for this SOMA context.
-
-        Lifecycle:
-            Maturing.
-        """
-        with self._lock:
-            if self._native_context is None:
-                self._native_context = clib.SOMAContext(self._initial_config)
-        return self._native_context
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.config}, {self.threadpool})"
 
     @property
     def config(self) -> dict[str, str]:
@@ -155,9 +168,7 @@ class SOMAContext:
             Maturing.
         """
         with self._lock:
-            if self._native_context is not None:
-                return dict(self._native_context.config())
-            return dict(self._initial_config)
+            return dict(self._handle.config())
 
     def replace(
         self,
@@ -177,9 +188,7 @@ class SOMAContext:
             Maturing.
         """
         with self._lock:
-            new_config: dict[str, str | float] = (
-                self._initial_config if self._native_context is None else dict(self._native_context.config())  # type: ignore[assignment]
-            )
+            new_config: dict[str, str | float] = dict(self._handle.config())
             if config is not None:
                 for key, val in config.items():
                     if val is None:
@@ -189,7 +198,7 @@ class SOMAContext:
             if threadpool == _UNSET:
                 threadpool = self.threadpool
 
-        return type(self)(config=new_config, threadpool=threadpool)
+        return type(self).create(config=new_config, threadpool=threadpool)
 
     def data_protocol(self, uri: str) -> DataProtocol:
         """Return the data protocol in use for this URI and context.
@@ -208,7 +217,8 @@ class SOMAContext:
         Lifecycle:
             Experimental.
         """
-        protocol: DataProtocol = self.native_context.data_protocol(uri)
+        with self._lock:
+            protocol: DataProtocol = self._handle.data_protocol(uri)
         return protocol
 
     def is_tiledbv2_uri(self, uri: str) -> bool:

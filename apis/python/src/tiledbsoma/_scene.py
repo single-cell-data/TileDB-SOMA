@@ -118,7 +118,7 @@ class Scene(
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMAScene.create(
-                ctx=context.native_context,
+                ctx=context._handle,
                 uri=uri,
                 axis_names=axis_names,
                 axis_units=axis_units,
@@ -132,7 +132,7 @@ class Scene(
             handle = clib.SOMAScene.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

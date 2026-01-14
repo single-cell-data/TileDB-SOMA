@@ -152,7 +152,7 @@ def _open_soma_object(
             handle = clib.SOMAObject.open(
                 uri=uri,
                 mode=open_mode,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
                 clib_type=clib_type,
             )

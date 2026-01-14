@@ -247,7 +247,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
     cfg = {}
     if "cfg" in io:
         cfg = io["cfg"]
-    context = soma.SOMAContext(config=cfg)
+    context = soma.SOMAContext.create(config=cfg)
 
     nr = 4
     nc = 6
@@ -494,7 +494,7 @@ def test_pass_configs(tmp_path):
     with soma.DenseNDArray.open(
         uri,
         "r",
-        context=soma.SOMAContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
+        context=soma.SOMAContext.create({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
         # This errors out as 0 is not a valid value to set the total memory
         # budget or number of threads

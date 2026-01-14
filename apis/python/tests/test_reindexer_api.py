@@ -6,7 +6,7 @@ import pytest
 from tiledbsoma import IntIndexer, SOMAContext
 
 
-@pytest.mark.parametrize("context", [None, SOMAContext()])
+@pytest.mark.parametrize("context", [None, SOMAContext.create()])
 def test_reindexer_api(context: SOMAContext | None):
     keys = np.arange(3, 10, 2)
     ids = np.arange(3, 10, 2)

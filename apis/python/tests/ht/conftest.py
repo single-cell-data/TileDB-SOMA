@@ -33,7 +33,7 @@ def ht_test_config() -> dict[str, Any]:
 
 @pytest.fixture
 def context() -> soma.SOMAContext:
-    return soma.SOMAContext()
+    return soma.SOMAContext.create()
 
 
 # Register Hypothesis strategies for use with `strategies.from_type()`
@@ -53,7 +53,7 @@ st.register_type_strategy(
     ),
 )
 # TODO: vary context configuration?
-st.register_type_strategy(soma.SOMAContext, st.just(soma.SOMAContext()))
+st.register_type_strategy(soma.SOMAContext, st.just(soma.SOMAContext.create()))
 
 
 # Register hypothesis profile for extensive/expensive test runs

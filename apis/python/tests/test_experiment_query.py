@@ -538,7 +538,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     """
     from contextlib import closing
 
-    context = SOMAContext()
+    context = SOMAContext.create()
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
 
     with soma_experiment.axis_query("RNA") as query:
@@ -849,7 +849,7 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
     pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=4))
     pool.submit.assert_not_called()
 
-    context = SOMAContext(threadpool=pool)
+    context = SOMAContext.create(threadpool=pool)
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context=context)
 
     with soma_experiment.axis_query("RNA") as query:

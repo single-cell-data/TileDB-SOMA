@@ -41,8 +41,8 @@ def rng() -> np.random.Generator:
 @pytest.fixture
 def context(concurrency: int | None) -> soma.SOMAContext:
     if concurrency is None:
-        return soma.SOMAContext()
-    return soma.SOMAContext(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
+        return soma.SOMAContext.create()
+    return soma.SOMAContext.create(tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"})
 
 
 def assert_eq(sp: sparse.spmatrix | sparse.sparray, cm: fastercsx.CompressedMatrix) -> bool:

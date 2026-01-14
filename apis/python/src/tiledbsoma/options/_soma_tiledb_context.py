@@ -194,10 +194,13 @@ class SOMATileDBContext(ContextBase):
         """Lazily construct clib.SOMAContext."""
 
     def _to_soma_context(self) -> SOMAContext:
-        context = SOMAContext(self.tiledb_config, self.threadpool)
         if self._native_context is not None:
-            context._native_context = self._native_context
-        return context
+            return SOMAContext(
+                self._native_context,
+                threadpool=self.threadpool,
+                _dont_call_this_use_create_instead="tiledbsoma-internal-code",
+            )
+        return SOMAContext.create(self.tiledb_config, self.threadpool)
 
     @property
     def timestamp_ms(self) -> int | None:
@@ -236,7 +239,7 @@ class SOMATileDBContext(ContextBase):
                     if not SOMAContext.has_default():
                         SOMAContext.set_default()
                     soma_context = SOMAContext.get_default()
-                    self._native_context = soma_context.native_context
+                    self._native_context = soma_context._handle
 
         # else SOMAContext already exists
         return self._native_context

@@ -189,7 +189,7 @@ def test_fastercsx_clib_compress_coo(
     indptr = np.empty(shape[0] + 1, dtype=index_dtype)
     indices = np.empty(nnz, dtype=index_dtype)
     data = np.empty(nnz, dtype=value_dtype)
-    clib_fastercsx.compress_coo(context.native_context, shape, i, j, d, indptr, indices, data)
+    clib_fastercsx.compress_coo(context._handle, shape, i, j, d, indptr, indices, data)
 
     # compare to oracle
     csr = sparse.csr_matrix((data, indices, indptr), shape=shape, dtype=value_dtype, copy=False)
@@ -244,7 +244,7 @@ def test_fuzz_fastercsx_clib_compress_coo(
 ) -> None:
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
-        clib_fastercsx.compress_coo(context.native_context, shape, i, j, d, indptr, indices, data)
+        clib_fastercsx.compress_coo(context._handle, shape, i, j, d, indptr, indices, data)
 
 
 @given(
@@ -261,7 +261,7 @@ def test_fuzz_fastercsx_clib_sort_csx_indices(
 ) -> None:
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
-        clib_fastercsx.sort_csx_indices(context.native_context, indptr, indices, data)
+        clib_fastercsx.sort_csx_indices(context._handle, indptr, indices, data)
 
 
 @given(
@@ -289,7 +289,7 @@ def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
         clib_fastercsx.copy_csx_to_dense(
-            context.native_context,
+            context._handle,
             major_idx_start,
             major_idx_end,
             shape,

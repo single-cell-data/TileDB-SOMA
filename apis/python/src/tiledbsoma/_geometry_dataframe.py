@@ -267,7 +267,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                 index_column_info=index_column_info,
                 axis_names=axis_names,
                 axis_units=axis_units,
-                ctx=context.native_context,
+                ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
@@ -279,7 +279,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             handle = clib.SOMAGeometryDataFrame.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 
