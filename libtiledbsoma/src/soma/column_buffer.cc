@@ -132,6 +132,10 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
 }
 
 std::vector<std::vector<std::byte>> ColumnBuffer::binaries() const {
+    if (!is_var_) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer][binaries] Column '{}' is not var sized.", name_));
+    }
+
     std::vector<std::vector<std::byte>> result;
 
     auto data_ptr = data().data();
@@ -148,6 +152,10 @@ std::vector<std::vector<std::byte>> ColumnBuffer::binaries() const {
 }
 
 std::vector<std::string> ColumnBuffer::strings() const {
+    if (!is_var_) {
+        throw TileDBSOMAError(fmt::format("[ColumnBuffer][binaries] Column '{}' is not var sized.", name_));
+    }
+
     std::vector<std::string> result;
     result.reserve(size());
 
@@ -358,7 +366,7 @@ std::span<uint8_t> CArrayColumnBuffer::validity() {
     return std::span<uint8_t>(validity_.get(), num_cells_);
 }
 
-std::unique_ptr<std::byte[]> CArrayColumnBuffer::release_data() {
+std::unique_ptr<std::byte[]> CArrayColumnBuffer::release_and_reallocate_data() {
     std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(max_data_size_);
 
     data_.swap(data_buffer);
@@ -366,7 +374,7 @@ std::unique_ptr<std::byte[]> CArrayColumnBuffer::release_data() {
     return data_buffer;
 }
 
-std::unique_ptr<uint64_t[]> CArrayColumnBuffer::release_offsets() {
+std::unique_ptr<uint64_t[]> CArrayColumnBuffer::release_and_reallocate_offsets() {
     std::unique_ptr<uint64_t[]> offset_buffer = std::make_unique_for_overwrite<uint64_t[]>(max_num_cells_);
 
     offsets_.swap(offset_buffer);
@@ -459,7 +467,7 @@ WriteColumnBuffer::~WriteColumnBuffer() {
 }
 
 std::span<const std::byte> WriteColumnBuffer::data() const {
-    return data_;
+    return std::span<const std::byte>(data_view_ != nullptr ? data_view_ : data_buffer_.get(), data_size_);
 }
 
 std::span<const uint64_t> WriteColumnBuffer::offsets() const {
@@ -467,7 +475,7 @@ std::span<const uint64_t> WriteColumnBuffer::offsets() const {
         throw TileDBSOMAError(fmt::format("[WriteColumnBuffer] Offsets buffer not defined for '{}'", name()));
     }
 
-    return offsets_;
+    return std::span<const uint64_t>(offsets_view_ != nullptr ? offsets_view_ : offsets_buffer_.get(), num_cells_ + 1);
 }
 
 std::span<const uint8_t> WriteColumnBuffer::validity() const {
@@ -475,7 +483,7 @@ std::span<const uint8_t> WriteColumnBuffer::validity() const {
         throw TileDBSOMAError(fmt::format("[WriteColumnBuffer] Validity buffer not defined for '{}'", name()));
     }
 
-    return validity_;
+    return std::span<const uint8_t>(validity_buffer_.get(), num_cells_);
 }
 
 #pragma endregion

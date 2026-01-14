@@ -459,8 +459,15 @@ class CArrayColumnBuffer : public ReadColumnBuffer {
     std::span<const uint64_t> offsets() const override;
     std::span<const uint8_t> validity() const override;
 
-    std::unique_ptr<std::byte[]> release_data();
-    std::unique_ptr<uint64_t[]> release_offsets();
+    /**
+     * @brief Release ownership of the underyling data buffer to the caller and reallocate a new buffer with the same size.
+     */
+    std::unique_ptr<std::byte[]> release_and_reallocate_data();
+
+    /**
+     * @brief Release ownership of the underyling offsets buffer to the caller and reallocate a new buffer with the same size.
+     */
+    std::unique_ptr<uint64_t[]> release_and_reallocate_offsets();
 
     std::unique_ptr<IArrowBufferStorage> export_buffers() override;
 
@@ -676,15 +683,12 @@ class WriteColumnBuffer : public ColumnBuffer {
         if constexpr (std::is_same_v<std::unique_ptr<std::byte[]>, DataStorage>) {
             // Data buffer ownership is passed to the write column buffer
             data_buffer_ = std::move(data_buffer);
-            data_ = std::span<const std::byte>(data_buffer_.get(), data_size_);
         } else {
             if (copy_buffers) {
                 data_buffer_ = std::make_unique_for_overwrite<std::byte[]>(data_size_);
                 std::memcpy(data_buffer_.get(), data_buffer, data_size_);
-
-                data_ = std::span<const std::byte>(data_buffer_.get(), data_size_);
             } else {
-                data_ = std::span<const std::byte>(reinterpret_cast<const std::byte*>(data_buffer), data_size_);
+                data_view_ = reinterpret_cast<const std::byte*>(data_buffer);
             }
         }
 
@@ -692,7 +696,6 @@ class WriteColumnBuffer : public ColumnBuffer {
             if constexpr (std::is_same_v<std::unique_ptr<uint64_t[]>, OffsetStorage>) {
                 // Offset buffer ownership is passed to the write column buffer
                 offsets_buffer_ = std::move(offsets_buffer);
-                offsets_ = std::span<const uint64_t>(offsets_buffer_.get(), num_cells_ + 1);
             } else if constexpr (std::is_same_v<uint32_t, std::remove_const_t<std::remove_pointer_t<OffsetStorage>>>) {
                 // A new offset buffer will be contructed using the input offset buffer
                 offsets_buffer_ = std::make_unique_for_overwrite<uint64_t[]>(num_cells_ + 1);
@@ -702,16 +705,12 @@ class WriteColumnBuffer : public ColumnBuffer {
                     offsets_buffer, offsets_buffer + num_cells_ + 1, offsets_buffer_.get(), [](const uint32_t& offset) {
                         return static_cast<uint64_t>(offset);
                     });
-
-                offsets_ = std::span<const uint64_t>(offsets_buffer_.get(), num_cells_ + 1);
             } else {
                 if (copy_buffers) {
                     offsets_buffer_ = std::make_unique_for_overwrite<uint64_t[]>(num_cells_ + 1);
                     std::memcpy(offsets_buffer_.get(), offsets_buffer, (num_cells_ + 1) * sizeof(uint64_t));
-
-                    offsets_ = std::span<const uint64_t>(offsets_buffer_.get(), num_cells_ + 1);
                 } else {
-                    offsets_ = std::span<const uint64_t>(offsets_buffer, num_cells_ + 1);
+                    offsets_view_ = offsets_buffer;
                 }
             }
         }
@@ -719,11 +718,9 @@ class WriteColumnBuffer : public ColumnBuffer {
         if (is_nullable) {
             if (validity_buffer) {
                 validity_buffer_ = std::move(validity_buffer);
-                validity_ = std::span<const uint8_t>(validity_buffer_.get(), num_cells);
             } else {
                 validity_buffer_ = std::make_unique_for_overwrite<uint8_t[]>(num_cells);
                 std::fill(validity_buffer_.get(), validity_buffer_.get() + num_cells, 1);
-                validity_ = std::span<const uint8_t>(validity_buffer_.get(), num_cells);
             }
         } else {
             // As of version 1.15.6 we were throwing here. However, we found a
@@ -733,6 +730,16 @@ class WriteColumnBuffer : public ColumnBuffer {
                 LOG_DEBUG(
                     "[WriteColumnBuffer] Validity buffer passed for column '" + std::string(name) +
                     "' is being ignored");
+
+                for (size_t i = 0; i < num_cells; ++i) {
+                    if (!validity_buffer[i]) {
+                        LOG_WARN(
+                            "[WriteColumnBuffer] Found invalid cells in ignored validity buffer for non-nullable "
+                            "column '" +
+                            std::string(name) + "'");
+                        break;
+                    }
+                }
             }
         }
     }
@@ -748,9 +755,8 @@ class WriteColumnBuffer : public ColumnBuffer {
     std::span<const uint8_t> validity() const override;
 
    private:
-    std::span<const std::byte> data_;
-    std::span<const uint64_t> offsets_;
-    std::span<const uint8_t> validity_;
+    const std::byte* data_view_;
+    const uint64_t* offsets_view_;
 
     std::unique_ptr<std::byte[]> data_buffer_;
     std::unique_ptr<uint64_t[]> offsets_buffer_;
