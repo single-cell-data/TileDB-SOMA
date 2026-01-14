@@ -1136,7 +1136,7 @@ def test_empty_indexed_read(tmp_path):
 
 @pytest.fixture
 def a_soma_context() -> SOMAContext:
-    return SOMAContext(
+    return SOMAContext.create(
         config={
             "soma.init_buffer_bytes": 128 * 1024**2,
             "tiledb.init_buffer_bytes": 128 * 1024**2,
@@ -1647,7 +1647,7 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
     pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=2))
     pool.submit.assert_not_called()
 
-    context = SOMAContext(threadpool=pool)
+    context = SOMAContext.create(threadpool=pool)
     with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
         axis = 0
         size = 50
@@ -1757,7 +1757,7 @@ def test_pass_configs(tmp_path):
     with soma.SparseNDArray.open(
         uri,
         "r",
-        context=soma.SOMAContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
+        context=soma.SOMAContext.create({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
         # This errors out as 0 is not a valid value to set the total memory
         # budget or number of threads
@@ -1812,7 +1812,7 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
         write_arr.write(arrow_tensor)
 
     def test(path, tiledb_config):
-        context = soma.SOMAContext().replace(config=tiledb_config)
+        context = soma.SOMAContext.create().replace(config=tiledb_config)
         X = soma.SparseNDArray.open(path, context=context, mode="r")
         return X.read().tables()
 

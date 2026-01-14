@@ -85,7 +85,7 @@ class SOMAObject(somacore.SOMAObject):
             handle = cls._handle_type.open(
                 uri,
                 mode=open_mode,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 
@@ -187,7 +187,7 @@ class SOMAObject(somacore.SOMAObject):
         self._metadata._write()
         self._handle.close()
         self._handle = self._handle_type.open(
-            uri=self._uri, mode=open_mode, context=self._context.native_context, timestamp=(0, timestamp_ms)
+            uri=self._uri, mode=open_mode, context=self._context._handle, timestamp=(0, timestamp_ms)
         )
         self._timestamp_ms = timestamp_ms
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(
@@ -342,7 +342,7 @@ class SOMAObject(somacore.SOMAObject):
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             with cls._handle_type.open(
-                uri, mode=clib.OpenMode.soma_read, context=context.native_context, timestamp=(0, timestamp_ms)
+                uri, mode=clib.OpenMode.soma_read, context=context._handle, timestamp=(0, timestamp_ms)
             ) as handle:
                 md_type = handle.type
                 if not isinstance(md_type, str):

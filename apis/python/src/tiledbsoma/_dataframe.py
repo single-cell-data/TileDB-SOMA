@@ -317,7 +317,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 uri,
                 schema=schema,
                 index_column_info=index_column_info,
-                ctx=context.native_context,
+                ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
@@ -329,7 +329,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             handle = clib.SOMADataFrame.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

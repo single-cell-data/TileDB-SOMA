@@ -48,7 +48,7 @@ class IntIndexer:
             Maturing.
         """
         self._context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
-        self._reindexer = clib.IntIndexer() if self._context is None else clib.IntIndexer(self._context.native_context)
+        self._reindexer = clib.IntIndexer() if self._context is None else clib.IntIndexer(self._context._handle)
 
         # TODO: the map_locations interface does not accept chunked arrays. It would
         # save a copy (reduce memory usage) if they were natively supported.

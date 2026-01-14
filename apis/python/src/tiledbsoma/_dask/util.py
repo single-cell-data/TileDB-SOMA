@@ -70,7 +70,7 @@ def _make_context(tiledb_configs: tuple[tuple[str, Any], ...]) -> SOMAContext:
 
     ``tiledb_config`` is conceptually a ``dict``, but flattened into hashable ``tuple``s here, for use with ``cache``.
     """
-    return SOMAContext(config=dict(tiledb_configs))
+    return SOMAContext.create(config=dict(tiledb_configs))
 
 
 def coord_to_joinids(coord: SparseNDCoord, n: int) -> JoinIDs:

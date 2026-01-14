@@ -52,7 +52,7 @@ def read_h5ad(
     elif isinstance(ctx, SOMATileDBContext):
         ctx = ctx._to_soma_context()
     input_handle = CachingReader(
-        clib.SOMAFileHandle(str(input_path), ctx.native_context),
+        clib.SOMAFileHandle(str(input_path), ctx._handle),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )

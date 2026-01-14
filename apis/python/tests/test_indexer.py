@@ -19,7 +19,7 @@ from tiledbsoma._indexer import IntIndexer
     ],
 )
 def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.array):
-    context = SOMAContext()
+    context = SOMAContext.create()
     with pytest.raises(SOMAError, match=r"There are duplicate keys."):
         IntIndexer(keys, context=context)
 
@@ -91,7 +91,7 @@ def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.arr
     ],
 )
 def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
-    context = SOMAContext() if contextual else None
+    context = SOMAContext.create() if contextual else None
     all_results = []
     num_threads = 10
 
@@ -116,7 +116,7 @@ def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
 
 
 def test_expected_errors() -> None:
-    context = SOMAContext()
+    context = SOMAContext.create()
 
     # ndim != 1
     with pytest.raises(ValueError):

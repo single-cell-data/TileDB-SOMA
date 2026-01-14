@@ -218,7 +218,7 @@ class MultiscaleImage(
                 uri=uri,
                 axis_names=axis_names,
                 axis_units=axis_units,
-                ctx=context.native_context,
+                ctx=context._handle,
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
@@ -227,7 +227,7 @@ class MultiscaleImage(
         try:
             timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
             handle = clib.SOMAMultiscaleImage.open(
-                uri, mode=clib.OpenMode.soma_write, context=context.native_context, timestamp=(0, timestamp_ms)
+                uri, mode=clib.OpenMode.soma_write, context=context._handle, timestamp=(0, timestamp_ms)
             )
             metadata = _tdb_handles.MetadataWrapper.from_handle(handle)
             metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_

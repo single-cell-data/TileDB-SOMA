@@ -147,7 +147,7 @@ def test_tiledb_ctx_without_tiledb():
     with pytest.raises(ModuleNotFoundError):
         sctx.tiledb_ctx
 
-    with pytest.raises(ModuleNotFoundError), pytest.warns(DeprecationWarning):
+    with pytest.raises(ModuleNotFoundError):
         sctx.replace(tiledb_ctx="junk")
 
 

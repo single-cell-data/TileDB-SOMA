@@ -77,7 +77,7 @@ def test_fuzz_IntIndexer(data: npt.NDArray[Any], context: soma.SOMAContext) -> N
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
 def test_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[np.int64], context: soma.SOMAContext) -> None:
-    indexer = clib.IntIndexer(context.native_context)
+    indexer = clib.IntIndexer(context._handle)
     indexer.map_locations(data)
 
 
@@ -94,7 +94,7 @@ def test_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[np.int64], cont
 def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], context: soma.SOMAContext) -> None:
     ht.assume((not isinstance(data, np.ndarray)) or data.dtype != np.int64 or data.ndim != 1)
 
-    indexer = clib.IntIndexer(context.native_context)
+    indexer = clib.IntIndexer(context._handle)
     with pytest.raises(Exception):
         indexer.map_locations(data)
 
@@ -111,7 +111,7 @@ def test_fuzz_pytiledbsoma_IntIndexer_map_locations(data: npt.NDArray[Any], cont
 def test_fuzz_pytiledbsoma_Indexer_get_indexer_general(data: Any, context: soma.SOMAContext) -> None:
     ht.assume((not isinstance(data, np.ndarray)) or data.dtype != np.int64 or data.ndim != 1)
 
-    indexer = clib.IntIndexer(context.native_context)
+    indexer = clib.IntIndexer(context._handle)
     indexer.map_locations(np.arange(0, 100, dtype=np.int64))
     with pytest.raises(Exception):
         indexer.get_indexer_general(data)

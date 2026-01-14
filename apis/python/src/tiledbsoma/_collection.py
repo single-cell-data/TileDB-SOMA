@@ -101,7 +101,7 @@ class CollectionBase(
             clib.SOMAGroup.create(
                 uri=uri,
                 soma_type=cls._handle_type.__name__,
-                ctx=context.native_context,
+                ctx=context._handle,
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
@@ -112,7 +112,7 @@ class CollectionBase(
             handle = cls._handle_type.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
         except (RuntimeError, SOMAError) as tdbe:

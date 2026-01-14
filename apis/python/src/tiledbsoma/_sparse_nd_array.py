@@ -233,7 +233,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 uri,
                 format=carrow_type,
                 index_column_info=index_column_info,
-                ctx=context.native_context,
+                ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
@@ -245,7 +245,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             handle = clib.SOMASparseNDArray.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

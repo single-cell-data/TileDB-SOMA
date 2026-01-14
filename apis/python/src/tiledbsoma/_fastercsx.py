@@ -95,10 +95,10 @@ class CompressedMatrix:
         indptr = np.zeros((n_major + 1), dtype=index_dtype)
         indices = np.empty((nnz,), dtype=index_dtype)
         data = np.empty((nnz,), dtype=d[0].dtype)
-        compress_coo(context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data)
+        compress_coo(context._handle, (n_major, n_minor), i, j, d, indptr, indices, data)
         no_duplicates = None  # aka, unknown
         if make_sorted:
-            no_duplicates = sort_csx_indices(context.native_context, indptr, indices, data)
+            no_duplicates = sort_csx_indices(context._handle, indptr, indices, data)
         return CompressedMatrix(indptr, indices, data, shape, format, make_sorted, no_duplicates, context)
 
     @staticmethod
@@ -198,7 +198,7 @@ class CompressedMatrix:
         out_shape = (n_major, self.shape[1]) if self.format == "csr" else (self.shape[0], n_major)
         out = np.zeros(math.prod(out_shape), dtype=self.data.dtype)
         copy_csx_to_dense(
-            self.context.native_context,
+            self.context._handle,
             major_idx_start,
             major_idx_end,
             self.shape,
