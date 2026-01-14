@@ -93,7 +93,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindTileDB_EP.cmake)
 
 # Only include spdlog superbuild if vcpkg is not being used
 # When using vcpkg, spdlog comes from vcpkg; superbuild only builds TileDB
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+# Check both DEFINED and if the variable has a value (could be set via command line or cache)
+if(NOT CMAKE_TOOLCHAIN_FILE)
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
 endif()
 
