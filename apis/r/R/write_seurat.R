@@ -428,19 +428,24 @@ write_soma.Graph <- function(
     ),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
+
+  # Create (if needed) and open the `obsp` collection
+  obsp_uri <- file_path(soma_parent$uri, "obsp")
   obsp <- if (!"obsp" %in% soma_parent$names()) {
     SOMACollectionCreate(
-      uri = file_path(soma_parent$uri, "obsp"),
+      uri = obsp_uri,
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else if (isTRUE(relative)) {
-    SOMACollectionOpen(uri = file_path(soma_parent$uri, "obsp"), mode = "WRITE")
+    SOMACollectionOpen(uri = obsp_uri, mode = "WRITE")
   } else {
     soma_parent$obsp
   }
+
+  # Add the `obsp` collection to the measurement, if needed
   withCallingHandlers(
     .register_soma_object(obsp, soma_parent, key = "obsp", relative = relative),
     existingKeyWarning = .maybe_muffle
