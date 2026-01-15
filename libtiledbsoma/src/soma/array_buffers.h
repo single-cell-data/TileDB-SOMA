@@ -105,6 +105,8 @@ class ArrayBuffers {
      */
     static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
 
+    void expand_buffers();
+
    private:
     // A vector of column names that maintains the order the columns were added
     std::vector<std::string> names_;

@@ -727,4 +727,51 @@ std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
         name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode);
 }
 
+void ColumnBuffer::resize(size_t num_bytes, bool preserve_data) {
+    std::vector<std::byte> data_buffer(num_bytes);
+    std::vector<uint64_t> offsets_buffer;
+    std::vector<uint8_t> validity_buffer;
+
+    size_t new_num_cells = is_var_ ? num_bytes / sizeof(uint64_t) : num_bytes / tiledb::impl::type_size(type());
+
+    if (is_var_) {
+        offsets_buffer.resize(new_num_cells + 1);
+    }
+
+    if (is_nullable_) {
+        validity_buffer.resize(new_num_cells);
+    }
+
+    if (preserve_data) {
+        size_t copy_num_bytes = is_var_ ? std::min(num_bytes, (num_cells_ != 0 ? offsets_[num_cells_] : 0)) :
+                                          std::min(num_bytes, num_cells_ * impl::type_size(type()));
+
+        std::memcpy(data_buffer.data(), data_.data(), copy_num_bytes);
+
+        if (is_var_) {
+            std::memcpy(
+                offsets_buffer.data(), offsets_.data(), std::min(new_num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
+        }
+
+        if (is_nullable_) {
+            std::memcpy(
+                offsets_buffer.data(), offsets_.data(), std::min(new_num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
+        }
+    }
+
+    data_ = data_buffer;
+    offsets_ = offsets_buffer;
+    validity_ = validity_buffer;
+
+    num_cells_ = std::min(num_cells_, new_num_cells);
+}
+
+size_t ColumnBuffer::max_size() const {
+    return data_.capacity();
+}
+
+size_t ColumnBuffer::max_num_cells() const {
+    return is_var_ ? max_size() / sizeof(uint64_t) : max_size() / tiledb::impl::type_size(type());
+}
+
 }  // namespace tiledbsoma

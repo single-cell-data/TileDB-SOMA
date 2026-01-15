@@ -289,6 +289,11 @@ class ColumnBuffer {
 
     virtual std::unique_ptr<IArrowBufferStorage> export_buffers();
 
+    /**
+     * @brief Resize the internal buffers to the given size.
+     */
+    void resize(size_t size, bool preserve_data = false);
+
    protected:
     size_t num_cells_;
 
