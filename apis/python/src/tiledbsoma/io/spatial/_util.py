@@ -24,7 +24,7 @@ def _expand_compressed_index_pointers(indptr: npt.NDArray, nval: int) -> npt.NDA
         indptr: Array of row/column pointers to be expanded.
         nval: Number of total non-zero values in the sparse matrix.
     """
-    indices = np.empty(nval, dtype=np.int64)
+    indices: npt.NDArray = np.empty(nval, dtype=np.int64)
     for index in range(len(indptr) - 1):
         indices[indptr[index] : indptr[index + 1]] = index
     return indices

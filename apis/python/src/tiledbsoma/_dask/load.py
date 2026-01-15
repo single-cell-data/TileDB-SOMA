@@ -135,7 +135,7 @@ def load_daskarray(
     obs_chunk_joinids, obs_chunk_sizes = chunk_ids_sizes(obs_ids, obs_chunk_size, nobs)
     var_chunk_joinids, var_chunk_sizes = chunk_ids_sizes(var_ids, var_chunk_size, nvar)
 
-    arr = np.empty((len(obs_chunk_joinids), len(var_chunk_joinids)), dtype=object)
+    arr: npt.NDArray = np.empty((len(obs_chunk_joinids), len(var_chunk_joinids)), dtype=object)
     for obs_chunk_idx, obs_chunk_ids in enumerate(obs_chunk_joinids):
         for var_chunk_idx, var_chunk_ids in enumerate(var_chunk_joinids):
             arr[obs_chunk_idx, var_chunk_idx] = (obs_chunk_ids, var_chunk_ids)
