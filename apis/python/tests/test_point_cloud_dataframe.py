@@ -46,7 +46,7 @@ def test_point_cloud_basic_read(tmp_path):
         pydict["x"] = [10, 20, 30, 40, 50]
         pydict["y"] = [4.1, 5.2, 6.3, 7.4, 8.5]
 
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(urljoin(baseuri, "default"), "r") as ptc:
@@ -73,7 +73,7 @@ def test_point_cloud_basic_read(tmp_path):
         pydict["x"] = [1, 2, 3, 4, 5]
         pydict["y"] = [4.1, 5.2, 6.3, 7.4, 8.5]
 
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(urljoin(baseuri, "user_defined"), "r") as ptc:
@@ -150,7 +150,7 @@ def test_point_cloud_bad_read_spatial_region(tmp_path):
             "x": [10, 20, 30, 40, 50],
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc:
@@ -296,7 +296,7 @@ def test_point_cloud_read_spatial_region_basic_2d(tmp_path, name, region, value_
             "x": [10, 20, 30, 40, 50],
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc:
@@ -412,7 +412,7 @@ def test_point_cloud_read_spatial_region_basic_3d(tmp_path, name, region, expect
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
             "z": [0, 1, 2, 3, 4],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc:
@@ -440,7 +440,7 @@ def test_point_cloud_read_spatial_region_2d_bad(tmp_path, name, region, exc_type
             "x": [10, 20, 30, 40, 50],
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc, pytest.raises(exc_type):
@@ -469,7 +469,7 @@ def test_point_cloud_read_spatial_region_3d_bad(tmp_path, name, region, exc_type
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
             "z": [0, 1, 2, 3, 4],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc, pytest.raises(exc_type):
@@ -485,7 +485,7 @@ def point_cloud_read_spatial_region_transform_setup(uri, transform, input_axes, 
             "x": [10, 20, 30, 40, 50],
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     output_names = ("x", "y")
@@ -676,7 +676,7 @@ def test_point_cloud_read_spatial_region_region_coord_space(tmp_path):
             "x": [10, 20, 30, 40, 50],
             "y": [4.1, 5.2, 6.3, 7.4, 8.5],
         }
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
         ptc.write(rb)
 
     with soma.PointCloudDataFrame.open(uri, "r") as ptc:
@@ -844,7 +844,7 @@ def test_delete_cells_floating_point(tmp_path, index_type, delete_coords, value_
     with soma.PointCloudDataFrame.create(
         uri, schema=pa.schema([("x", index_type), ("y", index_type)]), domain=[[-1, 1], [-1, 1], [0, 24]]
     ) as point_cloud:
-        data = pa.Table.from_pydict({"soma_joinid": join_data, "x": x_data, "y": y_data})
+        data = pa.Table.from_pydict({"soma_joinid": join_data, "x": x_data, "y": y_data}, point_cloud.schema)
         point_cloud.write(data)
 
     with soma.PointCloudDataFrame.open(uri, mode="d") as points:

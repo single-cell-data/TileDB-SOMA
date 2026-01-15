@@ -2778,6 +2778,52 @@ def test_extend_enumerations(tmp_path):
             assert (readback_df[c] == written_df[c]).all()
 
 
+def test_write_dictionary_to_non_enum_column(tmp_path):
+    written_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
+            "str": pd.Series(["A", "B", "A", "B", "B", None], dtype="category"),
+            "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", None], dtype="category"),
+            "bool": pd.Series([True, False, True, False, False, None], dtype="category"),
+            "int64": pd.Series([0, 1, 2, 0, 1, None], dtype="Int64").astype("category"),
+            "uint64": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt64").astype("category"),
+            "int32": pd.Series([0, 1, 2, 0, 1, None], dtype="Int32").astype("category"),
+            "uint32": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt32").astype("category"),
+            "int16": pd.Series([0, 1, 2, 0, 1, None], dtype="Int16").astype("category"),
+            "uint16": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt16").astype("category"),
+            "int8": pd.Series([0, 1, 2, 0, 1, None], dtype="Int8").astype("category"),
+            "uint8": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt8").astype("category"),
+            "float32": pd.Series([0, 1.1, 2.1, 0, 1.1, None], dtype="Float32").astype("category"),
+            "float64": pd.Series([0, 1.1, 2.1, 0, 1.1, None], dtype="Float64").astype("category"),
+        },
+    )
+
+    schema = pa.schema([
+        pa.field("soma_joinid", pa.int64()),
+        pa.field("str", pa.large_string(), nullable=True),
+        pa.field("byte", pa.large_binary(), nullable=True),
+        pa.field("bool", pa.bool_(), nullable=True),
+        pa.field("int64", pa.int64(), nullable=True),
+        pa.field("uint64", pa.uint64(), nullable=True),
+        pa.field("int32", pa.int32(), nullable=True),
+        pa.field("uint32", pa.uint32(), nullable=True),
+        pa.field("int16", pa.int16(), nullable=True),
+        pa.field("uint16", pa.uint16(), nullable=True),
+        pa.field("int8", pa.int8(), nullable=True),
+        pa.field("uint8", pa.uint8(), nullable=True),
+        pa.field("float32", pa.float32(), nullable=True),
+        pa.field("float64", pa.float64(), nullable=True),
+    ])
+
+    with soma.DataFrame.create(str(tmp_path), schema=schema, domain=[[0, 9]]) as soma_dataframe:
+        tbl = pa.Table.from_pandas(written_df, preserve_index=False)
+        soma_dataframe.write(tbl)
+
+    with soma.open(str(tmp_path)) as soma_dataframe:
+        readback_tbl = soma_dataframe.read().concat()
+        assert tbl.to_pylist() == readback_tbl.to_pylist()
+
+
 def test_multiple_writes_with_str_enums(tmp_path):
     uri = tmp_path.as_posix()
 
@@ -3147,7 +3193,7 @@ def test_nullable(tmp_path):
     pydict["yes-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["yes-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["yes-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    data = pa.Table.from_pydict(pydict)
+    data = pa.Table.from_pydict(pydict, schema=asch.insert(0, pa.field("soma_joinid", pa.int64())))
 
     with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
         sdf.write(data)
@@ -3396,7 +3442,7 @@ def test_arrow_table_sliced_writer(tmp_path):
         pa.array([False, True], type=pa.bool_()),
     )
 
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
 
     domain = [[0, len(table) - 1]]
 
@@ -3466,7 +3512,7 @@ def test_arrow_table_validity_with_slicing(tmp_path):
         np.datetime64(9, "s"),
     ]
     pydict["myenum"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
 
     # As of version 1.15.6 we were throwing in this case. However, we found
     # a compatibility issue with pyarrow versions below 17. Thus this is
@@ -3477,7 +3523,7 @@ def test_arrow_table_validity_with_slicing(tmp_path):
     #        A.write(table)
 
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    table = pa.Table.from_pydict(pydict)
+    table = pa.Table.from_pydict(pydict, schema=schema.insert(0, pa.field("soma_joinid", pa.int64())))
 
     with soma.DataFrame.open(uri, "w") as A:
         A.write(table)
@@ -4103,49 +4149,3 @@ def test_dataframe_batch_size_not_implemented(tmp_path):
 
         with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
             list(df.read(batch_size=somacore.options.BatchSize(count=10)))
-
-
-def test_write_dictionary_to_non_enum_column(tmp_path):
-    written_df = pd.DataFrame(
-        {
-            "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
-            "str": pd.Series(["A", "B", "A", "B", "B", None], dtype="category"),
-            "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", None], dtype="category"),
-            "bool": pd.Series([True, False, True, False, False, None], dtype="category"),
-            "int64": pd.Series([0, 1, 2, 0, 1, None], dtype="Int64").astype("category"),
-            "uint64": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt64").astype("category"),
-            "int32": pd.Series([0, 1, 2, 0, 1, None], dtype="Int32").astype("category"),
-            "uint32": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt32").astype("category"),
-            "int16": pd.Series([0, 1, 2, 0, 1, None], dtype="Int16").astype("category"),
-            "uint16": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt16").astype("category"),
-            "int8": pd.Series([0, 1, 2, 0, 1, None], dtype="Int8").astype("category"),
-            "uint8": pd.Series([0, 1, 2, 0, 1, None], dtype="UInt8").astype("category"),
-            "float32": pd.Series([0, 1.1, 2.1, 0, 1.1, None], dtype="Float32").astype("category"),
-            "float64": pd.Series([0, 1.1, 2.1, 0, 1.1, None], dtype="Float64").astype("category"),
-        },
-    )
-
-    schema = pa.schema([
-        pa.field("soma_joinid", pa.int64()),
-        pa.field("str", pa.large_string(), nullable=True),
-        pa.field("byte", pa.large_binary(), nullable=True),
-        pa.field("bool", pa.bool_(), nullable=True),
-        pa.field("int64", pa.int64(), nullable=True),
-        pa.field("uint64", pa.uint64(), nullable=True),
-        pa.field("int32", pa.int32(), nullable=True),
-        pa.field("uint32", pa.uint32(), nullable=True),
-        pa.field("int16", pa.int16(), nullable=True),
-        pa.field("uint16", pa.uint16(), nullable=True),
-        pa.field("int8", pa.int8(), nullable=True),
-        pa.field("uint8", pa.uint8(), nullable=True),
-        pa.field("float32", pa.float32(), nullable=True),
-        pa.field("float64", pa.float64(), nullable=True),
-    ])
-
-    with soma.DataFrame.create(str(tmp_path), schema=schema, domain=[[0, 9]]) as soma_dataframe:
-        tbl = pa.Table.from_pandas(written_df, preserve_index=False)
-        soma_dataframe.write(tbl)
-
-    with soma.open(str(tmp_path)) as soma_dataframe:
-        readback_tbl = soma_dataframe.read().concat()
-        assert tbl.to_pylist() == readback_tbl.to_pylist()

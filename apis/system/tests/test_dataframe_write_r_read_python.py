@@ -24,13 +24,13 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
         sdf <- SOMADataFrameCreate("{self.uri}", df_schema, index_column_names=c("foo"), domain=list(foo=c(0,99)))
 
         df <- data.frame(
-            soma_joinid = bit64::as.integer64(c(1,2,3,4,5)),
             foo = as.integer(c(10, 20, 30, 40, 50)),
+            soma_joinid = bit64::as.integer64(c(1,2,3,4,5)),
             bar = c(4.1, 5.2, 6.3, 7.4, 8.5),
             baz = c("apple", "ball", "cat", "dog", "egg"),
             quux = c(TRUE, FALSE, FALSE, TRUE, FALSE)
         )
-        tbl <- arrow_table(df)
+        tbl <- arrow_table(df, schema = sdf$schema())
         sdf$write(tbl)
         """
         self.execute_R_script(base_script)

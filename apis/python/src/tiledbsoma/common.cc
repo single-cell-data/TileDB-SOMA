@@ -195,13 +195,18 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
     py::list array_list;
     py::list field_list;
 
-    for (auto& name : buffers->names()) {
-        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(buffers->at(name));
+    auto column_names = buffers->names();
+
+    auto arrays = ArrowAdapter::buffer_to_arrow(buffers);
+
+    for (size_t i = 0; i < column_names.size(); ++i) {
+        auto& [pa_array, pa_schema] = arrays[i];
         auto nullable = (pa_schema->flags & ARROW_FLAG_NULLABLE) != 0;
         auto dtype = pa_dtype_import(py::capsule(pa_schema.get()));
         array_list.append(pa_array_import(py::capsule(pa_array.get()), dtype));
-        field_list.append(pa.attr("field")(name, dtype, nullable));
+        field_list.append(pa.attr("field")(column_names[i], dtype, nullable));
     }
+
     return pa_table_from_arrays(array_list, "schema"_a = pa.attr("schema")(field_list));
 }
 

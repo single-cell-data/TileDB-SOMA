@@ -65,6 +65,16 @@ std::optional<std::vector<uint8_t>> bitmap_to_uint8(const uint8_t* bitmap, size_
     return casted;
 }
 
+std::unique_ptr<uint8_t[]> bitmap_to_uint8_ptr(const uint8_t* bitmap, size_t length, size_t offset) {
+    if (bitmap == nullptr) {
+        return nullptr;
+    }
+
+    std::unique_ptr<uint8_t[]> bytemap = std::make_unique_for_overwrite<uint8_t[]>(length);
+    ArrowBitsUnpackInt8(bitmap, offset, length, reinterpret_cast<int8_t*>(bytemap.get()));
+    return bytemap;
+}
+
 std::shared_ptr<SOMAColumn> find_column_by_name(
     std::span<const std::shared_ptr<SOMAColumn>> columns, std::string_view name) {
     auto column_it = std::find_if(columns.begin(), columns.end(), [&](auto col) { return col->name() == name; });

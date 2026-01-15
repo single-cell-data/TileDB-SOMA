@@ -62,6 +62,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/transformer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow/arrow_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
@@ -267,6 +268,12 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
 
   DESTINATION "include/tiledbsoma/utils"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow/arrow_buffer.h
+
+  DESTINATION "include/tiledbsoma/utils/arrow"
 )
 
 install(FILES

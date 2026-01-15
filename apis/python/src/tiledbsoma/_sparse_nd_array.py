@@ -395,23 +395,23 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             mq._handle.set_layout(layout)
 
             for i, c in enumerate(coords.T):
-                mq._handle.set_column_data(
+                mq.set_column_data(
                     f"soma_dim_{i}",
                     np.array(
                         c,
                         dtype=self.schema.field(f"soma_dim_{i}").type.to_pandas_dtype(),
                     ),
                 )
-            mq._handle.set_column_data(
+            mq.set_column_data(
                 "soma_data",
                 np.array(data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()),
             )
 
             if layout == clib.ResultOrder.unordered:
-                mq._handle.submit_write()
+                mq.submit_write()
                 mq._handle.finalize()
             else:
-                mq._handle.submit_and_finalize()
+                mq.submit_and_finalize()
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
@@ -431,23 +431,23 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             mq._handle.set_layout(layout)
 
             for i, c in enumerate([sp.row, sp.col]):
-                mq._handle.set_column_data(
+                mq.set_column_data(
                     f"soma_dim_{i}",
                     np.array(
                         c,
                         dtype=self.schema.field(f"soma_dim_{i}").type.to_pandas_dtype(),
                     ),
                 )
-            mq._handle.set_column_data(
+            mq.set_column_data(
                 "soma_data",
                 np.array(sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()),
             )
 
             if layout == clib.ResultOrder.unordered:
-                mq._handle.submit_write()
+                mq.submit_write()
                 mq._handle.finalize()
             else:
-                mq._handle.submit_and_finalize()
+                mq.submit_and_finalize()
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data

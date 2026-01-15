@@ -38,7 +38,7 @@ def create_and_populate_dataframe(path: str) -> soma.DataFrame:
         pydict["foo"] = [10, 20, 30, 40, 50]
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        rb = pa.Table.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict, schema=arrow_schema.insert(0, pa.field("soma_joinid", pa.int64())))
         df.write(rb)
 
     return _factory.open(path)

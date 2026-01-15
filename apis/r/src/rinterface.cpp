@@ -164,6 +164,8 @@ SEXP soma_array_reader(
     exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
     exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
 
+    auto pp_vector = tdbs::ArrowAdapter::buffer_to_arrow(sr_data.value(), true);
+
     arr->length = 0;  // initial value
     for (size_t i = 0; i < ncol; i++) {
         {
@@ -171,11 +173,9 @@ SEXP soma_array_reader(
             ss << "[soma_array_reader] Accessing '" << names[i] << "' at pos " << i;
             tdbs::LOG_DEBUG(ss.str());
         }
-        // now buf is a shared_ptr to ColumnBuffer
-        auto buf = sr_data->get()->at(names[i]);
 
         // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
+        auto& pp = pp_vector[i];
 
         // memcpy((void*) sch->children[i], pp.second.get(),
         // sizeof(ArrowSchema)); memcpy((void*) arr->children[i],
