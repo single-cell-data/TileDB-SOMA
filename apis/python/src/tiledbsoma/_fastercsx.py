@@ -15,7 +15,7 @@ import pyarrow as pa
 import scipy.sparse
 from typing_extensions import TypeAlias
 
-from .options._soma_tiledb_context import SOMATileDBContext
+from ._soma_context import SOMAContext
 from .pytiledbsoma.fastercsx import compress_coo, copy_csx_to_dense, sort_csx_indices
 
 NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
@@ -50,7 +50,7 @@ class CompressedMatrix:
         format: Format,
         is_sorted: bool,
         no_duplicates: bool | None,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> None:
         """Construct from PJV format. Not intended for direct use - use instead the
         static factory methods `from_ijd`, `from_pjv` and `from_soma`.
@@ -77,7 +77,7 @@ class CompressedMatrix:
         shape: tuple[int, int],
         format: Format,
         make_sorted: bool,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> CompressedMatrix:
         """Factory method accepting COO points stored in IJD vectors."""
         i = i if isinstance(i, collections.abc.Sequence) else (i,)
@@ -95,10 +95,10 @@ class CompressedMatrix:
         indptr = np.zeros((n_major + 1), dtype=index_dtype)
         indices = np.empty((nnz,), dtype=index_dtype)
         data = np.empty((nnz,), dtype=d[0].dtype)
-        compress_coo(context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data)
+        compress_coo(context._handle, (n_major, n_minor), i, j, d, indptr, indices, data)
         no_duplicates = None  # aka, unknown
         if make_sorted:
-            no_duplicates = sort_csx_indices(context.native_context, indptr, indices, data)
+            no_duplicates = sort_csx_indices(context._handle, indptr, indices, data)
         return CompressedMatrix(indptr, indices, data, shape, format, make_sorted, no_duplicates, context)
 
     @staticmethod
@@ -107,7 +107,7 @@ class CompressedMatrix:
         shape: tuple[int, int],
         format: Format,
         make_sorted: bool,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> CompressedMatrix:
         """Factory method accepting a sequence of Arrow tables containing SOMA sparse matrix data.
 
@@ -198,7 +198,7 @@ class CompressedMatrix:
         out_shape = (n_major, self.shape[1]) if self.format == "csr" else (self.shape[0], n_major)
         out = np.zeros(math.prod(out_shape), dtype=self.data.dtype)
         copy_csx_to_dense(
-            self.context.native_context,
+            self.context._handle,
             major_idx_start,
             major_idx_end,
             self.shape,

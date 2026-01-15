@@ -15,6 +15,7 @@ from anndata._core import file_backing
 
 from tiledbsoma import pytiledbsoma as clib
 from tiledbsoma._exception import SOMAError
+from tiledbsoma._soma_context import SOMAContext
 from tiledbsoma._types import Path
 from tiledbsoma.options import SOMATileDBContext
 
@@ -41,12 +42,17 @@ _pa_type_to_str_fmt = {
 
 @contextmanager
 def read_h5ad(
-    input_path: Path | str, *, mode: str | None = "r", ctx: SOMATileDBContext | None = None
+    input_path: Path | str, *, mode: str | None = "r", ctx: SOMAContext | SOMATileDBContext | None = None
 ) -> Iterator[ad.AnnData]:
     """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
-    ctx = ctx or SOMATileDBContext()
+    if ctx is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
+        ctx = SOMAContext.get_default()
+    elif isinstance(ctx, SOMATileDBContext):
+        ctx = ctx._to_soma_context()
     input_handle = CachingReader(
-        clib.SOMAFileHandle(str(input_path), ctx.native_context),
+        clib.SOMAFileHandle(str(input_path), ctx._handle),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )

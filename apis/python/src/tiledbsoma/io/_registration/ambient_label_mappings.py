@@ -22,10 +22,10 @@ import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.logging as logging
 from tiledbsoma import DataFrame, Experiment, SOMAError
+from tiledbsoma._soma_context import SOMAContext
 from tiledbsoma._types import PDIndex
 from tiledbsoma.io._util import read_h5ad
 from tiledbsoma.options import SOMATileDBContext
-from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
 from .enum import extend_enumerations, get_enumerations
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
@@ -174,7 +174,7 @@ class ExperimentAmbientLabelMapping:
         with read_h5ad(h5ad_path, mode="r") as adata:
             return self.subset_for_anndata(adata)
 
-    def prepare_experiment(self, experiment_uri: str, context: SOMATileDBContext | None = None) -> None:
+    def prepare_experiment(self, experiment_uri: str, context: SOMAContext | SOMATileDBContext | None = None) -> None:
         """Prepare experiment for ingestion.
 
         Currently performs two operations:
@@ -195,7 +195,12 @@ class ExperimentAmbientLabelMapping:
         Returns:
             None
         """
-        context = _validate_soma_tiledb_context(context)
+        if context is None:
+            if not SOMAContext.has_default():
+                SOMAContext.set_default()
+            context = SOMAContext.get_default()
+        elif isinstance(context, SOMATileDBContext):
+            context = context._to_soma_context()
 
         def _check_experiment_structure(exp: tiledbsoma.Experiment) -> None:
             # Verify that the experiment has been created correctly - check for existence of obs & var
@@ -346,7 +351,7 @@ class ExperimentAmbientLabelMapping:
         uri: str,
         obs_field_name: str,
         var_field_name: str,
-        context: SOMATileDBContext,
+        context: SOMAContext,
     ) -> tuple[
         pd.DataFrame,
         dict[ColumnName, pd.DataFrame],
@@ -392,7 +397,7 @@ class ExperimentAmbientLabelMapping:
         measurement_name: str,
         obs_field_name: str,
         var_field_name: str,
-        context: SOMATileDBContext,
+        context: SOMAContext,
         allow_duplicate_obs_ids: bool,
     ) -> ExperimentAmbientLabelMapping:
         """Private method used by various constructor paths -- shared code for registration.

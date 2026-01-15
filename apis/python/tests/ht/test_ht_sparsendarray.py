@@ -153,7 +153,7 @@ def sparse_array(
         max_size=10,
     ),
     platform_config=st.from_type(Union[dict[str, str], None]),
-    context=st.from_type(Union[soma.SOMATileDBContext, None]),
+    context=st.from_type(Union[soma.SOMAContext, None]),
     tiledb_timestamp=tiledb_timestamps(),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
@@ -163,7 +163,7 @@ def test_fuzz_SparseNDArray_create(
     type: pa.DataType,
     shape: Sequence[int | None],
     platform_config: dict[str, Mapping[str, Any]] | object | None,
-    context: tiledbsoma.SOMATileDBContext | None,
+    context: tiledbsoma.SOMAContext | None,
     tiledb_timestamp: int | datetime.datetime | None,
 ) -> None:
     try:
@@ -241,7 +241,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
             allows_duplicates=False,
         )
 
-    def _array_exists(self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None) -> bool:
+    def _array_exists(self, uri: str, context: soma.SOMAContext, tiledb_timestamp: int | None) -> bool:
         return soma.SparseNDArray.exists(uri, context=context, tiledb_timestamp=tiledb_timestamp)
 
     def _array_open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
