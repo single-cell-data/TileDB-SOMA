@@ -15,8 +15,8 @@ skip_if_no_cloud <- function() {
 # Read from environment variables or use defaults
 get_cloud_config <- function() {
   list(
-    namespace = Sys.getenv("CLOUD_TEST_NAMESPACE", "aaronwolen"),
-    bucket = Sys.getenv("CLOUD_TEST_BUCKET", "s3://tiledb-aaron/tiledb-cloud/soma-tests")
+    namespace = Sys.getenv("CLOUD_TEST_NAMESPACE", "TileDB-Inc"),
+    bucket = Sys.getenv("CLOUD_TEST_BUCKET")
   )
 }
 
