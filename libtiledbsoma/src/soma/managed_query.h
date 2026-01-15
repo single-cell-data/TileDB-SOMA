@@ -54,6 +54,8 @@ class StatusAndException {
 
 class ManagedQuery {
    public:
+    inline static const size_t MAX_RETRIES = 3;
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -607,6 +609,8 @@ class ManagedQuery {
 
     // Query layout
     ResultOrder layout_ = ResultOrder::automatic;
+
+    size_t retries = 0;
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 

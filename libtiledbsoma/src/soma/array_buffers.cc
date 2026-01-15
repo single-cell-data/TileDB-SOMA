@@ -182,4 +182,9 @@ void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<ColumnBuffer
     buffers_.emplace(name, buffer);
 }
 
+void ArrayBuffers::expand_buffers() {
+    for (const auto& [name, buffer] : buffers_) {
+        buffer->resize(buffer->max_size() * DEFAULT_BUFFER_EXPANSION_FACTOR);
+    }
+}
 }  // namespace tiledbsoma
