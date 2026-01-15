@@ -38,5 +38,4 @@ The `helper-cloud.R` file provides utility functions for cloud tests:
 - `get_cloud_config()` - Returns configuration from environment variables
 - `get_cloud_base_uri()` - Builds the base URI for test objects
 - `cloud_path()` - Creates a unique path with automatic cleanup
-- `cloud_unique_id()` - Generates a unique ID for test assets
 - `get_test_seurat_object()` - Returns a simplified Seurat object for testing
