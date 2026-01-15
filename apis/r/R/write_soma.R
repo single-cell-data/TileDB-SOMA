@@ -820,13 +820,14 @@ write_soma.TsparseMatrix <- function(
 
 #' Register a SOMA Object to a Parent Collection
 #'
-#' The behavior differs by URI scheme:
+#' Registers a child SOMA object as a member of a parent collection. The
+#' registration behavior differs by URI scheme:
 #'
 #' - For Carrara (TileDB v3) URIs, children are auto-registered when created at
 #'   a nested URI, so this function simply returns early.
 #' - For TileDB v2 URIs, the object is explicitly registered via
-#'   `SOMACollection$set()`. If the key already exists in the parent collection
-#'   the error is silently ignored (like Python's `_maybe_set`).
+#'   [SOMACollectionBase]`$set()`. If the key already exists, an
+#'   `existingKeyWarning` is thrown when `options(verbose = TRUE)`.
 #'
 #' @param x A `SOMAArrayBase` or `SOMACollectionBase` object to be registered.
 #' @param soma_parent A `SOMACollectionBase` object that will contain `x`.
@@ -859,7 +860,6 @@ write_soma.TsparseMatrix <- function(
   }
 
   # v2: explicit registration via set()
-  # Catch "already exists" errors silently (like Python's _maybe_set)
   tryCatch(
     expr = {
       soma_parent$reopen("WRITE")
@@ -870,9 +870,17 @@ write_soma.TsparseMatrix <- function(
       )
     },
     error = function(e) {
-      # If it's an "already exists" error, ignore it
-      # Otherwise rethrow
-      if (!grepl("already", conditionMessage(e), ignore.case = TRUE)) {
+      if (grepl("already", conditionMessage(e), ignore.case = TRUE)) {
+        # Throw warning for existing key (controlled by verbose option)
+        warning(warningCondition(
+          message = paste(
+            "Already found an object stored as",
+            sQuote(key),
+            "in the parent collection"
+          ),
+          class = "existingKeyWarning"
+        ))
+      } else {
         stop(e)
       }
     }
