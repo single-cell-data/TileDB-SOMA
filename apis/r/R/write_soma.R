@@ -820,19 +820,20 @@ write_soma.TsparseMatrix <- function(
 
 #' Register a SOMA Object to a Parent Collection
 #'
-#' For Carrara (TileDB v3) URIs, children are auto-registered when created at
-#' a nested URI, so this function simply returns early. For v2 URIs, this calls
-#' [SOMACollectionBase$set()] to explicitly register the object.
+#' The behavior differs by URI scheme:
 #'
-#' This follows the same pattern as Python's `_maybe_set()` helper in
-#' `tiledbsoma.io.ingest`.
+#' - For Carrara (TileDB v3) URIs, children are auto-registered when created at
+#'   a nested URI, so this function simply returns early.
+#' - For TileDB v2 URIs, the object is explicitly registered via
+#'   `SOMACollection$set()`. If the key already exists in the parent collection
+#'   the error is silently ignored (like Python's `_maybe_set`).
 #'
 #' @param x A `SOMAArrayBase` or `SOMACollectionBase` object to be registered.
 #' @param soma_parent A `SOMACollectionBase` object that will contain `x`.
 #' @param key A non-empty character string serving as the name for `x` within
 #'   `soma_parent`.
 #' @param relative Whether to store the URI of `x` relative to `soma_parent`.
-#'   Defaults to `TRUE`. Ignored for `tiledb://` URIs.
+#'   Defaults to `TRUE`. Ignored for Carrara (TileDB v3) URIs.
 #'
 #' @noRd
 #'
