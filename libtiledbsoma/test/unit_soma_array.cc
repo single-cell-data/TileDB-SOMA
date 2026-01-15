@@ -461,6 +461,34 @@ TEST_CASE("SOMAArray: Test buffer size") {
     soma_array->close();
 }
 
+TEST_CASE("SOMAArray: Test resize") {
+    // Test soma.init_buffer_bytes by making buffer small
+    // enough to read one byte at a time so that read_next
+    // must be called 10 times instead of placing all data
+    // in buffer within a single read
+    std::map<std::string, std::string> cfg;
+    cfg["soma.init_buffer_bytes"] = "1";
+    auto ctx = std::make_shared<SOMAContext>(cfg);
+    REQUIRE(ctx->tiledb_config()["soma.init_buffer_bytes"] == "1");
+
+    std::string base_uri = "mem://unit-test-array";
+    auto [uri, expected_nnz] = create_array(base_uri, ctx);
+    auto [expected_d0, expected_a0] = write_array(uri, ctx);
+    auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
+    auto mq = soma_array->create_managed_query();
+
+    REQUIRE(mq.read_next().value()->num_rows() == 0);
+    REQUIRE(mq.read_next().value()->num_rows() == 0);
+    REQUIRE(mq.read_next().value()->num_rows() == 0);
+
+    size_t loops = 0;
+    while (auto batch = mq.read_next())
+        ++loops;
+    REQUIRE(loops == 10);
+
+    soma_array->close();
+}
+
 TEST_CASE("SOMAArray: ResultOrder") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-array-result-order";

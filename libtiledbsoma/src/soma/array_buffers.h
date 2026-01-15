@@ -28,6 +28,7 @@ using namespace tiledb;
 
 class ArrayBuffers {
     inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 28;
+    inline static const size_t DEFAULT_BUFFER_EXPANSION_FACTOR = 2;
     inline static const std::string CONFIG_KEY_USE_MEMORY_POOL = "soma.read.use_memory_pool";
     inline static const std::string CONFIG_KEY_MEMORY_BUDGET = "soma.read.memory_budget";
     inline static const std::string CONFIG_KEY_VAR_SIZED_FACTOR = "soma.read.var_size_factor";
