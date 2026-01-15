@@ -62,7 +62,7 @@ cloud_path <- function(env = parent.frame()) {
   path
 }
 
-# Get a simplified Seurat object for testing
+# Get a simplified Seurat object for faster testing
 get_test_seurat_object <- function() {
   # Load pbmc_small from SeuratObject package
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
