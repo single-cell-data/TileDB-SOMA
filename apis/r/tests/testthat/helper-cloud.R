@@ -1,10 +1,4 @@
-# Cloud Test Configuration and Helpers ------------------------------------
-
-# Generate a unique ID for test assets (mirrors helper-carrara.R)
-# Defined here to avoid dependency on helper-carrara.R
-cloud_unique_id <- function(pattern = "") {
-  basename(tempfile(pattern = pattern))
-}
+# Cloud Test Configuration and Helpers ----------------------------------
 
 # Skip cloud tests unless explicitly enabled via environment variable
 skip_if_no_cloud <- function() {
@@ -34,32 +28,7 @@ get_cloud_base_uri <- function() {
 
 # Create a unique cloud uri with automatic cleanup
 cloud_path <- function(env = parent.frame()) {
-  path <- file_path(
-    get_cloud_base_uri(),
-    cloud_unique_id("tiledbsoma-r-test-")
-  )
-
-  # Recursively delete group after test completes
-  # Note: tiledb-r requires this specific sequence of operations
-  withr::defer(
-    {
-      tryCatch(
-        {
-          grp <- tiledb::tiledb_group(path)
-          tiledb::tiledb_group_close(grp)
-          grp <- tiledb::tiledb_group_open(grp, type = "MODIFY_EXCLUSIVE")
-          tiledb::tiledb_group_delete(grp = grp, uri = path, recursive = TRUE)
-          tiledb::tiledb_group_close(grp)
-        },
-        error = function(e) {
-          message("Failed to cleanup cloud group: ", path)
-        }
-      )
-    },
-    envir = env
-  )
-
-  path
+  remote_path(get_cloud_base_uri(), "tiledbsoma-r-test-", cleanup_group, env)
 }
 
 # Get a simplified Seurat object for faster testing

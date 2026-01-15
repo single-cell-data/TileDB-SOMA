@@ -1,15 +1,11 @@
-# Carrara Test Configuration and Helpers -----------------------------------
-
-# Generate a unique ID for test assets
-generate_unique_id <- function(pattern = "") {
-  basename(tempfile(pattern = pattern))
-}
+# Carrara Test Configuration and Helpers --------------------------------
 
 # Skip carrara tests unless explicitly enabled via environment variable
 skip_if_no_carrara <- function() {
-  if (Sys.getenv("SOMA_TEST_CARRARA", "false") != "true") {
-    skip("Carrara tests not enabled. Set SOMA_TEST_CARRARA=true to run.")
-  }
+  testthat::skip_if_not(
+    Sys.getenv("SOMA_TEST_CARRARA", "false") == "true",
+    "Carrara tests not enabled. Set SOMA_TEST_CARRARA=true to run."
+  )
 }
 
 # Read from environment variables or use defaults
@@ -28,69 +24,25 @@ get_carrara_config <- function() {
 
 # Set carrara-related environment variables and unset existing TILEDB_REST_TOKEN
 with_carrara_env <- function(env = parent.frame()) {
-    withr::local_envvar(list(
-      TILEDB_PROFILE_NAME = get_carrara_config()$profile,
-      TILEDB_REST_SERVER_ADDRESS = get_carrara_config()$rest_server,
-      TILEDB_REST_TOKEN = NA_character_
+  withr::local_envvar(list(
+    TILEDB_PROFILE_NAME = get_carrara_config()$profile,
+    TILEDB_REST_SERVER_ADDRESS = get_carrara_config()$rest_server,
+    TILEDB_REST_TOKEN = NA_character_
   ), .local_envir = env)
 }
 
 # Build base URI for carrara tests
-get_base_uri <- function() {
+get_carrara_base_uri <- function() {
   cfg <- get_carrara_config()
   sprintf("tiledb://%s/%s/%s", cfg$workspace, cfg$teamspace, cfg$folder)
 }
 
 # Create a unique carrara array path with automatic cleanup
 carrara_array_path <- function(env = parent.frame()) {
-
-  path <- file_path(
-    get_base_uri(),
-    generate_unique_id("tiledbsoma-r-")
-  )
-
-  # Register cleanup - delete array after test completes
-  withr::defer(
-    {
-      tryCatch(
-        tiledb::tiledb_vfs_remove_dir(path),
-        error = function(e) {
-          message("Failed to cleanup carrara array: ", path)
-        }
-      )
-    },
-    envir = env
-  )
-
-  path
+  remote_path(get_carrara_base_uri(), "tiledbsoma-r-", cleanup_array, env)
 }
 
 # Create a unique carrara group path with automatic cleanup
 carrara_group_path <- function(env = parent.frame()) {
-  path <- file_path(
-    get_base_uri(),
-    generate_unique_id("tiledbsoma-r-group-")
-  )
-
-  # Recursively delete group after test completes
-  # Note: tiledb-r requires this specific sequence of operations
-  withr::defer(
-    {
-      tryCatch(
-        {
-          grp <- tiledb::tiledb_group(path)
-          tiledb::tiledb_group_close(grp)
-          grp <- tiledb::tiledb_group_open(grp, type = "MODIFY_EXCLUSIVE")
-          tiledb::tiledb_group_delete(grp = grp, uri = path, recursive = TRUE)
-          tiledb::tiledb_group_close(grp)
-        },
-        error = function(e) {
-          message("Failed to cleanup carrara group: ", path)
-        }
-      )
-    },
-    envir = env
-  )
-
-  path
+  remote_path(get_carrara_base_uri(), "tiledbsoma-r-group-", cleanup_group, env)
 }

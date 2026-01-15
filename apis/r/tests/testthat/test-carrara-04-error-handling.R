@@ -7,7 +7,7 @@ test_that("SOMACollection invalid operations", {
   uri <- carrara_group_path()
 
   # Opening non-existent URI should error
-  nonexistent_uri <- file_path(get_base_uri(), "does_not_exist")
+  nonexistent_uri <- file_path(get_carrara_base_uri(), "does_not_exist")
   expect_error(
     SOMACollectionOpen(nonexistent_uri),
     class = "error"
@@ -52,7 +52,7 @@ test_that("SOMACollection relative URI behavior", {
   with_carrara_env()
 
   # Create nested collection structure
-  base_uri <- get_base_uri()
+  base_uri <- get_carrara_base_uri()
   parent_uri <- file_path(base_uri, generate_unique_id("parent-"))
   child_name <- "child_collection"
   child_uri <- file.path(parent_uri, child_name)
