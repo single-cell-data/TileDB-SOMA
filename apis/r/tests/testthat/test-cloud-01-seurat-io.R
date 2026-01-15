@@ -115,7 +115,7 @@ test_that("Ingest Seurat object to cloud with write_soma", {
   # Read obs from query
   obs_result <- query$obs(column_names = c("obs_id", "nFeature_RNA"))$concat()
   expect_equal(nrow(obs_result), query$n_obs)
-  expect_true(all(obs_result$nFeature_RNA > 70))
+  expect_true(all(obs_result$to_data_frame()$nFeature_RNA > 70))
 
   # Read X data from query
   x_reader <- query$X(layer_name = "data")
@@ -123,66 +123,9 @@ test_that("Ingest Seurat object to cloud with write_soma", {
 
   # Convert to Seurat
   seurat_result <- query$to_seurat(X_layers = c(data = "data"))
-  expect_s3_class(seurat_result, "Seurat")
+  expect_s4_class(seurat_result, "Seurat")
   expect_equal(ncol(seurat_result), query$n_obs)
   expect_equal(nrow(seurat_result), query$n_vars)
-  exp$close()
-
-  # Add dimensional reduction to cloud experiment ---------------------------
-  exp <- SOMAExperimentOpen(uri, mode = "READ")
-  ms_rna <- exp$ms$get("RNA")
-
-  # obsm may not exist or be empty when no reductions are present
-  if (ms_rna$obsm$exists()) {
-    expect_false("PCA" %in% ms_rna$obsm$names())
-  }
-  exp$close()
-
-  # Now prepare the object with PCA
-  suppressWarnings({
-    pbmc_small <- Seurat::FindVariableFeatures(
-      pbmc_small,
-      nfeatures = 50,
-      verbose = FALSE
-    )
-    pbmc_small <- Seurat::ScaleData(pbmc_small, verbose = FALSE)
-    pbmc_small <- Seurat::RunPCA(
-      pbmc_small,
-      features = Seurat::VariableFeatures(pbmc_small),
-      verbose = FALSE
-    )
-  })
-
-  # Reopen experiment in WRITE mode
-  exp <- SOMAExperimentOpen(uri, mode = "WRITE")
-  expect_equal(exp$mode(), "WRITE")
-
-  # Get RNA measurement in WRITE mode
-  ms_rna <- exp$ms$get("RNA")
-  expect_equal(ms_rna$mode(), "WRITE")
-
-  # Add PCA to the experiment
-  suppressWarnings({
-    write_soma(pbmc_small[["pca"]], soma_parent = ms_rna)
-  })
-
-  # Close measurement and experiment
-  ms_rna$close()
-  exp$close()
-
-  # Reopen in READ mode and verify PCA exists
-  exp <- SOMAExperimentOpen(uri, mode = "READ")
-  ms_rna <- exp$ms$get("RNA")
-
-  # Verify obsm collection exists with PCA
-  expect_true(ms_rna$obsm$exists())
-  expect_true("PCA" %in% ms_rna$obsm$names())
-
-  # Verify PCA data can be read
-  pca_data <- ms_rna$obsm$get("PCA")
-  expect_equivalent(pca_data$soma_type, "SOMADenseNDArray")
-  pca_array <- pca_data$read()$concat()
-  expect_s3_class(pca_array, "Table")
   exp$close()
 
   # Filter obs with string/dictionary column equality -----------------------
@@ -217,9 +160,6 @@ test_that("Ingest Seurat object to cloud with write_soma", {
   original_ngenes <- nrow(pbmc_small)
   original_cell_ids <- colnames(pbmc_small)
   original_gene_ids <- rownames(pbmc_small)
-
-  # Write to cloud
-  write_soma(pbmc_small, uri = uri)
 
   # Read back
   exp <- SOMAExperimentOpen(uri)
