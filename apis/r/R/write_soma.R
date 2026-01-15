@@ -870,7 +870,7 @@ write_soma.TsparseMatrix <- function(
       )
     },
     error = function(e) {
-      if (grepl("already", conditionMessage(e), ignore.case = TRUE)) {
+      if (grepl("already exists", conditionMessage(e), ignore.case = TRUE)) {
         # Throw warning for existing key (controlled by verbose option)
         warning(warningCondition(
           message = paste(
