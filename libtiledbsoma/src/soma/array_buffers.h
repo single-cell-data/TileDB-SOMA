@@ -38,7 +38,8 @@ class ArrayBuffers {
         const std::vector<std::string>& names,
         const tiledb::Array& array,
         std::unique_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
-    ArrayBuffers(const ArrayBuffers&) = default;
+
+    ArrayBuffers(const ArrayBuffers&) = delete;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
 
