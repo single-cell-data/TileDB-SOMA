@@ -20,6 +20,7 @@
 
 #include "common/logging/impl/logger.h"
 #include "common/logging/logger.h"
+#include "column_buffer_strategies.h"
 #include "utils/common.h"
 #include "utils/util.h"
 
@@ -152,7 +153,8 @@ void ManagedQuery::setup_read() {
     LOG_TRACE("[ManagedQuery] allocate new buffers");
     if (!buffers_) {
         if (ArrayBuffers::use_memory_pool(array_)) {
-            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
+            buffers_ = std::make_shared<ArrayBuffers>(
+                columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
         } else {
             buffers_ = std::make_shared<ArrayBuffers>();
             for (auto& name : columns_) {

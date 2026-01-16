@@ -727,19 +727,17 @@ std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
         name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode);
 }
 
-void ColumnBuffer::resize(size_t num_bytes, bool preserve_data) {
+void ColumnBuffer::resize(size_t num_bytes, size_t num_cells, bool preserve_data) {
     std::vector<std::byte> data_buffer(num_bytes);
     std::vector<uint64_t> offsets_buffer;
     std::vector<uint8_t> validity_buffer;
 
-    size_t new_num_cells = is_var_ ? num_bytes / sizeof(uint64_t) : num_bytes / tiledb::impl::type_size(type());
-
     if (is_var_) {
-        offsets_buffer.resize(new_num_cells + 1);
+        offsets_buffer.resize(num_cells + 1);
     }
 
     if (is_nullable_) {
-        validity_buffer.resize(new_num_cells);
+        validity_buffer.resize(num_cells);
     }
 
     if (preserve_data) {
@@ -750,12 +748,12 @@ void ColumnBuffer::resize(size_t num_bytes, bool preserve_data) {
 
         if (is_var_) {
             std::memcpy(
-                offsets_buffer.data(), offsets_.data(), std::min(new_num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
+                offsets_buffer.data(), offsets_.data(), std::min(num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
         }
 
         if (is_nullable_) {
             std::memcpy(
-                offsets_buffer.data(), offsets_.data(), std::min(new_num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
+                offsets_buffer.data(), offsets_.data(), std::min(num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
         }
     }
 
@@ -763,7 +761,7 @@ void ColumnBuffer::resize(size_t num_bytes, bool preserve_data) {
     offsets_ = offsets_buffer;
     validity_ = validity_buffer;
 
-    num_cells_ = std::min(num_cells_, new_num_cells);
+    num_cells_ = std::min(num_cells_, num_cells);
 }
 
 size_t ColumnBuffer::max_size() const {
