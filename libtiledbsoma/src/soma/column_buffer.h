@@ -346,7 +346,7 @@ class ColumnBuffer {
     /**
      * @brief Resize the internal buffers to the given size.
      */
-    void resize(size_t size, bool preserve_data = false);
+    void resize(size_t size, size_t num_cells, bool preserve_data = false);
 
     /**
      * @brief Get max size of data buffer in bytes.
