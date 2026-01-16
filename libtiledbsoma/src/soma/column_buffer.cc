@@ -727,7 +727,7 @@ std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
         name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode);
 }
 
-void ColumnBuffer::resize(size_t num_bytes, size_t num_cells, bool preserve_data) {
+void ColumnBuffer::resize(uint64_t num_bytes, uint64_t num_cells, bool preserve_data) {
     std::vector<std::byte> data_buffer(num_bytes);
     std::vector<uint64_t> offsets_buffer;
     std::vector<uint8_t> validity_buffer;
@@ -764,11 +764,11 @@ void ColumnBuffer::resize(size_t num_bytes, size_t num_cells, bool preserve_data
     num_cells_ = std::min(num_cells_, num_cells);
 }
 
-size_t ColumnBuffer::max_size() const {
+uint64_t ColumnBuffer::max_size() const {
     return data_.capacity();
 }
 
-size_t ColumnBuffer::max_num_cells() const {
+uint64_t ColumnBuffer::max_num_cells() const {
     return is_var_ ? max_size() / sizeof(uint64_t) : max_size() / tiledb::impl::type_size(type());
 }
 
