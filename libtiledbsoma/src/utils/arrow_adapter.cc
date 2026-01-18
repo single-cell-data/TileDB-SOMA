@@ -727,8 +727,6 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
     auto coltype = to_arrow_format(column->type(), true).data();
     auto natype = to_nanoarrow_type(coltype);
 
-    std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>> enmr_map;
-
     if (natype == NANOARROW_TYPE_TIMESTAMP) {
         ArrowSchemaInit(sch);
         auto [ts_type, ts_unit] = to_nanoarrow_time(coltype);
@@ -817,12 +815,8 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
 
     auto enmr = column->get_enumeration_info();
     if (enmr.has_value()) {
-        if (!enmr_map.contains(enmr->name())) {
-            enmr_map.insert(
-                std::make_pair(enmr->name(), std::make_shared<ArrowBuffer>(*enmr, !downcast_dict_of_large_var)));
-        }
-
-        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enmr_map.at(enmr->name()));
+        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(
+            std::make_shared<ArrowBuffer>(*enmr, !downcast_dict_of_large_var));
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
