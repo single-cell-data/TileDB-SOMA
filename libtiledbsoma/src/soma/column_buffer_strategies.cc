@@ -47,7 +47,7 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
     const tiledb::Config config = array.config();
     const tiledb::ArraySchema schema = array.schema();
 
-    size_t memory_budget = 0;
+    size_t memory_budget = DEFAULT_MEMORY_POOL;
     if (config.contains(CONFIG_KEY_MEMORY_POOL_SIZE)) {
         auto value_str = config.get(CONFIG_KEY_MEMORY_POOL_SIZE.data());
         try {
@@ -59,6 +59,7 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
         }
     }
 
+    var_size_expansion_factor = DEFAULT_VAR_SIZE_FACTOR;
     if (config.contains(CONFIG_KEY_VAR_SIZED_FACTOR)) {
         auto value_str = config.get(CONFIG_KEY_VAR_SIZED_FACTOR.data());
         try {
