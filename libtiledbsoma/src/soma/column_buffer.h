@@ -343,6 +343,21 @@ class ColumnBuffer {
         return is_ordered_;
     }
 
+    /**
+     * @brief Resize the internal buffers to the given size.
+     */
+    void resize(uint64_t size, uint64_t num_cells, bool preserve_data = false);
+
+    /**
+     * @brief Get max size of data buffer in bytes.
+     */
+    uint64_t max_size() const;
+
+    /**
+     * @brief Get the max number of cells the buffers can hold.
+     */
+    uint64_t max_num_cells() const;
+
    private:
     //===================================================================
     //= private static

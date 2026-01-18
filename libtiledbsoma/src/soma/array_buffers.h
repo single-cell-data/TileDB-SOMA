@@ -14,12 +14,13 @@
 #ifndef ARRAY_BUFFERS_H
 #define ARRAY_BUFFERS_H
 
+#include <functional>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
 #include "column_buffer.h"
+#include "column_buffer_strategies.h"
 
 namespace tiledbsoma {
 
@@ -27,13 +28,16 @@ using namespace tiledb;
 
 class ArrayBuffers {
     inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 28;
+    inline static const size_t DEFAULT_BUFFER_EXPANSION_FACTOR = 2;
     inline static const std::string CONFIG_KEY_USE_MEMORY_POOL = "soma.read.use_memory_pool";
-    inline static const std::string CONFIG_KEY_MEMORY_BUDGET = "soma.read.memory_budget";
-    inline static const std::string CONFIG_KEY_VAR_SIZED_FACTOR = "soma.read.var_size_factor";
 
    public:
     ArrayBuffers() = default;
-    ArrayBuffers(const std::vector<std::string>& names, const tiledb::Array& array);
+    ArrayBuffers(
+        const std::vector<std::string>& names,
+        const tiledb::Array& array,
+        std::shared_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
+
     ArrayBuffers(const ArrayBuffers&) = default;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
@@ -90,12 +94,16 @@ class ArrayBuffers {
      */
     static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
 
+    void expand_buffers();
+
    private:
     // A vector of column names that maintains the order the columns were added
     std::vector<std::string> names_;
 
     // Map: column name -> ColumnBuffer
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
+
+    std::shared_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 
 }  // namespace tiledbsoma
