@@ -33,6 +33,9 @@ class BasicAllocationStrategy : public ColumnBufferAllocationStrategy {
     size_t buffer_size = 1 << 30;
 };
 
+inline constexpr size_t DEFAULT_MEMORY_POOL = 1 << 30;
+inline constexpr size_t DEFAULT_VAR_SIZE_FACTOR = 2;
+
 class MemoryPoolAllocationStrategy : public ColumnBufferAllocationStrategy {
    public:
     MemoryPoolAllocationStrategy(std::span<std::string> columns, const tiledb::Array& array);
@@ -41,8 +44,8 @@ class MemoryPoolAllocationStrategy : public ColumnBufferAllocationStrategy {
         std::variant<tiledb::Attribute, tiledb::Dimension> column) const override;
 
    private:
-    size_t buffer_unit_size;
-    size_t var_size_expansion_factor;
+    size_t buffer_unit_size = 1 << 30;
+    size_t var_size_expansion_factor = 2;
 };
 }  // namespace tiledbsoma
 #endif

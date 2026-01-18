@@ -37,9 +37,9 @@ class ArrayBuffers {
     ArrayBuffers(
         const std::vector<std::string>& names,
         const tiledb::Array& array,
-        std::unique_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
+        std::shared_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
 
-    ArrayBuffers(const ArrayBuffers&) = delete;
+    ArrayBuffers(const ArrayBuffers&) = default;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
 
@@ -118,7 +118,7 @@ class ArrayBuffers {
     // Map: column name -> ColumnBuffer
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
 
-    std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;
+    std::shared_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 
 }  // namespace tiledbsoma

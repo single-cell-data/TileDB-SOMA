@@ -32,16 +32,16 @@ bool ArrayBuffers::use_memory_pool(const std::shared_ptr<tiledb::Array>& array) 
 ArrayBuffers::ArrayBuffers(
     const std::vector<std::string>& names,
     const tiledb::Array& array,
-    std::unique_ptr<ColumnBufferAllocationStrategy> strategy)
+    std::shared_ptr<ColumnBufferAllocationStrategy> strategy)
     : names_(names)
     , strategy_(std::move(strategy)) {
     if (!strategy_) {
-        strategy_ = std::make_unique<BasicAllocationStrategy>(array);
+        strategy_ = std::make_shared<BasicAllocationStrategy>(array);
     }
 
     MemoryMode mode = ColumnBuffer::memory_mode(array.config());
     const tiledb::ArraySchema schema = array.schema();
-    const tiledb::Context context = schema.context();
+    const tiledb::Context& context = array.context();
     // Split memory budget to each column depending on the byte size of each columns element
     // Var sized columns will be allocated the same as an 8 byte datatype
 
@@ -54,9 +54,9 @@ ArrayBuffers::ArrayBuffers(
             std::optional<Enumeration> enumeration = std::nullopt;
             bool is_ordered = false;
             if (enum_name.has_value()) {
-                auto enmr = ArrayExperimental::get_enumeration(context, array, *enum_name);
-                is_ordered = enmr.ordered();
-                enumeration = std::make_optional<Enumeration>(enmr);
+                enumeration = std::make_optional<Enumeration>(
+                    ArrayExperimental::get_enumeration(context, array, *enum_name));
+                is_ordered = enumeration->ordered();
             }
 
             buffers_.insert(
