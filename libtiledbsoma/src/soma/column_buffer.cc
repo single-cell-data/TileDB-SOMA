@@ -769,7 +769,7 @@ uint64_t ColumnBuffer::max_size() const {
 }
 
 uint64_t ColumnBuffer::max_num_cells() const {
-    return is_var_ ? max_size() / sizeof(uint64_t) : max_size() / tiledb::impl::type_size(type());
+    return is_var_ ? (offsets_.capacity() - 1) : max_size() / tiledb::impl::type_size(type());
 }
 
 }  // namespace tiledbsoma
