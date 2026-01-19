@@ -154,13 +154,9 @@ void ManagedQuery::setup_read() {
     if (!buffers_) {
         if (ArrayBuffers::use_memory_pool(array_)) {
             buffers_ = std::make_shared<ArrayBuffers>(
-                columns_, *array_, std::make_shared<MemoryPoolAllocationStrategy>(columns_, *array_));
+                columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
         } else {
-            buffers_ = std::make_shared<ArrayBuffers>();
-            for (auto& name : columns_) {
-                LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
-                buffers_->emplace(name, VectorColumnBuffer::create(array_, name));
-            }
+            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
         }
     }
 

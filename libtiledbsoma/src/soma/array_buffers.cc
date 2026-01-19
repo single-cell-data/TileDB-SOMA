@@ -32,11 +32,11 @@ bool ArrayBuffers::use_memory_pool(const std::shared_ptr<tiledb::Array>& array) 
 ArrayBuffers::ArrayBuffers(
     const std::vector<std::string>& names,
     const tiledb::Array& array,
-    std::shared_ptr<ColumnBufferAllocationStrategy> strategy)
+    std::unique_ptr<ColumnBufferAllocationStrategy> strategy)
     : names_(names)
     , strategy_(std::move(strategy)) {
     if (!strategy_) {
-        strategy_ = std::make_shared<BasicAllocationStrategy>(array);
+        strategy_ = std::make_unique<BasicAllocationStrategy>(array);
     }
 
     MemoryMode mode = ColumnBuffer::memory_mode(array.config());

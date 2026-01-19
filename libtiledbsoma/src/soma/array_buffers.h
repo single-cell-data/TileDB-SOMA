@@ -28,7 +28,6 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 class ArrayBuffers {
-    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 28;
     inline static const size_t DEFAULT_BUFFER_EXPANSION_FACTOR = 2;
     inline static const std::string CONFIG_KEY_USE_MEMORY_POOL = "soma.read.use_memory_pool";
 
@@ -37,11 +36,13 @@ class ArrayBuffers {
     ArrayBuffers(
         const std::vector<std::string>& names,
         const tiledb::Array& array,
-        std::shared_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
+        std::unique_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
 
-    ArrayBuffers(const ArrayBuffers&) = default;
+    ArrayBuffers(const ArrayBuffers&) = delete;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
+
+    ArrayBuffers& operator=(const ArrayBuffers&) = delete;
 
     /**
      * @brief Return the buffer with the given name.
@@ -118,7 +119,7 @@ class ArrayBuffers {
     // Map: column name -> ColumnBuffer
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
 
-    std::shared_ptr<ColumnBufferAllocationStrategy> strategy_;
+    std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 
 }  // namespace tiledbsoma

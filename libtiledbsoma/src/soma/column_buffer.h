@@ -89,6 +89,13 @@ class ColumnBuffer {
 
     virtual ~ColumnBuffer();
 
+    ColumnBuffer& operator=(const ColumnBuffer&) = delete;
+
+    /**
+     * @brief Attach this ColumnBuffer to a TileDB query.
+     *
+     * @param query TileDB query
+     */
     void attach(Query& query, std::optional<Subarray> subarray = std::nullopt);
 
     /**
