@@ -752,8 +752,7 @@ void ColumnBuffer::resize(uint64_t num_bytes, uint64_t num_cells, bool preserve_
         }
 
         if (is_nullable_) {
-            std::memcpy(
-                offsets_buffer.data(), offsets_.data(), std::min(num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
+            std::memcpy(offsets_buffer.data(), offsets_.data(), std::min(num_cells, num_cells_) * sizeof(uint64_t));
         }
     }
 
