@@ -95,6 +95,8 @@ class ColumnBuffer {
 
     ~ColumnBuffer();
 
+    ColumnBuffer& operator=(const ColumnBuffer&) = delete;
+
     /**
      * @brief Attach this ColumnBuffer to a TileDB query.
      *
