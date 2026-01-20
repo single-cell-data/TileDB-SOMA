@@ -113,7 +113,7 @@ SEXP soma_array_reader(
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        tdbs::LOG_DEBUG("[soma_array_reader_impl] Applying query condition");
+        tdbs::common::logging::LOG_DEBUG("[soma_array_reader_impl] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         mq.set_condition(*qcxp);
     }

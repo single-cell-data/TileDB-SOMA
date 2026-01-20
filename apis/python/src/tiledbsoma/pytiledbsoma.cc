@@ -86,12 +86,14 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
     m.def(
         "config_logging",
-        [](const std::string& level, const std::string& logfile) { LOG_CONFIG(level, logfile); },
+        [](const std::string& level, const std::string& logfile) {
+            tiledbsoma::common::logging::LOG_CONFIG(level, logfile);
+        },
         "level"_a,
         "logfile"_a = "");
 
-    m.def("info", &LOG_INFO, "message"_a = "");
-    m.def("debug", &LOG_DEBUG, "message"_a = "");
+    m.def("info", &tiledbsoma::common::logging::LOG_INFO, "message"_a = "");
+    m.def("debug", &tiledbsoma::common::logging::LOG_DEBUG, "message"_a = "");
 
     m.def(
         "tiledbsoma_stats_enable",
