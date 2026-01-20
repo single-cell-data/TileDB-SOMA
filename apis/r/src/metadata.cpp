@@ -195,7 +195,7 @@ void set_metadata(
         std::string value = Rcpp::as<std::string>(valuesxp);
         std::stringstream ss;
         ss << "[set_metadata] key " << key << " value " << value << " is_array " << is_array << " type " << type;
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
         soup->set_metadata(key, value_type, value.length(), (void*)value.c_str(), true);
     } else if (type == "integer64") {
         const tiledb_datatype_t value_type = TILEDB_INT64;
@@ -203,7 +203,7 @@ void set_metadata(
         int64_t value = Rcpp::fromInteger64(dv);
         std::stringstream ss;
         ss << "[set_metadata] key " << key << " value " << value << " is_array " << is_array << " type " << type;
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
         soup->set_metadata(key, value_type, 1, (void*)&value, true);
     } else {
         Rcpp::stop("Unsupported type '%s'", type);

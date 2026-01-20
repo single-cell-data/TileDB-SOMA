@@ -62,21 +62,21 @@ SEXP soma_array_reader(
     const std::string& loglevel = "auto",
     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
     if (loglevel != "auto") {
-        tdbs::LOG_SET_LEVEL(loglevel);
+        tdbs::common::logging::LOG_SET_LEVEL(loglevel);
     }
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
     std::stringstream ss;
     ss << "[soma_array_reader] Reading from " << uri;
-    tdbs::LOG_DEBUG(ss.str());
+    tdbs::common::logging::LOG_DEBUG(ss.str());
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
         std::stringstream ss;
         ss << "[soma_array_reader] Selecting " << column_names.size() << " columns";
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
     }
 
     auto tdb_result_order = get_tdb_result_order(result_order);
@@ -87,7 +87,7 @@ SEXP soma_array_reader(
         Rcpp::DatetimeVector vec(timestamprange);
         std::stringstream ss;
         ss << "[soma_array_reader] timestamp range (" << vec[0] << ", " << vec[1] << ")";
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
@@ -107,7 +107,7 @@ SEXP soma_array_reader(
         std::stringstream ss;
         ss << "[soma_array_reader] Dimension " << dim.name() << " type " << tiledb::impl::to_str(dim.type())
            << " extent " << dim.tile_extent_to_str();
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
@@ -147,7 +147,7 @@ SEXP soma_array_reader(
         std::stringstream ss;
         ss << "[soma_array_reader] Read complete with " << sr_data->get()->num_rows() << " rows and "
            << sr_data->get()->names().size() << " cols";
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
     }
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
@@ -171,7 +171,7 @@ SEXP soma_array_reader(
         {
             std::stringstream ss;
             ss << "[soma_array_reader] Accessing '" << names[i] << "' at pos " << i;
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::common::logging::LOG_DEBUG(ss.str());
         }
 
         // this is pair of array and schema pointer
@@ -186,12 +186,12 @@ SEXP soma_array_reader(
             std::stringstream ss;
             ss << "[soma_array_reader] Incoming name " << std::string(pp.second->name) << " length "
                << pp.first->length;
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::common::logging::LOG_DEBUG(ss.str());
         }
         if (pp.first->length > arr->length) {
             std::stringstream ss;
             ss << "[soma_array_reader] Setting array length to " << pp.first->length;
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::common::logging::LOG_DEBUG(ss.str());
             arr->length = pp.first->length;
         }
     }
@@ -215,7 +215,7 @@ SEXP soma_array_reader(
 //'
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
-    tdbs::LOG_SET_LEVEL(level);
+    tdbs::common::logging::LOG_SET_LEVEL(level);
 }
 
 //' Set a trace message
@@ -228,7 +228,7 @@ void set_log_level(const std::string& level) {
 //'
 // [[Rcpp::export]]
 void soma_trace(const std::string& msg) {
-    tdbs::LOG_TRACE(msg);
+    tdbs::common::logging::LOG_TRACE(msg);
 }
 
 //' Set a debug message
@@ -241,7 +241,7 @@ void soma_trace(const std::string& msg) {
 //'
 // [[Rcpp::export]]
 void soma_debug(const std::string& msg) {
-    tdbs::LOG_DEBUG(msg);
+    tdbs::common::logging::LOG_DEBUG(msg);
 }
 
 //' Set a info message
@@ -254,7 +254,7 @@ void soma_debug(const std::string& msg) {
 //'
 // [[Rcpp::export]]
 void soma_info(const std::string& msg) {
-    tdbs::LOG_INFO(msg);
+    tdbs::common::logging::LOG_INFO(msg);
 }
 
 //' Set a warn message
@@ -267,7 +267,7 @@ void soma_info(const std::string& msg) {
 //'
 // [[Rcpp::export]]
 void soma_warn(const std::string& msg) {
-    tdbs::LOG_WARN(msg);
+    tdbs::common::logging::LOG_WARN(msg);
 }
 
 // [[Rcpp::export]]
@@ -440,7 +440,7 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
         std::stringstream ss;
         ss << "[c_schema] Accessing name '" << std::string(lib_retval->children[i]->name) << "' format '"
            << std::string(lib_retval->children[i]->format) << "' at position " << i;
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
         ArrowSchemaMove(lib_retval->children[i], sch->children[i]);
     }
 
