@@ -79,17 +79,14 @@ class SOMAContext:
     def get_default(cls) -> Self:
         """Returns the current default context used by TileDB-SOMA operations.
 
-        This function returns the context that was either:
+        A default context must be set before this method is called. This can be done by using the :meth:`set_default`.
 
         Raise:
             RuntimeError:
                 If no default context is set.
 
-        If no global default context is set, a new context will be created with default configuration options.
-
         Returns:
-            The default
-
+            The current default context.
         """
         if cls._default_context is None:
             raise RuntimeError(
