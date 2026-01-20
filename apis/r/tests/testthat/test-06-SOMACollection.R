@@ -192,3 +192,43 @@ test_that("Platform config and context are respected by add_ methods", {
     "string_column"
   )
 })
+
+test_that("SOMACollection set() rejects duplicate key in same session", {
+  uri <- withr::local_tempdir("collection-dup-key")
+
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  sdf1 <- create_and_populate_soma_dataframe(file.path(uri, "sdf1"))
+  sdf2 <- create_and_populate_soma_dataframe(file.path(uri, "sdf2"))
+
+  collection$set(sdf1, name = "foo")
+  expect_true("foo" %in% collection$names())
+
+  expect_error(
+    collection$set(sdf2, name = "foo"),
+    regexp = "replacing key 'foo' is unsupported"
+  )
+
+  expect_true("foo" %in% collection$names())
+})
+
+test_that("SOMACollection set() rejects duplicate key after reopen", {
+  uri <- withr::local_tempdir("collection-dup-key-reopen")
+
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  sdf1 <- create_and_populate_soma_dataframe(file.path(uri, "sdf1"))
+  collection$set(sdf1, name = "foo")
+  collection$close()
+
+  sdf2 <- create_and_populate_soma_dataframe(file.path(uri, "sdf2"))
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  expect_true("foo" %in% collection$names())
+
+  expect_error(
+    collection$set(sdf2, name = "foo"),
+    regexp = "replacing key 'foo' is unsupported"
+  )
+})
