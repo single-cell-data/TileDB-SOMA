@@ -12,7 +12,7 @@
  */
 
 #include "soma_geometry_column.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(

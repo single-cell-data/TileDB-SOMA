@@ -13,7 +13,9 @@
 
 #include "version.h"
 #include <tiledb/tiledb>
-#include "logger.h"
+
+#include "common/logging/impl/logger.h"
+
 namespace tiledbsoma::version {
 
 std::string as_string() {

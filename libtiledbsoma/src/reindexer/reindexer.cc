@@ -14,17 +14,20 @@
 #include "reindexer.h"
 #include <thread_pool/thread_pool.h>
 #include <thread>
+#include "builder/logging/impl/logger.h"
+#include "builder/logging/logger.h"
 #include "khash.h"
 #include "soma/enums.h"
 #include "soma/soma_context.h"
 #include "utils/arrow_adapter.h"
 #include "utils/common.h"
-#include "utils/logger.h"
 
 // Typedef for a 64-bit khash table
 KHASH_MAP_INIT_INT64(m64, int64_t)
 
 namespace tiledbsoma {
+
+using namespace tiledb::builder::logging;
 
 void IntIndexer::map_locations(const int64_t* keys, size_t size) {
     map_size_ = size;

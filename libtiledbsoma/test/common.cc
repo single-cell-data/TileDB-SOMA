@@ -12,9 +12,11 @@
  */
 
 #include "common.h"
-#include "utils/logger.h"
+#include "common/logging/impl/logger.h"
 
 namespace helper {
+
+using namespace tiledbsoma::common::logging;
 
 static managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos, std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);

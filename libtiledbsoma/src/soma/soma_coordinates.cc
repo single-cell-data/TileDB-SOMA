@@ -14,7 +14,7 @@
 
 #include <tiledb/tiledb>
 #include <unordered_set>
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 #include "nlohmann/json.hpp"
 
 #include "soma_coordinates.h"

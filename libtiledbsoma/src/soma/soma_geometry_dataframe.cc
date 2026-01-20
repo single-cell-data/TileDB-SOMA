@@ -12,9 +12,9 @@
  */
 
 #include "soma_geometry_dataframe.h"
-#include "../utils/logger.h"
 #include "../utils/transformer.h"
 #include "../utils/util.h"
+#include "common/logging/impl/logger.h"
 #include "soma_geometry_column.h"
 #include "soma_transformers.h"
 

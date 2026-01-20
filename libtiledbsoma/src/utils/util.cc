@@ -13,8 +13,7 @@
 
 #include "utils/util.h"
 #include <cstring>
-#include "logger.h"
-#include "utils/logger.h"  // for fmt::format
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma::util {
 

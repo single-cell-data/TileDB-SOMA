@@ -27,6 +27,7 @@
 
 using namespace tiledb;
 using namespace tiledbsoma;
+using namespace tiledbsoma::common::logging;
 using namespace Catch::Matchers;
 
 #ifndef TILEDBSOMA_SOURCE_ROOT

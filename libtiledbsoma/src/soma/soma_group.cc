@@ -12,9 +12,8 @@
  */
 
 #include "soma_group.h"
-#include "../soma/logger_public.h"
-#include "../utils/logger.h"  // for fmt::format
 #include "../utils/util.h"
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;

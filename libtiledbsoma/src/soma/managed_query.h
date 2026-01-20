@@ -25,7 +25,6 @@
 #include "array_buffers.h"
 #include "column_buffer.h"
 #include "enums.h"
-#include "logger_public.h"
 
 namespace tiledbsoma {
 

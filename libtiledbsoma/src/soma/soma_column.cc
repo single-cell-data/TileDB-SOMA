@@ -13,7 +13,7 @@
 
 #include "soma_column.h"
 
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 #include "soma_attribute.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"

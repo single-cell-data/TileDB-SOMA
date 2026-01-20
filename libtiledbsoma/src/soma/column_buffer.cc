@@ -12,11 +12,13 @@
  */
 
 #include "column_buffer.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
+using namespace common::logging;
 
 #pragma region ColumnBuffer
 

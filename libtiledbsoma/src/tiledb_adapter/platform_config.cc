@@ -15,7 +15,7 @@
 #include "nlohmann/json.hpp"
 
 #include "../utils/common.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 
 using json = nlohmann::json;
 
