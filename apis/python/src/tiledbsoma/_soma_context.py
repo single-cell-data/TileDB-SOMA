@@ -21,7 +21,7 @@ class SOMAContext:
     """Maintains TileDB-specific context for TileDB-SOMA objects.
 
     The context holds TileDB-specific configuration options. Internally, the context contains the storage manager for
-    for TileDB operations. The internal TileDB context is lazily created with it is first used.
+    TileDB operations. The internal TileDB context is lazily created with it is first used.
 
     Most API functions accept an optional `context` keyword argument, but this is typically only necessary in advanced
     cases with multiple contexts per programs. In most cases, the user should set a global default context before
@@ -47,7 +47,7 @@ class SOMAContext:
 
         This method should be called once at the beginning of your session before opening any SOMA objects
         if you want to customize the TileDB context parameters that will apply to all subsequent operations.
-        Otherwise, a default contxt will be created automatically with standard parameters when you first open
+        Otherwise, a default context will be created automatically with standard parameters when you first open
         a SOMA object.
 
         If the global context was already set, an error will be raised unless ``replace=True``. Setting a new
@@ -116,7 +116,7 @@ class SOMAContext:
             threadpool: A threadpool to use for concurrent operations. If not provided, a new ThreadPoolExecutor
                 will be created with default settings.
 
-        Lifecylce:
+        Lifecycle:
             Maturing.
         """
         config = {} if config is None else {key: str(val) for key, val in config.items()}
@@ -134,7 +134,7 @@ class SOMAContext:
         threadpool: ThreadPoolExecutor | None = None,
         _dont_call_this_use_create_instead: str = "unset",
     ) -> None:
-        """Internal-only initializer stpes.
+        """Internal-only initializer steps.
 
         This function is internal; users should create a TileDB-SOMA context using `meth`:create:.
         """

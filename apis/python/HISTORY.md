@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow.
 - \[[#4294](https://github.com/single-cell-data/TileDB-SOMA/pull/4294)\] Use vcpkg instead of custom superbuild, for installing libtiledbsoma and its dependencies. Changes in CI workflows to use the prebuilt libtiledbsoma.
-- \[[#4636](https://github.com/single-cell-data/TileDB-SOMA/pull/4363)\] (BREAKING) The `context` property of a `SOMAObject` now returns a `SOMAContext` instead of a `SOMATileDBContext`.
+- \[[#4363](https://github.com/single-cell-data/TileDB-SOMA/pull/4363)\] (BREAKING) The `context` property of a `SOMAObject` now returns a `SOMAContext` instead of a `SOMATileDBContext`.
 
 ### Deprecated
 
