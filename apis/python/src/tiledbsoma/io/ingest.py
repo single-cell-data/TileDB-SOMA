@@ -94,7 +94,7 @@ from ._registration import (
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
 )
-from ._util import get_arrow_str_format, read_h5ad
+from ._util import _set_and_get_context, get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)
@@ -216,12 +216,7 @@ def register_h5ads(
     if isinstance(h5ad_file_names, str):
         h5ad_file_names = [h5ad_file_names]
 
-    if context is None:
-        if not SOMAContext.has_default():
-            SOMAContext.set_default()
-        context = SOMAContext.get_default()
-    elif isinstance(context, SOMATileDBContext):
-        context = context._to_soma_context()
+    context = _set_and_get_context(context)
     concurrency_level = _concurrency_level(context)
 
     logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
@@ -285,12 +280,7 @@ def register_anndatas(
     if isinstance(adatas, ad.AnnData):
         adatas = [adatas]
 
-    if context is None:
-        if not SOMAContext.has_default():
-            SOMAContext.set_default()
-        context = SOMAContext.get_default()
-    elif isinstance(context, SOMATileDBContext):
-        context = context._to_soma_context()
+    context = _set_and_get_context(context)
 
     axes_metadata = [
         ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
@@ -448,12 +438,7 @@ def from_h5ad(
     if isinstance(input_path, ad.AnnData):
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
 
-    if context is None:
-        if not SOMAContext.has_default():
-            SOMAContext.set_default()
-        context = SOMAContext.get_default()
-    elif isinstance(context, SOMATileDBContext):
-        context = context._to_soma_context()
+    context = _set_and_get_context(context)
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
@@ -665,12 +650,7 @@ def _from_anndata(
         joinid_maps = registration_mapping.id_mappings_for_anndata(anndata, measurement_name=measurement_name)
         filter_existing_obs_joinids = registration_mapping.obs_axis.allow_duplicate_ids
 
-    if context is None:
-        if not SOMAContext.has_default():
-            SOMAContext.set_default()
-        context = SOMAContext.get_default()
-    elif isinstance(context, SOMATileDBContext):
-        context = context._to_soma_context()
+    context = _set_and_get_context(context)
 
     # Without _at least_ one index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:

@@ -139,3 +139,17 @@ def get_arrow_str_format(pa_type: pa.DataType) -> str:
         return _pa_type_to_str_fmt[pa_type]
     except KeyError:
         raise SOMAError(f"Could not convert {pa_type} to Arrow string format") from None
+
+
+def _set_and_get_context(context: SOMAContext | SOMATileDBContext | None) -> SOMAContext:
+    """Get a SOMAContext from input context parameter.
+
+    If no context is provided, get and possibly set the default context.
+    """
+    if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
+        return SOMAContext.get_default()
+    if isinstance(context, SOMATileDBContext):
+        return context._to_soma_context()
+    return context
