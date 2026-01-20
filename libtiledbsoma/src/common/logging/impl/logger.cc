@@ -8,8 +8,8 @@
  *
  * @section DESCRIPTION
  *
- * This file defines class Logger, declared in logger.h, and the public logging
- * functions, declared in logger_public.h.
+ * This file defines class Logger, declared in `logger.h`, and the public logging
+ * functions, declared in `common/logging/logger.h`.
  */
 
 #include "logger.h"
@@ -20,7 +20,15 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace tiledbsoma {
+namespace tiledbsoma::common::logging {
+
+namespace impl {
+
+bool sv_compare(std::string_view lhs, std::string_view rhs) {
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](const char& l, const char& r) {
+        return ::tolower(l) == ::tolower(r);
+    });
+}
 
 // Set the default logging format
 // %^ : start color range
@@ -31,19 +39,19 @@ namespace tiledbsoma {
 // [log level]
 // text to log...
 // %$ : end color range
-const std::string LOG_PATTERN = "%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$";
-const std::string CONSOLE_LOGGER = "tiledbsoma";
-const std::string FILE_LOGGER = "tiledbsoma-file";
+inline constexpr std::string_view LOG_PATTERN{"%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$"};
+inline constexpr std::string_view CONSOLE_LOGGER{"tiledbsoma"};
+inline constexpr std::string_view FILE_LOGGER{"tiledbsoma-file"};
 
 /* ********************************* */
 /*     CONSTRUCTORS & DESTRUCTORS    */
 /* ********************************* */
 
 Logger::Logger() {
-    logger_ = spdlog::get(CONSOLE_LOGGER);
+    logger_ = spdlog::get(CONSOLE_LOGGER.data());
     if (logger_ == nullptr) {
-        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
-        logger_->set_pattern(LOG_PATTERN);
+        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER.data());
+        logger_->set_pattern(LOG_PATTERN.data());
 #if !defined(_WIN32)
         // change color of critical messages
         auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(logger_->sinks().back().get());
@@ -58,63 +66,32 @@ Logger::Logger() {
 }
 
 Logger::~Logger() {
-    spdlog::drop(CONSOLE_LOGGER);
-    if (spdlog::get(FILE_LOGGER) != nullptr) {
-        spdlog::drop(FILE_LOGGER);
+    spdlog::drop(CONSOLE_LOGGER.data());
+    if (spdlog::get(FILE_LOGGER.data()) != nullptr) {
+        spdlog::drop(FILE_LOGGER.data());
     }
 }
 
-void Logger::trace(const char* msg) {
-    logger_->trace(msg);
-}
-
-void Logger::debug(const char* msg) {
-    logger_->debug(msg);
-}
-
-void Logger::info(const char* msg) {
-    logger_->info(msg);
-}
-
-void Logger::warn(const char* msg) {
-    logger_->warn(msg);
-}
-
-void Logger::error(const char* msg) {
-    logger_->error(msg);
-}
-
-void Logger::critical(const char* msg) {
-    logger_->critical(msg);
-}
-
-void Logger::set_level(const std::string& level_in) {
-    // convert level to lower case
-    std::string level = level_in;
-    std::for_each(level.begin(), level.end(), [](char& c) { c = ::tolower(c); });
-
-    if (level == "fatal" || level[0] == 'f') {
+void Logger::set_level(std::string_view level) {
+    if (sv_compare(level, "fatal") || level[0] == 'f') {
         level_ = spdlog::level::critical;
-    } else if (level == "error" || level[0] == 'e') {
+    } else if (sv_compare(level, "error")) {
         level_ = spdlog::level::err;
-    } else if (level == "warn" || level[0] == 'w') {
+    } else if (sv_compare(level, "warn")) {
         level_ = spdlog::level::warn;
-    } else if (level == "info" || level[0] == 'i') {
+    } else if (sv_compare(level, "info")) {
         level_ = spdlog::level::info;
-    } else if (level == "debug" || level[0] == 'd') {
+    } else if (sv_compare(level, "debug")) {
         level_ = spdlog::level::debug;
-    } else if (level == "trace" || level[0] == 't') {
+    } else if (sv_compare(level, "trace")) {
         level_ = spdlog::level::trace;
     } else {
-        set_level("WARN");
-        //        LOG_WARN("Illegal log level = {}, using log level FATAL",
-        //        level);
         level_ = spdlog::level::critical;
     }
     logger_->set_level(level_);
 }
 
-void Logger::set_logfile(const std::string& filename) {
+void Logger::set_logfile(std::string_view filename) {
     if (!logfile_.empty()) {
         // LOG_WARN("Already logging messages to {}", logfile_);
         return;
@@ -123,17 +100,17 @@ void Logger::set_logfile(const std::string& filename) {
     logfile_ = filename;
 
     try {
-        auto file_logger = spdlog::basic_logger_mt(FILE_LOGGER, filename);
-        file_logger->set_pattern(LOG_PATTERN);
+        auto file_logger = spdlog::basic_logger_mt(FILE_LOGGER.data(), filename.data());
+        file_logger->set_pattern(LOG_PATTERN.data());
         file_logger->set_level(level_);
     } catch (spdlog::spdlog_ex& e) {
         // log message and exit if file logger cannot be created
-        LOG_FATAL(e.what());
+        logger_->error(e.what());
     }
 
     // add sink to existing logger
     // (https://github.com/gabime/spdlog/wiki/4.-Sinks)
-    auto file_sink = spdlog::get(FILE_LOGGER)->sinks().back();
+    auto file_sink = spdlog::get(FILE_LOGGER.data())->sinks().back();
     logger_->sinks().push_back(file_sink);
     logger_->flush_on(spdlog::level::info);
 }
@@ -142,17 +119,18 @@ bool Logger::debug_enabled() {
     return (level_ == spdlog::level::debug) || (level_ == spdlog::level::trace);
 }
 
+}  // namespace impl
 /* ********************************* */
 /*              GLOBAL               */
 /* ********************************* */
 
-Logger& global_logger() {
-    static Logger l;
+impl::Logger& global_logger() {
+    static impl::Logger l;
     return l;
 }
 
 /** Set log level for global logger. */
-void LOG_CONFIG(const std::string& level, const std::string& logfile) {
+void LOG_CONFIG(std::string_view level, std::string_view logfile) {
     if (!level.empty()) {
         global_logger().set_level(level);
     }
@@ -162,12 +140,12 @@ void LOG_CONFIG(const std::string& level, const std::string& logfile) {
 }
 
 /** Set log level for global logger. */
-void LOG_SET_LEVEL(const std::string& level) {
+void LOG_SET_LEVEL(std::string_view level) {
     global_logger().set_level(level);
 }
 
 /** Set log file for global logger. */
-void LOG_SET_FILE(const std::string& logfile) {
+void LOG_SET_FILE(std::string_view logfile) {
     global_logger().set_logfile(logfile);
 }
 
@@ -177,33 +155,33 @@ bool LOG_DEBUG_ENABLED() {
 }
 
 /** Logs a trace message. */
-void LOG_TRACE(const std::string& msg) {
-    global_logger().trace(msg.c_str());
+void LOG_TRACE(std::string_view msg) {
+    global_logger().trace(msg.data());
 }
 
 /** Logs a debug message. */
-void LOG_DEBUG(const std::string& msg) {
-    global_logger().debug(msg.c_str());
+void LOG_DEBUG(std::string_view msg) {
+    global_logger().debug(msg.data());
 }
 
 /** Logs an info message. */
-void LOG_INFO(const std::string& msg) {
-    global_logger().info(msg.c_str());
+void LOG_INFO(std::string_view msg) {
+    global_logger().info(msg.data());
 }
 
 /** Logs a warning. */
-void LOG_WARN(const std::string& msg) {
-    global_logger().warn(msg.c_str());
+void LOG_WARN(std::string_view msg) {
+    global_logger().warn(msg.data());
 }
 
 /** Logs an error. */
-void LOG_ERROR(const std::string& msg) {
-    global_logger().error(msg.c_str());
+void LOG_ERROR(std::string_view msg) {
+    global_logger().error(msg.data());
 }
 
 /** Logs a critical error and exits with a non-zero status. */
-void LOG_FATAL(const std::string& msg) {
-    global_logger().critical(msg.c_str());
+void LOG_FATAL(std::string_view msg) {
+    global_logger().critical(msg.data());
     exit(1);
 }
 
@@ -216,4 +194,4 @@ std::string asc_timestamp(uint64_t timestamp_ms) {
     return time_str;
 }
 
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common::logging
