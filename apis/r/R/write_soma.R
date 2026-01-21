@@ -870,7 +870,7 @@ write_soma.TsparseMatrix <- function(
       )
     },
     error = function(e) {
-      if (grepl("already exists", conditionMessage(e), ignore.case = TRUE)) {
+      if (grepl("replacing key .* is unsupported", conditionMessage(e))) {
         # Throw warning for existing key (controlled by verbose option)
         warning(warningCondition(
           message = paste(
