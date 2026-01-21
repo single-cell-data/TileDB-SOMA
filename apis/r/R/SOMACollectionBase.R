@@ -166,7 +166,6 @@ SOMACollectionBase <- R6::R6Class(
     #' (lifecycle: maturing).
     #'
     #' This method adds an existing SOMA object to the collection under the
-
     #' specified key. Replacing an existing key is not supported; attempting to
     #' add an object with a key that already exists will raise an error.
     #'
