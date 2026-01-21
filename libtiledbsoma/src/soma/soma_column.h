@@ -28,10 +28,13 @@
 #include "enums.h"
 #include "managed_query.h"
 #include "nanoarrow/nanoarrow.hpp"
+#include "nlohmann/json.hpp"
+#include "soma_context.h"
 #include "utils/common.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
+using json = nlohmann::json;
 
 class SOMAColumn {
    public:

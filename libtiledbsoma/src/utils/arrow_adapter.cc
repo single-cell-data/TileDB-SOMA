@@ -15,8 +15,10 @@
 #include <thread>
 
 #include "../soma/array_buffers.h"
-#include "../soma/column_buffer.h"
 #include "arrow_adapter.h"
+#include "common/arrow/arrow_buffer.h"
+#include "common/arrow/exporter.h"
+#include "common/query/column_buffer.h"
 #include "util.h"
 
 #include "common/logging/impl/logger.h"
@@ -199,7 +201,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
-    auto arrow_buffer = static_cast<PrivateArrowBuffer*>(array->private_data);
+    auto arrow_buffer = static_cast<common::arrow::PrivateArrowBuffer*>(array->private_data);
     if (arrow_buffer != nullptr) {
         LOG_TRACE(
             fmt::format(
@@ -581,13 +583,13 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 
 std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> ArrowAdapter::buffer_to_arrow(
     std::shared_ptr<ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
-    std::vector<std::future<ArrowTable>> arrow_futures;
+    std::vector<std::future<common::arrow::ArrowTable>> arrow_futures;
     // Create a hashmap containing each enum to enable reusing the dictionaries accross multiple columns
-    std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>> enumerations;
+    std::unordered_map<std::string, std::shared_future<std::shared_ptr<common::arrow::ArrowBuffer>>> enumerations;
     std::unordered_set<std::string> unique_enumerations;
 
     for (const auto& name : buffer->names()) {
-        auto enumeration = buffer->at<ReadColumnBuffer>(name)->get_enumeration_info();
+        auto enumeration = buffer->at<common::ReadColumnBuffer>(name)->get_enumeration();
 
         if (enumeration && !unique_enumerations.contains(enumeration->name())) {
             enumerations.emplace(
@@ -595,7 +597,7 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
                 std::async(
                     std::launch::async,
                     [](const Enumeration& enumeration, bool large_offsets) {
-                        return std::make_shared<ArrowBuffer>(enumeration, large_offsets);
+                        return std::make_shared<common::arrow::ArrowBuffer>(enumeration, large_offsets);
                     },
                     enumeration.value(),
                     !downcast_dict_of_large_var));
@@ -606,9 +608,9 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
     for (const auto& name : buffer->names()) {
         arrow_futures.emplace_back(
             std::async(
-                std::launch::async,
-                ArrowAdapter::to_arrow,
-                buffer->at<ReadColumnBuffer>(name),
+                std::launch::deferred,
+                common::arrow::column_buffer_to_arrow,
+                buffer->at<common::ReadColumnBuffer>(name).get(),
                 enumerations,
                 downcast_dict_of_large_var));
     }
@@ -622,152 +624,152 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
     return columns;
 }
 
-std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
-    std::shared_ptr<ReadColumnBuffer> column,
-    const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
-    bool downcast_dict_of_large_var) {
-    managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
-    managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
-    auto sch = schema.get();
-    auto arr = array.get();
+// std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
+//     std::shared_ptr<common::ReadColumnBuffer> column,
+//     const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
+//     bool downcast_dict_of_large_var) {
+//     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
+//     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
+//     auto sch = schema.get();
+//     auto arr = array.get();
 
-    auto coltype = to_arrow_format(column->type(), true).data();
-    auto natype = to_nanoarrow_type(coltype);
+//     auto coltype = to_arrow_format(column->type(), true).data();
+//     auto natype = to_nanoarrow_type(coltype);
 
-    if (natype == NANOARROW_TYPE_TIMESTAMP) {
-        ArrowSchemaInit(sch);
-        auto [ts_type, ts_unit] = to_nanoarrow_time(coltype);
-        exitIfError(ArrowSchemaSetTypeDateTime(sch, ts_type, ts_unit, NULL), "Bad datetime");
-    } else {
-        exitIfError(ArrowSchemaInitFromType(sch, natype), "Bad schema init");
-    }
+//     if (natype == NANOARROW_TYPE_TIMESTAMP) {
+//         ArrowSchemaInit(sch);
+//         auto [ts_type, ts_unit] = to_nanoarrow_time(coltype);
+//         exitIfError(ArrowSchemaSetTypeDateTime(sch, ts_type, ts_unit, NULL), "Bad datetime");
+//     } else {
+//         exitIfError(ArrowSchemaInitFromType(sch, natype), "Bad schema init");
+//     }
 
-    exitIfError(ArrowSchemaSetName(sch, column->name().data()), "Bad schema name");
-    exitIfError(ArrowSchemaAllocateChildren(sch, 0), "Bad schema children alloc");
-    // After allocating and initializing via nanoarrow we
-    // hook our custom release function in
-    schema->release = &release_schema;
+//     exitIfError(ArrowSchemaSetName(sch, column->name().data()), "Bad schema name");
+//     exitIfError(ArrowSchemaAllocateChildren(sch, 0), "Bad schema children alloc");
+//     // After allocating and initializing via nanoarrow we
+//     // hook our custom release function in
+//     schema->release = &release_schema;
 
-    // this will be 3 for char vecs and 2 for enumerations
-    int n_buffers = column->is_var() ? 3 : 2;
+//     // this will be 3 for char vecs and 2 for enumerations
+//     int n_buffers = column->is_var() ? 3 : 2;
 
-    exitIfError(ArrowArrayInitFromSchema(arr, sch, NULL), "Bad array init");
-    exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
+//     exitIfError(ArrowArrayInitFromSchema(arr, sch, NULL), "Bad array init");
+//     exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
 
-    // Create an ArrowBuffer to manage the lifetime of `column`.
-    // - `arrow_buffer` holds shared_ptr to `column`, increments
-    //   the use count and keeps the ColumnBuffer data alive.
-    // - When the arrow array is released, `array->release()` is
-    //   called with `arrow_buffer` in `private_data`.
-    //   `arrow_buffer` is deleted, which decrements the the
-    //   `column` use count. When the `column` use count reaches
-    //   0, the ColumnBuffer data will be deleted.
-    auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column->export_buffers(), column->name()));
+//     // Create an ArrowBuffer to manage the lifetime of `column`.
+//     // - `arrow_buffer` holds shared_ptr to `column`, increments
+//     //   the use count and keeps the ColumnBuffer data alive.
+//     // - When the arrow array is released, `array->release()` is
+//     //   called with `arrow_buffer` in `private_data`.
+//     //   `arrow_buffer` is deleted, which decrements the the
+//     //   `column` use count. When the `column` use count reaches
+//     //   0, the ColumnBuffer data will be deleted.
+//     auto arrow_buffer = new PrivateArrowBuffer(std::make_shared<ArrowBuffer>(column->export_buffers(), column->name()));
 
-    array->length = arrow_buffer->buffer_->storage()->length();
+//     array->length = arrow_buffer->buffer_->storage()->length();
 
-    if (column->is_nullable()) {
-        schema->flags |= ARROW_FLAG_NULLABLE;
-        array->null_count = arrow_buffer->buffer_->storage()->null_count();
-    } else {
-        schema->flags &= ~ARROW_FLAG_NULLABLE;
-    }
+//     if (column->is_nullable()) {
+//         schema->flags |= ARROW_FLAG_NULLABLE;
+//         array->null_count = arrow_buffer->buffer_->storage()->null_count();
+//     } else {
+//         schema->flags &= ~ARROW_FLAG_NULLABLE;
+//     }
 
-    LOG_TRACE(
-        fmt::format(
-            "[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
-            to_arrow_format(column->type()).data(),
-            column->name().data(),
-            n_buffers,
-            array->n_buffers,
-            column->is_nullable()));
+//     LOG_TRACE(
+//         fmt::format(
+//             "[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
+//             to_arrow_format(column->type()).data(),
+//             column->name().data(),
+//             n_buffers,
+//             array->n_buffers,
+//             column->is_nullable()));
 
-    if (array->n_buffers != n_buffers) {
-        throw TileDBSOMAError(
-            fmt::format(
-                "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
-                n_buffers,
-                column->name(),
-                array->n_buffers));
-    }
+//     if (array->n_buffers != n_buffers) {
+//         throw TileDBSOMAError(
+//             fmt::format(
+//                 "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
+//                 n_buffers,
+//                 column->name(),
+//                 array->n_buffers));
+//     }
 
-    // After allocating and initializing via nanoarrow we
-    // hook our custom release function in
-    array->release = &release_array;
-    if (array->private_data != nullptr) {  // as we use nanoarrow's init
-        free(array->private_data);         // free what was allocated before
-    }  // assigning our ArrowBuffer pointer
-    array->private_data = (void*)arrow_buffer;
+//     // After allocating and initializing via nanoarrow we
+//     // hook our custom release function in
+//     array->release = &release_array;
+//     if (array->private_data != nullptr) {  // as we use nanoarrow's init
+//         free(array->private_data);         // free what was allocated before
+//     }  // assigning our ArrowBuffer pointer
+//     array->private_data = (void*)arrow_buffer;
 
-    LOG_TRACE(fmt::format("[ArrowAdapter] create array name='{}' use_count={}", column->name(), column.use_count()));
+//     LOG_TRACE(fmt::format("[ArrowAdapter] create array name='{}' use_count={}", column->name(), column.use_count()));
 
-    array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
-    assert(array->buffers != nullptr);
-    array->buffers[0] = nullptr;  // validity addressed below
-    array->buffers[n_buffers - 1] = arrow_buffer->buffer_->storage()->data().data();
-    if (n_buffers == 3) {
-        array->buffers[1] = arrow_buffer->buffer_->storage()->offsets().data();
-    }
+//     array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
+//     assert(array->buffers != nullptr);
+//     array->buffers[0] = nullptr;  // validity addressed below
+//     array->buffers[n_buffers - 1] = arrow_buffer->buffer_->storage()->data().data();
+//     if (n_buffers == 3) {
+//         array->buffers[1] = arrow_buffer->buffer_->storage()->offsets().data();
+//     }
 
-    if (column->is_nullable()) {
-        array->buffers[0] = arrow_buffer->buffer_->storage()->validity().data();
-    }
+//     if (column->is_nullable()) {
+//         array->buffers[0] = arrow_buffer->buffer_->storage()->validity().data();
+//     }
 
-    if (column->is_ordered()) {
-        schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
-    }
+//     if (column->is_ordered()) {
+//         schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
+//     }
 
-    auto enmr = column->get_enumeration_info();
-    if (enmr.has_value()) {
-        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enumerations.at(enmr->name()).get());
-        auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
+//     auto enmr = column->get_enumeration_info();
+//     if (enmr.has_value()) {
+//         PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enumerations.at(enmr->name()).get());
+//         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+//         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        auto dcoltype = to_arrow_format(enmr->type(), !downcast_dict_of_large_var).data();
-        auto dnatype = to_nanoarrow_type(dcoltype);
+//         auto dcoltype = to_arrow_format(enmr->type(), !downcast_dict_of_large_var).data();
+//         auto dnatype = to_nanoarrow_type(dcoltype);
 
-        if (dnatype == NANOARROW_TYPE_TIMESTAMP) {
-            ArrowSchemaInit(dict_sch);
-            auto [ts_type, ts_unit] = to_nanoarrow_time(dcoltype);
-            exitIfError(ArrowSchemaSetTypeDateTime(dict_sch, ts_type, ts_unit, NULL), "Bad datetime");
-        } else {
-            exitIfError(ArrowSchemaInitFromType(dict_sch, dnatype), "Bad dict schema init");
-        }
+//         if (dnatype == NANOARROW_TYPE_TIMESTAMP) {
+//             ArrowSchemaInit(dict_sch);
+//             auto [ts_type, ts_unit] = to_nanoarrow_time(dcoltype);
+//             exitIfError(ArrowSchemaSetTypeDateTime(dict_sch, ts_type, ts_unit, NULL), "Bad datetime");
+//         } else {
+//             exitIfError(ArrowSchemaInitFromType(dict_sch, dnatype), "Bad dict schema init");
+//         }
 
-        exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad dict schema name");
-        exitIfError(ArrowSchemaAllocateChildren(dict_sch, 0), "Bad dict schema children alloc");
-        dict_sch->release = &release_schema;
+//         exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad dict schema name");
+//         exitIfError(ArrowSchemaAllocateChildren(dict_sch, 0), "Bad dict schema children alloc");
+//         dict_sch->release = &release_schema;
 
-        exitIfError(ArrowArrayInitFromSchema(dict_arr, dict_sch, NULL), "Bad dict array init");
-        exitIfError(ArrowArrayAllocateChildren(dict_arr, 0), "Bad array children alloc");
-        dict_arr->release = &release_array;
+//         exitIfError(ArrowArrayInitFromSchema(dict_arr, dict_sch, NULL), "Bad dict array init");
+//         exitIfError(ArrowArrayAllocateChildren(dict_arr, 0), "Bad array children alloc");
+//         dict_arr->release = &release_array;
 
-        bool is_var_enum = enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 ||
-                           enmr->type() == TILEDB_CHAR || enmr->type() == TILEDB_BLOB;
-        int n_buffers_enum = is_var_enum ? 3 : 2;
+//         bool is_var_enum = enmr->type() == TILEDB_STRING_ASCII || enmr->type() == TILEDB_STRING_UTF8 ||
+//                            enmr->type() == TILEDB_CHAR || enmr->type() == TILEDB_BLOB;
+//         int n_buffers_enum = is_var_enum ? 3 : 2;
 
-        dict_arr->n_buffers = n_buffers_enum;
-        dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buffers_enum);
-        assert(dict_arr->buffers != nullptr);
+//         dict_arr->n_buffers = n_buffers_enum;
+//         dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buffers_enum);
+//         assert(dict_arr->buffers != nullptr);
 
-        dict_arr->buffers[0] = nullptr;
-        dict_arr->buffers[dict_arr->n_buffers - 1] = enmr_buffer->buffer_->storage()->data().data();
-        if (is_var_enum) {
-            dict_arr->buffers[1] = enmr_buffer->buffer_->storage()->offsets().data();
-        }
+//         dict_arr->buffers[0] = nullptr;
+//         dict_arr->buffers[dict_arr->n_buffers - 1] = enmr_buffer->buffer_->storage()->data().data();
+//         if (is_var_enum) {
+//             dict_arr->buffers[1] = enmr_buffer->buffer_->storage()->offsets().data();
+//         }
 
-        dict_arr->length = enmr_buffer->buffer_->storage()->length();
-        if (dict_arr->private_data != nullptr) {  // as we use nanoarrow's init
-            free(dict_arr->private_data);         // free what was allocated before
-        }  // assigning our ArrowBuffer pointer
-        dict_arr->private_data = (void*)enmr_buffer;
+//         dict_arr->length = enmr_buffer->buffer_->storage()->length();
+//         if (dict_arr->private_data != nullptr) {  // as we use nanoarrow's init
+//             free(dict_arr->private_data);         // free what was allocated before
+//         }  // assigning our ArrowBuffer pointer
+//         dict_arr->private_data = (void*)enmr_buffer;
 
-        schema->dictionary = dict_sch;
-        array->dictionary = dict_arr;
-    }
+//         schema->dictionary = dict_sch;
+//         array->dictionary = dict_arr;
+//     }
 
-    return std::pair(std::move(array), std::move(schema));
-}
+//     return std::pair(std::move(array), std::move(schema));
+// }
 
 bool ArrowAdapter::arrow_is_var_length_type(const char* format) {
     return (

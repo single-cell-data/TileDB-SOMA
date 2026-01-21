@@ -12,6 +12,7 @@
  */
 
 #include "soma_geometry_column.h"
+#include "../utils/arrow_adapter.h"
 #include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {

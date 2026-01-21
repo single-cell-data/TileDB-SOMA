@@ -12,8 +12,9 @@
  */
 
 #include "array_buffers.h"
-#include "column_buffer.h"
 #include "common/logging/impl/logger.h"
+
+#include <numeric>
 
 namespace tiledbsoma {
 
@@ -39,7 +40,7 @@ ArrayBuffers::ArrayBuffers(
         strategy_ = std::make_unique<BasicAllocationStrategy>(array);
     }
 
-    MemoryMode mode = ColumnBuffer::memory_mode(array.config());
+    common::MemoryMode mode = common::ColumnBuffer::memory_mode(array.config());
     const tiledb::ArraySchema schema = array.schema();
     const tiledb::Context& context = array.context();
     // Split memory budget to each column depending on the byte size of each columns element
@@ -52,17 +53,15 @@ ArrayBuffers::ArrayBuffers(
             auto [column_budget, num_cells] = strategy_->get_buffer_sizes(attribute);
             auto enum_name = AttributeExperimental::get_enumeration_name(context, attribute);
             std::optional<Enumeration> enumeration = std::nullopt;
-            bool is_ordered = false;
             if (enum_name.has_value()) {
                 enumeration = std::make_optional<Enumeration>(
                     ArrayExperimental::get_enumeration(context, array, *enum_name));
-                is_ordered = enumeration->ordered();
             }
 
             buffers_.insert(
                 std::make_pair(
                     name,
-                    std::make_shared<CArrayColumnBuffer>(
+                    std::make_shared<common::CArrayColumnBuffer>(
                         name,
                         attribute.type(),
                         num_cells,
@@ -70,7 +69,6 @@ ArrayBuffers::ArrayBuffers(
                         attribute.variable_sized(),
                         attribute.nullable(),
                         enumeration,
-                        is_ordered,
                         mode)));
         }
         // Else check if column is a TileDB dimension
@@ -84,13 +82,13 @@ ArrayBuffers::ArrayBuffers(
             buffers_.insert(
                 std::make_pair(
                     name,
-                    std::make_shared<CArrayColumnBuffer>(
-                        name, dimension.type(), num_cells, column_budget, is_var, false, std::nullopt, false, mode)));
+                    std::make_shared<common::CArrayColumnBuffer>(
+                        name, dimension.type(), num_cells, column_budget, is_var, false, std::nullopt, mode)));
         }
     }
 }
 
-void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<ColumnBuffer> buffer) {
+void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<common::ColumnBuffer> buffer) {
     if (contains(name)) {
         throw TileDBSOMAError(fmt::format("[ArrayBuffers] column '{}' already exists", name));
     }
@@ -100,10 +98,10 @@ void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<ColumnBuffer
 
 void ArrayBuffers::expand_buffers() {
     for (const auto& name : names_) {
-        std::shared_ptr<ReadColumnBuffer> buffer = at<ReadColumnBuffer>(name);
+        std::shared_ptr<common::ReadColumnBuffer> buffer = at<common::ReadColumnBuffer>(name);
         buffer->resize(
-            buffer->max_size() * DEFAULT_BUFFER_EXPANSION_FACTOR,
-            buffer->max_num_cells() * DEFAULT_BUFFER_EXPANSION_FACTOR);
+            buffer->data_capacity() * DEFAULT_BUFFER_EXPANSION_FACTOR,
+            buffer->cell_capacity() * DEFAULT_BUFFER_EXPANSION_FACTOR);
     }
 }
 }  // namespace tiledbsoma

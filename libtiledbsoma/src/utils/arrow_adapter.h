@@ -121,16 +121,16 @@ class ArrowAdapter {
     static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
         std::shared_ptr<ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
 
-    /**
-     * @brief Convert ColumnBuffer to an Arrow array.
-     *
-     * @return std::pair<std::unique_ptr<ArrowArray>,
-     * std::unique_ptr<ArrowSchema>>
-     */
-    static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ReadColumnBuffer> column,
-        const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
-        bool downcast_dict_of_large_var = false);
+    // /**
+    //  * @brief Convert ColumnBuffer to an Arrow array.
+    //  *
+    //  * @return std::pair<std::unique_ptr<ArrowArray>,
+    //  * std::unique_ptr<ArrowSchema>>
+    //  */
+    // static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
+    //     std::shared_ptr<ReadColumnBuffer> column,
+    //     const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
+    //     bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *

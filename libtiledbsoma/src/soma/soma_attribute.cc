@@ -12,6 +12,7 @@
  */
 
 #include "soma_attribute.h"
+#include "../utils/arrow_adapter.h"
 #include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
