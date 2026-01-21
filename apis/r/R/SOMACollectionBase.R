@@ -199,6 +199,14 @@ SOMACollectionBase <- R6::R6Class(
       # Default name to URI basename
       name <- name %||% basename(object$uri)
 
+      # Prevent replacing existing keys with new objects
+      if (name %in% self$names()) {
+        stop(
+          sprintf("replacing key '%s' is unsupported", name),
+          call. = FALSE
+        )
+      }
+
       # Determine whether to use relative URI
       relative <- relative %||% is_relative_uri(object$uri)
       if (!(isTRUE(relative) || isFALSE(relative))) {

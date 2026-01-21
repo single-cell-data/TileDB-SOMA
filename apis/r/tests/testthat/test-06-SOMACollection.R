@@ -207,7 +207,7 @@ test_that("SOMACollection set() rejects duplicate key in same session", {
 
   expect_error(
     collection$set(sdf2, name = "foo"),
-    regexp = "Cannot add group member foo, a member with the same name or URI"
+    regexp = "replacing key 'foo' is unsupported"
   )
 
   expect_true("foo" %in% collection$names())
