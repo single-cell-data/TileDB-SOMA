@@ -39,19 +39,19 @@ bool sv_compare(std::string_view lhs, std::string_view rhs) {
 // [log level]
 // text to log...
 // %$ : end color range
-inline constexpr std::string_view LOG_PATTERN{"%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$"};
-inline constexpr std::string_view CONSOLE_LOGGER{"tiledbsoma"};
-inline constexpr std::string_view FILE_LOGGER{"tiledbsoma-file"};
+const std::string LOG_PATTERN = "%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$";
+const std::string CONSOLE_LOGGER = "tiledbsoma";
+const std::string FILE_LOGGER = "tiledbsoma-file";
 
 /* ********************************* */
 /*     CONSTRUCTORS & DESTRUCTORS    */
 /* ********************************* */
 
 Logger::Logger() {
-    logger_ = spdlog::get(CONSOLE_LOGGER.data());
+    logger_ = spdlog::get(CONSOLE_LOGGER);
     if (logger_ == nullptr) {
-        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER.data());
-        logger_->set_pattern(LOG_PATTERN.data());
+        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
+        logger_->set_pattern(LOG_PATTERN);
 #if !defined(_WIN32)
         // change color of critical messages
         auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(logger_->sinks().back().get());
@@ -66,9 +66,9 @@ Logger::Logger() {
 }
 
 Logger::~Logger() {
-    spdlog::drop(CONSOLE_LOGGER.data());
-    if (spdlog::get(FILE_LOGGER.data()) != nullptr) {
-        spdlog::drop(FILE_LOGGER.data());
+    spdlog::drop(CONSOLE_LOGGER);
+    if (spdlog::get(FILE_LOGGER) != nullptr) {
+        spdlog::drop(FILE_LOGGER);
     }
 }
 
@@ -100,8 +100,8 @@ void Logger::set_logfile(std::string_view filename) {
     logfile_ = filename;
 
     try {
-        auto file_logger = spdlog::basic_logger_mt(FILE_LOGGER.data(), filename.data());
-        file_logger->set_pattern(LOG_PATTERN.data());
+        auto file_logger = spdlog::basic_logger_mt(FILE_LOGGER, filename.data());
+        file_logger->set_pattern(LOG_PATTERN);
         file_logger->set_level(level_);
     } catch (spdlog::spdlog_ex& e) {
         // log message and exit if file logger cannot be created
@@ -110,7 +110,7 @@ void Logger::set_logfile(std::string_view filename) {
 
     // add sink to existing logger
     // (https://github.com/gabime/spdlog/wiki/4.-Sinks)
-    auto file_sink = spdlog::get(FILE_LOGGER.data())->sinks().back();
+    auto file_sink = spdlog::get(FILE_LOGGER)->sinks().back();
     logger_->sinks().push_back(file_sink);
     logger_->flush_on(spdlog::level::info);
 }
