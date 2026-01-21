@@ -202,21 +202,20 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
             }
         } break;
         case TILEDB_BOOL: {
-            std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
-            size_t count = data_size / sizeof(bool);
-
+            std::span<const uint8_t> data_v(static_cast<const uint8_t*>(data), data_size);
+            std::span<uint8_t> packed_data(reinterpret_cast<uint8_t*>(data_buffer.get()), data_size);
             // If the enumeration is not empty
-            if (count > 0) {
+            if (data_size > 0) {
+                std::fill(packed_data.begin(), packed_data.end(), 0);
+
                 // Represent the Boolean vector with, at most, the last two
                 // bits. In Arrow, Boolean values are LSB packed
-                uint8_t packed_data = 0;
-                for (size_t i = 0; i < count; ++i)
-                    packed_data |= (data_v[i] << i);
 
-                std::memcpy(data_buffer.get(), &packed_data, 1);
+                for (size_t i = 0; i < data_size; ++i)
+                    packed_data[i / 8] |= (std::min(data_v[i], (uint8_t)1) << (i % 8));
             }
 
-            storage_ = std::make_unique<ArrayArrowBufferStorage>(enumeration.type(), count, std::move(data_buffer));
+            storage_ = std::make_unique<ArrayArrowBufferStorage>(enumeration.type(), data_size, std::move(data_buffer));
         } break;
         case TILEDB_INT8:
         case TILEDB_UINT8:
