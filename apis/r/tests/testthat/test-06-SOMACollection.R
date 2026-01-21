@@ -207,10 +207,19 @@ test_that("SOMACollection set() rejects duplicate key in same session", {
 
   expect_error(
     collection$set(sdf2, name = "foo"),
-    regexp = "replacing key 'foo' is unsupported"
+    regexp = "Cannot add group member foo, a member with the same name or URI"
   )
 
   expect_true("foo" %in% collection$names())
+
+  # Cannot add_new_* with existing key
+  expect_error({
+    collection$add_new_sparse_ndarray(
+      key = "foo",
+      type = arrow::int32(),
+      shape = c(15, 15),
+    )
+  }, regexp = "Member 'foo' already exists")
 })
 
 test_that("SOMACollection set() rejects duplicate key after reopen", {
