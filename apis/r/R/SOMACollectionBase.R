@@ -165,6 +165,16 @@ SOMACollectionBase <- R6::R6Class(
     #' @description Add a new SOMA object to the collection
     #' (lifecycle: maturing).
     #'
+    #' This method adds an existing SOMA object to the collection under the
+
+    #' specified key. Replacing an existing key is not supported; attempting to
+    #' add an object with a key that already exists will raise an error.
+    #'
+    #' @note This method is not supported for Carrara (TileDB v3) URIs. For
+    #' Carrara collections, use the `add_new_*` methods instead, which create
+    #' child objects at nested URIs that are automatically registered with the
+    #' parent collection.
+    #'
     #' @param object SOMA object.
     #' @param name The name to use for the object; defaults to the basename of
     #' \code{object$uri}.

@@ -7,6 +7,12 @@
 Base class for objects containing persistent collection of SOMA
 objects, mapping string keys to any SOMA object (lifecycle: maturing).
 }
+\note{
+This method is not supported for Carrara (TileDB v3) URIs. For
+Carrara collections, use the \verb{add_new_*} methods instead, which create
+child objects at nested URIs that are automatically registered with the
+parent collection.
+}
 \section{Carrara (TileDB v3) behavior}{
 
 
@@ -124,6 +130,10 @@ Invisibly returns \code{self}.
 \subsection{Method \code{set()}}{
 Add a new SOMA object to the collection
 (lifecycle: maturing).
+
+This method adds an existing SOMA object to the collection under the
+specified key. Replacing an existing key is not supported; attempting to
+add an object with a key that already exists will raise an error.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$set(object, name = NULL, relative = NULL)}\if{html}{\out{</div>}}
 }
