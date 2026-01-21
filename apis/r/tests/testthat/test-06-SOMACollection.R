@@ -199,8 +199,8 @@ test_that("SOMACollection set() rejects duplicate key in same session", {
   collection <- SOMACollectionCreate(uri)
   withr::defer(collection$close())
 
-  sdf1 <- create_and_populate_soma_dataframe(file.path(uri, "sdf1"))
-  sdf2 <- create_and_populate_soma_dataframe(file.path(uri, "sdf2"))
+  sdf1 <- create_and_populate_soma_dataframe(file.path(uri, "df1"), nrows = 5)
+  sdf2 <- create_and_populate_soma_dataframe(file.path(uri, "df2"), nrows = 10)
 
   collection$set(sdf1, name = "foo")
   expect_true("foo" %in% collection$names())
@@ -220,6 +220,12 @@ test_that("SOMACollection set() rejects duplicate key in same session", {
       shape = c(15, 15),
     )
   }, regexp = "Member 'foo' already exists")
+  collection$close()
+
+  # Verify original sdf1 is still there
+  collection <- SOMACollectionOpen(uri)
+  expect_s3_class(collection$get("foo"), "SOMADataFrame")
+  expect_equal(collection$get("foo")$read()$concat()$num_rows, 5)
 })
 
 test_that("SOMACollection set() rejects duplicate key after reopen", {
