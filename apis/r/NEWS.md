@@ -24,6 +24,7 @@
 
 ## Fixed
 
+- Fixed `SOMACollectionBase$set()` allowing replacement of existing members after reopening the collection. The method now consistently rejects duplicate keys both within the same session and across sessions. ([#4378](https://github.com/single-cell-data/TileDB-SOMA/pull/4378))
 - The SOMA Context is only cached as an environment variable when the function `soma_context` is called directly. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
 - `SOMATileDBContext` no longer replaces `sm.mem.reader.sparse_global_order.ratio_array_data` when set in the input config. ([#4355](https://github.com/single-cell-data/TileDB-SOMA/pull/4355))
 - Fixed `SOMACollectionBase$remove()` incorrectly accessing `self$mode` instead of calling `self$mode()`.

@@ -699,3 +699,40 @@ test_that("get_{some,tiledb}_object_type", {
     "INVALID"
   )
 })
+
+test_that("write_soma throws existingKeyWarning for duplicate keys", {
+  uri <- withr::local_tempdir("write-soma-duplicate-key")
+
+  # Test data
+  df1 <- data.frame(a = 1:5, b = letters[1:5])
+  df2 <- data.frame(x = 6:10, y = letters[6:10])
+
+  # Create collection with first object
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  sdf1 <- write_soma(df1, uri = "foo", soma_parent = collection, key = "foo")
+  sdf1$close()
+  expect_true("foo" %in% collection$names())
+
+  # Attempt to write another object with same key
+  # With verbose = TRUE, warning should be thrown
+  expect_warning(
+    withr::with_options(
+      list(verbose = TRUE),
+      sdf2 <- write_soma(df2, uri = "bar", soma_parent = collection, key = "foo")
+    ),
+    class = "existingKeyWarning"
+  )
+
+  # Verify original data is still there (not replaced)
+  expect_true("foo" %in% collection$names())
+  expect_equal(collection$length(), 1L)
+
+  collection$close()
+  collection <- SOMACollectionOpen(uri)
+  expect_identical(
+    collection$get("foo")$read()$concat()$a$as_vector(),
+    df1$a
+  )
+})
