@@ -192,3 +192,74 @@ test_that("Platform config and context are respected by add_ methods", {
     "string_column"
   )
 })
+
+test_that("SOMACollection set() rejects duplicate key in same session", {
+  uri <- withr::local_tempdir("collection-dup-key")
+
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  sdf1 <- create_and_populate_soma_dataframe(file.path(uri, "df1"), nrows = 5)
+  sdf2 <- create_and_populate_soma_dataframe(file.path(uri, "df2"), nrows = 10)
+
+  collection$set(sdf1, name = "foo")
+  expect_true("foo" %in% collection$names())
+
+  expect_error(
+    collection$set(sdf2, name = "foo"),
+    regexp = "replacing key 'foo' is unsupported"
+  )
+
+  expect_true("foo" %in% collection$names())
+
+  # Cannot add_new_* with existing key
+  expect_error({
+    collection$add_new_sparse_ndarray(
+      key = "foo",
+      type = arrow::int32(),
+      shape = c(15, 15),
+    )
+  }, regexp = "Member 'foo' already exists")
+  collection$close()
+
+  # Verify original sdf1 is still there
+  collection <- SOMACollectionOpen(uri)
+  expect_s3_class(collection$get("foo"), "SOMADataFrame")
+  expect_equal(collection$get("foo")$read()$concat()$num_rows, 5)
+})
+
+test_that("SOMACollection set() rejects duplicate key after reopen", {
+  uri <- withr::local_tempdir("collection-dup-key-reopen")
+
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  sdf1 <- create_and_populate_soma_dataframe(file.path(uri, "df1"), nrows = 5)
+  collection$set(sdf1, name = "foo")
+  collection$close()
+
+  sdf2 <- create_and_populate_soma_dataframe(file.path(uri, "df2"), nrows = 10)
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  expect_true("foo" %in% collection$names())
+
+  expect_error(
+    collection$set(sdf2, name = "foo")
+  )
+  collection$close()
+
+  # Cannot add_new_* with existing key
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  expect_error({
+    collection$add_new_sparse_ndarray(
+      key = "foo",
+      type = arrow::int32(),
+      shape = c(15, 15),
+    )
+  }, regexp = "Member 'foo' already exists")
+  collection$close()
+
+  # Verify original sdf1 is still there
+  collection <- SOMACollectionOpen(uri)
+  expect_s3_class(collection$get("foo"), "SOMADataFrame")
+  expect_equal(collection$get("foo")$read()$concat()$num_rows, 5)
+})
