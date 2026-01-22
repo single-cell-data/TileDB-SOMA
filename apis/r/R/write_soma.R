@@ -809,6 +809,8 @@ write_soma.TsparseMatrix <- function(
 #' is `TRUE`, the function ensures the URI contains only a basename (no path
 #' components) and constructs a full path relative to the parent collection.
 #' When `relative` is `FALSE`, it creates parent directories for local URIs.
+#' For Carrara (TileDB v3) URIs, it also validates that `key` matches the URI
+#' basename.
 #'
 #' @param uri A single character string specifying the target URI or name.
 #' @param soma_parent A `SOMACollectionBase` object representing the parent
@@ -816,6 +818,8 @@ write_soma.TsparseMatrix <- function(
 #' @param relative Logical; if `TRUE` (default), `uri` is treated as a relative
 #'   path and resolved against `soma_parent$uri`. If `FALSE`, `uri` is treated
 #'   as an absolute path.
+#' @param key A single non-empty character string specifying the member name
+#'   within `soma_parent`, or `NULL`. Used to validate Carrara URI requirements.
 #'
 #' @return The resolved URI as a character string.
 #'
@@ -829,6 +833,11 @@ write_soma.TsparseMatrix <- function(
 #' When `relative = FALSE`:
 #' - For local (non-remote) URIs, parent directories are created if they don't
 #'   exist.
+#'
+#' For Carrara (TileDB v3) URIs:
+#' - When both `soma_parent` and `key` are provided, the function validates that
+#'   `key` matches the basename of the resolved `uri`. This is required by the
+#'   Carrara.
 #'
 #' @noRd
 .check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE, key = NULL) {
