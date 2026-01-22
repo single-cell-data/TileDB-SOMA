@@ -821,8 +821,7 @@ write_soma.TsparseMatrix <- function(
 #'
 #' @details
 #' When `relative = TRUE`:
-#' - If `uri` contains path separators, a warning is issued and only the
-#'   basename is used.
+#' - If `uri` contains path separators, only the basename is used.
 #' - The resolved path is constructed by joining `soma_parent$uri` (or
 #'   `tools::R_user_dir("tiledbsoma")` if `soma_parent` is `NULL`) with the
 #'   basename.
@@ -843,7 +842,6 @@ write_soma.TsparseMatrix <- function(
   )
   if (isTRUE(relative)) {
     if (basename(uri) != uri) {
-      warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
     uri <- file_path(soma_parent$uri %||% tools::R_user_dir("tiledbsoma"), uri)
