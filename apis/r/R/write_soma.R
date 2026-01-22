@@ -799,6 +799,35 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
+#' Validate and Resolve a SOMA URI
+#'
+#' Validates and resolves a URI for creating a new SOMA object. When `relative`
+#' is `TRUE`, the function ensures the URI contains only a basename (no path
+#' components) and constructs a full path relative to the parent collection.
+#' When `relative` is `FALSE`, it creates parent directories for local URIs.
+#'
+#' @param uri A single character string specifying the target URI or name.
+#' @param soma_parent A `SOMACollectionBase` object representing the parent
+#'   collection, or `NULL` for top-level objects.
+#' @param relative Logical; if `TRUE` (default), `uri` is treated as a relative
+#'   path and resolved against `soma_parent$uri`. If `FALSE`, `uri` is treated
+#'   as an absolute path.
+#'
+#' @return The resolved URI as a character string.
+#'
+#' @details
+#' When `relative = TRUE`:
+#' - If `uri` contains path separators, a warning is issued and only the
+#'   basename is used.
+#' - The resolved path is constructed by joining `soma_parent$uri` (or
+#'   `tools::R_user_dir("tiledbsoma")` if `soma_parent` is `NULL`) with the
+#'   basename.
+#'
+#' When `relative = FALSE`:
+#' - For local (non-remote) URIs, parent directories are created if they don't
+#'   exist.
+#'
+#' @noRd
 .check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
