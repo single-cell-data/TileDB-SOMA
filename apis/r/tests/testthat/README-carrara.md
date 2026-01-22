@@ -50,6 +50,6 @@ The `helper-carrara.R` file provides utility functions for carrara tests:
 - `skip_if_no_carrara()` - Skips tests if `SOMA_TEST_CARRARA` is not set to "true"
 - `get_carrara_config()` - Returns configuration from environment variables
 - `with_carrara_env()` - Sets up carrara environment variables for a test scope
-- `get_base_uri()` - Builds the base URI for test objects
+- `get_carrara_base_uri()` - Builds the base URI for test objects
 - `carrara_array_path()` - Creates a unique array path with automatic cleanup
 - `carrara_group_path()` - Creates a unique group path with automatic cleanup
