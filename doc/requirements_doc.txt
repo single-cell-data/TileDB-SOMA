@@ -13,4 +13,4 @@ spatialdata==0.2.6
 sphinx==7.3.7
 sphinxcontrib-jquery==4.1
 sphinx-rtd-theme==2.0.0
-wheel==0.43.0
+wheel==0.46.2
