@@ -67,6 +67,44 @@ test_that("SOMACollection member name vs URI enforcement", {
   collection$close()
 })
 
+
+test_that("write_soma rejects key that doesn't match URI basename", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  # When using write_soma with explicit key and uri arguments, they must match
+  uri <- carrara_group_path()
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  df <- data.frame(a = 1:5, b = letters[1:5])
+
+  # key="df" but uri ends with "df1" - should error
+  expect_error(
+    write_soma(
+      df,
+      uri = file_path(uri, "df1"),
+      soma_parent = collection,
+      key = "df"
+    ),
+    regexp = "member name and uri to be equal"
+  )
+  expect_equal(collection$length(), 0L)
+
+  # When key matches URI basename, should succeed
+  sdf <- write_soma(
+    df,
+    uri = file_path(uri, "df2"),
+    soma_parent = collection,
+    key = "df2"
+  )
+  sdf$close()
+
+  expect_true("df2" %in% collection$names())
+  expect_equal(collection$length(), 1L)
+})
+
+
 test_that("Path separator in member name is rejected", {
   skip_if_no_carrara()
   with_carrara_env()
