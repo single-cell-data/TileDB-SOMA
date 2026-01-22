@@ -818,6 +818,26 @@ write_soma.TsparseMatrix <- function(
   return(uri)
 }
 
+#' Register a SOMA Object to a Parent Collection
+#'
+#' Registers a child SOMA object as a member of a parent collection. The
+#' registration behavior differs by URI scheme:
+#'
+#' - For Carrara (TileDB v3) URIs, children are auto-registered when created at
+#'   a nested URI, so this function simply returns early.
+#' - For TileDB v2 URIs, the object is explicitly registered via
+#'   [SOMACollectionBase]`$set()`. If the key already exists, an
+#'   `existingKeyWarning` is thrown when `options(verbose = TRUE)`.
+#'
+#' @param x A `SOMAArrayBase` or `SOMACollectionBase` object to be registered.
+#' @param soma_parent A `SOMACollectionBase` object that will contain `x`.
+#' @param key A non-empty character string serving as the name for `x` within
+#'   `soma_parent`.
+#' @param relative Whether to store the URI of `x` relative to `soma_parent`.
+#'   Defaults to `TRUE`. Ignored for Carrara (TileDB v3) URIs.
+#'
+#' @noRd
+#'
 .register_soma_object <- function(x, soma_parent, key, relative = TRUE) {
   stopifnot(
     "'x' must be a SOMA object" = inherits(
@@ -832,37 +852,39 @@ write_soma.TsparseMatrix <- function(
       nzchar(key),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
-  xmode <- x$mode()
-  if (xmode == "CLOSED") {
-    x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
-    xmode <- x$mode()
-  }
-  on.exit(x$reopen(mode = xmode), add = TRUE, after = FALSE)
-  oldmode <- soma_parent$mode()
-  if (oldmode == "CLOSED") {
-    soma_parent$reopen("READ", tiledb_timestamp = soma_parent$tiledb_timestamp)
-    oldmode <- soma_parent$mode()
-  }
-  on.exit(soma_parent$reopen(oldmode), add = TRUE, after = FALSE)
-  if (key %in% soma_parent$names()) {
-    existing <- soma_parent$get(key)
-    warning(warningCondition(
-      message = paste(
-        "Already found a",
-        existing$class(),
-        "stored as",
-        sQuote(key),
-        "in the parent collection"
-      ),
-      class = "existingKeyWarning"
-    ))
+
+  # Carrara: children are auto-registered when created at nested URI
+  # Just return early - no explicit registration needed
+  if (soma_parent$context$is_tiledbv3(soma_parent$uri)) {
     return(invisible(NULL))
   }
-  soma_parent$reopen("WRITE")
-  soma_parent$set(
-    x,
-    name = key,
-    relative = switch(uri_scheme(x$uri) %||% "", tiledb = FALSE, relative)
+
+  # v2: explicit registration via set()
+  tryCatch(
+    expr = {
+      soma_parent$reopen("WRITE")
+      soma_parent$set(
+        x,
+        name = key,
+        relative = switch(uri_scheme(x$uri) %||% "", tiledb = FALSE, relative)
+      )
+    },
+    error = function(e) {
+      if (grepl("replacing key .* is unsupported", conditionMessage(e))) {
+        # Throw warning for existing key (controlled by verbose option)
+        warning(warningCondition(
+          message = paste(
+            "Already found an object stored as",
+            sQuote(key),
+            "in the parent collection"
+          ),
+          class = "existingKeyWarning"
+        ))
+      } else {
+        stop(e)
+      }
+    }
   )
+
   return(invisible(NULL))
 }
