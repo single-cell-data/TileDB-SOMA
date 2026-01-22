@@ -1,4 +1,4 @@
-# Tests for Carrara Error Handling and Edge Cases --------------------------
+# Tests for Carrara Error Handling and Edge Cases ---------------------------
 
 test_that("SOMACollection invalid operations", {
   skip_if_no_carrara()
@@ -202,3 +202,58 @@ test_that("Opening nested child paths directly works", {
     "SOMADenseNDArray"
   )
 })
+
+# Tests for Duplicate Key Handling ------------------------------------------
+
+test_that("SOMACollection add_new_* rejects duplicate key after reopen", {
+  skip_if_no_carrara()
+  with_carrara_env()
+  browser()
+  uri <- carrara_group_path()
+  SOMACollectionCreate(uri)$close()
+
+  # Add first member
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$add_new_sparse_ndarray(
+    "foo",
+    type = arrow::int32(),
+    shape = c(5, 5)
+  )
+  expect_true("foo" %in% collection$names())
+
+  # Attempt to add duplicate in same session
+  expect_error(
+    collection$add_new_sparse_ndarray(
+      "foo",
+      type = arrow::int32(),
+      shape = c(10, 10)
+    ),
+    regexp = "Member 'foo' already exists"
+  )
+  collection$close()
+
+  # Reopen and attempt to add duplicate
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  withr::defer(collection$close())
+
+  expect_true("foo" %in% collection$names())
+
+  expect_error(
+    collection$add_new_sparse_ndarray(
+      "foo",
+      type = arrow::int32(),
+      shape = c(10, 10)
+    ),
+    regexp = "Member 'foo' already exists"
+  )
+  collection$close()
+
+  # Verify original still there
+  collection <- SOMACollectionOpen(uri)
+  expect_s3_class(collection$get("foo"), "SOMASparseNDArray")
+  expect_equal(
+    collection$get("foo")$shape(),
+    c(5, 5)
+  )
+})
+
