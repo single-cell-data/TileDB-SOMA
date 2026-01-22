@@ -192,7 +192,8 @@ write_soma.data.frame <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -355,7 +356,8 @@ write_soma.IterableMatrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -524,7 +526,8 @@ write_soma.matrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -664,7 +667,8 @@ write_soma.TsparseMatrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -828,12 +832,14 @@ write_soma.TsparseMatrix <- function(
 #'   exist.
 #'
 #' @noRd
-.check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE) {
+.check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE, key = NULL) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
       inherits(x = soma_parent, what = "SOMACollectionBase"),
-    "'relative' must be a single logical value" = is_scalar_logical(relative)
+    "'relative' must be a single logical value" = is_scalar_logical(relative),
+    "'key' must be NULL or a single character value" = is.null(key) ||
+      (is_scalar_character(key) && nzchar(key))
   )
   if (isTRUE(relative)) {
     if (basename(uri) != uri) {
@@ -844,6 +850,22 @@ write_soma.TsparseMatrix <- function(
   } else if (!is_remote_uri(uri)) {
     dir.create(dirname(uri), showWarnings = FALSE, recursive = TRUE)
   }
+
+  # Carrara: validate key matches URI basename BEFORE creating object
+  if (!is.null(soma_parent) && is.character(key)) {
+    if (soma_parent$context$is_tiledbv3(soma_parent$uri)) {
+      uri_basename <- basename(uri)
+      if (key != uri_basename) {
+        stop(
+          "TileDB Carrara data model requires Collection member name and uri ",
+          "to be equal. key=", sQuote(key), " but uri basename=",
+          sQuote(uri_basename),
+          call. = FALSE
+        )
+      }
+    }
+  }
+
   return(uri)
 }
 
