@@ -835,7 +835,7 @@ write_soma.TsparseMatrix <- function(
       inherits(x = soma_parent, what = "SOMACollectionBase"),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
-  if (!isFALSE(relative)) {
+  if (isTRUE(relative)) {
     if (basename(uri) != uri) {
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
