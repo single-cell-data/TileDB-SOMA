@@ -208,7 +208,7 @@ test_that("Opening nested child paths directly works", {
 test_that("SOMACollection add_new_* rejects duplicate key after reopen", {
   skip_if_no_carrara()
   with_carrara_env()
-  browser()
+
   uri <- carrara_group_path()
   SOMACollectionCreate(uri)$close()
 
@@ -257,3 +257,49 @@ test_that("SOMACollection add_new_* rejects duplicate key after reopen", {
   )
 })
 
+test_that("write_soma fails for duplicate keys (same URI)", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  # For Carrara, key must equal URI basename. Attempting to write a second
+  # object with the same key means writing to the same URI, which fails because
+  # the object already exists.
+
+  uri <- carrara_group_path()
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  df1 <- data.frame(a = 1:5, b = letters[1:5])
+  df2 <- data.frame(x = 6:10, y = letters[6:10])
+
+  # Write first object (key must match URI basename for Carrara)
+  sdf1 <- write_soma(
+    df1,
+    uri = file_path(uri, "foo"),
+    soma_parent = collection,
+    key = "foo"
+  )
+  sdf1$close()
+  expect_true("foo" %in% collection$names())
+
+  # Attempt to write another object with same key
+  expect_error(
+    write_soma(
+      df2,
+      uri = file_path(uri, "foo"),
+      soma_parent = collection,
+      key = "foo"
+    ),
+    regexp = "already exists"
+  )
+
+  # Verify original data preserved
+  expect_equal(collection$length(), 1L)
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri)
+  expect_identical(
+    collection$get("foo")$read()$concat()$a$as_vector(),
+    df1$a
+  )
+})
