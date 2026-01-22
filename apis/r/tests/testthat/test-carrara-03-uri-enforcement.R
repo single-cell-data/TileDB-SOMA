@@ -79,7 +79,7 @@ test_that("write_soma rejects key that doesn't match URI basename", {
 
   df <- data.frame(a = 1:5, b = letters[1:5])
 
-  # key="df" but uri ends with "df1" - should error
+  # Error because key="df" but uri ends with "df1"
   expect_error(
     write_soma(
       df,
@@ -91,17 +91,27 @@ test_that("write_soma rejects key that doesn't match URI basename", {
   )
   expect_equal(collection$length(), 0L)
 
-  # When key matches URI basename, should succeed
-  sdf <- write_soma(
+  # Succeeds when key matches URI basename
+  sdf2 <- write_soma(
     df,
     uri = file_path(uri, "df2"),
     soma_parent = collection,
     key = "df2"
   )
-  sdf$close()
+  sdf2$close()
 
   expect_true("df2" %in% collection$names())
   expect_equal(collection$length(), 1L)
+
+  # URI basename is used when no key is provided
+  sdf3 <- write_soma(
+    df,
+    uri = file_path(uri, "df3"),
+    soma_parent = collection
+  )
+  sdf3$close()
+  expect_true("df3" %in% collection$names())
+  expect_equal(collection$length(), 2L)
 })
 
 
