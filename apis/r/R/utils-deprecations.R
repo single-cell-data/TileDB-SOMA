@@ -56,14 +56,14 @@
     EXPR = .deprecation_stage(when = when) %||% "future",
     defunct = lifecycle::deprecate_stop(
       when = as.character(when),
-      what = what,
+      what = I(what),
       with = with,
       details = details,
       env = env
     ),
     deprecate = lifecycle::deprecate_warn(
       when = as.character(when),
-      what = what,
+      what = I(what),
       with = with,
       details = details,
       # lifecycle tries to be clever when determining when to warn; however,
