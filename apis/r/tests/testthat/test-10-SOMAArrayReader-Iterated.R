@@ -108,9 +108,9 @@ test_that("Iterated Interface from SOMA Classes", {
 
   # The read_complete et al. in this test case are designed to be verified
   # against 16MB buffer size, and the particular provided input dataset.
-  # The soma_context() is cached at the package level and passed that way
+  # The context is cached at the package level and passed that way
   # to the SOMADataFrame and SOMASparseNDArray classes
-  context_handle <- soma_context(c(soma.init_buffer_bytes = as.character(16777216)))
+  set_default_context(c(soma.init_buffer_bytes = as.character(16777216)), replace = TRUE)
 
   for (tc in test_cases) {
     sdf <- switch(

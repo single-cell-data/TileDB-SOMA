@@ -21,9 +21,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- \[[#4359](https://github.com/single-cell-data/TileDB-SOMA/pull/4359)\] Fix unsafe casting of data on write when the input data type in a PyArrow table or batch does not match the existing schema.
-
 ### Security
+
+## [2.3.0]
+
+### Fixed
+
+- \[[#4359](https://github.com/single-cell-data/TileDB-SOMA/pull/4359)\] Fix unsafe casting of data on write when the input data type in a PyArrow table or batch does not match the existing schema.
 
 ## [Release 2.2.0]
 
