@@ -96,14 +96,6 @@ jobs:
           brew update
           brew install automake llvm
 
-      - name: "Setup for arm builds"
-        # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
-        if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
-        run: |
-          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
-          echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
-          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
-
       - name: Get arch
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
         run: |
@@ -125,7 +117,6 @@ jobs:
           CIBW_BUILD: ${{ matrix.python_name }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BEFORE_BUILD_LINUX: ${{ env.CIBW_BEFORE_BUILD_LINUX || '' }}
-          CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=${{ env.VCPKG_FORCE_SYSTEM_BINARIES || '' }}
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
           CIBW_ARCHS_MACOS: "x86_64 arm64"

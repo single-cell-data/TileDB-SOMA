@@ -43,12 +43,6 @@ if [ "${build}" != "Release" ] && [ -z "${tiledb}" ]; then
   extra_opts+=" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
 
-if [ "$(uname -m)" == "aarch64" ]; then
-  # build TileDB from source on arm
-  extra_opts+=" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
-fi
-
-
 
 # NOTE: set to true to debug the cmake build
 if [ "$cmake_verbose" = "true" ]; then
@@ -103,20 +97,8 @@ mkdir -p build
 
 if [ -z ${TILEDBSOMA_COVERAGE+x} ]; then TILEDBSOMA_COVERAGE=""; fi
 
-# Set up vcpkg environment variables
-if [ -n "${VCPKG_ROOT:-}" ]; then
-  export CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-fi
 
-# On macOS, detect and set architecture if not already set (needed for vcpkg)
-if [ "$(uname)" == "Darwin" ] && [ -z "${CMAKE_OSX_ARCHITECTURES:-}" ]; then
-  # Set architecture if either VCPKG_ROOT or CMAKE_TOOLCHAIN_FILE is set (vcpkg usage)
-  if [ -n "${VCPKG_ROOT:-}" ] || [ -n "${CMAKE_TOOLCHAIN_FILE:-}" ]; then
-    export CMAKE_OSX_ARCHITECTURES="$(uname -m)"
-  fi
-fi
-
-TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts} --preset vcpkg
+TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build/libtiledbsoma --target build_tests -j ${nproc}

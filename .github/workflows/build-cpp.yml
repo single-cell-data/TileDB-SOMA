@@ -17,64 +17,10 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
 
-      - name: Checkout vcpkg
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/vcpkg
-          path: vcpkg
-
-      - name: Bootstrap vcpkg
-        run: |
-          ./vcpkg/bootstrap-vcpkg.sh
-          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
-
-      - name: Set macOS architecture
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          # Detect architecture (arm64 for Apple Silicon, x86_64 for Intel)
-          ARCH=$(uname -m)
-          echo "CMAKE_OSX_ARCHITECTURES=$ARCH" >> $GITHUB_ENV
-          echo "Set CMAKE_OSX_ARCHITECTURES=$ARCH"
-
-      # --- Conditional ASAN Triplet ---
-      - name: Set ASAN Triplet for OS
-        if: ${{ inputs.build_type == 'ASAN' }}
-        run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            echo "VCPKG_ASAN_TRIPLET=x64-linux-asan" >> $GITHUB_ENV
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            echo "VCPKG_ASAN_TRIPLET=x64-osx-asan" >> $GITHUB_ENV
-          fi
-
-      # --- Conditional libtiledb Download ---
-      - name: Install pre-built libtiledb (ASAN only)
-        if: ${{ inputs.build_type == 'ASAN' }}
-        run: |
-          mkdir -p external
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.1/tiledb-linux-x86_64-2.29.1-9a6284d.tar.gz
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.29.1/tiledb-macos-arm64-2.29.1-9a6284d.tar.gz
-          fi
-          tar -C external -xzf tiledb-*.tar.gz
-
-
-      # --- Dynamic Build Command ---
-      - name: Set Build Preset
-        id: set_preset
-        run: |
-          if [[ "${{ inputs.build_type }}" == "ASAN" ]]; then
-            echo "PRESET_NAME=vcpkg-asan" >> $GITHUB_ENV
-          else
-            echo "PRESET_NAME=vcpkg" >> $GITHUB_ENV
-          fi
-
       - name: Build and install libtiledbsoma
         run: |
-          ./scripts/bld --preset $PRESET_NAME --no-tiledb-deprecated=true --werror=true --build ${{ inputs.build_type }}
-          cmake --build build -j 2
+          ./scripts/bld --no-tiledb-deprecated=true --werror=true --build ${{ inputs.build_type }}
 
-      # --- Dynamic Artifact Name ---
       - name: Upload C++ build artifact
         uses: actions/upload-artifact@v4
         with:
