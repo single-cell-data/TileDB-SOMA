@@ -326,7 +326,12 @@ test_that("`SOMADenseNDArray$set_data_type()` deprecations", {
     }
   )
 
-  if (utils::packageVersion("tiledbsoma") >= "2.1.0") {
+  # Per POLICIES.md:
+  # deprecated in 2.1.0, defunct after two minor releases (2.3.0)
+  pkg_version <- utils::packageVersion("tiledbsoma")
+  if (pkg_version >= "2.3.0") {
+    lifecycle::expect_defunct(dnda$set_data_type(arrow::int16()))
+  } else if (pkg_version >= "2.1.0") {
     lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16()))
   }
 })
