@@ -1,4 +1,4 @@
-# Tests for Carrara Error Handling and Edge Cases --------------------------
+# Tests for Carrara Error Handling and Edge Cases ---------------------------
 
 test_that("SOMACollection invalid operations", {
   skip_if_no_carrara()
@@ -200,5 +200,106 @@ test_that("Opening nested child paths directly works", {
   expect_equal(
     SOMADenseNDArrayOpen(file_path(uri, "c1/c1.1/dnda1"))$soma_type,
     "SOMADenseNDArray"
+  )
+})
+
+# Tests for Duplicate Key Handling ------------------------------------------
+
+test_that("SOMACollection add_new_* rejects duplicate key after reopen", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  uri <- carrara_group_path()
+  SOMACollectionCreate(uri)$close()
+
+  # Add first member
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$add_new_sparse_ndarray(
+    "foo",
+    type = arrow::int32(),
+    shape = c(5, 5)
+  )
+  expect_true("foo" %in% collection$names())
+
+  # Attempt to add duplicate in same session
+  expect_error(
+    collection$add_new_sparse_ndarray(
+      "foo",
+      type = arrow::int32(),
+      shape = c(10, 10)
+    ),
+    regexp = "Member 'foo' already exists"
+  )
+  collection$close()
+
+  # Reopen and attempt to add duplicate
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  withr::defer(collection$close())
+
+  expect_true("foo" %in% collection$names())
+
+  expect_error(
+    collection$add_new_sparse_ndarray(
+      "foo",
+      type = arrow::int32(),
+      shape = c(10, 10)
+    ),
+    regexp = "Member 'foo' already exists"
+  )
+  collection$close()
+
+  # Verify original still there
+  collection <- SOMACollectionOpen(uri)
+  expect_s3_class(collection$get("foo"), "SOMASparseNDArray")
+  expect_equal(
+    collection$get("foo")$shape(),
+    c(5, 5)
+  )
+})
+
+test_that("write_soma fails for duplicate keys (same URI)", {
+  skip_if_no_carrara()
+  with_carrara_env()
+
+  # For Carrara, key must equal URI basename. Attempting to write a second
+  # object with the same key means writing to the same URI, which fails because
+  # the object already exists.
+
+  uri <- carrara_group_path()
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  df1 <- data.frame(a = 1:5, b = letters[1:5])
+  df2 <- data.frame(x = 6:10, y = letters[6:10])
+
+  # Write first object (key must match URI basename for Carrara)
+  sdf1 <- write_soma(
+    df1,
+    uri = file_path(uri, "foo"),
+    soma_parent = collection,
+    key = "foo"
+  )
+  sdf1$close()
+  expect_true("foo" %in% collection$names())
+
+  # Attempt to write another object with same key
+  expect_error(
+    write_soma(
+      df2,
+      uri = file_path(uri, "foo"),
+      soma_parent = collection,
+      key = "foo"
+    ),
+    regexp = "already exists"
+  )
+
+  # Verify original data preserved
+  expect_equal(collection$length(), 1L)
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri)
+  expect_identical(
+    collection$get("foo")$read()$concat()$a$as_vector(),
+    df1$a
   )
 })

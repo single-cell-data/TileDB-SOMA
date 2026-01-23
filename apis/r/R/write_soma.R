@@ -192,7 +192,8 @@ write_soma.data.frame <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -355,7 +356,8 @@ write_soma.IterableMatrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -524,7 +526,8 @@ write_soma.matrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -664,7 +667,8 @@ write_soma.TsparseMatrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    key = key
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -799,22 +803,76 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
-.check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE) {
+#' Validate and Resolve a SOMA URI
+#'
+#' Validates and resolves a URI for creating a new SOMA object. When `relative`
+#' is `TRUE`, the function ensures the URI contains only a basename (no path
+#' components) and constructs a full path relative to the parent collection.
+#' When `relative` is `FALSE`, it creates parent directories for local URIs.
+#' For Carrara (TileDB v3) URIs, it also validates that `key` matches the URI
+#' basename.
+#'
+#' @param uri A single character string specifying the target URI or name.
+#' @param soma_parent A `SOMACollectionBase` object representing the parent
+#'   collection, or `NULL` for top-level objects.
+#' @param relative Logical; if `TRUE` (default), `uri` is treated as a relative
+#'   path and resolved against `soma_parent$uri`. If `FALSE`, `uri` is treated
+#'   as an absolute path.
+#' @param key A single non-empty character string specifying the member name
+#'   within `soma_parent`, or `NULL`. Used to validate Carrara URI requirements.
+#'
+#' @return The resolved URI as a character string.
+#'
+#' @details
+#' When `relative = TRUE`:
+#' - If `uri` contains path separators, only the basename is used.
+#' - The resolved path is constructed by joining `soma_parent$uri` (or
+#'   `tools::R_user_dir("tiledbsoma")` if `soma_parent` is `NULL`) with the
+#'   basename.
+#'
+#' When `relative = FALSE`:
+#' - For local (non-remote) URIs, parent directories are created if they don't
+#'   exist.
+#'
+#' For Carrara (TileDB v3) URIs:
+#' - When both `soma_parent` and `key` are provided, the function validates that
+#'   `key` matches the basename of the resolved `uri`. This is required by the
+#'   Carrara.
+#'
+#' @noRd
+.check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE, key = NULL) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
       inherits(x = soma_parent, what = "SOMACollectionBase"),
-    "'relative' must be a single logical value" = is_scalar_logical(relative)
+    "'relative' must be a single logical value" = is_scalar_logical(relative),
+    "'key' must be NULL or a single character value" = is.null(key) ||
+      (is_scalar_character(key) && nzchar(key))
   )
-  if (!isFALSE(relative)) {
+  if (isTRUE(relative)) {
     if (basename(uri) != uri) {
-      warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
     uri <- file_path(soma_parent$uri %||% tools::R_user_dir("tiledbsoma"), uri)
   } else if (!is_remote_uri(uri)) {
     dir.create(dirname(uri), showWarnings = FALSE, recursive = TRUE)
   }
+
+  # Carrara: validate key matches URI basename BEFORE creating object
+  if (!is.null(soma_parent) && is.character(key)) {
+    if (soma_parent$context$is_tiledbv3(soma_parent$uri)) {
+      uri_basename <- basename(uri)
+      if (key != uri_basename) {
+        stop(
+          "TileDB Carrara data model requires Collection member name and uri ",
+          "to be equal. key=", sQuote(key), " but uri basename=",
+          sQuote(uri_basename),
+          call. = FALSE
+        )
+      }
+    }
+  }
+
   return(uri)
 }
 
