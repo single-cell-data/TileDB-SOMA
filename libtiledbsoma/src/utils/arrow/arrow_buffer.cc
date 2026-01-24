@@ -208,8 +208,11 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
             if (data_size > 0) {
                 std::fill(packed_data.begin(), packed_data.end(), 0);
 
-                // Represent the Boolean vector with, at most, the last two
-                // bits. In Arrow, Boolean values are LSB packed
+                // LSB pack the enumeration values to use in Arrow.
+                // TileDB Enumerations are representing boolean an uint8 thus a boolean
+                // enumeration can contain more than 2 values. We need to preserve all
+                // these values to preserve index integrity. Any non-zero value is considered
+                // True when converting to Arrow.
 
                 for (size_t i = 0; i < data_size; ++i)
                     packed_data[i / 8] |= (std::min(data_v[i], (uint8_t)1) << (i % 8));
