@@ -579,30 +579,25 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> ArrowAdapter::buffer_to_arrow(
     std::shared_ptr<ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
     std::vector<std::future<ArrowTable>> arrow_futures;
-    std::vector<std::future<std::pair<std::string, std::shared_ptr<ArrowBuffer>>>> enumeration_futures;
     // Create a hashmap containing each enum to enable reusing the dictionaries accross multiple columns
-    std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>> enumerations;
+    std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>> enumerations;
     std::unordered_set<std::string> unique_enumerations;
 
     for (const auto& name : buffer->names()) {
         auto enumeration = buffer->at<ReadColumnBuffer>(name)->get_enumeration_info();
 
         if (enumeration && !unique_enumerations.contains(enumeration->name())) {
-            enumeration_futures.emplace_back(
+            enumerations.emplace(
+                enumeration->name(),
                 std::async(
                     std::launch::async,
                     [](const Enumeration& enumeration, bool large_offsets) {
-                        return std::make_pair<std::string, std::shared_ptr<ArrowBuffer>>(
-                            enumeration.name(), std::make_shared<ArrowBuffer>(enumeration, large_offsets));
+                        return std::make_shared<ArrowBuffer>(enumeration, large_offsets);
                     },
                     enumeration.value(),
                     !downcast_dict_of_large_var));
             unique_enumerations.insert(enumeration->name());
         }
-    }
-
-    for (auto& enumeration : enumeration_futures) {
-        enumerations.insert(enumeration.get());
     }
 
     for (const auto& name : buffer->names()) {
@@ -626,7 +621,7 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
 
 std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> ArrowAdapter::to_arrow(
     std::shared_ptr<ReadColumnBuffer> column,
-    const std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>>& enumerations,
+    const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
     bool downcast_dict_of_large_var) {
     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
@@ -721,7 +716,7 @@ std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> Arrow
 
     auto enmr = column->get_enumeration_info();
     if (enmr.has_value()) {
-        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enumerations.at(enmr->name()));
+        PrivateArrowBuffer* enmr_buffer = new PrivateArrowBuffer(enumerations.at(enmr->name()).get());
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 

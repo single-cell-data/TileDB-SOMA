@@ -16,6 +16,7 @@
 
 #include <any>
 #include <concepts>
+#include <future>
 #include <span>
 
 #include <tiledb/tiledb>
@@ -128,7 +129,7 @@ class ArrowAdapter {
      */
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
         std::shared_ptr<ReadColumnBuffer> column,
-        const std::unordered_map<std::string, std::shared_ptr<ArrowBuffer>>& enumerations,
+        const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
         bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
