@@ -1,6 +1,6 @@
 #include "arrow_buffer.h"
-#include "../logger.h"
 #include "../util.h"
+#include "common/logging/impl/logger.h"
 #include "nanoarrow/nanoarrow.hpp"
 
 #include <limits>

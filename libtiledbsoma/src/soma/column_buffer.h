@@ -25,7 +25,7 @@
 #include "../utils/arrow/arrow_buffer.h"
 #include "../utils/arrow_adapter.h"
 #include "../utils/common.h"
-#include "logger_public.h"
+#include "common/logging/logger.h"
 #include "soma_context.h"
 
 namespace tiledbsoma {
@@ -727,13 +727,13 @@ class WriteColumnBuffer : public ColumnBuffer {
             // compatibility issue with pyarrow versions below 17. Thus we log and
             // continue.
             if (validity_buffer) {
-                LOG_DEBUG(
+                common::logging::LOG_DEBUG(
                     "[WriteColumnBuffer] Validity buffer passed for column '" + std::string(name) +
                     "' is being ignored");
 
                 for (size_t i = 0; i < num_cells; ++i) {
                     if (!validity_buffer[i]) {
-                        LOG_WARN(
+                        common::logging::LOG_WARN(
                             "[WriteColumnBuffer] Found invalid cells in ignored validity buffer for non-nullable "
                             "column '" +
                             std::string(name) + "'");

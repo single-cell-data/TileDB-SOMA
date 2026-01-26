@@ -56,4 +56,4 @@ std::string asc_timestamp(uint64_t timestamp_ms);
 
 }  // namespace tiledbsoma::common::logging
 
-#endif  // TILEDB_LOGGER_PUBLIC_H
+#endif  // COMMON_LOGGER_H
