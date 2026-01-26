@@ -95,6 +95,8 @@ class ColumnBuffer {
 
     ~ColumnBuffer();
 
+    ColumnBuffer& operator=(const ColumnBuffer&) = delete;
+
     /**
      * @brief Attach this ColumnBuffer to a TileDB query.
      *
@@ -342,6 +344,26 @@ class ColumnBuffer {
     bool is_ordered() const {
         return is_ordered_;
     }
+
+    /**
+     * @brief Resize the internal buffers to the given size.
+     * 
+     * @param size Number of bytes to allocate for the data buffer.
+     * @param num_cells Number of cells the buffer should hold. 
+     *  For variable sized and nullable columns this dictates the size of the offsets and validity buffers.
+     * @param preserve_data If true, copy any data written in the old buffers to the new buffers.
+     */
+    void resize(const uint64_t size, const uint64_t num_cells, const bool preserve_data = false);
+
+    /**
+     * @brief Get max size of data buffer in bytes.
+     */
+    uint64_t max_size() const;
+
+    /**
+     * @brief Get the max number of cells the buffers can hold.
+     */
+    uint64_t max_num_cells() const;
 
    private:
     //===================================================================
