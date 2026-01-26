@@ -430,7 +430,6 @@ SOMACollectionBase <- R6::R6Class(
         index_column_names = index_column_names,
         domain = domain,
         platform_config = platform_config %||% self$platform_config,
-        tiledbsoma_ctx = self$tiledbsoma_ctx,
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
@@ -459,7 +458,6 @@ SOMACollectionBase <- R6::R6Class(
         type = type,
         shape = shape,
         platform_config = platform_config %||% self$platform_config,
-        tiledbsoma_ctx = self$tiledbsoma_ctx,
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp
       )
@@ -493,7 +491,6 @@ SOMACollectionBase <- R6::R6Class(
         type = type,
         shape = shape,
         platform_config = platform_config %||% self$platform_config,
-        tiledbsoma_ctx = self$tiledbsoma_ctx,
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
@@ -816,7 +813,6 @@ SOMACollectionBase <- R6::R6Class(
         uri,
         mode = self$mode(),
         platform_config = self$platform_config,
-        tiledbsoma_ctx = self$tiledbsoma_ctx,
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp
       ))
