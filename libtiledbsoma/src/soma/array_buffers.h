@@ -110,6 +110,11 @@ class ArrayBuffers {
      */
     static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
 
+    /**
+     * @brief Double the size of the allocated buffers. Any data already in the buffers 
+     * will be deleted. By default this function will allocate more memory than the 
+     * memory budget set by the user.
+     */
     void expand_buffers();
 
    private:
@@ -119,6 +124,7 @@ class ArrayBuffers {
     // Map: column name -> ColumnBuffer
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
 
+    // The allocation strategy used to split the available memory budget to the different columns.
     std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 

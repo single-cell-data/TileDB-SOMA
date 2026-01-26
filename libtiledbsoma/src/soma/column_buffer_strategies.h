@@ -19,7 +19,7 @@ class ColumnBufferAllocationStrategy {
     virtual ~ColumnBufferAllocationStrategy() = default;
 
     virtual std::pair<size_t, size_t> get_buffer_sizes(
-        std::variant<tiledb::Attribute, tiledb::Dimension> column) const = 0;
+        const std::variant<tiledb::Attribute, tiledb::Dimension> column) const = 0;
 };
 
 class BasicAllocationStrategy : public ColumnBufferAllocationStrategy {
@@ -41,7 +41,7 @@ class MemoryPoolAllocationStrategy : public ColumnBufferAllocationStrategy {
     MemoryPoolAllocationStrategy(std::span<std::string> columns, const tiledb::Array& array);
 
     std::pair<size_t, size_t> get_buffer_sizes(
-        std::variant<tiledb::Attribute, tiledb::Dimension> column) const override;
+        const std::variant<tiledb::Attribute, tiledb::Dimension> column) const override;
 
    private:
     size_t buffer_unit_size = 1 << 30;

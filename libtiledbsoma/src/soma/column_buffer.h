@@ -298,8 +298,13 @@ class ColumnBuffer {
 
     /**
      * @brief Resize the internal buffers to the given size.
+     * 
+     * @param size Number of bytes to allocate for the data buffer.
+     * @param num_cells Number of cells the buffer should hold. 
+     *  For variable sized and nullable columns this dictates the size of the offsets and validity buffers.
+     * @param preserve_data If true, copy any data written in the old buffers to the new buffers.
      */
-    void resize(uint64_t size, uint64_t num_cells, bool preserve_data = false);
+    void resize(const uint64_t size, const uint64_t num_cells, const bool preserve_data = false);
 
    protected:
     size_t num_cells_;
