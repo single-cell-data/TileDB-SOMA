@@ -7,6 +7,7 @@
 ## Changed
 
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
+- Default log level changed from `info` to `warn` to reduce verbosity. Use `set_log_level("info")` or the `SPDLOG_LEVEL` environment variable to restore verbose logging. ([#4393](https://github.com/single-cell-data/TileDB-SOMA/pull/4393))
 
 ## Deprecated
 
