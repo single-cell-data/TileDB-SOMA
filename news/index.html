@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,40 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.3.0" id="tiledbsoma-230">tiledbsoma 2.3.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-230"></a></h2>
+<div class="section level3">
+<h3 id="added-2-3-0">Added<a class="anchor" aria-label="anchor" href="#added-2-3-0"></a></h3>
+<ul><li>A new <code>SOMAContext</code> method was added that replaces <code>SOMATileDBContext</code>. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4355" class="external-link">#4355</a>)</li>
+<li>New methods <code>set_default_context</code> and <code>get_default_context</code> for setting and getting the <code>SOMAContext</code>. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4364" class="external-link">#4364</a>)</li>
+<li>Added <code>SOMAContext$is_tiledbv2()</code> and <code>SOMAContext$is_tiledbv3()</code> methods to check the data protocol for a given URI.</li>
+<li>Added Carrara (TileDB v3) support for collection classes. Child objects created at nested Carrara URIs are automatically registered with their parent collection.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changed-2-3-0">Changed<a class="anchor" aria-label="anchor" href="#changed-2-3-0"></a></h3>
+<ul><li>
+<code>SOMACollectionBase$set()</code> now throws an <code>unsupportedOperationError</code> for Carrara URIs since the Carrara data model does not support adding external objects to collections. Use <code>add_new_*</code> methods instead.</li>
+<li>Reduced some internal diagnostic logging from INFO to DEBUG level.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="deprecated-2-3-0">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-2-3-0"></a></h3>
+<ul><li>The function <code>soma_context</code> is deprecated. Use class <code>SOMAContext</code> instead. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4355" class="external-link">#4355</a>)</li>
+<li>The parameter <code>tiledbsoma_ctx</code> is deprecated in all functions/methods that use it. Use the parameter <code>context</code> instead. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4355" class="external-link">#4355</a>)</li>
+<li>
+<code>SOMATileDBContext</code> is deprecated. Use class <code>SOMAContext</code> instead. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4355" class="external-link">#4355</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixed-2-3-0">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2-3-0"></a></h3>
+<ul><li>Fixed <code>SOMACollectionBase$set()</code> allowing replacement of existing members after reopening the collection. The method now consistently rejects duplicate keys both within the same session and across sessions. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4378" class="external-link">#4378</a>)</li>
+<li>
+<code>SOMATileDBContext</code> no longer replaces <code>sm.mem.reader.sparse_global_order.ratio_array_data</code> when set in the input config. (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4355" class="external-link">#4355</a>)</li>
+<li>Fixed <code>SOMACollectionBase$remove()</code> incorrectly accessing <code>self$mode</code> instead of calling <code>self$mode()</code>.</li>
+<li>Fixed collection member cache not properly handling DELETE mode.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.2.0" id="tiledbsoma-220">tiledbsoma 2.2.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-220"></a></h2>
 <div class="section level3">

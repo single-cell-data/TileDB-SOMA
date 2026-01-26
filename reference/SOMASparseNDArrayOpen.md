@@ -11,7 +11,8 @@ SOMASparseNDArrayOpen(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  context = NULL
 )
 ```
 
@@ -31,12 +32,19 @@ SOMASparseNDArrayOpen(
 
 - tiledbsoma_ctx:
 
-  Optional SOMATileDBContext.
+  Optional (DEPRECATED) SOMATileDBContext.
 
 - tiledb_timestamp:
 
   Optional Datetime (POSIXct) for TileDB timestamp; defaults to the
   current time.
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -57,7 +65,7 @@ mat[1:3, 1:5]
 
 (arr <- SOMASparseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/Rtmpza3ZZa/soma-sparse-array2be27d5ab94a
+#>   uri: /tmp/RtmpbAgXbM/soma-sparse-array284633198c01
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 arr$write(mat)
@@ -65,7 +73,7 @@ arr$close()
 
 (arr <- SOMASparseNDArrayOpen(uri))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/Rtmpza3ZZa/soma-sparse-array2be27d5ab94a
+#>   uri: /tmp/RtmpbAgXbM/soma-sparse-array284633198c01
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 m2 <- arr$read()$sparse_matrix()$concat()

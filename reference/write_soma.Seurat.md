@@ -14,7 +14,8 @@ write_soma(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  context = NULL
 )
 ```
 
@@ -49,7 +50,14 @@ write_soma(
 
 - tiledbsoma_ctx:
 
-  Optional [`SOMATileDBContext`](SOMATileDBContext.md).
+  Optional (DEPRECATED) [`SOMATileDBContext`](SOMATileDBContext.md).
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -252,10 +260,10 @@ uri <- write_soma(pbmc_small, uri)
 
 (exp <- SOMAExperimentOpen(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpza3ZZa/pbmc-small2be2591e3570
+#>   uri: /tmp/RtmpbAgXbM/pbmc-small28464c826a38
 exp$obs
 #> <SOMADataFrame>
-#>   uri: file:///tmp/Rtmpza3ZZa/pbmc-small2be2591e3570/obs
+#>   uri: file:///tmp/RtmpbAgXbM/pbmc-small28464c826a38/obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,... 
 exp$get("uns")$get("seurat_commands")$names()
@@ -266,10 +274,10 @@ exp$get("uns")$get("seurat_commands")$names()
 #>  [9] "ScaleData.RNA"            "ScoreJackStraw.pca"      
 (ms <- exp$ms$get("RNA"))
 #> <SOMAMeasurement>
-#>   uri: file:///tmp/Rtmpza3ZZa/pbmc-small2be2591e3570/ms/RNA
+#>   uri: file:///tmp/RtmpbAgXbM/pbmc-small28464c826a38/ms/RNA
 ms$var
 #> <SOMADataFrame>
-#>   uri: file:///tmp/Rtmpza3ZZa/pbmc-small2be2591e3570/ms/RNA/var
+#>   uri: file:///tmp/RtmpbAgXbM/pbmc-small28464c826a38/ms/RNA/var
 #>   dimensions: soma_joinid 
 #>   attributes: vst.mean, vst.variance, vst.variance.expected, vst.variance.standardized, vst... 
 ms$X$names()

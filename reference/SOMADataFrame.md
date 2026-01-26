@@ -110,14 +110,9 @@ directly; use factory functions (eg.
   be `list(soma_joinid=c(100, 200))` to indicate that values between 100
   and 200, inclusive, can be stored in that column. If provided, this
   sequence must have the same length as `index_column_names`, and the
-  index-column domain will be as specified. If omitted entirely, or if
-  `NULL` in a given dimension, the corresponding index-column domain
-  will use an empty range, and data writes after that will fail with “A
-  range was set outside of the current domain”. Unless you have a
-  particular reason not to, you should always provide the desired
-  `domain` at create time: this is an optional but strongly recommended
-  parameter. See also `change_domain` which allows you to expand the
-  domain after create.
+  index-column domain will be as specified. Omitting or setting the
+  domain to `NULL` is deprecated. See also `change_domain` which allows
+  you to expand the domain after create.
 
 - `platform_config`:
 
@@ -499,7 +494,7 @@ df <- data.frame(
 #> nCount: int32
 (sdf <- SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 100))))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpza3ZZa/soma-data-frame2be25703bcdc
+#>   uri: /tmp/RtmpbAgXbM/soma-data-frame28463e30f110
 #>   dimensions: soma_joinid 
 #>   attributes: group, nCount 
 sdf$write(arrow::as_arrow_table(df, schema = sch))
@@ -507,7 +502,7 @@ sdf$close()
 
 (sdf <- SOMADataFrameOpen(uri))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpza3ZZa/soma-data-frame2be25703bcdc
+#>   uri: /tmp/RtmpbAgXbM/soma-data-frame28463e30f110
 #>   dimensions: soma_joinid 
 #>   attributes: group, nCount 
 head(as.data.frame(sdf$read()$concat()))

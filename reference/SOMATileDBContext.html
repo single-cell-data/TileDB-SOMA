@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA TileDB Context</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/SOMATileDBContext.R" class="external-link"><code>R/SOMATileDBContext.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/SOMATileDBContext.R" class="external-link"><code>R/SOMATileDBContext.R</code></a></small>
       <div class="d-none name"><code>SOMATileDBContext.Rd</code></div>
     </div>
 
@@ -243,6 +243,10 @@ a stored (and long-lived) result from <code>to_tiledb_context</code>.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="op">(</span><span class="va">ctx</span> <span class="op">&lt;-</span> <span class="va">SOMATileDBContext</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>SOMATileDBContext$new() was deprecated in tiledbsoma 2.3.0.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Use `SOMAContext` instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">R6</span> package.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/r-lib/R6/issues&gt;</span>.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMATileDBContext&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   config.env_var_prefix: TILEDB_</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   config.logging_format: DEFAULT</span>
@@ -405,7 +409,7 @@ a stored (and long-lived) result from <code>to_tiledb_context</code>.</p>
 <span class="r-in"><span><span class="va">ctx</span><span class="op">$</span><span class="fu">to_tiledb_context</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> An object of class "tiledb_ctx"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Slot "ptr":</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;pointer: 0x559aecccab80&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;pointer: 0x558437c7f100&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

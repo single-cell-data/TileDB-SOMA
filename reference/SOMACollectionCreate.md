@@ -11,7 +11,8 @@ SOMACollectionCreate(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  context = NULL
 )
 ```
 
@@ -37,11 +38,18 @@ SOMACollectionCreate(
 
 - tiledbsoma_ctx:
 
-  Optional SOMATileDBContext.
+  Optional (DEPRECATED) SOMATileDBContext.
 
 - tiledb_timestamp:
 
   Optional Datetime (POSIXct) for TileDB timestamp.
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -55,17 +63,17 @@ uri <- withr::local_tempfile(pattern = "soma-collection")
 
 (col <- SOMACollectionCreate(uri))
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/soma-collection2be24f11e36e
+#>   uri: /tmp/RtmpbAgXbM/soma-collection284647f89fbe
 col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/Rtmpza3ZZa/soma-collection2be24f11e36e/sparse
+#>   uri: /tmp/RtmpbAgXbM/soma-collection284647f89fbe/sparse
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 col$close()
 
 (col <- SOMACollectionOpen(uri))
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/soma-collection2be24f11e36e
+#>   uri: /tmp/RtmpbAgXbM/soma-collection284647f89fbe
 col$names()
 #> [1] "sparse"
 ```

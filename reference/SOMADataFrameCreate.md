@@ -15,7 +15,7 @@ SOMADataFrameCreate(
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  soma_context = NULL
+  context = NULL
 )
 ```
 
@@ -65,15 +65,18 @@ SOMADataFrameCreate(
 
 - tiledbsoma_ctx:
 
-  Optional SOMATileDBContext.
+  Optional (DEPRECATED) SOMATileDBContext.
 
 - tiledb_timestamp:
 
   Optional Datetime (POSIXct) for TileDB timestamp.
 
-- soma_context:
+- context:
 
-  A SOMA context as created by [`soma_context()`](soma_context.md).
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -96,7 +99,7 @@ df <- data.frame(
 #> nCount: int32
 (sdf <- SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 100))))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpza3ZZa/soma-data-frame2be2157bf6a7
+#>   uri: /tmp/RtmpbAgXbM/soma-data-frame28462282b08d
 #>   dimensions: soma_joinid 
 #>   attributes: group, nCount 
 sdf$write(arrow::as_arrow_table(df, schema = sch))
@@ -104,7 +107,7 @@ sdf$close()
 
 (sdf <- SOMADataFrameOpen(uri))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpza3ZZa/soma-data-frame2be2157bf6a7
+#>   uri: /tmp/RtmpbAgXbM/soma-data-frame28462282b08d
 #>   dimensions: soma_joinid 
 #>   attributes: group, nCount 
 head(as.data.frame(sdf$read()$concat()))

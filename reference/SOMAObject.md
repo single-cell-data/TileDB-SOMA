@@ -16,6 +16,10 @@ Derived classes: [`SOMAArrayBase`](SOMAArrayBase.md),
 
   Platform configuration
 
+- `context`:
+
+  SOMAContext context object for TileDB operations
+
 - `tiledbsoma_ctx`:
 
   SOMATileDBContext
@@ -74,7 +78,7 @@ Create a new SOMA object. (lifecycle: maturing)
       platform_config = NULL,
       tiledbsoma_ctx = NULL,
       tiledb_timestamp = NULL,
-      soma_context = NULL
+      context = NULL
     )
 
 #### Arguments
@@ -93,7 +97,7 @@ Create a new SOMA object. (lifecycle: maturing)
 
 - `tiledbsoma_ctx`:
 
-  Optional TileDB SOMA context
+  Optional (DEPRECATED) TileDB SOMA context
 
 - `tiledb_timestamp`:
 
@@ -101,9 +105,12 @@ Create a new SOMA object. (lifecycle: maturing)
   ([`POSIXct`](https://rdrr.io/r/base/DateTimeClasses.html)) to open the
   object at
 
-- `soma_context`:
+- `context`:
 
-  A SOMA context as created by [`soma_context()`](soma_context.md)
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ------------------------------------------------------------------------
 

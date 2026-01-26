@@ -15,7 +15,7 @@ SOMAExperiment (lifecycle: maturing)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ SOMAExperiment (lifecycle: maturing)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA Collection</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/SOMACollection.R" class="external-link"><code>R/SOMACollection.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/SOMACollection.R" class="external-link"><code>R/SOMACollection.R</code></a></small>
       <div class="d-none name"><code>SOMACollection.Rd</code></div>
     </div>
 
@@ -75,6 +75,21 @@ configuration (see <code><a href="PlatformConfig.html">PlatformConfig</a></code>
 default platform configuration by passing a custom configuration to the
 <code>platform_config</code> argument.</p>
     </div>
+    <div class="section level2">
+    <h2 id="carrara-tiledb-v-behavior">Carrara (TileDB v3) behavior<a class="anchor" aria-label="anchor" href="#carrara-tiledb-v-behavior"></a></h2>
+
+
+
+<p>When working with Carrara URIs (<code>tiledb://workspace/teamspace/...</code>), child
+objects created at a URI nested under a parent collection are <strong>automatically
+added</strong> as members of the parent. This means:</p>
+<ul><li><p>You do not need to call <code>add_new_collection()</code> after creating a child
+at a nested URI—the child is already a member.</p></li>
+<li><p>For backward compatibility, calling <code>add_new_collection()</code> on an
+already-registered child is a <strong>no-op</strong> and will not cause an error.</p></li>
+<li><p>The member name must match the relative URI segment (e.g., creating
+at <code>parent_uri/child</code> automatically adds the child with key <code>"child"</code>).</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="super-classes">Super classes<a class="anchor" aria-label="anchor" href="#super-classes"></a></h2>
     <p><code><a href="SOMAObject.html">tiledbsoma::SOMAObject</a></code> -&gt; <code><a href="SOMACollectionBase.html">tiledbsoma::SOMACollectionBase</a></code> -&gt; <code>SOMACollection</code></p>
@@ -133,17 +148,17 @@ default platform configuration by passing a custom configuration to the
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">col</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMACollectionCreate.html">SOMACollectionCreate</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-collection2be2122ad419</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-collection28465711d65a</span>
 <span class="r-in"><span><span class="va">col</span><span class="op">$</span><span class="fu">add_new_sparse_ndarray</span><span class="op">(</span><span class="st">"sparse"</span>, <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">float64</a></span><span class="op">(</span><span class="op">)</span>, shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100L</span>, <span class="fl">100L</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMASparseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-collection2be2122ad419/sparse</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-collection28465711d65a/sparse</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span><span class="va">col</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">col</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMACollectionOpen.html">SOMACollectionOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-collection2be2122ad419</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-collection28465711d65a</span>
 <span class="r-in"><span><span class="va">col</span><span class="op">$</span><span class="fu">names</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "sparse"</span>
 <span class="r-in"><span></span></span>

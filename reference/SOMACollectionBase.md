@@ -3,6 +3,19 @@
 Base class for objects containing persistent collection of SOMA objects,
 mapping string keys to any SOMA object (lifecycle: maturing).
 
+## Note
+
+This method is not supported for Carrara (TileDB v3) URIs. For Carrara
+collections, use the `add_new_*` methods instead, which create child
+objects at nested URIs that are automatically registered with the parent
+collection.
+
+## Carrara (TileDB v3) behavior
+
+For Carrara URIs, child objects created at nested URIs are automatically
+added to the parent collection. Calling this method on an already-
+registered child is a **no-op** for backward compatibility.
+
 ## See also
 
 Derived classes: [`SOMACollection`](SOMACollection.md),
@@ -124,6 +137,10 @@ Invisibly returns `self`.
 ### Method `set()`
 
 Add a new SOMA object to the collection (lifecycle: maturing).
+
+This method adds an existing SOMA object to the collection under the
+specified key. Replacing an existing key is not supported; attempting to
+add an object with a key that already exists will raise an error.
 
 #### Usage
 

@@ -11,7 +11,7 @@ SOMA experiment for writing
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ SOMA experiment for writing
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a SOMA Experiment</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
       <div class="d-none name"><code>SOMAExperimentCreate.Rd</code></div>
     </div>
 
@@ -61,7 +61,8 @@ SOMA experiment for writing
 <span>  ingest_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"write"</span>, <span class="st">"resume"</span><span class="op">)</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tiledb_timestamp <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  tiledb_timestamp <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -87,11 +88,18 @@ if it already exists, simply open it for writing.</p></li>
 
 
 <dt id="arg-tiledbsoma-ctx">tiledbsoma_ctx<a class="anchor" aria-label="anchor" href="#arg-tiledbsoma-ctx"></a></dt>
-<dd><p>Optional SOMATileDBContext.</p></dd>
+<dd><p>Optional (DEPRECATED) SOMATileDBContext.</p></dd>
 
 
 <dt id="arg-tiledb-timestamp">tiledb_timestamp<a class="anchor" aria-label="anchor" href="#arg-tiledb-timestamp"></a></dt>
 <dd><p>Optional Datetime (POSIXct) for TileDB timestamp.</p></dd>
+
+
+<dt id="arg-context">context<a class="anchor" aria-label="anchor" href="#arg-context"></a></dt>
+<dd><p>Optional <code>SOMAContext</code> object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+<code>set_default_context</code> once before other SOMA operations to configure
+the default context.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -111,7 +119,7 @@ if it already exists, simply open it for writing.</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu">SOMAExperimentCreate</span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAExperiment&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-experiment2be2fd6a3a9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-experiment284676a6ed72</span>
 <span class="r-in"><span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="va">exp</span><span class="op">$</span><span class="fu">add_new_dataframe</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"obs"</span>,</span></span>
 <span class="r-in"><span>  <span class="va">sch</span>,</span></span>
@@ -124,10 +132,10 @@ if it already exists, simply open it for writing.</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMAExperimentOpen.html">SOMAExperimentOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAExperiment&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-experiment2be2fd6a3a9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-experiment284676a6ed72</span>
 <span class="r-in"><span><span class="va">exp</span><span class="op">$</span><span class="va">obs</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: file:///tmp/Rtmpza3ZZa/soma-experiment2be2fd6a3a9/obs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: file:///tmp/RtmpbAgXbM/soma-experiment284676a6ed72/obs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: obs_id </span>
 <span class="r-in"><span></span></span>

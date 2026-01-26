@@ -829,7 +829,7 @@ counts
 ```
 
     ## <SOMASparseNDArray>
-    ##   uri: file:///tmp/RtmpcC1wN2/soma-exp-pbmc-small/ms/RNA/X/counts
+    ##   uri: file:///tmp/RtmpPSFqT3/soma-exp-pbmc-small/ms/RNA/X/counts
     ##   dimensions: soma_dim_0, soma_dim_1 
     ##   attributes: soma_data
 

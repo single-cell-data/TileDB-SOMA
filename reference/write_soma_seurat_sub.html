@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Convert a <span class="pkg">Seurat</span> Sub-Object to a SOMA Object, returned opened for write</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/write_seurat.R" class="external-link"><code>R/write_seurat.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/write_seurat.R" class="external-link"><code>R/write_seurat.R</code></a></small>
       <div class="d-none name"><code>write_soma_seurat_sub.Rd</code></div>
     </div>
 
@@ -59,6 +59,7 @@
 <span>  ingest_mode <span class="op">=</span> <span class="st">"write"</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  relative <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -71,6 +72,7 @@
 <span>  ingest_mode <span class="op">=</span> <span class="st">"write"</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  relative <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -85,6 +87,7 @@
 <span>  ingest_mode <span class="op">=</span> <span class="st">"write"</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  relative <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -97,6 +100,7 @@
 <span>  ingest_mode <span class="op">=</span> <span class="st">"write"</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  relative <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -109,6 +113,7 @@
 <span>  ingest_mode <span class="op">=</span> <span class="st">"write"</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  relative <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -152,7 +157,14 @@ configuration</a>.</p></dd>
 
 
 <dt id="arg-tiledbsoma-ctx">tiledbsoma_ctx<a class="anchor" aria-label="anchor" href="#arg-tiledbsoma-ctx"></a></dt>
-<dd><p>Optional <code><a href="SOMATileDBContext.html">SOMATileDBContext</a></code>.</p></dd>
+<dd><p>Optional (DEPRECATED) <code><a href="SOMATileDBContext.html">SOMATileDBContext</a></code>.</p></dd>
+
+
+<dt id="arg-context">context<a class="anchor" aria-label="anchor" href="#arg-context"></a></dt>
+<dd><p>Optional <code>SOMAContext</code> object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+<code>set_default_context</code> once before other SOMA operations to configure
+the default context.</p></dd>
 
 
 <dt id="arg-relative">relative<a class="anchor" aria-label="anchor" href="#arg-relative"></a></dt>
@@ -362,7 +374,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-out co"><span class="r-pr">#&gt;</span>  PPBP, IGLL5, VDAC3, CD1C, AKR1C3, PF4, MYL9, GNLY, TREML1, CA2 </span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">assay</span>, <span class="st">"RNA"</span>, soma_parent <span class="op">=</span> <span class="va">col</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: var </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   groups: X </span>
 <span class="r-in"><span></span></span>
@@ -375,7 +387,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-out co"><span class="r-pr">#&gt;</span>  data, counts, scale.data </span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms5</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">assay5</span>, <span class="st">"RNA5"</span>, soma_parent <span class="op">=</span> <span class="va">col</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: var </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   groups: X </span>
 <span class="r-in"><span></span></span>
@@ -386,7 +398,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-in"><span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">tsne</span>, soma_parent <span class="op">=</span> <span class="va">ms</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">obsm</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA/obsm</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA/obsm</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: X_tsne </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Write a Seurat Graph</span></span></span>
@@ -395,7 +407,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-in"><span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">snn</span>, <span class="st">"snn"</span>, soma_parent <span class="op">=</span> <span class="va">ms</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">obsp</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA/obsp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA/obsp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: snn </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Write a Seurat command log</span></span></span>
@@ -409,11 +421,11 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-in"><span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">cmd</span>, <span class="st">"NormalizeData.RNA"</span>, soma_parent <span class="op">=</span> <span class="va">col</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">logs</span> <span class="op">&lt;-</span> <span class="va">col</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"seurat_commands"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/seurat_commands</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/seurat_commands</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: NormalizeData.RNA </span>
 <span class="r-in"><span><span class="va">logs</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"NormalizeData.RNA"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/seurat_commands/NormalizeData.RNA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/seurat_commands/NormalizeData.RNA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: values </span>
 <span class="r-in"><span></span></span>

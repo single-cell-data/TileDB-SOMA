@@ -13,7 +13,8 @@ write_soma(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  context = NULL
 )
 ```
 
@@ -50,7 +51,14 @@ write_soma(
 
 - tiledbsoma_ctx:
 
-  Optional [`SOMATileDBContext`](SOMATileDBContext.md).
+  Optional (DEPRECATED) [`SOMATileDBContext`](SOMATileDBContext.md).
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 

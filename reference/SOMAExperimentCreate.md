@@ -11,7 +11,8 @@ SOMAExperimentCreate(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  context = NULL
 )
 ```
 
@@ -37,11 +38,18 @@ SOMAExperimentCreate(
 
 - tiledbsoma_ctx:
 
-  Optional SOMATileDBContext.
+  Optional (DEPRECATED) SOMATileDBContext.
 
 - tiledb_timestamp:
 
   Optional Datetime (POSIXct) for TileDB timestamp.
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -60,7 +68,7 @@ sch <- arrow::infer_schema(obs)
 
 (exp <- SOMAExperimentCreate(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpza3ZZa/soma-experiment2be2fd6a3a9
+#>   uri: /tmp/RtmpbAgXbM/soma-experiment284676a6ed72
 sdf <- exp$add_new_dataframe(
   "obs",
   sch,
@@ -73,10 +81,10 @@ exp$close()
 
 (exp <- SOMAExperimentOpen(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpza3ZZa/soma-experiment2be2fd6a3a9
+#>   uri: /tmp/RtmpbAgXbM/soma-experiment284676a6ed72
 exp$obs
 #> <SOMADataFrame>
-#>   uri: file:///tmp/Rtmpza3ZZa/soma-experiment2be2fd6a3a9/obs
+#>   uri: file:///tmp/RtmpbAgXbM/soma-experiment284676a6ed72/obs
 #>   dimensions: soma_joinid 
 #>   attributes: obs_id 
 ```

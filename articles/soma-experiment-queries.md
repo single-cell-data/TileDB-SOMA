@@ -22,7 +22,7 @@ provided by SeuratObject. This will return a `SOMAExperiment` object.
 experiment <- load_dataset("soma-exp-pbmc-small")
 experiment
 #> <SOMAExperiment>
-#>   uri: /tmp/RtmpB5R0wj/soma-exp-pbmc-small
+#>   uri: /tmp/RtmpULcDjK/soma-exp-pbmc-small
 ```
 
 ## Querying basics
@@ -37,14 +37,29 @@ measurement: `"RNA"`.
 ``` r
 experiment$ms
 #> <SOMACollection>
-#>   uri: file:///tmp/RtmpB5R0wj/soma-exp-pbmc-small/ms
+#>   uri: file:///tmp/RtmpULcDjK/soma-exp-pbmc-small/ms
 ```
 
 To use larger (or smaller) buffer sizes:
 
 ``` r
 ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes = as.character(2 * 1024**3)))
+#> Warning: SOMATileDBContext$new() was deprecated in tiledbsoma 2.3.0.
+#> ℹ Use `SOMAContext` instead.
+#> ℹ The deprecated feature was likely used in the R6 package.
+#>   Please report the issue at <https://github.com/r-lib/R6/issues>.
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 experiment <- SOMAExperimentOpen(experiment$uri, tiledbsoma_ctx = ctx)
+#> Warning: SOMAExperimentOpen(tiledbsoma_ctx) was deprecated in tiledbsoma 2.3.0.
+#> ℹ Use `context` instead.
+#> ℹ The deprecated feature was likely used in the tiledbsoma package.
+#>   Please report the issue at
+#>   <https://github.com/single-cell-data/TileDB-SOMA/issues>.
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 ```
 
 Alternatively, you can have in your environment
@@ -114,168 +129,21 @@ As a reminder `arrow:Table` can be easily cast into a `tibble`
 
 ``` r
 obs$to_data_frame()
-#>    soma_joinid    orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8
-#> 1            0 SeuratProject         70           47               0
-#> 2            1 SeuratProject         85           52               0
-#> 3            2 SeuratProject         87           50               1
-#> 4            3 SeuratProject        127           56               0
-#> 5            4 SeuratProject        173           53               0
-#> 6            5 SeuratProject         70           48               0
-#> 7            6 SeuratProject         64           36               0
-#> 8            7 SeuratProject         72           45               0
-#> 9            8 SeuratProject         52           36               0
-#> 10           9 SeuratProject        100           41               0
-#> 11          10 SeuratProject         62           31               0
-#> 12          11 SeuratProject        191           61               0
-#> 13          12 SeuratProject        101           41               0
-#> 14          13 SeuratProject         51           26               0
-#> 15          14 SeuratProject         99           45               0
-#> 16          15 SeuratProject        168           44               0
-#> 17          16 SeuratProject         67           33               0
-#> 18          17 SeuratProject        135           45               0
-#> 19          18 SeuratProject         79           43               0
-#> 20          19 SeuratProject        109           41               0
-#> 21          20 SeuratProject        298           65               1
-#> 22          21 SeuratProject        406           74               1
-#> 23          22 SeuratProject        213           48               1
-#> 24          23 SeuratProject        231           49               1
-#> 25          24 SeuratProject        463           77               1
-#> 26          25 SeuratProject         87           42               1
-#> 27          26 SeuratProject        327           62               1
-#> 28          27 SeuratProject        224           50               1
-#> 29          28 SeuratProject        361           76               1
-#> 30          29 SeuratProject        353           80               1
-#> 31          30 SeuratProject        246           59               0
-#> 32          31 SeuratProject        115           51               0
-#> 33          32 SeuratProject        189           53               0
-#> 34          33 SeuratProject        187           61               0
-#> 35          34 SeuratProject        156           48               0
-#> 36          35 SeuratProject        164           47               0
-#> 37          36 SeuratProject        221           67               0
-#> 38          37 SeuratProject        151           59               0
-#> 39          38 SeuratProject        126           53               0
-#> 40          39 SeuratProject        316           65               0
-#> 41          40 SeuratProject        156           60               0
-#> 42          41 SeuratProject        139           61               0
-#> 43          42 SeuratProject        108           44               0
-#> 44          43 SeuratProject         41           32               0
-#> 45          44 SeuratProject        146           47               0
-#> 46          45 SeuratProject        104           40               0
-#> 47          46 SeuratProject        126           48               0
-#> 48          47 SeuratProject         94           55               0
-#> 49          48 SeuratProject        204           52               0
-#> 50          49 SeuratProject         99           45               0
-#> 51          50 SeuratProject        371           75               1
-#> 52          51 SeuratProject        387           83               1
-#> 53          52 SeuratProject        139           50               1
-#> 54          53 SeuratProject         99           42               1
-#> 55          54 SeuratProject        443           77               1
-#> 56          55 SeuratProject        417           75               0
-#> 57          56 SeuratProject        502           81               1
-#> 58          57 SeuratProject        324           76               1
-#> 59          58 SeuratProject        292           71               1
-#> 60          59 SeuratProject        443           81               0
-#> 61          60 SeuratProject        787           88               0
-#> 62          61 SeuratProject        612           69               1
-#> 63          62 SeuratProject        286           68               0
-#> 64          63 SeuratProject        462           86               1
-#> 65          64 SeuratProject        872           96               1
-#> 66          65 SeuratProject        709           94               1
-#> 67          66 SeuratProject        745           84               1
-#> 68          67 SeuratProject        328           72               1
-#> 69          68 SeuratProject        389           73               1
-#> 70          69 SeuratProject        754           83               0
-#> 71          70 SeuratProject        212           38               0
-#> 72          71 SeuratProject        172           29               0
-#> 73          72 SeuratProject        168           37               0
-#> 74          73 SeuratProject        210           33               0
-#> 75          74 SeuratProject        228           39               0
-#> 76          75 SeuratProject        527           47               0
-#> 77          76 SeuratProject        202           30               0
-#> 78          77 SeuratProject        157           29               0
-#> 79          78 SeuratProject        150           30               0
-#> 80          79 SeuratProject        233           76               1
-#>    letter.idents groups RNA_snn_res.1         obs_id
-#> 1              A     g2             0 ATGCCAGAACGACT
-#> 2              A     g1             0 CATGGCCTGTGCAT
-#> 3              B     g2             0 GAACCTGATGAACC
-#> 4              A     g2             0 TGACTGGATTCTCA
-#> 5              A     g2             0 AGTCAGACTGCACA
-#> 6              A     g1             0 TCTGATACACGTGT
-#> 7              A     g1             0 TGGTATCTAAACAG
-#> 8              A     g1             0 GCAGCTCTGTTTCT
-#> 9              A     g1             0 GATATAACACGCAT
-#> 10             A     g1             0 AATGTTGACAGTCA
-#> 11             A     g2             2 AGGTCATGAGTGTC
-#> 12             A     g1             2 AGAGATGATCTCGC
-#> 13             A     g2             2 GGGTAACTCTAGTG
-#> 14             A     g2             2 CATGAGACACGGGA
-#> 15             A     g2             2 TACGCCACTCCGAA
-#> 16             A     g1             2 CTAAACCTGTGCAT
-#> 17             A     g2             2 GTAAGCACTCATTC
-#> 18             A     g1             2 TTGGTACTGAATCC
-#> 19             A     g1             2 CATCATACGGAGCA
-#> 20             A     g2             2 TACATCACGCTAAC
-#> 21             B     g1             1 TTACCATGAATCGC
-#> 22             B     g1             1 ATAGGAGAAACAGA
-#> 23             B     g2             1 GCGCACGACTTTAC
-#> 24             B     g2             1 ACTCGCACGAAAGT
-#> 25             B     g1             1 ATTACCTGCCTTAT
-#> 26             B     g2             1 CCCAACTGCAATCG
-#> 27             B     g2             1 AAATTCGAATCACG
-#> 28             B     g2             1 CCATCCGATTCGCC
-#> 29             B     g2             1 TCCACTCTGAGCTT
-#> 30             B     g1             1 CATCAGGATGCACA
-#> 31             A     g1             0 CTAAACCTCTGACA
-#> 32             A     g1             2 GATAGAGAAGGGTG
-#> 33             A     g1             0 CTAACGGAACCGAT
-#> 34             A     g2             0 AGATATACCCGTAA
-#> 35             A     g1             0 TACTCTGAATCGAC
-#> 36             A     g1             0 GCGCATCTTGCTCC
-#> 37             A     g2             0 GTTGACGATATCGG
-#> 38             A     g1             0 ACAGGTACTGGTGT
-#> 39             A     g1             0 GGCATATGCTTATC
-#> 40             A     g2             0 CATTACACCAACTG
-#> 41             A     g1             0 TAGGGACTGAACTC
-#> 42             A     g2             2 GCTCCATGAGAAGT
-#> 43             A     g2             0 TACAATGATGCTAG
-#> 44             A     g2             0 CTTCATGACCGAAT
-#> 45             A     g1             2 CTGCCAACAGGAGC
-#> 46             A     g2             2 TTGCATTGAGCTAC
-#> 47             A     g1             0 AAGCAAGAGCTTAG
-#> 48             A     g2             0 CGGCACGAACTCAG
-#> 49             A     g1             0 GGTGGAGATTACTC
-#> 50             A     g2             0 GGCCGATGTACTCT
-#> 51             B     g1             1 CGTAGCCTGTATGC
-#> 52             B     g2             1 TGAGCTGAATGCTG
-#> 53             B     g2             2 CCTATAACGAGACG
-#> 54             B     g2             1 ATAAGTTGGTACGT
-#> 55             B     g1             1 AAGCGACTTTGACG
-#> 56             A     g1             1 ACCAGTGAATACCG
-#> 57             B     g1             1 ATTGCACTTGCTTT
-#> 58             B     g1             1 CTAGGTGATGGTTG
-#> 59             B     g2             1 GCACTAGACCTTTA
-#> 60             A     g1             0 CATGCGCTAGTCAC
-#> 61             A     g1             2 TTGAGGACTACGCA
-#> 62             B     g1             1 ATACCACTCTAAGC
-#> 63             A     g1             2 CATATAGACTAAGC
-#> 64             B     g1             1 TTTAGCTGTACTCT
-#> 65             B     g1             2 GACATTCTCCACCT
-#> 66             B     g2             1 ACGTGATGCCATGA
-#> 67             B     g2             1 ATTGTAGATTCCCG
-#> 68             B     g1             1 GATAGAGATCACGA
-#> 69             B     g1             1 AATGCGTGGACGGA
-#> 70             A     g1             2 GCGTAAACACGGTT
-#> 71             A     g2             0 ATTCAGCTCATTGG
-#> 72             A     g1             0 GGCATATGGGGAGT
-#> 73             A     g2             0 ATCATCTGACACCA
-#> 74             A     g2             0 GTCATACTTCGCCT
-#> 75             A     g1             0 TTACGTACGTTCAG
-#> 76             A     g1             0 GAGTTGTGGTAGCT
-#> 77             A     g2             0 GACGCTCTCTCTCG
-#> 78             A     g1             0 AGTCTTACTTCGGA
-#> 79             A     g2             0 GGAACACTTCAGAC
-#> 80             B     g1             1 CTTGATTGATCTTC
+#> # A data frame: 80 × 9
+#>    soma_joinid orig.ident  nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents
+#>          <int> <fct>            <dbl>        <int> <fct>           <fct>        
+#>  1           0 SeuratProj…         70           47 0               A            
+#>  2           1 SeuratProj…         85           52 0               A            
+#>  3           2 SeuratProj…         87           50 1               B            
+#>  4           3 SeuratProj…        127           56 0               A            
+#>  5           4 SeuratProj…        173           53 0               A            
+#>  6           5 SeuratProj…         70           48 0               A            
+#>  7           6 SeuratProj…         64           36 0               A            
+#>  8           7 SeuratProj…         72           45 0               A            
+#>  9           8 SeuratProj…         52           36 0               A            
+#> 10           9 SeuratProj…        100           41 0               A            
+#> # ℹ 70 more rows
+#> # ℹ 3 more variables: groups <chr>, RNA_snn_res.1 <fct>, obs_id <chr>
 ```
 
 Alternatively, you can use the iterator, which retrieves data in chunks
@@ -417,33 +285,20 @@ includes the filtered observations.
 ``` r
 obs <- query$obs(column_names = c("obs_id", "nCount_RNA"))$concat()
 obs$to_data_frame()
-#>            obs_id nCount_RNA
-#> 1  TGACTGGATTCTCA        127
-#> 2  AGTCAGACTGCACA        173
-#> 3  AGAGATGATCTCGC        191
-#> 4  GGGTAACTCTAGTG        101
-#> 5  CTAAACCTGTGCAT        168
-#> 6  TTGGTACTGAATCC        135
-#> 7  TACATCACGCTAAC        109
-#> 8  TTACCATGAATCGC        298
-#> 9  ATAGGAGAAACAGA        406
+#> # A data frame: 26 × 2
+#>    obs_id         nCount_RNA
+#>    <chr>               <dbl>
+#>  1 TGACTGGATTCTCA        127
+#>  2 AGTCAGACTGCACA        173
+#>  3 AGAGATGATCTCGC        191
+#>  4 GGGTAACTCTAGTG        101
+#>  5 CTAAACCTGTGCAT        168
+#>  6 TTGGTACTGAATCC        135
+#>  7 TACATCACGCTAAC        109
+#>  8 TTACCATGAATCGC        298
+#>  9 ATAGGAGAAACAGA        406
 #> 10 GCGCACGACTTTAC        213
-#> 11 ACTCGCACGAAAGT        231
-#> 12 ATTACCTGCCTTAT        463
-#> 13 AAATTCGAATCACG        327
-#> 14 CCATCCGATTCGCC        224
-#> 15 TCCACTCTGAGCTT        361
-#> 16 CATCAGGATGCACA        353
-#> 17 CTAAACCTCTGACA        246
-#> 18 GATAGAGAAGGGTG        115
-#> 19 CTAACGGAACCGAT        189
-#> 20 AGATATACCCGTAA        187
-#> 21 TACTCTGAATCGAC        156
-#> 22 GCGCATCTTGCTCC        164
-#> 23 GTTGACGATATCGG        221
-#> 24 ACAGGTACTGGTGT        151
-#> 25 GGCATATGCTTATC        126
-#> 26 CATTACACCAACTG        316
+#> # ℹ 16 more rows
 ```
 
 As well as the X matrix in two different formats:

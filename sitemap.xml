@@ -31,6 +31,7 @@
 <url><loc>/reference/SOMACollectionBase.html</loc></url>
 <url><loc>/reference/SOMACollectionCreate.html</loc></url>
 <url><loc>/reference/SOMACollectionOpen.html</loc></url>
+<url><loc>/reference/SOMAContext.html</loc></url>
 <url><loc>/reference/SOMAContextBase.html</loc></url>
 <url><loc>/reference/SOMADataFrame.html</loc></url>
 <url><loc>/reference/SOMADataFrameCreate.html</loc></url>
@@ -60,8 +61,10 @@
 <url><loc>/reference/TableReadIter.html</loc></url>
 <url><loc>/reference/TileDBCreateOptions.html</loc></url>
 <url><loc>/reference/example-datasets.html</loc></url>
+<url><loc>/reference/get_default_context.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/matrixZeroBasedView.html</loc></url>
+<url><loc>/reference/set_default_context.html</loc></url>
 <url><loc>/reference/set_log_level.html</loc></url>
 <url><loc>/reference/show_package_versions.html</loc></url>
 <url><loc>/reference/soma_context.html</loc></url>

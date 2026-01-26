@@ -22,6 +22,8 @@
 - [`SOMACollectionOpen()`](SOMACollectionOpen.md) : Open a SOMA
   Collection
 
+- [`SOMAContext`](SOMAContext.md) : SOMA Context
+
 - [`SOMADataFrame`](SOMADataFrame.md) : SOMADataFrame
 
 - [`SOMADataFrameCreate()`](SOMADataFrameCreate.md) : Create a SOMA Data
@@ -78,8 +80,14 @@
   [`extract_dataset()`](example-datasets.md)
   [`load_dataset()`](example-datasets.md) : SOMA Example Datasets
 
+- [`get_default_context()`](get_default_context.md) : Get the Default
+  SOMA Context
+
 - [`matrixZeroBasedView`](matrixZeroBasedView.md) : Zero-based Wrapper
   for Sparse Matrices
+
+- [`set_default_context()`](set_default_context.md) : Set the Default
+  Global Context
 
 - [`set_log_level()`](set_log_level.md) : Set TileDB-SOMA Logging Level
 

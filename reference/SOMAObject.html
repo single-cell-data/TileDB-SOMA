@@ -11,7 +11,7 @@ SOMAArrayBase and SOMACollectionBase classes.
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ SOMAArrayBase and SOMACollectionBase classes.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>The SOMA Object Base Class</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/SOMAObject.R" class="external-link"><code>R/SOMAObject.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/SOMAObject.R" class="external-link"><code>R/SOMAObject.R</code></a></small>
       <div class="d-none name"><code>SOMAObject.Rd</code></div>
     </div>
 
@@ -64,6 +64,10 @@ SOMAArrayBase and SOMACollectionBase classes.
     <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
     <p></p><div class="r6-active-bindings"><dl><dt><code>platform_config</code></dt>
 <dd><p>Platform configuration</p></dd>
+
+
+<dt><code>context</code></dt>
+<dd><p>SOMAContext context object for TileDB operations</p></dd>
 
 
 <dt><code>tiledbsoma_ctx</code></dt>
@@ -114,7 +118,7 @@ SOMAArrayBase and SOMACollectionBase classes.
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledb_timestamp <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  soma_context <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -133,7 +137,7 @@ SOMAArrayBase and SOMACollectionBase classes.
 
 
 <dt><code>tiledbsoma_ctx</code></dt>
-<dd><p>Optional TileDB SOMA context</p></dd>
+<dd><p>Optional (DEPRECATED) TileDB SOMA context</p></dd>
 
 
 <dt><code>tiledb_timestamp</code></dt>
@@ -141,9 +145,11 @@ SOMAArrayBase and SOMACollectionBase classes.
 to open the object at</p></dd>
 
 
-<dt><code>soma_context</code></dt>
-<dd><p>A SOMA context as created by
-<code><a href="soma_context.html">soma_context()</a></code></p></dd>
+<dt><code>context</code></dt>
+<dd><p>Optional <code>SOMAContext</code> object used for TileDB operations.
+If a context is not provided, then the default context will be used. Call
+<code>set_default_context</code> once before other SOMA operations to configure
+the default context.</p></dd>
 
 
 </dl><p></p></div>

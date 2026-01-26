@@ -192,6 +192,10 @@ The objects of this class are cloneable with this method.
 
 ``` r
 (ctx <- SOMATileDBContext$new())
+#> Warning: SOMATileDBContext$new() was deprecated in tiledbsoma 2.3.0.
+#> ℹ Use `SOMAContext` instead.
+#> ℹ The deprecated feature was likely used in the R6 package.
+#>   Please report the issue at <https://github.com/r-lib/R6/issues>.
 #> <SOMATileDBContext>
 #>   config.env_var_prefix: TILEDB_
 #>   config.logging_format: DEFAULT
@@ -354,6 +358,6 @@ ctx$get("sm.mem.reader.sparse_global_order.ratio_array_data")
 ctx$to_tiledb_context()
 #> An object of class "tiledb_ctx"
 #> Slot "ptr":
-#> <pointer: 0x559aecccab80>
+#> <pointer: 0x558437c7f100>
 #> 
 ```

@@ -11,7 +11,8 @@ SOMAMeasurementCreate(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  context = NULL
 )
 ```
 
@@ -37,11 +38,18 @@ SOMAMeasurementCreate(
 
 - tiledbsoma_ctx:
 
-  Optional SOMATileDBContext.
+  Optional (DEPRECATED) SOMATileDBContext.
 
 - tiledb_timestamp:
 
   Optional Datetime (POSIXct) for TileDB timestamp.
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -60,7 +68,7 @@ sch <- arrow::infer_schema(var)
 
 (ms <- SOMAMeasurementCreate(uri))
 #> <SOMAMeasurement>
-#>   uri: /tmp/Rtmpza3ZZa/soma-measurement2be27a617bc4
+#>   uri: /tmp/RtmpbAgXbM/soma-measurement28465f692fe6
 sdf <- ms$add_new_dataframe(
   "var",
   sch,
@@ -73,10 +81,10 @@ ms$close()
 
 (ms <- SOMAMeasurementOpen(uri))
 #> <SOMAMeasurement>
-#>   uri: /tmp/Rtmpza3ZZa/soma-measurement2be27a617bc4
+#>   uri: /tmp/RtmpbAgXbM/soma-measurement28465f692fe6
 ms$var
 #> <SOMADataFrame>
-#>   uri: file:///tmp/Rtmpza3ZZa/soma-measurement2be27a617bc4/var
+#>   uri: file:///tmp/RtmpbAgXbM/soma-measurement28465f692fe6/var
 #>   dimensions: soma_joinid 
 #>   attributes: var_id 
 ```

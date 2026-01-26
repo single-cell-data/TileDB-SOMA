@@ -14,7 +14,7 @@ list_datasets()
 
 extract_dataset(name, dir = tempdir())
 
-load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
+load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL, context = NULL)
 ```
 
 ## Arguments
@@ -30,7 +30,14 @@ load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
 
 - tiledbsoma_ctx:
 
-  Optional TileDB “Context” object, which defaults to `NULL`.
+  Optional (DEPRECATED) TileDB “Context” object that defaults to `NULL`.
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 ## Value
 
@@ -64,5 +71,5 @@ dir <- withr::local_tempfile(pattern = "pbmc_small")
 dir.create(dir, recursive = TRUE)
 (exp <- load_dataset("soma-exp-pbmc-small", dir))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpza3ZZa/pbmc_small2be22c83f46e/soma-exp-pbmc-small
+#>   uri: /tmp/RtmpbAgXbM/pbmc_small284672471e06/soma-exp-pbmc-small
 ```

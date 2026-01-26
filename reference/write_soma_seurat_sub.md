@@ -14,6 +14,7 @@ write_soma(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -26,6 +27,7 @@ write_soma(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -40,6 +42,7 @@ write_soma(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -52,6 +55,7 @@ write_soma(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  context = NULL,
   relative = TRUE
 )
 
@@ -64,6 +68,7 @@ write_soma(
   ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  context = NULL,
   relative = TRUE
 )
 ```
@@ -108,7 +113,14 @@ write_soma(
 
 - tiledbsoma_ctx:
 
-  Optional [`SOMATileDBContext`](SOMATileDBContext.md).
+  Optional (DEPRECATED) [`SOMATileDBContext`](SOMATileDBContext.md).
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 - relative:
 
@@ -327,7 +339,7 @@ col <- SOMACollectionCreate(uri)
 #>  PPBP, IGLL5, VDAC3, CD1C, AKR1C3, PF4, MYL9, GNLY, TREML1, CA2 
 (ms <- write_soma(assay, "RNA", soma_parent = col))
 #> <SOMAMeasurement>
-#>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA
+#>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA
 #>   arrays: var 
 #>   groups: X 
 
@@ -340,7 +352,7 @@ col <- SOMACollectionCreate(uri)
 #>  data, counts, scale.data 
 (ms5 <- write_soma(assay5, "RNA5", soma_parent = col))
 #> <SOMAMeasurement>
-#>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA5
+#>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA5
 #>   arrays: var 
 #>   groups: X 
 
@@ -351,7 +363,7 @@ ms5$close()
 write_soma(tsne, soma_parent = ms)
 ms$obsm
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA/obsm
+#>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA/obsm
 #>   arrays: X_tsne 
 
 # Write a Seurat Graph
@@ -360,7 +372,7 @@ ms$obsm
 write_soma(snn, "snn", soma_parent = ms)
 ms$obsp
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/RNA/obsp
+#>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA/obsp
 #>   arrays: snn 
 
 # Write a Seurat command log
@@ -374,11 +386,11 @@ ms$obsp
 write_soma(cmd, "NormalizeData.RNA", soma_parent = col)
 (logs <- col$get("seurat_commands"))
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/seurat_commands
+#>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/seurat_commands
 #>   arrays: NormalizeData.RNA 
 logs$get("NormalizeData.RNA")
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpza3ZZa/seurat-sub2be2369ff9d4/seurat_commands/NormalizeData.RNA
+#>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/seurat_commands/NormalizeData.RNA
 #>   dimensions: soma_joinid 
 #>   attributes: values 
 

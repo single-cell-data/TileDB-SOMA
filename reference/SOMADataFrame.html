@@ -13,7 +13,7 @@ other objects, such as SOMASparseNDArray (lifecycle: maturing)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ other objects, such as SOMASparseNDArray (lifecycle: maturing)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrame.Rd</code></div>
     </div>
 
@@ -140,14 +140,9 @@ column. For example, if there is a single int64-valued index column
 <code>list(soma_joinid=c(100, 200))</code> to indicate that values between 100
 and 200, inclusive, can be stored in that column.  If provided, this
 sequence must have the same length as <code>index_column_names</code>, and the
-index-column domain will be as specified.  If omitted entirely, or if
-<code>NULL</code> in a given dimension, the corresponding index-column domain
-will use an empty range, and data writes after that will fail with
-“A range was set outside of the current domain”. Unless you have
-a particular reason not to, you should always provide the desired
-<code>domain</code> at create time: this is an optional but strongly
-recommended parameter. See also <code>change_domain</code> which allows you to
-expand the domain after create.</p></dd>
+index-column domain will be as specified. Omitting or setting the domain
+to <code>NULL</code> is deprecated. See also <code>change_domain</code> which allows
+you to expand the domain after create.</p></dd>
 
 
 <dt><code>platform_config</code></dt>
@@ -516,7 +511,7 @@ detected, else a description of the error. Otherwise, invisibly returns
 <span class="r-out co"><span class="r-pr">#&gt;</span> nCount: int32</span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADataFrameCreate.html">SOMADataFrameCreate</a></span><span class="op">(</span><span class="va">uri</span>, <span class="va">sch</span>, domain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_joinid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-data-frame2be25703bcdc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-data-frame28463e30f110</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: group, nCount </span>
 <span class="r-in"><span><span class="va">sdf</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/as_arrow_table.html" class="external-link">as_arrow_table</a></span><span class="op">(</span><span class="va">df</span>, schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -524,7 +519,7 @@ detected, else a description of the error. Otherwise, invisibly returns
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADataFrameOpen.html">SOMADataFrameOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-data-frame2be25703bcdc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-data-frame28463e30f110</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: group, nCount </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">sdf</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

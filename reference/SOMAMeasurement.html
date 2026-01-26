@@ -15,7 +15,7 @@ Active Bindings below for details) (lifecycle: maturing)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ Active Bindings below for details) (lifecycle: maturing)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA Measurement</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.2.0/R/SOMAMeasurement.R" class="external-link"><code>R/SOMAMeasurement.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/SOMAMeasurement.R" class="external-link"><code>R/SOMAMeasurement.R</code></a></small>
       <div class="d-none name"><code>SOMAMeasurement.Rd</code></div>
     </div>
 
@@ -75,6 +75,21 @@ configuration (see <code><a href="PlatformConfig.html">PlatformConfig</a></code>
 default platform configuration by passing a custom configuration to the
 <code>platform_config</code> argument.</p>
     </div>
+    <div class="section level2">
+    <h2 id="carrara-tiledb-v-behavior">Carrara (TileDB v3) behavior<a class="anchor" aria-label="anchor" href="#carrara-tiledb-v-behavior"></a></h2>
+
+
+
+<p>When working with Carrara URIs (<code>tiledb://workspace/teamspace/...</code>), child
+objects created at a URI nested under a parent collection are <strong>automatically
+added</strong> as members of the parent. This means:</p>
+<ul><li><p>You do not need to call <code>add_new_collection()</code> after creating a child
+at a nested URI—the child is already a member.</p></li>
+<li><p>For backward compatibility, calling <code>add_new_collection()</code> on an
+already-registered child is a <strong>no-op</strong> and will not cause an error.</p></li>
+<li><p>The member name must match the relative URI segment (e.g., creating
+at <code>parent_uri/child</code> automatically adds the child with key <code>"child"</code>).</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="super-classes">Super classes<a class="anchor" aria-label="anchor" href="#super-classes"></a></h2>
     <p><code><a href="SOMAObject.html">tiledbsoma::SOMAObject</a></code> -&gt; <code><a href="SOMACollectionBase.html">tiledbsoma::SOMACollectionBase</a></code> -&gt; <code>SOMAMeasurement</code></p>
@@ -183,7 +198,7 @@ variable axis and indexed with <code>[varid_1, varid_2]</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMAMeasurementCreate.html">SOMAMeasurementCreate</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-measurement2be22e42a1fa</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-measurement284642c41e9c</span>
 <span class="r-in"><span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="va">ms</span><span class="op">$</span><span class="fu">add_new_dataframe</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"var"</span>,</span></span>
 <span class="r-in"><span>  <span class="va">sch</span>,</span></span>
@@ -196,10 +211,10 @@ variable axis and indexed with <code>[varid_1, varid_2]</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMAMeasurementOpen.html">SOMAMeasurementOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpza3ZZa/soma-measurement2be22e42a1fa</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-measurement284642c41e9c</span>
 <span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">var</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: file:///tmp/Rtmpza3ZZa/soma-measurement2be22e42a1fa/var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: file:///tmp/RtmpbAgXbM/soma-measurement284642c41e9c/var</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: var_id </span>
 <span class="r-in"><span></span></span>

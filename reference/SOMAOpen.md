@@ -11,6 +11,7 @@ SOMAOpen(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  context = NULL,
   tiledb_timestamp = NULL
 )
 ```
@@ -31,7 +32,14 @@ SOMAOpen(
 
 - tiledbsoma_ctx:
 
-  Optional SOMATileDBContext.
+  Optional (DEPRECATED) SOMATileDBContext.
+
+- context:
+
+  Optional `SOMAContext` object used for TileDB operations. If a context
+  is not provided, then the default context will be used. Call
+  `set_default_context` once before other SOMA operations to configure
+  the default context.
 
 - tiledb_timestamp:
 
@@ -52,13 +60,13 @@ dir.create(dir, recursive = TRUE)
 uri <- extract_dataset("soma-exp-pbmc-small", dir)
 (exp <- SOMAOpen(uri))
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmpza3ZZa/soma-open2be263a91439/soma-exp-pbmc-small
+#>   uri: /tmp/RtmpbAgXbM/soma-open28467a7c40f6/soma-exp-pbmc-small
 
 
 uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs", dir)
 (obs <- SOMAOpen(uri))
 #> <SOMADataFrame>
-#>   uri: /tmp/Rtmpza3ZZa/soma-open2be263a91439/soma-dataframe-pbmc3k-processed-obs
+#>   uri: /tmp/RtmpbAgXbM/soma-open28467a7c40f6/soma-dataframe-pbmc3k-processed-obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, seurat_annotations, percent.mt, RNA_snn... 
 ```

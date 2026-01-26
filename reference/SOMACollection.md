@@ -19,6 +19,21 @@ platform configuration (see [`PlatformConfig`](PlatformConfig.md)).
 However, the user can override the default platform configuration by
 passing a custom configuration to the `platform_config` argument.
 
+## Carrara (TileDB v3) behavior
+
+When working with Carrara URIs (`tiledb://workspace/teamspace/...`),
+child objects created at a URI nested under a parent collection are
+**automatically added** as members of the parent. This means:
+
+- You do not need to call `add_new_collection()` after creating a child
+  at a nested URI—the child is already a member.
+
+- For backward compatibility, calling `add_new_collection()` on an
+  already-registered child is a **no-op** and will not cause an error.
+
+- The member name must match the relative URI segment (e.g., creating at
+  `parent_uri/child` automatically adds the child with key `"child"`).
+
 ## Super classes
 
 [`tiledbsoma::SOMAObject`](SOMAObject.md) -\>
@@ -78,17 +93,17 @@ uri <- withr::local_tempfile(pattern = "soma-collection")
 
 (col <- SOMACollectionCreate(uri))
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/soma-collection2be2122ad419
+#>   uri: /tmp/RtmpbAgXbM/soma-collection28465711d65a
 col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/Rtmpza3ZZa/soma-collection2be2122ad419/sparse
+#>   uri: /tmp/RtmpbAgXbM/soma-collection28465711d65a/sparse
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 col$close()
 
 (col <- SOMACollectionOpen(uri))
 #> <SOMACollection>
-#>   uri: /tmp/Rtmpza3ZZa/soma-collection2be2122ad419
+#>   uri: /tmp/RtmpbAgXbM/soma-collection28465711d65a
 col$names()
 #> [1] "sparse"
 ```
