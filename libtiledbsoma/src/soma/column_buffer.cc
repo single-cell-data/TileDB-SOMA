@@ -300,7 +300,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
         name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered);
 }
 
-void ColumnBuffer::resize(uint64_t num_bytes, uint64_t num_cells, bool preserve_data) {
+void ColumnBuffer::resize(const uint64_t num_bytes, const uint64_t num_cells, const bool preserve_data) {
     std::vector<std::byte> data_buffer(num_bytes);
     std::vector<uint64_t> offsets_buffer;
     std::vector<uint8_t> validity_buffer;

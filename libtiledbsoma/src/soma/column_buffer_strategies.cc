@@ -22,7 +22,7 @@ BasicAllocationStrategy::BasicAllocationStrategy(const tiledb::Array& array) {
 }
 
 std::pair<size_t, size_t> BasicAllocationStrategy::get_buffer_sizes(
-    std::variant<tiledb::Attribute, tiledb::Dimension> column) const {
+    const std::variant<tiledb::Attribute, tiledb::Dimension> column) const {
     return std::visit(
         [&](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
@@ -109,7 +109,7 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
 }
 
 std::pair<size_t, size_t> MemoryPoolAllocationStrategy::get_buffer_sizes(
-    std::variant<tiledb::Attribute, tiledb::Dimension> column) const {
+    const std::variant<tiledb::Attribute, tiledb::Dimension> column) const {
     return std::visit(
         [&](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
