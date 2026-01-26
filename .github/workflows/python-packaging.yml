@@ -103,7 +103,7 @@ jobs:
         # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
         if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
         run: |
-          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
+          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build zip" >> $GITHUB_ENV
           echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV
           echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
 
