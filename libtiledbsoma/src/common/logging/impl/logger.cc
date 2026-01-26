@@ -58,7 +58,7 @@ Logger::Logger() {
         console_sink->set_color(spdlog::level::critical, console_sink->red_bold);
 #endif
     }
-    set_level("INFO");
+    set_level("WARN");
     // Examples:
     // SPDLOG_LEVEL=trace name-of-program
     // SPDLOG_LEVEL=tiledbsoma=trace name-of-program
