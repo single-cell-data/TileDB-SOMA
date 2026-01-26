@@ -50,7 +50,6 @@ Imports:
     stats,
     tiledb (>= 0.34.0),
     tools,
-    lifecycle,
     utils
 LinkingTo:
     nanoarrow,
