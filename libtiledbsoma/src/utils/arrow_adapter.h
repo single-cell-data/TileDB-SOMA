@@ -16,6 +16,8 @@
 
 #include <any>
 #include <concepts>
+#include <future>
+#include <span>
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -33,7 +35,8 @@ namespace tiledbsoma {
 using namespace tiledb;
 using json = nlohmann::json;
 
-class ColumnBuffer;
+class ReadColumnBuffer;
+class ArrayBuffers;
 class SOMACoordinateSpace;
 
 /**
@@ -44,26 +47,32 @@ class SOMACoordinateSpace;
  * automatically decrement the use count of the ColumnBuffer's shared pointer.
  *
  */
-struct ArrowBuffer {
-    ArrowBuffer(ColumnBuffer& buffer, bool large_offsets = true);
-    ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
+// struct ArrowBuffer {
+//     ArrowBuffer(CArrayColumnBuffer* buffer, bool large_offsets = true);
+//     ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
+//     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
 
-    std::vector<std::byte> data_;
-    std::vector<int64_t> large_offsets_;
-    std::vector<int32_t> small_offsets_;
-    std::vector<std::byte> validity_;
+//     std::span<std::byte> data_;
+//     std::span<int64_t> large_offsets_;
+//     std::span<int32_t> small_offsets_;
+//     std::span<uint8_t> validity_;
 
-    size_t length;
-    std::string name;
-};
+//     size_t length;
+//     std::string name;
 
-struct PrivateArrowBuffer {
-    PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
-        : buffer_(buffer) {
-    }
+//    private:
+//     std::unique_ptr<std::byte[]> data_buffer_;
+//     std::unique_ptr<std::byte[]> offset_buffer_;
+//     std::unique_ptr<std::byte[]> validity_buffer_;
+// };
 
-    std::shared_ptr<ArrowBuffer> buffer_;
-};
+// struct PrivateArrowBuffer {
+//     PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
+//         : buffer_(buffer) {
+//     }
+
+//     std::shared_ptr<ArrowBuffer> buffer_;
+// };
 
 template <typename T>
 using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
@@ -105,13 +114,23 @@ class ArrowAdapter {
     static bool _isstr(const char* format);
 
     /**
+     * @brief Convert ArrayBuffer to an list of Arrow arrays.
+     *
+     * @return std::vector<std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>>
+     */
+    static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
+        std::shared_ptr<ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
+
+    /**
      * @brief Convert ColumnBuffer to an Arrow array.
      *
      * @return std::pair<std::unique_ptr<ArrowArray>,
      * std::unique_ptr<ArrowSchema>>
      */
     static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ColumnBuffer> column, bool downcast_dict_of_large_var = false);
+        std::shared_ptr<ReadColumnBuffer> column,
+        const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
+        bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *

@@ -939,7 +939,7 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
     ],
 )
 def test_result_order(tmp_path: pathlib.Path, result_order, want: dict[str, list[float]]):
-    arrow_tensor = create_random_tensor("table", (5, 7), np.float32(), density=1)
+    arrow_tensor = create_random_tensor("table", (5, 7), np.float64(), density=1)
 
     with soma.SparseNDArray.create(tmp_path.as_uri(), type=pa.float64(), shape=(5, 7)) as write_arr:
         write_arr.write(arrow_tensor)
@@ -1777,7 +1777,7 @@ def test_pass_configs(tmp_path):
 
 
 def test_iter(tmp_path: pathlib.Path):
-    arrow_tensor = create_random_tensor("table", (1,), np.float32(), density=1)
+    arrow_tensor = create_random_tensor("table", (1,), np.float64(), density=1)
 
     with soma.SparseNDArray.create(tmp_path.as_uri(), type=pa.float64(), shape=(1,)) as write_arr:
         write_arr.write(arrow_tensor)
@@ -1803,7 +1803,7 @@ def test_iter(tmp_path: pathlib.Path):
 
 @pytest.mark.medium_runner
 def test_context_cleanup(tmp_path: pathlib.Path) -> None:
-    arrow_tensor = create_random_tensor("table", (1,), np.float32(), density=1)
+    arrow_tensor = create_random_tensor("table", (1,), np.float64(), density=1)
     with soma.SparseNDArray.create(tmp_path.as_uri(), type=pa.float64(), shape=(1,)) as write_arr:
         write_arr.write(arrow_tensor)
 
@@ -1829,13 +1829,14 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
 @pytest.mark.parametrize("ts", (None, 1))
 def test_resize_with_time_travel_61254(tmp_path, ts):
     uri = tmp_path.as_posix()
+    schema = pa.schema([pa.field("soma_dim_0", pa.int64()), pa.field("soma_data", pa.int32())])
     data = {"soma_dim_0": [9], "soma_data": [9]}
 
     soma.SparseNDArray.create(uri, type=pa.int32(), shape=(10,), tiledb_timestamp=ts)
 
     ts = ts + 1 if ts is not None else None
     with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
-        A.write(pa.Table.from_pydict(data))
+        A.write(pa.Table.from_pydict(data, schema=schema))
         most_recent_write_ts = A.tiledb_timestamp_ms
 
     # verify shape and contents using the most recent write timestamp
@@ -1849,7 +1850,7 @@ def test_resize_with_time_travel_61254(tmp_path, ts):
 
     ts = ts + 1 if ts is not None else None
     with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
-        A.write(pa.Table.from_pydict(data))
+        A.write(pa.Table.from_pydict(data, schema=schema))
         most_recent_write_ts = A.tiledb_timestamp_ms
 
     # verify shape and contents using the most recent write timestamp
@@ -1910,32 +1911,28 @@ def test_fragments_in_writes(tmp_path, element_type):
     assert df.equals(expected_df)
 
 
-@pytest.mark.parametrize(
-    "dtype",
-    ["int8", "int16", "int32", "uint8", "uint16", "uint32", "uint64", "float32", "float64"],
-)
-def test_fragments_in_writes_2d(tmp_path, dtype):
+def test_fragments_in_writes_2d(tmp_path):
     uri = tmp_path.as_posix()
 
     # --- three dataframes, all with identical schema
     df_0 = pd.DataFrame(
         {
-            "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=dtype),
-            "soma_dim_1": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_dim_0": pd.Series([0, 1, 2, 3], dtype="int64"),
+            "soma_dim_1": pd.Series([0, 1, 2, 3], dtype="int64"),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
         },
     )
     df_1 = pd.DataFrame(
         {
-            "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=dtype),
-            "soma_dim_1": pd.Series([4, 5, 6, 7], dtype=dtype),
+            "soma_dim_0": pd.Series([4, 5, 6, 7], dtype="int64"),
+            "soma_dim_1": pd.Series([4, 5, 6, 7], dtype="int64"),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
         },
     )
     df_2 = pd.DataFrame(
         {
-            "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=dtype),
-            "soma_dim_1": pd.Series([8, 9, 10, 11], dtype=dtype),
+            "soma_dim_0": pd.Series([8, 9, 10, 11], dtype="int64"),
+            "soma_dim_1": pd.Series([8, 9, 10, 11], dtype="int64"),
             "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
         },
     )

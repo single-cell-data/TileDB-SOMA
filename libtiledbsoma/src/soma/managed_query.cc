@@ -150,18 +150,18 @@ void ManagedQuery::setup_read() {
     if (!buffers_) {
         if (ArrayBuffers::use_memory_pool(array_)) {
             buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
-            for (auto& name : columns_) {
-                LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
-                buffers_->at(name)->attach(*query_);
-            }
         } else {
             buffers_ = std::make_shared<ArrayBuffers>();
             for (auto& name : columns_) {
                 LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
-                buffers_->emplace(name, ColumnBuffer::create(array_, name));
-                buffers_->at(name)->attach(*query_);
+                buffers_->emplace(name, VectorColumnBuffer::create(array_, name));
             }
         }
+    }
+
+    for (auto& name : columns_) {
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
+        buffers_->at(name)->attach(*query_);
     }
 }
 
@@ -260,7 +260,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
-        num_cells = buffers_->at(name)->update_size(*query_);
+        num_cells = buffers_->at<ReadColumnBuffer>(name)->update_size(*query_);
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
@@ -440,7 +440,7 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
-        num_cells = buffers_->at(name)->update_size(*query_);
+        num_cells = buffers_->at<ReadColumnBuffer>(name)->update_size(*query_);
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
@@ -628,7 +628,6 @@ void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* arra
     // to the associated dictionary values and set the buffers to use the
     // dictionary values to write to disk. Note the specialized templates for
     // string and Boolean types below
-
     auto value_array = array->dictionary;
 
     T* valbuf;
@@ -637,21 +636,57 @@ void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* arra
     } else {
         valbuf = (T*)value_array->buffers[1];
     }
-    std::vector<T> values(valbuf, valbuf + value_array->length);
 
-    std::vector<int64_t> indexes = _get_index_vector(schema, array);
+    std::span<const T> values(valbuf, value_array->length);
 
-    std::vector<T> index_to_value;
-    for (auto i : indexes) {
-        index_to_value.push_back(values[i]);
+    std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(array->length * sizeof(T));
+    std::span<T> data_view(reinterpret_cast<T*>(data_buffer.get()), array->length);
+
+    auto extract_values = [&]<typename IndexType>() {
+        std::span<const IndexType> indices(reinterpret_cast<const IndexType*>(array->buffers[1]), array->length);
+
+        for (size_t i = 0; i < indices.size(); ++i) {
+            data_view[i] = values[indices[i]];
+        }
+    };
+
+    switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+        case TILEDB_INT8:
+            extract_values.template operator()<int8_t>();
+            break;
+        case TILEDB_UINT8:
+            extract_values.template operator()<uint8_t>();
+            break;
+        case TILEDB_INT16:
+            extract_values.template operator()<int16_t>();
+            break;
+        case TILEDB_UINT16:
+            extract_values.template operator()<uint16_t>();
+            break;
+        case TILEDB_INT32:
+            extract_values.template operator()<int32_t>();
+            break;
+        case TILEDB_UINT32:
+            extract_values.template operator()<uint32_t>();
+            break;
+        case TILEDB_INT64:
+            extract_values.template operator()<int64_t>();
+            break;
+        case TILEDB_UINT64:
+            extract_values.template operator()<uint64_t>();
+            break;
+        default:
+            throw TileDBSOMAError(
+                "Saw invalid index type when trying to promote indexes to "
+                "values");
     }
 
-    setup_write_column(
-        schema->name,
-        array->length,
-        (const void*)index_to_value.data(),
-        (uint64_t*)nullptr,
-        std::nullopt);  // validities are set by index column
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = _cast_validity_buffer_ptr(array);
+    }
+
+    setup_write_column(schema->name, array->length, std::move(data_buffer), (uint64_t*)nullptr, std::move(validity));
 }
 
 template <>
@@ -659,75 +694,148 @@ void ManagedQuery::_cast_dictionary_values<std::string>(ArrowSchema* schema, Arr
     // String types require special handling due to large vs regular
     // string/binary
 
-    auto value_schema = schema->dictionary;
-    auto value_array = array->dictionary;
+    auto extract_values = []<typename OffsetType>(ArrowSchema* schema, ArrowArray* array) {
+        auto value_array = array->dictionary;
 
-    uint64_t num_elems = value_array->length;
+        std::span<const OffsetType> value_offsets(
+            (OffsetType*)value_array->buffers[1] + value_array->offset, value_array->length);
+        std::span<const std::byte> value_data((std::byte*)value_array->buffers[2], value_offsets.back());
 
-    std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) || (strcmp(value_schema->format, "Z") == 0)) {
-        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
-        offsets_v.resize(num_elems + 1);
-        offsets_v.assign(offsets, offsets + num_elems + 1);
-    } else {
-        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
-        std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
-        for (auto offset : offset_holder) {
-            offsets_v.push_back((uint64_t)offset);
+        std::unique_ptr<uint64_t[]> offsets = std::make_unique_for_overwrite<uint64_t[]>(array->length + 1);
+        std::unique_ptr<std::byte[]> data;
+
+        auto calculate_value_size = [&]<typename S>() {
+            // Calculate the total number of bytes to allocate for the values by summing the differences of the offset
+            std::span<const S> indices(reinterpret_cast<const S*>(array->buffers[1]), array->length);
+
+            size_t data_buffer_size = std::transform_reduce(
+                indices.begin(), indices.end(), 0L, std::plus{}, [&](const auto& index) {
+                    return value_offsets[index + 1] - value_offsets[index];
+                });
+
+            data = std::make_unique_for_overwrite<std::byte[]>(data_buffer_size);
+
+            size_t offset = 0;
+            offsets[0] = 0;
+
+            for (size_t i = 0; i < indices.size(); ++i) {
+                auto index = indices[i];
+                std::memcpy(
+                    data.get() + offset,
+                    value_data.data() + value_offsets[index],
+                    value_offsets[index + 1] - value_offsets[index]);
+
+                offset += value_offsets[index + 1] - value_offsets[index];
+                offsets[i + 1] = offset;
+            }
+        };
+
+        switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+            case TILEDB_INT8:
+                calculate_value_size.template operator()<int8_t>();
+                break;
+            case TILEDB_UINT8:
+                calculate_value_size.template operator()<uint8_t>();
+                break;
+            case TILEDB_INT16:
+                calculate_value_size.template operator()<int16_t>();
+                break;
+            case TILEDB_UINT16:
+                calculate_value_size.template operator()<uint16_t>();
+                break;
+            case TILEDB_INT32:
+                calculate_value_size.template operator()<int32_t>();
+                break;
+            case TILEDB_UINT32:
+                calculate_value_size.template operator()<uint32_t>();
+                break;
+            case TILEDB_INT64:
+                calculate_value_size.template operator()<int64_t>();
+                break;
+            case TILEDB_UINT64:
+                calculate_value_size.template operator()<uint64_t>();
+                break;
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid index type when trying to promote indexes to "
+                    "values");
         }
+
+        return std::make_pair<std::unique_ptr<std::byte[]>, std::unique_ptr<uint64_t[]>>(
+            std::move(data), std::move(offsets));
+    };
+
+    std::unique_ptr<std::byte[]> data_buffer;
+    std::unique_ptr<uint64_t[]> offset_buffer;
+
+    if ((strcmp(schema->dictionary->format, "U") == 0) || (strcmp(schema->dictionary->format, "Z") == 0)) {
+        std::tie(data_buffer, offset_buffer) = extract_values.operator()<uint64_t>(schema, array);
+    } else {
+        std::tie(data_buffer, offset_buffer) = extract_values.operator()<uint32_t>(schema, array);
     }
 
-    std::string_view data(static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
-
-    std::vector<std::string_view> values;
-    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1; ++offset_idx) {
-        auto beg = offsets_v[offset_idx];
-        auto sz = offsets_v[offset_idx + 1] - beg;
-        values.push_back(data.substr(beg, sz));
-    }
-
-    std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(schema, array);
-
-    uint64_t offset_sum = 0;
-    std::vector<uint64_t> value_offsets = {0};
-    std::string index_to_value;
-    for (auto i : indexes) {
-        auto value = values[i];
-        offset_sum += value.size();
-        value_offsets.push_back(offset_sum);
-        index_to_value.insert(index_to_value.end(), value.begin(), value.end());
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = _cast_validity_buffer_ptr(array);
     }
 
     setup_write_column(
-        schema->name,
-        value_offsets.size() - 1,
-        (const void*)index_to_value.data(),
-        (uint64_t*)value_offsets.data(),
-        std::nullopt);  // validities are set by index column
+        schema->name, array->length, std::move(data_buffer), std::move(offset_buffer), std::move(validity));
 }
 
 template <>
 void ManagedQuery::_cast_dictionary_values<bool>(ArrowSchema* schema, ArrowArray* array) {
     // Boolean types require special handling due to bit vs uint8_t
     // representation in Arrow vs TileDB respectively
+    std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(array->length);
+    std::span<uint8_t> data_view(reinterpret_cast<uint8_t*>(data_buffer.get()), array->length);
 
-    auto value_schema = schema->dictionary;
-    auto value_array = array->dictionary;
+    auto extract_values = [&]<typename T>() {
+        std::span<const T> indices(reinterpret_cast<const T*>(array->buffers[1]) + array->offset, array->length);
 
-    std::vector<int64_t> indexes = _get_index_vector(schema, array);
-    std::vector<uint8_t> values = _bool_data_bits_to_bytes(value_schema, value_array);
-    std::vector<uint8_t> index_to_value;
+        for (int64_t i = 0; i < array->length; ++i) {
+            data_view[i] = static_cast<uint8_t>(
+                ArrowBitGet((const uint8_t*)array->dictionary->buffers[1], indices[i] + array->dictionary->offset));
+        }
+    };
 
-    for (auto i : indexes) {
-        index_to_value.push_back(values[i]);
+    switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+        case TILEDB_INT8:
+            extract_values.template operator()<int8_t>();
+            break;
+        case TILEDB_UINT8:
+            extract_values.template operator()<uint8_t>();
+            break;
+        case TILEDB_INT16:
+            extract_values.template operator()<int16_t>();
+            break;
+        case TILEDB_UINT16:
+            extract_values.template operator()<uint16_t>();
+            break;
+        case TILEDB_INT32:
+            extract_values.template operator()<int32_t>();
+            break;
+        case TILEDB_UINT32:
+            extract_values.template operator()<uint32_t>();
+            break;
+        case TILEDB_INT64:
+            extract_values.template operator()<int64_t>();
+            break;
+        case TILEDB_UINT64:
+            extract_values.template operator()<uint64_t>();
+            break;
+        default:
+            throw TileDBSOMAError(
+                "Saw invalid index type when trying to promote indexes to "
+                "values");
     }
 
-    setup_write_column(
-        schema->name,
-        array->length,
-        (const void*)index_to_value.data(),
-        (uint64_t*)nullptr,
-        std::nullopt);  // validities are set by index column
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = _cast_validity_buffer_ptr(array);
+    }
+
+    setup_write_column(schema->name, array->length, std::move(data_buffer), (uint64_t*)nullptr, std::move(validity));
 }
 
 template <>
@@ -752,7 +860,7 @@ bool ManagedQuery::_cast_column_aux<std::string>(ArrowSchema* schema, ArrowArray
     }
 
     const void* data = array->buffers[2];
-    std::optional<std::vector<uint8_t>> validity = _cast_validity_buffer(array);
+    std::unique_ptr<uint8_t[]> validity = _cast_validity_buffer_ptr(array);
 
     // If this is a table-slice, do *not* slice into the data
     // buffer since it is indexed via offsets, which we slice
@@ -761,12 +869,12 @@ bool ManagedQuery::_cast_column_aux<std::string>(ArrowSchema* schema, ArrowArray
     if ((strcmp(schema->format, "U") == 0) || (strcmp(schema->format, "Z") == 0)) {
         // If this is a table-slice, slice into the offsets buffer.
         uint64_t* offset = (uint64_t*)array->buffers[1] + array->offset;
-        setup_write_column(schema->name, array->length, data, offset, validity);
+        setup_write_column(schema->name, array->length, data, offset, std::move(validity));
 
     } else {
         // If this is a table-slice, slice into the offsets buffer.
         uint32_t* offset = (uint32_t*)array->buffers[1] + array->offset;
-        setup_write_column(schema->name, array->length, data, offset, validity);
+        setup_write_column(schema->name, array->length, data, offset, std::move(validity));
     }
     return false;
 }
@@ -776,9 +884,15 @@ bool ManagedQuery::_cast_column_aux<bool>(ArrowSchema* schema, ArrowArray* array
     (void)se;  // se is unused in bool specialization
 
     auto casted = _bool_data_bits_to_bytes(schema, array);
+    std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(array->length);
+    ArrowBitsUnpackInt8(
+        reinterpret_cast<const uint8_t*>(array->buffers[1]),
+        array->offset,
+        array->length,
+        reinterpret_cast<int8_t*>(data_buffer.get()));
 
     setup_write_column(
-        schema->name, array->length, (const void*)casted.data(), (uint64_t*)nullptr, _cast_validity_buffer(array));
+        schema->name, array->length, std::move(data_buffer), (uint64_t*)nullptr, _cast_validity_buffer_ptr(array));
     return false;
 }
 
@@ -847,14 +961,12 @@ bool ManagedQuery::_extend_and_write_enumeration(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     // For columns with dictionaries, we need to identify the data type of the
     // enumeration to extend any new enumeration values
 
-    auto value_type = enmr.type();
-
-    switch (value_type) {
+    switch (enmr.type()) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
@@ -898,7 +1010,7 @@ bool ManagedQuery::_extend_and_write_enumeration(
         default:
             throw TileDBSOMAError(
                 fmt::format(
-                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_type)));
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(enmr.type())));
     }
 }
 
@@ -908,11 +1020,11 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     std::string column_name = index_schema->name;
 
-    const auto [was_extended, enum_values_in_write, extended_enmr] =
+    auto [was_extended, enum_values_in_write, extended_enmr] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
             value_schema, value_array, index_schema, index_array, column_name, true, enmr, se);
 
@@ -940,11 +1052,11 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     std::string column_name = index_schema->name;
 
-    const auto [was_extended, enum_values_in_write, extended_enmr] =
+    auto [was_extended, enum_values_in_write, extended_enmr] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
             value_schema, value_array, index_schema, index_array, column_name, true, enmr, se);
 
@@ -978,7 +1090,7 @@ bool ManagedQuery::_extend_enumeration(
     ArrowArray* value_array,
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     // For columns with dictionaries, we need to identify the data type of the
     // enumeration to extend any new enumeration values
@@ -1045,7 +1157,7 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details<std::string, std::s
     ArrowArray* value_array,
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2] = _extend_and_evolve_schema_with_details<std::string, std::string_view>(
         value_schema, value_array, nullptr, nullptr, column_name, deduplicate, enmr, se);
@@ -1058,7 +1170,7 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
     ArrowArray* value_array,
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2] = _extend_and_evolve_schema_with_details<ValueType, ValueType>(
         value_schema, value_array, nullptr, nullptr, column_name, deduplicate, enmr, se);
@@ -1080,7 +1192,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     uint64_t num_elems = value_array->length;
 
@@ -1259,7 +1371,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
-    Enumeration enmr,
+    Enumeration& enmr,
     ArraySchemaEvolution& se) {
     if (value_array->n_buffers != 2) {
         // Higher-level code should be catching this with an error message which
@@ -1277,10 +1389,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             fmt::format(
                 "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
                 "null values are not supported"));
-    }
-    std::optional<std::vector<uint8_t>> validities = std::nullopt;
-    if (index_array != nullptr) {
-        validities = _cast_validity_buffer(index_array);
     }
 
     // Get all the enumeration values in the passed-in column
@@ -1446,9 +1554,27 @@ std::vector<uint8_t> ManagedQuery::_bool_data_bits_to_bytes(ArrowSchema* schema,
     return *util::bitmap_to_uint8(data, array->length, array->offset);
 }
 
+std::unique_ptr<uint8_t[]> ManagedQuery::_bool_data_bits_to_bytes_ptr(ArrowSchema* schema, ArrowArray* array) {
+    if (strcmp(schema->format, "b") != 0) {
+        throw TileDBSOMAError(
+            fmt::format(
+                "_cast_bit_to_uint8 expected column format to be 'b' but saw "
+                "{}",
+                schema->format));
+    }
+
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(array->buffers[1]);
+    return util::bitmap_to_uint8_ptr(data, array->length, array->offset);
+}
+
 std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(ArrowArray* array) {
     const uint8_t* validity = reinterpret_cast<const uint8_t*>(array->buffers[0]);
     return util::bitmap_to_uint8(validity, array->length, array->offset);
+}
+
+std::unique_ptr<uint8_t[]> ManagedQuery::_cast_validity_buffer_ptr(ArrowArray* array) {
+    const uint8_t* validity = reinterpret_cast<const uint8_t*>(array->buffers[0]);
+    return util::bitmap_to_uint8_ptr(validity, array->length, array->offset);
 }
 
 template <>
