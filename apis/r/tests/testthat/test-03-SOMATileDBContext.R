@@ -18,6 +18,9 @@ test_that("SOMATileDBContext mechanics", {
 
 test_that("SOMATileDBContext SOMA mechanics", {
   skip_if(!extended_tests())
+  # lifecycle 1.0.4 emits a lifecycle_stage condition even when
+  # lifecycle_verbosity = "quiet", which causes expect_no_condition() to fail
+  skip_if_not_installed("lifecycle", minimum_version = "1.0.5")
   withr::local_options(lifecycle_verbosity = "quiet")
 
   ctx <- SOMATileDBContext$new()
@@ -52,6 +55,7 @@ test_that("SOMATileDBContext SOMA mechanics", {
 
 test_that("SOMATileDBContext TileDB mechanics", {
   skip_if(!extended_tests())
+  skip_if_not_installed("lifecycle", minimum_version = "1.0.5")
   withr::local_options(lifecycle_verbosity = "quiet")
 
   ctx <- SOMATileDBContext$new()
@@ -78,6 +82,7 @@ test_that("SOMATileDBContext TileDB mechanics", {
 
 test_that("SOMATileDBContext SOMA + TileDB mechanics", {
   skip_if(!extended_tests())
+  skip_if_not_installed("lifecycle", minimum_version = "1.0.5")
   withr::local_options(lifecycle_verbosity = "quiet")
 
   ctx <- SOMATileDBContext$new()
