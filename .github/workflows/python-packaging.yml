@@ -57,6 +57,9 @@ jobs:
         with:
           name: sdist
           path: apis/python/dist/
+      - name: Install older version of numba to prevent building from source on osx-64 (no wheels for numba 0.63+)
+        if: ${{ matrix.os == 'macos-15-intel' }}
+        run: pip install numba==0.60.0
       - name: Install sdist artifact
         working-directory: apis/python
         run: |
@@ -95,6 +98,12 @@ jobs:
           set -e pipefail
           brew update
           brew install automake llvm
+
+      - name: "Setup for arm builds"
+        if: ${{ endsWith(matrix.platform, 'aarch64') == true }}
+        run: |
+          echo "CIBW_BEFORE_BUILD_LINUX=dnf install -y ninja-build perl-IPC-Cmd zip" >> $GITHUB_ENV
+          echo ${{ env.CIBW_BEFORE_BUILD_LINUX }}
 
       - name: Get arch
         if: ${{ startsWith(matrix.os, 'macos-') == true }}
@@ -167,18 +176,22 @@ jobs:
             python_version: "3.12"
           - python_name: "cp313"
             python_version: "3.13"
+        exclude:
+          - os: macos-15-intel
+            python_version: 3.13
       fail-fast: false
     steps:
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: wheel-${{ matrix.python_name }}-${{ matrix.platform }}
-
+      - name: Install numba to prevent building from source
+        if: ${{ matrix.os == 'macos-15-intel' }}
+        run: pip install numba==0.60.0
       - name: Install wheel
         run: |
           set -x
@@ -190,11 +203,8 @@ jobs:
           pip install wheel
           pip install $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
-
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
-        # TODO: more thorough local smoke test
-
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
