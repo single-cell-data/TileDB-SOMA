@@ -12,23 +12,6 @@ NULL
 
 .pkgenv <- new.env(parent = emptyenv())
 
-#' Import Helper
-#'
-#' \code{R CMD check} tries to check use of all imported dependencies; however,
-#' it sometimes misses, such as in R6 methods. This function exists to satiate
-#' \code{R CMD check} by showing usage of imported dependencies.
-#'
-#' @return Invisibly returns \code{NULL}.
-#'
-#' @keywords internal
-#'
-#' @noRd
-#'
-.import_helper <- function() {
-  data.table::address
-  return(invisible(NULL))
-}
-
 ## .onLoad is called whether code from the package is used and the packages is 'loaded'. An
 ## example is calling `tiledbsoma::show_package_versions()`. So this is most elementary check,
 ## .onAttach is also called when the package is 'attached' via 'library(tiledbsoma)'
