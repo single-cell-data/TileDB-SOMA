@@ -12,11 +12,13 @@
  */
 
 #include "column_buffer.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
+using namespace common::logging;
 
 #pragma region ColumnBuffer
 
@@ -287,7 +289,7 @@ size_t ReadColumnBuffer::update_size(const Query& query) {
         offsets()[num_offsets] = data_size_ = num_elements;
     } else {
         num_cells_ = num_elements;
-        data_size_ = num_elements * impl::type_size(type());
+        data_size_ = num_elements * tiledb::impl::type_size(type());
     }
 
     return num_cells_;
@@ -549,7 +551,7 @@ VectorColumnBuffer::VectorColumnBuffer(
     std::optional<Enumeration> enumeration,
     bool is_ordered,
     MemoryMode mode)
-    : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered) {
+    : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode) {
     LOG_DEBUG(
         fmt::format(
             "[VectorColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var, is_nullable));

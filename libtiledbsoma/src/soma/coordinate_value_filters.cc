@@ -15,7 +15,7 @@
 
 #include <numeric>
 #include "../tiledb_adapter/value_filter.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;

@@ -62,7 +62,7 @@ class CoordinateValueFilters {
             validate_string_column(col);
         } else {
             try {
-                impl::type_check<T>(col->domain_type().value());
+                tiledb::impl::type_check<T>(col->domain_type().value());
             } catch (const TileDBError& e) {
                 throw std::invalid_argument("Invalid type.");  // TODO: Add error message before merging.
             }
@@ -102,7 +102,7 @@ class CoordinateValueFilters {
             validate_string_column(col);
         } else {
             try {
-                impl::type_check<T>(col->domain_type().value());
+                tiledb::impl::type_check<T>(col->domain_type().value());
             } catch (const TileDBError& e) {
                 throw std::invalid_argument("Invalid type.");  // TODO: Add error message before merging.
             }

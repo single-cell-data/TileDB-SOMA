@@ -18,13 +18,15 @@
 
 #include <unordered_set>
 
+#include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
 #include "utils/common.h"
-#include "utils/logger.h"
 #include "utils/util.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
+using namespace common::logging;
 
 //===================================================================
 //= public non-static

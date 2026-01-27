@@ -16,7 +16,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {

@@ -17,8 +17,10 @@
 #include "../soma/array_buffers.h"
 #include "../soma/column_buffer.h"
 #include "arrow_adapter.h"
-#include "logger.h"
 #include "util.h"
+
+#include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
 
 #include "../soma/soma_attribute.h"
 #include "../soma/soma_coordinates.h"
@@ -28,6 +30,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
+using namespace common::logging;
 
 /**************************
  * Internal helper methods

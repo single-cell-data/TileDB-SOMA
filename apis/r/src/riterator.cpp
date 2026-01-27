@@ -88,12 +88,12 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
     const std::string& loglevel = "auto") {
     if (loglevel != "auto") {
-        tdbs::LOG_SET_LEVEL(loglevel);
+        tdbs::common::logging::LOG_SET_LEVEL(loglevel);
     }
 
     std::stringstream ss;
     ss << "[mq_setup] Setting up " << uri;
-    tdbs::LOG_DEBUG(ss.str());
+    tdbs::common::logging::LOG_DEBUG(ss.str());
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
@@ -126,13 +126,13 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
         std::stringstream ss;
         ss << "[mq_setup] Dimension '" << dim.name() << "' type " << tiledb::impl::to_str(dim.type()) << " domain "
            << dim.domain_to_str() << " extent " << dim.tile_extent_to_str();
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        tdbs::LOG_DEBUG("[mq_setup] Applying query condition");
+        tdbs::common::logging::LOG_DEBUG("[mq_setup] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         mq->set_condition(*qcxp);
     }
@@ -205,7 +205,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     if (mq_complete(mq)) {
         std::stringstream ss;
         ss << "[mq_next] complete " << mq->is_complete(true) << " num_cells " << mq->total_num_cells();
-        tdbs::LOG_TRACE(ss.str());
+        tdbs::common::logging::LOG_TRACE(ss.str());
         return create_empty_arrow_table();
     }
 
@@ -214,11 +214,11 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         std::stringstream ss;
         ss << "[mq_next] Read " << mq_data->get()->num_rows() << " rows and " << mq_data->get()->names().size()
            << " cols";
-        tdbs::LOG_DEBUG(ss.str());
+        tdbs::common::logging::LOG_DEBUG(ss.str());
     }
 
     if (!mq_data) {
-        tdbs::LOG_TRACE("[mq_next] complete - mq_data read no data");
+        tdbs::common::logging::LOG_TRACE("[mq_next] complete - mq_data read no data");
         return create_empty_arrow_table();
     }
 
@@ -245,7 +245,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         {
             std::stringstream ss;
             ss << "[mq_next] Accessing " << names[i] << " at " << i;
-            tdbs::LOG_TRACE(ss.str());
+            tdbs::common::logging::LOG_TRACE(ss.str());
         }
 
         // this is pair of array and schema pointer
@@ -257,14 +257,14 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         if (pp.first->length > arr->length) {
             std::stringstream ss;
             ss << "[soma_array_reader] Setting array length to " << pp.first->length;
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::common::logging::LOG_DEBUG(ss.str());
             arr->length = pp.first->length;
         }
     }
 
     std::stringstream ss;
     ss << "[mq_next] Exporting chunk with " << arr->length << " rows";
-    tdbs::LOG_DEBUG(ss.str());
+    tdbs::common::logging::LOG_DEBUG(ss.str());
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;
@@ -274,7 +274,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
 void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
     mq->reset();
-    tdbs::LOG_DEBUG("[mq_reset] Reset SOMAArray object");
+    tdbs::common::logging::LOG_DEBUG("[mq_reset] Reset SOMAArray object");
 }
 
 // [[Rcpp::export]]
@@ -287,5 +287,5 @@ void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp:
     std::stringstream ss;
     ss << "[mq_set_dim_points] Set on dim '" << dim << "' for " << points.length() << " points, first two are "
        << vec[0] << " and " << vec[1];
-    tdbs::LOG_DEBUG(ss.str());
+    tdbs::common::logging::LOG_DEBUG(ss.str());
 }

@@ -13,8 +13,8 @@
 #include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include <ranges>
-#include "../utils/logger.h"
 #include "../utils/util.h"
+#include "common/logging/impl/logger.h"
 #include "coordinate_value_filters.h"
 #include "soma_attribute.h"
 #include "soma_dimension.h"
@@ -22,6 +22,7 @@
 
 namespace tiledbsoma {
 using namespace tiledb;
+using namespace common::logging;
 
 //==================================================================
 // helper functions

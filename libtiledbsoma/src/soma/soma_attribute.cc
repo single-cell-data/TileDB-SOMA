@@ -12,7 +12,7 @@
  */
 
 #include "soma_attribute.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(

@@ -13,11 +13,12 @@
 
 #include "soma_dataframe.h"
 
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
+using namespace common::logging;
 
 //===================================================================
 //= public static

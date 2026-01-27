@@ -2,8 +2,8 @@
 #include <string>
 #include <tiledb/tiledb>
 
-#include "../utils/logger.h"
 #include "../utils/util.h"
+#include "common/logging/impl/logger.h"
 #include "soma_array.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"

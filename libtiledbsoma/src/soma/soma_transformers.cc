@@ -2,7 +2,7 @@
 #include "../geometry/geometry.h"
 #include "../geometry/operators/envelope.h"
 #include "../geometry/operators/io/write.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
 OutlineTransformer::OutlineTransformer(SOMACoordinateSpace coordinate_space)

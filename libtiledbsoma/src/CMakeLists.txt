@@ -27,6 +27,41 @@ set_property(TARGET TILEDBSOMA_NANOARROW_OBJECT PROPERTY POSITION_INDEPENDENT_CO
 # ###########################################################
 # Common object library
 # ###########################################################
+
+add_library(TILEDB_COMMON_OBJECTS OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl/logger.cc
+)
+
+target_link_libraries(TILEDB_COMMON_OBJECTS PUBLIC spdlog::spdlog)
+
+target_compile_definitions(TILEDB_COMMON_OBJECTS
+  PRIVATE
+    -DTILEDB_NO_API_DEPRECATION_WARNINGS
+)
+
+target_compile_options(TILEDB_COMMON_OBJECTS
+  PRIVATE
+    ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_WERROR_OPTION}
+    ${TILEDBSOMA_SANITIZER_FLAG}
+)
+target_link_options(TILEDB_COMMON_OBJECTS
+  PRIVATE
+    ${TILEDBSOMA_SANITIZER_FLAG}
+)
+
+set_property(TARGET TILEDB_COMMON_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(TILEDB_COMMON_OBJECTS
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/logging
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
+  $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
+# ###########################################################
+# Soma object library
+# ###########################################################
 add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
@@ -57,7 +92,6 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/value_filter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/platform_config.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/transformer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
@@ -91,6 +125,8 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor
   ${CMAKE_CURRENT_SOURCE_DIR}/soma
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/logging
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl
   ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
@@ -144,6 +180,7 @@ target_include_directories(TILEDB_SOMA_GEOMETRY_OBJECTS
 set(TILEDBSOMA_INSTALL_TARGETS "")
 if(TILEDBSOMA_BUILD_STATIC)
   add_library(tiledbsoma_static STATIC
+    $<TARGET_OBJECTS:TILEDB_COMMON_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
@@ -167,6 +204,7 @@ if(TILEDBSOMA_BUILD_STATIC)
   )
 else()
   add_library(tiledbsoma SHARED
+    $<TARGET_OBJECTS:TILEDB_COMMON_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
@@ -207,7 +245,6 @@ endif()
 
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/enums.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/logger_public.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/coordinate_value_filters.h
@@ -244,6 +281,11 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/soma_column_selection.h
   DESTINATION "include/tiledbsoma/common/"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/logger.h
+  DESTINATION "include/tiledbsoma/common/logging"
 )
 
 install(FILES
@@ -331,6 +373,7 @@ endif()
 if(TILEDBSOMA_BUILD_CLI)
   add_executable(tiledbsoma-cli
     ${CMAKE_CURRENT_SOURCE_DIR}/cli/cli.cc
+    $<TARGET_OBJECTS:TILEDB_COMMON_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
   )

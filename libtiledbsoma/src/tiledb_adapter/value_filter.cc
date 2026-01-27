@@ -14,7 +14,6 @@
 #include "value_filter.h"
 
 #include <numeric>
-#include "../utils/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;

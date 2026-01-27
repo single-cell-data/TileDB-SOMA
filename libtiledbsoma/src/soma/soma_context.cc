@@ -15,7 +15,7 @@
 
 #include <thread_pool/thread_pool.h>
 #include "../utils/common.h"
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 #include "soma_context.h"
 
 namespace tiledbsoma {

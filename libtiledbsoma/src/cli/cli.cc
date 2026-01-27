@@ -11,12 +11,14 @@
  * This file is currently a sandbox for C++ API experiments
  */
 
+#include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
 #include "soma/enums.h"
 #include "soma/soma_array.h"
 #include "utils/arrow_adapter.h"
-#include "utils/logger.h"
 
 using namespace tiledbsoma;
+using namespace tiledbsoma::common::logging;
 
 // [[Rcpp::export]]
 void test_sdf(const std::string& uri) {
@@ -70,10 +72,10 @@ void test_arrow(const std::string& uri) {
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto obs_data = obs_mq.read_next();
     if (!obs_mq.results_complete()) {
-        tdbs::LOG_WARN(fmt::format("Read of '{}' incomplete", uri));
+        tdbs::common::logging::LOG_WARN(fmt::format("Read of '{}' incomplete", uri));
         exit(-1);
     }
-    tdbs::LOG_INFO(
+    tdbs::common::logging::LOG_INFO(
         fmt::format(
             "Read complete with {} obs and {} cols", obs_data->get()->num_rows(), obs_data->get()->names().size()));
 
@@ -83,7 +85,7 @@ void test_arrow(const std::string& uri) {
         auto nm = names[i];
         auto& pp = arrow_arrays[i];
         ArrowSchema* schema = pp.second.get();
-        tdbs::LOG_INFO(
+        tdbs::common::logging::LOG_INFO(
             fmt::format("Accessing '{}', retrieved '{}', n_children {}", nm, schema->name, schema->n_children));
     }
 }

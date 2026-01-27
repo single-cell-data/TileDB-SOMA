@@ -17,7 +17,7 @@
 #define TILEDB_THREAD_POOL_H
 
 #include "producer_consumer_queue.h"
-#include "soma/logger_public.h"
+#include "common/logging/logger.h"
 #include "status.h"
 
 #include <functional>
@@ -26,6 +26,8 @@
 #include <tiledb/tiledb>
 
 namespace tiledbsoma {
+
+using namespace common::logging;
 
 class ThreadPool {
  public:

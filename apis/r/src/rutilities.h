@@ -40,7 +40,7 @@ inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rc
             std::stringstream ss;
             ss << "[config_vector_to_map] adding '" << std::string(namesvec[i]) << "' = '" << std::string(confvec[i])
                << "'";
-            tdbs::LOG_TRACE(ss.str());
+            tdbs::common::logging::LOG_TRACE(ss.str());
         }
     }
 

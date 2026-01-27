@@ -19,6 +19,7 @@ else()
 endif()
 
 add_executable(unit_soma
+    $<TARGET_OBJECTS:TILEDB_COMMON_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
@@ -107,6 +108,7 @@ endif()
 ############################################################
 
 add_executable(unit_geometry
+    $<TARGET_OBJECTS:TILEDB_COMMON_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
@@ -178,6 +180,7 @@ endif()
 ############################################################
 
 add_executable(test_tiledb_adapter
+    $<TARGET_OBJECTS:TILEDB_COMMON_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>

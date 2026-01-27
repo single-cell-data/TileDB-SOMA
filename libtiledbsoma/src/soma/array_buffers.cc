@@ -12,8 +12,8 @@
  */
 
 #include "array_buffers.h"
-#include "../utils/logger.h"
 #include "column_buffer.h"
+#include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
 

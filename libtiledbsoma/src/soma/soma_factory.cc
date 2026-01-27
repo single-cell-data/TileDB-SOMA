@@ -15,7 +15,7 @@
 #include "soma_factory.h"
 
 #include <tiledb/tiledb>
-#include "../utils/logger.h"
+#include "common/logging/impl/logger.h"
 #include "soma_context.h"
 
 namespace tiledbsoma {

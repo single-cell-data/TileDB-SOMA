@@ -33,7 +33,7 @@ void c_group_create(
         Rcpp::DatetimeVector v(timestamp);
         ss << " ts (" << v[0] << ", " << v[1] << ")";
     }
-    tdbs::LOG_DEBUG(ss.str());
+    tdbs::common::logging::LOG_DEBUG(ss.str());
 
     tdbs::SOMAGroup::create(sctx, uri, type, tsrng);
 }

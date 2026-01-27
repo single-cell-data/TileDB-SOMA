@@ -37,7 +37,7 @@ void apply_dim_points(
                     mq->select_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
                     std::stringstream ss;
                     ss << "[apply_dim_points] Applying dim point " << uv[i] << " on " << nm;
-                    tdbs::LOG_DEBUG(ss.str());
+                    tdbs::common::logging::LOG_DEBUG(ss.str());
                     suitable = true;
                 }
             }
@@ -50,7 +50,7 @@ void apply_dim_points(
                     mq->select_point<int64_t>(nm, iv[i]);
                     std::stringstream ss;
                     ss << "[apply_dim_points] Applying dim point " << iv[i] << " on " << nm;
-                    tdbs::LOG_DEBUG(ss.str());
+                    tdbs::common::logging::LOG_DEBUG(ss.str());
                     suitable = true;
                 }
             }
@@ -63,7 +63,7 @@ void apply_dim_points(
                     mq->select_point<float>(nm, v);
                     std::stringstream ss;
                     ss << "[apply_dim_points] Applying dim point " << v << " on " << nm;
-                    tdbs::LOG_DEBUG(ss.str());
+                    tdbs::common::logging::LOG_DEBUG(ss.str());
                     suitable = true;
                 }
             }
@@ -75,7 +75,7 @@ void apply_dim_points(
                     mq->select_point<double>(nm, payload[i]);
                     std::stringstream ss;
                     ss << "[apply_dim_points] Applying dim point " << payload[i] << " on " << nm;
-                    tdbs::LOG_DEBUG(ss.str());
+                    tdbs::common::logging::LOG_DEBUG(ss.str());
                     suitable = true;
                 }
             }
@@ -87,7 +87,7 @@ void apply_dim_points(
                     mq->select_point<int32_t>(nm, payload[i]);
                     std::stringstream ss;
                     ss << "[apply_dim_points] Applying dim point " << payload[i] << " on " << nm;
-                    tdbs::LOG_DEBUG(ss.str());
+                    tdbs::common::logging::LOG_DEBUG(ss.str());
                     suitable = true;
                 }
             }
@@ -121,7 +121,7 @@ void apply_dim_ranges(
                 vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
                 std::stringstream ss;
                 ss << "[apply_dim_ranges] Applying dim point " << i << " on " << nm << " with " << l << " - " << h;
-                tdbs::LOG_DEBUG(ss.str());
+                tdbs::common::logging::LOG_DEBUG(ss.str());
                 suitable = l < pr.second && h > pr.first;  // lower must be less than max, higher
                                                            // more than min
             }
@@ -138,7 +138,7 @@ void apply_dim_ranges(
                 std::stringstream ss;
                 ss << "[apply_dim_ranges] Applying dim point " << i << " on " << nm << " with " << lo[i] << " - "
                    << hi[i];
-                tdbs::LOG_DEBUG(ss.str());
+                tdbs::common::logging::LOG_DEBUG(ss.str());
                 suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
                                                                    // higher more than min
             }
@@ -156,7 +156,7 @@ void apply_dim_ranges(
                 vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
                 std::stringstream ss;
                 ss << "[apply_dim_ranges] Applying dim point " << i << " on " << nm << " with " << l << " - " << h;
-                tdbs::LOG_DEBUG(ss.str());
+                tdbs::common::logging::LOG_DEBUG(ss.str());
                 suitable = l < pr.second && h > pr.first;  // lower must be less than max, higher
                                                            // more than min
             }
@@ -173,7 +173,7 @@ void apply_dim_ranges(
                 std::stringstream ss;
                 ss << "[apply_dim_ranges] Applying dim point " << i << " on " << nm << " with " << lo[i] << " - "
                    << hi[i];
-                tdbs::LOG_DEBUG(ss.str());
+                tdbs::common::logging::LOG_DEBUG(ss.str());
                 suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
                                                                    // higher more than min
             }
@@ -190,7 +190,7 @@ void apply_dim_ranges(
                 std::stringstream ss;
                 ss << "[apply_dim_ranges] Applying dim point " << i << " on " << nm << " with " << lo[i] << " - "
                    << hi[i];
-                tdbs::LOG_DEBUG(ss.str());
+                tdbs::common::logging::LOG_DEBUG(ss.str());
                 suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
                                                                    // higher more than min
             }
@@ -424,14 +424,14 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             ss << "[domainish] name {} format {} length {} lo {} hi {}" << std::string(arrow_schema->children[i]->name)
                << " format " << std::string(arrow_schema->children[i]->format) << " length "
                << arrow_array->children[i]->length << "lo " << lohi[0] << " hi " << lohi[1];
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::common::logging::LOG_DEBUG(ss.str());
         } else {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
             std::stringstream ss;
             ss << "[domainish] name " << std::string(arrow_schema->children[i]->name) << " format "
                << std::string(arrow_schema->children[i]->format) << " length " << arrow_array->children[i]->length;
-            tdbs::LOG_DEBUG(ss.str());
+            tdbs::common::logging::LOG_DEBUG(ss.str());
         }
 
         ArrowArrayMove(arrow_array->children[i], arr->children[i]);
