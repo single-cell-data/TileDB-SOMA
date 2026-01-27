@@ -76,7 +76,7 @@ the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level.
 }
 
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 \donttest{
 uri <- withr::local_tempfile(pattern = "summarized-experiment")
 

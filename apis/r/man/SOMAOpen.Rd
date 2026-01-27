@@ -39,7 +39,7 @@ Utility function to open the corresponding SOMA object given a URI
 (lifecycle: maturing).
 }
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 dir <- withr::local_tempfile(pattern = "soma-open")
 dir.create(dir, recursive = TRUE)
 

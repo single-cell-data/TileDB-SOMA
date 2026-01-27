@@ -39,7 +39,7 @@ Factory function to open a \link[tiledbsoma:SOMADataFrame]{SOMA data frame}
 for reading (lifecycle: maturing).
 }
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 uri <- withr::local_tempfile(pattern = "soma-data-frame")
 df <- data.frame(
   soma_joinid = bit64::seq.integer64(0L, 99L),
