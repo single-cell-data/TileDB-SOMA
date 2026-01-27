@@ -37,7 +37,6 @@ Depends:
 Imports:
     arrow (>= 19.0.1),
     bit64 (>= 4.6.0.1),
-    data.table,
     fs,
     glue,
     lifecycle,
