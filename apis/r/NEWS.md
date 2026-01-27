@@ -6,6 +6,7 @@
 
 ## Changed
 
+- Removed `data.table` package dependency by leveraging `rlang::obj_address()` for generating ephemeral collection URIs.
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 
 ## Deprecated
