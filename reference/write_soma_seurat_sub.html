@@ -40,7 +40,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Convert a <span class="pkg">Seurat</span> Sub-Object to a SOMA Object, returned opened for write</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/write_seurat.R" class="external-link"><code>R/write_seurat.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0/R/write_seurat.R" class="external-link"><code>R/write_seurat.R</code></a></small>
       <div class="d-none name"><code>write_soma_seurat_sub.Rd</code></div>
     </div>
 
@@ -374,7 +374,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-out co"><span class="r-pr">#&gt;</span>  PPBP, IGLL5, VDAC3, CD1C, AKR1C3, PF4, MYL9, GNLY, TREML1, CA2 </span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">assay</span>, <span class="st">"RNA"</span>, soma_parent <span class="op">=</span> <span class="va">col</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/seurat-sub2a7e7537a170/RNA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: var </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   groups: X </span>
 <span class="r-in"><span></span></span>
@@ -387,7 +387,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-out co"><span class="r-pr">#&gt;</span>  data, counts, scale.data </span>
 <span class="r-in"><span><span class="op">(</span><span class="va">ms5</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">assay5</span>, <span class="st">"RNA5"</span>, soma_parent <span class="op">=</span> <span class="va">col</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMAMeasurement&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/seurat-sub2a7e7537a170/RNA5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: var </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   groups: X </span>
 <span class="r-in"><span></span></span>
@@ -398,7 +398,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-in"><span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">tsne</span>, soma_parent <span class="op">=</span> <span class="va">ms</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">obsm</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA/obsm</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/seurat-sub2a7e7537a170/RNA/obsm</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: X_tsne </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Write a Seurat Graph</span></span></span>
@@ -407,7 +407,7 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-in"><span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">snn</span>, <span class="st">"snn"</span>, soma_parent <span class="op">=</span> <span class="va">ms</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ms</span><span class="op">$</span><span class="va">obsp</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/RNA/obsp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/seurat-sub2a7e7537a170/RNA/obsp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: snn </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Write a Seurat command log</span></span></span>
@@ -421,11 +421,11 @@ as <a href="SOMADataFrame.html">data frames</a> to the
 <span class="r-in"><span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span><span class="va">cmd</span>, <span class="st">"NormalizeData.RNA"</span>, soma_parent <span class="op">=</span> <span class="va">col</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">logs</span> <span class="op">&lt;-</span> <span class="va">col</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"seurat_commands"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMACollection&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/seurat_commands</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/seurat-sub2a7e7537a170/seurat_commands</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   arrays: NormalizeData.RNA </span>
 <span class="r-in"><span><span class="va">logs</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"NormalizeData.RNA"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADataFrame&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/seurat-sub28466ad254ca/seurat_commands/NormalizeData.RNA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/seurat-sub2a7e7537a170/seurat_commands/NormalizeData.RNA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_joinid </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: values </span>
 <span class="r-in"><span></span></span>

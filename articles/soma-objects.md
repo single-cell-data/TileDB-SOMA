@@ -18,7 +18,7 @@ extracted dataset.
 ``` r
 uri <- extract_dataset("soma-exp-pbmc-small")
 uri
-#> [1] "/tmp/Rtmp5EQX41/soma-exp-pbmc-small"
+#> [1] "/tmp/RtmpyZGxkS/soma-exp-pbmc-small"
 ```
 
 ## `SOMAExperiment`
@@ -39,7 +39,7 @@ Open the `SOMAExperiment` using its file path and inspect the object:
 experiment <- SOMAExperimentOpen(uri)
 experiment
 #> <SOMAExperiment>
-#>   uri: /tmp/Rtmp5EQX41/soma-exp-pbmc-small
+#>   uri: /tmp/RtmpyZGxkS/soma-exp-pbmc-small
 ```
 
 Note that opening a `SOMAExperiment` (or any SOMA object) only returns a
@@ -53,7 +53,7 @@ using the `$` operator. For example, to access the `ms` field:
 ``` r
 experiment$ms
 #> <SOMACollection>
-#>   uri: file:///tmp/Rtmp5EQX41/soma-exp-pbmc-small/ms
+#>   uri: file:///tmp/RtmpyZGxkS/soma-exp-pbmc-small/ms
 ```
 
 This returns the `SOMACollection` of measurements. We’ll take a closer
@@ -64,7 +64,7 @@ To access the `obs` field containing the observation annotations:
 ``` r
 experiment$obs
 #> <SOMADataFrame>
-#>   uri: file:///tmp/Rtmp5EQX41/soma-exp-pbmc-small/obs
+#>   uri: file:///tmp/RtmpyZGxkS/soma-exp-pbmc-small/obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,...
 ```
@@ -207,7 +207,7 @@ The `ms` member of a `SOMAExperiment` is implemented as a
 ``` r
 experiment$ms
 #> <SOMACollection>
-#>   uri: file:///tmp/Rtmp5EQX41/soma-exp-pbmc-small/ms
+#>   uri: file:///tmp/RtmpyZGxkS/soma-exp-pbmc-small/ms
 ```
 
 In this case, we have one member: `RNA`, which is a `SOMAMeasurement`. A
@@ -217,7 +217,7 @@ specific measurement can be accessed by name with the
 ``` r
 experiment$ms$get("RNA")
 #> <SOMAMeasurement>
-#>   uri: file:///tmp/Rtmp5EQX41/soma-exp-pbmc-small/ms/RNA
+#>   uri: file:///tmp/RtmpyZGxkS/soma-exp-pbmc-small/ms/RNA
 ```
 
 ## `SOMAMeasurement`
@@ -260,7 +260,7 @@ Let’s take a look at the `X` data matrices within the `RNA` measurement:
 X <- experiment$ms$get("RNA")$X
 X
 #> <SOMACollection>
-#>   uri: file:///tmp/Rtmp5EQX41/soma-exp-pbmc-small/ms/RNA/X
+#>   uri: file:///tmp/RtmpyZGxkS/soma-exp-pbmc-small/ms/RNA/X
 ```
 
 This collection contains 3 layers corresponding to the raw, normalized,
@@ -273,7 +273,7 @@ Any of these `X` layers can be accessed using
 X_data <- X$get("data")
 X_data
 #> <SOMASparseNDArray>
-#>   uri: file:///tmp/Rtmp5EQX41/soma-exp-pbmc-small/ms/RNA/X/data
+#>   uri: file:///tmp/RtmpyZGxkS/soma-exp-pbmc-small/ms/RNA/X/data
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data
 ```

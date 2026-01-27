@@ -21,7 +21,7 @@ library(tiledbsoma)
 exp <- load_dataset("soma-exp-pbmc-small")
 exp
 #> <SOMAExperiment>
-#>   uri: /tmp/RtmpNZLR4Y/soma-exp-pbmc-small
+#>   uri: /tmp/RtmpqMgRCI/soma-exp-pbmc-small
 ```
 
 The `obs` dataframe has a `domain`, which is a soft limit on what values
@@ -369,7 +369,7 @@ Let’s do a fresh unpack of a pre-1.15 experiment:
 exp <- load_dataset("soma-exp-pbmc-small-pre-1.15")
 exp
 #> <SOMAExperiment>
-#>   uri: /tmp/RtmpNZLR4Y/soma-exp-pbmc-small-pre-1.15
+#>   uri: /tmp/RtmpqMgRCI/soma-exp-pbmc-small-pre-1.15
 ```
 
 Here we see that the X array has not been upgraded, and that its shape

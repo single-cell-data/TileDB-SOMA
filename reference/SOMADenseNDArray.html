@@ -72,7 +72,7 @@ arrow::float32() defaults to 0.0)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA Dense Nd-Array</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/SOMADenseNDArray.R" class="external-link"><code>R/SOMADenseNDArray.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0/R/SOMADenseNDArray.R" class="external-link"><code>R/SOMADenseNDArray.R</code></a></small>
       <div class="d-none name"><code>SOMADenseNDArray.Rd</code></div>
     </div>
 
@@ -275,7 +275,7 @@ of <code>values</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADenseNDArrayCreate.html">SOMADenseNDArrayCreate</a></span><span class="op">(</span><span class="va">uri</span>, <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">float64</a></span><span class="op">(</span><span class="op">)</span>, shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADenseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-dense-array284643064cb0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/soma-dense-array2a7e104b689f</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span><span class="va">arr</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
@@ -283,7 +283,7 @@ of <code>values</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMADenseNDArrayOpen.html">SOMADenseNDArrayOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMADenseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-dense-array284643064cb0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/soma-dense-array2a7e104b689f</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span><span class="va">arr</span><span class="op">$</span><span class="fu">read_arrow_table</span><span class="op">(</span><span class="op">)</span></span></span>

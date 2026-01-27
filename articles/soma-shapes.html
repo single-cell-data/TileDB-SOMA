@@ -66,7 +66,7 @@
       <h1>SOMA shapes</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/vignettes/soma-shapes.Rmd" class="external-link"><code>vignettes/soma-shapes.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0/vignettes/soma-shapes.Rmd" class="external-link"><code>vignettes/soma-shapes.Rmd</code></a></small>
       <div class="d-none name"><code>soma-shapes.Rmd</code></div>
     </div>
 
@@ -93,7 +93,7 @@ dataset</a> provided by SeuratObject. This will return a
 <span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">exp</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpNZLR4Y/soma-exp-pbmc-small</span></span></code></pre></div>
+<span><span class="co">#&gt;   uri: /tmp/RtmpqMgRCI/soma-exp-pbmc-small</span></span></code></pre></div>
 <p>The <code>obs</code> dataframe has a <code>domain</code>, which is a
 soft limit on what values can be written to it. (You’ll get an error if
 you try to read or write <code>soma_joinid</code> values outside this
@@ -373,7 +373,7 @@ method.</li>
 <code class="sourceCode R"><span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small-pre-1.15"</span><span class="op">)</span></span>
 <span><span class="va">exp</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpNZLR4Y/soma-exp-pbmc-small-pre-1.15</span></span></code></pre></div>
+<span><span class="co">#&gt;   uri: /tmp/RtmpqMgRCI/soma-exp-pbmc-small-pre-1.15</span></span></code></pre></div>
 <p>Here we see that the X array has not been upgraded, and that its
 shape reports the same as maxshape:</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">

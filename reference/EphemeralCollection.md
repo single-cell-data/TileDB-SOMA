@@ -69,7 +69,7 @@ The objects of this class are cloneable with this method.
 ``` r
 (col <- EphemeralCollection$new())
 #> <EphemeralCollection>
-#>   uri: ephemeral-collection:0x5584290a4f98
+#>   uri: ephemeral-collection:0x55cf36f51ef8
 col$soma_type
 #> [1] "SOMACollection"
 
@@ -78,7 +78,7 @@ dir.create(dir, recursive = TRUE)
 
 (obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
 #> <SOMADataFrame>
-#>   uri: /tmp/RtmpbAgXbM/obs28467db90adf/soma-dataframe-pbmc3k-processed-obs
+#>   uri: /tmp/Rtmpfr8mYm/obs2a7e719aa1b1/soma-dataframe-pbmc3k-processed-obs
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, seurat_annotations, percent.mt, RNA_snn... 
 col$set(obs, "obs")

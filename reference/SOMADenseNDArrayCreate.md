@@ -70,7 +70,7 @@ mat[1:3, 1:5]
 
 (arr <- SOMADenseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
 #> <SOMADenseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/soma-dense-array284648111a0
+#>   uri: /tmp/Rtmpfr8mYm/soma-dense-array2a7e791df1cc
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 arr$write(mat)
@@ -78,7 +78,7 @@ arr$close()
 
 (arr <- SOMADenseNDArrayOpen(uri))
 #> <SOMADenseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/soma-dense-array284648111a0
+#>   uri: /tmp/Rtmpfr8mYm/soma-dense-array2a7e791df1cc
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 arr$read_arrow_table()

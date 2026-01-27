@@ -313,7 +313,7 @@ arr$close()
 uri <- withr::local_tempfile(pattern = "character")
 (sdf <- write_soma(letters, uri, soma_parent = NULL, relative = FALSE))
 #> <SOMADataFrame>
-#>   uri: /tmp/RtmpbAgXbM/character2846782fea3e
+#>   uri: /tmp/Rtmpfr8mYm/character2a7e71bc2339
 #>   dimensions: soma_joinid 
 #>   attributes: values 
 
@@ -367,7 +367,7 @@ head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
 
 (sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
 #> <SOMADataFrame>
-#>   uri: /tmp/RtmpbAgXbM/data-frame284618b9298a
+#>   uri: /tmp/Rtmpfr8mYm/data-frame2a7e43577f1d
 #>   dimensions: soma_joinid 
 #>   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,... 
 
@@ -380,7 +380,7 @@ uri <- withr::local_tempfile(pattern = "matrix")
 mat <- matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
 (arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
 #> <SOMADenseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/matrix284633044052
+#>   uri: /tmp/Rtmpfr8mYm/matrix2a7e24d892d0
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 
@@ -390,7 +390,7 @@ uri <- withr::local_tempfile(pattern = "s4-matrix")
 mat <- Matrix::Matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
 (arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
 #> <SOMADenseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/s4-matrix2846518c05fe
+#>   uri: /tmp/Rtmpfr8mYm/s4-matrix2a7ec3adaea
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 
@@ -400,7 +400,7 @@ uri <- withr::local_tempfile(pattern = "tsparse-matrix")
 mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "T")
 (arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/tsparse-matrix28465f7e6a1f
+#>   uri: /tmp/Rtmpfr8mYm/tsparse-matrix2a7e9969814
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 
@@ -411,7 +411,7 @@ uri <- withr::local_tempfile(pattern = "csparse-matrix")
 mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "C")
 (arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/csparse-matrix284679a835f7
+#>   uri: /tmp/Rtmpfr8mYm/csparse-matrix2a7e1e00a84
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 
@@ -422,7 +422,7 @@ uri <- withr::local_tempfile(pattern = "rsparse-matrix")
 mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "R")
 (arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
 #> <SOMASparseNDArray>
-#>   uri: /tmp/RtmpbAgXbM/rsparse-matrix284632106299
+#>   uri: /tmp/Rtmpfr8mYm/rsparse-matrix2a7e691c15e9
 #>   dimensions: soma_dim_0, soma_dim_1 
 #>   attributes: soma_data 
 

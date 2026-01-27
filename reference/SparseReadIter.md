@@ -86,7 +86,7 @@ dir <- withr::local_tempfile(pattern = "matrix-iter")
 dir.create(dir, recursive = TRUE)
 (exp <- load_dataset("soma-exp-pbmc-small", dir))
 #> <SOMAExperiment>
-#>   uri: /tmp/RtmpbAgXbM/matrix-iter28463c662601/soma-exp-pbmc-small
+#>   uri: /tmp/Rtmpfr8mYm/matrix-iter2a7e48d749a0/soma-exp-pbmc-small
 qry <- exp$axis_query("RNA")
 xqry <- qry$X("data")
 

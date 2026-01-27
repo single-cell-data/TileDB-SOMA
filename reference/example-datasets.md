@@ -71,5 +71,5 @@ dir <- withr::local_tempfile(pattern = "pbmc_small")
 dir.create(dir, recursive = TRUE)
 (exp <- load_dataset("soma-exp-pbmc-small", dir))
 #> <SOMAExperiment>
-#>   uri: /tmp/RtmpbAgXbM/pbmc_small284672471e06/soma-exp-pbmc-small
+#>   uri: /tmp/Rtmpfr8mYm/pbmc_small2a7e574ceabc/soma-exp-pbmc-small
 ```

@@ -44,7 +44,7 @@ SOMA sparse ND array for reading
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Open a SOMA Sparse ND Array</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0rc0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/2.3.0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
       <div class="d-none name"><code>SOMASparseNDArrayOpen.Rd</code></div>
     </div>
 
@@ -117,7 +117,7 @@ the default context.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu"><a href="SOMASparseNDArrayCreate.html">SOMASparseNDArrayCreate</a></span><span class="op">(</span><span class="va">uri</span>, <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">float64</a></span><span class="op">(</span><span class="op">)</span>, shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMASparseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-sparse-array284633198c01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/soma-sparse-array2a7e11014caa</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span><span class="va">arr</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
@@ -125,7 +125,7 @@ the default context.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">arr</span> <span class="op">&lt;-</span> <span class="fu">SOMASparseNDArrayOpen</span><span class="op">(</span><span class="va">uri</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;SOMASparseNDArray&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/RtmpbAgXbM/soma-sparse-array284633198c01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   uri: /tmp/Rtmpfr8mYm/soma-sparse-array2a7e11014caa</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dimensions: soma_dim_0, soma_dim_1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   attributes: soma_data </span>
 <span class="r-in"><span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="va">arr</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span></span>
