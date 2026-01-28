@@ -14,6 +14,7 @@
 #include "common/logging/impl/logger.h"
 #include "common/logging/logger.h"
 #include "soma/enums.h"
+#include "soma/managed_query.h"
 #include "soma/soma_array.h"
 #include "utils/arrow_adapter.h"
 

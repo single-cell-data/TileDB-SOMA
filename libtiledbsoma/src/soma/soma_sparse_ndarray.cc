@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include "../utils/arrow_adapter.h"
 #include "common/logging/impl/logger.h"
 #include "soma_coordinates.h"
 

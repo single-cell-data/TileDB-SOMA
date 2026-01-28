@@ -17,62 +17,35 @@
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 #include <future>
+#include <optional>
 #include <span>
+#include <utility>
 
-#include <tiledb/tiledb>
-#include <tiledb/tiledb_experimental>
-#include "../common/soma_column_selection.h"
-#include "../tiledb_adapter/platform_config.h"
-#include "../utils/arrow_adapter.h"
+#include "../utils/common.h"
 #include "common/logging/logger.h"
 #include "enums.h"
-#include "managed_query.h"
-#include "soma_column.h"
 #include "soma_object.h"
 
-// ================================================================
-// Some general developer notes:
-//
-// ----------------------------------------------------------------
-// In several places we have
-//
-//     template <typename T>
-//     static sometype foo(T arg) {
-//         if (std::is_same_v<T, std::string>) {
-//             throw std::runtime_error(...);
-//         }
-//         }D...
-//     }
-//
-//     static sometype foo_string(std::string arg) { ... }
-//
-// -- with explicit `_string` suffix -- rather than
-//
-//     template <typename T>
-//     static sometype foo(T arg) ...
-//
-//     template <>
-//     static sometype foo(std::string arg) ...
-//
-// We're aware of the former but we've found it a bit fiddly across systems and
-// compiler versions -- namely, with the latter we find it tricky to always
-// avoid the <typename T> variant being templated with std::string. It's simple,
-// explicit, and robust to go the `_string` suffix route, and it's friendlier to
-// current and future maintainers of this code.
-//
-// ----------------------------------------------------------------
-// These are several methods here for use nominally by SOMADataFrame. These
-// could be moved in their entirety to SOMADataFrame, but that would entail
-// moving several SOMAArray attributes from private to protected, which has
-// knock-on effects on the order of constructor initializers, etc.: in total
-// it's simplest to place these here and have SOMADataFrame invoke them.
-// ================================================================
+namespace tiledb {
+class Array;
+class ArraySchema;
+class ArraySchemaEvolution;
+class Enumeration;
+struct CurrentDomain;
+}  // namespace tiledb
+
+struct ArrowArray;
+struct ArrowSchema;
 
 namespace tiledbsoma {
-using namespace tiledb;
+
+class CoordinateValueFilters;
+class SOMAColumn;
+class ManagedQuery;
+struct PlatformSchemaConfig;
 
 using StatusAndReason = std::pair<bool, std::string>;
-class CoordinateValueFilters;
+using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
 
 class SOMAArray : public SOMAObject {
    public:
@@ -92,7 +65,7 @@ class SOMAArray : public SOMAObject {
     static void create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
-        ArraySchema schema,
+        tiledb::ArraySchema schema,
         std::string_view soma_type,
         std::optional<std::string_view> soma_schema = std::nullopt,
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -168,7 +141,8 @@ class SOMAArray : public SOMAObject {
      * @param arr TileDB array.
      * @param timestamp Timestamp range the array was opened at.
      */
-    SOMAArray(std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Array> arr, std::optional<TimestampRange> timestamp);
+    SOMAArray(
+        std::shared_ptr<SOMAContext> ctx, std::shared_ptr<tiledb::Array> arr, std::optional<TimestampRange> timestamp);
 
     SOMAArray(const SOMAArray& other) = default;
     SOMAArray(SOMAArray&&) = default;
@@ -203,7 +177,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Returns a shared pointer of the internal TileDB array.
      */
-    inline std::shared_ptr<Array> tiledb_array() {
+    inline std::shared_ptr<tiledb::Array> tiledb_array() {
         return arr_;
     }
 
@@ -212,9 +186,7 @@ class SOMAArray : public SOMAObject {
      *
      * @param name Name of the array.
      */
-    inline ManagedQuery create_managed_query(std::string_view name = "unnamed") const {
-        return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
-    }
+    ManagedQuery create_managed_query(std::string_view name = "unnamed") const;
 
     /**
      * Creates a new ManagedQuery for this array.
@@ -222,10 +194,7 @@ class SOMAArray : public SOMAObject {
      * @param ctx SOMA context to use for the query.
      * @param name Name of the array.
      */
-    inline ManagedQuery create_managed_query(
-        std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const {
-        return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
-    }
+    ManagedQuery create_managed_query(std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const;
 
     /**
      * Creates a new CoordinateValueFilters for this array.
@@ -242,9 +211,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return bool true if open
      */
-    inline bool is_open() const {
-        return arr_->is_open();
-    }
+    bool is_open() const;
 
     /**
      * Get whether the SOMAArray was open in read or write mode.
@@ -319,7 +286,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::shared_ptr<ArraySchema> Schema
      */
-    std::shared_ptr<ArraySchema> tiledb_schema() const {
+    std::shared_ptr<tiledb::ArraySchema> tiledb_schema() const {
         return schema_;
     }
 
@@ -328,24 +295,14 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const {
-        auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
+    managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const;
 
-        for (size_t i = 0; i < columns_.size(); ++i) {
-            schema->children[i] = columns_[i]->arrow_schema_slot(*ctx_, *arr_, downcast_dict_of_large_var);
-        }
-
-        return schema;
-    }
-
-    ArrowSchema* arrow_schema_for_column(std::string column_name, bool downcast_dict_of_large_var = false) const {
-        for (size_t i = 0; i < columns_.size(); ++i) {
-            if (columns_[i]->name() == column_name) {
-                return columns_[i]->arrow_schema_slot(*ctx_, *arr_, downcast_dict_of_large_var);
-            }
-        }
-        throw TileDBSOMAError("[arrow_schema_for_column] column name '" + column_name + "' not present in schema");
-    }
+    /**
+     * @brief Get the Arrow schema of a column in the array.
+     *
+     * @return ArrowSchema* Schema
+     */
+    ArrowSchema* arrow_schema_for_column(std::string column_name, bool downcast_dict_of_large_var = false) const;
 
     /**
      * @brief Get members of the schema (capacity, allows_duplicates,
@@ -354,9 +311,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return PlatformSchemaConfig
      */
-    inline PlatformSchemaConfig schema_config_options() const {
-        return utils::platform_schema_config_from_tiledb(*schema_);
-    }
+    PlatformSchemaConfig schema_config_options() const;
 
     /**
      * Set metadata key-value items to an open array. The array must
@@ -488,32 +443,10 @@ class SOMAArray : public SOMAObject {
         std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values, bool deduplicate);
 
     /**
-     * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments. Returns (0, 0) for empty
-     * domains.
-     */
-    template <typename T>
-    std::pair<T, T> non_empty_domain_slot(std::string_view name) const {
-        return get_column(name)->non_empty_domain_slot<T>(*arr_);
-    }
-
-    /**
-     * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments. Return std::nullopt for empty
-     * domains.
-     */
-    template <typename T>
-    std::optional<std::pair<T, T>> non_empty_domain_slot_opt(std::string_view name) const {
-        return get_column(name)->non_empty_domain_slot_opt<T>(*ctx_, *arr_);
-    }
-
-    /**
      * Exposed for testing purposes within this library.
      * Not for use by Python/R.
      */
-    CurrentDomain get_current_domain_for_test() const {
-        return _get_current_domain();
-    }
+    tiledb::CurrentDomain get_current_domain_for_test() const;
 
     /**
      * @brief Returns true if the array has a non-empty current domain, else
@@ -523,77 +456,7 @@ class SOMAArray : public SOMAObject {
      * we use the core language and defer to Python/R to conform to
      * SOMA-API syntax.
      */
-    bool has_current_domain() const {
-        return !_get_current_domain().is_empty();
-    }
-
-    /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> _core_current_domain_slot(std::string_view name) const {
-        return get_column(name)->core_current_domain_slot<T>(*ctx_, *arr_);
-    }
-
-    /**
-     * Returns the core domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> _core_domain_slot(std::string_view name) const {
-        return get_column(name)->core_domain_slot<T>();
-    }
-
-    /**
-     * Returns the SOMA domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     */
-    template <typename T>
-    std::pair<T, T> soma_domain_slot(std::string_view name) const {
-        if (has_current_domain()) {
-            return _core_current_domain_slot<T>(name);
-        } else {
-            return _core_domain_slot<T>(name);
-        }
-    }
-
-    /**
-     * Returns the SOMA maxdomain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma maxdomain is core domain
-     */
-    template <typename T>
-    std::pair<T, T> soma_maxdomain_slot(std::string_view name) const {
-        return _core_domain_slot<T>(name);
-    }
+    bool has_current_domain() const;
 
     /**
      * Returns the SOMA domain in its entirety, as an Arrow table for return to
@@ -610,11 +473,11 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    ArrowTable get_soma_domain() {
+    inline ArrowTable get_soma_domain() {
         if (has_current_domain()) {
-            return _get_core_current_domain();
+            return _get_core_domainish(Domainish::kind_core_current_domain);
         } else {
-            return _get_core_domain();
+            return _get_core_domainish(Domainish::kind_core_domain);
         }
     }
 
@@ -634,7 +497,7 @@ class SOMAArray : public SOMAObject {
      * @return Pair of [lower, upper] inclusive bounds.
      */
     ArrowTable get_soma_maxdomain() {
-        return _get_core_domain();
+        return _get_core_domainish(Domainish::kind_core_domain);
     }
 
     /**
@@ -650,15 +513,6 @@ class SOMAArray : public SOMAObject {
      * non-empty domain.
      */
     ArrowTable _get_core_domainish(enum Domainish which_kind);
-
-    /**
-     * This enables some code deduplication between core domain, core current
-     * domain, and core non-empty domain.
-     */
-    template <typename T>
-    std::pair<T, T> _core_domainish_slot(std::string_view name, enum Domainish which_kind) const {
-        return get_column(name)->domain_slot<T>(*ctx_, *arr_, which_kind);
-    }
 
     /**
      * @brief Get the total number of unique cells in the array. Equivalent to
@@ -871,9 +725,6 @@ class SOMAArray : public SOMAObject {
    protected:
     static bool _exists(std::string_view uri, std::string_view soma_type, std::shared_ptr<SOMAContext> ctx);
 
-    // See top-of-file notes regarding methods for SOMADataFrame being
-    // defined in this file.
-    //
     // These return the shape and maxshape slots for the soma_joinid dim, if
     // the array has one. These are important test-points and dev-internal
     // access-points, in particular, for the tiledbsoma-io experiment-level
@@ -888,7 +739,7 @@ class SOMAArray : public SOMAObject {
      */
     void delete_cells_impl(const QueryCondition& delete_cond);
 
-    static Array _create(
+    static tiledb::Array _create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
         ArraySchema schema,
@@ -907,7 +758,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<SOMAContext> ctx_;
 
     // Array associated with SOMAArray
-    std::shared_ptr<Array> arr_;
+    std::shared_ptr<tiledb::Array> arr_;
 
    private:
     //===================================================================
@@ -921,7 +772,7 @@ class SOMAArray : public SOMAObject {
      * getting the list of distinct enumeration values, or extending
      * the existing enumeration.
      */
-    Enumeration get_existing_enumeration_for_column(std::string column_name);
+    tiledb::Enumeration get_existing_enumeration_for_column(std::string column_name);
 
     /**
      * The caller must check the return value for .is_empty() to see if this is
@@ -930,25 +781,7 @@ class SOMAArray : public SOMAObject {
      * We could implement this as a std::optional<CurrentDomain> return value
      * here, but, that would be a redundant indicator.
      */
-    CurrentDomain _get_current_domain() const {
-        return tiledb::ArraySchemaExperimental::current_domain(*ctx_->tiledb_ctx(), *schema_);
-    }
-
-    /**
-     * Returns the core current domain in its entirety, as an Arrow
-     * table for return to Python/R.
-     */
-    ArrowTable _get_core_current_domain() {
-        return _get_core_domainish(Domainish::kind_core_current_domain);
-    }
-
-    /**
-     * Returns the core domain in its entirety, as an Arrow
-     * table for return to Python/R.
-     */
-    ArrowTable _get_core_domain() {
-        return _get_core_domainish(Domainish::kind_core_domain);
-    }
+    tiledb::CurrentDomain _get_current_domain() const;
 
     /**
      * This is a code-dedupe helper for can_resize and can_upgrade_shape.
@@ -957,8 +790,7 @@ class SOMAArray : public SOMAObject {
         const std::vector<int64_t>& newshape, bool must_already_have, std::string function_name_for_messages);
 
     /**
-     * This is a code-dedupe helper method for can_change_domain and
-     * can_upgrade_domain.
+     * This is a code-dedupe helper method for can_change_domain and can_upgrade_domain.
      */
     StatusAndReason _can_set_domain_helper(
         const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
@@ -1002,81 +834,6 @@ class SOMAArray : public SOMAObject {
         const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
 
     /**
-     * This is a helper for can_upgrade_domain.
-     */
-    template <typename T>
-    StatusAndReason _can_set_dataframe_domainish_slot_checker_non_string(
-        bool check_current_domain, const ArrowTable& domain_table, std::string dim_name) {
-        std::pair<T, T> old_lo_hi = check_current_domain ? _core_current_domain_slot<T>(dim_name) :
-                                                           _core_domain_slot<T>(dim_name);
-        std::vector<T> new_lo_hi = ArrowAdapter::get_table_non_string_column_by_name<T>(domain_table, dim_name);
-        if (new_lo_hi.size() != 2) {
-            throw TileDBSOMAError(
-                "internal coding error detected at "
-                "_can_set_dataframe_domainish_slot_checker");
-        }
-
-        const T& old_lo = old_lo_hi.first;
-        const T& old_hi = old_lo_hi.second;
-        const T& new_lo = new_lo_hi[0];
-        const T& new_hi = new_lo_hi[1];
-
-        // If we're checking against the core current domain: the user-provided
-        // domain must contain the core current domain.
-        //
-        // If we're checking against the core (max) domain: the user-provided
-        // domain must be contained within the core (max) domain.
-
-        if (new_lo > new_hi) {
-            return std::pair(false, "index-column name " + dim_name + ": new lower > new upper");
-        }
-
-        if (check_current_domain) {
-            if (new_lo > old_lo) {
-                return std::pair(
-                    false, "index-column name " + dim_name + ": new lower > old lower (downsize is unsupported)");
-            }
-            if (new_hi < old_hi) {
-                return std::pair(
-                    false, "index-column name " + dim_name + ": new upper < old upper (downsize is unsupported)");
-            }
-        } else {
-            if (new_lo < old_lo) {
-                return std::pair(false, "index-column name " + dim_name + ": new lower < limit lower");
-            }
-            if (new_hi > old_hi) {
-                return std::pair(false, "index-column name " + dim_name + ": new upper > limit upper");
-            }
-        }
-        return std::pair(true, "");
-    }
-
-    /**
-     * This is a helper for can_upgrade_domain.
-     */
-    StatusAndReason _can_set_dataframe_domainish_slot_checker_string(
-        bool /*check_current_domain*/, const ArrowTable& domain_table, std::string dim_name) {
-        std::vector<std::string> new_lo_hi = ArrowAdapter::get_table_string_column_by_name(domain_table, dim_name);
-        if (new_lo_hi.size() != 2) {
-            throw TileDBSOMAError(
-                "internal coding error detected at "
-                "_can_set_dataframe_domainish_slot_checker");
-        }
-
-        const std::string& new_lo = new_lo_hi[0];
-        const std::string& new_hi = new_lo_hi[1];
-
-        if (new_lo != "" || new_hi != "") {
-            return std::pair(
-                false,
-                "domain cannot be set for string index columns: please use "
-                "(\"\", \"\")");
-        }
-
-        return std::pair(true, "");
-    }
-
-    /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame
      * have int64 dims, variant-indexed DataFrames do not. This helper
      * lets us pre-check any attempts to treat dims as if they were int64.
@@ -1107,12 +864,12 @@ class SOMAArray : public SOMAObject {
      * referencing this array's context pointer, along with its open-at
      * timestamp (if any).
      */
-    ArraySchemaEvolution _make_se();
+    tiledb::ArraySchemaEvolution _make_se();
 
     // Array associated with metadata_. If open mode is not "read", then a second
     // array is opened. Otherwise, this is a reference to `arr_`. This needs to be
     // kept open to make metadata value pointer in the metadata cache accessible.
-    std::shared_ptr<Array> meta_cache_arr_;
+    std::shared_ptr<tiledb::Array> meta_cache_arr_;
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
@@ -1130,7 +887,7 @@ class SOMAArray : public SOMAObject {
     // is closed or opened in write mode which means we cannot use arr->schema()
     // directly in those cases. Here, we store a copy of the schema so that it
     // can be accessed in any mode
-    std::shared_ptr<ArraySchema> schema_;
+    std::shared_ptr<tiledb::ArraySchema> schema_;
 };
 
 }  // namespace tiledbsoma

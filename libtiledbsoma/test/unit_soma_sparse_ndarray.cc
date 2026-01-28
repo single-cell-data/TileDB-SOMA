@@ -291,9 +291,8 @@ TEST_CASE("SOMASparseNDArray: can_tiledbsoma_upgrade_shape", "[SOMASparseNDArray
     auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     REQUIRE(snda->has_current_domain());
 
-    auto dom = snda->soma_domain_slot<int64_t>(dim_name);
-    REQUIRE(dom.first == 0);
-    REQUIRE(dom.second == dim_max);
+    auto shape = snda->shape();
+    REQUIRE(shape[0] - 1 == dim_max);
 
     std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
     std::vector<int64_t> newshape_too_big({dim_max + 10});
@@ -346,11 +345,10 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     //   o Recall that the core current domain is mutable, up tp <= (max) domain
     // * The core (max) domain is huge
     //   o Recall that the core max domain is immutable
-    auto dom = snda->soma_domain_slot<int64_t>(dim_name);
-    auto mxd = snda->soma_maxdomain_slot<int64_t>(dim_name);
-    REQUIRE(dom != mxd);
-    REQUIRE(dom.first == 0);
-    REQUIRE(dom.second == dim_max);
+    auto shape = snda->shape();
+    auto max_shape = snda->maxshape();
+    REQUIRE(shape != max_shape);
+    REQUIRE(shape[0] - 1 == dim_max);
 
     std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
     std::vector<int64_t> newshape_too_small({40});

@@ -13,7 +13,8 @@
 
 #include "soma_point_cloud_dataframe.h"
 #include <tiledb/tiledb>
-#include "utils/common.h"
+#include "../utils/arrow_adapter.h"
+#include "../utils/common.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
