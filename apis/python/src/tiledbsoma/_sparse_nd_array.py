@@ -28,9 +28,10 @@ from ._dask.util import SOMADaskConfig
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._managed_query import ManagedQuery
 from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseCOOTensorReadIter, TableReadIter
+from ._soma_context import SOMAContext
 from ._types import NTuple, OpenTimestamp
-from ._util import from_clib_result_order
-from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
+from ._util import from_clib_result_order, tiledb_timestamp_to_ms
+from .options._soma_tiledb_context import SOMATileDBContext, _update_context_and_timestamp
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 
@@ -108,7 +109,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         type: pa.DataType,
         shape: Sequence[int | None],
         platform_config: options.PlatformConfig | None = None,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a SOMA ``SparseNDArray`` at the given URI.
@@ -151,8 +152,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Lifecycle:
             Maturing.
         """
-        context = _validate_soma_tiledb_context(context)
-
         # SOMA-to-core mappings:
         #
         # Before the current-domain feature was enabled (possible after core 2.25):
@@ -227,25 +226,26 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = build_clib_platform_config(platform_config)
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMASparseNDArray.create(
                 uri,
                 format=carrow_type,
                 index_column_info=index_column_info,
-                ctx=context.native_context,
+                ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             handle = clib.SOMASparseNDArray.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

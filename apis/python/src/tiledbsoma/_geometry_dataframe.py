@@ -14,7 +14,6 @@ import somacore
 from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
 
-from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 from . import _arrow_types, _util
@@ -35,6 +34,7 @@ from ._dataframe import (
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._managed_query import ManagedQuery
 from ._read_iters import TableReadIter
+from ._soma_context import SOMAContext
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
@@ -42,8 +42,8 @@ from ._spatial_util import (
     process_spatial_df_region,
 )
 from ._types import OpenTimestamp
-from ._util import _cast_record_batch
-from .options import SOMATileDBContext
+from ._util import _cast_record_batch, tiledb_timestamp_to_ms
+from .options import SOMATileDBContext, _update_context_and_timestamp
 from .options._util import build_clib_platform_config
 
 _UNBATCHED = options.BatchSize()
@@ -74,7 +74,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         domain: Domain | None = None,
         platform_config: options.PlatformConfig | None = None,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new ``GeometryDataFrame`` at the given URI.
@@ -120,8 +120,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             SOMA_GEOMETRY,
             SOMA_JOINID,
         )
-
-        context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names, [SOMA_JOINID, SOMA_GEOMETRY])
 
         # SOMA-to-core mappings:
@@ -260,7 +258,8 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         plt_cfg = build_clib_platform_config(platform_config)
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMAGeometryDataFrame.create(
                 uri,
@@ -268,19 +267,19 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                 index_column_info=index_column_info,
                 axis_names=axis_names,
                 axis_units=axis_units,
-                ctx=context.native_context,
+                ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             handle = clib.SOMAGeometryDataFrame.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

@@ -65,7 +65,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         return self.A is not None
 
     @abstractmethod
-    def _array_exists(self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None) -> bool:
+    def _array_exists(self, uri: str, context: soma.SOMAContext, tiledb_timestamp: int | None) -> bool:
         pass
 
     @abstractmethod

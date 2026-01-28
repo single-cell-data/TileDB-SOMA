@@ -29,6 +29,7 @@ from ._fastercsx import CompressedMatrix
 from ._indexer import IntIndexer
 from ._managed_query import ManagedQuery
 from ._query_condition import QueryCondition
+from ._soma_context import SOMAContext
 from ._types import NTuple
 from .options import SOMATileDBContext
 
@@ -135,7 +136,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
         eager: bool = True,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
     ) -> None:
         super().__init__()
 
@@ -153,7 +154,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         else:
             self._threadpool = futures.ThreadPoolExecutor()
 
-        self.context = context
+        self.context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
 
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
@@ -343,10 +344,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         reindex_disable_on_axis: int | Sequence[int] | None = None,
         eager: bool = True,
         compress: bool = True,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
     ) -> None:
         self.compress = compress
-        self.context = context
+        self.context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
         super().__init__(
             array,
             coords,
@@ -356,7 +357,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             size=size,
             reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
-            context=context,
+            context=self.context,
         )
 
         if len(self.shape) != 2 or len(self.coords) > 2 or self.major_axis not in [0, 1]:

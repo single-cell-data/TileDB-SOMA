@@ -183,6 +183,7 @@ from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
 from ._query import ExperimentAxisQuery
 from ._scene import Scene
+from ._soma_context import SOMAContext
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .pytiledbsoma import (
@@ -221,6 +222,7 @@ __all__ = [
     "NotCreateableError",
     "PointCloudDataFrame",
     "ResultOrder",
+    "SOMAContext",
     "SOMAError",
     "SOMATileDBContext",
     "ScaleTransform",
