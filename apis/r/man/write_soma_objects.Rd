@@ -257,7 +257,7 @@ The array type is determined by \code{type}, or
 }
 
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a Bioconductor S4 DataFrame object to a SOMA
 uri <- withr::local_tempfile(pattern = "s4-data-frame")
 data("pbmc_small", package = "SeuratObject")
@@ -268,7 +268,7 @@ head(obs <- as(obs, "DataFrame"))
 
 sdf$close()
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a Bioconductor SelfHits object to a SOMA
 uri <- withr::local_tempfile(pattern = "hits")
 (hits <- S4Vectors::SelfHits(
@@ -282,14 +282,14 @@ uri <- withr::local_tempfile(pattern = "hits")
 
 arr$close()
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a character vector to a SOMA
 uri <- withr::local_tempfile(pattern = "character")
 (sdf <- write_soma(letters, uri, soma_parent = NULL, relative = FALSE))
 
 sdf$close()
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a data.frame to a SOMA
 uri <- withr::local_tempfile(pattern = "data-frame")
 data("pbmc_small", package = "SeuratObject")
@@ -299,10 +299,10 @@ head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
 
 sdf$close()
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("BPCells", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("BPCells", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a BPCells `IterableMatrix` to a SOMA
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a matrix to a SOMA
 uri <- withr::local_tempfile(pattern = "matrix")
 mat <- matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
@@ -310,7 +310,7 @@ mat <- matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
 
 arr$close()
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a dense S4 Matrix to a SOMA
 uri <- withr::local_tempfile(pattern = "s4-matrix")
 mat <- Matrix::Matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
@@ -318,7 +318,7 @@ mat <- Matrix::Matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
 
 arr$close()
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Write a TsparseMatrix to a SOMA
 uri <- withr::local_tempfile(pattern = "tsparse-matrix")
 mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "T")

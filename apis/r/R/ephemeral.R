@@ -294,7 +294,7 @@ EphemeralCollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error("uri")
       }
-      return(paste0("ephemeral-collection:", data.table::address(self)))
+      return(paste0("ephemeral-collection:", rlang::obj_address(self)))
     },
 
     #' @field members A list with the members of this collection

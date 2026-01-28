@@ -53,7 +53,7 @@ Factory function to create a
 (lifecycle: maturing).
 }
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 uri <- withr::local_tempfile(pattern = "soma-sparse-array")
 mat <- Matrix::rsparsematrix(100L, 100L, 0.7, repr = "T")
 mat[1:3, 1:5]

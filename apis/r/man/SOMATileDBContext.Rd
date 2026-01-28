@@ -7,7 +7,7 @@
 Context map for TileDB-backed SOMA objects
 }
 \examples{
-\dontshow{if (requireNamespace("tiledb", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("tiledb", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 (ctx <- SOMATileDBContext$new())
 ctx$get("sm.mem.reader.sparse_global_order.ratio_array_data")
 

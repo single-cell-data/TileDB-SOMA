@@ -53,13 +53,13 @@ SOMA object.
 \examples{
 list_datasets()
 
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 dir <- withr::local_tempfile(pattern = "pbmc-small")
 dir.create(dir, recursive = TRUE)
 dest <- extract_dataset("soma-exp-pbmc-small", dir)
 list.files(dest)
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 dir <- withr::local_tempfile(pattern = "pbmc_small")
 dir.create(dir, recursive = TRUE)
 (exp <- load_dataset("soma-exp-pbmc-small", dir))

@@ -40,7 +40,7 @@ as.list(strider)
 
 length(strider)
 
-\dontshow{if (requireNamespace("itertools", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("itertools", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 (strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
 while (itertools::hasNext(strider)) {
   str(iterators::nextElem(strider))

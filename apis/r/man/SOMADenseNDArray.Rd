@@ -26,7 +26,7 @@ null value of the array type (e.g.,
 \code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
 }
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 uri <- withr::local_tempfile(pattern = "soma-dense-array")
 mat <- matrix(stats::rnorm(100L ^ 2L), nrow = 100L, ncol = 100L)
 mat[1:3, 1:5]
