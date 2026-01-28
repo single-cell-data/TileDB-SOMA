@@ -25,44 +25,16 @@ set(FORWARD_EP_CMAKE_ARGS)
 set(EXTERNAL_PROJECTS)
 
 # Forward any additional CMake args to the non-superbuild.
-# Filter out vcpkg-installed paths from CMAKE_PREFIX_PATH to avoid "extra path" warnings
-# vcpkg will add these paths automatically when its toolchain file loads in the nested configure
-# But we need to keep EP_INSTALL_PREFIX so TileDB can be found
-if(CMAKE_PREFIX_PATH)
-  set(CMAKE_PREFIX_PATH_FILTERED)
-  foreach(path ${CMAKE_PREFIX_PATH})
-    # Skip vcpkg-installed paths - vcpkg will add them automatically
-    if(NOT path MATCHES "vcpkg_installed")
-      list(APPEND CMAKE_PREFIX_PATH_FILTERED "${path}")
-    endif()
-  endforeach()
-  set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH_FILTERED}")
-endif()
-# Always add EP_INSTALL_PREFIX so TileDB (built by superbuild) can be found
-list(APPEND CMAKE_PREFIX_PATH "${EP_INSTALL_PREFIX}")
-# Join the filtered list with semicolons for passing to CMake command
-list(JOIN CMAKE_PREFIX_PATH ";" CMAKE_PREFIX_PATH_STRING)
-
-# Forward CMAKE_TOOLCHAIN_FILE and CMAKE_OSX_ARCHITECTURES if set (needed for vcpkg in nested configure)
-set(INHERITED_TOOLCHAIN_ARG)
-if(CMAKE_TOOLCHAIN_FILE)
-  list(APPEND INHERITED_TOOLCHAIN_ARG -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
-endif()
-if(CMAKE_OSX_ARCHITECTURES)
-  list(APPEND INHERITED_TOOLCHAIN_ARG -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES})
-endif()
-
 set(INHERITED_CMAKE_ARGS
   -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-  -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_STRING}
+  -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
   -DCMAKE_BUILD_TYPE=$<CONFIG>
-  ${INHERITED_TOOLCHAIN_ARG}
   -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
   -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
   -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
   -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-  -DEP_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
+  -DEP_BASE=${EP_BASE}
   -DFORCE_BUILD_TILEDB=${FORCE_BUILD_TILEDB}
   -DTILEDB_S3=${TILEDB_S3}
   -DTILEDB_AZURE=${TILEDB_AZURe}
@@ -90,12 +62,7 @@ set(INHERITED_CMAKE_ARGS
 
 #TBD include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCLI11_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindTileDB_EP.cmake)
-
-# Only include spdlog superbuild if vcpkg is not being used
-# When using vcpkg, spdlog comes from vcpkg; superbuild only builds TileDB
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
 
 
 ############################################################

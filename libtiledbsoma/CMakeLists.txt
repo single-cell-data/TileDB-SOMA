@@ -31,16 +31,8 @@ option(TILEDBSOMA_BUILD_STATIC "Build a static library; otherwise, shared librar
 option(TILEDBSOMA_ENABLE_TESTING "Enable tests" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." OFF)
 
-# TileDB-SOMA VCPKG options
-option(TILEDBSOMA_FETCH_VCPKG "Download and install vcpkg. Ignored if CMAKE_TOOLCHAIN_FILE or ENV{VCPKG_ROOT} is set." OFF)
-
-# Superbuild option - enabled when using vcpkg to build TileDB (TileDB is not in vcpkg)
-# When using vcpkg, superbuild only builds TileDB; other deps come from vcpkg
-if(DEFINED CMAKE_TOOLCHAIN_FILE)
-  option(SUPERBUILD "If true, perform a superbuild (builds TileDB only when using vcpkg)." ON)
-else()
-  option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
-endif()
+# Superbuild option must be on by default.
+option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
 option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP install dir." OFF)
 option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." OFF)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)
@@ -61,29 +53,6 @@ option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and 
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
 option(TILEDB_SANITIZER "Sanitizer to use in TILEDB. ")
-
-# Set the CMake toolchain file and possibly fetch vcpkg.
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  if(DEFINED ENV{VCPKG_ROOT})
-    set(CMAKE_TOOLCHAIN_FILE
-      "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-      CACHE STRING "Vcpkg toolchain file"
-    )
-  elseif (TILEDBSOMA_FETCH_VCPKG)
-      # Inspired from https://github.com/Azure/azure-sdk-for-cpp/blob/azure-core_1.10.3/cmake-modules/AzureVcpkg.cmake
-      message("TILEDBSOMA_FETCH_VCPKG is enabled. Fetching a local copy of vcpkg.")
-      set(VCPKG_COMMIT_STRING ea2a964f9303270322cf3f2d51c265ba146c422d) # 2025-04-01
-      message("Vcpkg commit string used: ${VCPKG_COMMIT_STRING}")
-      include(FetchContent)
-      FetchContent_Declare(
-        vcpkg
-        GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
-        GIT_TAG        ${VCPKG_COMMIT_STRING}
-      )
-      FetchContent_MakeAvailable(vcpkg)
-      set(CMAKE_TOOLCHAIN_FILE "${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
-  endif()
-endif()
 
 # Enable compiler cache to speed up recompilation
 find_program(CCACHE_FOUND ccache)
@@ -160,6 +129,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 # Superbuild setup
 # ###########################################################
 
+# Search the externals install directory for dependencies.
+list(APPEND CMAKE_PREFIX_PATH "${EP_INSTALL_PREFIX}")
+
 # If this is an in-IDE build, we need to disable the superbuild and explicitly
 # set the EP base dir. The normal 'cmake && make' process won't need this step,
 # it is for better CLion support of the superbuild architecture.
@@ -169,9 +141,6 @@ if(CMAKE_IDE)
 endif()
 
 if(SUPERBUILD)
-  # Search the externals install directory for dependencies.
-  list(APPEND CMAKE_PREFIX_PATH "${EP_INSTALL_PREFIX}")
-  
   project(TileDB-SOMA-Superbuild)
   message(STATUS "Starting TileDB-SOMA superbuild.")
   include("cmake/Superbuild.cmake")
@@ -181,11 +150,9 @@ endif()
 project(TileDB-SOMA)
 message(STATUS "Starting TileDB-SOMA regular build.")
 
-# Paths to locate the installed external projects (only used in superbuild mode)
-if(SUPERBUILD)
-  set(EP_SOURCE_DIR "${EP_BASE}/src")
-  set(EP_INSTALL_PREFIX "${EP_BASE}/install")
-endif()
+# Paths to locate the installed external projects.
+set(EP_SOURCE_DIR "${EP_BASE}/src")
+set(EP_INSTALL_PREFIX "${EP_BASE}/install")
 
 
 # ###########################################################
@@ -336,20 +303,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
 
 # Find required dependencies
-# When using vcpkg, find packages directly from vcpkg
-# When using superbuild, use ExternalProject finders
-if(DEFINED CMAKE_TOOLCHAIN_FILE)
-  # vcpkg mode: find packages directly from vcpkg
-  # TileDB is built via superbuild (TileDB is not in vcpkg)
-  find_package(TileDB_EP REQUIRED)
-  find_package(spdlog CONFIG REQUIRED)
-  message(STATUS "Using vcpkg for dependencies: spdlog, fmt, catch2")
-  message(STATUS "Using superbuild for TileDB (not in vcpkg)")
-else()
-  # Pure superbuild mode: use ExternalProject finders for all deps
-  find_package(TileDB_EP REQUIRED)
-  find_package(Spdlog_EP REQUIRED)
-endif()
+# See ../cmake/Modules/*.cmake for provenance/version info
+find_package(TileDB_EP REQUIRED)
+find_package(Spdlog_EP REQUIRED)
 
 add_subdirectory(src)
 
