@@ -950,7 +950,10 @@ class ManagedQuery {
                     shifted_indexes[i] = static_cast<DiskIndexType>(enumeration.index_of(enum_values[oi]).value());
                 } else {
                     shifted_indexes[i] = static_cast<DiskIndexType>(
-                        enumeration.index_of<ValueType>(enum_values[oi]).value());
+                        enumeration
+                            .index_of(
+                                std::string_view(reinterpret_cast<const char*>(&enum_values[oi]), sizeof(ValueType)))
+                            .value());
                 }
             }
         }
