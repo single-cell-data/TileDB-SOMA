@@ -213,6 +213,14 @@ std::unique_ptr<IArrowBufferStorage> ColumnBuffer::export_buffers() {
     }
 }
 
+uint64_t ColumnBuffer::max_size() const {
+    return max_data_size_;
+}
+
+uint64_t ColumnBuffer::max_num_cells() const {
+    return max_num_cells_;
+}
+
 #pragma endregion
 
 #pragma region private non-static
@@ -455,6 +463,45 @@ std::unique_ptr<IArrowBufferStorage> CArrayColumnBuffer::export_buffers() {
                 type(), num_cells_, std::move(data_buffer), std::move(validity_buffer));
         }
     }
+}
+
+void CArrayColumnBuffer::resize(const uint64_t num_bytes, const uint64_t num_cells, const bool preserve_data) {
+    std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(num_bytes);
+    std::unique_ptr<uint64_t[]> offsets_buffer;
+    std::unique_ptr<uint8_t[]> validity_buffer;
+
+    if (is_var()) {
+        offsets_buffer = std::make_unique_for_overwrite<uint64_t[]>(num_cells + 1);
+    }
+
+    if (is_nullable()) {
+        validity_buffer = std::make_unique_for_overwrite<uint8_t[]>(num_cells);
+    }
+
+    if (preserve_data) {
+        std::memcpy(data_buffer.get(), data_.get(), std::min(num_bytes, data_size_));
+
+        if (is_var()) {
+            std::memcpy(
+                offsets_buffer.get(), offsets_.get(), std::min(num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
+        }
+
+        if (is_nullable()) {
+            std::memcpy(validity_buffer.get(), validity_.get(), std::min(num_cells, num_cells_) * sizeof(uint8_t));
+        }
+
+        data_size_ = std::min(num_bytes, data_size_);
+        num_cells_ = std::min(num_cells, num_cells_);
+    }
+
+    max_data_size_ = num_bytes;
+    max_num_cells_ = num_cells;
+
+    data_ = std::move(data_buffer);
+    offsets_ = std::move(offsets_buffer);
+    validity_ = std::move(validity_buffer);
+
+    num_cells_ = std::min(num_cells_, num_cells);
 }
 
 #pragma endregion
@@ -727,34 +774,37 @@ std::shared_ptr<ColumnBuffer> VectorColumnBuffer::alloc(
         name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered, mode);
 }
 
-void ColumnBuffer::resize(const uint64_t num_bytes, const uint64_t num_cells, const bool preserve_data) {
-    std::vector<std::byte> data_buffer(num_bytes);
-    std::vector<uint64_t> offsets_buffer;
-    std::vector<uint8_t> validity_buffer;
+void VectorColumnBuffer::resize(const uint64_t num_bytes, const uint64_t num_cells, const bool preserve_data) {
+    std::vector<std::byte, NoInitAlloc<std::byte>> data_buffer(num_bytes);
+    std::vector<uint64_t, NoInitAlloc<uint64_t>> offsets_buffer;
+    std::vector<uint8_t, NoInitAlloc<uint8_t>> validity_buffer;
 
-    if (is_var_) {
+    if (is_var()) {
         offsets_buffer.resize(num_cells + 1);
     }
 
-    if (is_nullable_) {
+    if (is_nullable()) {
         validity_buffer.resize(num_cells);
     }
 
     if (preserve_data) {
-        size_t copy_num_bytes = is_var_ ? std::min(num_bytes, (num_cells_ != 0 ? offsets_[num_cells_] : 0)) :
-                                          std::min(num_bytes, num_cells_ * impl::type_size(type()));
+        std::memcpy(data_buffer.data(), data_.data(), std::min(num_bytes, data_size_));
 
-        std::memcpy(data_buffer.data(), data_.data(), copy_num_bytes);
-
-        if (is_var_) {
+        if (is_var()) {
             std::memcpy(
                 offsets_buffer.data(), offsets_.data(), std::min(num_cells + 1, num_cells_ + 1) * sizeof(uint64_t));
         }
 
-        if (is_nullable_) {
+        if (is_nullable()) {
             std::memcpy(validity_buffer.data(), validity_.data(), std::min(num_cells, num_cells_) * sizeof(uint8_t));
         }
+
+        data_size_ = std::min(num_bytes, data_size_);
+        num_cells_ = std::min(num_cells, num_cells_);
     }
+
+    max_data_size_ = num_bytes;
+    max_num_cells_ = num_cells;
 
     data_ = data_buffer;
     offsets_ = offsets_buffer;
@@ -762,13 +812,4 @@ void ColumnBuffer::resize(const uint64_t num_bytes, const uint64_t num_cells, co
 
     num_cells_ = std::min(num_cells_, num_cells);
 }
-
-uint64_t ColumnBuffer::max_size() const {
-    return data_.capacity();
-}
-
-uint64_t ColumnBuffer::max_num_cells() const {
-    return is_var_ ? (offsets_.capacity() - 1) : max_size() / tiledb::impl::type_size(type());
-}
-
 }  // namespace tiledbsoma

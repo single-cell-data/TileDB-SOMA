@@ -99,7 +99,8 @@ void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<ColumnBuffer
 }
 
 void ArrayBuffers::expand_buffers() {
-    for (const auto& [name, buffer] : buffers_) {
+    for (const auto& name : names_) {
+        std::shared_ptr<ReadColumnBuffer> buffer = at<ReadColumnBuffer>(name);
         buffer->resize(
             buffer->max_size() * DEFAULT_BUFFER_EXPANSION_FACTOR,
             buffer->max_num_cells() * DEFAULT_BUFFER_EXPANSION_FACTOR);

@@ -18,9 +18,9 @@
 
 #include <unordered_set>
 
+#include "column_buffer_strategies.h"
 #include "common/logging/impl/logger.h"
 #include "common/logging/logger.h"
-#include "column_buffer_strategies.h"
 #include "utils/common.h"
 #include "utils/util.h"
 
