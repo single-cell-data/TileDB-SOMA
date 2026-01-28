@@ -548,18 +548,22 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
 
     {
         INFO("Write data to array.");
-        std::vector<int64_t> coords_dim_0{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
-        std::vector<int64_t> coords_dim_1{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
-        std::vector<int32_t> data(12);
-        std::iota(data.begin(), data.end(), 1);
-
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
         Query query{*ctx->tiledb_ctx(), array};
         query.set_layout(TILEDB_GLOBAL_ORDER);
-        query.set_data_buffer("soma_dim_0", coords_dim_0);
-        query.set_data_buffer("soma_dim_1", coords_dim_1);
-        query.set_data_buffer("soma_data", data);
-        query.submit();
+
+        {
+            std::vector<int64_t> coords_dim_0{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+            std::vector<int64_t> coords_dim_1{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
+            std::vector<int32_t> data(12);
+            std::iota(data.begin(), data.end(), 1);
+
+            query.set_data_buffer("soma_dim_0", coords_dim_0);
+            query.set_data_buffer("soma_dim_1", coords_dim_1);
+            query.set_data_buffer("soma_data", data);
+            query.submit();
+        }
+
         query.finalize();
         array.close();
     }

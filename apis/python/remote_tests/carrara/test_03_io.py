@@ -11,13 +11,12 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pandas.testing
-import pytest
 import scipy.sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io
 
-from ._util import carrara_cleanup_asset, parse_tiledb_uri
+from ._util import carrara_cleanup_asset
 from .conftest import BASE_URI
 
 
@@ -85,7 +84,6 @@ def test_soma_io_roundtrip(
                 assert array_eq(getattr(adata, slot)[k], getattr(small_pbmc, slot)[k]), f"{slot}[{k}] not EQ"
 
 
-@pytest.mark.xfail(reason="CORE-363 - VFS does not support Carrara asset paths")
 def test_soma_io_from_h5ad(
     tmp_path: pathlib.Path, small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMATileDBContext
 ) -> None:
@@ -95,14 +93,12 @@ def test_soma_io_from_h5ad(
     local_small_pbmc_path = tmp_path / "small_pbmc.h5ad"
     small_pbmc.write(local_small_pbmc_path)
 
-    with carrara_cleanup_asset(f"{BASE_URI}/{uuid4()}.h5ad") as h5ad_uri:
-        _, teamspace, remote_path = parse_tiledb_uri(h5ad_uri)
-        with open(local_small_pbmc_path, "rb") as fs:
-            # stage H5AD to Carrara as a file asset
-            tiledb.client.files.upload_file(teamspace, fs, remote_path, content_type="application/octet-stream")
-            # ingest from Carrara asset to Carrara SOMA experiment
-            soma.io.from_h5ad(carrara_group_path, h5ad_uri, measurement_name="RNA", context=carrara_context)
-            # verify
-            with soma.open(carrara_group_path) as exp:
-                assert exp.obs.count == small_pbmc.n_obs
-                assert exp.ms["RNA"].var.count == small_pbmc.n_vars
+    with carrara_cleanup_asset(f"{BASE_URI}/{uuid4()}.h5ad") as h5ad_uri, open(local_small_pbmc_path, "rb") as fs:
+        # stage H5AD to Carrara as a file asset
+        tiledb.client.files.upload_file(fs, h5ad_uri)
+        # ingest from Carrara asset to Carrara SOMA experiment
+        soma.io.from_h5ad(carrara_group_path, h5ad_uri, measurement_name="RNA", context=carrara_context)
+        # verify
+        with soma.open(carrara_group_path) as exp:
+            assert exp.obs.count == small_pbmc.n_obs
+            assert exp.ms["RNA"].var.count == small_pbmc.n_vars

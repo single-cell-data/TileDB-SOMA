@@ -409,7 +409,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if layout == clib.ResultOrder.unordered:
                 mq.submit_write()
-                mq._handle.finalize()
+                mq.finalize()
             else:
                 mq.submit_and_finalize()
 
@@ -445,7 +445,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if layout == clib.ResultOrder.unordered:
                 mq.submit_write()
-                mq._handle.finalize()
+                mq.finalize()
             else:
                 mq.submit_and_finalize()
 

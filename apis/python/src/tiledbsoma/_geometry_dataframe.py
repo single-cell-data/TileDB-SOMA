@@ -573,8 +573,8 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                 .asTable()
             )
             for subbatch in table.to_batches():
-                mq = ManagedQuery(self)._handle
-                mq.set_layout(clib.ResultOrder.unordered)
+                mq = ManagedQuery(self)
+                mq._handle.set_layout(clib.ResultOrder.unordered)
                 mq.submit_batch(subbatch)
                 mq.finalize()
 

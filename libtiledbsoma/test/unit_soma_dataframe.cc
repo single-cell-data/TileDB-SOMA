@@ -1230,17 +1230,22 @@ TEST_CASE("SOMADataFrame: delete with only soma_joinid index", "[SOMADataFrame][
 
     {
         INFO("Write data to array.");
-        std::vector<int64_t> join(8);
-        std::vector<int32_t> data(8);
-        std::iota(join.begin(), join.end(), 0);
-        std::iota(data.begin(), data.end(), 1);
-
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
         Query query{*ctx->tiledb_ctx(), array};
         query.set_layout(TILEDB_GLOBAL_ORDER);
-        query.set_data_buffer("soma_joinid", join);
-        query.set_data_buffer("attr1", data);
-        query.submit();
+
+        // Ensure that buffer can be freed before finalizing query
+        {
+            std::vector<int64_t> join(8);
+            std::vector<int32_t> data(8);
+            std::iota(join.begin(), join.end(), 0);
+            std::iota(data.begin(), data.end(), 1);
+
+            query.set_data_buffer("soma_joinid", join);
+            query.set_data_buffer("attr1", data);
+            query.submit();
+        }
+
         query.finalize();
         REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
         array.close();
@@ -1381,26 +1386,31 @@ TEST_CASE("SOMADataFrame: delete with only string index column", "[SOMADataFrame
     for (auto& val : coords) {
         data_size += val.size();
     }
-    std::vector<uint64_t> coords_offsets{};
-    std::vector<char> coords_data(data_size);
-    uint64_t curr_offset = 0;
-    for (auto& val : coords) {
-        coords_offsets.push_back(curr_offset);
-        memcpy(coords_data.data() + curr_offset, val.data(), val.size());
-        curr_offset += val.size();
-    }
-
-    std::vector<int64_t> index(6);
-    std::iota(index.begin(), index.end(), 0);
 
     {
         INFO("Write data to array.");
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
         Query query{*ctx->tiledb_ctx(), array};
-        query.set_data_buffer("label", coords_data);
-        query.set_offsets_buffer("label", coords_offsets);
-        query.set_data_buffer("soma_joinid", index);
-        query.submit();
+
+        {
+            std::vector<uint64_t> coords_offsets{};
+            std::vector<char> coords_data(data_size);
+            uint64_t curr_offset = 0;
+            for (auto& val : coords) {
+                coords_offsets.push_back(curr_offset);
+                memcpy(coords_data.data() + curr_offset, val.data(), val.size());
+                curr_offset += val.size();
+            }
+
+            std::vector<int64_t> index(6);
+            std::iota(index.begin(), index.end(), 0);
+
+            query.set_data_buffer("label", coords_data);
+            query.set_offsets_buffer("label", coords_offsets);
+            query.set_data_buffer("soma_joinid", index);
+            query.submit();
+        }
+
         query.finalize();
         REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
     }
@@ -1532,17 +1542,21 @@ TEST_CASE("SOMADataFrame: delete from multi-index dataframe", "[SOMADataFrame][d
 
     {
         INFO("Write data to array.");
-        std::vector<int64_t> join{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
-        std::vector<uint32_t> index{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
-        std::vector<int32_t> data(12);
-        std::iota(data.begin(), data.end(), 1);
-
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
         Query query{*ctx->tiledb_ctx(), array};
-        query.set_data_buffer("soma_joinid", join);
-        query.set_data_buffer("index", index);
-        query.set_data_buffer("attr1", data);
-        query.submit();
+
+        {
+            std::vector<int64_t> join{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+            std::vector<uint32_t> index{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
+            std::vector<int32_t> data(12);
+            std::iota(data.begin(), data.end(), 1);
+
+            query.set_data_buffer("soma_joinid", join);
+            query.set_data_buffer("index", index);
+            query.set_data_buffer("attr1", data);
+            query.submit();
+        }
+
         query.finalize();
         REQUIRE(query.query_status() == tiledb::Query::Status::COMPLETE);
         array.close();
