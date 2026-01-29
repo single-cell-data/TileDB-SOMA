@@ -103,7 +103,7 @@ class ColumnBuffer {
      *
      * @return size_t
      */
-    size_t size() const {
+    uint64_t size() const {
         return num_cells_;
     }
 
@@ -307,15 +307,15 @@ class ColumnBuffer {
     uint64_t max_num_cells() const;
 
    protected:
-    size_t num_cells_;
+    uint64_t num_cells_;
 
     // Data size which is calculated different for var vs non-var
-    size_t data_size_;
+    uint64_t data_size_;
 
-    size_t max_num_cells_;
+    uint64_t max_num_cells_;
 
     // Data size which is calculated different for var vs non-var
-    size_t max_data_size_;
+    uint64_t max_data_size_;
 
     MemoryMode mode_;
 
