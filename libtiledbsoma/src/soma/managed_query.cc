@@ -18,6 +18,7 @@
 
 #include <unordered_set>
 
+#include "column_buffer_strategies.h"
 #include "common/logging/impl/logger.h"
 #include "common/logging/logger.h"
 #include "utils/common.h"
@@ -57,6 +58,7 @@ void ManagedQuery::reset() {
     total_num_cells_ = 0;
     buffers_.reset();
     query_submitted_ = false;
+    retries = 0;
 }
 
 void ManagedQuery::set_layout(ResultOrder layout) {
@@ -151,13 +153,10 @@ void ManagedQuery::setup_read() {
     LOG_TRACE("[ManagedQuery] allocate new buffers");
     if (!buffers_) {
         if (ArrayBuffers::use_memory_pool(array_)) {
-            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
+            buffers_ = std::make_shared<ArrayBuffers>(
+                columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
         } else {
-            buffers_ = std::make_shared<ArrayBuffers>();
-            for (auto& name : columns_) {
-                LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
-                buffers_->emplace(name, VectorColumnBuffer::create(array_, name));
-            }
+            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
         }
     }
 
@@ -267,9 +266,39 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     }
     total_num_cells_ += num_cells;
 
-    // TODO: retry the query with larger buffers
-    if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+    if (status == Query::Status::INCOMPLETE) {
+        if (retries > MAX_RETRIES) {
+            throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Maximum number or retries reached.", name_));
+        }
+
+        tiledb_query_status_details_t status_details;
+        tiledb_query_get_status_details(ctx_->ptr().get(), query_->ptr().get(), &status_details);
+
+        switch (status_details.incomplete_reason) {
+            case TILEDB_REASON_USER_BUFFER_SIZE:
+                // If incomplete because of user buffer size expand buffers otherwise continue submitting the query.
+                // Resubmissions without managing to return any data count towards max number or resubmissions.
+                if (num_cells == 0) {
+                    buffers_->expand_buffers();
+                    ++retries;
+                }
+                break;
+            case TILEDB_REASON_MEMORY_BUDGET:
+                // If incomplete because of memory budget continue submitting the query.
+                // Resubmissions without managing to return any data count towards max number or resubmissions.
+                if (num_cells == 0) {
+                    ++retries;
+                }
+                break;
+            default:
+                ++retries;
+        }
+
+        LOG_DEBUG(
+            fmt::format(
+                "[ManagedQuery] [{}] Query retry; reason {}",
+                name_,
+                static_cast<int>(status_details.incomplete_reason)));
     }
 
     return buffers_;

@@ -15,29 +15,34 @@
 #define ARRAY_BUFFERS_H
 
 #include <concepts>
+#include <functional>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
 #include "column_buffer.h"
+#include "column_buffer_strategies.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
 
 class ArrayBuffers {
-    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 28;
+    inline static const size_t DEFAULT_BUFFER_EXPANSION_FACTOR = 2;
     inline static const std::string CONFIG_KEY_USE_MEMORY_POOL = "soma.read.use_memory_pool";
-    inline static const std::string CONFIG_KEY_MEMORY_BUDGET = "soma.read.memory_budget";
-    inline static const std::string CONFIG_KEY_VAR_SIZED_FACTOR = "soma.read.var_size_factor";
 
    public:
     ArrayBuffers() = default;
-    ArrayBuffers(const std::vector<std::string>& names, const tiledb::Array& array);
-    ArrayBuffers(const ArrayBuffers&) = default;
+    ArrayBuffers(
+        const std::vector<std::string>& names,
+        const tiledb::Array& array,
+        std::unique_ptr<ColumnBufferAllocationStrategy> strategy = nullptr);
+
+    ArrayBuffers(const ArrayBuffers&) = delete;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
+
+    ArrayBuffers& operator=(const ArrayBuffers&) = delete;
 
     /**
      * @brief Return the buffer with the given name.
@@ -105,12 +110,22 @@ class ArrayBuffers {
      */
     static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
 
+    /**
+     * @brief Double the size of the allocated buffers. Any data already in the buffers 
+     * will be deleted. By default this function will allocate more memory than the 
+     * memory budget set by the user.
+     */
+    void expand_buffers();
+
    private:
     // A vector of column names that maintains the order the columns were added
     std::vector<std::string> names_;
 
     // Map: column name -> ColumnBuffer
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
+
+    // The allocation strategy used to split the available memory budget to the different columns.
+    std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 
 }  // namespace tiledbsoma

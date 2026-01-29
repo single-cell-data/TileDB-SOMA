@@ -89,6 +89,13 @@ class ColumnBuffer {
 
     virtual ~ColumnBuffer();
 
+    ColumnBuffer& operator=(const ColumnBuffer&) = delete;
+
+    /**
+     * @brief Attach this ColumnBuffer to a TileDB query.
+     *
+     * @param query TileDB query
+     */
     void attach(Query& query, std::optional<Subarray> subarray = std::nullopt);
 
     /**
@@ -96,7 +103,7 @@ class ColumnBuffer {
      *
      * @return size_t
      */
-    size_t size() const {
+    uint64_t size() const {
         return num_cells_;
     }
 
@@ -289,16 +296,26 @@ class ColumnBuffer {
 
     virtual std::unique_ptr<IArrowBufferStorage> export_buffers();
 
+    /**
+     * @brief Get max size of data buffer in bytes.
+     */
+    uint64_t max_size() const;
+
+    /**
+     * @brief Get the max number of cells the buffers can hold.
+     */
+    uint64_t max_num_cells() const;
+
    protected:
-    size_t num_cells_;
+    uint64_t num_cells_;
 
     // Data size which is calculated different for var vs non-var
-    size_t data_size_;
+    uint64_t data_size_;
 
-    size_t max_num_cells_;
+    uint64_t max_num_cells_;
 
     // Data size which is calculated different for var vs non-var
-    size_t max_data_size_;
+    uint64_t max_data_size_;
 
     MemoryMode mode_;
 
@@ -415,6 +432,16 @@ class ReadColumnBuffer : public ColumnBuffer {
         ColumnBuffer::to_bitmap(validity(), bitmap);
     }
 
+    /**
+     * @brief Resize the internal buffers to the given size.
+     * 
+     * @param size Number of bytes to allocate for the data buffer.
+     * @param num_cells Number of cells the buffer should hold. 
+     *  For variable sized and nullable columns this dictates the size of the offsets and validity buffers.
+     * @param preserve_data If true, copy any data written in the old buffers to the new buffers.
+     */
+    virtual void resize(const uint64_t size, const uint64_t num_cells, const bool preserve_data = false) = 0;
+
     using ColumnBuffer::data;
     using ColumnBuffer::offsets;
     using ColumnBuffer::validity;
@@ -468,6 +495,8 @@ class CArrayColumnBuffer : public ReadColumnBuffer {
      * @brief Release ownership of the underyling offsets buffer to the caller and reallocate a new buffer with the same size.
      */
     std::unique_ptr<uint64_t[]> release_and_reallocate_offsets();
+
+    void resize(const uint64_t size, const uint64_t num_cells, const bool preserve_data = false) override;
 
     std::unique_ptr<IArrowBufferStorage> export_buffers() override;
 
@@ -544,6 +573,8 @@ class VectorColumnBuffer : public ReadColumnBuffer {
     std::span<std::byte> data() override;
     std::span<uint64_t> offsets() override;
     std::span<uint8_t> validity() override;
+
+    void resize(const uint64_t size, const uint64_t num_cells, const bool preserve_data = false) override;
 
     std::unique_ptr<IArrowBufferStorage> export_buffers() override;
 
