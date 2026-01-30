@@ -510,23 +510,38 @@ WriteColumnBuffer::~WriteColumnBuffer() {
 }
 
 std::span<const std::byte> WriteColumnBuffer::data() const {
-    return data_;
+    if (data_view_) {
+        return std::span<const std::byte>(data_view_, data_size());
+    } else if (data_buffer_) {
+        return std::span<const std::byte>(data_buffer_.get(), data_size());
+    } else {
+        throw std::runtime_error(fmt::format("[WriteColumnBuffer][data] Data buffer is null for column '{}'", name()));
+    }
 }
 
 std::span<const uint64_t> WriteColumnBuffer::offsets() const {
     if (!is_var()) {
-        throw std::runtime_error(fmt::format("[WriteColumnBuffer] Offsets buffer not defined for '{}'", name()));
+        throw std::runtime_error(
+            fmt::format("[WriteColumnBuffer][offsets] Offsets buffer not defined for '{}'", name()));
     }
 
-    return offsets_;
+    if (offsets_view_) {
+        return std::span<const uint64_t>(offsets_view_, cell_count() + 1);
+    } else if (offsets_buffer_) {
+        return std::span<const uint64_t>(offsets_buffer_.get(), cell_count() + 1);
+    } else {
+        throw std::runtime_error(
+            fmt::format("[WriteColumnBuffer][offsets] Offset buffer is null for column '{}'", name()));
+    }
 }
 
 std::span<const uint8_t> WriteColumnBuffer::validity() const {
     if (!is_nullable()) {
-        throw std::runtime_error(fmt::format("[WriteColumnBuffer] Validity buffer not defined for '{}'", name()));
+        throw std::runtime_error(
+            fmt::format("[WriteColumnBuffer][validity] Validity buffer not defined for '{}'", name()));
     }
 
-    return validity_;
+    return std::span<const uint8_t>(validity_buffer_.get(), cell_count());
 }
 
 #pragma endregion
