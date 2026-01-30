@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -106,7 +105,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[int | None],
+        shape: Sequence[int],
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -176,13 +175,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         index_column_data = {}
 
         if any(col_size is None for col_size in shape):
-            new_shape = tuple(1 if col_size is None else col_size for col_size in shape)
-            warnings.warn(
-                f"Using ``None`` in the shape is deprecated. Updating shape={shape} to shape={new_shape}.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            shape = new_shape
+            raise ValueError(f"Invalid shape={shape}. Cannot use ``None`` in the shape.")
 
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"

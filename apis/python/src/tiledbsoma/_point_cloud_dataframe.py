@@ -66,8 +66,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         uri: str,
         *,
         schema: pa.Schema,
+        domain: Domain,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
-        domain: Domain | None = None,
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -162,19 +162,14 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         domain = None
 
         if soma_domain is None:
-            warnings.warn(
-                "Setting ``domain=None`` is deprecated. Please specify the desired domain for the point cloud dataframe.",
-                DeprecationWarning,
-                stacklevel=2,
+            raise TypeError("The domain cannot be ``None``.")
+        ndom = len(soma_domain)
+        nidx = len(index_column_names)
+        if ndom != nidx:
+            raise ValueError(
+                f"The domain must have the same length as index_column_names. Got domain length={ndom} and "
+                f"index_column_names length={nidx}."
             )
-            soma_domain = tuple(None for _ in index_column_names)
-        else:
-            ndom = len(soma_domain)
-            nidx = len(index_column_names)
-            if ndom != nidx:
-                raise ValueError(
-                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}",
-                )
 
         index_column_schema = []
         index_column_data = {}

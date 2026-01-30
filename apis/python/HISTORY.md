@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
+- \[[](<>)\] The `create` method in `SOMADataFrame`, `SOMAGeometryDataFrame`, and `SOMAPointCloudDataFrame` no longer support `domain=None`.
+- \[[](<>)\] The `create` method in `SOMASparseNDArray` no longer allows a `shape` with `None` entries.
+- \[[](<>)\] Removes support for deleting items from a `SOMACollection`, `SOMAMeasurement`, `SOMAExperiment`, or `SOMAMultiscaleImage` in "write" mode.
+
 ### Fixed
 
 ### Security
