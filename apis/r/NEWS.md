@@ -14,6 +14,10 @@
 
 ## Removed
 
+- Removed the `set_data_type` from `SOMASparseNDArray` and `SOMADenseNDArray`. ([](<>))
+- Removed the ability to remove items from a SOMA collection object in "write" mode. The collection must now be opened in "delete" mode to remove items. ([](<>))
+- Removed the option to set a DataFrame domain to `NULL`. ([](<>))
+
 ## Fixed
 
 ## Security

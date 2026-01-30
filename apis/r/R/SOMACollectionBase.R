@@ -303,15 +303,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}
     #'
     remove = function(name) {
-      if (self$mode() == "WRITE") {
-        .Deprecated(
-          msg = sprintf(
-            "Removing a member in %s mode is deprecated. Collection should be opened in %s mode.",
-            sQuote("WRITE"),
-            sQuote("DELETE")
-          )
-        )
-      } else if (self$mode() != "DELETE") {
+      if (self$mode() != "DELETE") {
         stop(
           "SOMA object is not opened in 'delete' mode; cannot remove member.",
           call. = FALSE

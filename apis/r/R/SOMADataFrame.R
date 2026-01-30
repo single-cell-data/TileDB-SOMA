@@ -36,10 +36,9 @@ SOMADataFrame <- R6::R6Class(
     #' column. For example, if there is a single int64-valued index column
     #' \code{soma_joinid}, then \code{domain} might be
     #' \code{list(soma_joinid=c(100, 200))} to indicate that values between 100
-    #' and 200, inclusive, can be stored in that column.  If provided, this
-    #' sequence must have the same length as \code{index_column_names}, and the
-    #' index-column domain will be as specified. Omitting or setting the domain
-    #' to \code{NULL} is deprecated. See also \code{change_domain} which allows
+    #' and 200, inclusive, can be stored in that column.  This sequence must have
+    #' the same length as \code{index_column_names}, and the  index-column domain
+    #' will be as specified.  See also \code{change_domain} which allows
     #' you to expand the domain after create.
     #' @template param-platform-config
     #'
@@ -68,15 +67,9 @@ SOMADataFrame <- R6::R6Class(
 
       schema <- private$validate_schema(schema, index_column_names)
 
-      if (is.null(domain)) {
-        .deprecate(
-          when = "2.1.0",
-          what = "create(domain = 'must be a named list')",
-        )
-      }
-      if (!(is.null(domain) || .is_domain(domain, index_column_names))) {
+      if (!.is_domain(domain, index_column_names)) {
         stop(
-          "domain must be NULL or a named list, with values being 2-element vectors or NULL"
+          "domain must be a named list, with values being 2-element vectors or NULL"
         )
       }
 

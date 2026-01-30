@@ -97,28 +97,6 @@ SOMANDArrayBase <- R6::R6Class(
       return(self)
     },
 
-    ## needed eg after open() to set (Arrow) type
-    #' @description Sets a cache value for the datatype.
-    #'
-    #' @section Lifecycle:
-    #' As of \pkg{tiledbsoma} 2.1.0, \code{$set_data_type()} is deprecated; this
-    #' functionality is no longer needed as \code{libtiledbsoma} now accurately
-    #' sets the TileDB data type upon array opening
-    #'
-    #' @param type A character value describing the TileDB data type.
-    #'
-    set_data_type = function(type) {
-      .deprecate(
-        when = "2.1.0",
-        what = sprintf("%s$set_data_type()", class(self)[1L])
-      )
-      soma_debug(sprintf(
-        "[SOMANDArrayBase::set_data_type] caching type %s",
-        type$ToString()
-      ))
-      private$.type <- type
-    },
-
     #' @description Test if the array has the upgraded resizeable shape feature
     #' from TileDB-SOMA 1.15, the array was created with this support, or it has
     #' had \code{$upgrade_domain()} applied to it (lifecycle: maturing).
