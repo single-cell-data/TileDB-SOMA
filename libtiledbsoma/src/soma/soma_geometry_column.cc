@@ -96,7 +96,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
         auto dim_schema = spatial_schema->children[j];
         auto dim_array = spatial_array->children[j];
-        auto dim_type = ArrowAdapter::to_tiledb_format(dim_schema->format, type_metadata);
+        auto dim_type = common::arrow::to_tiledb_format(dim_schema->format, type_metadata);
         if (dim_type != TILEDB_FLOAT64) {
             throw TileDBSOMAError("Internal error: unexpected geometry dimension type.");
         }

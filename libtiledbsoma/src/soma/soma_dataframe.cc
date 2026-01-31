@@ -75,7 +75,7 @@ void SOMADataFrame::update_dataframe_schema(
     for (auto add_attr : add_attrs) {
         auto [attr_name, attr_type] = add_attr;
 
-        Attribute attr(tctx, attr_name, ArrowAdapter::to_tiledb_format(attr_type));
+        Attribute attr(tctx, attr_name, common::arrow::to_tiledb_format(attr_type));
 
         if (ArrowAdapter::arrow_is_var_length_type(attr_type.c_str())) {
             attr.set_cell_val_num(TILEDB_VAR_NUM);
@@ -202,7 +202,7 @@ void SOMADataFrame::update_dataframe_schema(
                     Enumeration::create_empty(
                         tctx,
                         enmr_name,
-                        ArrowAdapter::to_tiledb_format(enmr_type),
+                        common::arrow::to_tiledb_format(enmr_type),
                         enmr_type == "u" || enmr_type == "z" || enmr_type == "U" || enmr_type == "Z" ? TILEDB_VAR_NUM :
                                                                                                        1,
                         ordered));

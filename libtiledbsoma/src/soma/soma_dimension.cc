@@ -51,7 +51,7 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
     const std::string& soma_type,
     std::string_view type_metadata,
     const PlatformConfig& platform_config) {
-    auto tiledb_type = ArrowAdapter::to_tiledb_format(schema->format, type_metadata);
+    auto tiledb_type = common::arrow::to_tiledb_format(schema->format, type_metadata);
     if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {  // Actual checks for string types not var types.
         tiledb_type = TILEDB_STRING_ASCII;
     }
