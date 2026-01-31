@@ -33,6 +33,8 @@ add_library(TILEDB_COMMON_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/exporter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/utils.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl/logger.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/array_buffers.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer_strategies.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/common.cc
 )
@@ -96,8 +98,6 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_transformers.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer_strategies.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/value_filter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/platform_config.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.cc
@@ -260,8 +260,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/coordinate_value_filters.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer_strategies.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.h
@@ -308,6 +306,8 @@ install(FILES
 )
 
 install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/array_buffers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer_strategies.h
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.h
   DESTINATION "include/tiledbsoma/common/query"
 )

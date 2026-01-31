@@ -52,7 +52,7 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type);
 
 bool is_tdb_str(tiledb_datatype_t type);
 
-std::optional<py::object> to_table(std::optional<std::shared_ptr<ArrayBuffers>> buffers);
+std::optional<py::object> to_table(std::optional<std::shared_ptr<common::ArrayBuffers>> buffers);
 
 py::dict meta(std::map<std::string, MetadataValue> metadata_mapping);
 void set_metadata(SOMAObject& soma_object, const std::string& key, py::array value, bool force = false);

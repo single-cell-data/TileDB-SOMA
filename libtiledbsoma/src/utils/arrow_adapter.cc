@@ -14,10 +14,10 @@
 #include <ranges>
 #include <thread>
 
-#include "../soma/array_buffers.h"
 #include "arrow_adapter.h"
 #include "common/arrow/arrow_buffer.h"
 #include "common/arrow/exporter.h"
+#include "common/query/array_buffers.h"
 #include "common/query/column_buffer.h"
 #include "util.h"
 
@@ -539,7 +539,7 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 }
 
 std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> ArrowAdapter::buffer_to_arrow(
-    std::shared_ptr<ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
+    std::shared_ptr<common::ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
     std::vector<std::future<common::arrow::ArrowTable>> arrow_futures;
     // Create a hashmap containing each enum to enable reusing the dictionaries accross multiple columns
     std::unordered_map<std::string, std::shared_future<std::shared_ptr<common::arrow::ArrowBuffer>>> enumerations;

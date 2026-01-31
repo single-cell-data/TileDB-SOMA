@@ -19,13 +19,10 @@
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <tiledb/tiledb>
 
-#include "../utils/common.h"
+#include "column_buffer.h"
 #include "column_buffer_strategies.h"
-#include "common/query/column_buffer.h"
 
-namespace tiledbsoma {
-
-using namespace tiledb;
+namespace tiledbsoma::common {
 
 class ArrayBuffers {
     inline static const size_t DEFAULT_BUFFER_EXPANSION_FACTOR = 2;
@@ -54,7 +51,7 @@ class ArrayBuffers {
         requires std::derived_from<T, common::ColumnBuffer>
     std::shared_ptr<T> at(const std::string& name) {
         if (!contains(name)) {
-            throw TileDBSOMAError("[ArrayBuffers] column '" + name + "' does not exist");
+            throw std::runtime_error("[ArrayBuffers] column '" + name + "' does not exist");
         }
 
         std::shared_ptr<T> casted_column = std::dynamic_pointer_cast<T>(buffers_[name]);
@@ -128,6 +125,6 @@ class ArrayBuffers {
     std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common
 
 #endif

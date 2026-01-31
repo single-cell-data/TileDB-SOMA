@@ -1,3 +1,16 @@
+/**
+ * @file   column_buffer_strategies.h
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ *
+ * @section DESCRIPTION
+ *
+ *   This declares the array buffers API
+ */
+
 #ifndef COLUMN_BUFFER_STRATEGIES_H
 #define COLUMN_BUFFER_STRATEGIES_H
 

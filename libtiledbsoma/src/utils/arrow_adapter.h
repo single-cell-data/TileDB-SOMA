@@ -29,6 +29,7 @@
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
 #include "common/arrow/utils.h"
+#include "common/query/array_buffers.h"
 #include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
 
@@ -37,58 +38,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 using json = nlohmann::json;
 
-class ReadColumnBuffer;
-class ArrayBuffers;
 class SOMACoordinateSpace;
-
-/**
- * @brief The ArrowBuffer holds a shared pointer to a ColumnBuffer, which
- * manages the lifetime of a ColumnBuffer used to back an Arrow array.
- *
- * The ArrowArray.release callback will delete the ArrowBuffer, and
- * automatically decrement the use count of the ColumnBuffer's shared pointer.
- *
- */
-// struct ArrowBuffer {
-//     ArrowBuffer(CArrayColumnBuffer* buffer, bool large_offsets = true);
-//     ArrowBuffer(ReadColumnBuffer* buffer, bool large_offsets = true);
-//     ArrowBuffer(const Enumeration& enumeration, bool large_offsets = true);
-
-//     std::span<std::byte> data_;
-//     std::span<int64_t> large_offsets_;
-//     std::span<int32_t> small_offsets_;
-//     std::span<uint8_t> validity_;
-
-//     size_t length;
-//     std::string name;
-
-//    private:
-//     std::unique_ptr<std::byte[]> data_buffer_;
-//     std::unique_ptr<std::byte[]> offset_buffer_;
-//     std::unique_ptr<std::byte[]> validity_buffer_;
-// };
-
-// struct PrivateArrowBuffer {
-//     PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
-//         : buffer_(buffer) {
-//     }
-
-//     std::shared_ptr<ArrowBuffer> buffer_;
-// };
-
-template <typename T, typename... Args>
-    requires std::same_as<T, ArrowArray> || std::same_as<T, ArrowSchema>
-managed_unique_ptr<T> make_managed_unique(Args&&... args) {
-    return managed_unique_ptr<T>(new T(std::forward<Args>(args)...), [](T* arrow_struct) {
-        if (arrow_struct->release != nullptr) {
-            arrow_struct->release(arrow_struct);
-        }
-
-        delete arrow_struct;
-    });
-}
-
-using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
 
 /**
  * This is our application-specific wrapper around nanoarrow.
@@ -104,7 +54,6 @@ using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<
  * combination of ArrowSchema (for the types) and ArrowArray (for the data) is
  * key for Python/R interop with C++ libtiledbsoma.
  */
-
 class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
@@ -118,7 +67,7 @@ class ArrowAdapter {
      * @return std::vector<std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>>
      */
     static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
-        std::shared_ptr<ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
+        std::shared_ptr<common::ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *

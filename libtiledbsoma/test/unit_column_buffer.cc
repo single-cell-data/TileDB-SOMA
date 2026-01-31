@@ -64,7 +64,7 @@ TEST_CASE("ColumnBuffer: Create from array") {
     auto ctx = Context();
     auto array = create_array(uri, ctx);
 
-    ArrayBuffers buffers({"d1", "a1"}, *array);
+    common::ArrayBuffers buffers({"d1", "a1"}, *array);
 
     {
         auto buffer = buffers.at("d1");

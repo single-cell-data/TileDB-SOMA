@@ -89,7 +89,7 @@ void load_managed_query(py::module& m) {
             [](ManagedQuery& mq) -> std::optional<py::object> {
                 // Release python GIL before reading data
                 py::gil_scoped_release release;
-                std::optional<std::shared_ptr<ArrayBuffers>> tbl;
+                std::optional<std::shared_ptr<common::ArrayBuffers>> tbl;
                 try {
                     tbl = mq.read_next();
                 } catch (const std::exception& e) {

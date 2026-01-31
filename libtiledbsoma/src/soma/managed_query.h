@@ -22,8 +22,8 @@
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
-#include "array_buffers.h"
 #include "common/arrow/utils.h"
+#include "common/query/array_buffers.h"
 #include "common/query/column_buffer.h"
 #include "enums.h"
 #include "nanoarrow/nanoarrow.hpp"
@@ -237,7 +237,7 @@ class ManagedQuery {
         bool copy_buffers = false) {
         // Create the ArrayBuffers as necessary
         if (buffers_ == nullptr) {
-            buffers_ = std::make_shared<ArrayBuffers>();
+            buffers_ = std::make_shared<common::ArrayBuffers>();
         }
 
         buffers_->emplace(
@@ -258,7 +258,7 @@ class ManagedQuery {
      */
     void set_array_data(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+    std::optional<std::shared_ptr<common::ArrayBuffers>> read_next();
 
     /**
      * @brief Check if the query is complete.
@@ -505,7 +505,7 @@ class ManagedQuery {
      *
      * @return std::shared_ptr<ArrayBuffers>
      */
-    std::shared_ptr<ArrayBuffers> results();
+    std::shared_ptr<common::ArrayBuffers> results();
 
     /**
      * @brief Check if column name is contained in the query results.
@@ -598,7 +598,7 @@ class ManagedQuery {
     size_t total_num_cells_ = 0;
 
     // A collection of ColumnBuffers attached to the query
-    std::shared_ptr<ArrayBuffers> buffers_;
+    std::shared_ptr<common::ArrayBuffers> buffers_;
 
     // True if the query has been submitted
     bool query_submitted_ = false;
