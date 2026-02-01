@@ -90,7 +90,7 @@ ArrowTable make_empty_arrow_table(std::string_view name, std::string_view format
 tiledb_datatype_t to_tiledb_format(std::string_view format, std::string_view dtype_metadata) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
-        {"z", TILEDB_BLOB},           {"Z", TILEDB_BLOB},
+        {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
         {"c", TILEDB_INT8},           {"C", TILEDB_UINT8},
         {"s", TILEDB_INT16},          {"S", TILEDB_UINT16},
         {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},
