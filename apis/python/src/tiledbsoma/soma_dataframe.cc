@@ -77,10 +77,10 @@ void load_soma_dataframe(py::module& m) {
                 try {
                     SOMADataFrame::create(
                         uri,
-                        make_managed_unique<ArrowSchema>(schema),
-                        ArrowTable(
-                            make_managed_unique<ArrowArray>(index_column_array),
-                            make_managed_unique<ArrowSchema>(index_column_schema)),
+                        common::arrow::make_managed_unique<ArrowSchema>(schema),
+                        common::arrow::ArrowTable(
+                            common::arrow::make_managed_unique<ArrowArray>(index_column_array),
+                            common::arrow::make_managed_unique<ArrowSchema>(index_column_schema)),
                         context,
                         platform_config,
                         timestamp);
@@ -123,7 +123,7 @@ void load_soma_dataframe(py::module& m) {
                     auto pa_array_import = pa.attr("Array").attr("_import_from_c");
 
                     py::gil_scoped_release release;
-                    ArrowTable t = sdf.get_enumeration_values(column_names);
+                    common::arrow::ArrowTable t = sdf.get_enumeration_values(column_names);
                     py::gil_scoped_acquire acquire;
 
                     auto ncol = t.second->n_children;
@@ -273,9 +273,9 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t nanoarrow_domain_array_ptr = (uintptr_t)(&pyarrow_domain_array);
                 uintptr_t nanoarrow_domain_schema_ptr = (uintptr_t)(&pyarrow_domain_schema);
                 pyarrow_domain_table.attr("_export_to_c")(nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
-                ArrowTable nanoarrow_domain_table(
-                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
-                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
+                common::arrow::ArrowTable nanoarrow_domain_table(
+                    common::arrow::make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    common::arrow::make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     sdf.upgrade_domain(nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
@@ -293,9 +293,9 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t nanoarrow_domain_array_ptr = (uintptr_t)(&pyarrow_domain_array);
                 uintptr_t nanoarrow_domain_schema_ptr = (uintptr_t)(&pyarrow_domain_schema);
                 pyarrow_domain_table.attr("_export_to_c")(nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
-                ArrowTable nanoarrow_domain_table(
-                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
-                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
+                common::arrow::ArrowTable nanoarrow_domain_table(
+                    common::arrow::make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    common::arrow::make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     return sdf.can_upgrade_domain(nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
@@ -313,9 +313,9 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t nanoarrow_domain_array_ptr = (uintptr_t)(&pyarrow_domain_array);
                 uintptr_t nanoarrow_domain_schema_ptr = (uintptr_t)(&pyarrow_domain_schema);
                 pyarrow_domain_table.attr("_export_to_c")(nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
-                ArrowTable nanoarrow_domain_table(
-                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
-                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
+                common::arrow::ArrowTable nanoarrow_domain_table(
+                    common::arrow::make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    common::arrow::make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     sdf.change_domain(nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
@@ -333,9 +333,9 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t nanoarrow_domain_array_ptr = (uintptr_t)(&pyarrow_domain_array);
                 uintptr_t nanoarrow_domain_schema_ptr = (uintptr_t)(&pyarrow_domain_schema);
                 pyarrow_domain_table.attr("_export_to_c")(nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
-                ArrowTable nanoarrow_domain_table(
-                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
-                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
+                common::arrow::ArrowTable nanoarrow_domain_table(
+                    common::arrow::make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    common::arrow::make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     return sdf.can_change_domain(nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {

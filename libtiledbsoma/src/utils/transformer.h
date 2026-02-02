@@ -18,6 +18,7 @@
 #define TRANSFORMER_H
 
 #include "arrow_adapter.h"
+#include "common/arrow/utils.h"
 
 #include <concepts>
 #include <functional>
@@ -29,12 +30,14 @@ class Transformer {
    public:
     virtual ~Transformer();
 
-    virtual ArrowTable apply(managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>) = 0;
+    virtual common::arrow::ArrowTable apply(
+        common::arrow::managed_unique_ptr<ArrowArray>, common::arrow::managed_unique_ptr<ArrowSchema>) = 0;
 };
 
 class TransformerPipeline {
    public:
-    TransformerPipeline(managed_unique_ptr<ArrowArray> array, managed_unique_ptr<ArrowSchema> schema);
+    TransformerPipeline(
+        common::arrow::managed_unique_ptr<ArrowArray> array, common::arrow::managed_unique_ptr<ArrowSchema> schema);
 
     TransformerPipeline(TransformerPipeline&& other);
 
@@ -57,21 +60,29 @@ class TransformerPipeline {
     }
 
     template <typename T, class... Ts>
-        requires std::invocable<T, managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>, Ts...> &&
+        requires std::invocable<
+                     T,
+                     common::arrow::managed_unique_ptr<ArrowArray>,
+                     common::arrow::managed_unique_ptr<ArrowSchema>,
+                     Ts...> &&
                  std::same_as<
-                     std::invoke_result_t<T, managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>, Ts...>,
-                     ArrowTable>
+                     std::invoke_result_t<
+                         T,
+                         common::arrow::managed_unique_ptr<ArrowArray>,
+                         common::arrow::managed_unique_ptr<ArrowSchema>,
+                         Ts...>,
+                     common::arrow::ArrowTable>
     TransformerPipeline& transform(T transformer, Ts... args) {
         std::tie(array, schema) = transformer(std::move(array), std::move(schema), args...);
 
         return *this;
     }
 
-    ArrowTable asTable();
+    common::arrow::ArrowTable asTable();
 
    private:
-    managed_unique_ptr<ArrowArray> array;
-    managed_unique_ptr<ArrowSchema> schema;
+    common::arrow::managed_unique_ptr<ArrowArray> array;
+    common::arrow::managed_unique_ptr<ArrowSchema> schema;
 };
 }  // namespace tiledbsoma
 

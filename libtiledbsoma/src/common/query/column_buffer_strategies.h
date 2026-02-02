@@ -8,7 +8,9 @@
  *
  * @section DESCRIPTION
  *
- *   This declares the array buffers API
+ *   This file define the ColumnBufferAllocationStrategy API. Implementing this
+ *   API allows for controlling how the memory budget for read operations is assigned
+ *   to each column.
  */
 
 #ifndef COLUMN_BUFFER_STRATEGIES_H

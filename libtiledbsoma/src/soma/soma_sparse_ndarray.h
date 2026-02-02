@@ -22,6 +22,7 @@
 
 #include "../common/soma_column_selection.h"
 #include "../tiledb_adapter/platform_config.h"
+#include "common/arrow/utils.h"
 #include "soma_array.h"
 
 namespace tiledbsoma {
@@ -50,7 +51,7 @@ class SOMASparseNDArray : public SOMAArray {
     static void create(
         std::string_view uri,
         std::string_view format,
-        const ArrowTable& index_columns,
+        const common::arrow::ArrowTable& index_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -122,7 +123,7 @@ class SOMASparseNDArray : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    managed_unique_ptr<ArrowSchema> schema() const;
+    common::arrow::managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * @brief Get the soma_data's dtype in the form of an Arrow

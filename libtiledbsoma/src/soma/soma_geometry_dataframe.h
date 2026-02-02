@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "../tiledb_adapter/platform_config.h"
+#include "common/arrow/utils.h"
 #include "soma_array.h"
 #include "soma_coordinates.h"
 
@@ -48,8 +49,8 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     static void create(
         std::string_view uri,
-        const managed_unique_ptr<ArrowSchema>& schema,
-        const ArrowTable& index_columns,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        const common::arrow::ArrowTable& index_columns,
         const SOMACoordinateSpace& coordinate_space,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
@@ -127,7 +128,7 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    managed_unique_ptr<ArrowSchema> schema() const;
+    common::arrow::managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

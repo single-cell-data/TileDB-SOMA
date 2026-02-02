@@ -38,8 +38,8 @@ class SOMAExperiment : public SOMACollection {
      */
     static void create(
         std::string_view uri,
-        const managed_unique_ptr<ArrowSchema>& schema,
-        const ArrowTable& index_columns,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        const common::arrow::ArrowTable& index_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);

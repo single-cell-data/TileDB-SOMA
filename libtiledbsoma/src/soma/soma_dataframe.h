@@ -19,6 +19,7 @@
 
 #include "../common/soma_column_selection.h"
 #include "../tiledb_adapter/platform_config.h"
+#include "common/arrow/utils.h"
 #include "soma_array.h"
 
 namespace tiledbsoma {
@@ -46,8 +47,8 @@ class SOMADataFrame : public SOMAArray {
      */
     static void create(
         std::string_view uri,
-        const managed_unique_ptr<ArrowSchema>& schema,
-        const ArrowTable& index_columns,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        const common::arrow::ArrowTable& index_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -185,7 +186,7 @@ class SOMADataFrame : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    managed_unique_ptr<ArrowSchema> schema() const;
+    common::arrow::managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

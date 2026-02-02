@@ -100,8 +100,8 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     SOMAGeometryDataFrame::create(uri, schema, index_columns, coord_space, ctx, platform_config, std::nullopt);
 
     // Create table of data for writing
-    managed_unique_ptr<ArrowSchema> data_schema = make_managed_unique<ArrowSchema>();
-    managed_unique_ptr<ArrowArray> data_array = make_managed_unique<ArrowArray>();
+    common::arrow::managed_unique_ptr<ArrowSchema> data_schema = common::arrow::make_managed_unique<ArrowSchema>();
+    common::arrow::managed_unique_ptr<ArrowArray> data_array = common::arrow::make_managed_unique<ArrowArray>();
 
     nanoarrow::UniqueBuffer metadata_buffer;
     ArrowMetadataBuilderInit(metadata_buffer.get(), nullptr);

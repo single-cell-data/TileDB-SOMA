@@ -450,15 +450,15 @@ TEST_CASE_METHOD(
         REQUIRE(actual.value() == expect);
 
         // Check domainish accessors before resize
-        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+        common::arrow::ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<int64_t> ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
 
-        ArrowTable soma_domain = sdf->get_soma_domain();
+        common::arrow::ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<int64_t> dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
 
-        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+        common::arrow::ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<int64_t> maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_maxdomain, "soma_joinid");
 
@@ -517,10 +517,10 @@ TEST_CASE_METHOD(
 
         // Apply the domain change
         if (test_upgrade_domain) {
-            managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
+            common::arrow::managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
             domain_array->children[0] = ArrowAdapter::make_arrow_array_child(std::vector<int64_t>({0, new_shape - 1}));
-            auto domain_table = ArrowTable(std::move(domain_array), std::move(domain_schema));
+            auto domain_table = common::arrow::ArrowTable(std::move(domain_array), std::move(domain_schema));
 
             // Not open for write
             sdf = open(OpenMode::soma_read);
@@ -659,19 +659,19 @@ TEST_CASE_METHOD(
         // Check domainish accessors before resize
         sdf->open(OpenMode::soma_read);
 
-        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+        common::arrow::ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<int64_t> ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
         std::vector<uint32_t> ned_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
             non_empty_domain, "myuint32");
 
-        ArrowTable soma_domain = sdf->get_soma_domain();
+        common::arrow::ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<int64_t> dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
         std::vector<uint32_t> dom_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
             soma_domain, "myuint32");
 
-        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+        common::arrow::ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<int64_t> maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_maxdomain, "soma_joinid");
         std::vector<uint32_t> maxdom_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
@@ -729,12 +729,12 @@ TEST_CASE_METHOD(
 
         // Apply the domain change
         if (test_upgrade_domain) {
-            managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
+            common::arrow::managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
             domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
                 std::vector<uint32_t>({0, new_u32_dim_max}));
             domain_array->children[1] = ArrowAdapter::make_arrow_array_child(std::vector<int64_t>({0, new_shape - 1}));
-            auto domain_table = ArrowTable(std::move(domain_array), std::move(domain_schema));
+            auto domain_table = common::arrow::ArrowTable(std::move(domain_array), std::move(domain_schema));
 
             // Not open for write
             sdf = open(OpenMode::soma_read);
@@ -881,18 +881,18 @@ TEST_CASE_METHOD(
             REQUIRE(actual.value() == expect);
 
             // Check domainish accessors before resize
-            ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+            common::arrow::ArrowTable non_empty_domain = sdf->get_non_empty_domain();
             std::vector<int64_t> ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
             std::vector<std::string> ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
-            ArrowTable soma_domain = sdf->get_soma_domain();
+            common::arrow::ArrowTable soma_domain = sdf->get_soma_domain();
             std::vector<int64_t> dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
             std::vector<std::string> dom_str = ArrowAdapter::get_table_string_column_by_name(soma_domain, "mystring");
 
-            ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+            common::arrow::ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
             std::vector<int64_t> maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
             std::vector<std::string> maxdom_str = ArrowAdapter::get_table_string_column_by_name(
@@ -944,13 +944,13 @@ TEST_CASE_METHOD(
 
             // Apply the domain change
             if (test_upgrade_domain) {
-                managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
+                common::arrow::managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
                 auto domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
                 domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
                     std::vector<int64_t>({0, new_shape - 1}));
                 domain_array->children[1] = ArrowAdapter::make_arrow_array_child_string(
                     std::vector<std::string>({"", ""}));
-                auto domain_table = ArrowTable(std::move(domain_array), std::move(domain_schema));
+                auto domain_table = common::arrow::ArrowTable(std::move(domain_array), std::move(domain_schema));
 
                 // Not open for write
                 sdf = open(OpenMode::soma_read);
@@ -1082,14 +1082,14 @@ TEST_CASE_METHOD(
             REQUIRE(!actual.has_value());
 
             // Check domainish accessors before resize
-            ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+            common::arrow::ArrowTable non_empty_domain = sdf->get_non_empty_domain();
             std::vector<std::string> ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
-            ArrowTable soma_domain = sdf->get_soma_domain();
+            common::arrow::ArrowTable soma_domain = sdf->get_soma_domain();
             std::vector<std::string> dom_str = ArrowAdapter::get_table_string_column_by_name(soma_domain, "mystring");
 
-            ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+            common::arrow::ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
             std::vector<std::string> maxdom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_maxdomain, "mystring");
 
@@ -1143,13 +1143,13 @@ TEST_CASE_METHOD(
 
             // Apply the domain change
             if (test_upgrade_domain) {
-                managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
+                common::arrow::managed_unique_ptr<ArrowSchema> domain_schema = create_index_cols_info_schema(dim_infos);
                 auto domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
                 domain_array->children[0] = ArrowAdapter::make_arrow_array_child_string(
                     std::vector<std::string>({"", ""}));
                 domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
                     std::vector<uint32_t>({0, new_u32_dim_max}));
-                auto domain_table = ArrowTable(std::move(domain_array), std::move(domain_schema));
+                auto domain_table = common::arrow::ArrowTable(std::move(domain_array), std::move(domain_schema));
 
                 // Not open for write
                 sdf = open(OpenMode::soma_read);

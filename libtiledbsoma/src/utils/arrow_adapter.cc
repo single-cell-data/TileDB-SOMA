@@ -318,8 +318,8 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
 
 std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
-    const managed_unique_ptr<ArrowSchema>& arrow_schema,
-    const ArrowTable& index_column_info,
+    const common::arrow::managed_unique_ptr<ArrowSchema>& arrow_schema,
+    const common::arrow::ArrowTable& index_column_info,
     const std::optional<SOMACoordinateSpace>& coordinate_space,
     std::string soma_type,
     bool is_sparse,
@@ -538,7 +538,7 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
         throw TileDBSOMAError(fmt::format("ArrowAdapter: Arrow Error {} ", msg));
 }
 
-std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> ArrowAdapter::buffer_to_arrow(
+std::vector<common::arrow::ArrowTable> ArrowAdapter::buffer_to_arrow(
     std::shared_ptr<common::ArrayBuffers> buffer, bool downcast_dict_of_large_var) {
     std::vector<std::future<common::arrow::ArrowTable>> arrow_futures;
     // Create a hashmap containing each enum to enable reusing the dictionaries accross multiple columns
@@ -572,7 +572,7 @@ std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSc
                 downcast_dict_of_large_var));
     }
 
-    std::vector<ArrowTable> columns;
+    std::vector<common::arrow::ArrowTable> columns;
 
     for (auto& arrow_column : arrow_futures) {
         columns.push_back(arrow_column.get());
@@ -610,7 +610,7 @@ std::string_view ArrowAdapter::to_arrow_format(tiledb_datatype_t tiledb_dtype, b
     }
 }
 
-managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
+common::arrow::managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     const std::vector<std::string>& names, const std::vector<tiledb_datatype_t>& tiledb_datatypes) {
     auto num_names = names.size();
     auto num_types = tiledb_datatypes.size();
@@ -624,7 +624,7 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
                 num_types));
     }
 
-    auto arrow_schema = make_managed_unique<ArrowSchema>();
+    auto arrow_schema = common::arrow::make_managed_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
     arrow_schema->name = strdup("parent");
     arrow_schema->metadata = nullptr;
@@ -677,8 +677,9 @@ ArrowSchema* ArrowAdapter::make_arrow_schema_child(std::string name, tiledb_data
     return arrow_schema;
 }
 
-managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(size_t num_columns, std::string_view name) {
-    auto arrow_schema = make_managed_unique<ArrowSchema>();
+common::arrow::managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
+    size_t num_columns, std::string_view name) {
+    auto arrow_schema = common::arrow::make_managed_unique<ArrowSchema>();
 
     arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
     arrow_schema->name = strdup(name.data());
@@ -699,8 +700,8 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(size_t nu
     return arrow_schema;
 }
 
-managed_unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(size_t num_columns) {
-    auto arrow_array = make_managed_unique<ArrowArray>();
+common::arrow::managed_unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(size_t num_columns) {
+    auto arrow_array = common::arrow::make_managed_unique<ArrowArray>();
 
     // All zero/null since this is a parent ArrowArray, and each
     // column/child is also of type ArrowArray.
@@ -740,7 +741,8 @@ void ArrowAdapter::_check_shapes(ArrowArray* arrow_array, ArrowSchema* arrow_sch
     }
 }
 
-int64_t ArrowAdapter::_get_column_index_from_name(const ArrowTable& arrow_table, std::string column_name) {
+int64_t ArrowAdapter::_get_column_index_from_name(
+    const common::arrow::ArrowTable& arrow_table, std::string column_name) {
     ArrowArray* arrow_array = arrow_table.first.get();
     ArrowSchema* arrow_schema = arrow_table.second.get();
     // Make sure the child-count is the same
@@ -762,7 +764,7 @@ int64_t ArrowAdapter::_get_column_index_from_name(const ArrowTable& arrow_table,
 }
 
 ArrowArray* ArrowAdapter::_get_and_check_column(
-    const ArrowTable& arrow_table, int64_t column_index, int64_t expected_n_buffers) {
+    const common::arrow::ArrowTable& arrow_table, int64_t column_index, int64_t expected_n_buffers) {
     ArrowArray* arrow_array = arrow_table.first.get();
     if (column_index < 0 || column_index >= arrow_array->n_children) {
         throw std::runtime_error(
@@ -816,9 +818,9 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     return child;
 }
 
-managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
-    managed_unique_ptr<ArrowArray> parent_array,
-    std::vector<managed_unique_ptr<ArrowArray>> child_arrays,
+common::arrow::managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
+    common::arrow::managed_unique_ptr<ArrowArray> parent_array,
+    std::vector<common::arrow::managed_unique_ptr<ArrowArray>> child_arrays,
     int64_t index) {
     if (parent_array->n_children < index || index < 0) {
         throw std::runtime_error(
@@ -846,9 +848,9 @@ managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
     return array;
 }
 
-managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
-    managed_unique_ptr<ArrowSchema> parent_schema,
-    std::vector<managed_unique_ptr<ArrowSchema>> child_schemas,
+common::arrow::managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
+    common::arrow::managed_unique_ptr<ArrowSchema> parent_schema,
+    std::vector<common::arrow::managed_unique_ptr<ArrowSchema>> child_schemas,
     int64_t index) {
     if (parent_schema->n_children < index || index < 0) {
         throw std::runtime_error(
@@ -876,8 +878,8 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
     return schema;
 }
 
-managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
-    managed_unique_ptr<ArrowArray> array, int64_t index) {
+common::arrow::managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
+    common::arrow::managed_unique_ptr<ArrowArray> array, int64_t index) {
     if (array->n_children <= index || index < 0) {
         throw std::runtime_error(
             "[ArrowAdapter][arrow_array_remove_at_index] Invalid index to "
@@ -897,8 +899,8 @@ managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
     return array_new;
 }
 
-managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
-    managed_unique_ptr<ArrowSchema> schema, int64_t index) {
+common::arrow::managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
+    common::arrow::managed_unique_ptr<ArrowSchema> schema, int64_t index) {
     if (schema->n_children <= index || index < 0) {
         throw std::runtime_error(
             "[ArrowAdapter][arrow_schema_remove_at_index] Invalid index to "

@@ -12,9 +12,10 @@ OutlineTransformer::OutlineTransformer(SOMACoordinateSpace coordinate_space)
 OutlineTransformer::~OutlineTransformer() {
 }
 
-ArrowTable OutlineTransformer::apply(managed_unique_ptr<ArrowArray> array, managed_unique_ptr<ArrowSchema> schema) {
-    std::vector<managed_unique_ptr<ArrowArray>> generated_arrays;
-    std::vector<managed_unique_ptr<ArrowSchema>> generated_schemas;
+common::arrow::ArrowTable OutlineTransformer::apply(
+    common::arrow::managed_unique_ptr<ArrowArray> array, common::arrow::managed_unique_ptr<ArrowSchema> schema) {
+    std::vector<common::arrow::managed_unique_ptr<ArrowArray>> generated_arrays;
+    std::vector<common::arrow::managed_unique_ptr<ArrowSchema>> generated_schemas;
 
     for (int64_t i = 0; i < schema->n_children; ++i) {
         /**
@@ -58,16 +59,18 @@ ArrowTable OutlineTransformer::apply(managed_unique_ptr<ArrowArray> array, manag
     return std::make_pair(std::move(array), std::move(schema));
 }
 
-std::pair<std::vector<managed_unique_ptr<ArrowArray>>, std::vector<managed_unique_ptr<ArrowSchema>>>
+std::pair<
+    std::vector<common::arrow::managed_unique_ptr<ArrowArray>>,
+    std::vector<common::arrow::managed_unique_ptr<ArrowSchema>>>
 OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
     ArrowArray* array, const tiledbsoma::SOMACoordinateSpace& coordinate_space) {
     // Initialize a vector to hold all the Arrow tables containing the
     // transformed geometry data
-    std::vector<managed_unique_ptr<ArrowArray>> arrays;
-    std::vector<managed_unique_ptr<ArrowSchema>> schemas;
+    std::vector<common::arrow::managed_unique_ptr<ArrowArray>> arrays;
+    std::vector<common::arrow::managed_unique_ptr<ArrowSchema>> schemas;
 
-    arrays.push_back(make_managed_unique<ArrowArray>());
-    schemas.push_back(make_managed_unique<ArrowSchema>());
+    arrays.push_back(common::arrow::make_managed_unique<ArrowArray>());
+    schemas.push_back(common::arrow::make_managed_unique<ArrowSchema>());
 
     NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(arrays.front().get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
     NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(schemas.front().get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
@@ -77,15 +80,15 @@ OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
         const auto axis = coordinate_space.axis(i);
 
         // Min spatial axis
-        arrays.push_back(make_managed_unique<ArrowArray>());
-        schemas.push_back(make_managed_unique<ArrowSchema>());
+        arrays.push_back(common::arrow::make_managed_unique<ArrowArray>());
+        schemas.push_back(common::arrow::make_managed_unique<ArrowSchema>());
         NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(schemas.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         schemas.back()->name = strdup((SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__min").c_str());
 
         // Max spatial axis
-        arrays.push_back(make_managed_unique<ArrowArray>());
-        schemas.push_back(make_managed_unique<ArrowSchema>());
+        arrays.push_back(common::arrow::make_managed_unique<ArrowArray>());
+        schemas.push_back(common::arrow::make_managed_unique<ArrowSchema>());
         NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(schemas.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         schemas.back()->name = strdup((SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__max").c_str());

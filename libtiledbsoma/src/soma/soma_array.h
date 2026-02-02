@@ -295,7 +295,8 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const;
+    common::arrow::managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const {
+        auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
 
     /**
      * @brief Get the Arrow schema of a column in the array.
@@ -415,7 +416,7 @@ class SOMAArray : public SOMAObject {
      * @tparam std::vector<std::string> column names
      * @return ArrowTable with as many columns as the size of column_names.
      */
-    ArrowTable get_enumeration_values(std::vector<std::string> column_names);
+    common::arrow::ArrowTable get_enumeration_values(std::vector<std::string> column_names);
 
     /**
      * Retrieves the enumeration values from the array's TileDB schema,
@@ -473,7 +474,7 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    inline ArrowTable get_soma_domain() {
+    common::arrow::ArrowTable get_soma_domain() {
         if (has_current_domain()) {
             return _get_core_domainish(Domainish::kind_core_current_domain);
         } else {
@@ -496,15 +497,15 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    ArrowTable get_soma_maxdomain() {
-        return _get_core_domainish(Domainish::kind_core_domain);
+    common::arrow::ArrowTable get_soma_maxdomain() {
+        return _get_core_domain();
     }
 
     /**
      * Returns the core non-empty domain in its entirety, as an Arrow
      * table for return to Python/R.
      */
-    ArrowTable get_non_empty_domain() {
+    common::arrow::ArrowTable get_non_empty_domain() {
         return _get_core_domainish(Domainish::kind_non_empty_domain);
     }
 
@@ -512,7 +513,7 @@ class SOMAArray : public SOMAObject {
      * Code-dedupe helper for core domain, core current domain, and core
      * non-empty domain.
      */
-    ArrowTable _get_core_domainish(enum Domainish which_kind);
+    common::arrow::ArrowTable _get_core_domainish(enum Domainish which_kind);
 
     /**
      * @brief Get the total number of unique cells in the array. Equivalent to
@@ -624,14 +625,16 @@ class SOMAArray : public SOMAObject {
     /**
      * This is for SOMADataFrame.
      */
-    StatusAndReason can_upgrade_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
+    StatusAndReason can_upgrade_domain(
+        const common::arrow::ArrowTable& newdomain, std::string function_name_for_messages) {
         return _can_set_domain_helper(newdomain, false, function_name_for_messages);
     }
 
     /**
      * This is for SOMADataFrame.
      */
-    StatusAndReason can_change_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
+    StatusAndReason can_change_domain(
+        const common::arrow::ArrowTable& newdomain, std::string function_name_for_messages) {
         return _can_set_domain_helper(newdomain, true, function_name_for_messages);
     }
 
@@ -703,7 +706,7 @@ class SOMAArray : public SOMAObject {
      * this allows the full-generality resize-every-index-column case
      * (which only applies to variant-indexed/non-standard dataframes).
      */
-    void change_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
+    void change_domain(const common::arrow::ArrowTable& newdomain, std::string function_name_for_messages) {
         _set_domain_helper(newdomain, true, function_name_for_messages);
     }
 
@@ -714,7 +717,7 @@ class SOMAArray : public SOMAObject {
      * this allows the full-generality resize-every-index-column case
      * (which only applies to variant-indexed/non-standard dataframes).
      */
-    void upgrade_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
+    void upgrade_domain(const common::arrow::ArrowTable& newdomain, std::string function_name_for_messages) {
         _set_domain_helper(newdomain, false, function_name_for_messages);
     }
 
@@ -793,7 +796,7 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper method for can_change_domain and can_upgrade_domain.
      */
     StatusAndReason _can_set_domain_helper(
-        const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
+        const common::arrow::ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a second-level code-dedupe helper for _can_set_shape_helper.
@@ -805,7 +808,7 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper for can_upgrade_domain.
      */
     StatusAndReason _can_set_dataframe_domainish_subhelper(
-        const ArrowTable& newdomain, std::string function_name_for_messages);
+        const common::arrow::ArrowTable& newdomain, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper for can_resize_soma_joinid_shape and
@@ -831,7 +834,7 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper method for change_domain and upgrade_domain.
      */
     void _set_domain_helper(
-        const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
+        const common::arrow::ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame

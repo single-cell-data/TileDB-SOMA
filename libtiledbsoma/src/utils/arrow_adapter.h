@@ -66,7 +66,7 @@ class ArrowAdapter {
      *
      * @return std::vector<std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>>
      */
-    static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
+    static std::vector<common::arrow::ArrowTable> buffer_to_arrow(
         std::shared_ptr<common::ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
@@ -101,8 +101,8 @@ class ArrowAdapter {
      */
     static std::tuple<ArraySchema, nlohmann::json> tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
-        const managed_unique_ptr<ArrowSchema>& arrow_schema,
-        const ArrowTable& index_column_info,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& arrow_schema,
+        const common::arrow::ArrowTable& index_column_info,
         const std::optional<SOMACoordinateSpace>& coordinate_space,
         std::string soma_type,
         bool is_sparse = true,
@@ -151,7 +151,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowSchema. This constructs the parent and the children.
      */
-    static managed_unique_ptr<ArrowSchema> make_arrow_schema(
+    static common::arrow::managed_unique_ptr<ArrowSchema> make_arrow_schema(
         const std::vector<std::string>& names, const std::vector<tiledb_datatype_t>& tiledb_datatypes);
 
     /**
@@ -169,7 +169,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowSchema. This constructs the parent and not the children.
      */
-    static managed_unique_ptr<ArrowSchema> make_arrow_schema_parent(
+    static common::arrow::managed_unique_ptr<ArrowSchema> make_arrow_schema_parent(
         size_t num_columns, std::string_view name = "parent");
 
     /**
@@ -179,7 +179,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowArray. This constructs the parent and not the children.
      */
-    static managed_unique_ptr<ArrowArray> make_arrow_array_parent(size_t num_columns);
+    static common::arrow::managed_unique_ptr<ArrowArray> make_arrow_array_parent(size_t num_columns);
 
     /**
      * @brief Creates a nanoarrow ArrowArray for a single column.
@@ -395,13 +395,14 @@ class ArrowAdapter {
     // primarily for keystroke-reduction in unit-test cases.
 
     template <typename T>
-    static std::vector<T> get_table_non_string_column_by_name(const ArrowTable& arrow_table, std::string column_name) {
+    static std::vector<T> get_table_non_string_column_by_name(
+        const common::arrow::ArrowTable& arrow_table, std::string column_name) {
         int64_t index = _get_column_index_from_name(arrow_table, column_name);
         return get_table_non_string_column_by_index<T>(arrow_table, index);
     }
 
     static std::vector<std::string> get_table_string_column_by_name(
-        const ArrowTable& arrow_table, std::string column_name) {
+        const common::arrow::ArrowTable& arrow_table, std::string column_name) {
         int64_t index = _get_column_index_from_name(arrow_table, column_name);
         return get_table_string_column_by_index(arrow_table, index);
     }
@@ -411,7 +412,8 @@ class ArrowAdapter {
      * ArrowTable as a standard/non-Arrow C++ object.
      */
     template <typename T>
-    static std::vector<T> get_table_non_string_column_by_index(const ArrowTable& arrow_table, int64_t column_index) {
+    static std::vector<T> get_table_non_string_column_by_index(
+        const common::arrow::ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
         ArrowSchema* arrow_schema = arrow_table.second.get();
         _check_shapes(arrow_array, arrow_schema);
@@ -432,7 +434,7 @@ class ArrowAdapter {
      * ArrowTable as a standard/non-Arrow C++ object.
      */
     static std::vector<std::string> get_table_string_column_by_index(
-        const ArrowTable& arrow_table, int64_t column_index) {
+        const common::arrow::ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
         ArrowSchema* arrow_schema = arrow_table.second.get();
         _check_shapes(arrow_array, arrow_schema);
@@ -594,14 +596,14 @@ class ArrowAdapter {
      */
     template <size_t S>
     static std::vector<std::any> get_table_any_column_by_name(
-        const ArrowTable& arrow_table, std::string column_name, size_t offset) {
+        const common::arrow::ArrowTable& arrow_table, std::string column_name, size_t offset) {
         int64_t index = _get_column_index_from_name(arrow_table, column_name);
         return get_table_any_column_by_index<S>(arrow_table, index, offset);
     }
 
     template <size_t S>
     static std::vector<std::any> get_table_any_column_by_index(
-        const ArrowTable& arrow_table, int64_t column_index, size_t offset) {
+        const common::arrow::ArrowTable& arrow_table, int64_t column_index, size_t offset) {
         ArrowArray* arrow_array = arrow_table.first.get();
         ArrowSchema* arrow_schema = arrow_table.second.get();
         _check_shapes(arrow_array, arrow_schema);
@@ -863,21 +865,21 @@ class ArrowAdapter {
         }
     }
 
-    static managed_unique_ptr<ArrowArray> arrow_array_insert_at_index(
-        managed_unique_ptr<ArrowArray> parent_array,
-        std::vector<managed_unique_ptr<ArrowArray>> child_arrays,
+    static common::arrow::managed_unique_ptr<ArrowArray> arrow_array_insert_at_index(
+        common::arrow::managed_unique_ptr<ArrowArray> parent_array,
+        std::vector<common::arrow::managed_unique_ptr<ArrowArray>> child_arrays,
         int64_t index);
 
-    static managed_unique_ptr<ArrowSchema> arrow_schema_insert_at_index(
-        managed_unique_ptr<ArrowSchema> parent_schema,
-        std::vector<managed_unique_ptr<ArrowSchema>> child_schemas,
+    static common::arrow::managed_unique_ptr<ArrowSchema> arrow_schema_insert_at_index(
+        common::arrow::managed_unique_ptr<ArrowSchema> parent_schema,
+        std::vector<common::arrow::managed_unique_ptr<ArrowSchema>> child_schemas,
         int64_t index);
 
-    static managed_unique_ptr<ArrowArray> arrow_array_remove_at_index(
-        managed_unique_ptr<ArrowArray> array, int64_t index);
+    static common::arrow::managed_unique_ptr<ArrowArray> arrow_array_remove_at_index(
+        common::arrow::managed_unique_ptr<ArrowArray> array, int64_t index);
 
-    static managed_unique_ptr<ArrowSchema> arrow_schema_remove_at_index(
-        managed_unique_ptr<ArrowSchema> schema, int64_t index);
+    static common::arrow::managed_unique_ptr<ArrowSchema> arrow_schema_remove_at_index(
+        common::arrow::managed_unique_ptr<ArrowSchema> schema, int64_t index);
 
    private:
     static size_t _set_var_dictionary_buffers(
@@ -895,10 +897,10 @@ class ArrowAdapter {
     static void _check_shapes(ArrowArray* arrow_array, ArrowSchema* arrow_schema);
 
     // Throws if the table doesn't have the column name.
-    static int64_t _get_column_index_from_name(const ArrowTable& arrow_table, std::string column_name);
+    static int64_t _get_column_index_from_name(const common::arrow::ArrowTable& arrow_table, std::string column_name);
 
     static ArrowArray* _get_and_check_column(
-        const ArrowTable& arrow_table, int64_t column_index, int64_t expected_n_buffers);
+        const common::arrow::ArrowTable& arrow_table, int64_t column_index, int64_t expected_n_buffers);
 
 };  // class ArrowAdapter
 };  // namespace tiledbsoma

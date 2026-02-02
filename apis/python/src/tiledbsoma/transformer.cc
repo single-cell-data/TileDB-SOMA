@@ -35,8 +35,8 @@ void load_transformers(py::module& m) {
             uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
             py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
 
-            auto array = make_managed_unique<ArrowArray>(arrow_array);
-            auto schema = make_managed_unique<ArrowSchema>(arrow_schema);
+            auto array = common::arrow::make_managed_unique<ArrowArray>(arrow_array);
+            auto schema = common::arrow::make_managed_unique<ArrowSchema>(arrow_schema);
 
             return TransformerPipeline(std::move(array), std::move(schema));
         }))
