@@ -1,3 +1,12 @@
+/**
+ * @file   common.cc
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ */
+
 #include "common.h"
 
 #include <cxxabi.h>
@@ -34,7 +43,8 @@ size_t get_max_capacity(tiledb_datatype_t index_type) {
         case TILEDB_UINT64:
             return std::numeric_limits<uint64_t>::max();
         default:
-            throw std::runtime_error("Saw invalid enumeration index type when trying to extend enumeration");
+            throw std::runtime_error(
+                "[get_max_capacity] Saw invalid enumeration index type when trying to extend enumeration");
     }
 }
 

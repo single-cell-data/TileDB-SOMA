@@ -5,10 +5,6 @@
  *
  * Licensed under the MIT License.
  * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
- *
- * @section DESCRIPTION
- *
- * This declares the column buffer API
  */
 
 #ifndef COMMON_COMMON_H
@@ -61,8 +57,24 @@ concept is_offset_buffer = std::same_as<T, std::unique_ptr<uint64_t[]>> ||
                             (std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint32_t> ||
                              std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint64_t>));
 
+/**
+ * @brief Get a human redable name from the name of a type
+ * 
+ * @param name A mangled name as it comes from `std::type_info::name`
+ */
 std::string demangle_name(std::string_view name);
 
+/**
+ * @brief Get the value associated with the given key from a TileDB config object.
+ * 
+ * @tparam T The datatype to cast the return value to
+ * 
+ * @param config The config object to extract the value from
+ * @param key The key to fetch the requested value with
+ * @param default_value The value to return if the requested key is missing
+ * 
+ * @return The value associated with the given key casted to the requested type `T` if present, otherwise return the default value
+ */
 template <typename T>
     requires std::floating_point<T> || std::integral<T> || std::same_as<T, std::string>
 T get_config_value(const tiledb::Config& config, std::string_view key, T default_value) {
@@ -96,6 +108,11 @@ T get_config_value(const tiledb::Config& config, std::string_view key, T default
     return value;
 }
 
+/**
+ * @brief get the maximum number of Enumeragtion value the given datatype can hold.
+ * 
+ * @param index_type The datatype of the index column
+ */
 size_t get_max_capacity(tiledb_datatype_t index_type);
 
 };  // namespace tiledbsoma::common

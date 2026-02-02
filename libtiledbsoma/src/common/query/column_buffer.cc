@@ -4,11 +4,7 @@
  * @section LICENSE
  *
  * Licensed under the MIT License.
- * Copyright (c) TileDB, Inc.
- *
- * @section DESCRIPTION
- *
- * This file defines the a ColumBuffer class.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  */
 
 #include "column_buffer.h"

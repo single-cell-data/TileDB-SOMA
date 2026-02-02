@@ -5,9 +5,11 @@
  *
  * Licensed under the MIT License.
  * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
- *
+ * 
  * @section DESCRIPTION
- *
+ * 
+ * This file contains a set o free functions that convert TileDB objects and 
+ * constructs to their equivalent Arrow representation
  */
 
 #ifndef COMMON_ARROW_EXPORTER_H

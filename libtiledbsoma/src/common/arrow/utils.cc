@@ -1,3 +1,12 @@
+/**
+ * @file   utils.cc
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ */
+
 #include <format>
 #include <numeric>
 #include <stdexcept>

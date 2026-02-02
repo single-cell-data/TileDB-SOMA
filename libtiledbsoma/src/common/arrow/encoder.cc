@@ -1,3 +1,12 @@
+/**
+ * @file   encoder.cc
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ */
+
 #include "encoder.h"
 
 #include <cstring>

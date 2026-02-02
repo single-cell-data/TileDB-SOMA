@@ -1,3 +1,12 @@
+/**
+ * @file   exporter.cc
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ */
+
 #include "exporter.h"
 
 #include "arrow_buffer.h"

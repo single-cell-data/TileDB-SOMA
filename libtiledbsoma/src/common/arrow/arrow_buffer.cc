@@ -1,3 +1,12 @@
+/**
+ * @file   arrow_buffer.cc
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ */
+
 #include "arrow_buffer.h"
 #include "nanoarrow/nanoarrow.hpp"
 

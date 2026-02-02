@@ -5,8 +5,6 @@
  *
  * Licensed under the MIT License.
  * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
- *
- * @section DESCRIPTION
  */
 
 #ifndef COMMON_ARROW_INTERFACE_H
