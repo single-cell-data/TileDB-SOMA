@@ -12,16 +12,21 @@
  */
 
 #include "array_buffers.h"
-#include "../logging/impl/logger.h"
 
 #include <concepts>
 #include <numeric>
+#include <tiledb/tiledb>
+
+#include "column_buffer.h"
+#include "column_buffer_strategies.h"
+
+#include "../logging/impl/logger.h"
 
 namespace tiledbsoma::common {
 
-bool ArrayBuffers::use_memory_pool(const std::shared_ptr<tiledb::Array>& array) {
+bool ArrayBuffers::use_memory_pool(const tiledb::Array& array) {
     bool use_memory_pool = false;
-    auto config = array->config();
+    const tiledb::Config config = array.config();
     if (config.contains(CONFIG_KEY_USE_MEMORY_POOL)) {
         use_memory_pool = config.get(CONFIG_KEY_USE_MEMORY_POOL) == "true";
     }
@@ -46,12 +51,24 @@ ArrayBuffers::ArrayBuffers(
     }
 }
 
+bool ArrayBuffers::contains(const std::string& name) const {
+    return buffers_.find(name) != buffers_.end();
+}
+
 void ArrayBuffers::emplace(const std::string& name, std::shared_ptr<common::ColumnBuffer> buffer) {
     if (contains(name)) {
         throw std::runtime_error(fmt::format("[ArrayBuffers] column '{}' already exists", name));
     }
     names_.push_back(name);
     buffers_.emplace(name, buffer);
+}
+
+const std::vector<std::string>& ArrayBuffers::names() const {
+    return names_;
+}
+
+uint64_t ArrayBuffers::num_rows() const {
+    return buffers_.at(names_.front())->cell_count();
 }
 
 void ArrayBuffers::expand_buffers() {

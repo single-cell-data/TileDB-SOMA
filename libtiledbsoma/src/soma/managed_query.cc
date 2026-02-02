@@ -152,9 +152,9 @@ void ManagedQuery::setup_read() {
     // Allocate and attach buffers
     LOG_TRACE("[ManagedQuery] allocate new buffers");
     if (!buffers_) {
-        if (common::ArrayBuffers::use_memory_pool(array_)) {
+        if (common::ArrayBuffers::use_memory_pool(*array_)) {
             buffers_ = std::make_shared<common::ArrayBuffers>(
-                columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
+                columns_, *array_, std::make_unique<common::MemoryPoolAllocationStrategy>(columns_, *array_));
         } else {
             buffers_ = std::make_shared<common::ArrayBuffers>(columns_, *array_);
         }

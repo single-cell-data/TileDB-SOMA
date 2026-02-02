@@ -4,7 +4,7 @@
 
 #include <stdexcept>
 
-namespace tiledbsoma {
+namespace tiledbsoma::common {
 
 BasicAllocationStrategy::BasicAllocationStrategy(const tiledb::Array& array) {
     const tiledb::Config config = array.config();
@@ -142,4 +142,4 @@ std::pair<size_t, size_t> MemoryPoolAllocationStrategy::get_buffer_sizes(
         },
         column);
 }
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common
