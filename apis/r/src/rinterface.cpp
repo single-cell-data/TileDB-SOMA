@@ -325,7 +325,7 @@ Rcpp::NumericVector maxshape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> 
 // [[Rcpp::export]]
 SEXP non_empty_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sdf = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    tdbs::ArrowTable arrow_table = sdf->get_non_empty_domain();
+    tdbs::common::arrow::ArrowTable arrow_table = sdf->get_non_empty_domain();
     SEXP retval = convert_domainish(arrow_table);
     sdf->close();
     return retval;
@@ -334,7 +334,7 @@ SEXP non_empty_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) 
 // [[Rcpp::export]]
 SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::soma_read, ctxxp->ctxptr);
-    tdbs::ArrowTable arrow_table = sdf->get_soma_domain();
+    tdbs::common::arrow::ArrowTable arrow_table = sdf->get_soma_domain();
     SEXP retval = convert_domainish(arrow_table);
     sdf->close();
     return retval;
@@ -343,7 +343,7 @@ SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 // [[Rcpp::export]]
 SEXP maxdomain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::soma_read, ctxxp->ctxptr);
-    tdbs::ArrowTable arrow_table = sdf->get_soma_maxdomain();
+    tdbs::common::arrow::ArrowTable arrow_table = sdf->get_soma_maxdomain();
     SEXP retval = convert_domainish(arrow_table);
     sdf->close();
     return retval;
@@ -427,7 +427,7 @@ Rcpp::CharacterVector c_attrnames(const std::string& uri, Rcpp::XPtr<somactx_wra
 // [[Rcpp::export]]
 SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema(true);
+    tdbs::common::arrow::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema(true);
     sr->close();
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
@@ -833,13 +833,13 @@ std::string upgrade_or_change_domain(
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
 
-    auto dimarr = tdbs::make_managed_unique<ArrowArray>();
-    auto dimsch = tdbs::make_managed_unique<ArrowSchema>();
+    auto dimarr = tdbs::common::arrow::make_managed_unique<ArrowArray>();
+    auto dimsch = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
 
     apdim.move(dimarr.get());
     spdim.move(dimsch.get());
 
-    tdbs::ArrowTable arrow_table(std::move(dimarr), std::move(dimsch));
+    tdbs::common::arrow::ArrowTable arrow_table(std::move(dimarr), std::move(dimsch));
 
     // Now call libtiledbsoma
     std::string reason_string = "";
