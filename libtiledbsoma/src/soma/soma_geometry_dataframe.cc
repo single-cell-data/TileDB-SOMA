@@ -12,6 +12,7 @@
  */
 
 #include "soma_geometry_dataframe.h"
+#include "../utils/arrow_adapter.h"
 #include "../utils/transformer.h"
 #include "../utils/util.h"
 #include "common/logging/impl/logger.h"

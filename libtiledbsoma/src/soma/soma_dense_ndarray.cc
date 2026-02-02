@@ -11,6 +11,7 @@
  *   This file defines the SOMADenseNDArray class.
  */
 #include "soma_dense_ndarray.h"
+#include "../utils/arrow_adapter.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {

@@ -11,17 +11,21 @@
  */
 
 #include "soma_array.h"
-#include <tiledb/array_experimental.h>
+
 #include <ranges>
+#include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
+
 #include "../utils/util.h"
 #include "common/logging/impl/logger.h"
 #include "coordinate_value_filters.h"
+#include "managed_query.h"
 #include "soma_attribute.h"
+#include "soma_column.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
 
 namespace tiledbsoma {
-using namespace tiledb;
 using namespace common::logging;
 
 //==================================================================
@@ -41,7 +45,7 @@ tiledb_query_type_t get_tiledb_mode(OpenMode mode) {
     }
 }
 
-std::shared_ptr<Array> open_tiledb_array(
+std::shared_ptr<tiledb::Array> open_tiledb_array(
     tiledb_query_type_t tiledb_mode,
     const std::string& uri,
     const Context& ctx,
@@ -54,7 +58,7 @@ std::shared_ptr<Array> open_tiledb_array(
         auto array = std::make_shared<Array>(ctx, std::string(uri), tiledb_mode, temporal_policy);
         if (load_enumerations) {
             LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
-            ArrayExperimental::load_all_enumerations(ctx, *(array.get()));
+            tiledb::ArrayExperimental::load_all_enumerations(ctx, *(array.get()));
         }
         return array;
     } catch (const std::exception& e) {
@@ -62,7 +66,7 @@ std::shared_ptr<Array> open_tiledb_array(
     }
 }
 
-std::map<std::string, MetadataValue> create_metadata_cache(Array& array) {
+std::map<std::string, MetadataValue> create_metadata_cache(tiledb::Array& array) {
     std::map<std::string, MetadataValue> metadata_cache;
     for (uint64_t idx = 0; idx < array.metadata_num(); ++idx) {
         std::string key;
@@ -84,7 +88,7 @@ std::map<std::string, MetadataValue> create_metadata_cache(Array& array) {
 void SOMAArray::create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
-    ArraySchema schema,
+    tiledb::ArraySchema schema,
     std::string_view soma_type,
     std::optional<std::string_view> soma_schema,
     std::optional<TimestampRange> timestamp) {
@@ -94,7 +98,7 @@ void SOMAArray::create(
 Array SOMAArray::_create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
-    ArraySchema schema,
+    tiledb::ArraySchema schema,
     std::string_view soma_type,
     std::optional<std::string_view> soma_schema,
     std::optional<TimestampRange> timestamp) {
@@ -166,7 +170,7 @@ SOMAArray::SOMAArray(
     , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
     , soma_mode_(mode)
-    , schema_(std::make_shared<ArraySchema>(arr_->schema())) {
+    , schema_(std::make_shared<tiledb::ArraySchema>(arr_->schema())) {
 }
 
 SOMAArray::SOMAArray(
@@ -178,7 +182,7 @@ SOMAArray::SOMAArray(
     , metadata_{create_metadata_cache(*meta_cache_arr_)}
     , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
-    , schema_(std::make_shared<ArraySchema>(arr->schema())) {
+    , schema_(std::make_shared<tiledb::ArraySchema>(arr->schema())) {
     switch (arr_->query_type()) {
         case TILEDB_READ:
             soma_mode_ = OpenMode::soma_read;
@@ -212,7 +216,15 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
                           open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp);
     metadata_ = create_metadata_cache(*meta_cache_arr_);
     columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_);
-    schema_ = std::make_shared<ArraySchema>(arr_->schema());
+    schema_ = std::make_shared<tiledb::ArraySchema>(arr_->schema());
+}
+
+ManagedQuery SOMAArray::create_managed_query(std::string_view name) const {
+    return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
+}
+
+ManagedQuery SOMAArray::create_managed_query(std::shared_ptr<SOMAContext> query_ctx, std::string_view name) const {
+    return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
 }
 
 CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
@@ -227,6 +239,10 @@ void SOMAArray::close() {
     arr_->close();
     meta_cache_arr_->close();
     metadata_.clear();
+}
+
+bool SOMAArray::is_open() const {
+    return arr_->is_open();
 }
 
 uint64_t SOMAArray::ndim() const {
@@ -292,6 +308,29 @@ void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters, const 
     }
 }
 
+managed_unique_ptr<ArrowSchema> SOMAArray::arrow_schema(bool downcast_dict_of_large_var) const {
+    auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
+
+    for (size_t i = 0; i < columns_.size(); ++i) {
+        schema->children[i] = columns_[i]->arrow_schema_slot(*ctx_, *arr_, downcast_dict_of_large_var);
+    }
+
+    return schema;
+}
+
+ArrowSchema* SOMAArray::arrow_schema_for_column(std::string column_name, bool downcast_dict_of_large_var) const {
+    for (size_t i = 0; i < columns_.size(); ++i) {
+        if (columns_[i]->name() == column_name) {
+            return columns_[i]->arrow_schema_slot(*ctx_, *arr_, downcast_dict_of_large_var);
+        }
+    }
+    throw TileDBSOMAError("[arrow_schema_for_column] column name '" + column_name + "' not present in schema");
+}
+
+PlatformSchemaConfig SOMAArray::schema_config_options() const {
+    return utils::platform_schema_config_from_tiledb(*schema_);
+}
+
 void SOMAArray::set_metadata(
     const std::string& key, tiledb_datatype_t value_type, uint32_t value_num, const void* value, bool force) {
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
@@ -344,18 +383,20 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
     return timestamp_;
 }
 
-Enumeration SOMAArray::get_existing_enumeration_for_column(std::string column_name) {
+tiledb::Enumeration SOMAArray::get_existing_enumeration_for_column(std::string column_name) {
     auto tctx = ctx_->tiledb_ctx();
     auto attribute = schema_->attribute(column_name);
     auto enumeration_name = AttributeExperimental::get_enumeration_name(*tctx, attribute);
     if (!enumeration_name.has_value()) {
         throw TileDBSOMAError(
             fmt::format(
-                "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
-                "is non-enumerated",
-                column_name));
+                "Cannot get the enumeration for column_name '{}'. This column is non-enumerated.", column_name));
     }
-    return ArrayExperimental::get_enumeration(*tctx, *arr_, enumeration_name.value());
+    return tiledb::ArrayExperimental::get_enumeration(*tctx, *arr_, enumeration_name.value());
+}
+
+tiledb::CurrentDomain SOMAArray::_get_current_domain() const {
+    return tiledb::ArraySchemaExperimental::current_domain(*ctx_->tiledb_ctx(), *schema_);
 }
 
 ArrowTable SOMAArray::get_enumeration_values(std::vector<std::string> column_names) {
@@ -463,7 +504,7 @@ void SOMAArray::extend_enumeration_values(
     std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values, bool deduplicate) {
     auto tctx = ctx_->tiledb_ctx();
     auto mq = ManagedQuery(arr_, tctx, "extend_enumeration_values");
-    ArraySchemaEvolution schema_evolution(*tctx);
+    tiledb::ArraySchemaEvolution schema_evolution(*tctx);
 
     // TBD thread-pooling opportunity -- TBD if it will be worthwhile
     for (const auto& [column_name, arrow_pair] : values) {
@@ -489,6 +530,14 @@ void SOMAArray::extend_enumeration_values(
         mq._extend_enumeration(values_schema, values_array, column_name, deduplicate, core_enum, schema_evolution);
     }
     schema_evolution.array_evolve(arr_->uri());
+}
+
+tiledb::CurrentDomain SOMAArray::get_current_domain_for_test() const {
+    return _get_current_domain();
+}
+
+bool SOMAArray::has_current_domain() const {
+    return !_get_current_domain().is_empty();
 }
 
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
@@ -524,13 +573,13 @@ uint64_t SOMAArray::nnz() {
     }
 
     std::vector<uint64_t> count(1);
-    std::shared_ptr<Array> array = arr_;
+    std::shared_ptr<tiledb::Array> array = arr_;
 
     if (!arr_->is_open() || arr_->query_type() != TILEDB_READ) {
         auto temporal_policy = timestamp_.has_value() ?
                                    TemporalPolicy(TimestampStartEnd, timestamp_->first, timestamp_->second) :
                                    TemporalPolicy();
-        array = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ, temporal_policy);
+        array = std::make_shared<tiledb::Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ, temporal_policy);
     }
 
     auto query = Query(*ctx_->tiledb_ctx(), *array);
@@ -709,7 +758,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
 
     // Fail if the newshape isn't within the array's core current domain.
     if (must_already_have) {
-        std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>(SOMA_JOINID);
+        auto cur_dom_lo_hi = get_column(SOMA_JOINID)->core_current_domain_slot<int64_t>(*ctx_, *arr_);
         if (newshape < cur_dom_lo_hi.second) {
             return std::pair(
                 false,
@@ -722,7 +771,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     }
 
     // Fail if the newshape isn't within the array's core (max) domain.
-    std::pair dom_lo_hi = _core_domain_slot<int64_t>(SOMA_JOINID);
+    auto dom_lo_hi = get_column(SOMA_JOINID)->core_domain_slot<int64_t>();
     if (newshape > dom_lo_hi.second) {
         return std::pair(
             false,
@@ -761,7 +810,7 @@ void SOMAArray::_set_shape_helper(
     _check_dims_are_int64();
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchemaEvolution schema_evolution = _make_se();
+    tiledb::ArraySchemaEvolution schema_evolution = _make_se();
     CurrentDomain new_current_domain(*tctx);
 
     NDRectangle ndrect(*tctx, arr_->schema().domain());
@@ -806,7 +855,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     }
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchemaEvolution schema_evolution = _make_se();
+    tiledb::ArraySchemaEvolution schema_evolution = _make_se();
     CurrentDomain new_current_domain(*tctx);
 
     if (!must_already_have) {
@@ -846,7 +895,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     } else {
         // For resize: copy from the existing current domain except for the
         // new soma_joinid value.
-        CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(*tctx, arr_->schema());
+        CurrentDomain old_current_domain = tiledb::ArraySchemaExperimental::current_domain(*tctx, arr_->schema());
         NDRectangle ndrect = old_current_domain.ndrectangle();
 
         for (const auto& column : columns_ | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
