@@ -3,9 +3,9 @@ from urllib.parse import urljoin
 import numpy as np
 import pyarrow as pa
 import pytest
-import somacore
 
 import tiledbsoma as soma
+from tiledbsoma import AffineTransform, IdentityTransform, ScaleTransform
 
 soma_outgest = pytest.importorskip("tiledbsoma.io.spatial._spatialdata_util")
 sd = pytest.importorskip("spatialdata")
@@ -63,31 +63,31 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
         ),
         (
             0,
-            somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
+            IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
             sd.transformations.Identity(),
             "scene0",
         ),
         (
             2,
-            somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
+            IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
             sd.transformations.Scale([4, 4], ("x", "y")),
             "scene0",
         ),
         (
             0,
-            somacore.ScaleTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]),
+            ScaleTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]),
             sd.transformations.Scale([4, 2], ("x", "y")),
             "scene0",
         ),
         (
             2,
-            somacore.ScaleTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]),
+            ScaleTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]),
             sd.transformations.Scale([16, 8], ("x", "y")),
             "scene0",
         ),
         (
             0,
-            somacore.AffineTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]),
+            AffineTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]),
             sd.transformations.Affine(
                 np.array([[1, 0, -1], [0, 1, -2], [0, 0, 1]]),
                 ("x", "y"),
@@ -97,7 +97,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
         ),
         (
             2,
-            somacore.AffineTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]),
+            AffineTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]),
             sd.transformations.Sequence(
                 [
                     sd.transformations.Scale([4, 4], ("x", "y")),
@@ -159,7 +159,7 @@ def test_export_image_level_to_spatialdata(
             "image",
         ),
         (
-            somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
+            IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
             [
                 sd.transformations.Identity(),
                 sd.transformations.Scale([2, 2], ("x", "y")),
@@ -168,7 +168,7 @@ def test_export_image_level_to_spatialdata(
             "scene0",
         ),
         (
-            somacore.ScaleTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]),
+            ScaleTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]),
             [
                 sd.transformations.Scale([4, 2], ("x", "y")),
                 sd.transformations.Scale([8, 4], ("x", "y")),
@@ -177,7 +177,7 @@ def test_export_image_level_to_spatialdata(
             "scene0",
         ),
         (
-            somacore.AffineTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]),
+            AffineTransform(("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]),
             [
                 sd.transformations.Affine(
                     np.array([[1, 0, -1], [0, 1, -2], [0, 0, 1]]),

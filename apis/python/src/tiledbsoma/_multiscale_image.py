@@ -12,14 +12,6 @@ from typing import Any, Final
 
 import attrs
 import pyarrow as pa
-import somacore
-from somacore import (
-    CoordinateSpace,
-    CoordinateTransform,
-    IdentityTransform,
-    ScaleTransform,
-    options,
-)
 from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
@@ -31,11 +23,13 @@ from ._constants import (
     SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
+from ._coordinate_space import CoordinateSpace, CoordinateTransform, IdentityTransform, ScaleTransform
+from ._core_iters import SpatialRead
+from ._core_options import DenseCoord, PlatformConfig, ResultOrder, ResultOrderStr, SpatialRegion
 from ._dense_nd_array import DenseNDArray
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._soma_context import SOMAContext
 from ._soma_group import SOMAGroup
-from ._soma_object import SOMAObject
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
@@ -82,10 +76,7 @@ class _MultiscaleImageMetadata:
         return cls(datatype=type, **kwargs)
 
 
-class MultiscaleImage(
-    SOMAGroup[DenseNDArray],
-    somacore.MultiscaleImage[DenseNDArray, SOMAObject],
-):
+class MultiscaleImage(SOMAGroup[DenseNDArray]):
     """A multiscale image represented as a collection of images at multiple resolution levels.
 
     Each level of the multiscale image must have the following consistent properties:
@@ -105,7 +96,7 @@ class MultiscaleImage(
         "_levels",
     )
     _handle_type = clib.SOMAMultiscaleImage
-
+    soma_type: Final = "SOMAMultiscaleImage"  # type: ignore[misc]
     _level_prefix: Final = "soma_level_"
 
     # Lifecycle
@@ -125,7 +116,7 @@ class MultiscaleImage(
         ),
         data_axis_order: Sequence[str] | None = None,
         has_channel_axis: bool = True,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -403,15 +394,15 @@ class MultiscaleImage(
     def read_spatial_region(
         self,
         level: int | str,
-        region: options.SpatialRegion | None = None,
+        region: SpatialRegion | None = None,
         *,
-        channel_coords: options.DenseCoord = None,
+        channel_coords: DenseCoord = None,
         region_transform: CoordinateTransform | None = None,
         region_coord_space: CoordinateSpace | None = None,
-        result_order: options.ResultOrderStr = options.ResultOrder.ROW_MAJOR,
+        result_order: ResultOrderStr = ResultOrder.ROW_MAJOR,
         data_axis_order: Sequence[str] | None = None,
-        platform_config: options.PlatformConfig | None = None,
-    ) -> somacore.SpatialRead[pa.Tensor]:
+        platform_config: PlatformConfig | None = None,
+    ) -> SpatialRead[pa.Tensor]:
         """Reads a user-defined spatial region from a specific level of the ``MultiscaleImage``.
 
         Retrieves the data within the specified region from the requested image level, returning
@@ -435,7 +426,7 @@ class MultiscaleImage(
             data_axis_order: The order to return the data axes in. Use ``soma_channel``
                 to specify the location of the channel coordinate.
             result_order: The order data to return results, specified as a
-                :class:`~options.ResultOrder` or its string value. This is the result
+                :class:`~ResultOrder` or its string value. This is the result
                 order the data is read from disk. It may be permuted if
                 ``data_axis_order`` is not the default order.
             platform_config: platform-specific configuration; keys are SOMA
@@ -507,7 +498,7 @@ class MultiscaleImage(
             array = self[array_name]
         except KeyError as ke:
             raise SOMAError(f"Unable to open the dense array with name '{array_name}'.") from ke
-        return somacore.SpatialRead(
+        return SpatialRead(
             array.read(
                 coords,
                 result_order=result_order,

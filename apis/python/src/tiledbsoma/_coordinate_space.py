@@ -15,7 +15,7 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-from .types import str_or_seq_length, to_string_tuple
+from ._types import str_or_seq_length, to_string_tuple
 
 
 @attrs.define(frozen=True)
@@ -31,7 +31,7 @@ class Axis:
     """Optional string name for the units of the axis."""
 
     @name.validator
-    def check(self, _: attrs.Attribute[str], value: str) -> None:
+    def check(self, _, value: str) -> None:  # type: ignore[no-untyped-def]  # noqa: ANN001
         if value.startswith("soma_"):
             raise ValueError(f"Invalid axis name '{value}'. Cannot start with 'soma_'.")
 
@@ -53,7 +53,7 @@ class CoordinateSpace(collections.abc.Sequence[Axis]):
         return cls(tuple(Axis(name) for name in axis_names))  # type: ignore[misc]
 
     @axes.validator
-    def _validate(self, _: attrs.Attribute[tuple[Axis, ...]], axes: tuple[Axis, ...]) -> None:
+    def _validate(self, _, axes: tuple[Axis, ...]) -> None:  # type: ignore[no-untyped-def]  # noqa: ANN001
         if not axes:
             raise ValueError("The coordinate space must have at least one axis.")
         if len({axis.name for axis in self.axes}) != len(axes):

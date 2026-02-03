@@ -11,8 +11,6 @@ from subprocess import PIPE
 from sys import stderr
 from typing import Any
 
-import somacore
-
 import tiledbsoma
 
 from .context_generator import host_context
@@ -91,7 +89,6 @@ def build_profile_data(stderr_: str, stdout_: str, prof1: str | None, prof2: str
         stderr=stderr_,
         timestamp=datetime.utcnow().timestamp(),
         tiledb_stats=read_tiledb_stats_output(),
-        somacore_version=somacore.__version__,
         tiledbsoma_version=tiledbsoma.__version__,
         host_context=host_context(),
         custom_out=[prof1, prof2],

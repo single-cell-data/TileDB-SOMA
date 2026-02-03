@@ -12,7 +12,6 @@ from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Literal, Optional, Union, cast
 
-from somacore import ContextBase
 from typing_extensions import Self
 
 from tiledbsoma import pytiledbsoma as clib
@@ -86,7 +85,7 @@ _Unset = Literal["__unset__"]
 _UNSET: _Unset = "__unset__"
 
 
-class SOMATileDBContext(ContextBase):
+class SOMATileDBContext:
     """Maintains TileDB-specific context for TileDB-SOMA objects.
     This context can be shared across multiple objects,
     including having a child object inherit it from its parent.

@@ -17,7 +17,6 @@ Context info:
 - stdout
 - stderr
 - tiledb_stats
-- somacore_version
 - tiledbsoma_version
 - host_context
 - custom_out

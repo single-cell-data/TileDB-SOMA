@@ -48,7 +48,6 @@ try:
 except (AttributeError, ModuleNotFoundError):
     from anndata.experimental import CSCDataset
 
-from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
 from tiledbsoma import (
@@ -68,6 +67,7 @@ from tiledbsoma import (
 from tiledbsoma._collection import AnyTileDBCollection, CollectionBase
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
+from tiledbsoma._core_options import PlatformConfig
 from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, SOMAError
 from tiledbsoma._soma_array import SOMAArray
 from tiledbsoma._soma_object import SOMAObject

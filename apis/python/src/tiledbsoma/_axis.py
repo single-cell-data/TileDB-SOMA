@@ -9,18 +9,19 @@ import attrs
 import numpy as np
 import pyarrow as pa
 
-from tiledbsoma._core import options, types
+from ._core_options import SparseDFCoord, SparseDFCoords
+from ._types import is_nonstringy_sequence
 
 
 def _canonicalize_coords(
-    in_coords: options.SparseDFCoords,
-) -> tuple[options.SparseDFCoord, ...]:
+    in_coords: SparseDFCoords,
+) -> tuple[SparseDFCoord, ...]:
     """Validates coordinates and freezes sequences as tuples.
 
     This is not strictly necessary; DataFrame will report these errors
     eventually but doing it now makes for better UX.
     """
-    if types.is_nonstringy_sequence(in_coords):
+    if is_nonstringy_sequence(in_coords):
         return tuple(_canonicalize_coord(c) for c in in_coords)
     if isinstance(in_coords, (str, bytes)):
         raise TypeError(
@@ -29,7 +30,7 @@ def _canonicalize_coords(
     raise TypeError(f"Query coordinates must be a sequence, not a single {type(in_coords)}")
 
 
-def _canonicalize_coord(coord: options.SparseDFCoord) -> options.SparseDFCoord:
+def _canonicalize_coord(coord: SparseDFCoord) -> SparseDFCoord:
     """Validates a single coordinate, freezing mutable sequences."""
     # NOTE: Keep this in sync with the `SparseDFCoord` type.
     if coord is None or isinstance(
@@ -87,7 +88,7 @@ class AxisQuery:
         validator=attrs.validators.optional(attrs.validators.instance_of(str)),
     )
     """A string specifying a SOMA ``value_filter``."""
-    coords: tuple[options.SparseDFCoord, ...] = attrs.field(
+    coords: tuple[SparseDFCoord, ...] = attrs.field(
         default=(),
         converter=_canonicalize_coords,
     )

@@ -14,7 +14,6 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 import scipy
-import somacore
 from anndata import AnnData
 from packaging.version import Version
 from scipy.sparse import csr_matrix
@@ -22,6 +21,7 @@ from scipy.sparse import csr_matrix
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
+from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
 
@@ -192,7 +192,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
         for key, orig_value in orig.obsm.items():
-            assert isinstance(obsm[key], somacore.NDArray)
+            assert isinstance(obsm[key], NDArray)
             if have_ingested:
                 matrix = obsm[key].read(coords=all2d)
                 if not obsm[key].is_sparse:
@@ -205,7 +205,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
         for key, orig_value in orig.varm.items():
-            assert isinstance(varm[key], somacore.NDArray)
+            assert isinstance(varm[key], NDArray)
             if have_ingested:
                 matrix = varm[key].read(coords=all2d)
                 if not varm[key].is_sparse:
@@ -218,7 +218,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
         for key, orig_value in orig.obsp.items():
-            assert isinstance(obsp[key], somacore.NDArray)
+            assert isinstance(obsp[key], NDArray)
             if have_ingested:
                 table = obsp[key].read(coords=all2d).tables().concat()
                 assert table.shape[0] == orig_value.nnz

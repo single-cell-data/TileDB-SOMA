@@ -15,14 +15,15 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
-import somacore
 from scipy import sparse
-from somacore import CoordinateSpace, options
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
+from ._coordinate_space import CoordinateSpace
+from ._core_iters import ReadIter
+from ._core_options import DenseNDCoords, PlatformConfig, SparseDFCoords, SparseNDCoord, SparseNDCoords
 from ._eager_iter import EagerIterator
 from ._exception import SOMAError
 from ._fastercsx import CompressedMatrix
@@ -55,17 +56,17 @@ IJDType = tuple[
 ]
 
 
-class TableReadIter(somacore.ReadIter[pa.Table]):
+class TableReadIter(ReadIter[pa.Table]):
     """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements."""
 
     def __init__(
         self,
         array: SOMAArray,
-        coords: options.SparseDFCoords | options.SparseNDCoords | options.DenseNDCoords,
+        coords: SparseDFCoords | SparseNDCoords | DenseNDCoords,
         column_names: Sequence[str] | None,
         result_order: clib.ResultOrder,
         value_filter: str | None,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
         *,
         coord_space: CoordinateSpace | None = None,
     ) -> None:
@@ -76,7 +77,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
                 The NDArray, DataFrame, or SpatialDataFrame being read.
 
             coords (Union[
-                options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
+                SparseDFCoords, SparseNDCoords, DenseNDCoords
             ]):
                 for each index dimension, which rows to read.
                 ``()`` means no constraint -- all IDs.
@@ -92,7 +93,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
             value_filter (str | None):
                 An optional [value filter] to apply to the results.
 
-            platform_config (options.PlatformConfig | None):
+            platform_config (PlatformConfig | None):
                 Pass in parameters for tuning reads.
 
         """
@@ -117,7 +118,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
 _EagerRT = TypeVar("_EagerRT")
 
 
-class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
+class BlockwiseReadIterBase(ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class.
 
     Currently implemented as a single-axis blockwise iterator.
@@ -128,10 +129,10 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     def __init__(
         self,
         array: SOMAArray,
-        coords: options.SparseNDCoords,
+        coords: SparseNDCoords,
         axis: int | Sequence[int],
         result_order: clib.ResultOrder,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
         *,
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
@@ -335,10 +336,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     def __init__(
         self,
         array: SOMAArray,
-        coords: options.SparseNDCoords,
+        coords: SparseNDCoords,
         axis: int | Sequence[int],
         result_order: clib.ResultOrder,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
         *,
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
@@ -463,16 +464,16 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             yield sp, indices
 
 
-class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
+class SparseTensorReadIterBase(ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class."""
 
     def __init__(
         self,
         array: SparseNDArray,
-        coords: options.SparseDFCoords,
+        coords: SparseDFCoords,
         shape: NTuple,
         result_order: clib.ResultOrder,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
     ) -> None:
         self.array = array
         self.coords = coords
@@ -525,11 +526,11 @@ class ArrowTableRead(Iterator[pa.Table]):
     def __init__(
         self,
         array: SOMAArray,
-        coords: options.SparseDFCoords | options.SparseNDCoords | options.DenseNDCoords,
+        coords: SparseDFCoords | SparseNDCoords | DenseNDCoords,
         column_names: Sequence[str] | None,
         result_order: clib.ResultOrder,
         value_filter: str | None,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
         *,
         coord_space: CoordinateSpace | None = None,
     ) -> None:
@@ -552,7 +553,7 @@ class ArrowTableRead(Iterator[pa.Table]):
         return self.mq._handle.next()
 
 
-def _coords_strider(coords: options.SparseNDCoord, length: int, stride: int) -> Iterator[npt.NDArray[np.int64]]:
+def _coords_strider(coords: SparseNDCoord, length: int, stride: int) -> Iterator[npt.NDArray[np.int64]]:
     """Private.
 
     Iterate over major coordinates, in stride sized steps, materializing each step as an

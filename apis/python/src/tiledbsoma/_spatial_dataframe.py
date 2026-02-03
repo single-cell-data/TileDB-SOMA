@@ -10,14 +10,23 @@ from collections.abc import Sequence
 from typing import Any
 
 import pyarrow as pa
-import somacore
-from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
 
+from ._coordinate_space import CoordinateSpace, CoordinateTransform
+from ._core_iters import ReadIter, SpatialRead
+from ._core_options import (
+    BatchSize,
+    PlatformConfig,
+    ReadPartitions,
+    ResultOrder,
+    ResultOrderStr,
+    SparseDFCoords,
+    SpatialRegion,
+)
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 
-_UNBATCHED = options.BatchSize()
+_UNBATCHED = BatchSize()
 
 
 class SpatialDataFrame(SOMAArray):
@@ -67,14 +76,14 @@ class SpatialDataFrame(SOMAArray):
 
     def read(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         column_names: Sequence[str] | None = None,
         *,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined slice of data into Arrow tables.
 
@@ -86,7 +95,7 @@ class SpatialDataFrame(SOMAArray):
             partitions: If present, specifies that this is part of
                 a partitioned read, and which part of the data to include.
             result_order: the order to return results, specified as a
-                :class:`~options.ResultOrder` or its string value.
+                :class:`~ResultOrder` or its string value.
             value_filter: an optional value filter to apply to the results.
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
@@ -102,17 +111,17 @@ class SpatialDataFrame(SOMAArray):
 
     def read_spatial_region(
         self,
-        region: options.SpatialRegion | None = None,
+        region: SpatialRegion | None = None,
         column_names: Sequence[str] | None = None,
         *,
         region_transform: CoordinateTransform | None = None,
         region_coord_space: CoordinateSpace | None = None,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
-    ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
+        platform_config: PlatformConfig | None = None,
+    ) -> SpatialRead[ReadIter[pa.Table]]:
         """Reads data intersecting an user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
 
@@ -134,7 +143,7 @@ class SpatialDataFrame(SOMAArray):
             partitions: If present, specifies that this is part of a partitioned read,
                 and which part of the data to include.
             result_order: the order to return results, specified as a
-                :class:`~options.ResultOrder` or its string value.
+                :class:`~ResultOrder` or its string value.
             value_filter: an optional value filter to apply to the results.
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
@@ -152,7 +161,7 @@ class SpatialDataFrame(SOMAArray):
         self,
         values: pa.RecordBatch | pa.Table,
         *,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object.
 

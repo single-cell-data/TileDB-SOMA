@@ -1,6 +1,6 @@
 import pytest
-from somacore import ResultOrder
 
+from tiledbsoma import ResultOrder
 from tiledbsoma._util import (
     dense_index_to_shape,
     dense_indices_to_shape,

@@ -16,10 +16,9 @@ from typing import Any, TypeVar
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import somacore
-from somacore import options
 
 from . import pytiledbsoma as clib
+from ._core_options import DenseCoord, DenseNDCoords, IOfN, ReadPartitions, ResultOrder, ResultOrderStr
 from ._types import DataProtocol, OpenTimestamp, Slice, is_slice_of
 
 
@@ -159,9 +158,9 @@ def slice_to_numeric_range(slc: Slice[Any], domain: tuple[_T, _T]) -> tuple[_T, 
 
 
 def dense_indices_to_shape(
-    coords: options.DenseNDCoords,
+    coords: DenseNDCoords,
     array_shape: tuple[int, ...],
-    result_order: somacore.ResultOrder,
+    result_order: ResultOrder,
 ) -> tuple[int, ...]:
     """Given a subarray index specified as a tuple of per-dimension slices or scalars
     (e.g., ``([:], 1, [1:2])``), and the shape of the array, return the shape of
@@ -172,12 +171,12 @@ def dense_indices_to_shape(
         raise ValueError(f"coordinate length ({len(coords)}) must be <= array dimension count ({len(array_shape)})")
 
     shape = tuple(dense_index_to_shape(coord, extent) for coord, extent in zip_longest(coords, array_shape))
-    if result_order == somacore.ResultOrder.ROW_MAJOR:
+    if result_order == ResultOrder.ROW_MAJOR:
         return shape
     return tuple(reversed(shape))
 
 
-def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
+def dense_index_to_shape(coord: DenseCoord, array_length: int) -> int:
     """Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
     and the shape of the array in that dimension, return the shape of the subarray in
     that dimension.
@@ -210,14 +209,14 @@ def check_type(
         raise TypeError(f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}")
 
 
-def check_unpartitioned(partitions: options.ReadPartitions | None) -> None:
+def check_unpartitioned(partitions: ReadPartitions | None) -> None:
     """Ensures that we're not being asked for a partitioned read.
 
     Because we currently don't support partitioned reads, we should reject all
     reads that request partitions to avoid giving the user duplicate data across
     sharded tasks.
     """
-    if not partitions or partitions == options.IOfN(0, 1):
+    if not partitions or partitions == IOfN(0, 1):
         return
     raise ValueError("Paritioned reads are not currently supported")
 
@@ -262,12 +261,12 @@ def tiledb_timestamp_to_ms(tiledb_timestamp: OpenTimestamp | None) -> int:
     return int(time.time() * 1000)
 
 
-def to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrder:
-    result_order = options.ResultOrder(result_order)
+def to_clib_result_order(result_order: ResultOrderStr) -> clib.ResultOrder:
+    result_order = ResultOrder(result_order)
     to_clib_result_order = {
-        options.ResultOrder.AUTO: clib.ResultOrder.automatic,
-        options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
-        options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
+        ResultOrder.AUTO: clib.ResultOrder.automatic,
+        ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
+        ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
     }
     try:
         return to_clib_result_order[result_order]
@@ -275,11 +274,11 @@ def to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrd
         raise ValueError(f"Invalid result_order: {result_order}") from ke
 
 
-def from_clib_result_order(result_order: clib.ResultOrder) -> options.ResultOrder:
+def from_clib_result_order(result_order: clib.ResultOrder) -> ResultOrder:
     from_clib_result_order = {
-        clib.ResultOrder.automatic: options.ResultOrder.AUTO,
-        clib.ResultOrder.rowmajor: options.ResultOrder.ROW_MAJOR,
-        clib.ResultOrder.colmajor: options.ResultOrder.COLUMN_MAJOR,
+        clib.ResultOrder.automatic: ResultOrder.AUTO,
+        clib.ResultOrder.rowmajor: ResultOrder.ROW_MAJOR,
+        clib.ResultOrder.colmajor: ResultOrder.COLUMN_MAJOR,
     }
     try:
         return from_clib_result_order[result_order]

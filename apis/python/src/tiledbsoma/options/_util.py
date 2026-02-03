@@ -8,9 +8,8 @@ import json
 from collections.abc import Mapping
 from typing import Union, cast
 
-from somacore import options
-
 from tiledbsoma import pytiledbsoma as clib
+from tiledbsoma._core_options import PlatformConfig
 
 from ._tiledb_create_write_options import TileDBCreateOptions, _ColumnConfig, _DictFilterSpec
 
@@ -19,7 +18,7 @@ _JSONFilterList = Union[str, list[_JSONFilter]]
 
 
 def build_clib_platform_config(
-    platform_config: options.PlatformConfig | None,
+    platform_config: PlatformConfig | None,
 ) -> clib.PlatformConfig:
     """Copy over Python PlatformConfig values to the C++ clib.PlatformConfig."""
     plt_cfg = clib.PlatformConfig()

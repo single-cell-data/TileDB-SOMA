@@ -24,7 +24,6 @@ class ProfileData:
     stdout: str
     stderr: str
     tiledb_stats: dict[str, Any]
-    somacore_version: str
     tiledbsoma_version: str
     host_context: dict[str, str]
     user_time_sec: float

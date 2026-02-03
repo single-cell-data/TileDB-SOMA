@@ -12,7 +12,7 @@ import warnings
 from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
-from typing import TYPE_CHECKING, Any, Callable, Literal, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Literal, Protocol, TypeVar, Union
 
 import attrs
 import numpy as np
@@ -22,32 +22,21 @@ import pyarrow as pa
 import pyarrow.compute as pacomp
 import scipy.sparse as sp
 from anndata import AnnData
-from somacore import (
-    AxisQuery,
-    Collection,
-    DataFrame,
-    NDArray,
-    ReadIter,
-    SparseRead,
-    query,
-)
-from somacore.data import _RO_AUTO
-from somacore.options import (
+from typing_extensions import Self, TypedDict
+
+from ._axis import AxisQuery
+from ._collection import Collection
+from ._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SPATIAL_DISCLAIMER
+from ._core_iters import _RO_AUTO, ReadIter, SparseRead
+from ._core_options import (
     BatchSize,
     PlatformConfig,
     ReadPartitions,
     ResultOrder,
     ResultOrderStr,
 )
-from somacore.query.query import (
-    AxisColumnNames,
-    Numpyable,
-)
-from somacore.query.types import IndexFactory, IndexLike
-from typing_extensions import Self
-
-from ._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SPATIAL_DISCLAIMER
 from ._dask.load import SOMADaskConfig, load_daskarray
+from ._dataframe import DataFrame
 from ._exception import SOMAError
 
 if TYPE_CHECKING:
@@ -56,10 +45,26 @@ if TYPE_CHECKING:
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
+from ._types import IndexFactory, IndexLike
 from ._util import MISSING, Sentinel, _df_set_index, _resolve_futures
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
+
+Numpyable = Union[pa.Array, pa.ChunkedArray, npt.NDArray[np.int64]]
+"""Things that can be converted to a NumPy array."""
+
+
+class AxisColumnNames(TypedDict, total=False):
+    """Specifies column names for experiment axis query read operations.
+
+    Lifecycle: maturing
+    """
+
+    obs: Sequence[str] | None
+    """obs columns to use. All columns if ``None`` or not present."""
+    var: Sequence[str] | None
+    """var columns to use. All columns if ``None`` or not present."""
 
 
 class _HasObsVar(Protocol[_T_co]):
@@ -85,7 +90,7 @@ class AxisName(enum.Enum):
 
 
 @attrs.define
-class AxisIndexer(query.AxisIndexer):
+class AxisIndexer:
     """Given a query, provides index-building services for obs/var axis.
 
     Lifecycle: maturing
@@ -129,7 +134,7 @@ def _to_numpy(it: Numpyable) -> npt.NDArray[np.int64]:
     return it.to_numpy()
 
 
-class ExperimentAxisQuery(query.ExperimentAxisQuery):
+class ExperimentAxisQuery:
     """Axis-based query against a SOMA Experiment.
 
     ExperimentAxisQuery allows easy selection and extraction of data from a
@@ -742,7 +747,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 Name of the layer.
         """
         try:
-            coll: Collection[NDArray] = self._ms[annotation_name]  # type: ignore
+            coll = self._ms[annotation_name]
         except KeyError:
             raise ValueError(f"Measurement does not contain {annotation_name!r} data.") from None
         if not isinstance(coll, Collection):
