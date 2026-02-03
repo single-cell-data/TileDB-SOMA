@@ -72,7 +72,6 @@ def small_pbmc() -> ad.AnnData:
     adata = sc.datasets.pbmc3k_processed()
 
     # trim it down to something smallish
-
     adata = adata[0 : adata.n_obs // 2, 0 : adata.n_vars // 2].copy()
     del adata.obsm["X_draw_graph_fr"]
     del adata.obsm["X_pca"]
@@ -83,6 +82,10 @@ def small_pbmc() -> ad.AnnData:
 
     del adata.obsp["distances"]
 
+    # make the main data matrix sparse
     adata.X = sp.csr_matrix(adata.X)
+
+    # add boolean column to obs for testing
+    adata.obs["is_b_cell"] = adata.obs["louvain"] == "B cells"
 
     return adata
