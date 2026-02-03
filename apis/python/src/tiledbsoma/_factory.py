@@ -14,9 +14,6 @@ from typing import (
     overload,
 )
 
-import somacore
-from somacore import options
-
 from . import (
     _collection,
     _dataframe,
@@ -31,6 +28,7 @@ from . import (
     _tdb_handles,
 )
 from . import pytiledbsoma as clib
+from ._core_options import OpenMode
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._funcs import typeguard_ignore
 from ._soma_context import SOMAContext
@@ -45,7 +43,7 @@ _Obj = TypeVar("_Obj", bound="SOMAObject")
 @overload
 def open(
     uri: str,
-    mode: options.OpenMode = ...,
+    mode: OpenMode = ...,
     *,
     soma_type: str | None = None,
     context: SOMAContext | SOMATileDBContext | None = None,
@@ -56,7 +54,7 @@ def open(
 @overload
 def open(
     uri: str,
-    mode: options.OpenMode,
+    mode: OpenMode,
     *,
     soma_type: type[_Obj],
     context: SOMAContext | SOMATileDBContext | None = None,
@@ -67,7 +65,7 @@ def open(
 @typeguard_ignore
 def open(
     uri: str,
-    mode: options.OpenMode = "r",
+    mode: OpenMode = "r",
     *,
     soma_type: type[SOMAObject] | str | None = None,
     context: SOMAContext | SOMATileDBContext | None = None,
@@ -123,7 +121,7 @@ def open(
 
     if isinstance(soma_type, str):
         soma_type_name = soma_type
-    elif issubclass(soma_type, somacore.SOMAObject):
+    elif issubclass(soma_type, SOMAObject):
         soma_type_name = soma_type.soma_type
     else:
         raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
@@ -139,7 +137,7 @@ def open(
 
 def _open_soma_object(
     uri: str,
-    mode: options.OpenMode,
+    mode: OpenMode,
     context: SOMAContext,
     tiledb_timestamp: OpenTimestamp | None,
     clib_type: str | None = None,

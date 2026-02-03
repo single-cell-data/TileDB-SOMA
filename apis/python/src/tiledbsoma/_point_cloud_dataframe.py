@@ -7,10 +7,9 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
+from typing import Final
 
 import pyarrow as pa
-import somacore
-from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
@@ -21,6 +20,17 @@ from ._constants import (
     SPATIAL_DISCLAIMER,
 )
 from ._coordinate_selection import CoordinateValueFilters
+from ._coordinate_space import CoordinateSpace, CoordinateTransform, IdentityTransform
+from ._core_iters import ReadIter, SpatialRead
+from ._core_options import (
+    BatchSize,
+    PlatformConfig,
+    ReadPartitions,
+    ResultOrder,
+    ResultOrderStr,
+    SparseDFCoords,
+    SpatialRegion,
+)
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
@@ -49,10 +59,10 @@ from .options import (
 )
 from .options._util import build_clib_platform_config
 
-_UNBATCHED = options.BatchSize()
+_UNBATCHED = BatchSize()
 
 
-class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
+class PointCloudDataFrame(SpatialDataFrame):
     """A specialized SOMA DataFrame for storing collections of points in
     multi-dimensional space.
 
@@ -66,6 +76,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     __slots__ = ("_coord_space",)
     _handle_type = clib.SOMAPointCloudDataFrame
+    soma_type: Final = "SOMAPointCloudDataFrame"  # type: ignore[misc]
 
     @classmethod
     def create(
@@ -75,7 +86,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         schema: pa.Schema,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         domain: Domain | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -295,10 +306,10 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         *,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> None:
         """Deletes cells at the specified coordinates.
 
@@ -344,14 +355,14 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     def read(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         column_names: Sequence[str] | None = None,
         *,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined slice of data into Arrow tables.
 
@@ -366,7 +377,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             partitions: If present, specifies that this is part of
                 a partitioned read, and which part of the data to include.
             result_order: the order to return results, specified as a
-                :class:`~options.ResultOrder` or its string value.
+                :class:`~ResultOrder` or its string value.
             value_filter: an optional value filter to apply to the results.
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
@@ -396,17 +407,17 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     def read_spatial_region(
         self,
-        region: options.SpatialRegion | None = None,
+        region: SpatialRegion | None = None,
         column_names: Sequence[str] | None = None,
         *,
         region_transform: CoordinateTransform | None = None,
         region_coord_space: CoordinateSpace | None = None,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
-    ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
+        platform_config: PlatformConfig | None = None,
+    ) -> SpatialRead[ReadIter[pa.Table]]:
         """Reads data intersecting a user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
 
@@ -427,7 +438,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             partitions: If present, specifies that this is part of a partitioned read,
                 and which part of the data to include.
             result_order: the order to return results, specified as a
-                :class:`~options.ResultOrder` or its string value.
+                :class:`~ResultOrder` or its string value.
             value_filter: an optional value filter to apply to the results.
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
@@ -441,7 +452,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """
         # Set/check transform and region coordinate space.
         if region_transform is None:
-            region_transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
+            region_transform = IdentityTransform(self.axis_names, self.axis_names)
             if region_coord_space is not None:
                 raise ValueError("Cannot specify the output coordinate space when region transform is ``None``.")
             region_coord_space = self._coord_space
@@ -471,7 +482,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             self._handle.schema,
         )
 
-        return somacore.SpatialRead(
+        return SpatialRead(
             self.read(
                 coords,
                 column_names,
@@ -490,7 +501,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self,
         values: pa.RecordBatch | pa.Table,
         *,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object.
 

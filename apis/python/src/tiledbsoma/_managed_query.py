@@ -12,11 +12,11 @@ from typing import TYPE_CHECKING, cast
 import attrs
 import numpy as np
 import pyarrow as pa
-from somacore import options
 
 import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
+from ._core_options import PlatformConfig, SparseNDCoords
 from ._types import is_nonstringy_sequence, is_slice_of
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class ManagedQuery:
     """Keep the lifetime of the SOMAArray tethered to ManagedQuery."""
 
     _array: SOMAArray
-    _platform_config: options.PlatformConfig | None = None
+    _platform_config: PlatformConfig | None = None
     _handle: clib.ManagedQuery = attrs.field(init=False)
     _ref_store: list[object] = attrs.field(init=False, default=[])
 
@@ -171,7 +171,7 @@ class ManagedQuery:
 
         raise TypeError(f"unhandled type {dim.type} for index column named {dim.name}")
 
-    def set_coords(self, coords: options.SparseNDCoords, axis_names: Sequence[str] | None = None) -> None:
+    def set_coords(self, coords: SparseNDCoords, axis_names: Sequence[str] | None = None) -> None:
         if not is_nonstringy_sequence(coords):
             raise TypeError(f"The coords type {type(coords)} must be a regular sequence, not str or bytes")
 

@@ -4,10 +4,9 @@
 
 """Implementation of a SOMA Measurement."""
 
-from typing import ClassVar, Union
+from typing import Final, Union
 
-from somacore import measurement
-
+from . import _mixin
 from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
@@ -16,18 +15,7 @@ from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 
 
-class Measurement(
-    CollectionBase[SOMAObject],
-    measurement.Measurement[
-        DataFrame,
-        Collection[  # type: ignore[type-var]
-            Union[SparseNDArray, DenseNDArray]
-        ],  # not just `NDArray` since that has no common `read`
-        Collection[DenseNDArray],  # type: ignore[type-var]
-        Collection[SparseNDArray],  # type: ignore[type-var]
-        SOMAObject,
-    ],
-):
+class Measurement(CollectionBase[SOMAObject]):
     """A set of observations defined by a dataframe, with measurements.
 
     This is a common set of annotated variables (defined by the ``var``
@@ -70,13 +58,54 @@ class Measurement(
 
     __slots__ = ()
     _handle_type = clib.SOMAMeasurement
+    soma_type: Final = "SOMAMeasurement"  # type: ignore[misc]
 
-    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
-        "var": ("SOMADataFrame",),
-        "X": ("SOMACollection",),
-        "obsm": ("SOMACollection",),
-        "obsp": ("SOMACollection",),
-        "varm": ("SOMACollection",),
-        "varp": ("SOMACollection",),
-        "var_spatial_presence": ("SOMADataFrame",),
-    }
+    var = _mixin.item[DataFrame]()
+    """Primary annotations on the variable axis for vars on this measurement.
+
+    This annotates _columns_ of the ``X`` arrays. The contents of the
+    ``soma_joinid`` pseudo-column define the variable index domain (``varid``)
+    All variables for this measurement _must_ be defined in this dataframe.
+    """
+
+    X = _mixin.item[Collection[Union[SparseNDArray, DenseNDArray]]]()
+    """A collection of matrices containing feature values.
+
+    Each matrix is indexed by ``[obsid, varid]``. Sparse and dense 2D arrays may
+    both be used in any combination in ``X``.
+    """
+
+    obsm = _mixin.item[Collection[Union[SparseNDArray, DenseNDArray]]]()
+    """Matrices containing annotations of each ``obs`` row.
+
+    This has the same shape as ``obs`` and is indexed with ``obsid``.
+    """
+
+    obsp = _mixin.item[Collection[SparseNDArray]]()
+    """Matrices containing pairwise annotations of each ``obs`` row.
+
+    This is indexed by ``[obsid_1, obsid_2]``.
+    """
+
+    varm = _mixin.item[Collection[Union[SparseNDArray, DenseNDArray]]]()
+    """Matrices containing annotations of each ``var`` row.
+
+    This has the same shape as ``var`` and is indexed with ``varid``.
+    """
+
+    varp = _mixin.item[Collection[SparseNDArray]]()
+    """Matrices containing pairwise annotations of each ``var`` row.
+
+    This is indexed by ``[varid_1, varid_2]``.
+    """
+
+    var_spatial_presence = _mixin.item[DataFrame]()
+    """A dataframe that stores the presence of var in the spatial scenes.
+
+    This provides a join table for the var ``soma_joinid`` and the scene names used in
+    the ``spatial`` collection. This dataframe must contain index columns ``soma_joinid``
+    and ``scene_id``. The ``scene_id`` column  must have type ``string``. The
+    dataframe must contain a ``boolean`` column ``data``. The values of ``data`` are
+    ``True`` if the var with varid ``soma_joinid`` is contained in scene with name
+    ``scene_id`` and ``False`` otherwise.
+    """

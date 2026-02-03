@@ -14,8 +14,9 @@ from typing import (
 
 import attrs as attrs_  # We use the name `attrs` later.
 import attrs.validators as vld  # Short name because we use this a bunch.
-from somacore import options
 from typing_extensions import Self
+
+from tiledbsoma._core_options import PlatformConfig
 
 # Most defaults are configured directly as default attribute values
 # within TileDBCreateOptions.
@@ -126,7 +127,7 @@ class TileDBCreateOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: options.PlatformConfig | TileDBCreateOptions | None = None,
+        platform_config: PlatformConfig | TileDBCreateOptions | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -185,7 +186,7 @@ class TileDBWriteOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: options.PlatformConfig | TileDBWriteOptions | None = None,
+        platform_config: PlatformConfig | TileDBWriteOptions | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -213,7 +214,7 @@ class TileDBDeleteOptions:
     """Tuning options used when deleting cells in SOMA arrays."""
 
     @classmethod
-    def from_platform_config(cls, platform_config: options.PlatformConfig | TileDBDeleteOptions | None = None) -> Self:
+    def from_platform_config(cls, platform_config: PlatformConfig | TileDBDeleteOptions | None = None) -> Self:
         """Create the class from a value passed in ``platform_config``."""
         del platform_config
         return cls()

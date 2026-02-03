@@ -4,7 +4,7 @@ pytest
 pytest-cov
 ruff
 sparse
-typeguard==4.4.2
+typeguard==4.4.4
 types-setuptools
 more-itertools
 hypothesis

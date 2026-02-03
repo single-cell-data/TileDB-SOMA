@@ -7,23 +7,19 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import Any, ClassVar, TypeVar, Union
+from typing import Any, ClassVar, Final, TypeVar, Union
 
-import somacore
-from somacore import (
-    CoordinateSpace,
-    CoordinateTransform,
-    options,
-)
 from typing_extensions import Self
 
-from . import _funcs
+from . import _funcs, _mixin
 from . import pytiledbsoma as clib
-from ._collection import CollectionBase
+from ._collection import Collection, CollectionBase
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
+from ._coordinate_space import CoordinateSpace, CoordinateTransform
+from ._core_options import PlatformConfig
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
@@ -45,10 +41,7 @@ _spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame
 _SE = TypeVar("_SE", bound=_spatial_element)
 
 
-class Scene(
-    CollectionBase[SOMAObject],
-    somacore.Scene[MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, SOMAObject],
-):
+class Scene(CollectionBase[SOMAObject]):
     """A collection subtype representing spatial assets that can all be stored
     on a single coordinate space.
 
@@ -58,6 +51,7 @@ class Scene(
 
     __slots__ = ("_coord_space",)
     _handle_type = clib.SOMAScene
+    soma_type: Final = "SOMAScene"  # type: ignore[misc]
 
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "img": ("SOMACollection",),
@@ -65,13 +59,42 @@ class Scene(
         "varl": ("SOMACollection",),
     }
 
+    img = _mixin.item[Collection[MultiscaleImage]]()
+    """A collection of multiscale images backing the spatial data.
+
+    Lifecycle: experimental
+    """
+
+    obsl = _mixin.item[Collection[Union[PointCloudDataFrame, GeometryDataFrame]]]()
+    """A collection of observation location data.
+
+    This collection exists to store any spatial data in the scene that joins on the obs
+    ``soma_joinid``. Each dataframe in ``obsl`` can be either a PointCloudDataFrame
+    or a GeometryDataFrame.
+
+    Lifecycle: experimental
+    """
+
+    varl = _mixin.item[Collection[Collection[Union[PointCloudDataFrame, GeometryDataFrame]]]]()
+    """A collection of collections of variable location data.
+
+    This collection exists to store any spatial data in the scene that joins on the
+    variable ``soma_joinid`` for the measurements in the SOMA experiment. The top-level
+    collection maps from measurement name to a collection of dataframes.
+
+    Each dataframe in a ``varl`` subcollection can be either a GeometryDataFrame or a
+    PointCloudDataFrame.
+
+    Lifecycle: experimental
+    """
+
     @classmethod
     def create(
         cls,
         uri: str,
         *,
         coordinate_space: Sequence[str] | CoordinateSpace | None = None,
-        platform_config: options.PlatformConfig | None = None,  # noqa: ARG003
+        platform_config: PlatformConfig | None = None,  # noqa: ARG003
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:

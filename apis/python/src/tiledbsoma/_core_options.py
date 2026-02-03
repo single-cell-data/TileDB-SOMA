@@ -20,7 +20,7 @@ import pyarrow as pa
 import shapely
 from typing_extensions import Literal
 
-from . import types
+from ._types import Slice
 
 SOMA_JOINID: Final = "soma_joinid"
 """Global constant for the SOMA join ID."""
@@ -140,7 +140,7 @@ class ResultOrder(enum.Enum):
 ResultOrderStr = Union[ResultOrder, Literal["auto", "row-major", "column-major"]]
 """A ResultOrder, or the str representing it."""
 
-DenseCoord = Union[int, types.Slice[int], None]
+DenseCoord = Union[int, Slice[int], None]
 """A single coordinate range for reading dense data.
 
 ``None`` indicates the entire domain of a dimension; values of this type are
@@ -152,7 +152,7 @@ DenseNDCoords = Sequence[DenseCoord]
 """A sequence of ranges to read dense data."""
 
 _T = TypeVar("_T")
-ValSliceOrSequence = Union[_T, types.Slice[_T], Sequence[_T]]
+ValSliceOrSequence = Union[_T, Slice[_T], Sequence[_T]]
 """A value of a type, a Slice of that type, or a Sequence of that type."""
 
 # NOTE: Keep this in sync with the types accepted in `_canonicalize_coord`

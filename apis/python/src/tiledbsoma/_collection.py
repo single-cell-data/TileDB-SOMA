@@ -6,24 +6,17 @@
 
 from __future__ import annotations
 
+import abc
 import itertools
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    TypeVar,
-    cast,
-    overload,
-)
+from collections.abc import MutableMapping
+from typing import Any, Callable, ClassVar, Final, TypeVar, cast, overload
 
-import somacore
-import somacore.collection
-from somacore import options
 from typing_extensions import Self
 
 from . import _funcs
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
+from ._core_options import PlatformConfig
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
@@ -44,8 +37,7 @@ _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
 class CollectionBase(
-    SOMAGroup[CollectionElementType],
-    somacore.collection.BaseCollection[CollectionElementType],
+    SOMAGroup[CollectionElementType], MutableMapping[str, CollectionElementType], metaclass=abc.ABCMeta
 ):
     """Contains a key-value mapping where the keys are string names and the values
     are any SOMA-defined foundational or composed type, including :class:`Collection`,
@@ -60,7 +52,7 @@ class CollectionBase(
         cls,
         uri: str,
         *,
-        platform_config: options.PlatformConfig | None = None,  # noqa: ARG003
+        platform_config: PlatformConfig | None = None,  # noqa: ARG003
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -123,6 +115,10 @@ class CollectionBase(
             handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
         )
 
+    def __setitem__(self, key: str, value: CollectionElementType) -> None:
+        """Sets an entry into this collection. See :meth:`set` for details."""
+        self.set(key, value)
+
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {}
@@ -133,23 +129,14 @@ class CollectionBase(
     :class:`Measurement` for details.
     """
 
-    # Overloads to allow type inference to work when doing:
-    #
-    #     some_coll.add_new_collection("key")  # -> Collection  # noqa: ERA001
-    # and
-    #     some_coll.add_new_collection("key", Experiment)  # -> Experiment  # noqa: ERA001
-    #
-    # These are only used in type inference to provide better type-checking and
-    # autocompletion etc. in static analysis, not at runtime.
-
-    @overload  # type: ignore[override]  # intentionally stricter
+    @overload
     def add_new_collection(
         self,
         key: str,
         kind: None = None,
         *,
         uri: str | None = ...,
-        platform_config: options.PlatformConfig | None = ...,
+        platform_config: PlatformConfig | None = ...,
         **kwargs: Any,  # noqa: ANN401
     ) -> Collection[SOMAObject]: ...
 
@@ -160,7 +147,7 @@ class CollectionBase(
         kind: type[_Coll],
         *,
         uri: str | None = ...,
-        platform_config: options.PlatformConfig | None = ...,
+        platform_config: PlatformConfig | None = ...,
         **kwargs: Any,  # noqa: ANN401
     ) -> _Coll: ...
 
@@ -170,7 +157,7 @@ class CollectionBase(
         kind: type[CollectionBase] | None = None,  # type: ignore[type-arg]
         *,
         uri: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         **kwargs: Any,
     ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
@@ -416,7 +403,7 @@ class CollectionBase(
         *,
         uri: str,
         relative: bool,
-        soma_object: CollectionElementType,
+        soma_object: _TDBO,
     ) -> None:
         """Internal implementation of element setting.
 
@@ -446,7 +433,7 @@ class CollectionBase(
 AnyTileDBCollection = CollectionBase[Any]
 
 
-class Collection(CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]):
+class Collection(CollectionBase[CollectionElementType]):
     """:class:`Collection` is a persistent container of named SOMA objects, stored as
     a mapping of string keys and SOMA object values. Values may be any
     persistent ``tiledbsoma`` object, including :class:`DataFrame`,
@@ -491,6 +478,8 @@ class Collection(CollectionBase[CollectionElementType], somacore.Collection[Coll
     __slots__ = ()
 
     _handle_type = clib.SOMACollection
+
+    soma_type: Final = "SOMACollection"  # type: ignore[misc]
 
 
 @typeguard_ignore

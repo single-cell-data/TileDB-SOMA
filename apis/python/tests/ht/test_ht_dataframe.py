@@ -15,9 +15,9 @@ from hypothesis.extra import numpy as ht_np
 from hypothesis.stateful import initialize, invariant, precondition, rule
 from more_itertools import pairwise
 from packaging.version import Version
-from somacore.options import OpenMode
 
 import tiledbsoma as soma
+from tiledbsoma._core_options import OpenMode
 
 from tests.ht._array_state_machine import SOMAArrayStateMachine
 from tests.ht._ht_test_config import HT_TEST_CONFIG

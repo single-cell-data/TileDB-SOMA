@@ -10,13 +10,13 @@ from threading import Lock
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import attrs
-from somacore import options
 from typing_extensions import Self
 
 from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib
+from ._core_options import OpenMode
 from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
@@ -140,7 +140,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         *,
         uri: str,
         relative: bool,
-        soma_object: CollectionElementType,
+        soma_object: _TDBO,
     ) -> None:
         """Internal implementation of element setting.
 
@@ -229,13 +229,11 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             )
 
         child = factory(child_uri.full_uri)
-        # The resulting element may not be the right type for this collection,
-        # but we can't really handle that within the type system.
         self._set_element(
             key,
             uri=child_uri.add_uri,
             relative=child_uri.relative,
-            soma_object=child,  # type: ignore[arg-type]
+            soma_object=child,
         )
         self._close_stack.enter_context(child)
         return child
@@ -262,7 +260,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         absolute_uri = uri_joinpath(self.uri, maybe_relative_uri)
         return _ChildURI(add_uri=absolute_uri, full_uri=absolute_uri, relative=False)
 
-    def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
+    def reopen(self, mode: OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
         """Return a new copy of the SOMAObject with the given mode at the current
         Unix timestamp.
 

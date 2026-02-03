@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from somacore import (
+
+from tiledbsoma import (
     AffineTransform,
     Axis,
     CoordinateSpace,

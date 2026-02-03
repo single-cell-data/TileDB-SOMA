@@ -9,23 +9,17 @@ from __future__ import annotations
 import inspect
 import warnings
 from collections.abc import Sequence
-from typing import (
-    Any,
-    Literal,
-    Union,
-    cast,
-)
+from typing import Any, Final, Literal, Union, cast
 
 import numpy as np
 import pyarrow as pa
-import somacore
-from somacore import options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._coordinate_selection import CoordinateValueFilters
+from ._core_options import BatchSize, PlatformConfig, ReadPartitions, ResultOrder, ResultOrderStr, SparseDFCoords
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
@@ -44,12 +38,12 @@ from .options import SOMATileDBContext, _update_context_and_timestamp
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 
-_UNBATCHED = options.BatchSize()
+_UNBATCHED = BatchSize()
 AxisDomain = Union[tuple[Any, Any], list[Any], None]
 Domain = Sequence[AxisDomain]
 
 
-class DataFrame(SOMAArray, somacore.DataFrame):
+class DataFrame(SOMAArray):
     """:class:`DataFrame` is a multi-column table with a user-defined schema. The
     schema is expressed as an
     `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_,
@@ -142,6 +136,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     __slots__ = ()
     _handle_type = clib.SOMADataFrame
+    soma_type: Final = "SOMADataFrame"  # type: ignore[misc]
 
     @classmethod
     def create(
@@ -151,7 +146,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         schema: pa.Schema,
         domain: Domain | None = None,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> DataFrame:
@@ -681,10 +676,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         *,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> None:
         """Deletes cells at the specified coordinates.
 
@@ -721,14 +716,14 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     def read(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         column_names: Sequence[str] | None = None,
         *,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined subset of data, addressed by the dataframe indexing columns,
         optionally filtered, and return results as one or more `Arrow tables <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
@@ -802,7 +797,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             platform_config=platform_config,
         )
 
-    def write(self, values: pa.Table, platform_config: options.PlatformConfig | None = None) -> Self:
+    def write(self, values: pa.Table, platform_config: PlatformConfig | None = None) -> Self:
         """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
         to the persistent object. As duplicate index values are not allowed, index values already
         present in the object are overwritten and new index values are added.

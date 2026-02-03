@@ -18,9 +18,9 @@ import numpy as np
 import pyarrow as pa
 from numpy import int64
 from numpy.typing import NDArray
-from somacore.options import SparseNDCoord, SparseNDCoords
 from typing_extensions import TypeAlias
 
+from tiledbsoma._core_options import SparseNDCoord, SparseNDCoords
 from tiledbsoma._soma_context import SOMAContext
 
 ChunkSize = Union[int, tuple[Union[int, None], int]]

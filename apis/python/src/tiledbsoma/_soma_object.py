@@ -9,12 +9,11 @@ from collections.abc import MutableMapping
 from contextlib import ExitStack
 from typing import Any, ClassVar
 
-import somacore
-from somacore import options
-from typing_extensions import Self
+from typing_extensions import LiteralString, Self
 
 from . import _tdb_handles
 from . import pytiledbsoma as clib
+from ._core_options import OpenMode, PlatformConfig
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._types import OpenTimestamp
@@ -22,7 +21,7 @@ from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
 from .options import SOMATileDBContext, _update_context_and_timestamp
 
 
-class SOMAObject(somacore.SOMAObject):
+class SOMAObject:
     """Base class for all TileDB SOMA objects.
 
     Lifecycle:
@@ -34,15 +33,25 @@ class SOMAObject(somacore.SOMAObject):
 
     __slots__ = ("_close_stack", "_context", "_handle", "_metadata", "_timestamp_ms", "_uri")
 
+    soma_type: ClassVar[LiteralString]
+    """A string describing the SOMA type of this object. This is constant.
+
+    This uses ClassVar since you can't do abstract class properties.
+    This is the equivalent, just without abc-based automatic verification.
+    Overrides are marked Final with an ignore[misc] because mypy by default
+    wants this to be mutable, and doesn't like overriding the mutable member
+    with a Final member.
+    """
+
     @classmethod
     def open(
         cls,
         uri: str,
-        mode: options.OpenMode = "r",
+        mode: OpenMode = "r",
         *,
         tiledb_timestamp: OpenTimestamp | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
@@ -143,7 +152,7 @@ class SOMAObject(somacore.SOMAObject):
         """Helper function the subclasses can override if they require additional validation or set-up."""
         return
 
-    def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
+    def reopen(self, mode: OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
         """Return a new copy of the SOMAObject with the given mode at the current
         Unix timestamp.
 
@@ -188,6 +197,20 @@ class SOMAObject(somacore.SOMAObject):
     @property
     def metadata(self) -> MutableMapping[str, Any]:
         return self._metadata
+
+    __eq__ = object.__eq__
+    __hash__ = object.__hash__
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *_: Any) -> None:  # noqa: ANN401
+        self.close()
+
+    def __del__(self) -> None:
+        self.close()
+        super_del = getattr(super(), "__del__", lambda: None)
+        super_del()
 
     def __repr__(self) -> str:
         return f"<{self._my_repr()}>"
@@ -242,7 +265,7 @@ class SOMAObject(somacore.SOMAObject):
         return self._handle.closed  # type: ignore[no-any-return]
 
     @property
-    def mode(self) -> options.OpenMode:
+    def mode(self) -> OpenMode:
         """The mode this object was opened in, either ``r``, ``w``, or ``d``.
 
         Examples:

@@ -9,10 +9,10 @@ from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-from somacore.options import PlatformConfig
 
 from tiledbsoma import Experiment, SOMAContext, SOMATileDBContext
 from tiledbsoma._collection import AnyTileDBCollection, Collection
+from tiledbsoma._core_options import PlatformConfig
 from tiledbsoma.io._common import AdditionalMetadata, UnsMapping, UnsNode
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import (

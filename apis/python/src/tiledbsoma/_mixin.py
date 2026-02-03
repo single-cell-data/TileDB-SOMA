@@ -10,9 +10,9 @@ from typing import Generic, TypeVar, overload
 
 import attrs
 
-from . import base
+from ._soma_object import SOMAObject
 
-_ST = TypeVar("_ST", bound=base.SOMAObject)
+_ST = TypeVar("_ST", bound=SOMAObject)
 _Coll = MutableMapping[str, _ST]
 _T = TypeVar("_T")
 
