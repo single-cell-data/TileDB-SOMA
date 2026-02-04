@@ -16,17 +16,14 @@ from typing_extensions import Self
 from . import _constants, _tdb_handles
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
+from ._soma_context import SOMAContext
 from ._types import OpenTimestamp
-from ._util import check_type, ms_to_datetime
-from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
+from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
+from .options import SOMATileDBContext, _update_context_and_timestamp
 
 
 class SOMAObject(somacore.SOMAObject):
     """Base class for all TileDB SOMA objects.
-
-    Accepts a SOMATileDBContext, to enable session state to be shared
-    across SOMA objects.
 
     Lifecycle:
         Maturing.
@@ -44,7 +41,7 @@ class SOMAObject(somacore.SOMAObject):
         mode: options.OpenMode = "r",
         *,
         tiledb_timestamp: OpenTimestamp | None = None,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
@@ -80,15 +77,15 @@ class SOMAObject(somacore.SOMAObject):
             Maturing.
         """
         del platform_config  # unused
-        context = _validate_soma_tiledb_context(context)
-        open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
 
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
+        open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
         try:
             handle = cls._handle_type.open(
                 uri,
                 mode=open_mode,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 
@@ -105,7 +102,7 @@ class SOMAObject(somacore.SOMAObject):
         handle: _tdb_handles.RawHandle,
         *,
         uri: str,
-        context: SOMATileDBContext,
+        context: SOMAContext,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ) -> None:
         """Internal-only common initializer steps.
@@ -137,7 +134,7 @@ class SOMAObject(somacore.SOMAObject):
         self._handle = handle
         self._context = context
         self._uri = uri
-        self._timestamp_ms = self._context._open_timestamp_ms(self._handle.timestamp)
+        self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle)
         self._check_required_metadata()
@@ -186,11 +183,11 @@ class SOMAObject(somacore.SOMAObject):
             Experimental.
         """
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
-        timestamp_ms = self._context._open_timestamp_ms(tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         self._metadata._write()
         self._handle.close()
         self._handle = self._handle_type.open(
-            uri=self._uri, mode=open_mode, context=self._context.native_context, timestamp=(0, timestamp_ms)
+            uri=self._uri, mode=open_mode, context=self._context._handle, timestamp=(0, timestamp_ms)
         )
         self._timestamp_ms = timestamp_ms
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(
@@ -201,7 +198,7 @@ class SOMAObject(somacore.SOMAObject):
         return self
 
     @property
-    def context(self) -> SOMATileDBContext:
+    def context(self) -> SOMAContext:
         return self._context
 
     @property
@@ -310,22 +307,18 @@ class SOMAObject(somacore.SOMAObject):
     def exists(
         cls,
         uri: str,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> bool:
         """Finds whether an object of this type exists at the given URI.
 
         Args:
-            uri:
-                The URI to open.
-            context:
-                If provided, the :class:`SOMATileDBContext` to use when creating and
-                attempting to access this object.
-            tiledb_timestamp:
-                The TileDB timestamp to open this object at,
-                measured in milliseconds since the Unix epoch.
-                When unset (the default), the current time is used.
-                A value of zero results in default, i.e., current time.
+            uri: The URI to open.
+            context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
+                provide the default context will be used and possibly initialized.
+            tiledb_timestamp: The TileDB timestamp to open this object at, measured in milliseconds since the Unix
+                epoch. When unset (the default), the current time is used. A value of zero results in default, i.e.,
+                current time.
 
         Raises:
             TypeError:
@@ -345,11 +338,11 @@ class SOMAObject(somacore.SOMAObject):
             Maturing.
         """
         check_type("uri", uri, (str,))
-        context = _validate_soma_tiledb_context(context)
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             with cls._handle_type.open(
-                uri, mode=clib.OpenMode.soma_read, context=context.native_context, timestamp=(0, timestamp_ms)
+                uri, mode=clib.OpenMode.soma_read, context=context._handle, timestamp=(0, timestamp_ms)
             ) as handle:
                 md_type = handle.type
                 if not isinstance(md_type, str):

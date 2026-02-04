@@ -3,11 +3,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from tiledbsoma import IntIndexer, SOMATileDBContext
+from tiledbsoma import IntIndexer, SOMAContext
 
 
-@pytest.mark.parametrize("context", [None, SOMATileDBContext()])
-def test_reindexer_api(context: SOMATileDBContext | None):
+@pytest.mark.parametrize("context", [None, SOMAContext.create()])
+def test_reindexer_api(context: SOMAContext | None):
     keys = np.arange(3, 10, 2)
     ids = np.arange(3, 10, 2)
     expected = np.array([0, 1, 2, 3])

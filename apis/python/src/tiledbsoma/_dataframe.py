@@ -30,6 +30,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, m
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
+from ._soma_context import SOMAContext
 from ._types import (
     NPFInfo,
     NPFloating,
@@ -38,8 +39,8 @@ from ._types import (
     OpenTimestamp,
     StatusAndReason,
 )
-from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
+from ._util import tiledb_timestamp_to_ms
+from .options import SOMATileDBContext, _update_context_and_timestamp
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 
@@ -151,7 +152,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         domain: Domain | None = None,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: options.PlatformConfig | None = None,
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> DataFrame:
         """Creates the data structure on disk/S3/cloud.
@@ -207,7 +208,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
 
         # SOMA-to-core mappings:
@@ -310,25 +310,26 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         plt_cfg = build_clib_platform_config(platform_config)
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
             clib.SOMADataFrame.create(
                 uri,
                 schema=schema,
                 index_column_info=index_column_info,
-                ctx=context.native_context,
+                ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             handle = clib.SOMADataFrame.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

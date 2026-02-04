@@ -28,6 +28,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, m
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
+from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._spatial_util import (
     coordinate_space_from_json,
@@ -36,8 +37,8 @@ from ._spatial_util import (
     transform_to_json,
 )
 from ._types import OpenTimestamp
-from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
+from ._util import tiledb_timestamp_to_ms
+from .options import SOMATileDBContext, _update_context_and_timestamp
 
 _spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame]
 
@@ -71,7 +72,7 @@ class Scene(
         *,
         coordinate_space: Sequence[str] | CoordinateSpace | None = None,
         platform_config: options.PlatformConfig | None = None,  # noqa: ARG003
-        context: SOMATileDBContext | None = None,
+        context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new scene at the given URI.
@@ -89,8 +90,8 @@ class Scene(
                 ``{'tiledb': {'create': ...}}`` key, or as a
                 :class:`~tiledbsoma.TileDBCreateOptions` object.
             context:
-                If provided, the :class:`SOMATileDBContext` to use when creating and
-                opening this scene
+                If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
+                provide the default context will be used and possibly initialized.
             tiledb_timestamp:
                 If specified, overrides the default timestamp used to open this object.
                 If unset, uses the timestamp provided by the context.
@@ -103,8 +104,6 @@ class Scene(
         """
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
-        context = _validate_soma_tiledb_context(context)
-
         if coordinate_space is None:
             axis_names = None
             axis_units = None
@@ -115,10 +114,11 @@ class Scene(
             axis_names = tuple(coordinate_space)
             axis_units = None
 
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAScene.create(
-                ctx=context.native_context,
+                ctx=context._handle,
                 uri=uri,
                 axis_names=axis_names,
                 axis_units=axis_units,
@@ -126,12 +126,13 @@ class Scene(
             )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
+
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             handle = clib.SOMAScene.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context.native_context,
+                context=context._handle,
                 timestamp=(0, timestamp_ms),
             )
 

@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from somacore.options import PlatformConfig
 
-from tiledbsoma import Experiment, SOMATileDBContext
+from tiledbsoma import Experiment, SOMAContext, SOMATileDBContext
 from tiledbsoma._collection import AnyTileDBCollection, Collection
 from tiledbsoma.io._common import AdditionalMetadata, UnsMapping, UnsNode
 from tiledbsoma.io._registration import AxisIDMapping
@@ -33,7 +33,7 @@ def update_uns_by_uri(
     measurement_name: str,
     *,
     use_relative_uri: bool | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | SOMATileDBContext | None = None,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
     default_index_name: str | None = None,
@@ -48,6 +48,7 @@ def update_uns_by_uri(
     arrays is currently not supported, and will either ``raise`` or "INFO" log, based on the value
     of the ``strict`` arg).
     """
+    context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
     with Experiment.open(uri, "w") as exp:
         _update_uns(
             exp,
@@ -68,7 +69,7 @@ def _update_uns(
     measurement_name: str,
     *,
     use_relative_uri: bool | None = None,
-    context: SOMATileDBContext | None = None,
+    context: SOMAContext | None = None,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
     default_index_name: str | None = None,
@@ -94,7 +95,8 @@ def _update_uns(
 
         use_relative_uri: If True, store the URI relative to the experiment's URI.
 
-        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
+            provide the default context will be used and possibly initialized.
 
         additional_metadata: Additional metadata to be added to the collection.
 

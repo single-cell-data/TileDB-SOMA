@@ -30,7 +30,7 @@ from tiledbsoma._fastercsx import CompressedMatrix, Format
 from tiledbsoma._indexer import IntIndexer
 from tiledbsoma._sparse_nd_array import SparseNDArray
 from tiledbsoma._types import OpenTimestamp
-from tiledbsoma.options._soma_tiledb_context import ConfigDict, ConfigVal
+from tiledbsoma.options._soma_tiledb_context import ConfigDict
 
 if TYPE_CHECKING:
     try:
@@ -108,7 +108,7 @@ def load_daskarray(
     *,
     coords: SparseNDCoords | None = None,
     chunk_size: ChunkSize | None = None,
-    tiledb_config: dict[str, ConfigVal] | None = None,
+    tiledb_config: dict[str, str | float] | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
     platform_config: PlatformConfig | None = None,
@@ -142,10 +142,10 @@ def load_daskarray(
 
     if isinstance(layer, SparseNDArray):
         if tiledb_config:
-            tiledb_config = {**layer.context.tiledb_config}
+            tiledb_config = {**layer.context.config}
             tiledb_config.update(**tiledb_config)
         else:
-            tiledb_config = layer.context.tiledb_config
+            tiledb_config = layer.context.config  # type: ignore[assignment]
 
         chunk_joinids = da.from_array(arr, chunks=(1, 1))
         meta = sp.csr_matrix((0, 0), dtype=dtype) if format == "csr" else sp.csc_matrix((0, 0), dtype=dtype)

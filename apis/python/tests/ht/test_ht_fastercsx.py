@@ -172,14 +172,14 @@ def coo_ijd(
         st.integers(min_value=0, max_value=2**16),
         st.integers(min_value=0, max_value=2**16),
     ),
-    context=st.from_type(soma.SOMATileDBContext),
+    context=st.from_type(soma.SOMAContext),
 )
 def test_fastercsx_clib_compress_coo(
     do: st.DataObject,
     value_dtype: np.dtype,
     unique: bool,
     shape: tuple[int, int],
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
 ) -> None:
     i, j, d = do.draw(coo_ijd(dtype=value_dtype, shape=shape, unique=unique))
     nnz = sum(len(c) for c in i)
@@ -189,7 +189,7 @@ def test_fastercsx_clib_compress_coo(
     indptr = np.empty(shape[0] + 1, dtype=index_dtype)
     indices = np.empty(nnz, dtype=index_dtype)
     data = np.empty(nnz, dtype=value_dtype)
-    clib_fastercsx.compress_coo(context.native_context, shape, i, j, d, indptr, indices, data)
+    clib_fastercsx.compress_coo(context._handle, shape, i, j, d, indptr, indices, data)
 
     # compare to oracle
     csr = sparse.csr_matrix((data, indices, indptr), shape=shape, dtype=value_dtype, copy=False)
@@ -230,7 +230,7 @@ def test_fastercsx_clib_compress_coo(
     indptr=st.from_type(npt.NDArray[Any]),
     indices=st.from_type(npt.NDArray[Any]),
     data=st.from_type(npt.NDArray[Any]),
-    context=st.from_type(soma.SOMATileDBContext),
+    context=st.from_type(soma.SOMAContext),
 )
 def test_fuzz_fastercsx_clib_compress_coo(
     shape,
@@ -240,28 +240,28 @@ def test_fuzz_fastercsx_clib_compress_coo(
     indptr: npt.NDArray[Any],
     indices: npt.NDArray[Any],
     data: npt.NDArray[Any],
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
 ) -> None:
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
-        clib_fastercsx.compress_coo(context.native_context, shape, i, j, d, indptr, indices, data)
+        clib_fastercsx.compress_coo(context._handle, shape, i, j, d, indptr, indices, data)
 
 
 @given(
     indptr=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in CsxIndexTypes),
     indices=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in CsxIndexTypes),
     data=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in ValueTypes),
-    context=st.from_type(soma.SOMATileDBContext),
+    context=st.from_type(soma.SOMAContext),
 )
 def test_fuzz_fastercsx_clib_sort_csx_indices(
     indptr: npt.NDArray[Any],
     indices: npt.NDArray[Any],
     data: npt.NDArray[Any],
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
 ) -> None:
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
-        clib_fastercsx.sort_csx_indices(context.native_context, indptr, indices, data)
+        clib_fastercsx.sort_csx_indices(context._handle, indptr, indices, data)
 
 
 @given(
@@ -273,7 +273,7 @@ def test_fuzz_fastercsx_clib_sort_csx_indices(
     indices=st.from_type(npt.NDArray[Any]),
     data=st.from_type(npt.NDArray[Any]),
     out=st.from_type(npt.NDArray[Any]),
-    context=st.from_type(soma.SOMATileDBContext),
+    context=st.from_type(soma.SOMAContext),
 )
 def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     major_idx_start: int,
@@ -284,12 +284,12 @@ def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     indices: npt.NDArray[Any],
     data: npt.NDArray[Any],
     out: npt.NDArray[Any],
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
 ) -> None:
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
         clib_fastercsx.copy_csx_to_dense(
-            context.native_context,
+            context._handle,
             major_idx_start,
             major_idx_end,
             shape,
@@ -311,7 +311,7 @@ def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     ),
     make_sorted=st.booleans(),
     format=st.sampled_from(["csc", "csr"]),
-    context=st.from_type(soma.SOMATileDBContext),
+    context=st.from_type(soma.SOMAContext),
 )
 def test_fastercsx_from_ijd(
     do: st.DataObject,
@@ -320,7 +320,7 @@ def test_fastercsx_from_ijd(
     shape: tuple[int, int],
     format: Format,
     make_sorted: bool,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
 ) -> None:
     i, j, d = do.draw(coo_ijd(dtype=value_dtype, shape=shape, unique=unique))
     assert all(a.dtype == value_dtype for a in d)
@@ -364,7 +364,7 @@ def test_fastercsx_from_ijd(
     ),
     make_sorted=st.booleans(),
     format=st.sampled_from(["csc", "csr"]),
-    context=st.from_type(soma.SOMATileDBContext),
+    context=st.from_type(soma.SOMAContext),
 )
 def test_fastercsx_to_scipy(
     do: st.DataObject,
@@ -373,7 +373,7 @@ def test_fastercsx_to_scipy(
     shape: tuple[int, int],
     format: Format,
     make_sorted: bool,
-    context: soma.SOMATileDBContext,
+    context: soma.SOMAContext,
 ) -> None:
     i, j, d = do.draw(coo_ijd(dtype=value_dtype, shape=shape, unique=unique))
     cm = fastercsx.CompressedMatrix.from_ijd(i, j, d, shape, format, make_sorted, context)

@@ -27,8 +27,8 @@ def test_get_soma_type_metadata_value(tmp_path_factory, soma_type):
     with create_basic_object(soma_type, uri) as soma_obj:
         soma_obj.close()
 
-    ctx = tiledbsoma.SOMATileDBContext()
-    actual_type = somaclib.get_soma_type_metadata_value(uri, ctx.native_context, None)
+    ctx = tiledbsoma.SOMAContext.create()
+    actual_type = somaclib.get_soma_type_metadata_value(uri, ctx._handle, None)
     assert actual_type == soma_type
 
 
@@ -47,8 +47,8 @@ def test_get_soma_type_metadata_value_from_array(tmp_path_factory, soma_type):
     with create_basic_object(soma_type, uri) as soma_obj:
         soma_obj.close()
 
-    ctx = tiledbsoma.SOMATileDBContext()
-    actual_type = somaclib.get_soma_type_metadata_value_from_array(uri, ctx.native_context, None)
+    ctx = tiledbsoma.SOMAContext.create()
+    actual_type = somaclib.get_soma_type_metadata_value_from_array(uri, ctx._handle, None)
     assert actual_type == soma_type
 
 
@@ -68,8 +68,8 @@ def test_get_soma_type_metadata_value_from_group(tmp_path_factory, soma_type):
     with create_basic_object(soma_type, uri) as soma_obj:
         soma_obj.close()
 
-    ctx = tiledbsoma.SOMATileDBContext()
-    actual_type = somaclib.get_soma_type_metadata_value_from_group(uri, ctx.native_context, None)
+    ctx = tiledbsoma.SOMAContext.create()
+    actual_type = somaclib.get_soma_type_metadata_value_from_group(uri, ctx._handle, None)
     assert actual_type == soma_type
 
 
@@ -78,9 +78,9 @@ def test_get_soma_type_metadata_value_from_array_error(tmp_path_factory):
     with create_basic_object("SOMACollection", uri) as coll:
         coll.close()
 
-    ctx = tiledbsoma.SOMATileDBContext()
+    ctx = tiledbsoma.SOMAContext.create()
     with pytest.raises(Exception, match=r".* Array does not exist."):
-        somaclib.get_soma_type_metadata_value_from_array(uri, ctx.native_context, None)
+        somaclib.get_soma_type_metadata_value_from_array(uri, ctx._handle, None)
 
 
 def test_get_soma_type_metadata_value_from_group_error(tmp_path_factory):
@@ -88,6 +88,6 @@ def test_get_soma_type_metadata_value_from_group_error(tmp_path_factory):
     with create_basic_object("SOMADataFrame", uri) as df:
         df.close()
 
-    ctx = tiledbsoma.SOMATileDBContext()
+    ctx = tiledbsoma.SOMAContext.create()
     with pytest.raises(Exception, match=r".* Group does not exist."):
-        somaclib.get_soma_type_metadata_value_from_group(uri, ctx.native_context, None)
+        somaclib.get_soma_type_metadata_value_from_group(uri, ctx._handle, None)
