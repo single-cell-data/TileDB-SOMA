@@ -9,7 +9,9 @@
 
 #include "common.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
 #include <cxxabi.h>
+#endif
 
 namespace tiledbsoma::common {
 #pragma region Status implementation
@@ -48,6 +50,7 @@ size_t get_max_capacity(tiledb_datatype_t index_type) {
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 std::string demangle_name(std::string_view name) {
     int status = 0;
     std::unique_ptr<char, void (*)(void*)> demangled_name{
@@ -59,6 +62,11 @@ std::string demangle_name(std::string_view name) {
 
     return demangled_name.get();
 }
+#else
+std::string demangle_name(std::string_view name) {
+    return std::string(name);
+}
+#endif
 
 #pragma endregion
 }  // namespace tiledbsoma::common

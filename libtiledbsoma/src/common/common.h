@@ -61,6 +61,8 @@ concept is_offset_buffer = std::same_as<T, std::unique_ptr<uint64_t[]>> ||
  * @brief Get a human redable name from the name of a type
  * 
  * @param name A mangled name as it comes from `std::type_info::name`
+ * 
+ * @return If compiled under GCC, returns the demangled type name, otherwise returns the mangled name as is.
  */
 std::string demangle_name(std::string_view name);
 
@@ -109,9 +111,10 @@ T get_config_value(const tiledb::Config& config, std::string_view key, T default
 }
 
 /**
- * @brief get the maximum number of Enumeragtion value the given datatype can hold.
+ * @brief Get the maximum number of Enumeration values the given index datatype can reference.
  * 
- * @param index_type The datatype of the index column
+ * @param index_type The datatype of the index column.
+ * @return The maximum number of enumeration values the index datatype can reference.
  */
 size_t get_max_capacity(tiledb_datatype_t index_type);
 
