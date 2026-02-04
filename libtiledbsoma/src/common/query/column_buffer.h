@@ -69,7 +69,7 @@ class ColumnBuffer {
     virtual ~ColumnBuffer();
 
     /**
-     * @brief Attach the internal buffer the the given query. If a subarray is provided, attach the subarray insted of the internal buffers.
+     * @brief Attach the internal buffer to the given query. If a subarray is provided, attach the subarray insted of the internal buffers.
      * 
      * @param query The query to attach the buffers to
      * @param subarray Optional subarray to attach to query instead of the columns internal buffers. 
@@ -199,8 +199,7 @@ class ColumnBuffer {
     double_t data_load_factor() const;
 
     /**
-     * @brief The percentage of the offset and validity buffers that is filled if
-     * any.
+     * @brief The percentage of the offset and validity buffers that is filled if any.
      */
     double_t cell_load_factor() const;
 
@@ -277,11 +276,12 @@ class ReadColumnBuffer : public ColumnBuffer {
     uint64_t update_size(const tiledb::Query& query);
 
     /**
-     * @brief
+     * @brief Resize the internal buffers to the given size.
      * 
-     * @param num_bytes
-     * @param num_cells
-     * @param retain_data
+     * @param num_bytes Number of bytes to allocate for the data buffer.
+     * @param num_cells Number of cells (elements) to allocate for offset and validity buffers, if any.
+     * @param retain_data If true, copy any data present if the buffers to the new resized buffers. 
+     *  If the new buffers are smaller than the previously allocated buffers, any excess data is lost.
      */
     virtual void resize(uint64_t num_bytes, uint64_t num_cells, bool retain_data = false) = 0;
 

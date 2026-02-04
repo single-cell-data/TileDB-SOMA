@@ -8,7 +8,7 @@
  * 
  * @section DESCRIPTION
  * 
- * This file contains a set o free functions that convert TileDB objects and 
+ * This file contains a set of free functions that convert TileDB objects and 
  * constructs to their equivalent Arrow representation
  */
 

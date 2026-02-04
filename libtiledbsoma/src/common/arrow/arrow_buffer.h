@@ -5,12 +5,6 @@
  *
  * Licensed under the MIT License.
  * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
- *
- * @section DESCRIPTION
- *
- * This file defines simple logging functions that can be exposed (by expedient)
- * to the public API. Their implementations are in `impl/logger.cc`. See the
- * documentation in `impl/logger.h` for the full story.
  */
 
 #ifndef COMMON_ARROW_BUFFER_H
