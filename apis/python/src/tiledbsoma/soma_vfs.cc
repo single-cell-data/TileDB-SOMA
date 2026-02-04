@@ -49,7 +49,7 @@ class SOMAFileHandle {
         if (buf_.open(uri, openmode_) == nullptr) {
             // No std::format in C++17, and fmt::format is overkill here
             std::stringstream ss;
-            ss << "URI " << uri << " is not a valid URI";
+            ss << "Unable to open '" << uri << "'.";
             TPY_ERROR_LOC(ss.str());
         }
     }

@@ -291,9 +291,8 @@ TEST_CASE("SOMASparseNDArray: can_tiledbsoma_upgrade_shape", "[SOMASparseNDArray
     auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     REQUIRE(snda->has_current_domain());
 
-    auto dom = snda->soma_domain_slot<int64_t>(dim_name);
-    REQUIRE(dom.first == 0);
-    REQUIRE(dom.second == dim_max);
+    auto shape = snda->shape();
+    REQUIRE(shape[0] - 1 == dim_max);
 
     std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
     std::vector<int64_t> newshape_too_big({dim_max + 10});
@@ -346,11 +345,10 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     //   o Recall that the core current domain is mutable, up tp <= (max) domain
     // * The core (max) domain is huge
     //   o Recall that the core max domain is immutable
-    auto dom = snda->soma_domain_slot<int64_t>(dim_name);
-    auto mxd = snda->soma_maxdomain_slot<int64_t>(dim_name);
-    REQUIRE(dom != mxd);
-    REQUIRE(dom.first == 0);
-    REQUIRE(dom.second == dim_max);
+    auto shape = snda->shape();
+    auto max_shape = snda->maxshape();
+    REQUIRE(shape != max_shape);
+    REQUIRE(shape[0] - 1 == dim_max);
 
     std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
     std::vector<int64_t> newshape_too_small({40});
@@ -548,18 +546,22 @@ TEST_CASE("SOMASparseNDArray: delete cells", "[SOMASparseNDArray][delete]") {
 
     {
         INFO("Write data to array.");
-        std::vector<int64_t> coords_dim_0{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
-        std::vector<int64_t> coords_dim_1{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
-        std::vector<int32_t> data(12);
-        std::iota(data.begin(), data.end(), 1);
-
         Array array{*ctx->tiledb_ctx(), uri, TILEDB_WRITE};
         Query query{*ctx->tiledb_ctx(), array};
         query.set_layout(TILEDB_GLOBAL_ORDER);
-        query.set_data_buffer("soma_dim_0", coords_dim_0);
-        query.set_data_buffer("soma_dim_1", coords_dim_1);
-        query.set_data_buffer("soma_data", data);
-        query.submit();
+
+        {
+            std::vector<int64_t> coords_dim_0{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+            std::vector<int64_t> coords_dim_1{0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
+            std::vector<int32_t> data(12);
+            std::iota(data.begin(), data.end(), 1);
+
+            query.set_data_buffer("soma_dim_0", coords_dim_0);
+            query.set_data_buffer("soma_dim_1", coords_dim_1);
+            query.set_data_buffer("soma_data", data);
+            query.submit();
+        }
+
         query.finalize();
         array.close();
     }

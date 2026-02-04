@@ -230,14 +230,29 @@ class ManagedQuery:
 
         self._handle.set_column_data(dim_name, data)
 
+    def submit_batch(self, batch: pa.RecordBatch) -> None:
+        # if array is remote we need to preserve the buffers until calling finalize
+        if self._array._uri.startswith("tiledb://"):
+            self._ref_store.append(batch)
+
+        self._handle.submit_batch(batch)
+
     def submit_write(self) -> None:
         self._handle.submit_write()
+
+        # if array is remote we need to preserve the buffers until calling finalize
+        if not self._array._uri.startswith("tiledb://"):
+            # clear stored data objects
+            self._ref_store.clear()
+
+    def submit_and_finalize(self) -> None:
+        self._handle.submit_and_finalize()
 
         # clear stored data objects
         self._ref_store.clear()
 
-    def submit_and_finalize(self) -> None:
-        self._handle.submit_and_finalize()
+    def finalize(self) -> None:
+        self._handle.finalize()
 
         # clear stored data objects
         self._ref_store.clear()

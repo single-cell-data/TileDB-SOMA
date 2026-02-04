@@ -21,6 +21,7 @@
 #include <string>
 #include <tiledb/tiledb>
 
+#include "../utils/common.h"
 #include "soma_context.h"
 
 namespace tiledbsoma {

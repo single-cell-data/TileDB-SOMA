@@ -1391,7 +1391,7 @@ def test_decat_append(tmp_path):
 
 
 def test_from_h5ad_bad_uri():
-    with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
+    with pytest.raises(tiledbsoma.SOMAError, match=r"Unable to open '/nonesuch'."):
         next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
 
 

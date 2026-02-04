@@ -14,12 +14,17 @@
 #ifndef TILEDBSOMA_COMMON_H
 #define TILEDBSOMA_COMMON_H
 
+#include <functional>
+#include <memory>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <string>
 #include <string_view>
 #include <tiledb/tiledb>
 
 namespace tiledbsoma {
+
+template <typename T>
+using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
 
 template <typename T>
 concept is_data_buffer = std::same_as<std::unique_ptr<std::byte[]>, T> ||

@@ -22,6 +22,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 #include "../tiledb_adapter/platform_config.h"
+#include "common.h"
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
@@ -74,9 +75,6 @@ class SOMACoordinateSpace;
 
 //     std::shared_ptr<ArrowBuffer> buffer_;
 // };
-
-template <typename T>
-using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
 
 template <typename T, typename... Args>
     requires std::same_as<T, ArrowArray> || std::same_as<T, ArrowSchema>
