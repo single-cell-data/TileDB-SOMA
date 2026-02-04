@@ -138,8 +138,8 @@ class SOMAContext:
         if _dont_call_this_use_create_instead != "tiledbsoma-internal-code":
             name = type(self).__name__
             raise RuntimeError(
-                f"Directly calling `{name}(...)` is intended for TileDB-SOMA internal use only. Use `name.create(...)` "
-                f"create a {name}."
+                f"Directly calling `{name}(...)` is intended for TileDB-SOMA internal use only. Use `{name}.create(...)` "
+                f"to create a {name}."
             )
 
         self._handle = handle
