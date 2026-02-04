@@ -20,8 +20,8 @@
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
-#include "column_buffer.h"
 #include "column_buffer_strategies.h"
+#include "common/query/column_buffer.h"
 
 namespace tiledbsoma {
 
@@ -50,8 +50,8 @@ class ArrayBuffers {
      * @param name Column name
      * @return std::shared_ptr<ColumnBuffer> Column buffer
      */
-    template <typename T = ColumnBuffer>
-        requires std::derived_from<T, ColumnBuffer>
+    template <typename T = common::ColumnBuffer>
+        requires std::derived_from<T, common::ColumnBuffer>
     std::shared_ptr<T> at(const std::string& name) {
         if (!contains(name)) {
             throw TileDBSOMAError("[ArrayBuffers] column '" + name + "' does not exist");
@@ -83,7 +83,7 @@ class ArrayBuffers {
      * @param name Column name
      * @param buffer Column buffer
      */
-    void emplace(const std::string& name, std::shared_ptr<ColumnBuffer> buffer);
+    void emplace(const std::string& name, std::shared_ptr<common::ColumnBuffer> buffer);
 
     /**
      * @brief Returns the ordered vector of names.
@@ -100,7 +100,7 @@ class ArrayBuffers {
      * @return uint64_t Number of rows
      */
     uint64_t num_rows() const {
-        return buffers_.at(names_.front())->size();
+        return buffers_.at(names_.front())->cell_count();
     }
 
     /**
@@ -122,7 +122,7 @@ class ArrayBuffers {
     std::vector<std::string> names_;
 
     // Map: column name -> ColumnBuffer
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
+    std::unordered_map<std::string, std::shared_ptr<common::ColumnBuffer>> buffers_;
 
     // The allocation strategy used to split the available memory budget to the different columns.
     std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;

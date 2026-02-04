@@ -16,6 +16,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include "../utils/arrow_adapter.h"
 #include "../utils/util.h"
 #include "common/logging/impl/logger.h"
 #include "coordinate_value_filters.h"

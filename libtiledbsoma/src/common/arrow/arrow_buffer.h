@@ -1,18 +1,14 @@
 /**
- * @file   arrow_adapter.h
+ * @file   arrow_buffer.h
  *
  * @section LICENSE
  *
  * Licensed under the MIT License.
  * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
- *
- * @section DESCRIPTION
- *
- * This file defines the ArrowBuffer class and a set of utility classes used to interface between TileDB and Arrow.
  */
 
-#ifndef ARROW_BUFFER_H
-#define ARROW_BUFFER_H
+#ifndef COMMON_ARROW_BUFFER_H
+#define COMMON_ARROW_BUFFER_H
 
 #include <concepts>
 #include <limits>
@@ -22,28 +18,10 @@
 #include <tiledb/tiledb_experimental>
 
 #include "../common.h"
+#include "interface.h"
 #include "nanoarrow/nanoarrow.hpp"
 
-namespace tiledbsoma {
-
-class IArrowBufferStorage {
-   public:
-    virtual ~IArrowBufferStorage() {
-    }
-
-    virtual std::span<const std::byte> data() const = 0;
-    virtual std::span<const std::byte> offsets() const = 0;
-    virtual std::span<const std::byte> validity() const = 0;
-
-    size_t length() const;
-    size_t null_count() const;
-
-   protected:
-    size_t length_;
-    size_t null_count_;
-    size_t data_size_;
-    size_t offsets_size_;
-};
+namespace tiledbsoma::common::arrow {
 
 class ArrayArrowBufferStorage : public IArrowBufferStorage {
    public:
@@ -93,29 +71,6 @@ class ArrayArrowBufferStorage : public IArrowBufferStorage {
     std::unique_ptr<std::byte[]> validity_buffer_;
 };
 
-class VectorArrowBufferStorage : public IArrowBufferStorage {
-   public:
-    VectorArrowBufferStorage(
-        tiledb_datatype_t type,
-        size_t length,
-        std::vector<std::byte, NoInitAlloc<std::byte>>&& data,
-        std::vector<uint8_t, NoInitAlloc<uint8_t>>&& validity = std::vector<uint8_t, NoInitAlloc<uint8_t>>());
-    VectorArrowBufferStorage(
-        std::vector<std::byte, NoInitAlloc<std::byte>>&& data,
-        std::vector<uint64_t, NoInitAlloc<uint64_t>>&& offsets,
-        size_t length,
-        std::vector<uint8_t, NoInitAlloc<uint8_t>>&& validity = std::vector<uint8_t, NoInitAlloc<uint8_t>>());
-
-    std::span<const std::byte> data() const override;
-    std::span<const std::byte> offsets() const override;
-    std::span<const std::byte> validity() const override;
-
-   private:
-    std::vector<std::byte, NoInitAlloc<std::byte>> data_buffer_;
-    std::vector<uint64_t, NoInitAlloc<uint64_t>> offset_buffer_;
-    std::vector<uint8_t, NoInitAlloc<uint8_t>> validity_buffer_;
-};
-
 class ArrowBuffer {
    public:
     ArrowBuffer(std::unique_ptr<IArrowBufferStorage> storage, std::string_view name);
@@ -130,12 +85,12 @@ class ArrowBuffer {
 };
 
 struct PrivateArrowBuffer {
-    PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer)
+    PrivateArrowBuffer(const std::shared_ptr<ArrowBuffer>& buffer = nullptr)
         : buffer_(buffer) {
     }
 
     std::shared_ptr<ArrowBuffer> buffer_;
 };
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common::arrow
 
 #endif

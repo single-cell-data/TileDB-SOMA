@@ -29,7 +29,12 @@ set_property(TARGET TILEDBSOMA_NANOARROW_OBJECT PROPERTY POSITION_INDEPENDENT_CO
 # ###########################################################
 
 add_library(TILEDB_COMMON_OBJECTS OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/arrow_buffer.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/exporter.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/utils.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl/logger.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/common.cc
 )
 
 target_link_libraries(TILEDB_COMMON_OBJECTS PUBLIC spdlog::spdlog)
@@ -53,8 +58,12 @@ target_link_options(TILEDB_COMMON_OBJECTS
 set_property(TARGET TILEDB_COMMON_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(TILEDB_COMMON_OBJECTS
   PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/common
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
   $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
 )
@@ -88,7 +97,6 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_transformers.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer_strategies.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/value_filter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledb_adapter/platform_config.cc
@@ -97,7 +105,6 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/transformer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow/arrow_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
@@ -126,6 +133,9 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor
   ${CMAKE_CURRENT_SOURCE_DIR}/soma
+  ${CMAKE_CURRENT_SOURCE_DIR}/common
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl
   ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
@@ -251,7 +261,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/coordinate_value_filters.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer_strategies.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
@@ -282,12 +291,25 @@ install(FILES
 
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/soma_column_selection.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/common.h
   DESTINATION "include/tiledbsoma/common/"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/arrow_buffer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/interface.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/utils.h
+  DESTINATION "include/tiledbsoma/common/arrow"
 )
 
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/logger.h
   DESTINATION "include/tiledbsoma/common/logging"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.h
+  DESTINATION "include/tiledbsoma/common/query"
 )
 
 install(FILES
@@ -312,12 +334,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
 
   DESTINATION "include/tiledbsoma/utils"
-)
-
-install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow/arrow_buffer.h
-
-  DESTINATION "include/tiledbsoma/utils/arrow"
 )
 
 install(FILES

@@ -28,6 +28,7 @@
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
+#include "common/arrow/utils.h"
 #include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
 
@@ -119,17 +120,6 @@ class ArrowAdapter {
     static std::vector<std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>> buffer_to_arrow(
         std::shared_ptr<ArrayBuffers> buffers, bool downcast_dict_of_large_var = false);
 
-    /**
-     * @brief Convert ColumnBuffer to an Arrow array.
-     *
-     * @return std::pair<std::unique_ptr<ArrowArray>,
-     * std::unique_ptr<ArrowSchema>>
-     */
-    static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
-        std::shared_ptr<ReadColumnBuffer> column,
-        const std::unordered_map<std::string, std::shared_future<std::shared_ptr<ArrowBuffer>>>& enumerations,
-        bool downcast_dict_of_large_var = false);
-
     /** @brief Create a an ArrowSchema from TileDB Dimension
      *
      * @return ArrowSchema
@@ -199,20 +189,10 @@ class ArrowAdapter {
     static bool arrow_is_var_length_type(const char* format);
 
     /**
-     * @brief Get TileDB datatype from Arrow format string.
-     *
-     * @param datatype TileDB datatype.
-     * @param arrow_dtype_metadata Additional datatype info. Useful for
-     * differentiating between BLOB and WKB.
-     * @return std::string_view Arrow format string.
-     */
-    static tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype, std::string_view arrow_dtype_metadata = {});
-
-    /**
      * @brief This is a keystroke-saver.
      */
     static std::string tdb_to_arrow_type(tiledb_datatype_t tiledb_datatype) {
-        return std::string(to_arrow_format(tiledb_datatype));
+        return std::string(common::arrow::to_arrow_format(tiledb_datatype));
     }
 
     /**
@@ -748,7 +728,7 @@ class ArrowAdapter {
      */
     template <size_t S>
     static std::any get_table_any_column(ArrowArray* array, ArrowSchema* schema, size_t offset) {
-        auto tdb_type = to_tiledb_format(schema->format, "");
+        auto tdb_type = common::arrow::to_tiledb_format(schema->format, "");
 
         if (array->n_children != 0) {
             throw std::runtime_error(

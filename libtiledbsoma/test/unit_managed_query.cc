@@ -11,6 +11,7 @@
  * This file manages unit tests for managed queries
  */
 
+#include <algorithm>
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_exception.hpp>
@@ -112,8 +113,21 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto num_cells = mq.total_num_cells();
     REQUIRE(num_cells == d0.size());
 
-    REQUIRE_THAT(d0, Equals(mq.strings(dim_name)));
-    REQUIRE_THAT(a0, Equals(mq.strings(attr_name)));
+    auto d0_span = mq.strings(dim_name);
+    auto a0_span = mq.strings(attr_name);
+
+    std::vector<std::string> d0_values;
+    std::vector<std::string> a0_values;
+
+    std::transform(d0_span.cbegin(), d0_span.cend(), std::back_inserter(d0_values), [](const std::string_view view) {
+        return std::string(view);
+    });
+    std::transform(a0_span.cbegin(), a0_span.cend(), std::back_inserter(a0_values), [](const std::string_view view) {
+        return std::string(view);
+    });
+
+    REQUIRE_THAT(d0, Equals(d0_values));
+    REQUIRE_THAT(a0, Equals(a0_values));
 }
 
 TEST_CASE("ManagedQuery: Select test") {
@@ -160,7 +174,20 @@ TEST_CASE("ManagedQuery: Validity test") {
     std::vector<uint8_t> a0_valids_actual;
     a0_valids_actual.assign(valids.begin(), valids.end());
 
-    REQUIRE_THAT(d0, Equals(mq.strings(dim_name)));
-    REQUIRE_THAT(a0, Equals(mq.strings(attr_name)));
+    auto d0_span = mq.strings(dim_name);
+    auto a0_span = mq.strings(attr_name);
+
+    std::vector<std::string> d0_values;
+    std::vector<std::string> a0_values;
+
+    std::transform(d0_span.cbegin(), d0_span.cend(), std::back_inserter(d0_values), [](const std::string_view view) {
+        return std::string(view);
+    });
+    std::transform(a0_span.cbegin(), a0_span.cend(), std::back_inserter(a0_values), [](const std::string_view view) {
+        return std::string(view);
+    });
+
+    REQUIRE_THAT(d0, Equals(d0_values));
+    REQUIRE_THAT(a0, Equals(a0_values));
     REQUIRE_THAT(a0_valids, Equals(a0_valids_actual));
 }

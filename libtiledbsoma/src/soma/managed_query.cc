@@ -261,7 +261,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
-        num_cells = buffers_->at<ReadColumnBuffer>(name)->update_size(*query_);
+        num_cells = buffers_->at<common::ReadColumnBuffer>(name)->update_size(*query_);
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
@@ -471,7 +471,7 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
-        num_cells = buffers_->at<ReadColumnBuffer>(name)->update_size(*query_);
+        num_cells = buffers_->at<common::ReadColumnBuffer>(name)->update_size(*query_);
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
@@ -538,7 +538,7 @@ void ManagedQuery::set_array_data(ArrowSchema* arrow_schema, ArrowArray* arrow_a
 };
 
 bool ManagedQuery::_cast_column(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
-    auto user_type = ArrowAdapter::to_tiledb_format(schema->format);
+    auto user_type = common::arrow::to_tiledb_format(schema->format);
     bool has_attr = schema_->has_attribute(schema->name);
 
     // If the attribute is enumerated, but the provided column is not, error out
@@ -569,6 +569,7 @@ bool ManagedQuery::_cast_column(ArrowSchema* schema, ArrowArray* array, ArraySch
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
@@ -611,11 +612,12 @@ void ManagedQuery::_promote_indexes_to_values(ArrowSchema* schema, ArrowArray* a
     // indexes to the associated dictionary values and write the values to disk.
     // Here, we identify the passed-in column type
 
-    auto value_type = ArrowAdapter::to_tiledb_format(schema->dictionary->format);
+    auto value_type = common::arrow::to_tiledb_format(schema->dictionary->format);
     switch (value_type) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
             return _cast_dictionary_values<std::string>(schema, array);
         case TILEDB_BOOL:
             return _cast_dictionary_values<bool>(schema, array);
@@ -681,7 +683,7 @@ void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* arra
         }
     };
 
-    switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+    switch (common::arrow::to_tiledb_format(schema->format)) {
         case TILEDB_INT8:
             extract_values.template operator()<int8_t>();
             break;
@@ -761,7 +763,7 @@ void ManagedQuery::_cast_dictionary_values<std::string>(ArrowSchema* schema, Arr
             }
         };
 
-        switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+        switch (common::arrow::to_tiledb_format(schema->format)) {
             case TILEDB_INT8:
                 calculate_value_size.template operator()<int8_t>();
                 break;
@@ -830,7 +832,7 @@ void ManagedQuery::_cast_dictionary_values<bool>(ArrowSchema* schema, ArrowArray
         }
     };
 
-    switch (ArrowAdapter::to_tiledb_format(schema->format)) {
+    switch (common::arrow::to_tiledb_format(schema->format)) {
         case TILEDB_INT8:
             extract_values.template operator()<int8_t>();
             break;
@@ -951,6 +953,7 @@ bool ManagedQuery::_cast_column_aux(ArrowSchema* schema, ArrowArray* array, Arra
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
             throw TileDBSOMAError(
                 "internal coding error: template-specialization failure for "
                 "string in _cast_column_aux");
@@ -1001,6 +1004,7 @@ bool ManagedQuery::_extend_and_write_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
             return _extend_and_evolve_schema_and_write<std::string>(
                 value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_INT8:
@@ -1127,7 +1131,7 @@ bool ManagedQuery::_extend_enumeration(
     // enumeration to extend any new enumeration values
 
     auto value_type_in_schema = enmr.type();
-    auto value_type_in_data = ArrowAdapter::to_tiledb_format(value_schema->format);
+    auto value_type_in_data = common::arrow::to_tiledb_format(value_schema->format);
 
     if (value_type_in_schema != value_type_in_data) {
         throw TileDBSOMAError(
@@ -1141,6 +1145,7 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
             return _extend_and_evolve_schema_without_details<std::string, std::string_view>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT8:

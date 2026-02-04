@@ -23,8 +23,10 @@
 
 #include "../utils/common.h"
 #include "array_buffers.h"
-#include "column_buffer.h"
+#include "common/arrow/utils.h"
+#include "common/query/column_buffer.h"
 #include "enums.h"
+#include "nanoarrow/nanoarrow.hpp"
 
 namespace tiledbsoma {
 
@@ -240,8 +242,8 @@ class ManagedQuery {
 
         buffers_->emplace(
             std::string(name),
-            WriteColumnBuffer::create(
-                array_, name, num_elems, std::move(data), std::move(offsets), std::move(validity), copy_buffers));
+            common::WriteColumnBuffer::create(
+                *array_, name, num_elems, std::move(data), std::move(offsets), std::move(validity), copy_buffers));
         buffers_->at(std::string(name))->attach(*query_, *subarray_);
     }
 
@@ -305,7 +307,7 @@ class ManagedQuery {
     template <typename T>
     std::span<T> data(const std::string& name) {
         check_column_name(name);
-        return buffers_->at<ReadColumnBuffer>(name)->data<T>();
+        return buffers_->at<common::ReadColumnBuffer>(name)->data<T>();
     }
 
     /**
@@ -316,7 +318,7 @@ class ManagedQuery {
      */
     const std::span<uint8_t> validity(const std::string& name) {
         check_column_name(name);
-        return buffers_->at<ReadColumnBuffer>(name)->validity();
+        return buffers_->at<common::ReadColumnBuffer>(name)->validity();
     }
 
     /**
@@ -325,7 +327,7 @@ class ManagedQuery {
      * @param name Column name
      * @return std::vector<std::string> Strings
      */
-    std::vector<std::string> strings(const std::string& name) {
+    std::vector<std::string_view> strings(const std::string& name) {
         check_column_name(name);
         return buffers_->at(name)->strings();
     }
@@ -758,8 +760,8 @@ class ManagedQuery {
         if (index_schema == nullptr) {
             return std::nullopt;
         }
-        auto user_index_type = ArrowAdapter::to_tiledb_format(index_schema->format);
-        switch (user_index_type) {
+
+        switch (common::arrow::to_tiledb_format(index_schema->format)) {
             case TILEDB_INT8:
                 return _find_covered_enum_values_aux<int8_t>(enum_values_as_sv, index_array);
             case TILEDB_UINT8:
@@ -777,9 +779,7 @@ class ManagedQuery {
             case TILEDB_UINT64:
                 return _find_covered_enum_values_aux<uint64_t>(enum_values_as_sv, index_array);
             default:
-                throw TileDBSOMAError(
-                    "Saw invalid enumeration index type when trying to extend"
-                    "enumeration");
+                throw TileDBSOMAError("Saw invalid enumeration index type when trying to extend enumeration");
         }
     }
 
@@ -853,7 +853,7 @@ class ManagedQuery {
         // enumerations, then we will need to remap the indexes. Here identify
         // the dictionary values' type
 
-        auto user_index_type = ArrowAdapter::to_tiledb_format(index_schema->format);
+        auto user_index_type = common::arrow::to_tiledb_format(index_schema->format);
         switch (user_index_type) {
             case TILEDB_INT8:
                 return _remap_indexes_aux<ValueType, int8_t>(name, extended_enmr, enum_values_in_write, index_array);

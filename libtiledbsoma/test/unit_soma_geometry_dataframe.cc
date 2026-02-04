@@ -171,19 +171,23 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         auto mq = soma_geometry->create_managed_query();
         while (auto batch = mq.read_next()) {
             auto arrbuf = batch.value();
-            auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-            auto d1span = arrbuf->at<ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")->data<double_t>();
-            auto d2span = arrbuf->at<ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__max")->data<double_t>();
-            auto d3span = arrbuf->at<ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__min")->data<double_t>();
-            auto d4span = arrbuf->at<ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__max")->data<double_t>();
-            auto wkbs = arrbuf->at<ReadColumnBuffer>(dim_infos[1].name)->binaries();
-            auto a0span = arrbuf->at<ReadColumnBuffer>(attr_infos[0].name)->data<double_t>();
+            auto d0span = arrbuf->at<common::ReadColumnBuffer>(dim_infos[0].name)->data<int64_t>();
+            auto d1span = arrbuf->at<common::ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")
+                              ->data<double_t>();
+            auto d2span = arrbuf->at<common::ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__max")
+                              ->data<double_t>();
+            auto d3span = arrbuf->at<common::ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__min")
+                              ->data<double_t>();
+            auto d4span = arrbuf->at<common::ReadColumnBuffer>(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__max")
+                              ->data<double_t>();
+            auto wkbs = arrbuf->at<common::ReadColumnBuffer>(dim_infos[1].name)->binaries();
+            auto a0span = arrbuf->at<common::ReadColumnBuffer>(attr_infos[0].name)->data<double_t>();
             CHECK(std::vector<int64_t>({1}) == std::vector<int64_t>(d0span.begin(), d0span.end()));
             CHECK(std::vector<double_t>({0}) == std::vector<double_t>(d1span.begin(), d1span.end()));
             CHECK(std::vector<double_t>({1}) == std::vector<double_t>(d2span.begin(), d2span.end()));
             CHECK(std::vector<double_t>({0}) == std::vector<double_t>(d3span.begin(), d3span.end()));
             CHECK(std::vector<double_t>({1}) == std::vector<double_t>(d4span.begin(), d4span.end()));
-            CHECK(geometry::to_wkb(polygon) == wkbs[0]);
+            CHECK(geometry::to_wkb(polygon) == std::vector<std::byte>(wkbs[0].begin(), wkbs[0].end()));
             CHECK(std::vector<double_t>({63}) == std::vector<double_t>(a0span.begin(), a0span.end()));
         }
         soma_geometry->close();
