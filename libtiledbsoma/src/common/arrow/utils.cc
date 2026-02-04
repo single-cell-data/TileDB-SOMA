@@ -18,10 +18,6 @@
 
 namespace tiledbsoma::common::arrow {
 
-namespace impl {
-constexpr std::array<char, 2> bool_dict({{0, 1}});
-}
-
 ArrowTable make_empty_arrow_table(std::string_view name, std::string_view format, size_t num_children = 0) {
     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
