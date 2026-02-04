@@ -22,6 +22,7 @@
 #include "common/arrow/utils.h"
 #include "common/logging/logger.h"
 #include "common/query/array_buffers.h"
+#include "common/query/managed_query.h"
 #include "tiledb_adapter/platform_config.h"
 #include "utils/arrow_adapter.h"
 #include "utils/common.h"

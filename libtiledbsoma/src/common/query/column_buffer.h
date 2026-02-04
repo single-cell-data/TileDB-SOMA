@@ -26,6 +26,7 @@
 
 #include "../arrow/interface.h"
 #include "../common.h"
+#include "../concepts.h"
 #include "../logging/logger.h"
 #include "column_buffer_strategies.h"
 

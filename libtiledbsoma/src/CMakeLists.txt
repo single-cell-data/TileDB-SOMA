@@ -36,6 +36,7 @@ add_library(TILEDB_COMMON_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/array_buffers.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer_strategies.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/common.cc
 )
 
@@ -309,6 +310,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/array_buffers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer_strategies.h
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/query/managed_query.h
   DESTINATION "include/tiledbsoma/common/query"
 )
 
