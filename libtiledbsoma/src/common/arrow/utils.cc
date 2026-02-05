@@ -7,7 +7,6 @@
  * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  */
 
-#include <format>
 #include <numeric>
 #include <stdexcept>
 #include <unordered_map>
