@@ -10,8 +10,8 @@
 #include "arrow_buffer.h"
 #include "nanoarrow/nanoarrow.hpp"
 
-#include <format>
 #include <limits>
+#include <sstream>
 
 namespace tiledbsoma::common::arrow {
 
@@ -120,10 +120,11 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
 
             if (large_offsets) {
                 if (data_size > std::numeric_limits<int64_t>::max()) {
-                    throw std::runtime_error(
-                        std::format(
-                            "[ArrowBuffer] Int64 cannot represent indices for `{}` enumeration: Datatype too small",
-                            enumeration.name()));
+                    // Use sstream until std::format is available in all used compilers.
+                    std::stringstream ss;
+                    ss << "Cannot represent indices for column '" << enumeration.name()
+                       << "' with int64. Datatype is too small.";
+                    throw std::runtime_error(ss.str());
                 }
 
                 std::unique_ptr<int64_t[]> offsets_buffer = std::make_unique_for_overwrite<int64_t[]>(count + 1);
@@ -134,10 +135,10 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
                     std::move(data_buffer), std::move(offsets_buffer), count);
             } else {
                 if (data_size > std::numeric_limits<int32_t>::max()) {
-                    throw std::runtime_error(
-                        std::format(
-                            "[ArrowBuffer] Int32 cannot represent indices for `{}` enumeration: Datatype too small",
-                            enumeration.name()));
+                    std::stringstream ss;
+                    ss << "Cannot represent incides for column " << enumeration.name()
+                       << " with int32. Datatype is too small.";
+                    throw std::runtime_error(ss.str());
                 }
 
                 std::unique_ptr<int32_t[]> offsets_buffer = std::make_unique_for_overwrite<int32_t[]>(count + 1);
@@ -185,11 +186,12 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
             storage_ = std::make_unique<ArrayArrowBufferStorage>(
                 enumeration.type(), data_size / tiledb::impl::type_size(enumeration.type()), std::move(data_buffer));
             break;
-        default:
-            throw std::runtime_error(
-                std::format(
-                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
-                    tiledb::impl::type_to_str(enumeration.type())));
+        default: {
+            std::stringstream ss;
+            ss << "Unsupported dictionary datatype '" << tiledb::impl::type_to_str(enumeration.type()) << " on column '"
+               << enumeration.name() << "'.";
+            throw std::runtime_error(ss.str());
+        }
     }
 
     name_ = enumeration.name();
