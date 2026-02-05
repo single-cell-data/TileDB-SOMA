@@ -39,8 +39,8 @@ def conftest_default_s3_path(conftest_user_profile):
 
 @pytest.fixture
 def conftest_context(conftest_token, conftest_namespace):
-    return tiledbsoma.SOMATileDBContext(
-        tiledb_config={
+    return tiledbsoma.SOMAContext(
+        config={
             "rest.token": conftest_token,
             "rest.payer_namespace": conftest_namespace,
         },
