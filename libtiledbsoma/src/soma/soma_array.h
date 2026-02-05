@@ -37,6 +37,13 @@ struct CurrentDomain;
 struct ArrowArray;
 struct ArrowSchema;
 
+namespace tiledbsoma::common::arrow {
+template <typename T>
+using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
+using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
+
+}  // namespace tiledbsoma::common::arrow
+
 namespace tiledbsoma {
 
 class CoordinateValueFilters;
@@ -45,7 +52,6 @@ class ManagedQuery;
 struct PlatformSchemaConfig;
 
 using StatusAndReason = std::pair<bool, std::string>;
-using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
 
 class SOMAArray : public SOMAObject {
    public:
@@ -295,8 +301,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    common::arrow::managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const {
-        auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
+    common::arrow::managed_unique_ptr<ArrowSchema> arrow_schema(bool downcast_dict_of_large_var = false) const;
 
     /**
      * @brief Get the Arrow schema of a column in the array.
@@ -474,13 +479,7 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    common::arrow::ArrowTable get_soma_domain() {
-        if (has_current_domain()) {
-            return _get_core_domainish(Domainish::kind_core_current_domain);
-        } else {
-            return _get_core_domainish(Domainish::kind_core_domain);
-        }
-    }
+    common::arrow::ArrowTable get_soma_domain() const;
 
     /**
      * Returns the SOMA maxdomain in its entirety, as an Arrow table for return
@@ -497,23 +496,19 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    common::arrow::ArrowTable get_soma_maxdomain() {
-        return _get_core_domain();
-    }
+    common::arrow::ArrowTable get_soma_maxdomain() const;
 
     /**
      * Returns the core non-empty domain in its entirety, as an Arrow
      * table for return to Python/R.
      */
-    common::arrow::ArrowTable get_non_empty_domain() {
-        return _get_core_domainish(Domainish::kind_non_empty_domain);
-    }
+    common::arrow::ArrowTable get_non_empty_domain() const;
 
     /**
      * Code-dedupe helper for core domain, core current domain, and core
      * non-empty domain.
      */
-    common::arrow::ArrowTable _get_core_domainish(enum Domainish which_kind);
+    common::arrow::ArrowTable _get_core_domainish(enum Domainish which_kind) const;
 
     /**
      * @brief Get the total number of unique cells in the array. Equivalent to

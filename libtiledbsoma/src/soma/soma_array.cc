@@ -18,6 +18,7 @@
 
 #include "../utils/arrow_adapter.h"
 #include "../utils/util.h"
+#include "common/arrow/utils.h"
 #include "common/logging/impl/logger.h"
 #include "coordinate_value_filters.h"
 #include "managed_query.h"
@@ -309,7 +310,7 @@ void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters, const 
     }
 }
 
-managed_unique_ptr<ArrowSchema> SOMAArray::arrow_schema(bool downcast_dict_of_large_var) const {
+common::arrow::managed_unique_ptr<ArrowSchema> SOMAArray::arrow_schema(bool downcast_dict_of_large_var) const {
     auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
 
     for (size_t i = 0; i < columns_.size(); ++i) {
@@ -541,12 +542,28 @@ bool SOMAArray::has_current_domain() const {
     return !_get_current_domain().is_empty();
 }
 
+common::arrow::ArrowTable SOMAArray::get_soma_domain() const {
+    if (has_current_domain()) {
+        return _get_core_domainish(Domainish::kind_core_current_domain);
+    } else {
+        return _get_core_domainish(Domainish::kind_core_domain);
+    }
+}
+
+common::arrow::ArrowTable SOMAArray::get_soma_maxdomain() const {
+    return _get_core_domainish(Domainish::kind_core_domain);
+}
+
+common::arrow::ArrowTable SOMAArray::get_non_empty_domain() const {
+    return _get_core_domainish(Domainish::kind_non_empty_domain);
+}
+
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
 // ArrowSchema from nanoarrow.
 //
 // The domainish enum simply lets us re-use code which is common across
 // core domain, core current domain, and core non-empty domain.
-common::arrow::ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
+common::arrow::ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) const {
     size_t array_ndim = static_cast<size_t>(ndim());
 
     auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(array_ndim);
