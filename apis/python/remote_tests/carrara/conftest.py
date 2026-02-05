@@ -37,21 +37,23 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
-def carrara_context() -> soma.SOMATileDBContext:
+def carrara_context() -> soma.SOMAContext:
     import tiledb.client
 
     tiledb.client.login(profile_name=PROFILE_NAME)
     assert tiledb.client.workspaces.get_workspace(tiledb.client.client.get_workspace_id()).name == WORKSPACE_NAME
-    return soma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
+    soma.SOMAContext.set_default()
+    return soma.SOMAContext.create()
 
 
 @pytest.fixture
 def carrara_array_path() -> Generator[str, None, None]:
     """Fixture returns an Array path that will be recursively deleted after test finishes."""
+    import tiledb.client
     path = f"{BASE_URI}/{uuid4()}"
     yield path
 
-    tiledb.Array.delete_array(path)
+    tiledb.client.assets.delete_asset(path, delete_storage=True)
 
 
 @pytest.fixture

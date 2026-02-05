@@ -11,7 +11,7 @@ import tiledbsoma as soma
 import tiledbsoma.io
 
 
-def test_open(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_open(carrara_group_path: str, carrara_context: soma.SOMAContext) -> None:
     """Test that open works on direct paths to child objects."""
 
     soma.Collection.create(carrara_group_path, context=carrara_context).close()
@@ -33,7 +33,7 @@ def test_open(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) 
 
 
 def test_experiment_axis_query(
-    small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMATileDBContext
+    small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMAContext
 ) -> None:
     """Very basic test that we can run an ExperimentAxisQuery against an Experiment."""
     soma.io.from_anndata(carrara_group_path, small_pbmc, measurement_name="RNA", context=carrara_context)
