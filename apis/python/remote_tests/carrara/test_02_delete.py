@@ -14,7 +14,6 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-import tiledb
 
 from ._util import get_asset_info
 
@@ -51,6 +50,7 @@ def test_collection_delete_member_object(carrara_group_path: str, carrara_contex
     This tests the behavior when an object is deleted - does it correctly clean up parent group?.
     """
     import tiledb.client
+
     soma.Collection.create(carrara_group_path, context=carrara_context).close()
     with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
         C.add_new_sparse_ndarray("array", type=pa.int8(), shape=(10,))

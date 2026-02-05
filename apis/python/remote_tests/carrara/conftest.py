@@ -50,6 +50,7 @@ def carrara_context() -> soma.SOMAContext:
 def carrara_array_path() -> Generator[str, None, None]:
     """Fixture returns an Array path that will be recursively deleted after test finishes."""
     import tiledb.client
+
     path = f"{BASE_URI}/{uuid4()}"
     yield path
 

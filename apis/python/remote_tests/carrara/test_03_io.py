@@ -32,9 +32,7 @@ def array_eq(a1, a2) -> bool:
     return False
 
 
-def test_soma_io_roundtrip(
-    small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMAContext
-) -> None:
+def test_soma_io_roundtrip(small_pbmc: ad.AnnData, carrara_group_path: str, carrara_context: soma.SOMAContext) -> None:
     soma.io.from_anndata(carrara_group_path, small_pbmc, measurement_name="RNA", context=carrara_context)
 
     with soma.open(carrara_group_path, context=carrara_context) as exp:
