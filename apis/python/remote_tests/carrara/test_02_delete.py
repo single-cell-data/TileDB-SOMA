@@ -14,13 +14,12 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-import tiledb
 
 from ._util import get_asset_info
 
 
 @pytest.mark.carrara
-def test_collection_delete_member_by_name(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_collection_delete_member_by_name(carrara_group_path: str, carrara_context: soma.SOMAContext) -> None:
     """
     This tests the behavior when an object is removed from a group.
     1. create parent collection
@@ -42,14 +41,16 @@ def test_collection_delete_member_by_name(carrara_group_path: str, carrara_conte
     with soma.open(carrara_group_path, context=carrara_context) as C:
         assert set(C) == {"collection"}
 
-    assert not tiledb.array_exists(f"{carrara_group_path}/array", ctx=carrara_context.tiledb_ctx)
+    assert not soma.SparseNDArray.exists(f"{carrara_group_path}/array", context=carrara_context)
 
 
 @pytest.mark.carrara
-def test_collection_delete_member_object(carrara_group_path: str, carrara_context: soma.SOMATileDBContext) -> None:
+def test_collection_delete_member_object(carrara_group_path: str, carrara_context: soma.SOMAContext) -> None:
     """
     This tests the behavior when an object is deleted - does it correctly clean up parent group?.
     """
+    import tiledb.client
+
     soma.Collection.create(carrara_group_path, context=carrara_context).close()
     with soma.Collection.open(carrara_group_path, mode="w", context=carrara_context) as C:
         C.add_new_sparse_ndarray("array", type=pa.int8(), shape=(10,))
@@ -62,7 +63,7 @@ def test_collection_delete_member_object(carrara_group_path: str, carrara_contex
         array_asset_info = get_asset_info(C["array"].uri)
 
     # Delete the array object, which is a member of the parent group
-    tiledb.Array.delete_array(f"{carrara_group_path}/array", ctx=carrara_context.tiledb_ctx)
+    tiledb.client.assets.delete_asset(f"{carrara_group_path}/array", delete_storage=True)
 
     # verify that the parent group no longer contains the object, and that
     # the other objects still exist.
