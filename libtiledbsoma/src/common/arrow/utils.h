@@ -13,7 +13,6 @@
 #include <tiledb/tiledb>
 #include <unordered_map>
 
-#include <span>
 #include <string_view>
 #include <tuple>
 
