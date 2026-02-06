@@ -76,7 +76,6 @@ target_include_directories(TILEDB_COMMON_OBJECTS
 # ###########################################################
 add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/coordinate_value_filters.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
@@ -258,7 +257,6 @@ endif()
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/enums.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/coordinate_value_filters.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h
@@ -290,6 +288,7 @@ install(FILES
 
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/soma_column_selection.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/concepts.h
   ${CMAKE_CURRENT_SOURCE_DIR}/common/common.h
   DESTINATION "include/tiledbsoma/common/"
 )
