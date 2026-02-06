@@ -1,5 +1,20 @@
-#ifndef COLUMN_BUFFER_STRATEGIES_H
-#define COLUMN_BUFFER_STRATEGIES_H
+/**
+ * @file   column_buffer_strategies.h
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ *
+ * @section DESCRIPTION
+ *
+ *   This file define the ColumnBufferAllocationStrategy API. Implementing this
+ *   API allows for controlling how the memory budget for read operations is assigned
+ *   to each column.
+ */
+
+#ifndef COMMON_COLUMN_BUFFER_STRATEGIES_H
+#define COMMON_COLUMN_BUFFER_STRATEGIES_H
 
 #include <tiledb/tiledb>
 
@@ -7,7 +22,7 @@
 #include <utility>
 #include <variant>
 
-namespace tiledbsoma {
+namespace tiledbsoma::common {
 
 inline constexpr std::string_view CONFIG_KEY_INIT_BYTES = "soma.init_buffer_bytes";
 
@@ -47,5 +62,5 @@ class MemoryPoolAllocationStrategy : public ColumnBufferAllocationStrategy {
     size_t buffer_unit_size = 1 << 30;
     size_t var_size_expansion_factor = 2;
 };
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common
 #endif

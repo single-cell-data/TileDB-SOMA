@@ -11,21 +11,29 @@
  *   This declares the array buffers API
  */
 
-#ifndef ARRAY_BUFFERS_H
-#define ARRAY_BUFFERS_H
+#ifndef COMMON_ARRAY_BUFFERS_H
+#define COMMON_ARRAY_BUFFERS_H
 
 #include <concepts>
 #include <functional>
-#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-#include <tiledb/tiledb>
+#include <memory>
+#include <span>
+#include <stdexcept>
 
-#include "../utils/common.h"
-#include "column_buffer_strategies.h"
-#include "common/query/column_buffer.h"
+#pragma region Forward declarations
 
-namespace tiledbsoma {
+namespace tiledb {
+class Array;
+}  // namespace tiledb
 
-using namespace tiledb;
+namespace tiledbsoma::common {
+class ColumnBuffer;
+class ColumnBufferAllocationStrategy;
+}  // namespace tiledbsoma::common
+
+#pragma endregion
+
+namespace tiledbsoma::common {
 
 class ArrayBuffers {
     inline static const size_t DEFAULT_BUFFER_EXPANSION_FACTOR = 2;
@@ -54,7 +62,7 @@ class ArrayBuffers {
         requires std::derived_from<T, common::ColumnBuffer>
     std::shared_ptr<T> at(const std::string& name) {
         if (!contains(name)) {
-            throw TileDBSOMAError("[ArrayBuffers] column '" + name + "' does not exist");
+            throw std::runtime_error("[ArrayBuffers] column '" + name + "' does not exist");
         }
 
         std::shared_ptr<T> casted_column = std::dynamic_pointer_cast<T>(buffers_[name]);
@@ -72,9 +80,7 @@ class ArrayBuffers {
      * @param name Column name
      * @return True if a buffer with the given name exists
      */
-    bool contains(const std::string& name) {
-        return buffers_.find(name) != buffers_.end();
-    }
+    bool contains(const std::string& name) const;
 
     /**
      * @brief Add a column buffer with the given name to the ArrayBuffers,
@@ -88,27 +94,23 @@ class ArrayBuffers {
     /**
      * @brief Returns the ordered vector of names.
      *
-     * @return const std::vector<std::string>& Vector of names
+     * @return const std::vector<const std::string>& Vector of names
      */
-    const std::vector<std::string>& names() {
-        return names_;
-    }
+    const std::vector<std::string>& names() const;
 
     /**
      * @brief Returns the number of rows in the array buffer.
      *
      * @return uint64_t Number of rows
      */
-    uint64_t num_rows() const {
-        return buffers_.at(names_.front())->cell_count();
-    }
+    uint64_t num_rows() const;
 
     /**
      * @brief Returns whether or not the experimental memory pool flag is enabled
      * 
      * @return bool memory pool feature flag status
      */
-    static bool use_memory_pool(const std::shared_ptr<tiledb::Array>& array);
+    static bool use_memory_pool(const tiledb::Array& array);
 
     /**
      * @brief Double the size of the allocated buffers. Any data already in the buffers 
@@ -128,6 +130,6 @@ class ArrayBuffers {
     std::unique_ptr<ColumnBufferAllocationStrategy> strategy_;
 };
 
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common
 
 #endif

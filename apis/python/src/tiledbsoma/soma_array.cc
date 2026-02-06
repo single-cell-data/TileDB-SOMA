@@ -131,7 +131,7 @@ void load_soma_array(py::module& m) {
         .def(
             "non_empty_domain",
             [](SOMAArray& array) {
-                ArrowTable arrow_table = array.get_non_empty_domain();
+                common::arrow::ArrowTable arrow_table = array.get_non_empty_domain();
                 return domainish_to_list(arrow_table.first.get(), arrow_table.second.get());
             })
 
@@ -139,7 +139,7 @@ void load_soma_array(py::module& m) {
             "domain",
             [](SOMAArray& array) {
                 auto pa = py::module::import("pyarrow");
-                ArrowTable arrow_table = array.get_soma_domain();
+                common::arrow::ArrowTable arrow_table = array.get_soma_domain();
                 return domainish_to_list(arrow_table.first.get(), arrow_table.second.get());
             })
 
@@ -147,7 +147,7 @@ void load_soma_array(py::module& m) {
             "maxdomain",
             [](SOMAArray& array) {
                 auto pa = py::module::import("pyarrow");
-                ArrowTable arrow_table = array.get_soma_maxdomain();
+                common::arrow::ArrowTable arrow_table = array.get_soma_maxdomain();
                 return domainish_to_list(arrow_table.first.get(), arrow_table.second.get());
             })
 

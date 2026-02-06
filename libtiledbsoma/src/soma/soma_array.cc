@@ -18,6 +18,7 @@
 
 #include "../utils/arrow_adapter.h"
 #include "../utils/util.h"
+#include "common/arrow/utils.h"
 #include "common/logging/impl/logger.h"
 #include "coordinate_value_filters.h"
 #include "managed_query.h"
@@ -309,7 +310,7 @@ void SOMAArray::delete_cells(const CoordinateValueFilters& coord_filters, const 
     }
 }
 
-managed_unique_ptr<ArrowSchema> SOMAArray::arrow_schema(bool downcast_dict_of_large_var) const {
+common::arrow::managed_unique_ptr<ArrowSchema> SOMAArray::arrow_schema(bool downcast_dict_of_large_var) const {
     auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
 
     for (size_t i = 0; i < columns_.size(); ++i) {
@@ -400,7 +401,7 @@ tiledb::CurrentDomain SOMAArray::_get_current_domain() const {
     return tiledb::ArraySchemaExperimental::current_domain(*ctx_->tiledb_ctx(), *schema_);
 }
 
-ArrowTable SOMAArray::get_enumeration_values(std::vector<std::string> column_names) {
+common::arrow::ArrowTable SOMAArray::get_enumeration_values(std::vector<std::string> column_names) {
     auto ncol = column_names.size();
     auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(ncol);
     auto arrow_array = ArrowAdapter::make_arrow_array_parent(ncol);
@@ -412,7 +413,7 @@ ArrowTable SOMAArray::get_enumeration_values(std::vector<std::string> column_nam
         arrow_array->children[i] = pair.first;
         arrow_schema->children[i] = pair.second;
     }
-    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+    return common::arrow::ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMAArray::get_enumeration_values_for_column(std::string column_name) {
@@ -541,12 +542,28 @@ bool SOMAArray::has_current_domain() const {
     return !_get_current_domain().is_empty();
 }
 
+common::arrow::ArrowTable SOMAArray::get_soma_domain() const {
+    if (has_current_domain()) {
+        return _get_core_domainish(Domainish::kind_core_current_domain);
+    } else {
+        return _get_core_domainish(Domainish::kind_core_domain);
+    }
+}
+
+common::arrow::ArrowTable SOMAArray::get_soma_maxdomain() const {
+    return _get_core_domainish(Domainish::kind_core_domain);
+}
+
+common::arrow::ArrowTable SOMAArray::get_non_empty_domain() const {
+    return _get_core_domainish(Domainish::kind_non_empty_domain);
+}
+
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
 // ArrowSchema from nanoarrow.
 //
 // The domainish enum simply lets us re-use code which is common across
 // core domain, core current domain, and core non-empty domain.
-ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
+common::arrow::ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) const {
     size_t array_ndim = static_cast<size_t>(ndim());
 
     auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(array_ndim);
@@ -562,7 +579,7 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
         ++child_index;
     }
 
-    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+    return common::arrow::ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
 uint64_t SOMAArray::nnz() {
@@ -914,7 +931,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
 }
 
 StatusAndReason SOMAArray::_can_set_domain_helper(
-    const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages) {
+    const common::arrow::ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages) {
     // Enforce the semantics that tiledbsoma_upgrade_domain must be called
     // only on arrays that don't have a shape set, and resize must be called
     // only on arrays that do.
@@ -957,7 +974,7 @@ StatusAndReason SOMAArray::_can_set_domain_helper(
 // the user's requested soma domain against the core current domain or core
 // (max) domain.
 StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
-    const ArrowTable& newdomain, std::string function_name_for_messages) {
+    const common::arrow::ArrowTable& newdomain, std::string function_name_for_messages) {
     if (newdomain.second->n_children != static_cast<int64_t>(ndim())) {
         return std::pair(
             false,
@@ -994,7 +1011,7 @@ StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
 }
 
 void SOMAArray::_set_domain_helper(
-    const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages) {
+    const common::arrow::ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages) {
     if (arr_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format("{}: array must be opened in write mode", function_name_for_messages));
     }

@@ -1,11 +1,10 @@
 #include "column_buffer_strategies.h"
 
-#include "../utils/common.h"
-#include "common/logging/impl/logger.h"
+#include "../logging/impl/logger.h"
 
 #include <stdexcept>
 
-namespace tiledbsoma {
+namespace tiledbsoma::common {
 
 BasicAllocationStrategy::BasicAllocationStrategy(const tiledb::Array& array) {
     const tiledb::Config config = array.config();
@@ -15,7 +14,7 @@ BasicAllocationStrategy::BasicAllocationStrategy(const tiledb::Array& array) {
         try {
             buffer_size = std::stoull(value_str);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(
+            throw std::runtime_error(
                 fmt::format(
                     "[BasicAllocationStrategy] Error parsing {}: '{}' ({})",
                     CONFIG_KEY_INIT_BYTES,
@@ -57,7 +56,7 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
         try {
             memory_budget = std::stoull(value_str);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(
+            throw std::runtime_error(
                 fmt::format(
                     "[MemoryPoolAllocationStrategy] Error parsing {}: '{}' ({})",
                     CONFIG_KEY_MEMORY_POOL_SIZE,
@@ -72,7 +71,7 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
         try {
             var_size_expansion_factor = std::max(1ull, std::stoull(value_str));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(
+            throw std::runtime_error(
                 fmt::format(
                     "[MemoryPoolAllocationStrategy] Error parsing {}: '{}' ({})",
                     CONFIG_KEY_VAR_SIZED_FACTOR,
@@ -87,7 +86,8 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
             tiledb::Attribute attr = schema.attribute(column);
 
             if (!attr.variable_sized() && attr.cell_val_num() != 1) {
-                throw TileDBSOMAError("[MemoryPoolAllocationStrategy] Values per cell > 1 is not supported: " + column);
+                throw std::runtime_error(
+                    "[MemoryPoolAllocationStrategy] Values per cell > 1 is not supported: " + column);
             }
 
             weight += attr.nullable() ? 1 : 0;
@@ -103,14 +103,15 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
                           dim.type() == TILEDB_STRING_UTF8;
 
             if (!is_var && dim.cell_val_num() != 1) {
-                throw TileDBSOMAError("[MemoryPoolAllocationStrategy] Values per cell > 1 is not supported: " + column);
+                throw std::runtime_error(
+                    "[MemoryPoolAllocationStrategy] Values per cell > 1 is not supported: " + column);
             }
 
             weight += (dim.type() == TILEDB_STRING_ASCII || dim.type() == TILEDB_STRING_UTF8) ?
                           sizeof(uint64_t) * (1 + var_size_expansion_factor) :
                           tiledb::impl::type_size(dim.type());
         } else {
-            throw TileDBSOMAError(fmt::format("[MemoryPoolAllocationStrategy] Missing column name '{}'", column));
+            throw std::runtime_error(fmt::format("[MemoryPoolAllocationStrategy] Missing column name '{}'", column));
         }
     }
 
@@ -141,4 +142,4 @@ std::pair<size_t, size_t> MemoryPoolAllocationStrategy::get_buffer_sizes(
         },
         column);
 }
-}  // namespace tiledbsoma
+}  // namespace tiledbsoma::common

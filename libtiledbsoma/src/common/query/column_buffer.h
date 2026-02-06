@@ -27,6 +27,7 @@
 #include "../arrow/interface.h"
 #include "../common.h"
 #include "../logging/logger.h"
+#include "column_buffer_strategies.h"
 
 namespace tiledbsoma::common {
 
@@ -324,18 +325,21 @@ class ReadColumnBuffer : public ColumnBuffer {
 
 class CArrayColumnBuffer : public ReadColumnBuffer {
    public:
+    static std::shared_ptr<ColumnBuffer> create(
+        const tiledb::Array& array, std::string_view name, ColumnBufferAllocationStrategy* strategy, MemoryMode mode);
+
     /**
-   * @brief Construct a new ColumnBuffer object
-   *
-   * @param name Column name
-   * @param type TileDB datatype
-   * @param num_cells Number of cells to allocate for offsets and validity
-   * @param num_bytes Number of bytes to allocate for data
-   * @param is_var Column type is variable length
-   * @param is_nullable Column can contain null values
-   * @param enumeration Optional Enumeration associated with column
-   * @param is_ordered Optional Enumeration is ordered
-   */
+     * @brief Construct a new ColumnBuffer object
+     *
+     * @param name Column name
+     * @param type TileDB datatype
+     * @param num_cells Number of cells to allocate for offsets and validity
+     * @param num_bytes Number of bytes to allocate for data
+     * @param is_var Column type is variable length
+     * @param is_nullable Column can contain null values
+     * @param enumeration Optional Enumeration associated with column
+     * @param mode Memory mode to use for exporting to Arrow. Defaults to `MemoryMode::PERFORMANCE`
+     */
     CArrayColumnBuffer(
         std::string_view name,
         tiledb_datatype_t type,

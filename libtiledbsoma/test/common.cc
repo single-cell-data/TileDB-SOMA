@@ -18,7 +18,7 @@ namespace helper {
 
 using namespace tiledbsoma::common::logging;
 
-static managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
+static common::arrow::managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos, std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
 
 // Core PR: https://github.com/TileDB-Inc/TileDB/pull/5303
@@ -63,7 +63,8 @@ bool have_dense_current_domain_support() {
 
 // Create ArrowSchema for the entire SOMAArray -- dims and attrs both -- as well
 // as index-column info
-std::pair<managed_unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema_and_index_columns(
+std::pair<common::arrow::managed_unique_ptr<ArrowSchema>, common::arrow::ArrowTable>
+create_arrow_schema_and_index_columns(
     const std::vector<DimInfo>& dim_infos,
     const std::vector<AttrInfo>& attr_infos,
     std::optional<SOMACoordinateSpace> coordinate_space) {
@@ -89,11 +90,12 @@ std::pair<managed_unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema_and_i
     auto index_cols_info_array = _create_index_cols_info_array(dim_infos, coordinate_space);
 
     return std::pair(
-        std::move(arrow_schema), ArrowTable(std::move(index_cols_info_array), std::move(index_cols_info_schema)));
+        std::move(arrow_schema),
+        common::arrow::ArrowTable(std::move(index_cols_info_array), std::move(index_cols_info_schema)));
 }
 
 // Create index-column info only, no schema involving the attrs
-ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
+common::arrow::ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
     for (auto info : dim_infos) {
         LOG_DEBUG(
             fmt::format(
@@ -106,10 +108,10 @@ ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
     auto index_cols_info_schema = create_index_cols_info_schema(dim_infos);
     auto index_cols_info_array = _create_index_cols_info_array(dim_infos);
 
-    return ArrowTable(std::move(index_cols_info_array), std::move(index_cols_info_schema));
+    return common::arrow::ArrowTable(std::move(index_cols_info_array), std::move(index_cols_info_schema));
 }
 
-managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
+common::arrow::managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
     const std::vector<DimInfo>& dim_infos, std::optional<SOMACoordinateSpace> coordinate_space) {
     auto ndim = dim_infos.size();
 
@@ -163,7 +165,7 @@ managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
     return schema;
 }
 
-static managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
+static common::arrow::managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos, std::optional<SOMACoordinateSpace> coordinate_space) {
     int ndim = dim_infos.size();
 

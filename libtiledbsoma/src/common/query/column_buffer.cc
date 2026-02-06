@@ -274,6 +274,55 @@ void ColumnBuffer::attach_subarray(tiledb::Subarray& subarray) const {
 
 #pragma region ReadColumnBuffer
 
+#pragma region public static
+
+std::shared_ptr<ColumnBuffer> CArrayColumnBuffer::create(
+    const tiledb::Array& array, std::string_view name, ColumnBufferAllocationStrategy* strategy, MemoryMode mode) {
+    if (array.query_type() != TILEDB_READ) {
+        throw std::runtime_error("[CArrayColumnBuffer][create] CArrayColumnBuffer should only be used during read.");
+    }
+
+    const tiledb::ArraySchema schema = array.schema();
+    const tiledb::Context& context = array.context();
+
+    if (schema.has_attribute(name.data())) {
+        tiledb::Attribute attribute = schema.attribute(name.data());
+
+        auto [data_capacity, cell_capacity] = strategy->get_buffer_sizes(attribute);
+        auto enum_name = tiledb::AttributeExperimental::get_enumeration_name(context, attribute);
+        std::optional<tiledb::Enumeration> enumeration = std::nullopt;
+        if (enum_name.has_value()) {
+            enumeration = std::make_optional<tiledb::Enumeration>(
+                tiledb::ArrayExperimental::get_enumeration(context, array, *enum_name));
+        }
+
+        return std::make_shared<common::CArrayColumnBuffer>(
+            name,
+            attribute.type(),
+            cell_capacity,
+            data_capacity,
+            attribute.variable_sized(),
+            attribute.nullable(),
+            enumeration,
+            mode);
+    }
+    // Else check if column is a TileDB dimension
+    else if (schema.domain().has_dimension(name.data())) {
+        tiledb::Dimension dimension = schema.domain().dimension(name.data());
+
+        auto [data_capacity, cell_capacity] = strategy->get_buffer_sizes(dimension);
+        bool is_var = dimension.cell_val_num() == TILEDB_VAR_NUM || dimension.type() == TILEDB_STRING_ASCII ||
+                      dimension.type() == TILEDB_STRING_UTF8;
+
+        return std::make_shared<common::CArrayColumnBuffer>(
+            name, dimension.type(), cell_capacity, data_capacity, is_var, false, std::nullopt, mode);
+    }
+
+    throw std::runtime_error("[CArrayColumnBuffer] Column name not found: " + std::string(name));
+}
+
+#pragma endregion
+
 #pragma region public non-static
 
 ReadColumnBuffer::~ReadColumnBuffer() {

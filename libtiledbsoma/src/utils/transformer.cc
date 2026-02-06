@@ -1,7 +1,8 @@
 #include "transformer.h"
 
 namespace tiledbsoma {
-TransformerPipeline::TransformerPipeline(managed_unique_ptr<ArrowArray> array, managed_unique_ptr<ArrowSchema> schema)
+TransformerPipeline::TransformerPipeline(
+    common::arrow::managed_unique_ptr<ArrowArray> array, common::arrow::managed_unique_ptr<ArrowSchema> schema)
     : array(std::move(array))
     , schema(std::move(schema)) {
 }
@@ -23,7 +24,7 @@ TransformerPipeline& TransformerPipeline::operator=(TransformerPipeline&& other)
     return *this;
 }
 
-ArrowTable TransformerPipeline::asTable() {
+common::arrow::ArrowTable TransformerPipeline::asTable() {
     return std::make_pair(std::move(array), std::move(schema));
 }
 

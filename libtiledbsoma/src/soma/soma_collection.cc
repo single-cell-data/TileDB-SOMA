@@ -91,8 +91,8 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const managed_unique_ptr<ArrowSchema>& schema,
-    const ArrowTable& index_columns,
+    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+    const common::arrow::ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -115,8 +115,8 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const managed_unique_ptr<ArrowSchema>& schema,
-    const ArrowTable& index_columns,
+    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+    const common::arrow::ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -139,8 +139,8 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const managed_unique_ptr<ArrowSchema>& schema,
-    const ArrowTable& index_columns,
+    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+    const common::arrow::ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -164,7 +164,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::string_view format,
-    const ArrowTable& index_columns,
+    const common::arrow::ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -188,7 +188,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::string_view format,
-    const ArrowTable& index_columns,
+    const common::arrow::ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {

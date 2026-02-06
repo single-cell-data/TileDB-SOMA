@@ -145,8 +145,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        const managed_unique_ptr<ArrowSchema>& schema,
-        const ArrowTable& index_columns,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        const common::arrow::ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -164,8 +164,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        const managed_unique_ptr<ArrowSchema>& schema,
-        const ArrowTable& index_columns,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        const common::arrow::ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -188,8 +188,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        const managed_unique_ptr<ArrowSchema>& schema,
-        const ArrowTable& index_columns,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        const common::arrow::ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -213,7 +213,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::string_view format,
-        const ArrowTable& index_columns,
+        const common::arrow::ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -237,7 +237,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::string_view format,
-        const ArrowTable& index_columns,
+        const common::arrow::ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 

@@ -393,7 +393,7 @@ std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::Date
     return tsrng;
 }
 
-SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
+SEXP convert_domainish(const tdbs::common::arrow::ArrowTable& arrow_table) {
     ArrowArray* arrow_array = arrow_table.first.get();
     ArrowSchema* arrow_schema = arrow_table.second.get();
 

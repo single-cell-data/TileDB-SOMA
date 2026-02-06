@@ -152,11 +152,11 @@ void ManagedQuery::setup_read() {
     // Allocate and attach buffers
     LOG_TRACE("[ManagedQuery] allocate new buffers");
     if (!buffers_) {
-        if (ArrayBuffers::use_memory_pool(array_)) {
-            buffers_ = std::make_shared<ArrayBuffers>(
-                columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
+        if (common::ArrayBuffers::use_memory_pool(*array_)) {
+            buffers_ = std::make_shared<common::ArrayBuffers>(
+                columns_, *array_, std::make_unique<common::MemoryPoolAllocationStrategy>(columns_, *array_));
         } else {
-            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
+            buffers_ = std::make_shared<common::ArrayBuffers>(columns_, *array_);
         }
     }
 
@@ -206,7 +206,7 @@ void ManagedQuery::submit_read() {
     });
 }
 
-std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
+std::optional<std::shared_ptr<common::ArrayBuffers>> ManagedQuery::read_next() {
     setup_read();
 
     if (is_empty_query() && !query_submitted_) {
@@ -434,7 +434,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomai
     }
 }
 
-std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+std::shared_ptr<common::ArrayBuffers> ManagedQuery::results() {
     if (is_empty_query()) {
         query_submitted_ = true;
         return buffers_;

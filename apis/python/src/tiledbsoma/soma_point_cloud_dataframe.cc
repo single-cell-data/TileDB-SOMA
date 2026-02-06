@@ -81,10 +81,10 @@ void load_soma_point_cloud_dataframe(py::module& m) {
                 try {
                     SOMAPointCloudDataFrame::create(
                         uri,
-                        make_managed_unique<ArrowSchema>(schema),
-                        ArrowTable(
-                            make_managed_unique<ArrowArray>(index_column_array),
-                            make_managed_unique<ArrowSchema>(index_column_schema)),
+                        common::arrow::make_managed_unique<ArrowSchema>(schema),
+                        common::arrow::ArrowTable(
+                            common::arrow::make_managed_unique<ArrowArray>(index_column_array),
+                            common::arrow::make_managed_unique<ArrowSchema>(index_column_schema)),
                         coord_space,
                         context,
                         platform_config,

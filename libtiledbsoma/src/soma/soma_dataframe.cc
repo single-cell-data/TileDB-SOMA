@@ -27,8 +27,8 @@ using namespace common::logging;
 
 void SOMADataFrame::create(
     std::string_view uri,
-    const managed_unique_ptr<ArrowSchema>& schema,
-    const ArrowTable& index_columns,
+    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+    const common::arrow::ArrowTable& index_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
@@ -236,7 +236,7 @@ void SOMADataFrame::update_dataframe_schema(
 //= public non-static
 //===================================================================
 
-managed_unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
+common::arrow::managed_unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return this->arrow_schema();
 }
 

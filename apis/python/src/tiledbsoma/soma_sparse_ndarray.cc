@@ -48,9 +48,9 @@ void load_soma_sparse_ndarray(py::module& m) {
                     SOMASparseNDArray::create(
                         uri,
                         format,
-                        ArrowTable(
-                            make_managed_unique<ArrowArray>(index_column_array),
-                            make_managed_unique<ArrowSchema>(index_column_schema)),
+                        common::arrow::ArrowTable(
+                            common::arrow::make_managed_unique<ArrowArray>(index_column_array),
+                            common::arrow::make_managed_unique<ArrowSchema>(index_column_schema)),
                         context,
                         platform_config,
                         timestamp);

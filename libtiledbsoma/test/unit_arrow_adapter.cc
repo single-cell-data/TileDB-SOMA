@@ -21,8 +21,9 @@ TEST_CASE("name", "[pattern]") {
     REQUIRE(names.size() == tiledb_datatypes.size());
     auto n_columns = names.size();
 
-    managed_unique_ptr<ArrowSchema> arrow_schema = ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
-    managed_unique_ptr<ArrowArray> arrow_array = ArrowAdapter::make_arrow_array_parent(n_columns);
+    common::arrow::managed_unique_ptr<ArrowSchema> arrow_schema = ArrowAdapter::make_arrow_schema(
+        names, tiledb_datatypes);
+    common::arrow::managed_unique_ptr<ArrowArray> arrow_array = ArrowAdapter::make_arrow_array_parent(n_columns);
 
     std::vector<int64_t> inputs_int64({1000, 2000, 3000});
     std::vector<uint8_t> inputs_uint8({33, 44, 55});
@@ -38,7 +39,7 @@ TEST_CASE("name", "[pattern]") {
     arrow_array->children[4] = ArrowAdapter::make_arrow_array_child(inputs_bool);
     arrow_array->children[5] = ArrowAdapter::make_arrow_array_child_string(inputs_string);
 
-    ArrowTable arrow_table(std::move(arrow_array), std::move(arrow_schema));
+    common::arrow::ArrowTable arrow_table(std::move(arrow_array), std::move(arrow_schema));
 
     std::vector<int64_t> outputs_int64 = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
         arrow_table, "int64");

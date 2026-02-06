@@ -24,14 +24,14 @@ using namespace tiledb;
 void SOMADenseNDArray::create(
     std::string_view uri,
     std::string_view format,
-    const ArrowTable& index_columns,
+    const common::arrow::ArrowTable& index_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     auto& index_column_schema = index_columns.second;
     uint64_t index_column_size = index_column_schema->n_children;
 
-    auto schema = make_managed_unique<ArrowSchema>();
+    auto schema = common::arrow::make_managed_unique<ArrowSchema>();
     schema->name = nullptr;
     schema->format = strdup("+s");
     schema->n_children = index_column_size + 1;
@@ -89,7 +89,7 @@ std::string_view SOMADenseNDArray::soma_data_type() {
 //= public non-static
 //===================================================================
 
-managed_unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
+common::arrow::managed_unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
     return this->arrow_schema();
 }
 

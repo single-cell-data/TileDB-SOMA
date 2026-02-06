@@ -186,7 +186,7 @@ bool is_tdb_str(tiledb_datatype_t type) {
  * @param buffers ArrayBuffers
  * @return py::object pa.Table
  */
-py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
+py::object _buffer_to_table(std::shared_ptr<common::ArrayBuffers> buffers) {
     auto pa = py::module::import("pyarrow");
     auto pa_array_import = pa.attr("Array").attr("_import_from_c");
     auto pa_dtype_import = pa.attr("DataType").attr("_import_from_c");
@@ -210,7 +210,7 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
     return pa_table_from_arrays(array_list, "schema"_a = pa.attr("schema")(field_list));
 }
 
-std::optional<py::object> to_table(std::optional<std::shared_ptr<ArrayBuffers>> buffers) {
+std::optional<py::object> to_table(std::optional<std::shared_ptr<common::ArrayBuffers>> buffers) {
     // If more data was read, convert it to an arrow table and return
     if (buffers.has_value()) {
         return _buffer_to_table(*buffers);

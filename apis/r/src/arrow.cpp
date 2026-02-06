@@ -59,12 +59,12 @@ void createSchemaFromArrow(
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
     //_show_content(apdim, spdim);
 
-    auto schema = tdbs::make_managed_unique<ArrowSchema>();
+    auto schema = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
     sp.move(schema.get());
 
-    auto dimsch = tdbs::make_managed_unique<ArrowSchema>();
+    auto dimsch = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
     spdim.move(dimsch.get());
-    auto dimarr = tdbs::make_managed_unique<ArrowArray>();
+    auto dimarr = tdbs::common::arrow::make_managed_unique<ArrowArray>();
     apdim.move(dimarr.get());
 
     tdbs::PlatformConfig pltcfg;
@@ -147,9 +147,9 @@ void writeArrayFromArrow(
 
     // now move nanoarrow unique arrays (created from objects handed from R)
     // into proper unique pointers to arrow schema and array
-    auto schema = tdbs::make_managed_unique<ArrowSchema>();
+    auto schema = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
     sp.move(schema.get());
-    auto array = tdbs::make_managed_unique<ArrowArray>();
+    auto array = tdbs::common::arrow::make_managed_unique<ArrowArray>();
     ap.move(array.get());
 
     // shared pointer to SOMAContext from external pointer wrapper

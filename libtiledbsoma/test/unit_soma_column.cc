@@ -279,18 +279,18 @@ TEST_CASE_METHOD(
         REQUIRE(!actual.has_value());
 
         // Check domainish accessors before resize
-        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+        common::arrow::ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<std::string> ned_str = ArrowAdapter::get_table_string_column_by_name(non_empty_domain, "mystring");
 
         auto col_non_empty_domain = columns[0]->arrow_domain_slot(*ctx_, raw_array, Domainish::kind_non_empty_domain);
         std::vector<std::string> ned_str_col = std::apply(ArrowAdapter::get_array_string_column, col_non_empty_domain);
 
-        ArrowTable soma_domain = sdf->get_soma_domain();
+        common::arrow::ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string> dom_str = ArrowAdapter::get_table_string_column_by_name(soma_domain, "mystring");
         auto col_soma_domain = columns[0]->arrow_domain_slot(*ctx_, raw_array, Domainish::kind_core_current_domain);
         std::vector<std::string> dom_str_col = std::apply(ArrowAdapter::get_array_string_column, col_soma_domain);
 
-        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+        common::arrow::ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string> maxdom_str = ArrowAdapter::get_table_string_column_by_name(soma_maxdomain, "mystring");
 
         auto col_soma_maxdomain = columns[0]->arrow_domain_slot(*ctx_, raw_array, Domainish::kind_core_domain);
@@ -425,19 +425,19 @@ TEST_CASE_METHOD(
         REQUIRE(!actual.has_value());
 
         // Check domainish accessors before resize
-        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+        common::arrow::ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<std::string> ned_str = ArrowAdapter::get_table_string_column_by_name(non_empty_domain, "mystring");
 
         auto col_non_empty_domain = columns[0]->arrow_domain_slot(*ctx_, raw_array, Domainish::kind_non_empty_domain);
         std::vector<std::string> ned_str_col = std::apply(ArrowAdapter::get_array_string_column, col_non_empty_domain);
 
-        ArrowTable soma_domain = sdf->get_soma_domain();
+        common::arrow::ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string> dom_str = ArrowAdapter::get_table_string_column_by_name(soma_domain, "mystring");
 
         auto col_soma_domain = columns[0]->arrow_domain_slot(*ctx_, raw_array, Domainish::kind_core_current_domain);
         std::vector<std::string> dom_str_col = std::apply(ArrowAdapter::get_array_string_column, col_soma_domain);
 
-        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+        common::arrow::ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string> maxdom_str = ArrowAdapter::get_table_string_column_by_name(soma_maxdomain, "mystring");
 
         auto col_soma_maxdomain = columns[0]->arrow_domain_slot(*ctx_, raw_array, Domainish::kind_core_domain);

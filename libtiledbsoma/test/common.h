@@ -65,19 +65,20 @@ struct AttrInfo {
     tiledb_datatype_t tiledb_datatype;
 };
 
-std::pair<managed_unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema_and_index_columns(
+std::pair<common::arrow::managed_unique_ptr<ArrowSchema>, common::arrow::ArrowTable>
+create_arrow_schema_and_index_columns(
     const std::vector<DimInfo>& dim_infos,
     const std::vector<AttrInfo>& attr_infos,
     std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
 
-ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos);
+common::arrow::ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos);
 
 std::string to_arrow_format(tiledb_datatype_t tiledb_datatype);
 
 // Core PR: https://github.com/TileDB-Inc/TileDB/pull/5303
 bool have_dense_current_domain_support();
 
-managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
+common::arrow::managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
     const std::vector<DimInfo>& dim_infos, std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
 
 }  // namespace helper
