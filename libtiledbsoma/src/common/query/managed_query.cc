@@ -160,6 +160,14 @@ void ManagedQuery::reset_columns() {
     columns_.clear();
 }
 
+std::vector<std::string> ManagedQuery::column_names() const {
+    return columns_;
+}
+
+void ManagedQuery::set_condition(const tiledb::QueryCondition& qc) {
+    query_->set_condition(qc);
+}
+
 void ManagedQuery::set_array_data(ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
     buffers_.reset();
 

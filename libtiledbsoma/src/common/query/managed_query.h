@@ -37,6 +37,7 @@ class Context;
 class CurrentDomain;
 class Enumeration;
 class Query;
+class QueryCondition;
 class Subarray;
 }  // namespace tiledb
 
@@ -153,6 +154,8 @@ class ManagedQuery {
      * @brief Reset column selection to none, aka "all".
      */
     void reset_columns();
+
+    std::vector<std::string> column_names() const;
 
 #pragma region Member functions
 
@@ -288,6 +291,13 @@ class ManagedQuery {
      */
     void submit_and_finalize();
 
+    /**
+     * @brief Set a query condition.
+     *
+     * @param qc A TileDB QueryCondition
+     */
+    void set_condition(const tiledb::QueryCondition& qc);
+
 #pragma endregion
 
     /**
@@ -303,6 +313,28 @@ class ManagedQuery {
     std::shared_ptr<tiledb::Array> array() const;
 
     std::shared_ptr<ArrayBuffers> buffers() const;
+
+    /**
+     * @brief Return true if the only ranges selected were empty.
+     *
+     * @return true if the query contains only empty ranges.
+     */
+    bool is_empty_query() const;
+
+    /**
+     * @brief Check if the query is complete.
+     *
+     * If `query_status_only` is true, return true if the query status is
+     * complete.
+     *
+     * If `query_status_only` is false, return true if the query status
+     * is complete or if the query is empty (no ranges have been added to the
+     * query).
+     *
+     * @param query_status_only Query complete mode.
+     * @return true if the query is complete, as described above
+     */
+    bool is_complete(bool query_status_only = false) const;
 
 #pragma endregion
 
@@ -390,28 +422,6 @@ class ManagedQuery {
     bool has_any_subarray_range_set() const;
 
     bool has_any_empty_range() const;
-
-    /**
-     * @brief Return true if the only ranges selected were empty.
-     *
-     * @return true if the query contains only empty ranges.
-     */
-    bool is_empty_query() const;
-
-    /**
-     * @brief Check if the query is complete.
-     *
-     * If `query_status_only` is true, return true if the query status is
-     * complete.
-     *
-     * If `query_status_only` is false, return true if the query status
-     * is complete or if the query is empty (no ranges have been added to the
-     * query).
-     *
-     * @param query_status_only Query complete mode.
-     * @return true if the query is complete, as described above
-     */
-    bool is_complete(bool query_status_only = false) const;
 
 #pragma endregion
 
