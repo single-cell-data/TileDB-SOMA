@@ -47,13 +47,6 @@ class Status;
 class WriteColumnBuffer;
 }  // namespace tiledbsoma::common
 
-template <typename T, typename, typename...>
-struct dependent_type {
-    using type = T;
-};
-template <typename T, typename P0, typename... P>
-using dependent_type_t = typename dependent_type<T, P0, P...>::type;
-
 #pragma endregion
 
 namespace tiledbsoma::common {
@@ -213,9 +206,21 @@ class ManagedQuery {
         subarray_range_empty_[dim] = false;
     }
 
+    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+
+    /**
+     * @brief Return true if the query result buffers hold all results from the
+     * query. The return value is false if the query was incomplete.
+     *
+     * @return true The buffers hold all results from the query.
+     */
+    bool results_complete() const;
+
+    uint64_t total_num_cells() const;
+
 #pragma endregion
 
-#pragma region Read functions
+#pragma region Write functions
 
     /**
      * @brief Set column data for write query.
@@ -245,7 +250,7 @@ class ManagedQuery {
             buffers_.get(),
             *array_,
             *query_,
-            *subarray_,
+            subarray_.get(),
             name,
             num_elems,
             std::move(data),
@@ -265,7 +270,39 @@ class ManagedQuery {
      */
     void set_array_data(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
+    /**
+     * @brief Submit the write query.
+     *
+     */
+    void submit_write();
+
+    /**
+     * @brief Finalize the write query.
+     *
+     */
+    void finalize();
+
+    /**
+     * @brief Submit and finalize the write query.
+     *
+     */
+    void submit_and_finalize();
+
 #pragma endregion
+
+    /**
+     * @brief Extend an Enumeration with the values contained in the supplied Arrow array and return true if the enumeration is modified
+     */
+    std::optional<std::shared_ptr<tiledb::Enumeration>> extend_enumeration(
+        ArrowSchema* schema,
+        ArrowArray* array,
+        std::string_view enumeration_name,
+        tiledb::ArraySchemaEvolution& se,
+        bool deduplicate);
+
+    std::shared_ptr<tiledb::Array> array() const;
+
+    std::shared_ptr<ArrayBuffers> buffers() const;
 
 #pragma endregion
 
@@ -289,7 +326,7 @@ class ManagedQuery {
         Buffers* buffers,
         const tiledb::Array& array,
         tiledb::Query& query,
-        tiledb::Subarray& subarray,
+        tiledb::Subarray* subarray,
         std::string_view name,
         uint64_t num_elems,
         DataStorage data,
@@ -317,8 +354,6 @@ class ManagedQuery {
 
     void submit_read();
 
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
-
 #pragma endregion
 
 #pragma region Write functions
@@ -336,16 +371,6 @@ class ManagedQuery {
         const tiledb::Enumeration& enumeration);
 
     void promote_indexes_to_values(ArrowSchema* schema, ArrowArray* array);
-
-    /**
-     * @brief Extend an Enumeration with the values contained in the supplied Arrow array and return true if the enumeration is modified
-     */
-    std::optional<std::shared_ptr<tiledb::Enumeration>> extend_enumeration(
-        ArrowSchema* schema,
-        ArrowArray* array,
-        std::string_view enumeration_name,
-        tiledb::ArraySchemaEvolution& se,
-        bool deduplicate);
 
     /**
      * @brief Get the mapping of attributes to Enumerations.
@@ -388,14 +413,6 @@ class ManagedQuery {
      */
     bool is_complete(bool query_status_only = false) const;
 
-    /**
-     * @brief Return true if the query result buffers hold all results from the
-     * query. The return value is false if the query was incomplete.
-     *
-     * @return true The buffers hold all results from the query.
-     */
-    bool results_complete() const;
-
 #pragma endregion
 
 #pragma region Member variables
@@ -434,7 +451,7 @@ class ManagedQuery {
     ResultOrder layout_ = ResultOrder::AUTOMATIC;
 
     // Number of query submission that returned no results due to insufficient buffer sizes
-    size_t retries;
+    size_t retries = 0;
 
     // Results in the buffers are complete (the query was never incomplete)
     bool results_complete_ = true;

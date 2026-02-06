@@ -100,6 +100,40 @@ ResultOrder ManagedQuery::result_order() const {
     return layout_;
 }
 
+std::shared_ptr<tiledb::Array> ManagedQuery::array() const {
+    return array_;
+}
+
+std::shared_ptr<ArrayBuffers> ManagedQuery::buffers() const {
+    return buffers_;
+}
+
+uint64_t ManagedQuery::total_num_cells() const {
+    return total_num_cells_;
+}
+
+void ManagedQuery::submit_write() {
+    query_submitted_ = true;
+    setup_write();
+    query_->submit();
+}
+
+void ManagedQuery::finalize() {
+    if (!query_submitted_) {
+        throw std::runtime_error(
+            "[ManagedQuery] Write query needs to be submitted before "
+            "finalizing");
+    }
+    query_->finalize();
+    teardown_write();
+}
+
+void ManagedQuery::submit_and_finalize() {
+    setup_write();
+    query_->submit_and_finalize();
+    teardown_write();
+}
+
 void ManagedQuery::select_columns(std::span<const std::string> names, bool if_not_empty, bool replace) {
     // Return if we are selecting all columns (columns_ is empty) and we want to
     // continue selecting all columns (if_not_empty == true).
@@ -115,7 +149,7 @@ void ManagedQuery::select_columns(std::span<const std::string> names, bool if_no
         // Name is not an attribute or dimension.
         if (!array_->schema().has_attribute(name) && !array_->schema().domain().has_dimension(name)) {
             logging::LOG_WARN(
-                std::format("[ManagedQuery][select_columns] [{}] Invalid column selected: {}", name_, name));
+                fmt::format("[ManagedQuery][select_columns] [{}] Invalid column selected: {}", name_, name));
         } else {
             columns_.push_back(name);
         }
@@ -154,7 +188,7 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
 
         if (enumeration_name && schema->dictionary == nullptr) {
             throw std::invalid_argument(
-                std::format("[ManagedQuery][setup_write_arrow_column] '{}' requires dictionary entry", schema->name));
+                fmt::format("[ManagedQuery][setup_write_arrow_column] '{}' requires dictionary entry", schema->name));
         }
 
         // If the attribute is not enumerated, but the provided column is, then we
@@ -205,7 +239,7 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
 
     if (arrow::to_tiledb_format(schema->format) != disk_type) {
         throw std::runtime_error(
-            std::format(
+            fmt::format(
                 "[ManagedQuery][setup_write_arrow_column] Column '{}'. Expected {}, found {}",
                 schema->name,
                 tiledb::impl::type_to_str(disk_type),
@@ -354,7 +388,7 @@ std::optional<std::shared_ptr<tiledb::Enumeration>> ManagedQuery::extend_enumera
     //      throw otherwise).
     if (!deduplicate && enumeration_values.size() != dictionary_values.size()) {
         throw std::runtime_error(
-            std::format(
+            fmt::format(
                 "[ManagedQuery][extend_enumeration] one or more values provided are already present in the enumeration "
                 "for column "
                 "'{}', and deduplicate was not specified",
@@ -500,7 +534,7 @@ void ManagedQuery::remap_enumeration_indices(
                 break;
             default:
                 throw std::runtime_error(
-                    std::format(
+                    fmt::format(
                         "[ManagedQuery][remap_enumeration_indices][dispatch_cast] Unsupported index type {}",
                         tiledb::impl::type_to_str(arrow::to_tiledb_format(schema->format))));
         }
@@ -533,7 +567,7 @@ void ManagedQuery::remap_enumeration_indices(
             break;
         default:
             throw std::runtime_error(
-                std::format(
+                fmt::format(
                     "[ManagedQuery][remap_enumeration_indices] Unsupported index type {}",
                     tiledb::impl::type_to_str(attribute.type())));
     }
@@ -601,7 +635,7 @@ void ManagedQuery::promote_indexes_to_values(ArrowSchema* schema, ArrowArray* ar
             break;
         default:
             throw std::runtime_error(
-                std::format(
+                fmt::format(
                     "Saw invalid TileDB value type when attempting to promote indexes to values: {}",
                     tiledb::impl::type_to_str(arrow::to_tiledb_format(schema->dictionary->format))));
     }
@@ -674,7 +708,7 @@ void ManagedQuery::setup_read() {
 
     for (auto& name : columns_) {
         logging::LOG_DEBUG(
-            std::format("[ManagedQuery][setup_read] [{}] Attaching buffer for column '{}'", name_, name));
+            fmt::format("[ManagedQuery][setup_read] [{}] Attaching buffer for column '{}'", name_, name));
         buffers_->at(name)->attach(*query_);
     }
 }
@@ -854,7 +888,7 @@ void ManagedQuery::fill_in_subarrays_current_domain(const tiledb::CurrentDomain&
         tiledb_datatype_t dim_type = dimensions[i].type();
 
         if (subarray_range_set_[dim_name]) {
-            logging::LOG_TRACE(std::format("[ManagedQuery][fill_in_subarrays_current_domain] continue {}", dim_name));
+            logging::LOG_TRACE(fmt::format("[ManagedQuery][fill_in_subarrays_current_domain] continue {}", dim_name));
             continue;
         }
 
@@ -902,7 +936,7 @@ void ManagedQuery::fill_in_subarrays_current_domain(const tiledb::CurrentDomain&
         }
 
         logging::LOG_TRACE(
-            std::format(
+            fmt::format(
                 "[ManagedQuery] fill_in_subarrays_current_domain dim "
                 "name {} select ({}, {})",
                 dim_name,
