@@ -22,6 +22,7 @@
 #include "nanoarrow/nanoarrow.hpp"
 
 #include "../arrow/utils.h"
+#include "../arrow/decode.h"
 
 #include "../logging/impl/logger.h"
 #include "../logging/logger.h"
@@ -245,7 +246,9 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
         }
     }
 
-    if (arrow::to_tiledb_format(schema->format) != disk_type) {
+    const std::unordered_map<std::string, std::string> metadata = arrow::metadata_string_to_map(schema->metadata);
+
+    if (arrow::to_tiledb_format(schema->format, metadata[]) != disk_type) {
         throw std::runtime_error(
             fmt::format(
                 "[ManagedQuery][setup_write_arrow_column] Column '{}'. Expected {}, found {}",
