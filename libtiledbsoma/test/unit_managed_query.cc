@@ -106,15 +106,16 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto ctx = std::make_shared<Context>();
     auto [array, d0, a0, _] = create_array(uri, *ctx);
 
-    auto mq = ManagedQuery(array, ctx);
+    auto mq = common::ManagedQuery(array, ctx);
     auto results = mq.read_next();
     REQUIRE(mq.results_complete());
 
     auto num_cells = mq.total_num_cells();
     REQUIRE(num_cells == d0.size());
 
-    auto d0_span = mq.strings(dim_name);
-    auto a0_span = mq.strings(attr_name);
+    auto buffers = mq.buffers();
+    auto d0_span = buffers->at(dim_name)->strings();
+    auto a0_span = buffers->at(attr_name)->strings();
 
     std::vector<std::string> d0_values;
     std::vector<std::string> a0_values;
@@ -138,20 +139,21 @@ TEST_CASE("ManagedQuery: Select test") {
     auto ctx = std::make_shared<Context>();
     auto [array, d0, a0, _] = create_array(uri, *ctx);
 
-    auto mq = ManagedQuery(array, ctx);
-    mq.select_columns({attr_name});
-    mq.select_points<std::string>(dim_name, {"a"});
+    auto mq = common::ManagedQuery(array, ctx);
+    mq.select_columns({{attr_name}});
+    mq.select_points<std::string>(dim_name, {{"a"}});
     auto results = mq.read_next();
     REQUIRE(mq.results_complete());
 
     auto num_cells = mq.total_num_cells();
+    auto buffers = mq.buffers();
     REQUIRE(num_cells == 1);
 
-    REQUIRE_THROWS(mq.data<int32_t>("a1"));
-    REQUIRE_THROWS(mq.strings(dim_name));
-    REQUIRE_THROWS(mq.string_view("d1", 0));
+    REQUIRE_THROWS(buffers->at("a1")->data<int32_t>());
+    REQUIRE_THROWS(buffers->at(dim_name)->strings());
+    REQUIRE_THROWS(buffers->at("d1")->string_view(0));
 
-    REQUIRE_THAT(std::string(a0[0]), Equals(std::string(mq.string_view(attr_name, 0))));
+    REQUIRE_THAT(std::string(a0[0]), Equals(std::string(buffers->at(attr_name)->string_view(0))));
 }
 
 TEST_CASE("ManagedQuery: Validity test") {
@@ -162,20 +164,21 @@ TEST_CASE("ManagedQuery: Validity test") {
     auto ctx = std::make_shared<Context>();
     auto [array, d0, a0, a0_valids] = create_array(uri, *ctx);
 
-    auto mq = ManagedQuery(array, ctx);
+    auto mq = common::ManagedQuery(array, ctx);
     auto results = mq.read_next();
     REQUIRE(mq.results_complete());
 
     auto num_cells = mq.total_num_cells();
+    auto buffers = mq.buffers();
     REQUIRE(num_cells == d0.size());
 
     // Convert span to vector
-    auto valids = mq.validity(attr_name);
+    auto valids = buffers->at(attr_name)->validity();
     std::vector<uint8_t> a0_valids_actual;
     a0_valids_actual.assign(valids.begin(), valids.end());
 
-    auto d0_span = mq.strings(dim_name);
-    auto a0_span = mq.strings(attr_name);
+    auto d0_span = buffers->at(dim_name)->strings();
+    auto a0_span = buffers->at(attr_name)->strings();
 
     std::vector<std::string> d0_values;
     std::vector<std::string> a0_values;

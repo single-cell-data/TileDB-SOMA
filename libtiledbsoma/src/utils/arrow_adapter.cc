@@ -556,7 +556,7 @@ std::vector<common::arrow::ArrowTable> ArrowAdapter::buffer_to_arrow(
                     [](const Enumeration& enumeration, bool large_offsets) {
                         return std::make_shared<common::arrow::ArrowBuffer>(enumeration, large_offsets);
                     },
-                    enumeration.value(),
+                    *enumeration,
                     !downcast_dict_of_large_var));
             unique_enumerations.insert(enumeration->name());
         }

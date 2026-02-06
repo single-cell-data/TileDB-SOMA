@@ -18,8 +18,8 @@
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
     const nlohmann::json& soma_schema,
-    const Context&,
-    const Array& array,
+    const tiledb::Context&,
+    const tiledb::Array& array,
     const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
@@ -74,7 +74,7 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
 }
 
 std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
-    std::shared_ptr<Context> ctx,
+    std::shared_ptr<tiledb::Context> ctx,
     ArrowSchema* schema,
     ArrowSchema* spatial_schema,
     ArrowArray* spatial_array,
@@ -106,7 +106,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
 }
 
 std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
-    std::shared_ptr<Context> ctx,
+    std::shared_ptr<tiledb::Context> ctx,
     const SOMACoordinateSpace& coordinate_space,
     const std::vector<DimensionConfigAdapter<double_t>>& dim_configs,
     const PlatformConfig& platform_config) {
@@ -141,13 +141,14 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     return std::make_shared<SOMAGeometryColumn>(SOMAGeometryColumn(dims, attr, coordinate_space));
 }
 
-void SOMAGeometryColumn::_set_dim_points(ManagedQuery& query, const std::any& points) const {
+void SOMAGeometryColumn::_set_dim_points(common::ManagedQuery& query, const std::any& points) const {
     std::vector<std::pair<double_t, double_t>> transformed_points = _transform_points(
         std::any_cast<std::span<const std::vector<double_t>>>(points));
 
+    std::shared_ptr<tiledb::Array> array = query.array();
     // The limits of the current domain if it exists or the core domain
     // otherwise.
-    auto limits = _limits(*query.ctx(), *query.schema());
+    auto limits = _limits(array->context(), array->schema());
 
     // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
@@ -155,20 +156,21 @@ void SOMAGeometryColumn::_set_dim_points(ManagedQuery& query, const std::any& po
 
     for (size_t i = 0; i < transformed_points.size(); ++i) {
         range[0] = std::make_pair(limits[i].first, std::min(transformed_points[i].second, limits[i].second));
-        query.select_ranges(dimensions[i].name(), range);
+        query.select_ranges<double_t>(dimensions[i].name(), range);
 
         range[0] = std::make_pair(std::max(transformed_points[i].first, limits[i].first), limits[i].second);
-        query.select_ranges(dimensions[i + dimensionality].name(), range);
+        query.select_ranges<double_t>(dimensions[i + dimensionality].name(), range);
     }
 }
 
-void SOMAGeometryColumn::_set_dim_ranges(ManagedQuery& query, const std::any& ranges) const {
+void SOMAGeometryColumn::_set_dim_ranges(common::ManagedQuery& query, const std::any& ranges) const {
     std::vector<std::pair<double_t, double_t>> transformed_ranges = _transform_ranges(
         std::any_cast<std::vector<std::pair<std::vector<double_t>, std::vector<double_t>>>>(ranges));
 
+    std::shared_ptr<tiledb::Array> array = query.array();
     // The limits of the current domain if it exists or the core domain
     // otherwise.
-    auto limits = _limits(*query.ctx(), *query.schema());
+    auto limits = _limits(array->context(), array->schema());
 
     // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
@@ -176,15 +178,15 @@ void SOMAGeometryColumn::_set_dim_ranges(ManagedQuery& query, const std::any& ra
 
     for (size_t i = 0; i < transformed_ranges.size(); ++i) {
         range[0] = std::make_pair(limits[i].first, std::min(transformed_ranges[i].second, limits[i].second));
-        query.select_ranges(dimensions[i].name(), range);
+        query.select_ranges<double_t>(dimensions[i].name(), range);
 
         range[0] = std::make_pair(std::max(transformed_ranges[i].first, limits[i].first), limits[i].second);
-        query.select_ranges(dimensions[i + dimensionality].name(), range);
+        query.select_ranges<double_t>(dimensions[i + dimensionality].name(), range);
     }
 }
 
 void SOMAGeometryColumn::_set_current_domain_slot(
-    NDRectangle& rectangle, std::span<const std::any> new_current_domain) const {
+    tiledb::NDRectangle& rectangle, std::span<const std::any> new_current_domain) const {
     if (TDB_DIM_PER_SPATIAL_AXIS * new_current_domain.size() != dimensions.size()) {
         throw TileDBSOMAError(
             fmt::format(
@@ -206,7 +208,7 @@ void SOMAGeometryColumn::_set_current_domain_slot(
 }
 
 std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
-    std::optional<NDRectangle>& rectangle, std::span<const std::any> new_current_domain) const {
+    std::optional<tiledb::NDRectangle>& rectangle, std::span<const std::any> new_current_domain) const {
     if (new_current_domain.size() != dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS) {
         throw TileDBSOMAError(
             fmt::format(
@@ -281,7 +283,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
 }
 
 std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
-    const Context& ctx, const ArraySchema& schema) const {
+    const tiledb::Context& ctx, const tiledb::ArraySchema& schema) const {
     std::vector<std::pair<double_t, double_t>> limits;
 
     if (ArraySchemaExperimental::current_domain(ctx, schema).is_empty()) {
@@ -344,7 +346,7 @@ std::any SOMAGeometryColumn::_core_domain_slot() const {
     return std::make_any<std::pair<std::vector<double_t>, std::vector<double_t>>>(std::make_pair(min, max));
 };
 
-std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
+std::any SOMAGeometryColumn::_non_empty_domain_slot(tiledb::Array& array) const {
     std::vector<double_t> min, max;
     size_t dimensionality = dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
     for (size_t i = 0; i < dimensionality; ++i) {
@@ -359,7 +361,7 @@ std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
     return std::make_any<std::pair<std::vector<double_t>, std::vector<double_t>>>(std::make_pair(min, max));
 }
 
-std::any SOMAGeometryColumn::_non_empty_domain_slot_opt(const SOMAContext& ctx, Array& array) const {
+std::any SOMAGeometryColumn::_non_empty_domain_slot_opt(const SOMAContext& ctx, tiledb::Array& array) const {
     std::vector<double_t> min, max;
     size_t dimensionality = dimensions.size() / 2;
     int32_t is_empty;
@@ -397,14 +399,15 @@ std::any SOMAGeometryColumn::_non_empty_domain_slot_opt(const SOMAContext& ctx, 
         std::make_pair(min, max));
 }
 
-std::any SOMAGeometryColumn::_core_current_domain_slot(const SOMAContext& ctx, Array& array) const {
-    CurrentDomain current_domain = tiledb::ArraySchemaExperimental::current_domain(*ctx.tiledb_ctx(), array.schema());
-    NDRectangle ndrect = current_domain.ndrectangle();
+std::any SOMAGeometryColumn::_core_current_domain_slot(const SOMAContext& ctx, tiledb::Array& array) const {
+    tiledb::CurrentDomain current_domain = tiledb::ArraySchemaExperimental::current_domain(
+        *ctx.tiledb_ctx(), array.schema());
+    tiledb::NDRectangle ndrect = current_domain.ndrectangle();
 
     return _core_current_domain_slot(ndrect);
 }
 
-std::any SOMAGeometryColumn::_core_current_domain_slot(NDRectangle& ndrect) const {
+std::any SOMAGeometryColumn::_core_current_domain_slot(tiledb::NDRectangle& ndrect) const {
     std::vector<double_t> min, max;
 
     for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS; ++i) {
@@ -418,7 +421,7 @@ std::any SOMAGeometryColumn::_core_current_domain_slot(NDRectangle& ndrect) cons
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
-    const SOMAContext& ctx, Array& array, enum Domainish kind, bool) const {
+    const SOMAContext& ctx, tiledb::Array& array, enum Domainish kind, bool) const {
     switch (domain_type().value()) {
         case TILEDB_FLOAT64: {
             ArrowSchema* parent_schema = static_cast<ArrowSchema*>(malloc(sizeof(ArrowSchema)));
@@ -483,7 +486,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
 }
 
 ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
-    const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var) const {
+    const SOMAContext& ctx, tiledb::Array& array, bool downcast_dict_of_large_var) const {
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
         attribute, *ctx.tiledb_ctx(), array, downcast_dict_of_large_var);
 }

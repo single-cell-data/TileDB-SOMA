@@ -68,7 +68,7 @@ ArrowTable column_buffer_to_arrow(
     }
 
     auto enumeration = column_buffer->get_enumeration();
-    if (enumeration.has_value()) {
+    if (enumeration) {
         if (column_buffer->is_ordered()) {
             schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
         }

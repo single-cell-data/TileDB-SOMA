@@ -21,8 +21,8 @@
 namespace tiledbsoma {
 
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
-    const Context& ctx,
-    const Array& array,
+    const tiledb::Context& ctx,
+    const tiledb::Array& array,
     std::map<std::string, tiledbsoma::MetadataValue>& metadata,
     std::string_view uri) {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
@@ -110,11 +110,11 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                 continue;
             }
 
-            auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
-            auto enumeration = enumeration_name.has_value() ?
-                                   std::make_optional(
-                                       ArrayExperimental::get_enumeration(ctx, array, enumeration_name.value())) :
-                                   std::nullopt;
+            auto enumeration_name = tiledb::AttributeExperimental::get_enumeration_name(ctx, attribute);
+            auto enumeration = enumeration_name.has_value() ? std::make_optional(
+                                                                  tiledb::ArrayExperimental::get_enumeration(
+                                                                      ctx, array, enumeration_name.value())) :
+                                                              std::nullopt;
 
             columns.push_back(std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
@@ -127,11 +127,11 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
 
         for (size_t i = 0; i < array.schema().attribute_num(); ++i) {
             auto attribute = array.schema().attribute(i);
-            auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
-            auto enumeration = enumeration_name.has_value() ?
-                                   std::make_optional(
-                                       ArrayExperimental::get_enumeration(ctx, array, enumeration_name.value())) :
-                                   std::nullopt;
+            auto enumeration_name = tiledb::AttributeExperimental::get_enumeration_name(ctx, attribute);
+            auto enumeration = enumeration_name.has_value() ? std::make_optional(
+                                                                  tiledb::ArrayExperimental::get_enumeration(
+                                                                      ctx, array, enumeration_name.value())) :
+                                                              std::nullopt;
 
             columns.push_back(std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
@@ -147,7 +147,7 @@ std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>() 
 
 template <>
 std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(
-    const SOMAContext& ctx, Array& array) const {
+    const SOMAContext& ctx, tiledb::Array& array) const {
     // Here is an intersection of a few oddities:
     //
     // * Core domain for string dims must be a nullptr pair; it cannot
@@ -184,7 +184,8 @@ std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::st
 }
 
 template <>
-std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(NDRectangle& ndrect) const {
+std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(
+    tiledb::NDRectangle& ndrect) const {
     try {
         std::pair<std::string, std::string> current_domain = std::any_cast<std::pair<std::string, std::string>>(
             _core_current_domain_slot(ndrect));

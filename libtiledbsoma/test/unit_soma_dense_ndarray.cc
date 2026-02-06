@@ -97,7 +97,7 @@ TEST_CASE("SOMADenseNDArray: basic read", "[SOMADenseNDArray]") {
 
     {
         auto dnda = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx);
-        auto mq = ManagedQuery(dnda->tiledb_array(), ctx->tiledb_ctx());
+        auto mq = common::ManagedQuery(dnda->tiledb_array(), ctx->tiledb_ctx());
         mq.select_points<int64_t>(dim_name, std::vector<int64_t>());
         auto results = mq.read_next();
     }

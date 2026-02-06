@@ -18,5 +18,4 @@ concept is_offset_buffer = std::same_as<T, std::unique_ptr<uint64_t[]>> ||
                             (std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint32_t> ||
                              std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint64_t>));
 
-
 #endif
