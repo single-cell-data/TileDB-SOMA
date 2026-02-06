@@ -15,20 +15,28 @@
 #define COMMON_COLUMN_BUFFER_H
 
 #include <algorithm>
+#include <cmath>
 #include <concepts>
+#include <memory>
 #include <span>
 #include <stdexcept>
-
-#include <tiledb/tiledb>
-#include <tiledb/tiledb_experimental>
-
-#include <cmath>
 
 #include "../arrow/interface.h"
 #include "../common.h"
 #include "../concepts.h"
 #include "../logging/logger.h"
 #include "column_buffer_strategies.h"
+
+#pragma region Forward declarations
+
+namespace tiledb {
+class Config;
+class Enumeration;
+class Query;
+class Subarray;
+}  // namespace tiledb
+
+#pragma endregion
 
 namespace tiledbsoma::common {
 
@@ -51,7 +59,7 @@ class ColumnBuffer {
         uint64_t max_data_size,
         bool is_var = false,
         bool is_nullable = false,
-        std::optional<tiledb::Enumeration> enumeration = std::nullopt,
+        std::shared_ptr<tiledb::Enumeration> enumeration = nullptr,
         MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     ColumnBuffer(
@@ -61,7 +69,7 @@ class ColumnBuffer {
         uint64_t max_data_size,
         bool is_var = false,
         bool is_nullable = false,
-        std::optional<tiledb::Enumeration> enumeration = std::nullopt,
+        std::shared_ptr<tiledb::Enumeration> enumeration = nullptr,
         MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     ColumnBuffer() = delete;
@@ -77,7 +85,7 @@ class ColumnBuffer {
      * @param subarray Optional subarray to attach to query instead of the columns internal buffers. 
      *  This should only be provided for dense write queries and only for dimensions.
      */
-    void attach(tiledb::Query& query, std::optional<tiledb::Subarray> subarray = std::nullopt);
+    void attach(tiledb::Query& query, tiledb::Subarray* subarray = nullptr);
 
     /**
      * @brief Return the number of cells taht are stored in the buffers.
@@ -188,7 +196,7 @@ class ColumnBuffer {
     /**
      * @brief Get the enumeration associated with this column.
      */
-    std::optional<tiledb::Enumeration> get_enumeration() const;
+    std::shared_ptr<tiledb::Enumeration> get_enumeration() const;
 
     /**
      * @brief Return true if the buffer contains an ordered enumeration.
@@ -257,7 +265,7 @@ class ColumnBuffer {
     bool is_nullable_;
 
     // If applicable, the Enumeration associated with the column
-    std::optional<tiledb::Enumeration> enumeration_;
+    std::shared_ptr<tiledb::Enumeration> enumeration_;
 };
 
 class ReadColumnBuffer : public ColumnBuffer {
@@ -348,7 +356,7 @@ class CArrayColumnBuffer : public ReadColumnBuffer {
         uint64_t num_bytes,
         bool is_var = false,
         bool is_nullable = false,
-        std::optional<tiledb::Enumeration> enumeration = std::nullopt,
+        std::shared_ptr<tiledb::Enumeration> enumeration = nullptr,
         MemoryMode mode = DEFAULT_MEMORY_MODE);
 
     CArrayColumnBuffer() = delete;
@@ -471,7 +479,7 @@ class WriteColumnBuffer : public ColumnBuffer {
         OffsetStorage offsets_buffer,
         std::unique_ptr<uint8_t[]> validity_buffer,
         bool copy_buffers = false)
-        : ColumnBuffer(name, type, num_cells, num_cells, num_bytes, num_bytes, is_var, is_nullable, std::nullopt) {
+        : ColumnBuffer(name, type, num_cells, num_cells, num_bytes, num_bytes, is_var, is_nullable, nullptr) {
         if (data_buffer == nullptr) {
             throw std::runtime_error(
                 "[WriteColumnBuffer] Supplied data buffer is null for column '" + std::string(name) + "'");

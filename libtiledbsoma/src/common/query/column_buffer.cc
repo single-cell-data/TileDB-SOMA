@@ -8,6 +8,10 @@
  */
 
 #include "column_buffer.h"
+
+#include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
+
 #include "../arrow/arrow_buffer.h"
 #include "../arrow/utils.h"
 #include "../logging/impl/logger.h"
@@ -50,7 +54,7 @@ ColumnBuffer::ColumnBuffer(
     uint64_t max_data_size,
     bool is_var,
     bool is_nullable,
-    std::optional<tiledb::Enumeration> enumeration,
+    std::shared_ptr<tiledb::Enumeration> enumeration,
     MemoryMode mode)
     : num_cells_(num_cells)
     , data_size_(data_size)
@@ -72,7 +76,7 @@ ColumnBuffer::ColumnBuffer(
     uint64_t max_data_size,
     bool is_var,
     bool is_nullable,
-    std::optional<tiledb::Enumeration> enumeration,
+    std::shared_ptr<tiledb::Enumeration> enumeration,
     MemoryMode mode)
     : ColumnBuffer(name, type, 0, max_num_cells, 0, max_data_size, is_var, is_nullable, enumeration, mode) {
 }
@@ -112,7 +116,7 @@ bool ColumnBuffer::is_nullable() const {
     return is_nullable_;
 }
 
-std::optional<tiledb::Enumeration> ColumnBuffer::get_enumeration() const {
+std::shared_ptr<tiledb::Enumeration> ColumnBuffer::get_enumeration() const {
     return enumeration_;
 }
 
@@ -128,14 +132,14 @@ double_t ColumnBuffer::cell_load_factor() const {
     return static_cast<double_t>(num_cells_) / max_num_cells_;
 }
 
-void ColumnBuffer::attach(tiledb::Query& query, std::optional<tiledb::Subarray> subarray) {
+void ColumnBuffer::attach(tiledb::Query& query, tiledb::Subarray* subarray) {
     bool is_write = query.query_type() == TILEDB_WRITE;
     const tiledb::ArraySchema schema = query.array().schema();
     bool is_dense = schema.array_type() == TILEDB_DENSE;
     bool is_dim = schema.domain().has_dimension(name_);
     bool use_subarray = is_write && is_dense && is_dim;
 
-    if (use_subarray && !subarray.has_value()) {
+    if (use_subarray && subarray) {
         throw std::runtime_error(
             "[ColumnBuffer::attach] Subarray must be provided to ColumnBuffer "
             "to attach to Query");
@@ -290,9 +294,9 @@ std::shared_ptr<ColumnBuffer> CArrayColumnBuffer::create(
 
         auto [data_capacity, cell_capacity] = strategy->get_buffer_sizes(attribute);
         auto enum_name = tiledb::AttributeExperimental::get_enumeration_name(context, attribute);
-        std::optional<tiledb::Enumeration> enumeration = std::nullopt;
+        std::shared_ptr<tiledb::Enumeration> enumeration = nullptr;
         if (enum_name.has_value()) {
-            enumeration = std::make_optional<tiledb::Enumeration>(
+            enumeration = std::make_shared<tiledb::Enumeration>(
                 tiledb::ArrayExperimental::get_enumeration(context, array, *enum_name));
         }
 
@@ -315,7 +319,7 @@ std::shared_ptr<ColumnBuffer> CArrayColumnBuffer::create(
                       dimension.type() == TILEDB_STRING_UTF8;
 
         return std::make_shared<common::CArrayColumnBuffer>(
-            name, dimension.type(), cell_capacity, data_capacity, is_var, false, std::nullopt, mode);
+            name, dimension.type(), cell_capacity, data_capacity, is_var, false, nullptr, mode);
     }
 
     throw std::runtime_error("[CArrayColumnBuffer] Column name not found: " + std::string(name));
@@ -358,7 +362,7 @@ CArrayColumnBuffer::CArrayColumnBuffer(
     uint64_t num_bytes,
     bool is_var,
     bool is_nullable,
-    std::optional<tiledb::Enumeration> enumeration,
+    std::shared_ptr<tiledb::Enumeration> enumeration,
     MemoryMode mode)
     : ReadColumnBuffer(name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, mode) {
     logging::LOG_DEBUG(fmt::format("[CArrayColumnBuffer] '{}' {} bytes", name, num_bytes));
