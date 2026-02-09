@@ -869,7 +869,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
         ]:
             with pytest.raises(
                 soma.SOMAError,
-                match=r"null values are not supported",
+                match=r"Null values are not supported",
             ):
                 sdf.extend_enumeration_values(nvalues)
 
@@ -1006,7 +1006,7 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered,
         values = {
             "float32_enum": pa.array([quiet_nan, quiet_nan], type=pa.float32()),
         }
-        with pytest.raises(soma.SOMAError):
+        with pytest.raises(ValueError):
             sdf.extend_enumeration_values(values)
 
         # Core treats these as distinct so we do too

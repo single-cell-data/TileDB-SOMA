@@ -66,12 +66,12 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .value("soma_write", OpenMode::soma_write)
         .value("soma_delete", OpenMode::soma_delete);
 
-    py::enum_<ResultOrder>(m, "ResultOrder")
-        .value("automatic", ResultOrder::automatic)
-        .value("rowmajor", ResultOrder::rowmajor)
-        .value("colmajor", ResultOrder::colmajor)
-        .value("unordered", ResultOrder::unordered)
-        .value("globalorder", ResultOrder::global);
+    py::enum_<common::ResultOrder>(m, "ResultOrder")
+        .value("automatic", common::ResultOrder::AUTOMATIC)
+        .value("rowmajor", common::ResultOrder::ROWMAJOR)
+        .value("colmajor", common::ResultOrder::COLMAJOR)
+        .value("unordered", common::ResultOrder::UNORDERED)
+        .value("globalorder", common::ResultOrder::GLOBAL);
 
     py::enum_<URIType>(m, "URIType")
         .value("automatic", URIType::automatic)
