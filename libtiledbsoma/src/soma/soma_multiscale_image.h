@@ -14,15 +14,13 @@
 #ifndef SOMA_MULTISCALE_IMAGE
 #define SOMA_MULTISCALE_IMAGE
 
-#include <tiledb/tiledb>
-
-#include "soma_collection.h"
+#include "soma_collection_base.h"
 #include "soma_coordinates.h"
+#include "utils/common.h"
 
 namespace tiledbsoma {
 
-using namespace tiledb;
-class SOMAMultiscaleImage : public SOMACollection {
+class SOMAMultiscaleImage : public SOMACollectionBase {
    public:
     //===================================================================
     //= public static
@@ -66,11 +64,11 @@ class SOMAMultiscaleImage : public SOMACollection {
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMACollection(mode, uri, ctx, timestamp) {
+        : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAMultiscaleImage") {
     }
 
-    SOMAMultiscaleImage(const SOMACollection& other)
-        : SOMACollection(other) {
+    SOMAMultiscaleImage(const SOMACollectionBase& other)
+        : SOMACollectionBase(other) {
     }
 
     SOMAMultiscaleImage() = delete;

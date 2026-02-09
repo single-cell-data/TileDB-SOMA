@@ -13,6 +13,7 @@
 
 #include "soma_experiment.h"
 #include "soma_collection.h"
+#include "soma_dataframe.h"
 #include "soma_measurement.h"
 
 namespace tiledbsoma {
@@ -50,13 +51,7 @@ void SOMAExperiment::create(
 std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        auto group = std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
-
-        if (!group->check_type("SOMAExperiment")) {
-            throw TileDBSOMAError("[SOMAExperiment::open] Object is not a SOMAExperiment");
-        }
-
-        return group;
+        return std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

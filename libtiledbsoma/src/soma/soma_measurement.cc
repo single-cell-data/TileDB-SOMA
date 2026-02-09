@@ -12,7 +12,9 @@
  */
 
 #include "soma_measurement.h"
+#include <tiledb/tiledb>
 #include "soma_collection.h"
+#include "soma_dataframe.h"
 #include "soma_experiment.h"
 
 namespace tiledbsoma {
@@ -50,7 +52,7 @@ void SOMAMeasurement::create(
         group->set((measurement_uri / "varm").string(), URIType::absolute, "varm", "SOMACollection");
         group->set((measurement_uri / "varp").string(), URIType::absolute, "varp", "SOMACollection");
         group->close();
-    } catch (TileDBError& e) {
+    } catch (tiledb::TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }
@@ -58,14 +60,8 @@ void SOMAMeasurement::create(
 std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        auto group = std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
-
-        if (!group->check_type("SOMAMeasurement")) {
-            throw TileDBSOMAError("[SOMAMeasurement::open] Object is not a SOMAMeasurement");
-        }
-
-        return group;
-    } catch (TileDBError& e) {
+        return std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
+    } catch (tiledb::TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }

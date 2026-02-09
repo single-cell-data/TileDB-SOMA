@@ -28,7 +28,14 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
-    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
+    py::class_<SOMACollectionBase, SOMAGroup, SOMAObject>(m, "SOMACollectionBase")
+        .def(
+            "__iter__",
+            [](SOMACollectionBase& collection) { return py::make_iterator(collection.begin(), collection.end()); },
+            py::keep_alive<0, 1>())
+        .def("get", &SOMACollectionBase::get);
+
+    py::class_<SOMACollection, SOMACollectionBase>(m, "SOMACollection")
         .def_static(
             "open",
             py::overload_cast<
@@ -41,14 +48,9 @@ void load_soma_collection(py::module& m) {
             "mode"_a,
             "context"_a,
             "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>())
-        .def(
-            "__iter__",
-            [](SOMACollection& collection) { return py::make_iterator(collection.begin(), collection.end()); },
-            py::keep_alive<0, 1>())
-        .def("get", &SOMACollection::get);
+            py::call_guard<py::gil_scoped_release>());
 
-    py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAExperiment")
+    py::class_<SOMAExperiment, SOMACollectionBase>(m, "SOMAExperiment")
         .def_static(
             "open",
             &SOMAExperiment::open,
@@ -59,7 +61,7 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>());
 
-    py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAMeasurement")
+    py::class_<SOMAMeasurement, SOMACollectionBase>(m, "SOMAMeasurement")
         .def_static(
             "open",
             &SOMAMeasurement::open,
@@ -70,7 +72,7 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>());
 
-    py::class_<SOMAScene, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAScene")
+    py::class_<SOMAScene, SOMACollectionBase>(m, "SOMAScene")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
@@ -111,7 +113,7 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>());
 
-    py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAMultiscaleImage")
+    py::class_<SOMAMultiscaleImage, SOMACollectionBase>(m, "SOMAMultiscaleImage")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
