@@ -84,7 +84,9 @@ void load_managed_query(py::module& m) {
             "py_schema"_a)
         .def(
             "select_columns",
-            &common::ManagedQuery::select_columns,
+            [](common::ManagedQuery& mq, const std::vector<std::string>& names, bool if_not_empty, bool replace) {
+                mq.select_columns(names, if_not_empty, replace);
+            },
             "names"_a,
             "if_not_empty"_a = false,
             "replace"_a = false)
