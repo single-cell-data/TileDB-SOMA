@@ -546,7 +546,7 @@ void ManagedQuery::remap_enumeration_indices(
         std::span<AttributeType> shifted_indexes(reinterpret_cast<AttributeType*>(data_buffer.get()), array->length);
 
         std::vector<std::string_view> values = arrow::dictionary_values_view(schema->dictionary, array->dictionary);
-        size_t value_index = 0;
+        uint64_t value_index = 0;
         int value_exist = 0;
 
         if (validity_buffer && array->null_count != 0) {

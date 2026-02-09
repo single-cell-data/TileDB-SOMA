@@ -31,7 +31,7 @@ class Array;
 class ArraySchema;
 class ArraySchemaEvolution;
 class Enumeration;
-struct CurrentDomain;
+class CurrentDomain;
 }  // namespace tiledb
 
 struct ArrowArray;
