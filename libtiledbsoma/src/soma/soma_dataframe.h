@@ -146,7 +146,7 @@ class SOMADataFrame : public SOMAArray {
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMAArray(mode, uri, ctx, timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp, "SOMADataFrame") {
     }
 
     /**
@@ -167,7 +167,7 @@ class SOMADataFrame : public SOMAArray {
         std::string_view uri,
         std::map<std::string, std::string> platform_config,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp) {
+        : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp, "SOMADataFrame") {
     }
 
     SOMADataFrame(const SOMAArray& other)

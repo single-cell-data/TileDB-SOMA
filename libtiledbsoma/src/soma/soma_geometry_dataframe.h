@@ -107,7 +107,7 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMAArray(mode, uri, ctx, timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp, "SOMAGeometryDataFrame") {
         initialize();
     }
 

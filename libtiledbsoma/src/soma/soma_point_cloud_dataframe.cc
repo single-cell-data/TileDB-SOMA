@@ -58,15 +58,7 @@ void SOMAPointCloudDataFrame::create(
 
 std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
-    auto array = std::make_unique<SOMAPointCloudDataFrame>(mode, uri, ctx, timestamp);
-
-    if (!array->check_type("SOMAPointCloudDataFrame")) {
-        throw TileDBSOMAError(
-            "[SOMAPointCloudDataFrame::open] Object is not a "
-            "SOMAPointCloudDataFrame");
-    }
-
-    return array;
+    return std::make_unique<SOMAPointCloudDataFrame>(mode, uri, ctx, timestamp);
 }
 
 //===================================================================

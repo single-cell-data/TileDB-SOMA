@@ -124,7 +124,8 @@ class SOMAArray : public SOMAObject {
         OpenMode mode,
         std::string_view uri,
         std::map<std::string, std::string> platform_config,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt,
+        std::optional<std::string> soma_type = std::nullopt);
 
     /**
      * @brief Construct a new SOMAArray object
@@ -138,7 +139,8 @@ class SOMAArray : public SOMAObject {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt,
+        std::optional<std::string> soma_type = std::nullopt);
 
     /**
      * @brief Construct a new SOMAArray from a TileDB array

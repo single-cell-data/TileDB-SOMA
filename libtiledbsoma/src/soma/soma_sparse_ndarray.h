@@ -95,7 +95,7 @@ class SOMASparseNDArray : public SOMAArray {
      */
     SOMASparseNDArray(
         OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
-        : SOMAArray(mode, uri, ctx, timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp, "SOMASparseNDArray") {
     }
 
     SOMASparseNDArray(const SOMAArray& other)
