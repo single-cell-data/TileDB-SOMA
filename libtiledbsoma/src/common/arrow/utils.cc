@@ -241,7 +241,7 @@ dictionary_to_values<std::string>(ArrowSchema* schema, ArrowArray* array) {
 
         auto calculate_value_size = [&]<typename S>() {
             // Calculate the total number of bytes to allocate for the values by summing the differences of the offset
-            std::span<const S> indices(reinterpret_cast<const S*>(array->buffers[1]), array->length);
+            std::span<const S> indices(reinterpret_cast<const S*>(array->buffers[1]) + array->offset, array->length);
 
             size_t data_buffer_size = std::transform_reduce(
                 indices.begin(), indices.end(), 0L, std::plus{}, [&](const auto& index) {
@@ -370,19 +370,31 @@ dictionary_to_values<bool>(ArrowSchema* schema, ArrowArray* array) {
 std::vector<std::string_view> dictionary_values_view(ArrowSchema* schema, ArrowArray* array) {
     std::vector<std::string_view> result;
 
-    if (array->n_buffers == 3) {
-        std::span<const int64_t> offsets(static_cast<const int64_t*>(array->buffers[1]), array->length + 1);
+    auto extract_var_size_view = [&]<typename OffsetType>() {
+        if (array->length == 0) {
+            return;
+        }
+
+        std::span<const OffsetType> offsets(
+            static_cast<const OffsetType*>(array->buffers[1]) + array->offset, array->length + 1);
         std::string_view data(static_cast<const char*>(array->buffers[2]), offsets.back());
 
-        if (offsets.empty()) {
-            return result;
-        } else {
-            result.reserve(offsets.size() - 1);
-        }
+        result.reserve(array->length);
 
         for (size_t i = 0; i < offsets.size() - 1; i++) {
             const size_t length = offsets[i + 1] - offsets[i];
             result.push_back(data.substr(offsets[i], length));
+        }
+    };
+
+    if (array->n_buffers == 3) {
+        if (strcmp(schema->format, "u") == 0 || strcmp(schema->format, "z") == 0) {
+            extract_var_size_view.template operator()<int32_t>();
+        } else if (strcmp(schema->format, "U") == 0 || strcmp(schema->format, "Z") == 0) {
+            extract_var_size_view.template operator()<int64_t>();
+        } else {
+            throw std::runtime_error(
+                fmt::format("[dictionary_values_view] Unknown format '{}' for var sized dictionary.", schema->format));
         }
     } else {
         result.reserve(array->length);
@@ -400,7 +412,8 @@ std::vector<std::string_view> dictionary_values_view(ArrowSchema* schema, ArrowA
             }
         } else {
             const size_t stride = tiledb::impl::type_size(to_tiledb_format(schema->format));
-            std::string_view data(static_cast<const char*>(array->buffers[1]), array->length * stride);
+            std::string_view data(
+                static_cast<const char*>(array->buffers[1]) + array->offset * stride, array->length * stride);
 
             for (int64_t i = 0; i < array->length; ++i) {
                 result.push_back(data.substr(i * stride, stride));

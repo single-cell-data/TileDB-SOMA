@@ -16,13 +16,17 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include <ranges>
+#include <type_traits>
+#include <unordered_set>
+
 #include "array_buffers.h"
 #include "column_buffer.h"
 #include "column_buffer_strategies.h"
 #include "nanoarrow/nanoarrow.hpp"
 
-#include "../arrow/utils.h"
 #include "../arrow/decode.h"
+#include "../arrow/utils.h"
 
 #include "../logging/impl/logger.h"
 #include "../logging/logger.h"
@@ -233,7 +237,7 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
 
         if (schema->dictionary && enumeration_name) {
             std::optional<std::shared_ptr<tiledb::Enumeration>> extended_enumeration = extend_enumeration(
-                schema, array, enumeration_name.value(), se, true);
+                schema->dictionary, array->dictionary, schema, array, schema->name, enumeration_name.value(), se, true);
             remap_enumeration_indices(
                 schema,
                 array,
@@ -248,13 +252,26 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
 
     const std::unordered_map<std::string, std::string> metadata = arrow::metadata_string_to_map(schema->metadata);
 
-    if (arrow::to_tiledb_format(schema->format, metadata[]) != disk_type) {
-        throw std::runtime_error(
-            fmt::format(
-                "[ManagedQuery][setup_write_arrow_column] Column '{}'. Expected {}, found {}",
-                schema->name,
-                tiledb::impl::type_to_str(disk_type),
-                tiledb::impl::type_to_str(arrow::to_tiledb_format(schema->format))));
+    auto array_type = arrow::to_tiledb_format(schema->format);
+    if (array_type != disk_type) {
+        // Due to type incompatibilities between Arrow and TileDB several type mismaths are allowed. In case of such mismatch we should not throw.
+        // TILEDB_GEOM_WKB and TILEDB_GEOM_WKT are encoded as plain binary and string array is Arrow
+        bool is_geometry_column = (disk_type == TILEDB_GEOM_WKB &&
+                                   (array_type == TILEDB_BLOB || array_type == TILEDB_CHAR)) ||
+                                  (disk_type == TILEDB_GEOM_WKT &&
+                                   (array_type == TILEDB_STRING_ASCII || array_type == TILEDB_STRING_UTF8));
+        // Arrow doesn't differentiate between ASCII and UTF8 string columns
+        bool is_string_column = (disk_type == TILEDB_STRING_ASCII || disk_type == TILEDB_STRING_UTF8) &&
+                                (array_type == TILEDB_STRING_ASCII || array_type == TILEDB_STRING_UTF8);
+
+        if (!(is_geometry_column || is_string_column)) {
+            throw std::runtime_error(
+                fmt::format(
+                    "[ManagedQuery][setup_write_arrow_column] Column '{}'. Expected {}, found {}",
+                    schema->name,
+                    tiledb::impl::type_to_str(disk_type),
+                    tiledb::impl::type_to_str(array_type)));
+        }
     }
 
     if (array->n_buffers == 3) {
@@ -262,15 +279,15 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
             setup_write_column(
                 schema->name,
                 array->length,
-                static_cast<const std::byte*>(array->buffers[2]) + array->offset,
-                static_cast<const uint64_t*>(array->buffers[1]),
+                static_cast<const std::byte*>(array->buffers[2]),
+                static_cast<const uint64_t*>(array->buffers[1]) + array->offset,
                 std::move(validity_buffer));
         } else {
             setup_write_column(
                 schema->name,
                 array->length,
-                static_cast<const std::byte*>(array->buffers[2]) + array->offset,
-                static_cast<const uint32_t*>(array->buffers[1]),
+                static_cast<const std::byte*>(array->buffers[2]),
+                static_cast<const uint32_t*>(array->buffers[1]) + array->offset,
                 std::move(validity_buffer));
         }
     } else {
@@ -288,7 +305,7 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
             setup_write_column(
                 schema->name,
                 array->length,
-                static_cast<const std::byte*>(array->buffers[1]),
+                static_cast<const std::byte*>(array->buffers[1]) + array->offset * tiledb::impl::type_size(disk_type),
                 (uint64_t*)nullptr,
                 std::move(validity_buffer));
         }
@@ -298,19 +315,30 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
 }
 
 std::optional<std::shared_ptr<tiledb::Enumeration>> ManagedQuery::extend_enumeration(
-    ArrowSchema* schema,
-    ArrowArray* array,
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    std::string_view column_name,
     std::string_view enumeration_name,
     tiledb::ArraySchemaEvolution& se,
     bool deduplicate) {
     tiledb::Enumeration enumeration = tiledb::ArrayExperimental::get_enumeration(
         *ctx_, *array_, enumeration_name.data());
 
-    std::vector<std::string_view> dictionary_values = arrow::dictionary_values_view(
-        schema->dictionary, array->dictionary);
-    std::unique_ptr<uint8_t[]> validity_buffer = arrow::bitmap_to_bytemap(
-        static_cast<const uint8_t*>(array->buffers[0]), array->length, array->offset);
+    if (enumeration.type() != arrow::to_tiledb_format(value_schema->format)) {
+        throw std::runtime_error(
+            fmt::format(
+                "extend_enumeration: data type '{}' != schema type '{}'",
+                tiledb::impl::type_to_str(enumeration.type()),
+                tiledb::impl::type_to_str(arrow::to_tiledb_format(value_schema->format))));
+    }
 
+    if (value_array->null_count != 0) {
+        throw std::invalid_argument(fmt::format("[ManagedQuery][extend_enumeration] Null values are not supported"));
+    }
+
+    std::vector<std::string_view> dictionary_values = arrow::dictionary_values_view(value_schema, value_array);
     std::vector<std::string_view> enumeration_values;
     size_t buffer_size = 0;
 
@@ -333,22 +361,50 @@ std::optional<std::shared_ptr<tiledb::Enumeration>> ManagedQuery::extend_enumera
         // It is important that we use core's logic here, so that when we are
         // able to access its hashmap directly without constructing our own,
         // that transition will be seamless.
-        std::span<const IndexType> indices(static_cast<const IndexType*>(array->buffers[1]), array->length);
-        std::set<std::string_view> unique_values;
 
-        if (validity_buffer) {
-            for (size_t i = 0; i < dictionary_values.size(); ++i) {
-                if (validity_buffer[i] && !enumeration.index_of(dictionary_values[i]).has_value() &&
-                    !unique_values.contains(dictionary_values[i])) {
-                    unique_values.insert(dictionary_values[i]);
-                    enumeration_values.push_back(dictionary_values[i]);
-                    buffer_size += dictionary_values[i].size();
+        if (std::unordered_set<std::string_view>(dictionary_values.begin(), dictionary_values.end()).size() !=
+            dictionary_values.size()) {
+            throw std::range_error(
+                fmt::format(
+                    "[ManagedQuery][extend_enumeration] New values provided for column '{}' must "
+                    "be unique within themselves, irrespective of the deduplicate flag",
+                    column_name));
+        }
+
+        if constexpr (std::is_integral_v<IndexType>) {
+            if (index_array->buffers[0]) {
+                std::span<const IndexType> indices(
+                    static_cast<const IndexType*>(index_array->buffers[1]), index_array->length);
+                std::unique_ptr<uint8_t[]> validity_buffer = arrow::bitmap_to_bytemap(
+                    static_cast<const uint8_t*>(index_array->buffers[0]), index_array->length, index_array->offset);
+
+                std::unordered_set<IndexType> referenced_indices;
+                for (size_t i = 0; i < indices.size(); ++i) {
+                    if (validity_buffer[i]) {
+                        referenced_indices.insert(indices[i]);
+                    }
+                }
+
+                for (IndexType i = 0; i < static_cast<IndexType>(dictionary_values.size()); ++i) {
+                    std::string_view value = dictionary_values[i];
+                    if (!enumeration.index_of(value).has_value() && referenced_indices.contains(i)) {
+                        enumeration_values.push_back(value);
+                        buffer_size += value.size();
+                    }
+                }
+            } else {
+                // If there is no validity buffer set
+                for (const auto value : dictionary_values) {
+                    if (!enumeration.index_of(value).has_value()) {
+                        enumeration_values.push_back(value);
+                        buffer_size += value.size();
+                    }
                 }
             }
         } else {
+            // If there is no validity buffer set
             for (const auto value : dictionary_values) {
-                if (!enumeration.index_of(value).has_value() && !unique_values.contains(value)) {
-                    unique_values.insert(value);
+                if (!enumeration.index_of(value).has_value()) {
                     enumeration_values.push_back(value);
                     buffer_size += value.size();
                 }
@@ -356,33 +412,40 @@ std::optional<std::shared_ptr<tiledb::Enumeration>> ManagedQuery::extend_enumera
         }
     };
 
-    switch (arrow::to_tiledb_format(schema->format)) {
-        case TILEDB_UINT8:
-            get_unique_values.template operator()<uint8_t>();
-            break;
-        case TILEDB_INT8:
-            get_unique_values.template operator()<int8_t>();
-            break;
-        case TILEDB_UINT16:
-            get_unique_values.template operator()<uint16_t>();
-            break;
-        case TILEDB_INT16:
-            get_unique_values.template operator()<int16_t>();
-            break;
-        case TILEDB_UINT32:
-            get_unique_values.template operator()<uint32_t>();
-            break;
-        case TILEDB_INT32:
-            get_unique_values.template operator()<int32_t>();
-            break;
-        case TILEDB_UINT64:
-            get_unique_values.template operator()<uint64_t>();
-            break;
-        case TILEDB_INT64:
-            get_unique_values.template operator()<int64_t>();
-            break;
-        default:
-            throw std::runtime_error("");
+    if (index_schema && index_array) {
+        switch (arrow::to_tiledb_format(index_schema->format)) {
+            case TILEDB_UINT8:
+                get_unique_values.template operator()<uint8_t>();
+                break;
+            case TILEDB_INT8:
+                get_unique_values.template operator()<int8_t>();
+                break;
+            case TILEDB_UINT16:
+                get_unique_values.template operator()<uint16_t>();
+                break;
+            case TILEDB_INT16:
+                get_unique_values.template operator()<int16_t>();
+                break;
+            case TILEDB_UINT32:
+                get_unique_values.template operator()<uint32_t>();
+                break;
+            case TILEDB_INT32:
+                get_unique_values.template operator()<int32_t>();
+                break;
+            case TILEDB_UINT64:
+                get_unique_values.template operator()<uint64_t>();
+                break;
+            case TILEDB_INT64:
+                get_unique_values.template operator()<int64_t>();
+                break;
+            default:
+                throw std::runtime_error(
+                    fmt::format(
+                        "[ManagedQuery][extend_enumeration] Unsupported enumeration index type {}",
+                        tiledb::impl::type_to_str(arrow::to_tiledb_format(index_schema->format))));
+        }
+    } else {
+        get_unique_values.template operator()<void>();
     }
 
     // There are two paths to enumeration extension:
@@ -403,7 +466,7 @@ std::optional<std::shared_ptr<tiledb::Enumeration>> ManagedQuery::extend_enumera
                 "[ManagedQuery][extend_enumeration] one or more values provided are already present in the enumeration "
                 "for column "
                 "'{}', and deduplicate was not specified",
-                schema->name));
+                column_name));
     }
 
     if (enumeration_values.empty()) {
@@ -411,7 +474,7 @@ std::optional<std::shared_ptr<tiledb::Enumeration>> ManagedQuery::extend_enumera
     }
 
     // Check if the number of new enumeration will cause an overflow if extended
-    size_t free_capacity = get_max_capacity(array_->schema().attribute(schema->name).type()) -
+    size_t free_capacity = get_max_capacity(array_->schema().attribute(column_name.data()).type()) -
                            enumeration_value_count(*ctx_, enumeration);
     if (free_capacity < enumeration_values.size()) {
         throw std::runtime_error(
@@ -481,7 +544,8 @@ void ManagedQuery::remap_enumeration_indices(
         static_cast<const uint8_t*>(array->buffers[0]), array->length, array->offset);
 
     auto cast_indices = [&]<typename AttributeType, typename IndexType>() {
-        std::span<const IndexType> original_indexes(static_cast<const IndexType*>(array->buffers[1]), array->length);
+        std::span<const IndexType> original_indexes(
+            static_cast<const IndexType*>(array->buffers[1]) + array->offset, array->length);
         std::span<AttributeType> shifted_indexes(reinterpret_cast<AttributeType*>(data_buffer.get()), array->length);
 
         std::vector<std::string_view> values = arrow::dictionary_values_view(schema->dictionary, array->dictionary);
@@ -713,8 +777,12 @@ void ManagedQuery::setup_read() {
 
     if (!buffers_) {
         logging::LOG_TRACE("[ManagedQuery][setup_read] allocate new buffers");
-        buffers_ = std::make_shared<ArrayBuffers>(
-            columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
+        if (ArrayBuffers::use_memory_pool(*array_)) {
+            buffers_ = std::make_shared<ArrayBuffers>(
+                columns_, *array_, std::make_unique<MemoryPoolAllocationStrategy>(columns_, *array_));
+        } else {
+            buffers_ = std::make_shared<ArrayBuffers>(columns_, *array_);
+        }
     }
 
     for (auto& name : columns_) {

@@ -529,9 +529,16 @@ void SOMAArray::extend_enumeration_values(
                     "non-enumerated",
                     column_name));
         }
-        Enumeration core_enum = get_existing_enumeration_for_column(column_name);
 
-        mq.extend_enumeration(values_schema, values_array, column_name, schema_evolution, deduplicate);
+        mq.extend_enumeration(
+            values_schema,
+            values_array,
+            nullptr,
+            nullptr,
+            column_name,
+            enumeration_name.value(),
+            schema_evolution,
+            deduplicate);
     }
     schema_evolution.array_evolve(arr_->uri());
 }

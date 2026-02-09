@@ -58,7 +58,8 @@ std::tuple<std::unique_ptr<std::byte[]>, std::unique_ptr<uint64_t[]>, std::uniqu
     std::span<T> data_view(reinterpret_cast<T*>(data_buffer.get()), array->length);
 
     auto extract_values = [&]<typename IndexType>() {
-        std::span<const IndexType> indices(reinterpret_cast<const IndexType*>(array->buffers[1]), array->length);
+        std::span<const IndexType> indices(
+            reinterpret_cast<const IndexType*>(array->buffers[1]) + array->offset, array->length);
 
         for (size_t i = 0; i < indices.size(); ++i) {
             data_view[i] = values[indices[i]];

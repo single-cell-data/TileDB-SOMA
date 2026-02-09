@@ -304,8 +304,11 @@ class ManagedQuery {
      * @brief Extend an Enumeration with the values contained in the supplied Arrow array and return true if the enumeration is modified
      */
     std::optional<std::shared_ptr<tiledb::Enumeration>> extend_enumeration(
-        ArrowSchema* schema,
-        ArrowArray* array,
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        std::string_view column_name,
         std::string_view enumeration_name,
         tiledb::ArraySchemaEvolution& se,
         bool deduplicate);
