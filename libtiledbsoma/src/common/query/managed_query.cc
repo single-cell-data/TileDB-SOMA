@@ -25,7 +25,6 @@
 #include "column_buffer_strategies.h"
 #include "nanoarrow/nanoarrow.hpp"
 
-#include "../arrow/decode.h"
 #include "../arrow/utils.h"
 
 #include "../logging/impl/logger.h"
@@ -249,8 +248,6 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
             return extended_enumeration.has_value();
         }
     }
-
-    const std::unordered_map<std::string, std::string> metadata = arrow::metadata_string_to_map(schema->metadata);
 
     auto array_type = arrow::to_tiledb_format(schema->format);
     if (array_type != disk_type) {

@@ -30,7 +30,6 @@ set_property(TARGET TILEDBSOMA_NANOARROW_OBJECT PROPERTY POSITION_INDEPENDENT_CO
 
 add_library(TILEDB_COMMON_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/arrow_buffer.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/decode.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/exporter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/arrow/utils.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/impl/logger.cc
