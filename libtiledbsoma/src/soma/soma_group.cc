@@ -94,7 +94,6 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
             group->put_metadata(
                 key, TILEDB_STRING_UTF8, static_cast<uint32_t>(dataset_type.length()), dataset_type.c_str());
         }
-
         return std::make_unique<SOMAGroup>(ctx, group, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
@@ -200,7 +199,7 @@ const std::string SOMAGroup::uri() const {
     return group_->uri();
 }
 
-std::shared_ptr<SOMAContext> SOMAGroup::ctx() {
+std::shared_ptr<SOMAContext> SOMAGroup::ctx() const {
     return ctx_;
 }
 
@@ -285,7 +284,7 @@ std::map<std::string, MetadataValue> SOMAGroup::get_metadata() {
     return metadata_;
 }
 
-bool SOMAGroup::has_metadata(const std::string& key) {
+bool SOMAGroup::has_metadata(const std::string& key) const {
     return metadata_.count(key) != 0;
 }
 

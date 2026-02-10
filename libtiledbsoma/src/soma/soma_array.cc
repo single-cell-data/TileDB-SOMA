@@ -24,6 +24,7 @@
 #include "managed_query.h"
 #include "soma_attribute.h"
 #include "soma_column.h"
+#include "soma_context.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
 
@@ -178,27 +179,27 @@ SOMAArray::SOMAArray(
     , timestamp_(timestamp)
     , soma_mode_(mode)
     , schema_(std::make_shared<tiledb::ArraySchema>(arr_->schema())) {
-    if (!soma_type.has_value()) {  // No SOMA type checking needed.
-        return;
+    if (soma_type.has_value()) {
+        auto type_metadata = type();
+        if (!type_metadata.has_value()) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Unable to open a {} at '{}'. Object is missing required '{}' metadata.",
+                    soma_type.value(),
+                    SOMA_OBJECT_TYPE_KEY,
+                    std::string{uri}));
+        }
+        if (type_metadata.value() != soma_type.value()) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Unable to open a {} at '{}'. The object at this location is a {} not a {}.",
+                    soma_type.value(),
+                    std::string(uri),
+                    type_metadata.value(),
+                    soma_type.value()));
+        }
     }
-    auto type_metadata = this->type();
-    if (!type_metadata.has_value()) {
-        throw TileDBSOMAError(
-            std::format(
-                "Unable to open a {} at '{}'. Object is missing required '{}' metadata.",
-                soma_type.value(),
-                SOMA_OBJECT_TYPE_KEY,
-                std::string{uri}));
-    }
-    if (type_metadata.value() != soma_type.value()) {
-        throw TileDBSOMAError(
-            std::format(
-                "Unable to open a {} at '{}'. The object at this location is a {} not a {}.",
-                soma_type.value(),
-                std::string(uri),
-                type_metadata.value(),
-                soma_type.value()));
-    }
+    check_encoding_version();
 }
 
 SOMAArray::SOMAArray(
@@ -399,7 +400,7 @@ std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
     return metadata_;
 }
 
-bool SOMAArray::has_metadata(const std::string& key) {
+bool SOMAArray::has_metadata(const std::string& key) const {
     return metadata_.count(key) != 0;
 }
 
@@ -407,7 +408,7 @@ uint64_t SOMAArray::metadata_num() const {
     return metadata_.size();
 }
 
-std::optional<TimestampRange> SOMAArray::timestamp() {
+std::optional<TimestampRange> SOMAArray::timestamp() const {
     return timestamp_;
 }
 

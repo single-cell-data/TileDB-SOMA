@@ -41,9 +41,7 @@ def tiledb_object_uri(tmp_path, metadata_typename, encoding_version, soma_type):
         ("SOMACollection", soma.Collection),
         ("SOMADataFrame", soma.DataFrame),
         ("SOMADenseNDArray", soma.DenseNDArray),
-        ("SOMADenseNdArray", soma.DenseNDArray),
         ("SOMASparseNDArray", soma.SparseNDArray),
-        ("SOMASparseNdArray", soma.SparseNDArray),
     ],
 )
 @pytest.mark.parametrize("encoding_version", _constants.SUPPORTED_SOMA_ENCODING_VERSIONS)
@@ -100,9 +98,9 @@ def test_factory_unsupported_version(tiledb_object_uri, soma_type: type, tiledb_
     """All of these should raise, as they are encoding formats from the future"""
     # TODO: Fix Windows test failures without the following.
     sleep(0.01)
-    with pytest.raises(ValueError):
+    with pytest.raises(soma.SOMAError):
         soma.open(tiledb_object_uri, tiledb_timestamp=tiledb_timestamp)
-    with pytest.raises(ValueError):
+    with pytest.raises(soma.SOMAError):
         soma_type.open(tiledb_object_uri, tiledb_timestamp=tiledb_timestamp)
 
 

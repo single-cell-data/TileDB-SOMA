@@ -170,7 +170,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return SOMAContext
      */
-    inline std::shared_ptr<SOMAContext> ctx() {
+    inline std::shared_ptr<SOMAContext> ctx() const {
         return ctx_;
     }
 
@@ -401,7 +401,7 @@ class SOMAArray : public SOMAObject {
      * encodings are acceptable.
      * @return true if the key exists, else false.
      */
-    bool has_metadata(const std::string& key);
+    bool has_metadata(const std::string& key) const;
 
     /**
      * Return then number of metadata items in an open array. The array must
@@ -412,7 +412,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Return optional timestamp pair SOMAArray was opened with.
      */
-    std::optional<TimestampRange> timestamp();
+    std::optional<TimestampRange> timestamp() const;
 
     /**
      * Retrieves the enumeration values from the array's TileDB schema,

@@ -35,27 +35,27 @@ SOMACollectionBase::SOMACollectionBase(
     std::optional<TimestampRange> timestamp,
     std::optional<std::string> soma_type)
     : SOMAGroup(mode, uri, ctx, std::filesystem::path(uri).filename().string(), timestamp) {
-    if (!soma_type.has_value()) {  // No SOMA type checking needed.
-        return;
+    if (soma_type.has_value()) {  // No SOMA type checking needed.
+        auto type_metadata = type();
+        if (!type_metadata.has_value()) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Unable to open a {} at '{}'. Object is missing required '{}' metadata key.",
+                    soma_type.value(),
+                    std::string(uri),
+                    SOMA_OBJECT_TYPE_KEY));
+        }
+        if (type_metadata.value() != soma_type.value()) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Unable to open a {} at '{}'. The object at this location is a {} not a {}.",
+                    soma_type.value(),
+                    std::string(uri),
+                    type_metadata.value(),
+                    soma_type.value()));
+        }
     }
-    auto type_metadata = this->type();
-    if (!type_metadata.has_value()) {
-        throw TileDBSOMAError(
-            std::format(
-                "Unable to open a {} at '{}'. Object is missing required '{}' metadata.",
-                soma_type.value(),
-                SOMA_OBJECT_TYPE_KEY,
-                std::string{uri}));
-    }
-    if (type_metadata.value() != soma_type.value()) {
-        throw TileDBSOMAError(
-            std::format(
-                "Unable to open a {} at '{}'. The object at this location is a {} not a {}.",
-                soma_type.value(),
-                std::string(uri),
-                type_metadata.value(),
-                soma_type.value()));
-    }
+    check_encoding_version();
 }
 
 void SOMACollectionBase::close() {

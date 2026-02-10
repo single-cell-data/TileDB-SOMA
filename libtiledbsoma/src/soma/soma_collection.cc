@@ -29,13 +29,7 @@ void SOMACollection::create(
 std::unique_ptr<SOMACollection> SOMACollection::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        auto group = std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
-
-        if (!group->check_type("SOMACollection")) {
-            throw TileDBSOMAError("[SOMACollection::open] Object is not a SOMACollection");
-        }
-
-        return group;
+        return std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

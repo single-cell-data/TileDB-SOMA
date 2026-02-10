@@ -156,10 +156,10 @@ def _open_soma_object(
                 timestamp=(0, timestamp_ms),
                 clib_type=clib_type,
             )
-        except Exception as tdbe:
+        except (RuntimeError, SOMAError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
-            raise
+            raise SOMAError(tdbe) from tdbe
         try:
             cls: type[SOMAObject] = _type_name_to_cls(handle.type.lower())
             return cls(

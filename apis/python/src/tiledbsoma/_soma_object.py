@@ -13,7 +13,7 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-from . import _constants, _tdb_handles
+from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._soma_context import SOMAContext
@@ -137,23 +137,7 @@ class SOMAObject(somacore.SOMAObject):
         self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle)
-        self._check_required_metadata()
         self._parse_special_metadata()
-
-    def _check_required_metadata(self) -> None:
-        encoding_version = self._metadata.get(_constants.SOMA_ENCODING_VERSION_METADATA_KEY)
-        if encoding_version is None:
-            raise SOMAError(
-                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-                f"the required '{_constants.SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key.",
-            )
-        if isinstance(encoding_version, bytes):
-            encoding_version = str(encoding_version, "utf-8")
-        if encoding_version not in _constants.SUPPORTED_SOMA_ENCODING_VERSIONS:
-            raise ValueError(
-                f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
-                f"needs to be updated to a more recent version.",
-            )
 
     def _parse_special_metadata(self) -> None:
         """Helper function the subclasses can override if they require additional validation or set-up."""
