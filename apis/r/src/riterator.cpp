@@ -76,7 +76,7 @@ namespace tdbs = tiledbsoma;
 // @noRd
 // clang-format on
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
+Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(
     const std::string& uri,
     Rcpp::XPtr<somactx_wrap_t> ctxxp,
     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
@@ -112,7 +112,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     auto arr = tdbs::SOMAArray(OpenMode::soma_read, uri, somactx, tsrng);
 
-    auto mq = new tdbs::ManagedQuery(arr.tiledb_array(), somactx->tiledb_ctx(), name);
+    auto mq = new tdbs::common::ManagedQuery(arr.tiledb_array(), somactx->tiledb_ctx(), name);
     mq->set_layout(tdb_result_order);
     if (!column_names.empty()) {
         mq->select_columns(column_names);
@@ -152,7 +152,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
         apply_dim_ranges(mq, name2dim, lst);
     }
 
-    Rcpp::XPtr<tdbs::ManagedQuery> xptr = make_xptr<tdbs::ManagedQuery>(mq);
+    Rcpp::XPtr<tdbs::common::ManagedQuery> xptr = make_xptr<tdbs::common::ManagedQuery>(mq);
     return xptr;
 }
 
@@ -163,8 +163,8 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 // @noRd
 //
 // [[Rcpp::export]]
-bool mq_complete(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
-    check_xptr_tag<tdbs::ManagedQuery>(mq);
+bool mq_complete(Rcpp::XPtr<tdbs::common::ManagedQuery> mq) {
+    check_xptr_tag<tdbs::common::ManagedQuery>(mq);
     return mq->results_complete();
 }
 
@@ -199,8 +199,8 @@ SEXP create_empty_arrow_table() {
 // @noRd
 //
 // [[Rcpp::export]]
-SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
-    check_xptr_tag<tdbs::ManagedQuery>(mq);
+SEXP mq_next(Rcpp::XPtr<tdbs::common::ManagedQuery> mq) {
+    check_xptr_tag<tdbs::common::ManagedQuery>(mq);
 
     if (mq_complete(mq)) {
         std::stringstream ss;
@@ -271,15 +271,15 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
 }
 
 // [[Rcpp::export]]
-void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
-    check_xptr_tag<tdbs::ManagedQuery>(mq);
+void mq_reset(Rcpp::XPtr<tdbs::common::ManagedQuery> mq) {
+    check_xptr_tag<tdbs::common::ManagedQuery>(mq);
     mq->reset();
     tdbs::common::logging::LOG_DEBUG("[mq_reset] Reset SOMAArray object");
 }
 
 // [[Rcpp::export]]
-void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp::NumericVector points) {
-    check_xptr_tag<tdbs::ManagedQuery>(mq);
+void mq_set_dim_points(Rcpp::XPtr<tdbs::common::ManagedQuery> mq, std::string dim, Rcpp::NumericVector points) {
+    check_xptr_tag<tdbs::common::ManagedQuery>(mq);
     // check args ?
 
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);

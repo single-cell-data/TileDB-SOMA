@@ -180,7 +180,8 @@ void writeArrayFromArrow(
     std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(OpenMode::soma_write, uri, somactx, tsrng);
 
     auto mq = arrup->create_managed_query("unnamed");
-    mq.set_layout(arraytype == "SOMADenseNDArray" ? ResultOrder::colmajor : ResultOrder::automatic);
+    mq.set_layout(
+        arraytype == "SOMADenseNDArray" ? tdbs::common::ResultOrder::COLMAJOR : tdbs::common::ResultOrder::AUTOMATIC);
     mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
     mq.close();

@@ -18,7 +18,7 @@
 namespace tdbs = tiledbsoma;
 
 void apply_dim_points(
-    tdbs::ManagedQuery* mq,
+    tdbs::common::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
     Rcpp::List lst) {
     std::vector<std::string> colnames = lst.attr("names");
@@ -101,7 +101,7 @@ void apply_dim_points(
 }
 
 void apply_dim_ranges(
-    tdbs::ManagedQuery* mq,
+    tdbs::common::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
     Rcpp::List lst) {
     std::vector<std::string> colnames = lst.attr("names");

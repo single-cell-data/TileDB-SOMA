@@ -778,7 +778,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // mq_setup
-Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange, const std::string& loglevel);
+Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_mq_setup(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP timestamprangeSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -798,12 +798,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // mq_complete
-bool mq_complete(Rcpp::XPtr<tdbs::ManagedQuery> mq);
+bool mq_complete(Rcpp::XPtr<tdbs::common::ManagedQuery> mq);
 RcppExport SEXP _tiledbsoma_mq_complete(SEXP mqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::common::ManagedQuery> >::type mq(mqSEXP);
     rcpp_result_gen = Rcpp::wrap(mq_complete(mq));
     return rcpp_result_gen;
 END_RCPP
@@ -819,32 +819,32 @@ BEGIN_RCPP
 END_RCPP
 }
 // mq_next
-SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq);
+SEXP mq_next(Rcpp::XPtr<tdbs::common::ManagedQuery> mq);
 RcppExport SEXP _tiledbsoma_mq_next(SEXP mqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::common::ManagedQuery> >::type mq(mqSEXP);
     rcpp_result_gen = Rcpp::wrap(mq_next(mq));
     return rcpp_result_gen;
 END_RCPP
 }
 // mq_reset
-void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq);
+void mq_reset(Rcpp::XPtr<tdbs::common::ManagedQuery> mq);
 RcppExport SEXP _tiledbsoma_mq_reset(SEXP mqSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::common::ManagedQuery> >::type mq(mqSEXP);
     mq_reset(mq);
     return R_NilValue;
 END_RCPP
 }
 // mq_set_dim_points
-void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp::NumericVector points);
+void mq_set_dim_points(Rcpp::XPtr<tdbs::common::ManagedQuery> mq, std::string dim, Rcpp::NumericVector points);
 RcppExport SEXP _tiledbsoma_mq_set_dim_points(SEXP mqSEXP, SEXP dimSEXP, SEXP pointsSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::common::ManagedQuery> >::type mq(mqSEXP);
     Rcpp::traits::input_parameter< std::string >::type dim(dimSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type points(pointsSEXP);
     mq_set_dim_points(mq, dim, points);
