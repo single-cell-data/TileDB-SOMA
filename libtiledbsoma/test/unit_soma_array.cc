@@ -69,7 +69,7 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    SOMAArray::create(ctx, uri, std::move(schema), "NONE", std::nullopt, TimestampRange(0, 2));
+    SOMAArray::create(ctx, uri, std::move(schema), "NONE", std::nullopt);
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -90,8 +90,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     std::shared_ptr<SOMAContext> ctx,
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
-    bool overlap = false,
-    uint64_t timestamp = 1) {
+    bool overlap = false) {
     // Generate fragments in random order
     std::vector<int> frags(num_fragments);
     std::iota(frags.begin(), frags.end(), 0);
@@ -103,7 +102,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     // Write to SOMAArray
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
-        auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx, TimestampRange(timestamp + i, timestamp + i));
+        auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx);
 
         std::vector<int64_t> d0(num_cells_per_fragment);
         for (int j = 0; j < num_cells_per_fragment; j++) {
@@ -127,7 +126,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     }
 
     // Read from TileDB Array to get expected data
-    Array tiledb_array(*ctx->tiledb_ctx(), uri, TILEDB_READ, TemporalPolicy(TimeTravel, timestamp + num_fragments - 1));
+    Array tiledb_array(*ctx->tiledb_ctx(), uri, TILEDB_READ);
     tiledb_array.reopen();
 
     std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
@@ -147,7 +146,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
 
 };  // namespace
 
-TEST_CASE("SOMAArray: random nnz") {
+TEST_CASE("SOMAArray: random nnz", "[SOMAArray]") {
     auto ctx = std::make_shared<SOMAContext>();
 
     // Create array
@@ -170,7 +169,7 @@ TEST_CASE("SOMAArray: random nnz") {
     schema.check();
 
     // Create array
-    SOMAArray::create(ctx, base_uri, std::move(schema), "NONE", std::nullopt, TimestampRange(0, 2));
+    SOMAArray::create(ctx, base_uri, std::move(schema), "NONE", std::nullopt);
 
     std::vector<size_t> fragment_ids(10);
     std::iota(fragment_ids.begin(), fragment_ids.end(), 0);
@@ -239,19 +238,15 @@ TEST_CASE("SOMAArray: random nnz") {
     }
 }
 
-TEST_CASE("SOMAArray: nnz") {
+TEST_CASE("SOMAArray: nnz", "[SOMAArray]") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
-    auto timestamp = 10;
 
     const char* dim_name = "d0";
     const char* attr_name = "a0";
 
-    // TODO this use to be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
     std::ostringstream section;
     section << "- fragments=" << num_fragments << ", overlap" << overlap << ", allow_duplicates=" << allow_duplicates;
 
@@ -263,13 +258,10 @@ TEST_CASE("SOMAArray: nnz") {
         auto [uri, expected_nnz] = create_array(
             base_uri, ctx, num_cells_per_fragment, num_fragments, overlap, allow_duplicates);
 
-        // Write at timestamp 10
-        auto [expected_d0, expected_a0] = write_array(
-            uri, ctx, num_cells_per_fragment, num_fragments, overlap, timestamp);
+        auto [expected_d0, expected_a0] = write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap);
 
         // Get total cell num
-        auto soma_array = SOMAArray::open(
-            OpenMode::soma_read, uri, ctx, TimestampRange(timestamp, timestamp + num_fragments - 1));
+        auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -301,44 +293,7 @@ TEST_CASE("SOMAArray: nnz") {
     }
 }
 
-TEST_CASE("SOMAArray: nnz with timestamp") {
-    auto num_fragments = GENERATE(1, 10);
-    auto overlap = GENERATE(false, true);
-    auto allow_duplicates = true;
-    int num_cells_per_fragment = 128;
-
-    // TODO this use to be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap << ", allow_duplicates=" << allow_duplicates;
-
-    SECTION(section.str()) {
-        auto ctx = std::make_shared<SOMAContext>();
-
-        // Create array
-        std::string base_uri = "mem://unit-test-array";
-        const auto& [uri, expected_nnz] = create_array(
-            base_uri, ctx, num_cells_per_fragment, num_fragments, overlap, allow_duplicates);
-
-        // Write at timestamp 10
-        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
-
-        // Write more data to the array at timestamp 40, which will be
-        // not be included in the nnz call with a timestamp
-        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 40);
-
-        // Get total cell num at timestamp (0, 20)
-        TimestampRange timestamp{0, 20};
-        auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx, timestamp);
-
-        uint64_t nnz = soma_array->nnz();
-        REQUIRE(nnz == expected_nnz);
-        REQUIRE(nnz >= soma_array->fragment_cell_count());
-    }
-}
-
-TEST_CASE("SOMAArray: nnz with consolidation") {
+TEST_CASE("SOMAArray: nnz with consolidation", "[SOMAArray]") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = true;
@@ -359,13 +314,8 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         const auto& [uri, expected_nnz] = create_array(
             base_uri, ctx, num_cells_per_fragment, num_fragments, overlap, allow_duplicates);
 
-        // Write at timestamp 10
-        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
-
-        // Write more data to the array at timestamp 20, which will be
-        // duplicates of the data written at timestamp 10
-        // The duplicates get merged into one fragment during consolidation.
-        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 20);
+        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap);
+        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap);
 
         // Consolidate and optionally vacuum
         Array::consolidate(*ctx->tiledb_ctx(), uri);
@@ -386,19 +336,19 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     }
 }
 
-TEST_CASE("SOMAArray: metadata") {
+TEST_CASE("SOMAArray: metadata", "[SOMAArray]") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-array";
     const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
-    auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx, TimestampRange(1, 1));
+    auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx);
 
     int32_t val = 100;
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_array->close();
 
     // Read metadata
-    soma_array->open(OpenMode::soma_read, TimestampRange(0, 2));
+    soma_array->open(OpenMode::soma_read);
     REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
@@ -409,16 +359,8 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_array->close();
 
-    // md should not be available at (2, 2)
-    soma_array->open(OpenMode::soma_read, TimestampRange(2, 2));
-    REQUIRE(soma_array->metadata_num() == 2);
-    REQUIRE(soma_array->has_metadata("soma_object_type"));
-    REQUIRE(soma_array->has_metadata("soma_encoding_version"));
-    REQUIRE(!soma_array->has_metadata("md"));
-    soma_array->close();
-
     // Metadata should also be retrievable in write mode
-    soma_array->open(OpenMode::soma_write, TimestampRange(0, 2));
+    soma_array->open(OpenMode::soma_write);
     REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
@@ -433,12 +375,12 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->close();
 
     // Confirm delete in read mode
-    soma_array->open(OpenMode::soma_read, TimestampRange(0, 2));
+    soma_array->open(OpenMode::soma_read);
     REQUIRE(!soma_array->has_metadata("md"));
     REQUIRE(soma_array->metadata_num() == 2);
 }
 
-TEST_CASE("SOMAArray: Test buffer size") {
+TEST_CASE("SOMAArray: Test buffer size", "[SOMAArray]") {
     // Test soma.init_buffer_bytes by making buffer small
     // enough to read one byte at a time so that read_next
     // must be called 10 times instead of placing all data
@@ -461,7 +403,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     soma_array->close();
 }
 
-TEST_CASE("SOMAArray: Test resize") {
+TEST_CASE("SOMAArray: Test resize", "[SOMAArray]") {
     // Test soma.init_buffer_bytes by making buffer small
     // enough to read one byte at a time so that read_next
     // must be called 10 times instead of placing all data
@@ -489,7 +431,7 @@ TEST_CASE("SOMAArray: Test resize") {
     soma_array->close();
 }
 
-TEST_CASE("SOMAArray: ResultOrder") {
+TEST_CASE("SOMAArray: ResultOrder", "[SOMAArray]") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-array-result-order";
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
@@ -504,7 +446,7 @@ TEST_CASE("SOMAArray: ResultOrder") {
     REQUIRE_THROWS_AS(mq.set_layout(static_cast<ResultOrder>(10)), std::invalid_argument);
 }
 
-TEST_CASE("SOMAArray: Write and read back Boolean") {
+TEST_CASE("SOMAArray: Write and read back Boolean", "[SOMAArray]") {
     std::string uri = "mem://unit-test-array";
 
     auto ctx = std::make_shared<SOMAContext>();
