@@ -91,3 +91,8 @@ SEXP _get_dim_domain(Rcpp::XPtr<tiledb::Dimension> dim);
 
 // Get tiling from a TileDB dimension
 SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim);
+
+/**
+ * Convert C++ metadata map to R list.
+ */
+Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap);
