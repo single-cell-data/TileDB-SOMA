@@ -90,6 +90,9 @@ test_that("Iterated Interface from SOMAArrayReader", {
 })
 
 
+# TODO: Before merge either create a new iterated interface test for SOMADataFrame
+# or file an issue to do so.
+
 test_that("Iterated Interface from SOMA Classes", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed("pbmc3k.tiledb") # a Suggests: pre-package 3k PBMC data
@@ -103,8 +106,6 @@ test_that("Iterated Interface from SOMA Classes", {
   untar(tarfile = tgzfile, exdir = tdir)
   uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "raw", "X", "data")
 
-  ## parameterize test
-  test_cases <- c("data.frame", "sparse")
 
   # The read_complete et al. in this test case are designed to be verified
   # against 16MB buffer size, and the particular provided input dataset.
@@ -112,64 +113,50 @@ test_that("Iterated Interface from SOMA Classes", {
   # to the SOMADataFrame and SOMASparseNDArray classes
   set_default_context(c(soma.init_buffer_bytes = as.character(16777216)), replace = TRUE)
 
-  for (tc in test_cases) {
-    sdf <- switch(
-      tc,
-      data.frame = SOMADataFrameOpen(uri),
-      sparse = SOMASparseNDArrayOpen(uri)
-    )
-    expect_true(inherits(sdf, "SOMAArrayBase"))
+  sdf <- SOMASparseNDArrayOpen(uri)
+  expect_true(inherits(sdf, "SOMAArrayBase"))
 
-    iterator <- switch(
-      tc,
-      data.frame = sdf$read(),
-      sparse = sdf$read()$tables()
-    )
+  iterator <-  sdf$read()$tables()
 
-    expect_true(inherits(iterator, "ReadIter"))
-    expect_true(inherits(iterator, "TableReadIter"))
+  expect_true(inherits(iterator, "ReadIter"))
+  expect_true(inherits(iterator, "TableReadIter"))
 
-    # Test $concat()
+  # Test $concat()
+  expect_false(iterator$read_complete())
+  dat <- iterator$concat()
+  expect_true(iterator$read_complete())
+  expect_true(inherits(dat, "Table"))
+  expect_equal(dat$num_columns, 3)
+  expect_equal(dat$num_rows, 2238732)
+
+  rm(iterator)
+  gc()
+
+  # Test $read_next()
+  iterator <- sdf$read()$tables()
+
+  expect_false(iterator$read_complete())
+  for (i in 1:2) {
     expect_false(iterator$read_complete())
-    dat <- iterator$concat()
-    expect_true(iterator$read_complete())
-    expect_true(inherits(dat, "Table"))
-    expect_equal(dat$num_columns, 3)
-    expect_equal(dat$num_rows, 2238732)
+    dat_slice <- iterator$read_next()
+    expect_true(inherits(dat_slice, "Table"))
+    expect_equal(dat_slice$num_columns, 3)
 
-    rm(iterator)
-    gc()
-
-    # Test $read_next()
-    iterator <- switch(
-      tc,
-      data.frame = sdf$read(),
-      sparse = sdf$read()$tables()
-    )
-
-    expect_false(iterator$read_complete())
-    for (i in 1:2) {
-      expect_false(iterator$read_complete())
-      dat_slice <- iterator$read_next()
-      expect_true(inherits(dat_slice, "Table"))
-      expect_equal(dat_slice$num_columns, 3)
-
-      if (i < 2) {
-        expect_equal(dat_slice$num_rows, 2097152)
-      } else {
-        expect_equal(dat_slice$num_rows, 141580)
-      }
+    if (i < 2) {
+      expect_equal(dat_slice$num_rows, 2097152)
+    } else {
+      expect_equal(dat_slice$num_rows, 141580)
     }
-
-    expect_true(iterator$read_complete())
-    expect_warning(iterator$read_next()) # returns NULL with warning
-    expect_warning(iterator$read_next()) # returns NULL with warning
-
-    sdf$close()
-
-    rm(iterator, sdf)
-    gc()
   }
+
+  expect_true(iterator$read_complete())
+  expect_warning(iterator$read_next()) # returns NULL with warning
+  expect_warning(iterator$read_next()) # returns NULL with warning
+
+  sdf$close()
+
+  rm(iterator, sdf)
+  gc()
 })
 
 test_that("Iterated Interface from SOMA Sparse Matrix", {

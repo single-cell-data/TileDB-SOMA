@@ -96,3 +96,32 @@ SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim);
  * Convert C++ metadata map to R list.
  */
 Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap);
+
+/**
+ * Convert R open mode string to C++ OpenMode.
+ */
+inline OpenMode get_open_mode(const std::string& open_mode) {
+    if (open_mode == "READ") {
+        return OpenMode::soma_read;
+    }
+    if (open_mode == "WRITE") {
+        return OpenMode::soma_write;
+    }
+    if (open_mode == "DELETE") {
+        return OpenMode::soma_delete;
+    }
+    throw Rcpp::exception("Unrecognized open mode.");  // TODO: Improve error message
+}
+
+inline std::string get_open_mode_string(const OpenMode open_mode) {
+    switch (open_mode) {
+        case OpenMode::soma_read:
+            return "READ";
+        case OpenMode::soma_write:
+            return "WRITE";
+        case OpenMode::soma_delete:
+            return "DELETE";
+        default:
+            throw Rcpp::exception("Unrecognized open mode.");  // TODO: Improve error message
+    }
+}

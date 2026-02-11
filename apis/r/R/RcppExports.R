@@ -398,3 +398,43 @@ get_data_protocol_from_soma_context <- function(soma_context, uri) {
     .Call(`_tiledbsoma_get_data_protocol_from_soma_context`, soma_context, uri)
 }
 
+soma_object_get_metadata <- function(soma_object) {
+    .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
+}
+
+soma_object_close <- function(soma_object) {
+    invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object))
+}
+
+soma_object_is_open <- function(soma_object) {
+    .Call(`_tiledbsoma_soma_object_is_open`, soma_object)
+}
+
+soma_object_open_mode <- function(dataframe) {
+    .Call(`_tiledbsoma_soma_object_open_mode`, dataframe)
+}
+
+open_dataframe_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_dataframe_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_sparse_ndarray_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_sparse_ndarray_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_dense_ndarray_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_dense_ndarray_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_collection_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_collection_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_measurement_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_measurement_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_experiment_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_experiment_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+

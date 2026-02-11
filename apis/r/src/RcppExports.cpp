@@ -995,6 +995,133 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// soma_object_get_metadata
+Rcpp::List soma_object_get_metadata(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
+RcppExport SEXP _tiledbsoma_soma_object_get_metadata(SEXP soma_objectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_object_get_metadata(soma_object));
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_object_close
+void soma_object_close(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
+RcppExport SEXP _tiledbsoma_soma_object_close(SEXP soma_objectSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    soma_object_close(soma_object);
+    return R_NilValue;
+END_RCPP
+}
+// soma_object_is_open
+bool soma_object_is_open(Rcpp::XPtr<tiledbsoma::SOMADataFrame> soma_object);
+RcppExport SEXP _tiledbsoma_soma_object_is_open(SEXP soma_objectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type soma_object(soma_objectSEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_object_is_open(soma_object));
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_object_open_mode
+std::string soma_object_open_mode(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe);
+RcppExport SEXP _tiledbsoma_soma_object_open_mode(SEXP dataframeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_object_open_mode(dataframe));
+    return rcpp_result_gen;
+END_RCPP
+}
+// open_dataframe_handle
+Rcpp::XPtr<tiledbsoma::SOMADataFrame> open_dataframe_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_dataframe_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_dataframe_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// open_sparse_ndarray_handle
+Rcpp::XPtr<tiledbsoma::SOMASparseNDArray> open_sparse_ndarray_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_sparse_ndarray_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_sparse_ndarray_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// open_dense_ndarray_handle
+Rcpp::XPtr<tiledbsoma::SOMADenseNDArray> open_dense_ndarray_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_dense_ndarray_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_dense_ndarray_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// open_collection_handle
+Rcpp::XPtr<tiledbsoma::SOMACollection> open_collection_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_collection_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_collection_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// open_measurement_handle
+Rcpp::XPtr<tiledbsoma::SOMAMeasurement> open_measurement_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_measurement_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_measurement_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// open_experiment_handle
+Rcpp::XPtr<tiledbsoma::SOMAExperiment> open_experiment_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_experiment_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_experiment_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 9},
@@ -1077,6 +1204,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_create_soma_context", (DL_FUNC) &_tiledbsoma_create_soma_context, 1},
     {"_tiledbsoma_get_config_from_soma_context", (DL_FUNC) &_tiledbsoma_get_config_from_soma_context, 1},
     {"_tiledbsoma_get_data_protocol_from_soma_context", (DL_FUNC) &_tiledbsoma_get_data_protocol_from_soma_context, 2},
+    {"_tiledbsoma_soma_object_get_metadata", (DL_FUNC) &_tiledbsoma_soma_object_get_metadata, 1},
+    {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 1},
+    {"_tiledbsoma_soma_object_is_open", (DL_FUNC) &_tiledbsoma_soma_object_is_open, 1},
+    {"_tiledbsoma_soma_object_open_mode", (DL_FUNC) &_tiledbsoma_soma_object_open_mode, 1},
+    {"_tiledbsoma_open_dataframe_handle", (DL_FUNC) &_tiledbsoma_open_dataframe_handle, 4},
+    {"_tiledbsoma_open_sparse_ndarray_handle", (DL_FUNC) &_tiledbsoma_open_sparse_ndarray_handle, 4},
+    {"_tiledbsoma_open_dense_ndarray_handle", (DL_FUNC) &_tiledbsoma_open_dense_ndarray_handle, 4},
+    {"_tiledbsoma_open_collection_handle", (DL_FUNC) &_tiledbsoma_open_collection_handle, 4},
+    {"_tiledbsoma_open_measurement_handle", (DL_FUNC) &_tiledbsoma_open_measurement_handle, 4},
+    {"_tiledbsoma_open_experiment_handle", (DL_FUNC) &_tiledbsoma_open_experiment_handle, 4},
     {NULL, NULL, 0}
 };
 

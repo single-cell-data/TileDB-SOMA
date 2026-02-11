@@ -25,53 +25,11 @@ SOMAArrayBase <- R6::R6Class(
     #' @return Return s\code{self}.
     #'
     open = function(mode = c("READ", "WRITE", "DELETE")) {
-      envs <- unique(vapply(
-        X = unique(sys.parents()),
-        FUN = function(n) environmentName(environment(sys.function(n))),
-        FUN.VALUE = character(1L)
-      ))
-      if (sys.parent()) {
-        if (
-          inherits(
-            environment(sys.function(sys.parent()))$self,
-            what = "SOMAObject"
-          )
-        ) {
-          envs <- union(envs, "tiledbsoma")
-        }
-      }
-      if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(private$.internal_use_only("open", "collection")),
-            collapse = '\n'
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Set the mode of the array
-      private$.mode <- match.arg(mode)
-
-      if (is.null(self$tiledb_timestamp)) {
-        soma_debug(sprintf(
-          "[SOMAArrayBase$open] Opening %s '%s' in %s mode",
-          self$class(),
-          self$uri,
-          self$mode()
-        ))
-      } else {
-        soma_debug(sprintf(
-          "[SOMAArrayBase$open] Opening %s '%s' in %s mode at (%s)",
-          self$class(),
-          self$uri,
-          mode,
-          self$tiledb_timestamp %||% "now"
-        ))
-      }
-
-      private$.update_metadata_cache(TRUE)
-
+      private$.check_call_is_internal("open", paste(self$class(), "Open", sep=""))
+      open_mode <- match.arg(mode)
+      private$.log_open_timestamp(open_mode)
+      private$.open_handle(open_mode, self$tiledb_timestamp)
+      private$.metadata_cache <- soma_object_get_metadata(private$.handle)
       return(self)
     },
 
@@ -81,13 +39,43 @@ SOMAArrayBase <- R6::R6Class(
     #'
     close = function() {
       soma_debug(sprintf(
-        "[SOMAArrayBase$close] Closing %s '%s'",
+        "[SOMAObject$close] Closing %s '%s'",
         self$class(),
         self$uri
       ))
-      private$.mode <- NULL
-
+      if (!is.null(private$.handle)) {
+        soma_object_close(private$.handle)
+      }
       return(invisible(self))
+    },
+
+
+    #' @description Determine if the object is open for reading or writing
+    #'
+    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
+    #'
+    is_open = function() {
+      if (is.null(private$.handle)) {
+        return(TRUE)
+      }
+      return(soma_object_is_open(private$.handle))
+    },
+
+    #' @description Get the mode of the object
+    #'
+    #' @return The mode of the object, one of:
+    #' \itemize{
+    #'  \item \dQuote{\code{CLOSED}}
+    #'  \item \dQuote{\code{READ}}
+    #'  \item \dQuote{\code{WRITE}}
+    #'  \item \dQuote{\code{DELETE}}
+    #' }
+    #'
+    mode = function() {
+      if (is.null(private$.handle)) {
+          return("CLOSED")
+      }
+      return(soma_object_open_mode(private$.handle))
     },
 
     #' @description Does an array allow duplicates?
@@ -256,6 +244,11 @@ SOMAArrayBase <- R6::R6Class(
     }
   ),
   private = list(
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      stop("No SOMAArray C++ handle. This method must be overridden.")
+    },
+
     write_object_type_metadata = function() {
       # private$.check_open_for_write()
 
