@@ -186,8 +186,8 @@ SOMAArray::SOMAArray(
                 fmt::format(
                     "Unable to open a {} at '{}'. Object is missing required '{}' metadata.",
                     soma_type.value(),
-                    SOMA_OBJECT_TYPE_KEY,
-                    std::string{uri}));
+                    std::string(uri),
+                    SOMA_OBJECT_TYPE_KEY));
         }
         if (type_metadata.value() != soma_type.value()) {
             throw TileDBSOMAError(

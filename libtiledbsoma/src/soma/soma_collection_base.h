@@ -1,5 +1,5 @@
 /**
- * @file   soma_collection.h
+ * @file   soma_collection_base.h
  *
  * @section LICENSE
  *
@@ -8,7 +8,7 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMACollection class.
+ *   This file defines the SOMACollectionBase class.
  */
 
 #ifndef SOMA_COLLECTION_BASE
