@@ -208,7 +208,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 index_column_name,
                 TileDBCreateOptions.from_platform_config(platform_config),
                 dtype,
-                slot_core_current_domain,
+                slot_core_max_domain,
             )
 
             # Necessary to avoid core array-creation error "Reduce domain max by

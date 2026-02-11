@@ -273,7 +273,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 index_column_name,
                 TileDBCreateOptions.from_platform_config(platform_config),
                 dtype,
-                slot_core_current_domain,
+                slot_core_max_domain,
             )
 
             # Necessary to avoid core array-creation error "Reduce domain max by
@@ -1099,7 +1099,7 @@ def _find_extent_for_domain(
     index_column_name: str,
     tiledb_create_write_options: TileDBCreateOptions,
     dtype: np.typing.DTypeLike | str,
-    slot_domain: tuple[Any, Any],
+    slot_max_domain: tuple[Any, Any],
 ) -> int | float | Literal["", b""]:
     """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
@@ -1135,7 +1135,7 @@ def _find_extent_for_domain(
     if dtype == "ascii" or np.dtype(dtype).kind in ("S", "U"):
         return ""
 
-    lo, hi = slot_domain
+    lo, hi = slot_max_domain
     if lo is None or hi is None:
         return extent
 
