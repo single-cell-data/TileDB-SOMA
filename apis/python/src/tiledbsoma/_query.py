@@ -61,9 +61,9 @@ class AxisColumnNames(TypedDict, total=False):
     Lifecycle: maturing
     """
 
-    obs: Sequence[str] | None
+    obs: Union[Sequence[str], None]  # noqa: UP007
     """obs columns to use. All columns if ``None`` or not present."""
-    var: Sequence[str] | None
+    var: Union[Sequence[str], None]  # noqa: UP007
     """var columns to use. All columns if ``None`` or not present."""
 
 
@@ -98,8 +98,8 @@ class AxisIndexer:
 
     query: ExperimentAxisQuery
     _index_factory: IndexFactory
-    _cached_obs: IndexLike | None = None
-    _cached_var: IndexLike | None = None
+    _cached_obs: Union[IndexLike, None] = None  # noqa: UP007
+    _cached_var: Union[IndexLike, None] = None  # noqa: UP007
     _obs_lock: Lock = attrs.field(factory=Lock)
     _var_lock: Lock = attrs.field(factory=Lock)
 

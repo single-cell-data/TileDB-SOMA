@@ -5,12 +5,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import (
-    Any,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Any, Optional, TypedDict, TypeVar, Union
 
 import attrs as attrs_  # We use the name `attrs` later.
 import attrs.validators as vld  # Short name because we use this a bunch.
@@ -42,7 +37,7 @@ _FilterSpec = Union[str, _DictFilterSpec]
 class _DictColumnSpec(TypedDict, total=False):
     """Type specification for the dictionary used to configure a column."""
 
-    filters: Sequence[str] | Mapping[str, _FilterSpec]
+    filters: Union[Sequence[str], Mapping[str, _FilterSpec]]  # noqa: UP007
     tile: int
 
 
@@ -58,16 +53,14 @@ def _normalize_filters(inputs: Iterable[_FilterSpec]) -> tuple[_DictFilterSpec, 
 
 # This exists because mypy does not currently (v1.3) support complex converters
 # like converters.optional(inner_converter).
-def _normalize_filters_optional(
-    inputs: Iterable[_FilterSpec] | None,
-) -> tuple[_DictFilterSpec, ...] | None:
+def _normalize_filters_optional(inputs: Iterable[_FilterSpec] | None) -> tuple[_DictFilterSpec, ...] | None:
     return None if inputs is None else _normalize_filters(inputs)
 
 
 @attrs_.define(frozen=True, slots=True)
 class _ColumnConfig:
-    filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(converter=_normalize_filters_optional)
-    tile: int | None = attrs_.field(validator=vld.optional(vld.instance_of(int)))
+    filters: Optional[tuple[_DictFilterSpec, ...]] = attrs_.field(converter=_normalize_filters_optional)  # noqa: UP045
+    tile: Optional[int] = attrs_.field(validator=vld.optional(vld.instance_of(int)))  # noqa: UP045
 
     @classmethod
     def from_dict(cls, input: _DictColumnSpec) -> Self:
@@ -111,7 +104,7 @@ class TileDBCreateOptions:
             "ZstdFilter",
         ),
     )
-    validity_filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(
+    validity_filters: Optional[tuple[_DictFilterSpec, ...]] = attrs_.field(  # noqa: UP045
         converter=_normalize_filters_optional,
         default=None,
     )
@@ -119,8 +112,8 @@ class TileDBCreateOptions:
         validator=vld.instance_of(bool),
         default=False,
     )
-    tile_order: str | None = attrs_.field(validator=vld.optional(vld.instance_of(str)), default=None)
-    cell_order: str | None = attrs_.field(validator=vld.optional(vld.instance_of(str)), default=None)
+    tile_order: Optional[str] = attrs_.field(validator=vld.optional(vld.instance_of(str)), default=None)  # noqa: UP045
+    cell_order: Optional[str] = attrs_.field(validator=vld.optional(vld.instance_of(str)), default=None)  # noqa: UP045
     dims: Mapping[str, _ColumnConfig] = attrs_.field(factory=dict, converter=_normalize_columns)
     attrs: Mapping[str, _ColumnConfig] = attrs_.field(factory=dict, converter=_normalize_columns)
 
@@ -181,7 +174,7 @@ class TileDBWriteOptions:
     """
 
     sort_coords: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
-    consolidate_and_vacuum: bool | None = attrs_.field(validator=vld.instance_of(bool), default=False)
+    consolidate_and_vacuum: Optional[bool] = attrs_.field(validator=vld.instance_of(bool), default=False)  # noqa: UP045
 
     @classmethod
     def from_platform_config(
