@@ -56,6 +56,56 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
     index_columns.second->release(index_columns.second.get());
 }
 
+TEST_CASE("SOMADenseNDArray: basic read", "[SOMADenseNDArray]") {
+    // Core uses domain & current domain like (0, 999); SOMA uses shape like
+    // 1000. We want to carefully and explicitly test here that there aren't any
+    // off-by-one errors.
+    int64_t dim_max = 999;
+
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-dense-ndarray-basic";
+    std::string dim_name = "soma_dim_0";
+    tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+    tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
+
+    REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
+
+    std::vector<helper::DimInfo> dim_infos(
+        {{.name = dim_name,
+          .tiledb_datatype = dim_tiledb_datatype,
+          .dim_max = dim_max,
+          .string_lo = "N/A",
+          .string_hi = "N/A"}});
+
+    auto index_columns = helper::create_column_index_info(dim_infos);
+
+    if (helper::have_dense_current_domain_support()) {
+        SOMADenseNDArray::create(uri, dim_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2));
+
+        auto dnda = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx);
+        REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max + 1});
+        dnda->close();
+    } else {
+        REQUIRE_THROWS(
+            SOMADenseNDArray::create(
+                uri, dim_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2)));
+    }
+
+    REQUIRE(SOMADenseNDArray::exists(uri, ctx));
+
+    {
+        auto dnda = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx);
+        auto mq = common::ManagedQuery(dnda->tiledb_array(), ctx->tiledb_ctx());
+        mq.select_points<int64_t>(dim_name, std::vector<int64_t>());
+        auto results = mq.read_next();
+    }
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
+}
+
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
     auto ctx = std::make_shared<SOMAContext>();

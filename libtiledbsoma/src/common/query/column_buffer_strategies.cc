@@ -3,6 +3,7 @@
 #include "../logging/impl/logger.h"
 
 #include <stdexcept>
+#include <tiledb/tiledb>
 
 namespace tiledbsoma::common {
 
@@ -24,26 +25,20 @@ BasicAllocationStrategy::BasicAllocationStrategy(const tiledb::Array& array) {
     }
 }
 
-std::pair<size_t, size_t> BasicAllocationStrategy::get_buffer_sizes(
-    const std::variant<tiledb::Attribute, tiledb::Dimension> column) const {
-    return std::visit(
-        [&](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
+std::pair<size_t, size_t> BasicAllocationStrategy::get_buffer_sizes(const tiledb::Attribute& column) const {
+    size_t num_cells = column.variable_sized() ? buffer_size / sizeof(uint64_t) :
+                                                 buffer_size / tiledb::impl::type_size(column.type());
 
-            bool is_var = false;
-            if constexpr (std::is_same_v<T, tiledb::Attribute>) {
-                is_var = arg.variable_sized();
-            } else {
-                is_var = arg.cell_val_num() == TILEDB_VAR_NUM || arg.type() == TILEDB_STRING_ASCII ||
-                         arg.type() == TILEDB_STRING_UTF8;
-            }
+    return std::make_pair(buffer_size, num_cells);
+}
 
-            size_t num_cells = is_var ? buffer_size / sizeof(uint64_t) :
-                                        buffer_size / tiledb::impl::type_size(arg.type());
+std::pair<size_t, size_t> BasicAllocationStrategy::get_buffer_sizes(const tiledb::Dimension& column) const {
+    bool is_var = column.cell_val_num() == TILEDB_VAR_NUM || column.type() == TILEDB_STRING_ASCII ||
+                  column.type() == TILEDB_STRING_UTF8;
 
-            return std::make_pair(buffer_size, num_cells);
-        },
-        column);
+    size_t num_cells = is_var ? buffer_size / sizeof(uint64_t) : buffer_size / tiledb::impl::type_size(column.type());
+
+    return std::make_pair(buffer_size, num_cells);
 }
 
 MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string> columns, const tiledb::Array& array) {
@@ -119,27 +114,24 @@ MemoryPoolAllocationStrategy::MemoryPoolAllocationStrategy(std::span<std::string
     buffer_unit_size = (memory_budget / weight / 8) * 8;
 }
 
-std::pair<size_t, size_t> MemoryPoolAllocationStrategy::get_buffer_sizes(
-    const std::variant<tiledb::Attribute, tiledb::Dimension> column) const {
-    return std::visit(
-        [&](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
+std::pair<size_t, size_t> MemoryPoolAllocationStrategy::get_buffer_sizes(const tiledb::Attribute& column) const {
+    size_t column_budget = (column.variable_sized() ? sizeof(uint64_t) * var_size_expansion_factor :
+                                                      tiledb::impl::type_size(column.type())) *
+                           buffer_unit_size;
+    size_t num_cells = buffer_unit_size;
 
-            bool is_var = false;
-            if constexpr (std::is_same_v<T, tiledb::Attribute>) {
-                is_var = arg.variable_sized();
-            } else {
-                is_var = arg.cell_val_num() == TILEDB_VAR_NUM || arg.type() == TILEDB_STRING_ASCII ||
-                         arg.type() == TILEDB_STRING_UTF8;
-            }
+    return std::make_pair(column_budget, num_cells);
+}
 
-            size_t column_budget = (is_var ? sizeof(uint64_t) * var_size_expansion_factor :
-                                             tiledb::impl::type_size(arg.type())) *
-                                   buffer_unit_size;
-            size_t num_cells = buffer_unit_size;
+std::pair<size_t, size_t> MemoryPoolAllocationStrategy::get_buffer_sizes(const tiledb::Dimension& column) const {
+    bool is_var = column.cell_val_num() == TILEDB_VAR_NUM || column.type() == TILEDB_STRING_ASCII ||
+                  column.type() == TILEDB_STRING_UTF8;
 
-            return std::make_pair(column_budget, num_cells);
-        },
-        column);
+    size_t column_budget = (is_var ? sizeof(uint64_t) * var_size_expansion_factor :
+                                     tiledb::impl::type_size(column.type())) *
+                           buffer_unit_size;
+    size_t num_cells = buffer_unit_size;
+
+    return std::make_pair(column_budget, num_cells);
 }
 }  // namespace tiledbsoma::common

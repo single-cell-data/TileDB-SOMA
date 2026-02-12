@@ -14,16 +14,22 @@
 #endif
 
 namespace tiledbsoma::common {
-#pragma region Status implementation
 
-Status::Status()
-    : code_(StatusCode::OK) {
-}
+size_t enumeration_value_count(const tiledb::Context& ctx, const tiledb::Enumeration& enumeration) {
+    const void* data_buffer;
+    uint64_t data_size;
+    ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data_buffer, &data_size));
 
-Status::Status(StatusCode code, std::string_view origin, std::string_view message)
-    : code_(code)
-    , origin_(origin)
-    , message_(message) {
+    if (enumeration.cell_val_num() == TILEDB_VAR_NUM) {
+        const void* offsets_buffer;
+        uint64_t offsets_size;
+        ctx.handle_error(
+            tiledb_enumeration_get_offsets(ctx.ptr().get(), enumeration.ptr().get(), &offsets_buffer, &offsets_size));
+
+        return offsets_size / sizeof(uint64_t);
+    } else {
+        return data_size / (tiledb::impl::type_size(enumeration.type()) * enumeration.cell_val_num());
+    }
 }
 
 size_t get_max_capacity(tiledb_datatype_t index_type) {

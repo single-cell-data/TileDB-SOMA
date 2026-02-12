@@ -19,8 +19,8 @@ namespace tiledbsoma {
 
 std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
     const nlohmann::json& soma_schema,
-    const Context&,
-    const Array& array,
+    const tiledb::Context&,
+    const tiledb::Array& array,
     const std::map<std::string, tiledbsoma::MetadataValue>&) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
@@ -45,7 +45,7 @@ std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
 }
 
 std::shared_ptr<SOMADimension> SOMADimension::create(
-    std::shared_ptr<Context> ctx,
+    std::shared_ptr<tiledb::Context> ctx,
     ArrowSchema* schema,
     ArrowArray* array,
     const std::string& soma_type,
@@ -148,18 +148,18 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
 }
 
 std::shared_ptr<SOMADimension> SOMADimension::create(
-    std::shared_ptr<Context> ctx,
+    std::shared_ptr<tiledb::Context> ctx,
     const std::string& name,
     const std::string& soma_type,
     tiledb_datatype_t tiledb_type,
     const PlatformConfig& platform_config) {
-    auto dim = Dimension::create(*ctx, name, tiledb_type, nullptr, nullptr);
+    auto dim = tiledb::Dimension::create(*ctx, name, tiledb_type, nullptr, nullptr);
     FilterList filter_list = utils::create_dim_filter_list(name, platform_config, soma_type, ctx);
     dim.set_filter_list(filter_list);
     return std::make_shared<SOMADimension>(SOMADimension(dim));
 }
 
-void SOMADimension::_set_dim_points(ManagedQuery& query, const std::any& points) const {
+void SOMADimension::_set_dim_points(common::ManagedQuery& query, const std::any& points) const {
     switch (dimension.type()) {
         case TILEDB_UINT8:
             query.select_points(dimension.name(), std::any_cast<std::span<const uint8_t>>(points));
@@ -223,28 +223,35 @@ void SOMADimension::_set_dim_points(ManagedQuery& query, const std::any& points)
     }
 }
 
-void SOMADimension::_set_dim_ranges(ManagedQuery& query, const std::any& ranges) const {
+void SOMADimension::_set_dim_ranges(common::ManagedQuery& query, const std::any& ranges) const {
     switch (dimension.type()) {
         case TILEDB_UINT8:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<uint8_t, uint8_t>>>(ranges));
+            query.select_ranges<uint8_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<uint8_t, uint8_t>>>(ranges));
             break;
         case TILEDB_UINT16:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<uint16_t, uint16_t>>>(ranges));
+            query.select_ranges<uint16_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<uint16_t, uint16_t>>>(ranges));
             break;
         case TILEDB_UINT32:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<uint32_t, uint32_t>>>(ranges));
+            query.select_ranges<uint32_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<uint32_t, uint32_t>>>(ranges));
             break;
         case TILEDB_UINT64:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<uint64_t, uint64_t>>>(ranges));
+            query.select_ranges<uint64_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<uint64_t, uint64_t>>>(ranges));
             break;
         case TILEDB_INT8:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<int8_t, int8_t>>>(ranges));
+            query.select_ranges<int8_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<int8_t, int8_t>>>(ranges));
             break;
         case TILEDB_INT16:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<int16_t, int16_t>>>(ranges));
+            query.select_ranges<int16_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<int16_t, int16_t>>>(ranges));
             break;
         case TILEDB_INT32:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<int32_t, int32_t>>>(ranges));
+            query.select_ranges<int32_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<int32_t, int32_t>>>(ranges));
             break;
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
@@ -269,17 +276,20 @@ void SOMADimension::_set_dim_ranges(ManagedQuery& query, const std::any& ranges)
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
         case TILEDB_INT64:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<int64_t, int64_t>>>(ranges));
+            query.select_ranges<int64_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<int64_t, int64_t>>>(ranges));
             break;
         case TILEDB_FLOAT32:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<float_t, float_t>>>(ranges));
+            query.select_ranges<float_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<float_t, float_t>>>(ranges));
             break;
         case TILEDB_FLOAT64:
-            query.select_ranges(dimension.name(), std::any_cast<std::vector<std::pair<double_t, double_t>>>(ranges));
+            query.select_ranges<double_t>(
+                dimension.name(), std::any_cast<std::vector<std::pair<double_t, double_t>>>(ranges));
             break;
         case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
-            query.select_ranges(
+            query.select_ranges<std::string>(
                 dimension.name(), std::any_cast<std::vector<std::pair<std::string, std::string>>>(ranges));
             break;
         default:
@@ -288,7 +298,7 @@ void SOMADimension::_set_dim_ranges(ManagedQuery& query, const std::any& ranges)
     }
 }
 
-void SOMADimension::_set_current_domain_slot(NDRectangle& rectangle, std::span<const std::any> domain) const {
+void SOMADimension::_set_current_domain_slot(tiledb::NDRectangle& rectangle, std::span<const std::any> domain) const {
     if (domain.size() != 1) {
         throw TileDBSOMAError(
             fmt::format(
@@ -406,7 +416,7 @@ void SOMADimension::_set_current_domain_slot(NDRectangle& rectangle, std::span<c
 }
 
 std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
-    std::optional<NDRectangle>& rectangle, std::span<const std::any> new_domain) const {
+    std::optional<tiledb::NDRectangle>& rectangle, std::span<const std::any> new_domain) const {
     if (new_domain.size() != 1) {
         throw TileDBSOMAError(
             fmt::format(
@@ -597,7 +607,7 @@ std::any SOMADimension::_core_domain_slot() const {
     }
 }
 
-std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
+std::any SOMADimension::_non_empty_domain_slot(tiledb::Array& array) const {
     switch (dimension.type()) {
         case TILEDB_UINT8:
             return std::make_any<std::pair<uint8_t, uint8_t>>(array.non_empty_domain<uint8_t>(dimension.name()));
@@ -653,7 +663,7 @@ std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
     }
 }
 
-std::any SOMADimension::_non_empty_domain_slot_opt(const SOMAContext& ctx, Array& array) const {
+std::any SOMADimension::_non_empty_domain_slot_opt(const SOMAContext& ctx, tiledb::Array& array) const {
     int32_t is_empty;
 
     if (dimension.type() == TILEDB_STRING_ASCII || dimension.type() == TILEDB_STRING_UTF8) {
@@ -808,14 +818,14 @@ std::any SOMADimension::_non_empty_domain_slot_opt(const SOMAContext& ctx, Array
     }
 }
 
-std::any SOMADimension::_core_current_domain_slot(const SOMAContext& ctx, Array& array) const {
+std::any SOMADimension::_core_current_domain_slot(const SOMAContext& ctx, tiledb::Array& array) const {
     CurrentDomain current_domain = tiledb::ArraySchemaExperimental::current_domain(*ctx.tiledb_ctx(), array.schema());
     NDRectangle ndrect = current_domain.ndrectangle();
 
     return _core_current_domain_slot(ndrect);
 }
 
-std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
+std::any SOMADimension::_core_current_domain_slot(tiledb::NDRectangle& ndrect) const {
     switch (dimension.type()) {
         case TILEDB_UINT8: {
             std::array<uint8_t, 2> domain = ndrect.range<uint8_t>(dimension.name());
@@ -891,7 +901,7 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
-    const SOMAContext& ctx, Array& array, enum Domainish kind, bool downcast_dict_of_large_var) const {
+    const SOMAContext& ctx, tiledb::Array& array, enum Domainish kind, bool downcast_dict_of_large_var) const {
     ArrowArray* arrow_array;
 
     switch (domain_type().value()) {
@@ -964,7 +974,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
     return std::make_pair(arrow_array, arrow_schema_slot(ctx, array, downcast_dict_of_large_var));
 }
 
-ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, Array&, bool) const {
+ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, tiledb::Array&, bool) const {
     return ArrowAdapter::arrow_schema_from_tiledb_dimension(dimension);
 }
 

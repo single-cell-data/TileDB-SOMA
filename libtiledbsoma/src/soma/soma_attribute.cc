@@ -18,8 +18,8 @@
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
     const nlohmann::json& soma_schema,
-    const Context& ctx,
-    const Array& array,
+    const tiledb::Context& ctx,
+    const tiledb::Array& array,
     const std::map<std::string, tiledbsoma::MetadataValue>&) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
         throw TileDBSOMAError(
@@ -44,25 +44,28 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
     }
 
     auto attribute = array.schema().attribute(attribute_names[0]);
-    auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
+    auto enumeration_name = tiledb::AttributeExperimental::get_enumeration_name(ctx, attribute);
 
-    std::optional<Enumeration> enumeration = enumeration_name.has_value() ?
-                                                 std::make_optional(
-                                                     ArrayExperimental::get_enumeration(
-                                                         ctx, array, enumeration_name.value())) :
-                                                 std::nullopt;
+    std::optional<tiledb::Enumeration> enumeration = enumeration_name.has_value() ?
+                                                         std::make_optional(
+                                                             tiledb::ArrayExperimental::get_enumeration(
+                                                                 ctx, array, enumeration_name.value())) :
+                                                         std::nullopt;
 
     return std::make_shared<SOMAAttribute>(attribute, enumeration);
 }
 
 std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
-    std::shared_ptr<Context> ctx, ArrowSchema* schema, std::string_view type_metadata, PlatformConfig platform_config) {
+    std::shared_ptr<tiledb::Context> ctx,
+    ArrowSchema* schema,
+    std::string_view type_metadata,
+    PlatformConfig platform_config) {
     auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(ctx, schema, type_metadata, platform_config);
 
     return std::make_shared<SOMAAttribute>(SOMAAttribute(attribute.first, attribute.second));
 }
 
-void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
+void SOMAAttribute::_set_dim_points(common::ManagedQuery&, const std::any&) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_set_dim_points] Column with name {} is not an index "
@@ -70,7 +73,7 @@ void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
             name()));
 }
 
-void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
+void SOMAAttribute::_set_dim_ranges(common::ManagedQuery&, const std::any&) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_set_dim_ranges] Column with name {} is not an index "
@@ -78,7 +81,7 @@ void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
             name()));
 }
 
-void SOMAAttribute::_set_current_domain_slot(NDRectangle&, std::span<const std::any>) const {
+void SOMAAttribute::_set_current_domain_slot(tiledb::NDRectangle&, std::span<const std::any>) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
@@ -87,7 +90,7 @@ void SOMAAttribute::_set_current_domain_slot(NDRectangle&, std::span<const std::
 }
 
 std::pair<bool, std::string> SOMAAttribute::_can_set_current_domain_slot(
-    std::optional<NDRectangle>&, std::span<const std::any>) const {
+    std::optional<tiledb::NDRectangle>&, std::span<const std::any>) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
@@ -103,7 +106,7 @@ std::any SOMAAttribute::_core_domain_slot() const {
             name()));
 }
 
-std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
+std::any SOMAAttribute::_non_empty_domain_slot(tiledb::Array&) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
@@ -111,7 +114,7 @@ std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
             name()));
 }
 
-std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, Array&) const {
+std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, tiledb::Array&) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
@@ -119,7 +122,7 @@ std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, Array&) c
             name()));
 }
 
-std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, Array&) const {
+std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, tiledb::Array&) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
@@ -127,7 +130,7 @@ std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, Array&) co
             name()));
 }
 
-std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
+std::any SOMAAttribute::_core_current_domain_slot(tiledb::NDRectangle&) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
@@ -136,7 +139,7 @@ std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
-    const SOMAContext&, Array&, enum Domainish, bool) const {
+    const SOMAContext&, tiledb::Array&, enum Domainish, bool) const {
     throw TileDBSOMAError(
         fmt::format(
             "[SOMAAttribute][arrow_domain_slot] Column with name {} is not an "
@@ -145,7 +148,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
 }
 
 ArrowSchema* SOMAAttribute::arrow_schema_slot(
-    const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var) const {
+    const SOMAContext& ctx, tiledb::Array& array, bool downcast_dict_of_large_var) const {
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
         attribute, *ctx.tiledb_ctx(), array, downcast_dict_of_large_var);
 }

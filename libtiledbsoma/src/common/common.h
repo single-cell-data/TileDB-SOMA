@@ -14,49 +14,9 @@
 #include <string>
 #include <string_view>
 #include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
 
 namespace tiledbsoma::common {
-
-enum class StatusCode { OK, ERROR };
-
-class Status {
-   public:
-    Status();
-    Status(StatusCode code, std::string_view origin, std::string_view message);
-    ~Status() = default;
-
-    StatusCode code() const {
-        return code_;
-    }
-
-    std::string origin() const {
-        return origin_;
-    }
-
-    std::string message() const {
-        return message_;
-    }
-
-   private:
-    StatusCode code_;
-    std::string origin_;
-    std::string message_;
-};
-
-template <typename T>
-concept is_data_buffer = std::same_as<std::unique_ptr<std::byte[]>, T> ||
-                         (std::is_pointer_v<T> &&
-                          (std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, void> ||
-                           std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, std::byte> ||
-                           std::integral<std::remove_const_t<std::remove_pointer_t<T>>> ||
-                           std::floating_point<std::remove_const_t<std::remove_pointer_t<T>>>));
-
-template <typename T>
-concept is_offset_buffer = std::same_as<T, std::unique_ptr<uint64_t[]>> ||
-                           (std::is_pointer_v<T> &&
-                            (std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint32_t> ||
-                             std::same_as<std::remove_const_t<std::remove_pointer_t<T>>, uint64_t>));
-
 /**
  * @brief Get a human redable name from the name of a type
  * 
@@ -109,6 +69,8 @@ T get_config_value(const tiledb::Config& config, std::string_view key, T default
 
     return value;
 }
+
+size_t enumeration_value_count(const tiledb::Context& ctx, const tiledb::Enumeration& enumeration);
 
 /**
  * @brief Get the maximum number of Enumeration values the given index datatype can reference.

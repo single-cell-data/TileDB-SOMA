@@ -31,24 +31,26 @@ class Array;
 class ArraySchema;
 class ArraySchemaEvolution;
 class Enumeration;
-struct CurrentDomain;
+class CurrentDomain;
 }  // namespace tiledb
 
 struct ArrowArray;
 struct ArrowSchema;
 
+namespace tiledbsoma::common {
+class ManagedQuery;
+}  // namespace tiledbsoma::common
+
 namespace tiledbsoma::common::arrow {
 template <typename T>
 using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
 using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
-
 }  // namespace tiledbsoma::common::arrow
 
 namespace tiledbsoma {
 
 class CoordinateValueFilters;
 class SOMAColumn;
-class ManagedQuery;
 struct PlatformSchemaConfig;
 
 using StatusAndReason = std::pair<bool, std::string>;
@@ -192,7 +194,7 @@ class SOMAArray : public SOMAObject {
      *
      * @param name Name of the array.
      */
-    ManagedQuery create_managed_query(std::string_view name = "unnamed") const;
+    common::ManagedQuery create_managed_query(std::string_view name = "unnamed") const;
 
     /**
      * Creates a new ManagedQuery for this array.
@@ -200,7 +202,8 @@ class SOMAArray : public SOMAObject {
      * @param ctx SOMA context to use for the query.
      * @param name Name of the array.
      */
-    ManagedQuery create_managed_query(std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const;
+    common::ManagedQuery create_managed_query(
+        std::shared_ptr<SOMAContext> query_ctx, std::string_view name = "unnamed") const;
 
     /**
      * Creates a new CoordinateValueFilters for this array.

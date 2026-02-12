@@ -17,13 +17,13 @@ namespace tdbs = tiledbsoma;
 
 // Applies (named list of) vectors of points to the named dimensions
 void apply_dim_points(
-    tdbs::ManagedQuery* mq,
+    tdbs::common::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
     Rcpp::List lst);
 
 // Applies (named list of) matrices of points to the named dimensions
 void apply_dim_ranges(
-    tdbs::ManagedQuery* mq,
+    tdbs::common::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
     Rcpp::List lst);
 
@@ -47,11 +47,11 @@ inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rc
     return platform_config;
 }
 
-inline ResultOrder get_tdb_result_order(std::string result_order) {
-    std::map<std::string, ResultOrder> result_order_map{
-        {"auto", ResultOrder::automatic},
-        {"row-major", ResultOrder::rowmajor},
-        {"column-major", ResultOrder::colmajor}};
+inline tdbs::common::ResultOrder get_tdb_result_order(std::string result_order) {
+    std::map<std::string, tdbs::common::ResultOrder> result_order_map{
+        {"auto", tdbs::common::ResultOrder::automatic},
+        {"row-major", tdbs::common::ResultOrder::rowmajor},
+        {"column-major", tdbs::common::ResultOrder::colmajor}};
     return result_order_map[result_order];
 }
 

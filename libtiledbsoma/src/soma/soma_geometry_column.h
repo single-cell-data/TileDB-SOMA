@@ -27,15 +27,13 @@
 #include <vector>
 
 #include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
+
 #include "../tiledb_adapter/platform_config.h"
 #include "soma_column.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {
-
-class ArrayBuffers;
-
-using namespace tiledb;
 
 class SOMAGeometryColumn : public SOMAColumn {
    public:
@@ -44,12 +42,12 @@ class SOMAGeometryColumn : public SOMAColumn {
     //===================================================================
     static std::shared_ptr<SOMAColumn> deserialize(
         const nlohmann::json& soma_schema,
-        const Context& ctx,
-        const Array& array,
+        const tiledb::Context& ctx,
+        const tiledb::Array& array,
         const std::map<std::string, tiledbsoma::MetadataValue>&);
 
     static std::shared_ptr<SOMAGeometryColumn> create(
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<tiledb::Context> ctx,
         ArrowSchema* schema,
         ArrowSchema* spatial_schema,
         ArrowArray* spatial_array,
@@ -59,12 +57,13 @@ class SOMAGeometryColumn : public SOMAColumn {
         const PlatformConfig& platform_config);
 
     static std::shared_ptr<SOMAGeometryColumn> create(
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<tiledb::Context> ctx,
         const SOMACoordinateSpace& coordinate_space,
         const std::vector<DimensionConfigAdapter<double_t>>& dim_configs,
         const PlatformConfig& platform_config);
 
-    SOMAGeometryColumn(std::vector<Dimension> dimensions, Attribute attribute, SOMACoordinateSpace coordinate_space)
+    SOMAGeometryColumn(
+        std::vector<tiledb::Dimension> dimensions, tiledb::Attribute attribute, SOMACoordinateSpace coordinate_space)
         : dimensions(dimensions)
         , attribute(attribute)
         , coordinate_space(coordinate_space) {};
@@ -77,7 +76,7 @@ class SOMAGeometryColumn : public SOMAColumn {
         return true;
     }
 
-    inline void select_columns(ManagedQuery& query, bool if_not_empty = false) const override {
+    inline void select_columns(common::ManagedQuery& query, bool if_not_empty = false) const override {
         query.select_columns(std::vector({attribute.name()}), if_not_empty);
     };
 
@@ -93,26 +92,26 @@ class SOMAGeometryColumn : public SOMAColumn {
         return attribute.type();
     }
 
-    inline std::optional<std::vector<Dimension>> tiledb_dimensions() override {
+    inline std::optional<std::vector<tiledb::Dimension>> tiledb_dimensions() override {
         return dimensions;
     }
 
-    inline std::optional<std::vector<Attribute>> tiledb_attributes() override {
+    inline std::optional<std::vector<tiledb::Attribute>> tiledb_attributes() override {
         return std::vector({attribute});
     }
 
-    inline std::optional<std::vector<Enumeration>> tiledb_enumerations() override {
+    inline std::optional<std::vector<tiledb::Enumeration>> tiledb_enumerations() override {
         return std::nullopt;
     }
 
     std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
         const SOMAContext& ctx,
-        Array& array,
+        tiledb::Array& array,
         enum Domainish kind,
         bool downcast_dict_of_large_var = false) const override;
 
     ArrowSchema* arrow_schema_slot(
-        const SOMAContext& ctx, Array& array, bool downcast_dict_of_large_var = false) const override;
+        const SOMAContext& ctx, tiledb::Array& array, bool downcast_dict_of_large_var = false) const override;
 
     void serialize(nlohmann::json&) const override;
 
@@ -121,24 +120,24 @@ class SOMAGeometryColumn : public SOMAColumn {
     }
 
    protected:
-    void _set_dim_points(ManagedQuery& query, const std::any& points) const override;
+    void _set_dim_points(common::ManagedQuery& query, const std::any& points) const override;
 
-    void _set_dim_ranges(ManagedQuery& query, const std::any& ranges) const override;
+    void _set_dim_ranges(common::ManagedQuery& query, const std::any& ranges) const override;
 
     void _set_current_domain_slot(NDRectangle& rectangle, std::span<const std::any> new_current_domain) const override;
 
     std::pair<bool, std::string> _can_set_current_domain_slot(
-        std::optional<NDRectangle>& rectangle, std::span<const std::any> new_current_domain) const override;
+        std::optional<tiledb::NDRectangle>& rectangle, std::span<const std::any> new_current_domain) const override;
 
     std::any _core_domain_slot() const override;
 
-    std::any _non_empty_domain_slot(Array& array) const override;
+    std::any _non_empty_domain_slot(tiledb::Array& array) const override;
 
-    std::any _non_empty_domain_slot_opt(const SOMAContext& ctx, Array& array) const override;
+    std::any _non_empty_domain_slot_opt(const SOMAContext& ctx, tiledb::Array& array) const override;
 
-    std::any _core_current_domain_slot(const SOMAContext& ctx, Array& array) const override;
+    std::any _core_current_domain_slot(const SOMAContext& ctx, tiledb::Array& array) const override;
 
-    std::any _core_current_domain_slot(NDRectangle& ndrect) const override;
+    std::any _core_current_domain_slot(tiledb::NDRectangle& ndrect) const override;
 
    private:
     /**
@@ -148,15 +147,16 @@ class SOMAGeometryColumn : public SOMAColumn {
      * num_spatial_axes) to provide spatial indexing.
      */
     const size_t TDB_DIM_PER_SPATIAL_AXIS = 2;
-    std::vector<Dimension> dimensions;
-    Attribute attribute;
+    std::vector<tiledb::Dimension> dimensions;
+    tiledb::Attribute attribute;
     SOMACoordinateSpace coordinate_space;
 
     /**
      * Compute the usable domain limits. If the array has a current domain then
      * it is used to compute the limits, otherwise the core domain is used.
      */
-    std::vector<std::pair<double_t, double_t>> _limits(const Context& ctx, const ArraySchema& schema) const;
+    std::vector<std::pair<double_t, double_t>> _limits(
+        const tiledb::Context& ctx, const tiledb::ArraySchema& schema) const;
 
     std::vector<std::pair<double_t, double_t>> _transform_ranges(
         const std::vector<std::pair<std::vector<double_t>, std::vector<double_t>>>& ranges) const;

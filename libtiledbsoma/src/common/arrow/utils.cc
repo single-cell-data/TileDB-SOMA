@@ -17,6 +17,10 @@
 
 namespace tiledbsoma::common::arrow {
 
+namespace impl {
+constexpr std::array<char, 2> bool_dict({{0, 1}});
+}
+
 ArrowTable make_empty_arrow_table(std::string_view name, std::string_view format, size_t num_children = 0) {
     managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
     managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
@@ -224,5 +228,203 @@ std::unique_ptr<uint8_t[]> bytemap_to_bitmap(const uint8_t* bytemap, size_t leng
     }
 
     return bitmap;
+}
+
+template <>
+std::tuple<std::unique_ptr<std::byte[]>, std::unique_ptr<uint64_t[]>, std::unique_ptr<uint8_t[]>>
+dictionary_to_values<std::string>(ArrowSchema* schema, ArrowArray* array) {
+    auto extract_values = []<typename OffsetType>(ArrowSchema* schema, ArrowArray* array) {
+        auto value_array = array->dictionary;
+
+        std::span<const OffsetType> value_offsets(
+            (OffsetType*)value_array->buffers[1] + value_array->offset, value_array->length);
+        std::span<const std::byte> value_data((std::byte*)value_array->buffers[2], value_offsets.back());
+
+        std::unique_ptr<uint64_t[]> offsets = std::make_unique_for_overwrite<uint64_t[]>(array->length + 1);
+        std::unique_ptr<std::byte[]> data;
+
+        auto calculate_value_size = [&]<typename S>() {
+            // Calculate the total number of bytes to allocate for the values by summing the differences of the offset
+            std::span<const S> indices(reinterpret_cast<const S*>(array->buffers[1]) + array->offset, array->length);
+
+            size_t data_buffer_size = std::transform_reduce(
+                indices.begin(), indices.end(), 0L, std::plus{}, [&](const auto& index) {
+                    return value_offsets[index + 1] - value_offsets[index];
+                });
+
+            data = std::make_unique_for_overwrite<std::byte[]>(data_buffer_size);
+
+            size_t offset = 0;
+            offsets[0] = 0;
+
+            for (size_t i = 0; i < indices.size(); ++i) {
+                auto index = indices[i];
+                std::memcpy(
+                    data.get() + offset,
+                    value_data.data() + value_offsets[index],
+                    value_offsets[index + 1] - value_offsets[index]);
+
+                offset += value_offsets[index + 1] - value_offsets[index];
+                offsets[i + 1] = offset;
+            }
+        };
+
+        switch (to_tiledb_format(schema->format)) {
+            case TILEDB_INT8:
+                calculate_value_size.template operator()<int8_t>();
+                break;
+            case TILEDB_UINT8:
+                calculate_value_size.template operator()<uint8_t>();
+                break;
+            case TILEDB_INT16:
+                calculate_value_size.template operator()<int16_t>();
+                break;
+            case TILEDB_UINT16:
+                calculate_value_size.template operator()<uint16_t>();
+                break;
+            case TILEDB_INT32:
+                calculate_value_size.template operator()<int32_t>();
+                break;
+            case TILEDB_UINT32:
+                calculate_value_size.template operator()<uint32_t>();
+                break;
+            case TILEDB_INT64:
+                calculate_value_size.template operator()<int64_t>();
+                break;
+            case TILEDB_UINT64:
+                calculate_value_size.template operator()<uint64_t>();
+                break;
+            default:
+                throw std::runtime_error("Saw invalid index type when trying to promote indexes to values");
+        }
+
+        return std::make_pair<std::unique_ptr<std::byte[]>, std::unique_ptr<uint64_t[]>>(
+            std::move(data), std::move(offsets));
+    };
+
+    std::unique_ptr<std::byte[]> data_buffer;
+    std::unique_ptr<uint64_t[]> offset_buffer;
+
+    if ((strcmp(schema->dictionary->format, "U") == 0) || (strcmp(schema->dictionary->format, "Z") == 0)) {
+        std::tie(data_buffer, offset_buffer) = extract_values.operator()<uint64_t>(schema, array);
+    } else {
+        std::tie(data_buffer, offset_buffer) = extract_values.operator()<uint32_t>(schema, array);
+    }
+
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = bitmap_to_bytemap(static_cast<const uint8_t*>(array->buffers[0]), array->length, array->offset);
+    }
+
+    return std::make_tuple(std::move(data_buffer), std::move(offset_buffer), std::move(validity));
+}
+
+template <>
+std::tuple<std::unique_ptr<std::byte[]>, std::unique_ptr<uint64_t[]>, std::unique_ptr<uint8_t[]>>
+dictionary_to_values<bool>(ArrowSchema* schema, ArrowArray* array) {
+    std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(array->length);
+    std::span<uint8_t> data_view(reinterpret_cast<uint8_t*>(data_buffer.get()), array->length);
+
+    auto extract_values = [&]<typename T>() {
+        std::span<const T> indices(reinterpret_cast<const T*>(array->buffers[1]) + array->offset, array->length);
+
+        for (int64_t i = 0; i < array->length; ++i) {
+            data_view[i] = static_cast<uint8_t>(
+                ArrowBitGet((const uint8_t*)array->dictionary->buffers[1], indices[i] + array->dictionary->offset));
+        }
+    };
+
+    switch (to_tiledb_format(schema->format)) {
+        case TILEDB_INT8:
+            extract_values.template operator()<int8_t>();
+            break;
+        case TILEDB_UINT8:
+            extract_values.template operator()<uint8_t>();
+            break;
+        case TILEDB_INT16:
+            extract_values.template operator()<int16_t>();
+            break;
+        case TILEDB_UINT16:
+            extract_values.template operator()<uint16_t>();
+            break;
+        case TILEDB_INT32:
+            extract_values.template operator()<int32_t>();
+            break;
+        case TILEDB_UINT32:
+            extract_values.template operator()<uint32_t>();
+            break;
+        case TILEDB_INT64:
+            extract_values.template operator()<int64_t>();
+            break;
+        case TILEDB_UINT64:
+            extract_values.template operator()<uint64_t>();
+            break;
+        default:
+            throw std::runtime_error("Saw invalid index type when trying to promote indexes to values");
+    }
+
+    std::unique_ptr<std::uint8_t[]> validity = nullptr;
+    if (schema->flags & ARROW_FLAG_NULLABLE) {
+        validity = bitmap_to_bytemap(static_cast<const uint8_t*>(array->buffers[0]), array->length, array->offset);
+    }
+
+    return std::make_tuple(std::move(data_buffer), std::unique_ptr<uint64_t[]>(nullptr), std::move(validity));
+}
+
+std::vector<std::string_view> dictionary_values_view(ArrowSchema* schema, ArrowArray* array) {
+    std::vector<std::string_view> result;
+
+    auto extract_var_size_view = [&]<typename OffsetType>() {
+        if (array->length == 0) {
+            return;
+        }
+
+        std::span<const OffsetType> offsets(
+            static_cast<const OffsetType*>(array->buffers[1]) + array->offset, array->length + 1);
+        std::string_view data(static_cast<const char*>(array->buffers[2]), offsets.back());
+
+        result.reserve(array->length);
+
+        for (size_t i = 0; i < offsets.size() - 1; i++) {
+            const size_t length = offsets[i + 1] - offsets[i];
+            result.push_back(data.substr(offsets[i], length));
+        }
+    };
+
+    if (array->n_buffers == 3) {
+        if (strcmp(schema->format, "u") == 0 || strcmp(schema->format, "z") == 0) {
+            extract_var_size_view.template operator()<int32_t>();
+        } else if (strcmp(schema->format, "U") == 0 || strcmp(schema->format, "Z") == 0) {
+            extract_var_size_view.template operator()<int64_t>();
+        } else {
+            throw std::runtime_error(
+                fmt::format("[dictionary_values_view] Unknown format '{}' for var sized dictionary.", schema->format));
+        }
+    } else {
+        result.reserve(array->length);
+
+        if (to_tiledb_format(schema->format) == TILEDB_BOOL) {
+            std::unique_ptr<uint8_t[]> byteset = bitmap_to_bytemap(
+                static_cast<const uint8_t*>(array->buffers[1]), array->length, array->offset);
+
+            for (size_t i = 0; i < static_cast<size_t>(array->length); ++i) {
+                if (byteset[i] == 0) {
+                    result.emplace_back(impl::bool_dict.begin(), 1);
+                } else {
+                    result.emplace_back(impl::bool_dict.begin() + 1, 1);
+                }
+            }
+        } else {
+            const size_t stride = tiledb::impl::type_size(to_tiledb_format(schema->format));
+            std::string_view data(
+                static_cast<const char*>(array->buffers[1]) + array->offset * stride, array->length * stride);
+
+            for (int64_t i = 0; i < array->length; ++i) {
+                result.push_back(data.substr(i * stride, stride));
+            }
+        }
+    }
+
+    return result;
 }
 }  // namespace tiledbsoma::common::arrow

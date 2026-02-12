@@ -28,7 +28,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_managed_query(py::module& m) {
-    py::class_<ManagedQuery>(m, "ManagedQuery")
+    py::class_<common::ManagedQuery>(m, "ManagedQuery")
         .def(
             py::init([](SOMAArray array, std::shared_ptr<SOMAContext> ctx, std::string_view name) {
                 return array.create_managed_query(ctx, name);
@@ -42,13 +42,13 @@ void load_managed_query(py::module& m) {
             py::arg("array"),
             py::arg("name") = "unnamed")
 
-        .def("is_empty_query", &ManagedQuery::is_empty_query)
-        .def("is_complete", &ManagedQuery::is_complete)
+        .def("is_empty_query", &common::ManagedQuery::is_empty_query)
+        .def("is_complete", &common::ManagedQuery::is_complete)
 
-        .def("set_layout", &ManagedQuery::set_layout)
+        .def("set_layout", &common::ManagedQuery::set_layout)
         .def(
             "set_condition",
-            [](ManagedQuery& mq, py::object py_query_condition, py::object py_schema) {
+            [](common::ManagedQuery& mq, py::object py_query_condition, py::object py_schema) {
                 auto column_names = mq.column_names();
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
@@ -82,11 +82,18 @@ void load_managed_query(py::module& m) {
             },
             "py_query_condition"_a,
             "py_schema"_a)
-        .def("select_columns", &ManagedQuery::select_columns, "names"_a, "if_not_empty"_a = false, "replace"_a = false)
+        .def(
+            "select_columns",
+            [](common::ManagedQuery& mq, const std::vector<std::string>& names, bool if_not_empty, bool replace) {
+                mq.select_columns(names, if_not_empty, replace);
+            },
+            "names"_a,
+            "if_not_empty"_a = false,
+            "replace"_a = false)
 
         .def(
             "next",
-            [](ManagedQuery& mq) -> std::optional<py::object> {
+            [](common::ManagedQuery& mq) -> std::optional<py::object> {
                 // Release python GIL before reading data
                 py::gil_scoped_release release;
                 std::optional<std::shared_ptr<common::ArrayBuffers>> tbl;
@@ -107,7 +114,7 @@ void load_managed_query(py::module& m) {
 
         .def(
             "submit_batch",
-            [](ManagedQuery& mq, py::handle py_batch) {
+            [](common::ManagedQuery& mq, py::handle py_batch) {
                 ArrowSchema arrow_schema;
                 ArrowArray arrow_array;
                 uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -128,7 +135,7 @@ void load_managed_query(py::module& m) {
             })
         .def(
             "submit_and_finalize_batch",
-            [](ManagedQuery& mq, py::handle py_batch) {
+            [](common::ManagedQuery& mq, py::handle py_batch) {
                 ArrowSchema arrow_schema;
                 ArrowArray arrow_array;
                 uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -149,7 +156,7 @@ void load_managed_query(py::module& m) {
             })
         .def(
             "set_column_data",
-            [](ManagedQuery& mq, std::string name, py::array data) {
+            [](common::ManagedQuery& mq, std::string name, py::array data) {
                 py::buffer_info data_info = data.request();
 
                 py::gil_scoped_release release;
@@ -161,11 +168,11 @@ void load_managed_query(py::module& m) {
                 }
                 py::gil_scoped_acquire acquire;
             })
-        .def("reset_columns", &ManagedQuery::reset_columns)
+        .def("reset_columns", &common::ManagedQuery::reset_columns)
 
         .def(
             "submit_write",
-            [](ManagedQuery& mq) {
+            [](common::ManagedQuery& mq) {
                 try {
                     mq.submit_write();
                 } catch (const std::exception& e) {
@@ -176,7 +183,7 @@ void load_managed_query(py::module& m) {
 
         .def(
             "submit_and_finalize",
-            [](ManagedQuery& mq) {
+            [](common::ManagedQuery& mq) {
                 try {
                     mq.submit_and_finalize();
                 } catch (const std::exception& e) {
@@ -187,7 +194,7 @@ void load_managed_query(py::module& m) {
 
         .def(
             "finalize",
-            [](ManagedQuery& mq) {
+            [](common::ManagedQuery& mq) {
                 try {
                     mq.finalize();
                 } catch (const std::exception& e) {
@@ -196,11 +203,11 @@ void load_managed_query(py::module& m) {
             },
             py::call_guard<py::gil_scoped_release>())
 
-        .def("reset", &ManagedQuery::reset)
-        .def("close", &ManagedQuery::close)
+        .def("reset", &common::ManagedQuery::reset)
+        .def("close", &common::ManagedQuery::close)
 
-        .def_property_readonly("result_order", &ManagedQuery::result_order)
-        .def_property_readonly("column_names", &ManagedQuery::column_names)
+        .def_property_readonly("result_order", &common::ManagedQuery::result_order)
+        .def_property_readonly("column_names", &common::ManagedQuery::column_names)
 
         // The following short functions are expected to be invoked when the
         // coords are Python list/tuple, or NumPy arrays.  Arrow arrays are in
@@ -225,9 +232,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_string_or_bytes",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::string>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<std::string>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<std::string>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -235,9 +242,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_double",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<double_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<double_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<double_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -245,9 +252,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_float",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<float_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<float_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<float_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -255,9 +262,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_int64",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<int64_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<int64_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<int64_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -265,9 +272,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_int32",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<int32_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<int32_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<int32_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -275,9 +282,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_int16",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<int16_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<int16_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<int16_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -285,9 +292,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_int8",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<int8_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<int8_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<int8_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -295,9 +302,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_uint64",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<uint64_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<uint64_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<uint64_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -305,9 +312,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_uint32",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<uint32_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<uint32_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<uint32_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -315,9 +322,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_uint16",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<uint16_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<uint16_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<uint16_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -325,9 +332,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_points_uint8",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<uint8_t>& points) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<uint8_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    mq.select_points<uint8_t>(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -348,11 +355,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_string_or_bytes",
-            [](ManagedQuery& mq,
+            [](common::ManagedQuery& mq,
                const std::string& dim,
                const std::vector<std::pair<std::string, std::string>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<std::string>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -360,9 +367,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_double",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<double, double>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<double_t, double_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<double_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -370,9 +379,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_float",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<float, float>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<float_t, float_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<float_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -380,9 +391,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_int64",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<int64_t, int64_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<int64_t, int64_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<int64_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -390,9 +403,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_int32",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<int32_t, int32_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<int32_t, int32_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<int32_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -400,9 +415,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_int16",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<int16_t, int16_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<int16_t, int16_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<int16_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -410,9 +427,9 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_int8",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<int8_t, int8_t>>& ranges) {
+            [](common::ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<int8_t, int8_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<int8_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -420,9 +437,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_uint64",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<uint64_t, uint64_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<uint64_t, uint64_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<uint64_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -430,9 +449,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_uint32",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<uint32_t, uint32_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<uint32_t, uint32_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<uint32_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -440,9 +461,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_uint16",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<uint16_t, uint16_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<uint16_t, uint16_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<uint16_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -450,9 +473,11 @@ void load_managed_query(py::module& m) {
 
         .def(
             "set_dim_ranges_uint8",
-            [](ManagedQuery& mq, const std::string& dim, const std::vector<std::pair<uint8_t, uint8_t>>& ranges) {
+            [](common::ManagedQuery& mq,
+               const std::string& dim,
+               const std::vector<std::pair<uint8_t, uint8_t>>& ranges) {
                 try {
-                    mq.select_ranges(dim, ranges);
+                    mq.select_ranges<uint8_t>(dim, ranges);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -463,7 +488,7 @@ void load_managed_query(py::module& m) {
         // long if-else-if function.
         .def(
             "set_dim_points_arrow",
-            [](ManagedQuery& mq,
+            [](common::ManagedQuery& mq,
                const std::string& dim,
                py::object py_arrow_array,
                int partition_index,
@@ -493,36 +518,36 @@ void load_managed_query(py::module& m) {
 
                     try {
                         if (!strcmp(arrow_schema.format, "l")) {
-                            mq.select_points(dim, coords.cast<std::vector<int64_t>>());
+                            mq.select_points<int64_t>(dim, coords.cast<std::vector<int64_t>>());
                         } else if (!strcmp(arrow_schema.format, "i")) {
-                            mq.select_points(dim, coords.cast<std::vector<int32_t>>());
+                            mq.select_points<int32_t>(dim, coords.cast<std::vector<int32_t>>());
                         } else if (!strcmp(arrow_schema.format, "s")) {
-                            mq.select_points(dim, coords.cast<std::vector<int16_t>>());
+                            mq.select_points<int16_t>(dim, coords.cast<std::vector<int16_t>>());
                         } else if (!strcmp(arrow_schema.format, "c")) {
-                            mq.select_points(dim, coords.cast<std::vector<int8_t>>());
+                            mq.select_points<int8_t>(dim, coords.cast<std::vector<int8_t>>());
                         } else if (!strcmp(arrow_schema.format, "L")) {
-                            mq.select_points(dim, coords.cast<std::vector<uint64_t>>());
+                            mq.select_points<uint64_t>(dim, coords.cast<std::vector<uint64_t>>());
                         } else if (!strcmp(arrow_schema.format, "I")) {
-                            mq.select_points(dim, coords.cast<std::vector<uint32_t>>());
+                            mq.select_points<uint32_t>(dim, coords.cast<std::vector<uint32_t>>());
                         } else if (!strcmp(arrow_schema.format, "S")) {
-                            mq.select_points(dim, coords.cast<std::vector<uint16_t>>());
+                            mq.select_points<uint16_t>(dim, coords.cast<std::vector<uint16_t>>());
                         } else if (!strcmp(arrow_schema.format, "C")) {
-                            mq.select_points(dim, coords.cast<std::vector<uint8_t>>());
+                            mq.select_points<uint8_t>(dim, coords.cast<std::vector<uint8_t>>());
                         } else if (!strcmp(arrow_schema.format, "f")) {
-                            mq.select_points(dim, coords.cast<std::vector<float>>());
+                            mq.select_points<float_t>(dim, coords.cast<std::vector<float_t>>());
                         } else if (!strcmp(arrow_schema.format, "g")) {
-                            mq.select_points(dim, coords.cast<std::vector<double>>());
+                            mq.select_points<double_t>(dim, coords.cast<std::vector<double_t>>());
                         } else if (!strcmp(arrow_schema.format, "u") || !strcmp(arrow_schema.format, "z")) {
-                            mq.select_points(dim, coords.cast<std::vector<std::string>>());
+                            mq.select_points<std::string>(dim, coords.cast<std::vector<std::string>>());
                         } else if (
                             !strcmp(arrow_schema.format, "tss:") || !strcmp(arrow_schema.format, "tsm:") ||
                             !strcmp(arrow_schema.format, "tsu:") || !strcmp(arrow_schema.format, "tsn:")) {
                             // convert the Arrow Array to int64
                             auto pa = py::module::import("pyarrow");
                             coords = array_handle.attr("cast")(pa.attr("int64")()).attr("tolist")();
-                            mq.select_points(dim, coords.cast<std::vector<int64_t>>());
+                            mq.select_points<int64_t>(dim, coords.cast<std::vector<int64_t>>());
                         } else if (!strcmp(arrow_schema.format, "U") || !strcmp(arrow_schema.format, "Z")) {
-                            mq.select_points(dim, coords.cast<std::vector<std::string>>());
+                            mq.select_points<std::string>(dim, coords.cast<std::vector<std::string>>());
                         } else {
                             TPY_ERROR_LOC(
                                 "[pytiledbsoma] set_dim_points: type={} not "

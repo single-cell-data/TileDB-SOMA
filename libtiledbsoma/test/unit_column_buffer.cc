@@ -15,6 +15,8 @@
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
 
+#include "common/query/column_buffer.h"
+
 using namespace tiledb;
 using namespace tiledbsoma;
 

@@ -20,6 +20,7 @@
 #include "../utils/util.h"
 #include "common/arrow/utils.h"
 #include "common/logging/impl/logger.h"
+#include "common/query/managed_query.h"
 #include "coordinate_value_filters.h"
 #include "managed_query.h"
 #include "soma_attribute.h"
@@ -221,12 +222,13 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     schema_ = std::make_shared<tiledb::ArraySchema>(arr_->schema());
 }
 
-ManagedQuery SOMAArray::create_managed_query(std::string_view name) const {
-    return ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
+common::ManagedQuery SOMAArray::create_managed_query(std::string_view name) const {
+    return common::ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
 }
 
-ManagedQuery SOMAArray::create_managed_query(std::shared_ptr<SOMAContext> query_ctx, std::string_view name) const {
-    return ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
+common::ManagedQuery SOMAArray::create_managed_query(
+    std::shared_ptr<SOMAContext> query_ctx, std::string_view name) const {
+    return common::ManagedQuery(arr_, query_ctx->tiledb_ctx(), name);
 }
 
 CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
@@ -505,7 +507,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAArray::get_enumeration_values_for_colum
 void SOMAArray::extend_enumeration_values(
     std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values, bool deduplicate) {
     auto tctx = ctx_->tiledb_ctx();
-    auto mq = ManagedQuery(arr_, tctx, "extend_enumeration_values");
+    auto mq = common::ManagedQuery(arr_, tctx, "extend_enumeration_values");
     tiledb::ArraySchemaEvolution schema_evolution(*tctx);
 
     // TBD thread-pooling opportunity -- TBD if it will be worthwhile
@@ -527,9 +529,16 @@ void SOMAArray::extend_enumeration_values(
                     "non-enumerated",
                     column_name));
         }
-        Enumeration core_enum = get_existing_enumeration_for_column(column_name);
 
-        mq._extend_enumeration(values_schema, values_array, column_name, deduplicate, core_enum, schema_evolution);
+        mq.extend_enumeration(
+            values_schema,
+            values_array,
+            nullptr,
+            nullptr,
+            column_name,
+            enumeration_name.value(),
+            schema_evolution,
+            deduplicate);
     }
     schema_evolution.array_evolve(arr_->uri());
 }
