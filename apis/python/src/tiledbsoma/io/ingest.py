@@ -24,6 +24,7 @@ from itertools import repeat
 from typing import (
     Any,
     Literal,
+    Optional,
     TypedDict,
     TypeVar,
     cast,
@@ -473,7 +474,7 @@ def from_h5ad(
 class IngestCtx(TypedDict):
     """Convenience type-alias for kwargs passed to ingest functions."""
 
-    context: SOMAContext | None
+    context: Optional[SOMAContext]  # noqa: UP045
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
 
@@ -484,7 +485,7 @@ class IngestPlatformCtx(IngestCtx):
     Extends :class:`IngestCtx`, adds ``platform_config``.
     """
 
-    platform_config: PlatformConfig | None
+    platform_config: Optional[PlatformConfig]  # noqa: UP045
 
 
 # ----------------------------------------------------------------

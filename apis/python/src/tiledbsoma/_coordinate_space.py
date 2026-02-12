@@ -9,6 +9,7 @@ import abc
 import collections.abc
 import itertools
 from collections.abc import Iterable, Sequence
+from typing import Union
 
 import attrs
 import numpy as np
@@ -27,7 +28,7 @@ class Axis:
 
     name: str = attrs.field()
     """Name of the axis."""
-    unit: str | None = None
+    unit: Union[str, None] = None  # noqa: UP007
     """Optional string name for the units of the axis."""
 
     @name.validator
@@ -167,7 +168,7 @@ class AffineTransform(CoordinateTransform):
         self,
         input_axes: str | Sequence[str],
         output_axes: str | Sequence[str],
-        matrix: npt.ArrayLike,
+        matrix: npt.ArrayLike | Sequence[int | float],
     ) -> None:
         super().__init__(input_axes, output_axes)
 
@@ -253,7 +254,7 @@ class ScaleTransform(AffineTransform):
         self,
         input_axes: str | Sequence[str],
         output_axes: str | Sequence[str],
-        scale_factors: npt.ArrayLike,
+        scale_factors: npt.ArrayLike | Sequence[int | float],
     ) -> None:
         rank = str_or_seq_length(input_axes)
         self._scale_factors: npt.NDArray[np.float64] = np.array(scale_factors, dtype=np.float64)
