@@ -181,7 +181,7 @@ void writeArrayFromArrow(
 
     auto mq = arrup->create_managed_query("unnamed");
     mq.set_layout(
-        arraytype == "SOMADenseNDArray" ? tdbs::common::ResultOrder::COLMAJOR : tdbs::common::ResultOrder::AUTOMATIC);
+        arraytype == "SOMADenseNDArray" ? tdbs::common::ResultOrder::colmajor : tdbs::common::ResultOrder::automatic);
     mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
     mq.close();

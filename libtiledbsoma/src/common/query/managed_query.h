@@ -78,7 +78,7 @@ class Status {
     std::string message_;
 };
 
-enum class ResultOrder { AUTOMATIC = 0, ROWMAJOR, COLMAJOR, UNORDERED, GLOBAL };
+enum class ResultOrder { automatic = 0, rowmajor, colmajor, unordered, global };
 
 class ManagedQuery {
    public:
@@ -461,7 +461,7 @@ class ManagedQuery {
     std::future<Status> query_future_;
 
     // Query layout
-    ResultOrder layout_ = ResultOrder::AUTOMATIC;
+    ResultOrder layout_ = ResultOrder::automatic;
 
     // Number of query submission that returned no results due to insufficient buffer sizes
     size_t retries = 0;

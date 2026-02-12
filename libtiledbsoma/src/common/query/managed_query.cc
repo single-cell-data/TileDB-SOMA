@@ -74,22 +74,22 @@ void ManagedQuery::reset() {
 
 void ManagedQuery::set_layout(ResultOrder layout) {
     switch (layout) {
-        case ResultOrder::AUTOMATIC:
+        case ResultOrder::automatic:
             if (array_->schema().array_type() == TILEDB_SPARSE)
                 query_->set_layout(TILEDB_UNORDERED);
             else
                 query_->set_layout(TILEDB_ROW_MAJOR);
             break;
-        case ResultOrder::UNORDERED:
+        case ResultOrder::unordered:
             query_->set_layout(TILEDB_UNORDERED);
             break;
-        case ResultOrder::GLOBAL:
+        case ResultOrder::global:
             query_->set_layout(TILEDB_GLOBAL_ORDER);
             break;
-        case ResultOrder::ROWMAJOR:
+        case ResultOrder::rowmajor:
             query_->set_layout(TILEDB_ROW_MAJOR);
             break;
-        case ResultOrder::COLMAJOR:
+        case ResultOrder::colmajor:
             query_->set_layout(TILEDB_COL_MAJOR);
             break;
         default:
@@ -251,7 +251,7 @@ bool ManagedQuery::setup_write_arrow_column(ArrowSchema* schema, ArrowArray* arr
 
     auto array_type = arrow::to_tiledb_format(schema->format);
     if (array_type != disk_type) {
-        // Due to type incompatibilities between Arrow and TileDB several type mismaths are allowed. In case of such mismatch we should not throw.
+        // Due to type incompatibilities between Arrow and TileDB several type mismatches are allowed. In case of such mismatch we should not throw.
         // TILEDB_GEOM_WKB and TILEDB_GEOM_WKT are encoded as plain binary and string array is Arrow
         bool is_geometry_column = (disk_type == TILEDB_GEOM_WKB &&
                                    (array_type == TILEDB_BLOB || array_type == TILEDB_CHAR)) ||

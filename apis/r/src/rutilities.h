@@ -49,9 +49,9 @@ inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rc
 
 inline tdbs::common::ResultOrder get_tdb_result_order(std::string result_order) {
     std::map<std::string, tdbs::common::ResultOrder> result_order_map{
-        {"auto", tdbs::common::ResultOrder::AUTOMATIC},
-        {"row-major", tdbs::common::ResultOrder::ROWMAJOR},
-        {"column-major", tdbs::common::ResultOrder::COLMAJOR}};
+        {"auto", tdbs::common::ResultOrder::automatic},
+        {"row-major", tdbs::common::ResultOrder::rowmajor},
+        {"column-major", tdbs::common::ResultOrder::colmajor}};
     return result_order_map[result_order];
 }
 

@@ -118,7 +118,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
 
         // Write data to array
         auto mq = soma_array->create_managed_query("");
-        mq.set_layout(common::ResultOrder::UNORDERED);
+        mq.set_layout(common::ResultOrder::unordered);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -186,7 +186,7 @@ TEST_CASE("SOMAArray: random nnz") {
 
         // Write data to array
         auto mq = soma_array->create_managed_query("");
-        mq.set_layout(common::ResultOrder::UNORDERED);
+        mq.set_layout(common::ResultOrder::unordered);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -214,7 +214,7 @@ TEST_CASE("SOMAArray: random nnz") {
 
         // Write data to array
         auto mq = soma_array->create_managed_query("");
-        mq.set_layout(common::ResultOrder::UNORDERED);
+        mq.set_layout(common::ResultOrder::unordered);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -228,7 +228,7 @@ TEST_CASE("SOMAArray: random nnz") {
 
         uint64_t nnz = soma_array->nnz();
         auto mq = soma_array->create_managed_query();
-        mq.set_layout(common::ResultOrder::UNORDERED);
+        mq.set_layout(common::ResultOrder::unordered);
 
         uint64_t total_cell_num = 0;
         while (auto batch = mq.read_next()) {
@@ -281,7 +281,7 @@ TEST_CASE("SOMAArray: nnz") {
 
         // Check that data from SOMAArray::read_next matches expected data
         auto mq = soma_array->create_managed_query();
-        mq.set_layout(common::ResultOrder::UNORDERED);
+        mq.set_layout(common::ResultOrder::unordered);
         while (!mq.results_complete()) {
             auto arrbuf = mq.read_next().value();
             REQUIRE(arrbuf->names() == std::vector<std::string>({dim_name, attr_name}));
@@ -496,11 +496,11 @@ TEST_CASE("SOMAArray: ResultOrder") {
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
     auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
     auto mq = soma_array->create_managed_query();
-    REQUIRE(mq.result_order() == common::ResultOrder::AUTOMATIC);
-    mq.set_layout(common::ResultOrder::ROWMAJOR);
-    REQUIRE(mq.result_order() == common::ResultOrder::ROWMAJOR);
-    mq.set_layout(common::ResultOrder::COLMAJOR);
-    REQUIRE(mq.result_order() == common::ResultOrder::COLMAJOR);
+    REQUIRE(mq.result_order() == common::ResultOrder::automatic);
+    mq.set_layout(common::ResultOrder::rowmajor);
+    REQUIRE(mq.result_order() == common::ResultOrder::rowmajor);
+    mq.set_layout(common::ResultOrder::colmajor);
+    REQUIRE(mq.result_order() == common::ResultOrder::colmajor);
     REQUIRE_THROWS_AS(mq.set_layout(static_cast<common::ResultOrder>(10)), std::invalid_argument);
 }
 
