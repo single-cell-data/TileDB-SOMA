@@ -43,29 +43,27 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         case Object::Type::Array: {
             auto array_ = SOMAArray::open(mode, uri, ctx, timestamp);
             auto array_type = array_->type();
-
             if (!array_type.has_value()) {
                 throw TileDBSOMAError(
                     fmt::format(
-                        "Unable to open the TileDB array at '{}'. The array is missing the required '{}' metadata "
-                        "key.",
+                        "Unable to open the TileDB array at '{}'. The array is missing the required '{}' metadata key.",
                         uri,
                         SOMA_OBJECT_TYPE_KEY));
             }
-
-            std::transform(array_type->begin(), array_type->end(), array_type->begin(), [](unsigned char c) {
-                return std::tolower(c);
-            });
-
-            if (array_type == "somadataframe") {
+            if (array_type == "SOMADataFrame") {
+                array_->check_encoding_version();
                 return std::make_unique<SOMADataFrame>(*array_);
-            } else if (array_type == "somasparsendarray") {
+            } else if (array_type == "SOMASparseNDArray") {
+                array_->check_encoding_version();
                 return std::make_unique<SOMASparseNDArray>(*array_);
-            } else if (array_type == "somadensendarray") {
+            } else if (array_type == "SOMADenseNDArray") {
+                array_->check_encoding_version();
                 return std::make_unique<SOMADenseNDArray>(*array_);
-            } else if (array_type == "somapointclouddataframe") {
+            } else if (array_type == "SOMAPointCloudDataFrame") {
+                array_->check_encoding_version();
                 return std::make_unique<SOMAPointCloudDataFrame>(*array_);
-            } else if (array_type == "somageometrydataframe") {
+            } else if (array_type == "SOMAGeometryDataFrame") {
+                array_->check_encoding_version();
                 return std::make_unique<SOMAGeometryDataFrame>(*array_);
             } else {
                 throw TileDBSOMAError(
@@ -78,7 +76,6 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         case Object::Type::Group: {
             auto group_ = SOMAGroup::open(mode, uri, ctx, "", timestamp);
             auto group_type = group_->type();
-
             if (!group_type.has_value()) {
                 throw TileDBSOMAError(
                     fmt::format(
@@ -87,20 +84,20 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
                         uri,
                         SOMA_OBJECT_TYPE_KEY));
             }
-
-            std::transform(group_type->begin(), group_type->end(), group_type->begin(), [](unsigned char c) {
-                return std::tolower(c);
-            });
-
-            if (group_type == "somacollection") {
+            if (group_type == "SOMACollection") {
+                group_->check_encoding_version();
                 return std::make_unique<SOMACollection>(*group_);
-            } else if (group_type == "somaexperiment") {
+            } else if (group_type == "SOMAExperiment") {
+                group_->check_encoding_version();
                 return std::make_unique<SOMAExperiment>(*group_);
-            } else if (group_type == "somameasurement") {
+            } else if (group_type == "SOMAMeasurement") {
+                group_->check_encoding_version();
                 return std::make_unique<SOMAMeasurement>(*group_);
-            } else if (group_type == "somascene") {
+            } else if (group_type == "SOMAScene") {
+                group_->check_encoding_version();
                 return std::make_unique<SOMAScene>(*group_);
-            } else if (group_type == "somamultiscaleimage") {
+            } else if (group_type == "SOMAMultiscaleImage") {
+                group_->check_encoding_version();
                 return std::make_unique<SOMAMultiscaleImage>(*group_);
             } else {
                 throw TileDBSOMAError(
@@ -116,33 +113,48 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
 }
 
 const std::optional<std::string> SOMAObject::type() {
-    auto soma_object_type = this->get_metadata(SOMA_OBJECT_TYPE_KEY);
+    auto soma_object_type = get_metadata(SOMA_OBJECT_TYPE_KEY);
 
     if (!soma_object_type.has_value()) {
         return std::nullopt;
     }
 
-    const char* dtype = (const char*)std::get<MetadataInfo::value>(*soma_object_type);
+    const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(*soma_object_type));
     uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
 
     return std::string(dtype, sz);
 }
 
-bool SOMAObject::check_type(std::string expected_type) {
-    auto soma_object_type = this->type();
+const std::optional<std::string> SOMAObject::encoding_version() {
+    auto encoding_version = get_metadata(ENCODING_VERSION_KEY);
 
-    if (!soma_object_type.has_value())
-        return false;
+    if (!encoding_version.has_value()) {
+        return std::nullopt;
+    }
 
-    std::transform(soma_object_type->begin(), soma_object_type->end(), soma_object_type->begin(), [](unsigned char c) {
-        return std::tolower(c);
-    });
+    const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(*encoding_version));
+    uint32_t sz = std::get<MetadataInfo::num>(*encoding_version);
 
-    std::transform(expected_type.begin(), expected_type.end(), expected_type.begin(), [](unsigned char c) {
-        return std::tolower(c);
-    });
+    return std::string(dtype, sz);
+}
 
-    return soma_object_type == expected_type;
+void SOMAObject::check_encoding_version() {
+    auto version = encoding_version();
+    if (!version.has_value()) {
+        throw TileDBSOMAError(
+            fmt::format(
+                "Unable to open object at '{}'. Object is missing required '{}' metadata key.",
+                std::string(uri()),
+                ENCODING_VERSION_KEY));
+    }
+    if (version.value() != "1" && version.value() != "1.1.0") {
+        throw TileDBSOMAError(
+            fmt::format(
+                "Unable to open object at '{}' with unsupported encoding version '{}'. Try updating "
+                "to a more recent release of TileDB-SOMA.",
+                std::string(uri()),
+                version.value()));
+    }
 };
 
 tiledb_object_t SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) {

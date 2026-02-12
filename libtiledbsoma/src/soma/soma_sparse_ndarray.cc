@@ -78,13 +78,7 @@ void SOMASparseNDArray::create(
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
-    auto array = std::make_unique<SOMASparseNDArray>(mode, uri, ctx, timestamp);
-
-    if (!array->check_type("SOMASparseNDArray")) {
-        throw TileDBSOMAError("[SOMASparseNDArray::open] Object is not a SOMASparseNDArray");
-    }
-
-    return array;
+    return std::make_unique<SOMASparseNDArray>(mode, uri, ctx, timestamp);
 }
 
 std::string_view SOMASparseNDArray::soma_data_type() {

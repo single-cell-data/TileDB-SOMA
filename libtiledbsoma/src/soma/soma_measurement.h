@@ -14,18 +14,16 @@
 #ifndef SOMA_MEASUREMENT
 #define SOMA_MEASUREMENT
 
-#include <tiledb/tiledb>
-
 #include "../tiledb_adapter/platform_config.h"
 #include "common/arrow/utils.h"
-#include "soma_collection.h"
-#include "soma_dataframe.h"
+#include "soma_collection_base.h"
 
 namespace tiledbsoma {
 
-using namespace tiledb;
+class SOMACollection;
+class SOMAMeasurement;
 
-class SOMAMeasurement : public SOMACollection {
+class SOMAMeasurement : public SOMACollectionBase {
    public:
     //===================================================================
     //= public static
@@ -70,11 +68,11 @@ class SOMAMeasurement : public SOMACollection {
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMACollection(mode, uri, ctx, timestamp) {
+        : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAMeasurement") {
     }
 
-    SOMAMeasurement(const SOMACollection& other)
-        : SOMACollection(other) {
+    SOMAMeasurement(const SOMACollectionBase& other)
+        : SOMACollectionBase(other) {
     }
 
     SOMAMeasurement() = delete;

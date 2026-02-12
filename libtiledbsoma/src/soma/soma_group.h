@@ -145,7 +145,7 @@ class SOMAGroup : public SOMAObject {
      *
      * @return SOMAContext
      */
-    std::shared_ptr<SOMAContext> ctx();
+    std::shared_ptr<SOMAContext> ctx() const;
 
     /**
      * Check if a named member is relative
@@ -284,7 +284,7 @@ class SOMAGroup : public SOMAObject {
      *     are acceptable.
      * @return true if the key exists, else false.
      */
-    bool has_metadata(const std::string& key);
+    bool has_metadata(const std::string& key) const;
 
     /**
      * Return then number of metadata items in an open group. The group must

@@ -36,6 +36,7 @@
 #include "soma/soma_coordinates.h"
 #include "soma/soma_array.h"
 #include "soma/soma_collection.h"
+#include "soma/soma_collection_base.h"
 #include "soma/soma_column.h"
 #include "soma/soma_dataframe.h"
 #include "soma/soma_group.h"

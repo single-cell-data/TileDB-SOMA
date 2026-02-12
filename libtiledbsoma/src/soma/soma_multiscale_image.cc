@@ -55,15 +55,7 @@ void SOMAMultiscaleImage::create(
 std::unique_ptr<SOMAMultiscaleImage> SOMAMultiscaleImage::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        auto group = std::make_unique<SOMAMultiscaleImage>(mode, uri, ctx, timestamp);
-
-        if (!group->check_type("SOMAMultiscaleImage")) {
-            throw TileDBSOMAError(
-                "[SOMAMultiscaleImage::open] Object is not a "
-                "SOMAMultiscaleImage");
-        }
-
-        return group;
+        return std::make_unique<SOMAMultiscaleImage>(mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

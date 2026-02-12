@@ -126,7 +126,8 @@ class SOMAArray : public SOMAObject {
         OpenMode mode,
         std::string_view uri,
         std::map<std::string, std::string> platform_config,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt,
+        std::optional<std::string> soma_type = std::nullopt);
 
     /**
      * @brief Construct a new SOMAArray object
@@ -140,7 +141,8 @@ class SOMAArray : public SOMAObject {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt,
+        std::optional<std::string> soma_type = std::nullopt);
 
     /**
      * @brief Construct a new SOMAArray from a TileDB array
@@ -170,7 +172,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return SOMAContext
      */
-    inline std::shared_ptr<SOMAContext> ctx() {
+    inline std::shared_ptr<SOMAContext> ctx() const {
         return ctx_;
     }
 
@@ -402,7 +404,7 @@ class SOMAArray : public SOMAObject {
      * encodings are acceptable.
      * @return true if the key exists, else false.
      */
-    bool has_metadata(const std::string& key);
+    bool has_metadata(const std::string& key) const;
 
     /**
      * Return then number of metadata items in an open array. The array must
@@ -413,7 +415,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Return optional timestamp pair SOMAArray was opened with.
      */
-    std::optional<TimestampRange> timestamp();
+    std::optional<TimestampRange> timestamp() const;
 
     /**
      * Retrieves the enumeration values from the array's TileDB schema,

@@ -26,7 +26,6 @@
 
 namespace tiledbsoma {
 
-using namespace tiledb;
 class SOMAObject {
    public:
     //===================================================================
@@ -46,7 +45,12 @@ class SOMAObject {
      */
     const std::optional<std::string> type();
 
-    bool check_type(std::string expected_type);
+    /**
+     * @brief Return a constant string describing the encoding version of the object.
+     */
+    const std::optional<std::string> encoding_version();
+
+    void check_encoding_version();
 
     /**
      * @brief Get URI of the SOMAObject.
@@ -60,7 +64,7 @@ class SOMAObject {
      *
      * @return SOMAContext
      */
-    virtual std::shared_ptr<SOMAContext> ctx() = 0;
+    virtual std::shared_ptr<SOMAContext> ctx() const = 0;
 
     /**
      * Get whether the SOMAObject was open in read or write mode.
@@ -161,7 +165,7 @@ class SOMAObject {
      *     are acceptable.
      * @return true if the key exists, else false.
      */
-    virtual bool has_metadata(const std::string& key) = 0;
+    virtual bool has_metadata(const std::string& key) const = 0;
 
     /**
      * Return then number of metadata items in an open SOMAObject. The group

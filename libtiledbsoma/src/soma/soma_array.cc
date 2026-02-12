@@ -25,6 +25,7 @@
 #include "managed_query.h"
 #include "soma_attribute.h"
 #include "soma_column.h"
+#include "soma_context.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
 
@@ -159,12 +160,17 @@ SOMAArray::SOMAArray(
     OpenMode mode,
     std::string_view uri,
     std::map<std::string, std::string> platform_config,
-    std::optional<TimestampRange> timestamp)
-    : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp) {
+    std::optional<TimestampRange> timestamp,
+    std::optional<std::string> soma_type)
+    : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp, soma_type) {
 }
 
 SOMAArray::SOMAArray(
-    OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
+    OpenMode mode,
+    std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp,
+    std::optional<std::string> soma_type)
     : uri_(util::rstrip_uri(uri))
     , ctx_(ctx)
     , arr_(open_tiledb_array(get_tiledb_mode(mode), uri_, *ctx_->tiledb_ctx(), timestamp))
@@ -174,6 +180,27 @@ SOMAArray::SOMAArray(
     , timestamp_(timestamp)
     , soma_mode_(mode)
     , schema_(std::make_shared<tiledb::ArraySchema>(arr_->schema())) {
+    if (soma_type.has_value()) {
+        auto type_metadata = type();
+        if (!type_metadata.has_value()) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Unable to open a {} at '{}'. Object is missing required '{}' metadata.",
+                    soma_type.value(),
+                    std::string(uri),
+                    SOMA_OBJECT_TYPE_KEY));
+        }
+        if (type_metadata.value() != soma_type.value()) {
+            throw TileDBSOMAError(
+                fmt::format(
+                    "Unable to open a {} at '{}'. The object at this location is a {} not a {}.",
+                    soma_type.value(),
+                    std::string(uri),
+                    type_metadata.value(),
+                    soma_type.value()));
+        }
+    }
+    check_encoding_version();
 }
 
 SOMAArray::SOMAArray(
@@ -375,7 +402,7 @@ std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
     return metadata_;
 }
 
-bool SOMAArray::has_metadata(const std::string& key) {
+bool SOMAArray::has_metadata(const std::string& key) const {
     return metadata_.count(key) != 0;
 }
 
@@ -383,7 +410,7 @@ uint64_t SOMAArray::metadata_num() const {
     return metadata_.size();
 }
 
-std::optional<TimestampRange> SOMAArray::timestamp() {
+std::optional<TimestampRange> SOMAArray::timestamp() const {
     return timestamp_;
 }
 

@@ -72,13 +72,7 @@ void SOMADenseNDArray::create(
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
-    auto array = std::make_unique<SOMADenseNDArray>(mode, uri, ctx, timestamp);
-
-    if (!array->check_type("SOMADenseNDArray")) {
-        throw TileDBSOMAError("[SOMADenseNDArray::open] Object is not a SOMADenseNDArray");
-    }
-
-    return array;
+    return std::make_unique<SOMADenseNDArray>(mode, uri, ctx, timestamp);
 }
 
 std::string_view SOMADenseNDArray::soma_data_type() {

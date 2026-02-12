@@ -14,15 +14,14 @@
 #ifndef SOMA_SCENE
 #define SOMA_SCENE
 
-#include <tiledb/tiledb>
-
-#include "soma_collection.h"
+#include "soma_collection_base.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {
 
-using namespace tiledb;
-class SOMAScene : public SOMACollection {
+class SOMACollection;
+
+class SOMAScene : public SOMACollectionBase {
    public:
     //===================================================================
     //= public static
@@ -65,12 +64,10 @@ class SOMAScene : public SOMACollection {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMACollection(mode, uri, ctx, timestamp) {
-    }
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
-    SOMAScene(const SOMACollection& other)
-        : SOMACollection(other) {
+    SOMAScene(const SOMACollectionBase& other)
+        : SOMACollectionBase(other) {
     }
 
     SOMAScene() = delete;

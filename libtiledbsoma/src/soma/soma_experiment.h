@@ -14,16 +14,15 @@
 #ifndef SOMA_EXPERIMENT
 #define SOMA_EXPERIMENT
 
-#include <tiledb/tiledb>
-
 #include "../tiledb_adapter/platform_config.h"
-#include "soma_collection.h"
-#include "soma_dataframe.h"
+#include "soma_collection_base.h"
 
 namespace tiledbsoma {
 
-using namespace tiledb;
-class SOMAExperiment : public SOMACollection {
+class SOMADataFrame;
+class SOMACollection;
+
+class SOMAExperiment : public SOMACollectionBase {
    public:
     //===================================================================
     //= public static
@@ -69,11 +68,11 @@ class SOMAExperiment : public SOMACollection {
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMACollection(mode, uri, ctx, timestamp) {
+        : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAExperiment") {
     }
 
-    SOMAExperiment(const SOMACollection& other)
-        : SOMACollection(other) {
+    SOMAExperiment(const SOMACollectionBase& other)
+        : SOMACollectionBase(other) {
     }
 
     SOMAExperiment() = delete;

@@ -89,7 +89,7 @@ class SOMADenseNDArray : public SOMAArray {
      */
     SOMADenseNDArray(
         OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
-        : SOMAArray(mode, uri, ctx, timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp, "SOMADenseNDArray") {
     }
 
     SOMADenseNDArray(const SOMAArray& other)

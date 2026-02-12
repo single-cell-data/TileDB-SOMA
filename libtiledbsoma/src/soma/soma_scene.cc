@@ -57,23 +57,21 @@ void SOMAScene::create(
 std::unique_ptr<SOMAScene> SOMAScene::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        auto group = std::make_unique<SOMAScene>(mode, uri, ctx, timestamp);
-
-        if (!group->check_type("SOMAScene")) {
-            throw TileDBSOMAError("[SOMAScene::open] Object is not a SOMAScene");
-        }
-
-        auto coord_space_metadata = group->get_metadata(SOMA_COORDINATE_SPACE_KEY);
-        if (coord_space_metadata.has_value()) {
-            group->coord_space_ = SOMACoordinateSpace::from_metadata(
-                std::get<0>(coord_space_metadata.value()),
-                std::get<1>(coord_space_metadata.value()),
-                std::get<2>(coord_space_metadata.value()));
-        }
-
-        return group;
+        return std::make_unique<SOMAScene>(mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
+    }
+}
+
+SOMAScene::SOMAScene(
+    OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
+    : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAScene") {
+    auto coord_space_metadata = get_metadata(SOMA_COORDINATE_SPACE_KEY);
+    if (coord_space_metadata.has_value()) {
+        coord_space_ = SOMACoordinateSpace::from_metadata(
+            std::get<0>(coord_space_metadata.value()),
+            std::get<1>(coord_space_metadata.value()),
+            std::get<2>(coord_space_metadata.value()));
     }
 }
 

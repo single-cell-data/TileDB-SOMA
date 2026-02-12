@@ -14,7 +14,7 @@ A SOMA Collection is stored as a TileDB group. The group has the following metad
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :--------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMACollection" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMACollection" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | SOMA encoding version | required |
 
 ### DataFrame encoding version 1.1.0
@@ -23,7 +23,7 @@ A SOMA DataFrame is stored as a sparse TileDB array. Index columns are stored as
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :-------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMADataFrame" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMADataFrame" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | SOMA encoding version | required |
 
 ### DenseNDArray encoding version 1.1.0
@@ -32,7 +32,7 @@ A SOMA DenseNDArray is stored as a dense TileDB array. The array has the followi
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :----------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMADenseNDArray" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMADenseNDArray" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | SOMA encoding version | required |
 
 ### Experiment encoding version 1.1.0
@@ -41,7 +41,7 @@ A SOMA Experiment is stored as a TileDB group. The group has the following metad
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :--------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAExperiment" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAExperiment" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | SOMA encoding version | required |
 
 ### MultiscaleImage encoding version 1.1.0
@@ -50,7 +50,7 @@ A SOMA MultiscaleImage is stored as a TileDB group that contains a SOMA DenseNDA
 
 | Metadata key | Datatype | Value | Description | Required |
 | :------------------------------ | :----------------- | :------------------------------------------------ | :------------------------------------------------ | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAMultiscaleImage" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAMultiscaleImage" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | general SOMA encoding version | required |
 | "soma_spatial_encoding_version" | TILEDB_STRING_UTF8 | "0.2.0" | type-specific SOMA encoding version | required |
 | "soma_coordinate_space" | TILEDB_STRING_UTF8 | JSON serialization of the coordinate space | JSON serialization of the coordinate space | required |
@@ -89,7 +89,7 @@ A SOMA Experiment is stored as a TileDB group. The group has the following metad
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :---------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAMeasurement" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAMeasurement" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | SOMA encoding version | required |
 
 ### PointCloudDataFrame encoding version 1.1.0
@@ -98,7 +98,7 @@ The SOMA PointCloudDataFrame is stored as a sparse TileDB array. Index columns a
 
 | Metadata key | Datatype | Value | Description | Required |
 | :------------------------------ | :----------------- | :----------------------------------------- | :------------------------------------------------------------ | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAPointCloudDataFrame" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAPointCloudDataFrame" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | general SOMA encoding version | required |
 | "soma_spatial_encoding_version" | TILEDB_STRING_UTF8 | "0.2.0" | type-specific SOMA encoding version | required |
 | "soma_coordinate_space" | TILEDB_STRING_UTF8 | JSON serialization of the coordinate space | JSON serialization of the coordinate space | required |
@@ -111,7 +111,7 @@ The SOMA Scene is stored as a TileDB group. It has the following group metadata:
 
 | Metadata key | Datatype | Value | Description | Required |
 | :------------------------------ | :----------------- | :----------------------------------------- | :----------------------------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAMultiscaleImage" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAMultiscaleImage" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | general SOMA encoding version | required |
 | "soma_spatial_encoding_version" | TILEDB_STRING_UTF8 | "0.2.0" | type-specific SOMA encoding version | required |
 | "soma_coordinate_space" | TILEDB_STRING_UTF8 | JSON serialization of the coordinate space | JSON serialization of the coordinate space | optional |
@@ -223,7 +223,7 @@ A SOMA SparseNDArray is stored as a sparse TileDB array. The array has the follo
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :------------------ | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMASparseNDArray" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMASparseNDArray" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1.1.0" | SOMA encoding version | required |
 
 ### CoordinateSpace serialization encoding version 1.1.0
@@ -261,7 +261,7 @@ A SOMA Collection is stored as a TileDB group. The group has the following metad
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :--------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMACollection" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMACollection" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1" | SOMA encoding version | required |
 
 ### DataFrame encoding version 1.0.0
@@ -270,7 +270,7 @@ A SOMA DataFrame is stored as a sparse TileDB array. Index columns are stored as
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :-------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMADataFrame" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMADataFrame" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1" | SOMA encoding version | required |
 
 ### DenseNDArray encoding version 1.0.0
@@ -279,7 +279,7 @@ A SOMA DenseNDArray is stored as a dense TileDB array. The array has the followi
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :----------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMADenseNDArray" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMADenseNDArray" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1" | SOMA encoding version | required |
 
 ### Experiment encoding version 1.0.0
@@ -288,7 +288,7 @@ A SOMA Experiment is stored as a TileDB group. The group has the following metad
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :--------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAExperiment" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAExperiment" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1" | SOMA encoding version | required |
 
 ### Measurement encoding version 1.0.0
@@ -297,7 +297,7 @@ A SOMA Experiment is stored as a TileDB group. The group has the following metad
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :---------------- | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMAMeasurement" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMAMeasurement" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1" | SOMA encoding version | required |
 
 ### SparseNDArray encoding version 1.0.0
@@ -306,5 +306,5 @@ A SOMA SparseNDArray is stored as a sparse TileDB array. The array has the follo
 
 | Metadata key | Datatype | Value | Description | Required |
 | :---------------------- | :----------------- | :------------------ | :-------------------- | :------- |
-| "soma_datatype" | TILEDB_STRING_UTF8 | "SOMASparseNDArray" | SOMA type name | required |
+| "soma_object_type" | TILEDB_STRING_UTF8 | "SOMASparseNDArray" | SOMA type name | required |
 | "soma_encoding_version" | TILEDB_STRING_UTF8 | "1" | SOMA encoding version | required |

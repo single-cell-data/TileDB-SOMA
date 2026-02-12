@@ -86,6 +86,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_column.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection_base.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.cc
@@ -233,27 +234,6 @@ else()
   )
 endif()
 
-# Install header files
-# target_sources FILE_SET is preferred with cmake>=3.23
-# TODO Uncomment after finishing Python and R bindings
-# set(TILEDB_SOMA_PUBLIC_HEADERS
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/tiledbsoma
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_collection.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dataframe.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dense_ndarray.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_scene.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_coordinates.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_geometry_dataframe.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_point_cloud_dataframe.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_multiscale_image.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_factory.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
-#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
-# )
-
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/enums.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h
@@ -265,6 +245,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_column.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.h
