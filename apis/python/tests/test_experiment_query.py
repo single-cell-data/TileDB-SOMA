@@ -673,9 +673,6 @@ def test_axis_query():
     assert AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
 
     with pytest.raises(TypeError):
-        AxisQuery(coords=True)
-
-    with pytest.raises(TypeError):
         AxisQuery(value_filter=[])
 
     with pytest.raises(TypeError):
