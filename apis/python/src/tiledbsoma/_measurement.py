@@ -4,7 +4,7 @@
 
 """Implementation of a SOMA Measurement."""
 
-from typing import Final, Union
+from typing import ClassVar, Final, Union
 
 from . import _mixin
 from . import pytiledbsoma as clib
@@ -59,6 +59,16 @@ class Measurement(CollectionBase[SOMAObject]):
     __slots__ = ()
     _handle_type = clib.SOMAMeasurement
     soma_type: Final = "SOMAMeasurement"  # type: ignore[misc]
+
+    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
+        "var": ("SOMADataFrame",),
+        "X": ("SOMACollection",),
+        "obsm": ("SOMACollection",),
+        "obsp": ("SOMACollection",),
+        "varm": ("SOMACollection",),
+        "varp": ("SOMACollection",),
+        "var_spatial_presence": ("SOMADataFrame",),
+    }
 
     var = _mixin.item[DataFrame]()
     """Primary annotations on the variable axis for vars on this measurement.

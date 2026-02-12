@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import functools
-from typing import Final
+from typing import ClassVar, Final
 
 import attrs
 import pyarrow as pa
@@ -74,6 +74,13 @@ class Experiment(CollectionBase[SOMAObject]):
     __slots__ = ()
     _handle_type = clib.SOMAExperiment
     soma_type: Final = "SOMAExperiment"  # type: ignore[misc]
+
+    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
+        "obs": ("SOMADataFrame",),
+        "ms": ("SOMACollection",),
+        "spatial": ("SOMACollection",),
+        "obs_spatial_presence": ("SOMADataFrame",),
+    }
 
     obs = _mixin.item[DataFrame]()
     """Primary observations on the observation axis.
