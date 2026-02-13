@@ -5,6 +5,10 @@ createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype,
     invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec))
 }
 
+createSchemaForNDArray <- function(uri, format, shape, soma_type, pclst, ctxxp, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_createSchemaForNDArray`, uri, format, shape, soma_type, pclst, ctxxp, tsvec))
+}
+
 writeArrayFromArrow <- function(uri, naap, nasp, ctxxp, arraytype = "", config = NULL, tsvec = NULL) {
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, ctxxp, arraytype, config, tsvec))
 }
