@@ -14,6 +14,7 @@
 #define SOMA_DENSE_NDARRAY
 
 #include <filesystem>
+#include <optional>
 
 #include "../tiledb_adapter/platform_config.h"
 #include "soma_array.h"
@@ -45,6 +46,24 @@ class SOMADenseNDArray : public SOMAArray {
         std::string_view uri,
         std::string_view format,
         const common::arrow::ArrowTable& index_columns,
+        std::shared_ptr<SOMAContext> ctx,
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
+     * @brief Create a SOMADenseNDArray object at the given URI.
+     *
+     * @param uri URI to create the SOMASparseNDArray
+     * @param format Arrow type to create the soma_data
+     * @param shape 
+     * @param ctx SOMAContext
+     * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
+     */
+    static void create(
+        std::string_view uri,
+        std::string_view format,
+        std::span<const std::optional<int64_t>> shape,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);

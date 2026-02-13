@@ -12,10 +12,13 @@
  */
 
 #include "platform_config.h"
-#include "nlohmann/json.hpp"
 
 #include "../utils/common.h"
+#include "common/arrow/utils.h"
 #include "common/logging/impl/logger.h"
+
+#include <limits>
+#include <tiledb/tiledb_experimental>
 
 using json = nlohmann::json;
 
@@ -369,5 +372,52 @@ PlatformSchemaConfig platform_schema_config_from_tiledb(tiledb::ArraySchema tile
     platform_config.dims = get_dims_list_json(tiledb_schema).dump();
 
     return platform_config;
+}
+
+ArraySchema create_nd_array_schema(
+    std::string_view soma_type,
+    bool is_sparse,
+    std::string_view format,
+    std::span<const int64_t> shape,
+    std::shared_ptr<tiledb::Context> ctx,
+    PlatformConfig platform_config,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    tiledb::ArraySchema schema = utils::create_base_tiledb_schema(ctx, platform_config, is_sparse, timestamp);
+    tiledb::Domain domain(*ctx);
+    int64_t default_extent = std::max(2048 >> shape.size(), 4);
+
+    for (size_t i = 0; i < shape.size(); ++i) {
+        if (shape[i] <= 0) {
+            throw std::range_error("[create_nd_array_schema] Shape slots must be at least 1");
+        }
+
+        std::string name = fmt::format("soma_dim_{}", i);
+        auto extent = std::min(
+            utils::get_dim_extent(name, platform_config, default_extent), std::numeric_limits<int64_t>::max());
+
+        tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
+            *ctx, name, {{0, std::numeric_limits<int64_t>::max() - extent - 1}}, extent);
+        dimension.set_filter_list(utils::create_dim_filter_list(name, platform_config, soma_type.data(), ctx));
+        domain.add_dimension(dimension);
+    }
+
+    schema.set_domain(domain);
+
+    tiledb::Attribute attribute = tiledb::Attribute::create(*ctx, "soma_data", common::arrow::to_tiledb_format(format));
+    attribute.set_filter_list(utils::create_attr_filter_list("soma_data", platform_config, ctx));
+    schema.add_attribute(attribute);
+
+    tiledb::CurrentDomain current_domain(*ctx);
+    tiledb::NDRectangle rect(*ctx, domain);
+
+    for (size_t i = 0; i < shape.size(); ++i) {
+        rect.set_range<int64_t>(i, 0, shape[i] - 1);
+    }
+
+    current_domain.set_ndrectangle(rect);
+    tiledb::ArraySchemaExperimental::set_current_domain(*ctx, schema, current_domain);
+    schema.check();
+
+    return schema;
 }
 }  // namespace tiledbsoma::utils
