@@ -8,11 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from functools import cache
-from typing import (
-    Any,
-    TypedDict,
-    Union,
-)
+from typing import Any, TypedDict, Union
 
 import numpy as np
 import pyarrow as pa
@@ -37,7 +33,7 @@ class SOMADaskConfig(TypedDict, total=False):
     """
 
     chunk_size: ChunkSize
-    tiledb_config: dict[str, str | float]
+    tiledb_config: dict[str, Union[str, float]]  # noqa: UP007
 
 
 def chunk_ids_sizes(joinids: JoinIDs, chunk_size: int, dim_size: int) -> tuple[list[JoinIDs], list[int]]:  # noqa: ARG001
