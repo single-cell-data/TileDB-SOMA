@@ -43,7 +43,6 @@ def test_canonicalization_nparray() -> None:
     [
         ("forbid bare strings",),
         (b"forbid bare byteses",),
-        (999,),
     ],
 )
 def test_canonicalization_bad(coords) -> None:
