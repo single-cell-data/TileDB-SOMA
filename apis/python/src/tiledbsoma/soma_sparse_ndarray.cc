@@ -69,6 +69,32 @@ void load_soma_sparse_ndarray(py::module& m) {
             "timestamp"_a = py::none())
 
         .def_static(
+            "create",
+            [](std::string_view uri,
+               std::string format,
+               const std::vector<std::optional<int64_t>>& shape,
+               std::shared_ptr<SOMAContext> context,
+               PlatformConfig platform_config,
+               std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+                try {
+                    SOMASparseNDArray::create(uri, format, shape, context, platform_config, timestamp);
+                } catch (const std::out_of_range& e) {
+                    throw py::type_error(e.what());
+                } catch (const std::range_error& e) {
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            "uri"_a,
+            py::kw_only(),
+            "format"_a,
+            "shape"_a,
+            "ctx"_a,
+            "platform_config"_a,
+            "timestamp"_a = py::none())
+
+        .def_static(
             "open",
             py::overload_cast<
                 std::string_view,

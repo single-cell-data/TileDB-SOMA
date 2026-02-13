@@ -171,58 +171,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         # about. It's resizeable (up to max_domain anyway), reads and writes are bounds-checked
         # against it, etc.
 
-        index_column_schema = []
-        index_column_data = {}
-
-        if any(col_size is None for col_size in shape):
-            new_shape = tuple(1 if col_size is None else col_size for col_size in shape)
+        if None in shape:
             warnings.warn(
-                f"Using ``None`` in the shape is deprecated. Updating shape={shape} to shape={new_shape}.",
+                f"Using ``None`` in the shape is deprecated. Updating shape={shape} to shape={tuple(1 if col_size is None else col_size for col_size in shape)}.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            shape = new_shape
-
-        for dim_idx, dim_shape in enumerate(shape):
-            dim_name = f"soma_dim_{dim_idx}"
-
-            pa_field = pa.field(dim_name, pa.int64())
-            index_column_schema.append(pa_field)
-
-            # Here is our Arrow data API for communicating schema info between
-            # Python/R and C++ libtiledbsoma:
-            #
-            # [0] core max domain lo
-            # [1] core max domain hi
-            # [2] core extent parameter
-            # If present, these next two signal to use the current-domain feature:
-            # [3] core current domain lo
-            # [4] core current domain hi
-
-            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                dim_name,
-                # The user specifies current domain -- this is the max domain
-                # which is taken from the max ranges for the dim datatype.
-                # We pass None here to detect those.
-                None,
-                len(shape),
-                TileDBCreateOptions.from_platform_config(platform_config),
-            )
-
-            if dim_shape == 0:
-                raise ValueError("SparseNDArray shape slots must be at least 1")
-            if dim_shape is None:
-                dim_shape = 1
-
-            index_column_data[pa_field.name] = [
-                0,
-                dim_capacity - 1,
-                dim_extent,
-                0,
-                dim_shape - 1,
-            ]
-
-        index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = build_clib_platform_config(platform_config)
@@ -232,7 +186,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             clib.SOMASparseNDArray.create(
                 uri,
                 format=carrow_type,
-                index_column_info=index_column_info,
+                shape=shape,
                 ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),

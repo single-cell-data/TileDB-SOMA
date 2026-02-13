@@ -384,7 +384,7 @@ ArraySchema create_nd_array_schema(
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     tiledb::ArraySchema schema = utils::create_base_tiledb_schema(ctx, platform_config, is_sparse, timestamp);
     tiledb::Domain domain(*ctx);
-    int64_t default_extent = std::max(2048 >> shape.size(), 4);
+    int64_t default_extent = is_sparse ? 2048 : std::max(2048 >> shape.size(), 4);
 
     for (size_t i = 0; i < shape.size(); ++i) {
         if (shape[i] <= 0) {
