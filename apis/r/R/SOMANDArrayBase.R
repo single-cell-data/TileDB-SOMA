@@ -68,7 +68,7 @@ SOMANDArrayBase <- R6::R6Class(
       createSchemaForNDArray(
         uri = self$uri,
         format = as_nanoarrow_schema(arrow::schema(arrow::field("soma_data", type)))$children$soma_data$format,
-        shape = shape,
+        shape = as.integer64(shape),
         soma_type = if (sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
         ctxxp = private$.context$handle,

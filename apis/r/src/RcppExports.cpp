@@ -30,13 +30,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // createSchemaForNDArray
-void createSchemaForNDArray(const std::string& uri, const std::string& format, Rcpp::IntegerVector shape, const std::string& soma_type, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
+void createSchemaForNDArray(const std::string& uri, const std::string& format, Rcpp::NumericVector shape, const std::string& soma_type, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
 RcppExport SEXP _tiledbsoma_createSchemaForNDArray(SEXP uriSEXP, SEXP formatSEXP, SEXP shapeSEXP, SEXP soma_typeSEXP, SEXP pclstSEXP, SEXP ctxxpSEXP, SEXP tsvecSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type format(formatSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type shape(shapeSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type soma_type(soma_typeSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);

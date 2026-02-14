@@ -129,7 +129,7 @@ void createSchemaFromArrow(
 void createSchemaForNDArray(
     const std::string& uri,
     const std::string& format,
-    Rcpp::IntegerVector shape,
+    Rcpp::NumericVector shape,
     const std::string& soma_type,
     Rcpp::List pclst,
     Rcpp::XPtr<somactx_wrap_t> ctxxp,
@@ -171,8 +171,8 @@ void createSchemaForNDArray(
     }
 
     std::vector<std::optional<int64_t>> cpp_shape;
-    for (const auto& dim_shape : shape) {
-        cpp_shape.push_back(std::make_optional<int64_t>(dim_shape));
+    for (size_t i = 0; i < shape.length(); ++i) {
+        cpp_shape.push_back(std::make_optional<int64_t>(*reinterpret_cast<int64_t*>(&shape[i])));
     }
 
     if (soma_type == "SOMASparseNDArray") {
