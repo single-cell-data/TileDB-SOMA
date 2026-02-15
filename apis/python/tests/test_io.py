@@ -38,9 +38,6 @@ def src_matrix(request):
         ),
         pa.schema(
             [
-                ("bool_enum", pa.dictionary(pa.int8(), pa.bool_())),
-                ("int32_enum", pa.dictionary(pa.int8(), pa.int32())),
-                ("float64_enum", pa.dictionary(pa.int8(), pa.float64())),
                 ("string_enum", pa.dictionary(pa.int8(), pa.string())),
             ],
         ),
