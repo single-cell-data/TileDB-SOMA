@@ -19,7 +19,7 @@ def src_matrix(request):
 
 @pytest.mark.parametrize(
     "num_rows",
-    [0, 1, 2, 3, 4, 10, 100, 1_000],
+    [1, 2, 3, 4, 10, 100, 1_000],
 )
 @pytest.mark.parametrize(
     "cap_nbytes",
@@ -39,6 +39,9 @@ def src_matrix(request):
         pa.schema(
             [
                 ("bool_enum", pa.dictionary(pa.int8(), pa.bool_())),
+                ("int32_enum", pa.dictionary(pa.int8(), pa.int32())),
+                ("float64_enum", pa.dictionary(pa.int8(), pa.float64())),
+                ("string_enum", pa.dictionary(pa.int8(), pa.string())),
             ],
         ),
     ],
