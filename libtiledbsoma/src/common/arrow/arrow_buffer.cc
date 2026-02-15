@@ -10,6 +10,7 @@
 #include "arrow_buffer.h"
 
 #include "../logging/impl/logger.h"
+#include "utils.h"
 
 #include "nanoarrow/nanoarrow.hpp"
 
@@ -107,7 +108,11 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
     ctx.handle_error(tiledb_enumeration_get_data(ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
 
     std::unique_ptr<std::byte[]> data_buffer = std::make_unique_for_overwrite<std::byte[]>(data_size);
-    std::memcpy(data_buffer.get(), data, data_size);
+
+    // If enumeration is empty do not copy the data buffer since data will be null and this would cause UB
+    if (data_size) {
+        std::memcpy(data_buffer.get(), data, data_size);
+    }
 
     switch (enumeration.type()) {
         case TILEDB_CHAR:
@@ -130,7 +135,12 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
                 }
 
                 std::unique_ptr<int64_t[]> offsets_buffer = std::make_unique_for_overwrite<int64_t[]>(count + 1);
-                std::memcpy(offsets_buffer.get(), offsets, offsets_size);
+
+                // If enumeration is empty do not copy the offset buffer since data will be null and this would cause UB
+                if (count) {
+                    std::memcpy(offsets_buffer.get(), offsets, offsets_size);
+                }
+
                 offsets_buffer[count] = static_cast<int64_t>(data_size);
 
                 storage_ = std::make_unique<ArrayArrowBufferStorage>(
@@ -155,21 +165,11 @@ ArrowBuffer::ArrowBuffer(const tiledb::Enumeration& enumeration, bool large_offs
             }
         } break;
         case TILEDB_BOOL: {
-            std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
-            size_t count = data_size / sizeof(bool);
-
-            // If the enumeration is not empty
-            if (count > 0) {
-                // Represent the Boolean vector with, at most, the last two
-                // bits. In Arrow, Boolean values are LSB packed
-                uint8_t packed_data = 0;
-                for (size_t i = 0; i < count; ++i)
-                    packed_data |= (data_v[i] << i);
-
-                std::memcpy(data_buffer.get(), &packed_data, 1);
-            }
-
-            storage_ = std::make_unique<ArrayArrowBufferStorage>(enumeration.type(), count, std::move(data_buffer));
+            storage_ = std::make_unique<ArrayArrowBufferStorage>(
+                enumeration.type(),
+                data_size,
+                std::unique_ptr<std::byte[]>(reinterpret_cast<std::byte*>(
+                    bytemap_to_bitmap(static_cast<const uint8_t*>(data), data_size, 0).release())));
         } break;
         case TILEDB_INT8:
         case TILEDB_UINT8:
