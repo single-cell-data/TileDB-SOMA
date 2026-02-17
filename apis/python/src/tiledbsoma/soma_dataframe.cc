@@ -201,7 +201,12 @@ void load_soma_dataframe(py::module& m) {
             "values"_a,
             "deduplicate"_a)
 
-        .def_property_readonly("count", &SOMADataFrame::count, py::call_guard<py::gil_scoped_release>())
+        .def_property_readonly(
+            "count",
+            [](SOMADataFrame& sdf) {
+                py::gil_scoped_release release;
+                return sdf.count();
+            })
         .def_property_readonly("maybe_soma_joinid_shape", &SOMADataFrame::maybe_soma_joinid_shape)
         .def_property_readonly("maybe_soma_joinid_maxshape", &SOMADataFrame::maybe_soma_joinid_maxshape)
         .def_property_readonly("tiledbsoma_has_upgraded_domain", &SOMAArray::has_current_domain)
