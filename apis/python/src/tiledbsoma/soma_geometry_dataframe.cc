@@ -121,6 +121,9 @@ void load_soma_geometry_dataframe(py::module& m) {
 
         .def_static("exists", &SOMAGeometryDataFrame::exists)
         .def_property_readonly("index_column_names", &SOMAGeometryDataFrame::index_column_names)
-        .def_property_readonly("count", &SOMAGeometryDataFrame::count, py::call_guard<py::gil_scoped_release>());
+        .def_property_readonly("count", [](SOMAGeometryDataFrame& df) {
+            py::gil_scoped_release release;
+            return df.count();
+        });
 }
 }  // namespace libtiledbsomacpp
