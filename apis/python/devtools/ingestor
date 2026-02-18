@@ -18,14 +18,13 @@ import os
 import pathlib
 import sys
 
-from somacore import options
-
 import tiledbsoma
 import tiledbsoma._exception
 import tiledbsoma._types
 import tiledbsoma._util
 import tiledbsoma.io
 import tiledbsoma.logging
+from tiledbsoma._core import options
 from tiledbsoma.options import SOMATileDBContext
 import tiledb
 

@@ -7,17 +7,17 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Final
 
 import numpy as np
 import pyarrow as pa
-import somacore
-from somacore import options
 from typing_extensions import Self
 
 from . import _util
 from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
+from ._core_options import DenseNDCoords, PlatformConfig, ReadPartitions, ResultOrder, ResultOrderStr
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._managed_query import ManagedQuery
 from ._read_iters import TableReadIter
@@ -29,7 +29,7 @@ from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWri
 from .options._util import build_clib_platform_config
 
 
-class DenseNDArray(NDArray, somacore.DenseNDArray):
+class DenseNDArray(NDArray):
     """:class:`DenseNDArray` is a dense, N-dimensional array, with offset (zero-based)
     integer indexing on each dimension.
 
@@ -80,6 +80,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     __slots__ = ()
 
+    soma_type: Final = "SOMADenseNDArray"  # type: ignore[misc]
+    is_sparse: Final = False
     _handle_type = clib.SOMADenseNDArray
 
     @classmethod
@@ -89,7 +91,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         *,
         type: pa.DataType,
         shape: Sequence[int | None],
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -168,9 +170,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
         )
 
-    def delete_cells(
-        self, coords: options.DenseNDCoords, *, platform_config: options.PlatformConfig | None = None
-    ) -> None:
+    def delete_cells(self, coords: DenseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
         """Deletes cells at the specified coordinates. Not supported on dense arrays.
 
         Not supported on DenseNDArray.
@@ -185,11 +185,11 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     def read(
         self,
-        coords: options.DenseNDCoords = (),
+        coords: DenseNDCoords = (),
         *,
-        result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
-        partitions: options.ReadPartitions | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        result_order: ResultOrderStr = ResultOrder.ROW_MAJOR,
+        partitions: ReadPartitions | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> pa.Tensor:
         """Reads a user-defined dense slice of the array and return as an Arrow ``Tensor``.
 
@@ -217,7 +217,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         del partitions  # Currently unused.
         self._verify_open_for_reading()
-        result_order = somacore.ResultOrder(result_order)
+        result_order = ResultOrder(result_order)
 
         # The dense_indices_to_shape includes, as one of its roles, how to handle default
         # coordinates -- e.g. `dnda.read()`. The default for a DenseNDArray should be "all the data"
@@ -233,7 +233,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         # all, in which case the best we can do is use the schema shape.
         handle: clib.SOMADenseNDArray = self._handle
 
-        if result_order == options.ResultOrder.AUTO:
+        if result_order == ResultOrder.AUTO:
             raise ValueError(
                 "The use of 'result_order=\"auto\"' is unsupported. Use 'row-order' (the default "
                 "if no option is provided) or 'col-order' instead."
@@ -265,10 +265,10 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     def write(
         self,
-        coords: options.DenseNDCoords,
+        coords: DenseNDCoords,
         values: pa.Tensor,
         *,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """Writes a subarray, defined by ``coords`` and ``values``. Will overwrite existing
         values in the array.

@@ -7,14 +7,10 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Final
 
 import pyarrow as pa
-import somacore
-from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
-
-from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -23,6 +19,17 @@ from ._constants import (
     SOMA_GEOMETRY,
     SOMA_JOINID,
     SPATIAL_DISCLAIMER,
+)
+from ._coordinate_space import CoordinateSpace, CoordinateTransform, IdentityTransform
+from ._core_iters import ReadIter, SpatialRead
+from ._core_options import (
+    BatchSize,
+    PlatformConfig,
+    ReadPartitions,
+    ResultOrder,
+    ResultOrderStr,
+    SparseDFCoords,
+    SpatialRegion,
 )
 from ._dataframe import (
     Domain,
@@ -43,13 +50,13 @@ from ._spatial_util import (
 )
 from ._types import OpenTimestamp
 from ._util import _cast_record_batch, tiledb_timestamp_to_ms
-from .options import SOMATileDBContext, _update_context_and_timestamp
+from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions, _update_context_and_timestamp
 from .options._util import build_clib_platform_config
 
-_UNBATCHED = options.BatchSize()
+_UNBATCHED = BatchSize()
 
 
-class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
+class GeometryDataFrame(SpatialDataFrame):
     """A specialized SOMA object for storing complex geometries with spatial indexing.
 
     The ``GeometryDataFrame`` class is designed to store and manage geometric shapes
@@ -62,6 +69,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     __slots__ = ("_coord_space",)
     _handle_type = clib.SOMAGeometryDataFrame
+    soma_type: Final = "SOMAGeometryDataFrame"  # type: ignore[misc]
 
     # Lifecycle
 
@@ -73,7 +81,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         schema: pa.Schema,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         domain: Domain | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -313,10 +321,10 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     def delete_cells(
         self,
-        coords: options.SparseDFCoords,
+        coords: SparseDFCoords,
         *,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> None:
         """Deletes cells at the specified coordinates.
 
@@ -333,14 +341,14 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     def read(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         column_names: Sequence[str] | None = None,
         *,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined slice of data into Arrow tables.
 
@@ -386,17 +394,17 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     def read_spatial_region(
         self,
-        region: options.SpatialRegion | None = None,
+        region: SpatialRegion | None = None,
         column_names: Sequence[str] | None = None,
         *,
         region_transform: CoordinateTransform | None = None,
         region_coord_space: CoordinateSpace | None = None,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
-    ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
+        platform_config: PlatformConfig | None = None,
+    ) -> SpatialRead[ReadIter[pa.Table]]:
         """Reads data intersecting an user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
 
@@ -418,7 +426,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             partitions: If present, specifies that this is part of a partitioned read,
                 and which part of the data to include.
             result_order: the order to return results, specified as a
-                :class:`~options.ResultOrder` or its string value.
+                :class:`~ResultOrder` or its string value.
             value_filter: an optional value filter to apply to the results.
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
@@ -432,7 +440,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """
         # Set/check transform and region coordinate space.
         if region_transform is None:
-            region_transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
+            region_transform = IdentityTransform(self.axis_names, self.axis_names)
             if region_coord_space is not None:
                 raise ValueError("Cannot specify the output coordinate space when region transform is ``None``.")
             region_coord_space = self._coord_space
@@ -463,7 +471,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             spatial_column=SOMA_GEOMETRY,
         )
 
-        return somacore.SpatialRead(
+        return SpatialRead(
             self.read(
                 coords,
                 column_names,
@@ -482,7 +490,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         self,
         values: pa.RecordBatch | pa.Table,
         *,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object.
 
@@ -518,7 +526,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         self,
         values: pa.RecordBatch | pa.Table,
         *,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object,
         applying a data transformation to transform the given outline

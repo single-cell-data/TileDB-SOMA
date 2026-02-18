@@ -8,13 +8,10 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import numpy as np
 import pyarrow as pa
-import somacore
-from somacore import options
-from somacore.options import PlatformConfig
 from typing_extensions import Self, Unpack
 
 from . import _util
@@ -24,6 +21,8 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._coordinate_selection import CoordinateValueFilters
+from ._core_iters import ReadIter, SparseRead
+from ._core_options import BatchSize, PlatformConfig, ReadPartitions, ResultOrder, ResultOrderStr, SparseNDCoords
 from ._dask.util import SOMADaskConfig
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._managed_query import ManagedQuery
@@ -42,10 +41,10 @@ if TYPE_CHECKING:
         pass
 
 
-_UNBATCHED = options.BatchSize()
+_UNBATCHED = BatchSize()
 
 
-class SparseNDArray(NDArray, somacore.SparseNDArray):
+class SparseNDArray(NDArray):
     """:class:`SparseNDArray` is a sparse, N-dimensional array, with offset (zero-based) integer indexing on each dimension.
 
     :class:`SparseNDArray` has a user-defined schema, which includes:
@@ -96,10 +95,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     __slots__ = ()
 
     _handle_type = clib.SOMASparseNDArray
-
-    # Inherited from somacore
-    # * ndim accessor
-    # * is_sparse: Final = True
+    soma_type: Final = "SOMASparseNDArray"  # type: ignore[misc]
+    is_sparse: Final = True
 
     @classmethod
     def create(
@@ -108,7 +105,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         *,
         type: pa.DataType,
         shape: Sequence[int | None],
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -221,7 +218,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         self._verify_open_for_reading()
         return int(self._handle.nnz())
 
-    def delete_cells(self, coords: options.SparseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
+    def delete_cells(self, coords: SparseNDCoords, *, platform_config: PlatformConfig | None = None) -> None:
         """Deletes cells at the specified coordinates in a :class:`SparseNDArray`.
 
         Note: Deleting cells does not change the shape of the :class:`SparseNDArray`.
@@ -245,11 +242,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def read(
         self,
-        coords: options.SparseNDCoords = (),
+        coords: SparseNDCoords = (),
         *,
-        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        batch_size: options.BatchSize = _UNBATCHED,
-        partitions: options.ReadPartitions | None = None,
+        result_order: ResultOrderStr = ResultOrder.AUTO,
+        batch_size: BatchSize = _UNBATCHED,
+        partitions: ReadPartitions | None = None,
         platform_config: PlatformConfig | None = None,
     ) -> SparseNDArrayRead:
         """Reads a user-defined slice of the :class:`SparseNDArray`.
@@ -448,15 +445,15 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         return (dim_capacity, dim_extent)
 
 
-class _SparseNDArrayReadBase(somacore.SparseRead):
+class _SparseNDArrayReadBase(SparseRead):
     """Base class for sparse reads."""
 
     def __init__(
         self,
         array: SparseNDArray,
-        coords: options.SparseNDCoords,
+        coords: SparseNDCoords,
         result_order: clib.ResultOrder,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
     ) -> None:
         """Lifecycle:
         Maturing.
@@ -478,8 +475,6 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
     complete "blocks" for any given user-specified dimension, eg., all coordinates in a given row in one
     iteration step. NB: `blockwise` iterators may utilize additional disk or network IO.
 
-    See Also:
-        somacore.data.SparseRead
 
     Lifecycle:
         Maturing.
@@ -625,10 +620,10 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
     def __init__(
         self,
         array: SparseNDArray,
-        coords: options.SparseNDCoords,
+        coords: SparseNDCoords,
         axis: int | Sequence[int],
         result_order: clib.ResultOrder,
-        platform_config: options.PlatformConfig | None,
+        platform_config: PlatformConfig | None,
         *,
         size: int | Sequence[int] | None,
         reindex_disable_on_axis: int | Sequence[int] | None,
@@ -664,7 +659,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             context=self.array.context,
         )
 
-    def coos(self) -> somacore.ReadIter[None]:
+    def coos(self) -> ReadIter[None]:
         """Unimplemented due to ARROW-17933, https://issues.apache.org/jira/browse/ARROW-17933, which causes failure on empty tensors (which are commonly yielded by blockwise iterators).
 
         Also tracked as https://github.com/single-cell-data/TileDB-SOMA/issues/668

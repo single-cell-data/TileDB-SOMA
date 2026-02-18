@@ -15,8 +15,8 @@ import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
 import scipy.sparse as sp
-from somacore.options import PlatformConfig, ResultOrder, ResultOrderStr, SparseNDCoords
 
+from tiledbsoma._core_options import PlatformConfig, ResultOrder, ResultOrderStr, SparseNDCoords
 from tiledbsoma._dask.util import (
     ChunkSize,
     JoinIDs,

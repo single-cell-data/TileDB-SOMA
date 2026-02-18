@@ -10,26 +10,34 @@ from typing import Any
 import numpy as np
 import pyarrow as pa
 import shapely
-import somacore
-from somacore import options
 
+from ._coordinate_space import (
+    AffineTransform,
+    Axis,
+    CoordinateSpace,
+    CoordinateTransform,
+    IdentityTransform,
+    ScaleTransform,
+    UniformScaleTransform,
+)
+from ._core_options import DenseCoord, DenseNDCoords, SparseDFCoord, SparseDFCoords, SpatialRegion
 from ._exception import SOMAError
 
 
-def coordinate_space_from_json(data: str) -> somacore.CoordinateSpace:
+def coordinate_space_from_json(data: str) -> CoordinateSpace:
     """Returns a coordinate space from a json string."""
     # TODO: Needs good, comprehensive error handling.
     raw = json.loads(data)
     # mypy false positive https://github.com/python/mypy/issues/5313
-    return somacore.CoordinateSpace(tuple(somacore.Axis(**axis) for axis in raw))  # type: ignore[misc]
+    return CoordinateSpace(tuple(Axis(**axis) for axis in raw))  # type: ignore[misc]
 
 
-def coordinate_space_to_json(coord_space: somacore.CoordinateSpace) -> str:
+def coordinate_space_to_json(coord_space: CoordinateSpace) -> str:
     """Returns json string representation of the coordinate space."""
     return json.dumps(tuple({"name": axis.name, "unit": axis.unit} for axis in coord_space.axes))
 
 
-def transform_from_json(data: str) -> somacore.CoordinateTransform:
+def transform_from_json(data: str) -> CoordinateTransform:
     """Convert a JSON string representing a CoordinateTransform."""
     raw = json.loads(data)
 
@@ -47,11 +55,11 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
             "'transform' kwargs options not found when attempting to convert JSON to CoordinateTransform child class",
         ) from None
 
-    coord_transform_init: dict[str, type[somacore.CoordinateTransform]] = {
-        "AffineTransform": somacore.AffineTransform,
-        "ScaleTransform": somacore.ScaleTransform,
-        "UniformScaleTransform": somacore.UniformScaleTransform,
-        "IdentityTransform": somacore.IdentityTransform,
+    coord_transform_init: dict[str, type[CoordinateTransform]] = {
+        "AffineTransform": AffineTransform,
+        "ScaleTransform": ScaleTransform,
+        "UniformScaleTransform": UniformScaleTransform,
+        "IdentityTransform": IdentityTransform,
     }
 
     try:
@@ -60,19 +68,19 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
         raise KeyError(f"Unrecognized transform type key '{transform_type}'") from None
 
 
-def transform_to_json(transform: somacore.CoordinateTransform) -> str:
+def transform_to_json(transform: CoordinateTransform) -> str:
     """Representing a CoordinateTransform as a JSON string."""
     kwargs: dict[str, Any] = {
         "input_axes": transform.input_axes,
         "output_axes": transform.output_axes,
     }
-    if isinstance(transform, somacore.IdentityTransform):
+    if isinstance(transform, IdentityTransform):
         pass
-    elif isinstance(transform, somacore.UniformScaleTransform):
+    elif isinstance(transform, UniformScaleTransform):
         kwargs["scale"] = transform.scale
-    elif isinstance(transform, somacore.ScaleTransform):
+    elif isinstance(transform, ScaleTransform):
         kwargs["scale_factors"] = transform.scale_factors.tolist()
-    elif isinstance(transform, somacore.AffineTransform):
+    elif isinstance(transform, AffineTransform):
         kwargs["matrix"] = transform.augmented_matrix.tolist()
     else:
         raise TypeError(f"Unrecognized coordinate transform type {type(transform)!r}.")
@@ -82,8 +90,8 @@ def transform_to_json(transform: somacore.CoordinateTransform) -> str:
 
 
 def transform_region(
-    region: options.SpatialRegion,
-    transform: somacore.CoordinateTransform,
+    region: SpatialRegion,
+    transform: CoordinateTransform,
 ) -> shapely.geometry.base.BaseGeometry:
     if len(transform.input_axes) != 2:
         raise NotImplementedError("Spatial queries are currently only supported for 2D coordinates.")
@@ -103,7 +111,7 @@ def transform_region(
             raise ValueError(f"Unexpected region with size {len(region)}")
         region = shapely.box(region[0], region[1], region[2], region[3])
 
-    if not isinstance(transform, somacore.AffineTransform):
+    if not isinstance(transform, AffineTransform):
         raise NotImplementedError("Only affine transforms are supported.")
     aug = transform.augmented_matrix
     affine = aug[:-1, :-1].flatten("C").tolist() + aug[-1, :-1].tolist()
@@ -111,16 +119,16 @@ def transform_region(
 
 
 def process_image_region(
-    region: options.SpatialRegion | None,
-    transform: somacore.CoordinateTransform,
-    channel_coords: options.DenseCoord,
+    region: SpatialRegion | None,
+    transform: CoordinateTransform,
+    channel_coords: DenseCoord,
     data_order: tuple[int, ...],
-) -> tuple[options.DenseNDCoords, options.SpatialRegion | None, somacore.CoordinateTransform]:
+) -> tuple[DenseNDCoords, SpatialRegion | None, CoordinateTransform]:
     if region is None:
         # Select the full region.
-        data_region: options.SpatialRegion | None = None
-        x_coords: options.DenseCoord = None
-        y_coords: options.DenseCoord = None
+        data_region: SpatialRegion | None = None
+        x_coords: DenseCoord = None
+        y_coords: DenseCoord = None
     else:
         # Get the transformed region the user is selecting in the data space.
         # Note: transform region verifies only 2D data. This function is hard-coded to
@@ -139,7 +147,7 @@ def process_image_region(
 
         # Translate the transform if the region does not start at the origin.
         if x_min != 0 or y_min != 0:
-            translate = somacore.AffineTransform(
+            translate = AffineTransform(
                 transform.output_axes,
                 transform.output_axes,
                 np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]]),
@@ -151,7 +159,7 @@ def process_image_region(
     inv_transform = transform.inverse_transform()
 
     # Get the dense coordinates for querying the array storing the image.
-    coords: options.DenseNDCoords = []
+    coords: DenseNDCoords = []
     for axis in data_order:
         if axis == len(inv_transform.input_axes):
             coords.append(channel_coords)  # type: ignore[attr-defined]
@@ -166,17 +174,17 @@ def process_image_region(
 
 
 def process_spatial_df_region(
-    region: options.SpatialRegion | None,
-    transform: somacore.CoordinateTransform,
-    coords_by_name: dict[str, options.SparseDFCoord],
+    region: SpatialRegion | None,
+    transform: CoordinateTransform,
+    coords_by_name: dict[str, SparseDFCoord],
     index_columns: tuple[str, ...],
     axis_names: tuple[str, ...],
     schema: pa.Schema,
     spatial_column: str | None = None,
 ) -> tuple[
-    options.SparseDFCoords,
-    options.SpatialRegion | None,
-    somacore.CoordinateTransform,
+    SparseDFCoords,
+    SpatialRegion | None,
+    CoordinateTransform,
 ]:
     # Check provided coords are valid.
     if not set(axis_names).isdisjoint(coords_by_name):
@@ -190,12 +198,12 @@ def process_spatial_df_region(
     # to the coords_by_name map.
     if region is None:
         # Leave spatial coords as None - this will select the entire region.
-        data_region: options.SpatialRegion | None = None
+        data_region: SpatialRegion | None = None
     else:
         # Restricted to guarantee data region is a box.
         if isinstance(region, shapely.GeometryType):
             raise NotImplementedError("Support for querying point clouds by geometries is not yet implemented.")
-        if not isinstance(transform, somacore.ScaleTransform):
+        if not isinstance(transform, ScaleTransform):
             raise NotImplementedError(
                 f"Support for querying point clouds with a transform of type "
                 f"{type(transform)!r} our a bounding box region is not yet supported.",

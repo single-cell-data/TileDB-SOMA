@@ -17,9 +17,8 @@ except ImportError:
 
 import pyarrow as pa
 from scipy.sparse import csc_matrix, csr_matrix, hstack, vstack
-from somacore import AxisQuery
 
-from tiledbsoma import Experiment, SparseNDArray
+from tiledbsoma import AxisQuery, Experiment, SparseNDArray
 from tiledbsoma._dask.load import load_daskarray
 from tiledbsoma.io import to_anndata
 

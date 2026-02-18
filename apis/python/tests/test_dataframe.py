@@ -13,13 +13,13 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-import somacore
 from numpy.testing import assert_array_equal
 from pandas.api.types import union_categoricals
 from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
-from tiledbsoma.options._soma_tiledb_context import SOMAContext
+from tiledbsoma._core_options import BatchSize, IOfN
+from tiledbsoma._soma_context import SOMAContext
 
 from tests._util import raises_no_typeguard
 
@@ -2186,7 +2186,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], dom
             "index_column_names": ["0_thru_5"],
             "domain": [[0, 8]],
             "coords": [slice(2, None)],
-            "partitions": somacore.IOfN(0, 1),
+            "partitions": IOfN(0, 1),
             "A": [12, 13, 14, 15],
             "throws": None,
         },
@@ -2195,7 +2195,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], dom
             "index_column_names": ["0_thru_5"],
             "domain": [[0, 8]],
             "coords": [],
-            "partitions": somacore.IOfN(1, 2),
+            "partitions": IOfN(1, 2),
             "A": None,
             "throws": ValueError,
         },
@@ -4150,4 +4150,4 @@ def test_dataframe_batch_size_not_implemented(tmp_path):
         assert result.num_rows == 3
 
         with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
-            list(df.read(batch_size=somacore.options.BatchSize(count=10)))
+            list(df.read(batch_size=BatchSize(count=10)))

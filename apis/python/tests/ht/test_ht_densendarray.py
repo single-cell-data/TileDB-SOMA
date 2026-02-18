@@ -15,9 +15,9 @@ from hypothesis.stateful import (
     precondition,
     rule,
 )
-from somacore.options import OpenMode
 
 import tiledbsoma as soma
+from tiledbsoma._core_options import OpenMode
 
 from tests.ht._array_state_machine import SOMANDArrayStateMachine
 from tests.ht._ht_test_config import HT_TEST_CONFIG

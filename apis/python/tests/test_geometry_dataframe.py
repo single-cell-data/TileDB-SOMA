@@ -2,9 +2,9 @@ import numpy as np
 import pyarrow as pa
 import pytest
 import shapely
-from somacore.options import BatchSize
 
 import tiledbsoma as soma
+from tiledbsoma._core_options import BatchSize
 
 
 @pytest.fixture

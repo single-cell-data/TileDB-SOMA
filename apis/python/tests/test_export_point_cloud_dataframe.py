@@ -5,9 +5,9 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 import shapely
-import somacore
 
 import tiledbsoma as soma
+from tiledbsoma import IdentityTransform
 
 gpd = pytest.importorskip("geopandas")
 soma_outgest = pytest.importorskip("tiledbsoma.io.spatial._spatialdata_util")
@@ -37,7 +37,7 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
     [
         (None, {"point_cloud": sd.transformations.Identity()}),
         (
-            somacore.IdentityTransform(("x_scene", "y_scene"), ("x_points", "y_points")),
+            IdentityTransform(("x_scene", "y_scene"), ("x_points", "y_points")),
             {"scene0": sd.transformations.Identity()},
         ),
     ],
@@ -80,7 +80,7 @@ def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d, transform, expecte
     [
         (None, {"point_cloud": sd.transformations.Identity()}),
         (
-            somacore.IdentityTransform(("x_scene", "y_scene"), ("x_points", "y_points")),
+            IdentityTransform(("x_scene", "y_scene"), ("x_points", "y_points")),
             {"scene0": sd.transformations.Identity()},
         ),
     ],

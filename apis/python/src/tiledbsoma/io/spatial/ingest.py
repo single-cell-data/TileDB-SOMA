@@ -30,9 +30,6 @@ except ImportError as err:
     raise err
 
 
-from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
-from somacore.options import PlatformConfig
-
 from tiledbsoma import (
     Collection,
     DataFrame,
@@ -49,6 +46,8 @@ from tiledbsoma import (
 )
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
+from tiledbsoma._coordinate_space import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
+from tiledbsoma._core_options import PlatformConfig
 from tiledbsoma._exception import AlreadyExistsError, SOMAError
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._types import IngestMode

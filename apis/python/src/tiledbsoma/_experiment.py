@@ -7,14 +7,16 @@
 from __future__ import annotations
 
 import functools
-from typing import ClassVar
+from typing import ClassVar, Final
 
 import attrs
 import pyarrow as pa
-from somacore import experiment, options, query
 
+from . import _mixin
 from . import pytiledbsoma as clib
+from ._axis import AxisQuery
 from ._collection import Collection, CollectionBase
+from ._core_options import PlatformConfig, SparseDFCoords
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError
@@ -30,15 +32,7 @@ from ._sparse_nd_array import SparseNDArray
 from .options._tiledb_create_write_options import TileDBDeleteOptions
 
 
-class Experiment(
-    CollectionBase[SOMAObject],
-    experiment.Experiment[
-        DataFrame,
-        Collection[Measurement],  # type: ignore[type-var]
-        Collection[Scene],  # type: ignore[type-var]
-        SOMAObject,
-    ],
-):
+class Experiment(CollectionBase[SOMAObject]):
     """A collection subtype that combines observations and measurements
     from an individual experiment.
 
@@ -79,6 +73,7 @@ class Experiment(
 
     __slots__ = ()
     _handle_type = clib.SOMAExperiment
+    soma_type: Final = "SOMAExperiment"  # type: ignore[misc]
 
     _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {
         "obs": ("SOMADataFrame",),
@@ -87,12 +82,37 @@ class Experiment(
         "obs_spatial_presence": ("SOMADataFrame",),
     }
 
+    obs = _mixin.item[DataFrame]()
+    """Primary observations on the observation axis.
+
+    The contents of the ``soma_joinid`` pseudo-column define the observation
+    index domain, i.e. ``obsid``. All observations for the experiment must be
+    defined here.
+    """
+
+    ms = _mixin.item[Collection[Measurement]]()
+    """A collection of named measurements."""
+
+    spatial = _mixin.item[Collection[Scene]]()  # TODO: Discuss the name of this element.
+    """A collection of named spatial scenes."""
+
+    obs_spatial_presence = _mixin.item[DataFrame]()
+    """A dataframe that stores the presence of obs in the spatial scenes.
+
+    This provides a join table for the obs ``soma_joinid`` and the scene names used in
+    the ``spatial`` collection. This dataframe must contain index columns ``soma_joinid``
+    and ``scene_id``. The ``scene_id`` column must have type ``string``. The
+    dataframe must contain a ``boolean`` column ``soma_data``. The values of ``soma_data`` are
+    ``True`` if the obs ``soma_joinid`` is contained in the scene
+    ``scene_id`` and ``False`` otherwise.
+    """
+
     def axis_query(
         self,
         measurement_name: str,
         *,
-        obs_query: query.AxisQuery | None = None,
-        var_query: query.AxisQuery | None = None,
+        obs_query: AxisQuery | None = None,
+        var_query: AxisQuery | None = None,
     ) -> ExperimentAxisQuery:
         """Creates an axis query over this experiment.
         Lifecycle: Maturing.
@@ -100,8 +120,8 @@ class Experiment(
         return ExperimentAxisQuery(
             self,
             measurement_name,
-            obs_query=obs_query or query.AxisQuery(),
-            var_query=var_query or query.AxisQuery(),
+            obs_query=obs_query or AxisQuery(),
+            var_query=var_query or AxisQuery(),
             index_factory=functools.partial(
                 IntIndexer,
                 context=self.context,
@@ -110,10 +130,10 @@ class Experiment(
 
     def obs_axis_delete(
         self,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         *,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> None:
         """Delete observations (obs axis elements only) from all predefined sub-objects within an Experiment.
 
@@ -176,10 +196,10 @@ class Experiment(
     def var_axis_delete(
         self,
         measurement_name: str,
-        coords: options.SparseDFCoords = (),
+        coords: SparseDFCoords = (),
         *,
         value_filter: str | None = None,
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> None:
         """Delete variables (``var`` axis elements only) from all predefined sub-objects within a single user-specified Measurement.
 
@@ -341,9 +361,7 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
     return candidates
 
 
-def _query_joinids(
-    uri: str, coords: options.SparseDFCoords, value_filter: str | None, context: SOMAContext
-) -> pa.Int64Array:
+def _query_joinids(uri: str, coords: SparseDFCoords, value_filter: str | None, context: SOMAContext) -> pa.Int64Array:
     with DataFrame.open(uri, context=context) as df:
         return (
             df

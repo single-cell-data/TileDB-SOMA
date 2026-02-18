@@ -12,10 +12,10 @@ from typing import Any, TypeVar, Union
 
 import attrs
 import numpy as np
-from somacore import options
 from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
+from ._core_options import OpenMode
 from ._exception import SOMAError
 from ._types import METADATA_TYPES, Metadatum
 
@@ -42,8 +42,8 @@ _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=clib.SOMAObject)
 
 
-def _open_mode_to_clib_mode(mode: options.OpenMode) -> clib.OpenMode:
-    """Convert options.OpenMode to clib.OpenMode."""
+def _open_mode_to_clib_mode(mode: OpenMode) -> clib.OpenMode:
+    """Convert OpenMode to clib.OpenMode."""
     if mode == "r":
         return clib.OpenMode.soma_read
     if mode == "w":

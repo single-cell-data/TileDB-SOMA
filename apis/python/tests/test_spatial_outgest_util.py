@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-import somacore
+
+import tiledbsoma
 
 soma_outgest = pytest.importorskip("tiledbsoma.io.spatial._spatialdata_util")
 sd = pytest.importorskip("spatialdata")
@@ -10,19 +11,19 @@ sd = pytest.importorskip("spatialdata")
     "transform, expected",
     [
         (
-            somacore.IdentityTransform(("x1", "y1"), ("x2", "y2")),
+            tiledbsoma.IdentityTransform(("x1", "y1"), ("x2", "y2")),
             sd.transformations.Identity(),
         ),
         (
-            somacore.UniformScaleTransform(("x1", "y1"), ("x2", "y2"), 10),
+            tiledbsoma.UniformScaleTransform(("x1", "y1"), ("x2", "y2"), 10),
             sd.transformations.Scale([10, 10], ("x", "y")),
         ),
         (
-            somacore.ScaleTransform(("x1", "y1"), ("x2", "y2"), [4, 0.1]),
+            tiledbsoma.ScaleTransform(("x1", "y1"), ("x2", "y2"), [4, 0.1]),
             sd.transformations.Scale([4, 0.1], ("x", "y")),
         ),
         (
-            somacore.AffineTransform(
+            tiledbsoma.AffineTransform(
                 ["x1", "y1"],
                 ["x2", "y2"],
                 [[2, 2, 0], [0, 3, 1]],

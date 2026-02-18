@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING
 import attrs
 import numpy as np
 import pyarrow as pa
-from somacore import options
 from typing_extensions import Self
 
 from . import pytiledbsoma as clib
+from ._core_options import DenseCoord, DenseNDCoords, SparseDFCoord, SparseDFCoords, SparseNDCoord, SparseNDCoords
 from ._types import is_nonstringy_sequence
 from ._util import pa_types_is_string_or_bytes, to_unix_ts
 
@@ -29,9 +29,7 @@ class CoordinateValueFilters:
     _handle: clib.CoordinateValueFilters = attrs.field(init=False)
 
     @classmethod
-    def create(
-        cls, array: SOMAArray, coords: options.SparseDFCoords | options.SparseNDCoords | options.DenseNDCoords
-    ) -> Self:
+    def create(cls, array: SOMAArray, coords: SparseDFCoords | SparseNDCoords | DenseNDCoords) -> Self:
         if not is_nonstringy_sequence(coords):
             raise TypeError(f"The coords type {type(coords)} must be a regular sequence, not str or bytes")
 
@@ -48,9 +46,7 @@ class CoordinateValueFilters:
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, "_handle", clib.CoordinateValueFilters(self._array._handle))
 
-    def add_coordinate_selection(
-        self, column_index: int, coord: options.SparseDFCoord | options.SparseNDCoord | options.DenseCoord
-    ) -> None:
+    def add_coordinate_selection(self, column_index: int, coord: SparseDFCoord | SparseNDCoord | DenseCoord) -> None:
         array_handle = self._array._handle
         dim = array_handle.schema.field(column_index)
         if dim.metadata is not None and dim.metadata[b"dtype"].decode("utf-8") == "WKB":
