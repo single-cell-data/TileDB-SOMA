@@ -355,17 +355,20 @@ FilterList create_dim_filter_list(
     std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
 
 template <typename T>
-T get_dim_extent(std::string name, PlatformConfig platform_config, T default_extent) {
+T get_dim_extent(std::string name, PlatformConfig platform_config, T default_extent, T max_domain) {
+    T extent;
     if (platform_config.dims.empty()) {
-        return default_extent;
+        extent = default_extent;
     } else {
         nlohmann::json dim_options = nlohmann::json::parse(platform_config.dims);
         if (dim_options.find(name) != dim_options.end() && dim_options[name].find("tile") != dim_options[name].end()) {
-            return dim_options[name].value("tile", default_extent);
+            extent = dim_options[name].value("tile", default_extent);
         } else {
-            return default_extent;
+            extent = default_extent;
         }
     }
+
+    return std::min(extent, max_domain);
 }
 
 /**

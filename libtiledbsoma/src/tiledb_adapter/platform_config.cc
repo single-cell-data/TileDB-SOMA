@@ -392,8 +392,8 @@ ArraySchema create_nd_array_schema(
         }
 
         std::string name = fmt::format("soma_dim_{}", i);
-        auto extent = std::min(
-            utils::get_dim_extent(name, platform_config, default_extent), std::numeric_limits<int64_t>::max());
+        int64_t extent = utils::get_dim_extent<int64_t>(
+            name, platform_config, default_extent, std::numeric_limits<int64_t>::max());
 
         tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
             *ctx, name, {{0, std::numeric_limits<int64_t>::max() - extent - 1}}, extent);
