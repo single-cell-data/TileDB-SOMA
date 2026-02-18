@@ -16,9 +16,12 @@
 
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <string>
 
 #include <tiledb/tiledb>
+
+#include "nlohmann/json.hpp"
 
 namespace tiledbsoma {
 
@@ -351,6 +354,23 @@ FilterList create_attr_filter_list(std::string name, PlatformConfig platform_con
 FilterList create_dim_filter_list(
     std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
 
+template <typename T>
+T get_dim_extent(std::string name, PlatformConfig platform_config, T default_extent, T max_domain) {
+    T extent;
+    if (platform_config.dims.empty()) {
+        extent = default_extent;
+    } else {
+        nlohmann::json dim_options = nlohmann::json::parse(platform_config.dims);
+        if (dim_options.find(name) != dim_options.end() && dim_options[name].find("tile") != dim_options[name].end()) {
+            extent = dim_options[name].value("tile", default_extent);
+        } else {
+            extent = default_extent;
+        }
+    }
+
+    return std::min(extent, max_domain);
+}
+
 /**
 * Get members of the TileDB Schema in the form of a PlatformSchemaConfig.
 *
@@ -366,6 +386,15 @@ PlatformSchemaConfig platform_schema_config_from_tiledb(ArraySchema tiledb_schem
 * @return PlatformConfig
 */
 PlatformConfig platform_config_from_tiledb_schema(ArraySchema tiledb_schema);
+
+ArraySchema create_nd_array_schema(
+    std::string_view soma_type,
+    bool is_sparse,
+    std::string_view format,
+    std::span<const int64_t> shape,
+    std::shared_ptr<tiledb::Context> ctx,
+    PlatformConfig platform_config,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
 }  // namespace utils
 

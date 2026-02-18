@@ -29,6 +29,22 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// createSchemaForNDArray
+void createSchemaForNDArray(const std::string& uri, const std::string& format, Rcpp::NumericVector shape, const std::string& soma_type, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
+RcppExport SEXP _tiledbsoma_createSchemaForNDArray(SEXP uriSEXP, SEXP formatSEXP, SEXP shapeSEXP, SEXP soma_typeSEXP, SEXP pclstSEXP, SEXP ctxxpSEXP, SEXP tsvecSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type format(formatSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type soma_type(soma_typeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tsvec(tsvecSEXP);
+    createSchemaForNDArray(uri, format, shape, soma_type, pclst, ctxxp, tsvec);
+    return R_NilValue;
+END_RCPP
+}
 // writeArrayFromArrow
 void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp, Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string arraytype, Rcpp::Nullable<Rcpp::CharacterVector> config, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
 RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP ctxxpSEXP, SEXP arraytypeSEXP, SEXP configSEXP, SEXP tsvecSEXP) {
@@ -982,6 +998,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 9},
+    {"_tiledbsoma_createSchemaForNDArray", (DL_FUNC) &_tiledbsoma_createSchemaForNDArray, 7},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 7},
     {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
     {"_tiledbsoma_c_group_open", (DL_FUNC) &_tiledbsoma_c_group_open, 4},

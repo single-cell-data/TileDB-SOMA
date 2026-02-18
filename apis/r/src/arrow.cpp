@@ -126,6 +126,65 @@ void createSchemaFromArrow(
 }
 
 // [[Rcpp::export]]
+void createSchemaForNDArray(
+    const std::string& uri,
+    const std::string& format,
+    Rcpp::NumericVector shape,
+    const std::string& soma_type,
+    Rcpp::List pclst,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
+    tdbs::PlatformConfig pltcfg;
+    pltcfg.dataframe_dim_zstd_level = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
+    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
+    pltcfg.dense_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["dense_nd_array_dim_zstd_level"]);
+    pltcfg.write_X_chunked = Rcpp::as<bool>(pclst["write_X_chunked"]);
+    pltcfg.goal_chunk_nnz = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
+    pltcfg.capacity = Rcpp::as<double>(pclst["capacity"]);
+    pltcfg.offsets_filters = Rcpp::as<std::string>(pclst["offsets_filters"]);
+    pltcfg.validity_filters = Rcpp::as<std::string>(pclst["validity_filters"]);
+    pltcfg.allows_duplicates = Rcpp::as<bool>(pclst["allows_duplicates"]);
+    pltcfg.cell_order = Rcpp::as<std::string>(pclst["cell_order"]);
+    pltcfg.tile_order = Rcpp::as<std::string>(pclst["tile_order"]);
+    pltcfg.attrs = Rcpp::as<std::string>(pclst["attrs"]);
+    pltcfg.dims = Rcpp::as<std::string>(pclst["dims"]);
+
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext
+    std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
+
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
+
+    bool exists = false;
+    if (soma_type == "SOMASparseNDArray") {
+        exists = tdbs::SOMASparseNDArray::exists(uri, sctx);
+    } else if (soma_type == "SOMADenseNDArray") {
+        exists = tdbs::SOMADenseNDArray::exists(uri, sctx);
+    } else {
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", soma_type));
+    }
+
+    if (exists) {
+        Rcpp::stop(tfm::format("Error: Array '%s' already exists", uri));
+    }
+
+    std::vector<std::optional<int64_t>> cpp_shape;
+    for (size_t i = 0; i < shape.length(); ++i) {
+        cpp_shape.push_back(std::make_optional<int64_t>(*reinterpret_cast<int64_t*>(&shape[i])));
+    }
+
+    if (soma_type == "SOMASparseNDArray") {
+        tdbs::SOMASparseNDArray::create(uri, format, cpp_shape, sctx, pltcfg, tsrng);
+    } else if (soma_type == "SOMADenseNDArray") {
+        tdbs::SOMADenseNDArray::create(uri, format, cpp_shape, sctx, pltcfg, tsrng);
+    } else {
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", soma_type));
+    }
+}
+
+// [[Rcpp::export]]
 void writeArrayFromArrow(
     const std::string& uri,
     naxpArray naap,

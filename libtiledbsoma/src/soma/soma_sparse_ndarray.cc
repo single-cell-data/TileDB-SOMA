@@ -76,6 +76,24 @@ void SOMASparseNDArray::create(
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMASparseNDArray", std::nullopt, timestamp);
 }
 
+void SOMASparseNDArray::create(
+    std::string_view uri,
+    std::string_view format,
+    std::span<const std::optional<int64_t>> shape,
+    std::shared_ptr<SOMAContext> ctx,
+    PlatformConfig platform_config,
+    std::optional<TimestampRange> timestamp) {
+    std::vector<int64_t> sanitized_shape;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(sanitized_shape), [](const auto& dim_shape) {
+        return dim_shape.value_or(1);
+    });
+
+    tiledb::ArraySchema schema = utils::create_nd_array_schema(
+        "SOMASparseNDArray", true, format, sanitized_shape, ctx->tiledb_ctx(), platform_config, timestamp);
+
+    SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray", std::nullopt, timestamp);
+}
+
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMASparseNDArray>(mode, uri, ctx, timestamp);

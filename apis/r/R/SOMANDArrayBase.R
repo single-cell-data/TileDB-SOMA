@@ -56,21 +56,6 @@ SOMANDArrayBase <- R6::R6Class(
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
 
-      ## we transfer to the arrow table via a pair of array and schema pointers
-      dnaap <- nanoarrow::nanoarrow_allocate_array()
-      dnasp <- nanoarrow::nanoarrow_allocate_schema()
-      arrow::as_record_batch(dom_ext_tbl)$export_to_c(dnaap, dnasp)
-
-      ## we need a schema pointer to transfer the schema information
-      ## so we first embed the (single column) 'type' into a schema and
-      ## combine it with domain schema
-      schema <- arrow::unify_schemas(
-        arrow::schema(dom_ext_tbl),
-        arrow::schema(arrow::field("soma_data", type))
-      )
-      nasp <- nanoarrow::nanoarrow_allocate_schema()
-      schema$export_to_c(nasp)
-
       ## create array
       # ctxptr <- self$tiledbsoma_ctx$context()
       sparse <- if (inherits(self, "SOMASparseNDArray")) {
@@ -80,13 +65,11 @@ SOMANDArrayBase <- R6::R6Class(
       } else {
         stop("Unknown SOMA array type: ", self$class(), call. = FALSE)
       }
-      createSchemaFromArrow(
+      createSchemaForNDArray(
         uri = self$uri,
-        nasp = nasp,
-        nadimap = dnaap,
-        nadimsp = dnasp,
-        sparse = sparse,
-        datatype = if (sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
+        format = as_nanoarrow_schema(arrow::schema(arrow::field("soma_data", type)))$children$soma_data$format,
+        shape = as.integer64(shape),
+        soma_type = if (sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
         ctxxp = private$.context$handle,
         tsvec = self$.tiledb_timestamp_range

@@ -12,7 +12,14 @@
  */
 #include "soma_dense_ndarray.h"
 #include "../utils/arrow_adapter.h"
+#include "soma_attribute.h"
 #include "soma_coordinates.h"
+#include "soma_dimension.h"
+
+#include "common/arrow/utils.h"
+#include "common/logging/impl/logger.h"
+
+#include <limits>
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -68,6 +75,28 @@ void SOMADenseNDArray::create(
         ctx->tiledb_ctx(), schema, index_columns, std::nullopt, "SOMADenseNDArray", false, platform_config, timestamp);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
+}
+
+void SOMADenseNDArray::create(
+    std::string_view uri,
+    std::string_view format,
+    std::span<const std::optional<int64_t>> shape,
+    std::shared_ptr<SOMAContext> ctx,
+    PlatformConfig platform_config,
+    std::optional<TimestampRange> timestamp) {
+    std::vector<int64_t> sanitized_shape;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(sanitized_shape), [](const auto& dim_shape) {
+        if (!dim_shape) {
+            throw std::range_error("[SOMADenseNDArray][create] Shape slots must be numeric");
+        }
+
+        return dim_shape.value();
+    });
+
+    tiledb::ArraySchema schema = utils::create_nd_array_schema(
+        "SOMADenseNDArray", false, format, sanitized_shape, ctx->tiledb_ctx(), platform_config, timestamp);
+
+    SOMAArray::create(ctx, uri, schema, "SOMADenseNDArray", std::nullopt, timestamp);
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
