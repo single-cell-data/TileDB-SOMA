@@ -87,7 +87,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     allows_duplicates = \() {
       private$.check_handle()
-      c_allows_dups(self$uri, private$.context$handle)
+      return(c_allows_dups(private$.handle))
     },
 
     #' @description Is an array sparse?
@@ -97,7 +97,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     is_sparse = \() {
       private$.check_handle()
-      c_is_sparse(self$uri, private$.context$handle)
+      return(c_is_sparse(private$.handle))
     },
 
     #' @description Retrieve the array schema as an Arrow schema
@@ -107,7 +107,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     schema = \() {
       private$.check_handle()
-      arrow::as_schema(c_schema(self$uri, private$.context$handle))
+      return(arrow::as_schema(c_schema(private$.handle)))
     },
 
     #' @description Retrieve the array attributes.
@@ -134,7 +134,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     attributes = \() {
       private$.check_handle()
-      c_attributes(self$uri, private$.context$handle)
+      return(c_attributes(private$.handle))
     },
 
     #' @description Retrieve attribute names (lifecycle: maturing).
@@ -143,7 +143,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     attrnames = \() {
       private$.check_handle()
-      c_attrnames(self$uri, private$.context$handle)
+      return(c_attrnames(private$.handle))
     },
 
     #' @description Retrieve the array dimensions (lifecycle: maturing)
@@ -171,7 +171,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     dimensions = \() {
       private$.check_handle()
-      c_domain(self$uri, private$.context$handle)
+      return(c_domain(private$.handle))
     },
 
     #' @description Retrieve dimension names (lifecycle: maturing).
@@ -180,7 +180,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     dimnames = \() {
       private$.check_handle()
-      c_dimnames(self$uri, private$.context$handle)
+      return(c_dimnames(private$.handle))
     },
 
     #' @description Retrieve the names of all columns, including dimensions and
@@ -189,7 +189,6 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A character vector with the array's column names.
     #'
     colnames = \() {
-      private$.check_handle()
       c(self$dimnames(), self$attrnames())
     },
 
@@ -198,7 +197,6 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A character vector with the array index (dimension) names
     #'
     index_column_names = \() {
-      private$.check_handle()
       self$dimnames()
     },
 
@@ -214,7 +212,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     shape = \() {
       private$.check_handle()
-      bit64::as.integer64(shape(self$uri, private$.context$handle))
+      return(bit64::as.integer64(shape(self$uri, private$.context$handle)))
     },
 
     #' @description Retrieve the hard limit up to which the array may be resized
@@ -225,7 +223,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     maxshape = \() {
       private$.check_handle()
-      bit64::as.integer64(maxshape(self$uri, private$.context$handle))
+      return(bit64::as.integer64(maxshape(self$uri, private$.context$handle)))
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -264,7 +262,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     ndim = \() {
       private$.check_handle()
-      ndim(self$uri, private$.context$handle)
+      return(ndim(self$uri, private$.context$handle))
     },
 
     #' @description Print-friendly representation of the object.

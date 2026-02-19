@@ -747,7 +747,7 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   expect_length(
-    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    domain <- sdf$dimensions(),
     n = 1L
   )
   dim <- domain[[1]]
@@ -799,7 +799,7 @@ test_that("platform_config defaults", {
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
-    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    domain <- sdf$dimensions(),
     n = 1L
   )
   expect_named(domain, "soma_joinid")

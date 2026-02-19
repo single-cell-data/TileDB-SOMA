@@ -90,7 +90,7 @@ SEXP soma_array_reader(
         tdbs::common::logging::LOG_DEBUG(ss.str());
     }
 
-    // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
+    // Read selected columns from the uri (return is unique_ptr<tiledbsoma::SOMAArray>)
     auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, somactx, tsrng);
 
     auto mq = sr->create_managed_query("unnamed");
@@ -397,10 +397,11 @@ Rcpp::NumericVector ndim(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxx
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector c_dimnames(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto lib_retval = sr->dimension_names();
-    sr->close();
+Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto lib_retval = array->dimension_names();
 
     size_t n = lib_retval.size();
     Rcpp::CharacterVector retval(n);
@@ -411,10 +412,11 @@ Rcpp::CharacterVector c_dimnames(const std::string& uri, Rcpp::XPtr<somactx_wrap
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector c_attrnames(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto lib_retval = sr->attribute_names();
-    sr->close();
+Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto lib_retval = array->attribute_names();
 
     size_t n = lib_retval.size();
     Rcpp::CharacterVector retval(n);
@@ -425,10 +427,11 @@ Rcpp::CharacterVector c_attrnames(const std::string& uri, Rcpp::XPtr<somactx_wra
 }
 
 // [[Rcpp::export]]
-SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    tdbs::common::arrow::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema(true);
-    sr->close();
+SEXP c_schema(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto lib_retval = array->arrow_schema(true);
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
     auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
@@ -448,21 +451,19 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 }
 
 // [[Rcpp::export]]
-bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
-    sr->close();
-
-    return sch->array_type() == TILEDB_SPARSE;
+bool c_is_sparse(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return array->tiledb_schema()->array_type() == TILEDB_SPARSE;
 }
 
 // [[Rcpp::export]]
-bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
-    sr->close();
-
-    return sch->allows_dups();
+bool c_allows_dups(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return array->tiledb_schema()->allows_dups();
 }
 
 // [[Rcpp::export]]
@@ -629,10 +630,11 @@ int _get_ncells(AttrOrDim x) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
-    sr->close();
+Rcpp::List c_attributes(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto sch = array->tiledb_schema();
 
     Rcpp::List result;
     int nattr = sch->attribute_num();
@@ -716,10 +718,11 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
-    sr->close();
+Rcpp::List c_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto sch = array->tiledb_schema();
 
     Rcpp::List result;
     auto domain = make_xptr<tiledb::Domain>(new tiledb::Domain(sch->domain()));

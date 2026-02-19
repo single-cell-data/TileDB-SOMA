@@ -220,24 +220,24 @@ ndim <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_ndim`, uri, ctxxp)
 }
 
-c_dimnames <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_dimnames`, uri, ctxxp)
+c_dimnames <- function(array) {
+    .Call(`_tiledbsoma_c_dimnames`, array)
 }
 
-c_attrnames <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attrnames`, uri, ctxxp)
+c_attrnames <- function(array) {
+    .Call(`_tiledbsoma_c_attrnames`, array)
 }
 
-c_schema <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_schema`, uri, ctxxp)
+c_schema <- function(array) {
+    .Call(`_tiledbsoma_c_schema`, array)
 }
 
-c_is_sparse <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_is_sparse`, uri, ctxxp)
+c_is_sparse <- function(array) {
+    .Call(`_tiledbsoma_c_is_sparse`, array)
 }
 
-c_allows_dups <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_allows_dups`, uri, ctxxp)
+c_allows_dups <- function(array) {
+    .Call(`_tiledbsoma_c_allows_dups`, array)
 }
 
 c_capacity <- function(uri, ctxxp) {
@@ -256,8 +256,8 @@ c_schema_filters <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_schema_filters`, uri, ctxxp)
 }
 
-c_attributes <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attributes`, uri, ctxxp)
+c_attributes <- function(array) {
+    .Call(`_tiledbsoma_c_attributes`, array)
 }
 
 c_attributes_enumerated <- function(uri, ctxxp) {
@@ -268,8 +268,8 @@ c_attribute_enumeration_levels <- function(uri, ctxxp, name) {
     .Call(`_tiledbsoma_c_attribute_enumeration_levels`, uri, ctxxp, name)
 }
 
-c_domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_domain`, uri, ctxxp)
+c_domain <- function(array) {
+    .Call(`_tiledbsoma_c_domain`, array)
 }
 
 resize <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {

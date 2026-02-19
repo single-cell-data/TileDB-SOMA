@@ -562,62 +562,57 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_dimnames
-Rcpp::CharacterVector c_dimnames(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_dimnames(SEXP uriSEXP, SEXP ctxxpSEXP) {
+Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_dimnames(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_dimnames(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_dimnames(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_attrnames
-Rcpp::CharacterVector c_attrnames(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_attrnames(SEXP uriSEXP, SEXP ctxxpSEXP) {
+Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_attrnames(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_attrnames(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_attrnames(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_schema
-SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_schema(SEXP uriSEXP, SEXP ctxxpSEXP) {
+SEXP c_schema(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_schema(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_schema(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_schema(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_is_sparse
-bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_is_sparse(SEXP uriSEXP, SEXP ctxxpSEXP) {
+bool c_is_sparse(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_is_sparse(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_is_sparse(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_is_sparse(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_allows_dups
-bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_allows_dups(SEXP uriSEXP, SEXP ctxxpSEXP) {
+bool c_allows_dups(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_allows_dups(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_allows_dups(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_allows_dups(array));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -670,14 +665,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_attributes
-Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_attributes(SEXP uriSEXP, SEXP ctxxpSEXP) {
+Rcpp::List c_attributes(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_attributes(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_attributes(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_attributes(array));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -707,14 +701,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_domain
-Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_domain(SEXP uriSEXP, SEXP ctxxpSEXP) {
+Rcpp::List c_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_c_domain(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_domain(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_domain(array));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1168,19 +1161,19 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_maybe_soma_joinid_maxshape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_maxshape, 2},
     {"_tiledbsoma_has_current_domain", (DL_FUNC) &_tiledbsoma_has_current_domain, 2},
     {"_tiledbsoma_ndim", (DL_FUNC) &_tiledbsoma_ndim, 2},
-    {"_tiledbsoma_c_dimnames", (DL_FUNC) &_tiledbsoma_c_dimnames, 2},
-    {"_tiledbsoma_c_attrnames", (DL_FUNC) &_tiledbsoma_c_attrnames, 2},
-    {"_tiledbsoma_c_schema", (DL_FUNC) &_tiledbsoma_c_schema, 2},
-    {"_tiledbsoma_c_is_sparse", (DL_FUNC) &_tiledbsoma_c_is_sparse, 2},
-    {"_tiledbsoma_c_allows_dups", (DL_FUNC) &_tiledbsoma_c_allows_dups, 2},
+    {"_tiledbsoma_c_dimnames", (DL_FUNC) &_tiledbsoma_c_dimnames, 1},
+    {"_tiledbsoma_c_attrnames", (DL_FUNC) &_tiledbsoma_c_attrnames, 1},
+    {"_tiledbsoma_c_schema", (DL_FUNC) &_tiledbsoma_c_schema, 1},
+    {"_tiledbsoma_c_is_sparse", (DL_FUNC) &_tiledbsoma_c_is_sparse, 1},
+    {"_tiledbsoma_c_allows_dups", (DL_FUNC) &_tiledbsoma_c_allows_dups, 1},
     {"_tiledbsoma_c_capacity", (DL_FUNC) &_tiledbsoma_c_capacity, 2},
     {"_tiledbsoma_c_tile_order", (DL_FUNC) &_tiledbsoma_c_tile_order, 2},
     {"_tiledbsoma_c_cell_order", (DL_FUNC) &_tiledbsoma_c_cell_order, 2},
     {"_tiledbsoma_c_schema_filters", (DL_FUNC) &_tiledbsoma_c_schema_filters, 2},
-    {"_tiledbsoma_c_attributes", (DL_FUNC) &_tiledbsoma_c_attributes, 2},
+    {"_tiledbsoma_c_attributes", (DL_FUNC) &_tiledbsoma_c_attributes, 1},
     {"_tiledbsoma_c_attributes_enumerated", (DL_FUNC) &_tiledbsoma_c_attributes_enumerated, 2},
     {"_tiledbsoma_c_attribute_enumeration_levels", (DL_FUNC) &_tiledbsoma_c_attribute_enumeration_levels, 3},
-    {"_tiledbsoma_c_domain", (DL_FUNC) &_tiledbsoma_c_domain, 2},
+    {"_tiledbsoma_c_domain", (DL_FUNC) &_tiledbsoma_c_domain, 1},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 5},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 5},
