@@ -16,7 +16,7 @@
 
 ## Fixed
 
-- [BREAKING] Use stored handle to access array properties. Array properties can no longer be accessed on an unopened array. ([](<>)) # TODO: Add reference before merging
+- [BREAKING] Use stored handle to access array properties. Array properties can no longer be accessed on an unopened array. ([#4414](https://github.com/single-cell-data/TileDB-SOMA/pull/4414))
 
 ## Security
 

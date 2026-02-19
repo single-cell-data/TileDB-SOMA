@@ -307,56 +307,49 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector shape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto retval = Rcpp::toInteger64(sr->shape());
-    sr->close();
-    return retval;
+Rcpp::NumericVector shape(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return Rcpp::toInteger64(array->shape());
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector maxshape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto retval = Rcpp::toInteger64(sr->maxshape());
-    sr->close();
-    return retval;
+Rcpp::NumericVector maxshape(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return Rcpp::toInteger64(array->maxshape());
 }
 
 // [[Rcpp::export]]
-SEXP non_empty_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sdf = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    tdbs::common::arrow::ArrowTable arrow_table = sdf->get_non_empty_domain();
-    SEXP retval = convert_domainish(arrow_table);
-    sdf->close();
-    return retval;
+SEXP non_empty_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto arrow_table = array->get_non_empty_domain();
+    return convert_domainish(arrow_table);
 }
 
 // [[Rcpp::export]]
-SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::soma_read, ctxxp->ctxptr);
-    tdbs::common::arrow::ArrowTable arrow_table = sdf->get_soma_domain();
-    SEXP retval = convert_domainish(arrow_table);
-    sdf->close();
-    return retval;
+SEXP domain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return convert_domainish(dataframe->get_soma_domain());
 }
 
 // [[Rcpp::export]]
-SEXP maxdomain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::soma_read, ctxxp->ctxptr);
-    tdbs::common::arrow::ArrowTable arrow_table = sdf->get_soma_maxdomain();
-    SEXP retval = convert_domainish(arrow_table);
-    sdf->close();
-    return retval;
+SEXP maxdomain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return convert_domainish(dataframe->get_soma_maxdomain());
 }
 
+/** Only used for testing. */
 // [[Rcpp::export]]
 Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    // Pro-tip:
-    // * Open with mode and uri gives a SOMAArray.
-    // * Open with uri and mode gives a SOMADataFrame.
-    // This was done intentionally to resolve an ambiguous-overload compiler
-    // error. ^ Unsure. This is C++, and it is typed so member functions return
-    // objects of their class.
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::soma_read, ctxxp->ctxptr);
     auto retval = sr->maybe_soma_joinid_shape();
     sr->close();
@@ -367,6 +360,7 @@ Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri, Rcpp::XPtr<s
     }
 }
 
+/** Only used for testing. */
 // [[Rcpp::export]]
 Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::soma_read, ctxxp->ctxptr);
@@ -380,20 +374,19 @@ Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri, Rcpp::XPt
 }
 
 // [[Rcpp::export]]
-Rcpp::LogicalVector has_current_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto retval = Rcpp::LogicalVector(sr->has_current_domain());
-    sr->close();
-    return retval;
+Rcpp::LogicalVector has_current_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return Rcpp::LogicalVector(array->has_current_domain());
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector ndim(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto lib_retval = sr->ndim();
-    sr->close();
-
-    return Rcpp::NumericVector::create(lib_retval);
+Rcpp::NumericVector ndim(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return Rcpp::NumericVector::create(array->ndim());
 }
 
 // [[Rcpp::export]]
@@ -762,76 +755,73 @@ Rcpp::List c_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 
 // [[Rcpp::export]]
 std::string resize(
-    const std::string& uri,
+    Rcpp::XPtr<tiledbsoma::SOMAArray> ndarray,
     Rcpp::NumericVector new_shape,
     std::string function_name_for_messages,
-    bool check_only,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    bool check_only) {
+    if (!ndarray) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
     // variant-indexed dataframes is via upgrade_domain and change_domain.
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
 
     std::string retval = "";
     if (check_only) {
-        auto status_and_reason = sr->can_resize(new_shape_i64, function_name_for_messages);
+        auto status_and_reason = ndarray->can_resize(new_shape_i64, function_name_for_messages);
         retval = status_and_reason.second;
     } else {
-        sr->resize(new_shape_i64, function_name_for_messages);
+        ndarray->resize(new_shape_i64, function_name_for_messages);
     }
-
-    sr->close();
     return retval;
 }
 
 // [[Rcpp::export]]
 void resize_soma_joinid_shape(
-    const std::string& uri,
+    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe,
     Rcpp::NumericVector new_shape,
-    std::string function_name_for_messages,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    // This function is solely for SOMADataFrame.
-    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::soma_write, ctxxp->ctxptr);
+    std::string function_name_for_messages) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize_soma_joinid_shape(new_shape_i64[0], function_name_for_messages);
-    sr->close();
+    dataframe->resize_soma_joinid_shape(new_shape_i64[0], function_name_for_messages);
 }
 
 // [[Rcpp::export]]
 std::string tiledbsoma_upgrade_shape(
-    const std::string& uri,
+    Rcpp::XPtr<tiledbsoma::SOMAArray> ndarray,
     Rcpp::NumericVector new_shape,
     std::string function_name_for_messages,
-    bool check_only,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    // This function is solely for SparseNDArray and DenseNDArray for which the
-    // dims are required by the SOMA spec to be of type int64. Domain-resize for
-    // variant-indexed dataframes is via upgrade_domain and change_domain.
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_write, uri, ctxxp->ctxptr);
+    bool check_only) {
+    if (!ndarray) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
 
     std::string retval = "";
     if (check_only) {
-        auto status_and_reason = sr->can_upgrade_shape(new_shape_i64, function_name_for_messages);
+        auto status_and_reason = ndarray->can_upgrade_shape(new_shape_i64, function_name_for_messages);
         retval = status_and_reason.second;
     } else {
-        sr->upgrade_shape(new_shape_i64, function_name_for_messages);
+        ndarray->upgrade_shape(new_shape_i64, function_name_for_messages);
     }
 
-    sr->close();
     return retval;
 }
 
 // [[Rcpp::export]]
 std::string upgrade_or_change_domain(
-    const std::string& uri,
+    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe,
     bool is_change_domain,
     naxpArray nadimap,
     naxpSchema nadimsp,
     std::string function_name_for_messages,
-    bool check_only,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    bool check_only) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     // This is pointer manipulation from R -> Rcpp SEXP -> libtiledbsoma:
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
@@ -846,23 +836,21 @@ std::string upgrade_or_change_domain(
 
     // Now call libtiledbsoma
     std::string reason_string = "";
-    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::soma_write, ctxxp->ctxptr);
     if (is_change_domain) {
         if (check_only) {
-            auto status_and_reason = sr->can_change_domain(arrow_table, function_name_for_messages);
+            auto status_and_reason = dataframe->can_change_domain(arrow_table, function_name_for_messages);
             reason_string = status_and_reason.second;
         } else {
-            sr->change_domain(arrow_table, function_name_for_messages);
+            dataframe->change_domain(arrow_table, function_name_for_messages);
         }
     } else {
         if (check_only) {
-            auto status_and_reason = sr->can_upgrade_domain(arrow_table, function_name_for_messages);
+            auto status_and_reason = dataframe->can_upgrade_domain(arrow_table, function_name_for_messages);
             reason_string = status_and_reason.second;
         } else {
-            sr->upgrade_domain(arrow_table, function_name_for_messages);
+            dataframe->upgrade_domain(arrow_table, function_name_for_messages);
         }
     }
-    sr->close();
     return reason_string;
 }
 

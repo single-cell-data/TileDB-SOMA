@@ -539,8 +539,7 @@ SOMADataFrame <- R6::R6Class(
     #'
     domain = function() {
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(domain(
-        self$uri,
-        private$.context$handle
+        private$.handle
       )))))
     },
 
@@ -552,8 +551,7 @@ SOMADataFrame <- R6::R6Class(
     #'
     maxdomain = function() {
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(maxdomain(
-        self$uri,
-        private$.context$handle
+        private$.handle
       )))))
     },
 
@@ -565,7 +563,7 @@ SOMADataFrame <- R6::R6Class(
     #' domain feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_domain = function() {
-      has_current_domain(self$uri, private$.context$handle)
+      has_current_domain(private$.handle)
     },
 
     #' @description Increases the shape of the data frame on the
@@ -592,10 +590,9 @@ SOMADataFrame <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
       return(invisible(resize_soma_joinid_shape(
-        self$uri,
+        private$.handle,
         new_shape,
-        .name_of_function(),
-        private$.context$handle
+        .name_of_function()
       )))
     },
 
@@ -622,13 +619,12 @@ SOMADataFrame <- R6::R6Class(
       )
 
       reason_string <- upgrade_or_change_domain(
-        self$uri,
+        private$.handle,
         FALSE,
         pyarrow_domain_table$array,
         pyarrow_domain_table$schema,
         .name_of_function(),
-        check_only,
-        private$.context$handle
+        check_only
       )
 
       if (isTRUE(check_only)) {
@@ -665,13 +661,12 @@ SOMADataFrame <- R6::R6Class(
       )
 
       reason_string <- upgrade_or_change_domain(
-        self$uri,
+        private$.handle,
         TRUE,
         pyarrow_domain_table$array,
         pyarrow_domain_table$schema,
         .name_of_function(),
-        check_only,
-        private$.context$handle
+        check_only
       )
 
       if (isTRUE(check_only)) {

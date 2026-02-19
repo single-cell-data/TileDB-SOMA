@@ -212,7 +212,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     shape = \() {
       private$.check_handle()
-      return(bit64::as.integer64(shape(self$uri, private$.context$handle)))
+      return(bit64::as.integer64(shape(private$.handle)))
     },
 
     #' @description Retrieve the hard limit up to which the array may be resized
@@ -223,7 +223,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     maxshape = \() {
       private$.check_handle()
-      return(bit64::as.integer64(maxshape(self$uri, private$.context$handle)))
+      return(bit64::as.integer64(maxshape(private$.handle)))
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -242,7 +242,7 @@ SOMAArrayBase <- R6::R6Class(
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            non_empty_domain(self$uri, private$.context$handle)
+            non_empty_domain(private$.handle)
           )
         )
       )
@@ -262,7 +262,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     ndim = \() {
       private$.check_handle()
-      return(ndim(self$uri, private$.context$handle))
+      return(ndim(private$.handle))
     },
 
     #' @description Print-friendly representation of the object.

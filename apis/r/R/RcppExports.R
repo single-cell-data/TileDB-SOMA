@@ -184,24 +184,24 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
-shape <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_shape`, uri, ctxxp)
+shape <- function(array) {
+    .Call(`_tiledbsoma_shape`, array)
 }
 
-maxshape <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_maxshape`, uri, ctxxp)
+maxshape <- function(array) {
+    .Call(`_tiledbsoma_maxshape`, array)
 }
 
-non_empty_domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_non_empty_domain`, uri, ctxxp)
+non_empty_domain <- function(array) {
+    .Call(`_tiledbsoma_non_empty_domain`, array)
 }
 
-domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_domain`, uri, ctxxp)
+domain <- function(dataframe) {
+    .Call(`_tiledbsoma_domain`, dataframe)
 }
 
-maxdomain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_maxdomain`, uri, ctxxp)
+maxdomain <- function(dataframe) {
+    .Call(`_tiledbsoma_maxdomain`, dataframe)
 }
 
 maybe_soma_joinid_shape <- function(uri, ctxxp) {
@@ -212,12 +212,12 @@ maybe_soma_joinid_maxshape <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_maybe_soma_joinid_maxshape`, uri, ctxxp)
 }
 
-has_current_domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_has_current_domain`, uri, ctxxp)
+has_current_domain <- function(array) {
+    .Call(`_tiledbsoma_has_current_domain`, array)
 }
 
-ndim <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_ndim`, uri, ctxxp)
+ndim <- function(array) {
+    .Call(`_tiledbsoma_ndim`, array)
 }
 
 c_dimnames <- function(array) {
@@ -272,20 +272,20 @@ c_domain <- function(array) {
     .Call(`_tiledbsoma_c_domain`, array)
 }
 
-resize <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
-    .Call(`_tiledbsoma_resize`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
+resize <- function(ndarray, new_shape, function_name_for_messages, check_only) {
+    .Call(`_tiledbsoma_resize`, ndarray, new_shape, function_name_for_messages, check_only)
 }
 
-resize_soma_joinid_shape <- function(uri, new_shape, function_name_for_messages, ctxxp) {
-    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, uri, new_shape, function_name_for_messages, ctxxp))
+resize_soma_joinid_shape <- function(dataframe, new_shape, function_name_for_messages) {
+    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, dataframe, new_shape, function_name_for_messages))
 }
 
-tiledbsoma_upgrade_shape <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
-    .Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
+tiledbsoma_upgrade_shape <- function(ndarray, new_shape, function_name_for_messages, check_only) {
+    .Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, ndarray, new_shape, function_name_for_messages, check_only)
 }
 
-upgrade_or_change_domain <- function(uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only, ctxxp) {
-    .Call(`_tiledbsoma_upgrade_or_change_domain`, uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only, ctxxp)
+upgrade_or_change_domain <- function(dataframe, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only) {
+    .Call(`_tiledbsoma_upgrade_or_change_domain`, dataframe, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only)
 }
 
 c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
