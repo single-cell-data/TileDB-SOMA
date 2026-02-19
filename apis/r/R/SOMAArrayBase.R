@@ -25,7 +25,10 @@ SOMAArrayBase <- R6::R6Class(
     #' @return Return s\code{self}.
     #'
     open = function(mode = c("READ", "WRITE", "DELETE")) {
-      private$.check_call_is_internal("open", paste(self$class(), "Open", sep=""))
+      private$.check_call_is_internal(
+        "open",
+        paste(self$class(), "Open", sep = "")
+      )
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
       private$.open_handle(open_mode, self$tiledb_timestamp)
@@ -48,7 +51,6 @@ SOMAArrayBase <- R6::R6Class(
       }
       return(invisible(self))
     },
-
 
     #' @description Determine if the object is open for reading or writing
     #'
@@ -73,7 +75,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     mode = function() {
       if (is.null(private$.handle)) {
-          return("CLOSED")
+        return("CLOSED")
       }
       return(soma_object_open_mode(private$.handle))
     },
@@ -83,21 +85,30 @@ SOMAArrayBase <- R6::R6Class(
     #' @return \code{TRUE} if the underlying TileDB array allows duplicates;
     #' otherwise \code{FALSE}.
     #'
-    allows_duplicates = \() c_allows_dups(self$uri, private$.context$handle),
+    allows_duplicates = \() {
+      private$.check_handle()
+      c_allows_dups(self$uri, private$.context$handle)
+    },
 
     #' @description Is an array sparse?
     #'
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
     #' otherwise \code{FALSE}.
     #'
-    is_sparse = \() c_is_sparse(self$uri, private$.context$handle),
+    is_sparse = \() {
+      private$.check_handle()
+      c_is_sparse(self$uri, private$.context$handle)
+    },
 
     #' @description Retrieve the array schema as an Arrow schema
     #' (lifecycle: maturing).
     #'
     #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object.
     #'
-    schema = \() arrow::as_schema(c_schema(self$uri, private$.context$handle)),
+    schema = \() {
+      private$.check_handle()
+      arrow::as_schema(c_schema(self$uri, private$.context$handle))
+    },
 
     #' @description Retrieve the array attributes.
     #'
@@ -121,13 +132,19 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    attributes = \() c_attributes(self$uri, private$.context$handle),
+    attributes = \() {
+      private$.check_handle()
+      c_attributes(self$uri, private$.context$handle)
+    },
 
     #' @description Retrieve attribute names (lifecycle: maturing).
     #'
     #' @return A character vector with the array's attribute names.
     #'
-    attrnames = \() c_attrnames(self$uri, private$.context$handle),
+    attrnames = \() {
+      private$.check_handle()
+      c_attrnames(self$uri, private$.context$handle)
+    },
 
     #' @description Retrieve the array dimensions (lifecycle: maturing)
     #'
@@ -152,26 +169,38 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    dimensions = \() c_domain(self$uri, private$.context$handle),
+    dimensions = \() {
+      private$.check_handle()
+      c_domain(self$uri, private$.context$handle)
+    },
 
     #' @description Retrieve dimension names (lifecycle: maturing).
     #'
     #' @return A character vector with the array's dimension names.
     #'
-    dimnames = \() c_dimnames(self$uri, private$.context$handle),
+    dimnames = \() {
+      private$.check_handle()
+      c_dimnames(self$uri, private$.context$handle)
+    },
 
     #' @description Retrieve the names of all columns, including dimensions and
     #' attributes (lifecycle: maturing).
     #'
     #' @return A character vector with the array's column names.
     #'
-    colnames = \() c(self$dimnames(), self$attrnames()),
+    colnames = \() {
+      private$.check_handle()
+      c(self$dimnames(), self$attrnames())
+    },
 
     #' @description Retrieve names of index (dimension) columns (lifecycle: maturing)
     #'
     #' @return A character vector with the array index (dimension) names
     #'
-    index_column_names = \() self$dimnames(),
+    index_column_names = \() {
+      private$.check_handle()
+      self$dimnames()
+    },
 
     #' @description Retrieve the shape, i.e. the capacity of each dimension
     #' Attempted reads and writes outside the \code{shape} will result in a
@@ -183,7 +212,10 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    shape = \() bit64::as.integer64(shape(self$uri, private$.context$handle)),
+    shape = \() {
+      private$.check_handle()
+      bit64::as.integer64(shape(self$uri, private$.context$handle))
+    },
 
     #' @description Retrieve the hard limit up to which the array may be resized
     #' using the \code{$resize()} method (lifecycle: maturing).
@@ -192,6 +224,7 @@ SOMAArrayBase <- R6::R6Class(
     #' the dimension.
     #'
     maxshape = \() {
+      private$.check_handle()
       bit64::as.integer64(maxshape(self$uri, private$.context$handle))
     },
 
@@ -207,6 +240,7 @@ SOMAArrayBase <- R6::R6Class(
     #' of maximum values.
     #'
     non_empty_domain = function(index1 = FALSE, max_only = FALSE) {
+      private$.check_handle()
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
@@ -228,7 +262,10 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return A scalar with the number of dimensions.
     #'
-    ndim = \() ndim(self$uri, private$.context$handle),
+    ndim = \() {
+      private$.check_handle()
+      ndim(self$uri, private$.context$handle)
+    },
 
     #' @description Print-friendly representation of the object.
     #'
@@ -247,6 +284,12 @@ SOMAArrayBase <- R6::R6Class(
     # @description Open the handle for the C++ interface
     .open_handle = function(open_mode, timestamp) {
       stop("No SOMAArray C++ handle. This method must be overridden.")
+    },
+
+    .check_handle = \() {
+      if (is.null(private$.handle)) {
+        stop("Cannot access SOMAArray properties. The array is not open.")
+      }
     },
 
     write_object_type_metadata = function() {

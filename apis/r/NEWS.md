@@ -16,6 +16,8 @@
 
 ## Fixed
 
+- [BREAKING] Use stored handle to access array properties. Array properties can no longer be accessed on an unopened array. ([](<>)) # TODO: Add reference before merging
+
 ## Security
 
 # tiledbsoma 2.3.0

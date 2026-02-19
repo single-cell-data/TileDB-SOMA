@@ -187,7 +187,12 @@ SOMADenseNDArray <- R6::R6Class(
   private = list(
     # @description Open the handle for the C++ interface
     .open_handle = function(open_mode, timestamp) {
-      private$.handle <- open_dense_ndarray_handle(self$uri, open_mode, private$.context$handle, timestamp)
+      private$.handle <- open_dense_ndarray_handle(
+        self$uri,
+        open_mode,
+        private$.context$handle,
+        timestamp
+      )
     },
 
     # Given a user-specified shape along a particular dimension, returns a named

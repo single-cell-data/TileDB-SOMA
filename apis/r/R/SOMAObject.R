@@ -62,7 +62,9 @@ SOMAObject <- R6::R6Class(
 
       # Set the context
       if (is.null(context)) {
-        stop("Internal error: `context` must be provided to SOMAObject$initialize.")
+        stop(
+          "Internal error: `context` must be provided to SOMAObject$initialize."
+        )
       }
       private$.context <- context
       private$.tiledbsoma_ctx <- tiledbsoma_ctx
@@ -265,9 +267,9 @@ SOMAObject <- R6::R6Class(
         private$.read_only_error("tiledbsoma_ctx")
       }
       .deprecate(
-        what=sprintf("%s$tiledbsoma_ctx", class(self)[1L]),
-        when="2.3.0",
-        details=sprintf("Use `context` instead.")
+        what = sprintf("%s$tiledbsoma_ctx", class(self)[1L]),
+        when = "2.3.0",
+        details = sprintf("Use `context` instead.")
       )
       return(private$.tiledbsoma_ctx)
     },
@@ -377,7 +379,7 @@ SOMAObject <- R6::R6Class(
 
     # @description Check that this code is only called internall
     #
-    .check_call_is_internal = function (internal_method, external_method) {
+    .check_call_is_internal = function(internal_method, external_method) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),
@@ -395,12 +397,12 @@ SOMAObject <- R6::R6Class(
       }
       if (!"tiledbsoma" %in% envs) {
         stop(
-            "Use of the '",
-            internal_method ,
-            "' method is for internal use only; consider using a factory method such as '",
-            external_method ,
-            "' instead",
-            call. = False,
+          "Use of the '",
+          internal_method,
+          "' method is for internal use only; consider using a factory method such as '",
+          external_method,
+          "' instead",
+          call. = False,
         )
       }
     },
