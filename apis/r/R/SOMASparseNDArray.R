@@ -225,7 +225,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     .write_coordinates = function(values) {
-      private$.check_open_for_write()
+      private$.check_handle()
       dnames <- self$dimnames()
       attrn <- self$attrnames()
 
@@ -307,13 +307,10 @@ SOMASparseNDArray <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
       writeArrayFromArrow(
-        uri = self$uri,
+        soma_array = private$.handle,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.context$handle,
-        arraytype = "SOMASparseNDArray",
-        config = NULL,
-        tsvec = self$.tiledb_timestamp_range
+        arraytype = "SOMASparseNDArray"
       )
       return(invisible(self))
     }

@@ -74,7 +74,6 @@ SOMANDArrayBase <- R6::R6Class(
         ctxxp = private$.context$handle,
         tsvec = self$.tiledb_timestamp_range
       )
-      # private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
 
       self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
       return(self)
@@ -110,6 +109,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' shape feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_shape = function() {
+      private$.check_handle()
       has_current_domain(private$.handle)
     },
 
@@ -126,6 +126,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' \code{NULL}.
     #'
     resize = function(new_shape, check_only = FALSE) {
+      private$.check_handle()
       stopifnot(
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(
           new_shape,

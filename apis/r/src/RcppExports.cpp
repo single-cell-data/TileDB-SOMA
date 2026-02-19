@@ -46,18 +46,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // writeArrayFromArrow
-void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp, Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string arraytype, Rcpp::Nullable<Rcpp::CharacterVector> config, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
-RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP ctxxpSEXP, SEXP arraytypeSEXP, SEXP configSEXP, SEXP tsvecSEXP) {
+void writeArrayFromArrow(Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype);
+RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP soma_arraySEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP arraytypeSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type soma_array(soma_arraySEXP);
     Rcpp::traits::input_parameter< naxpArray >::type naap(naapSEXP);
     Rcpp::traits::input_parameter< naxpSchema >::type nasp(naspSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
     Rcpp::traits::input_parameter< const std::string >::type arraytype(arraytypeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tsvec(tsvecSEXP);
-    writeArrayFromArrow(uri, naap, nasp, ctxxp, arraytype, config, tsvec);
+    writeArrayFromArrow(soma_array, naap, nasp, arraytype);
     return R_NilValue;
 END_RCPP
 }
@@ -1108,7 +1105,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 9},
     {"_tiledbsoma_createSchemaForNDArray", (DL_FUNC) &_tiledbsoma_createSchemaForNDArray, 7},
-    {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 7},
+    {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 4},
     {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
     {"_tiledbsoma_c_group_open", (DL_FUNC) &_tiledbsoma_c_group_open, 4},
     {"_tiledbsoma_c_group_member_count", (DL_FUNC) &_tiledbsoma_c_group_member_count, 1},

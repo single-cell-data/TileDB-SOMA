@@ -9,8 +9,8 @@ createSchemaForNDArray <- function(uri, format, shape, soma_type, pclst, ctxxp, 
     invisible(.Call(`_tiledbsoma_createSchemaForNDArray`, uri, format, shape, soma_type, pclst, ctxxp, tsvec))
 }
 
-writeArrayFromArrow <- function(uri, naap, nasp, ctxxp, arraytype = "", config = NULL, tsvec = NULL) {
-    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, ctxxp, arraytype, config, tsvec))
+writeArrayFromArrow <- function(soma_array, naap, nasp, arraytype = "") {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, soma_array, naap, nasp, arraytype))
 }
 
 c_group_create <- function(uri, type, ctxxp, timestamp = NULL) {

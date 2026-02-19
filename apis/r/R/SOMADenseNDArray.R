@@ -141,8 +141,7 @@ SOMADenseNDArray <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     write = function(values, coords = NULL) {
-      private$.check_open_for_write()
-
+      private$.check_handle()
       soma_debug("[SOMADenseNDArray::write] entered")
       stopifnot("'values' must be a matrix" = is.matrix(values))
 
@@ -171,13 +170,10 @@ SOMADenseNDArray <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
       writeArrayFromArrow(
-        uri = self$uri,
+        soma_array = private$.handle,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.context$handle,
-        arraytype = "SOMADenseNDArray",
-        config = NULL,
-        tsvec = self$.tiledb_timestamp_range
+        arraytype = "SOMADenseNDArray"
       )
       soma_debug("[SOMADenseNDArray::write] written")
 
