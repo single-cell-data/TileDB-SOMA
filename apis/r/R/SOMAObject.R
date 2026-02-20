@@ -94,7 +94,12 @@ SOMAObject <- R6::R6Class(
     #'
     #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
     #'
-    is_open = \() self$mode() != "CLOSED",
+    is_open = function() {
+      if (is.null(private$.handle)) {
+        return(TRUE)
+      }
+      return(soma_object_is_open(private$.handle))
+    },
 
     #' @description Print the name of the R6 class
     #'
@@ -112,7 +117,12 @@ SOMAObject <- R6::R6Class(
     #'  \item \dQuote{\code{DELETE}}
     #' }
     #'
-    mode = \() private$.mode %||% "CLOSED",
+    mode = function() {
+      if (is.null(private$.handle)) {
+        return("CLOSED")
+      }
+      return(soma_object_open_mode(private$.handle))
+    },
 
     #' @description Close and reopen the TileDB object in a new mode
     #'
@@ -344,10 +354,6 @@ SOMAObject <- R6::R6Class(
     #
     .soma_type = character(1L),
 
-    # @field .mode ...
-    #
-    .mode = character(1L),
-
     # @field .uri ...
     #
     .uri = character(1L),
@@ -410,8 +416,24 @@ SOMAObject <- R6::R6Class(
     # @description Check that the object is open for reading
     #
     .check_open_for_read = function() {
-      if (!switch(self$mode() %||% "", READ = TRUE, FALSE)) {
-        stop("Item must be open for read: ", self$uri, call. = FALSE)
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for reading (closed)",
+          call. = FALSE
+        )
+      }
+      if (self$mode() != "READ") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for reading. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
@@ -419,25 +441,48 @@ SOMAObject <- R6::R6Class(
     # @description Check that the object is open for writing
     #
     .check_open_for_write = function() {
-      if (!switch(self$mode() %||% "", WRITE = TRUE, FALSE)) {
-        stop("Item must be open for write: ", self$uri, call. = FALSE)
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for writing (closed)",
+          call. = FALSE
+        )
+      }
+      if (self$mode() != "WRITE") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for writing. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
 
     # @desciption Check that the object is open for delete
     .check_open_for_delete = function() {
-      if (self$mode() != "DELETE") {
-        stop("Item must be open for delete: ", self$uri, call. = FALSE)
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for deleting (closed)",
+          call. = FALSE
+        )
       }
-      return(invisible(NULL))
-    },
-
-    # @description Check that the object is open
-    #
-    .check_open_for_read_or_write = function() {
-      if (!switch(self$mode() %||% "", READ = , WRITE = TRUE, FALSE)) {
-        stop("Item must be open for read or write: ", self$uri, call. = FALSE)
+      if (self$mode() != "DELETE") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for deleting. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
@@ -446,14 +491,11 @@ SOMAObject <- R6::R6Class(
     #
     .check_open = function() {
       if (!self$is_open()) {
-        stop(
-          "Item must be open for read, write, or, delete: ",
-          self$uri,
-          call. = FALSE
-        )
+        stop(self$class(), " at '", self$uri, "' is closed", call. = FALSE)
       }
       return(invisible(NULL))
     },
+
 
     .log_open_timestamp = function(open_mode) {
       if (is.null(self$tiledb_timestamp)) {

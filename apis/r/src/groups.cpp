@@ -33,49 +33,14 @@ void c_group_create(
         Rcpp::DatetimeVector v(timestamp);
         ss << " ts (" << v[0] << ", " << v[1] << ")";
     }
-    tdbs::common::logging::LOG_DEBUG(ss.str());
+    tiledbsoma::common::logging::LOG_DEBUG(ss.str());
 
-    tdbs::SOMAGroup::create(sctx, uri, type, {}, tsrng);
+    tiledbsoma::SOMAGroup::create(sctx, uri, type, {}, tsrng);
 }
 
 // [[Rcpp::export]]
-Rcpp::XPtr<somagrp_wrap_t> c_group_open(
-    std::string& uri,
-    std::string& type,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
-    Rcpp::Nullable<Rcpp::DatetimeVector> timestamp = R_NilValue) {
-    // shared pointer to SOMAContext from external pointer wrapper
-    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    // shared pointer to TileDB Context from SOMAContext
-    // std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
-
-    // optional timestamp range
-    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
-
-    // Note: both OpenMode.soma_write and OpenMode.soma_delete should be opened
-    // in TILEDB_WRITE mode.
-    OpenMode mode = type == "READ" ? OpenMode::soma_read : OpenMode::soma_write;
-
-    auto sgrpptr = tdbs::SOMAGroup::open(mode, uri, sctx, "unnamed", tsrng);
-
-    somagrp_wrap_t* somagrp_p = new SOMAGroupWrapper(std::move(sgrpptr));
-    Rcpp::XPtr<somagrp_wrap_t> somagrp_xptr = make_xptr<somagrp_wrap_t>(somagrp_p);
-    return somagrp_xptr;
-}
-
-// [[Rcpp::export]]
-double c_group_member_count(Rcpp::XPtr<somagrp_wrap_t> xp) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
-    // unique pointer to SOMAGroup from external pointer wrapper
-    return static_cast<double>(xp->grpptr->count());
-}
-
-// [[Rcpp::export]]
-Rcpp::List c_group_members(Rcpp::XPtr<somagrp_wrap_t> xp) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
-    // unique pointer to SOMAGroup from external pointer wrapper
-    // 'members map': a map from string to pair of strings
-    auto mm = xp->grpptr->members_map();
+Rcpp::List soma_group_get_members(Rcpp::XPtr<tiledbsoma::SOMAGroup> group) {
+    auto mm = group->members_map();
     auto n = mm.size();
     Rcpp::List lst(n);
     Rcpp::CharacterVector names(n);
@@ -161,11 +126,11 @@ SEXP _metadata_to_sexp(const tdbs::common::DataType v_type, const uint32_t v_num
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
-    // unique pointer to SOMAGroup from external pointer wrapper
-    // 'members map': a map from string to pair of strings
-    auto mm = xp->grpptr->get_metadata();
+Rcpp::List soma_group_get_metadata(Rcpp::XPtr<tiledbsoma::SOMAGroup> group) {
+    if (!group) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto mm = group->get_metadata();
     auto n = mm.size();
     Rcpp::List lst(n);
     Rcpp::CharacterVector names(n);
@@ -184,35 +149,34 @@ Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
     return lst;
 }
 
-// [[Rcpp::export]]
-void c_group_close(Rcpp::XPtr<somagrp_wrap_t> xp) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
-    // unique pointer to SOMAGroup from external pointer wrapper
-    xp->grpptr->close();
-}
-
 std::map<int, URIType> uritypemap = {{0, URIType::automatic}, {1, URIType::absolute}, {2, URIType::relative}};
 
 // [[Rcpp::export]]
-void c_group_set(
-    Rcpp::XPtr<somagrp_wrap_t> xp,
+void soma_group_set(
+    Rcpp::XPtr<tiledbsoma::SOMAGroup> group,
     const std::string& uri,
     int uri_type_int,  // "automatic", "absolute", "relative"
     const std::string& name,
     const std::string& soma_type) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
-    xp->grpptr->set(uri, uritypemap[uri_type_int], name, soma_type);
+    if (!group) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    group->set(uri, uritypemap[uri_type_int], name, soma_type);
 }
 
 // [[Rcpp::export]]
-void c_group_remove_member(Rcpp::XPtr<somagrp_wrap_t> xp, const std::string& name) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
-    xp->grpptr->del(name);
+void soma_group_remove_member(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name) {
+    if (!group) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    group->del(name);
 }
 
 // [[Rcpp::export]]
-void c_group_put_metadata(Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP obj) {
-    check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
+void soma_group_put_metadata(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, std::string key, SEXP obj) {
+    if (!group) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     // we implement a simpler interface here as the 'type' is given from the
     // supplied SEXP, as is the extent
     switch (TYPEOF(obj)) {
@@ -223,15 +187,15 @@ void c_group_put_metadata(Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP o
         case REALSXP: {
             Rcpp::NumericVector v(obj);
             if (Rcpp::isInteger64(obj)) {
-                xp->grpptr->set_metadata(key, tdbs::common::DataType::int64, v.size(), v.begin());
+                group->set_metadata(key, tiledbsoma::common::DataType::int64, v.size(), v.begin());
             } else {
-                xp->grpptr->set_metadata(key, tdbs::common::DataType::float64, v.size(), v.begin());
+                group->set_metadata(key, tiledbsoma::common::DataType::float64, v.size(), v.begin());
             }
             break;
         }
         case INTSXP: {
             Rcpp::IntegerVector v(obj);
-            xp->grpptr->set_metadata(key, tdbs::common::DataType::int32, v.size(), v.begin());
+            group->set_metadata(key, tiledbsoma::common::DataType::int32, v.size(), v.begin());
             break;
         }
         case STRSXP: {
@@ -240,7 +204,7 @@ void c_group_put_metadata(Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP o
             // We use TILEDB_CHAR interchangeably with TILEDB_STRING_ASCII is
             // this best string type?
             // Use TILEDB_STRING_UTF8 for compatibility with Python API
-            xp->grpptr->set_metadata(key, tdbs::common::DataType::string_utf8, s.length(), s.c_str());
+            group->set_metadata(key, tiledbsoma::common::DataType::string_utf8, s.length(), s.c_str());
             break;
         }
         case LGLSXP: {  // experimental: map R logical (ie TRUE, FALSE, NA) to
