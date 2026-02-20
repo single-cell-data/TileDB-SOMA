@@ -410,8 +410,8 @@ soma_object_is_open <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_is_open`, soma_object)
 }
 
-soma_object_open_mode <- function(dataframe) {
-    .Call(`_tiledbsoma_soma_object_open_mode`, dataframe)
+soma_object_open_mode <- function(soma_object) {
+    .Call(`_tiledbsoma_soma_object_open_mode`, soma_object)
 }
 
 open_dataframe_handle <- function(uri, mode, soma_context, tiledb_timestamp) {

@@ -997,24 +997,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // soma_object_is_open
-bool soma_object_is_open(Rcpp::XPtr<tiledbsoma::SOMADataFrame> soma_object);
+bool soma_object_is_open(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
 RcppExport SEXP _tiledbsoma_soma_object_is_open(SEXP soma_objectSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
     rcpp_result_gen = Rcpp::wrap(soma_object_is_open(soma_object));
     return rcpp_result_gen;
 END_RCPP
 }
 // soma_object_open_mode
-std::string soma_object_open_mode(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe);
-RcppExport SEXP _tiledbsoma_soma_object_open_mode(SEXP dataframeSEXP) {
+std::string soma_object_open_mode(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
+RcppExport SEXP _tiledbsoma_soma_object_open_mode(SEXP soma_objectSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
-    rcpp_result_gen = Rcpp::wrap(soma_object_open_mode(dataframe));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_object_open_mode(soma_object));
     return rcpp_result_gen;
 END_RCPP
 }

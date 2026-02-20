@@ -722,6 +722,7 @@ Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& m
         } else if (dtype == TILEDB_INT32) {
             Rcpp::IntegerVector v(len);
             std::memcpy(v.begin(), ptr, len * sizeof(int32_t));
+            lst.push_back(v);
         } else {
             auto txt = tiledb::impl::type_to_str(dtype);
             Rcpp::stop("Currently unsupported type '%s'", txt.c_str());
