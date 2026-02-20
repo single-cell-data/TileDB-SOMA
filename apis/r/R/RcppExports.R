@@ -101,8 +101,12 @@ reindex_lookup <- function(idx, kvec) {
     .Call(`_tiledbsoma_reindex_lookup`, idx, kvec)
 }
 
+soma_array_read <- function(soma_array, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", timestamprange = NULL) {
+    .Call(`_tiledbsoma_soma_array_read`, soma_array, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
+}
+
 soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", timestamprange = NULL) {
-    .Call(`_tiledbsoma_soma_array_reader`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
+    .Call(`_tiledbsoma_soma_array_reader_impl`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
 }
 
 #' Set TileDB-SOMA Logging Level

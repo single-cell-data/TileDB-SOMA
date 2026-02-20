@@ -47,9 +47,11 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$.check_open_for_read()
-
-      uri <- self$uri
+      private$.check_handle()
+      stopifnot(
+        "'log_level' must be character" = is.character(log_level),
+        "'result_order' must be character" = is.character(result_order)
+      )
 
       result_order <- map_query_layout(match_query_layout(result_order))
 
@@ -67,12 +69,10 @@ SOMADenseNDArray <- R6::R6Class(
         self$tiledb_timestamp %||% "now"
       ))
 
-      rl <- soma_array_reader(
-        uri = uri,
+      rl <- soma_array_read(
+        soma_array = private$.handle,
         dim_points = coords,
         result_order = result_order,
-        timestamprange = self$.tiledb_timestamp_range,
-        context = private$.context,
         loglevel = log_level
       )
 
@@ -88,8 +88,6 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "ROW_MAJOR",
       log_level = "warn"
     ) {
-      private$.check_open_for_read()
-
       ndim <- self$ndim()
       attrnames <- self$attrnames()
 

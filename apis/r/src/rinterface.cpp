@@ -49,27 +49,27 @@ Rcpp::XPtr<ArrowArray> array_owning_xptr(void) {
 
 namespace tdbs = tiledbsoma;
 
-// [[Rcpp::export(soma_array_reader_impl)]]
-SEXP soma_array_reader(
-    const std::string& uri,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+SEXP soma_array_read_impl(
+    tiledbsoma::SOMAArray* soma_array,
     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
     std::string batch_size = "auto",
     std::string result_order = "auto",
-    const std::string& loglevel = "auto",
-    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
+    const std::string& loglevel = "auto") {
     if (loglevel != "auto") {
         tdbs::common::logging::LOG_SET_LEVEL(loglevel);
     }
 
-    // shared pointer to SOMAContext from external pointer wrapper
-    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
     std::stringstream ss;
-    ss << "[soma_array_reader] Reading from " << uri;
+    ss << "[soma_array_reader] Reading from " << soma_array->uri();
     tdbs::common::logging::LOG_DEBUG(ss.str());
+
+    auto mq = soma_array->create_managed_query();
+
+    auto tdb_result_order = get_tdb_result_order(result_order);
+    mq.set_layout(tdb_result_order);
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
@@ -77,30 +77,13 @@ SEXP soma_array_reader(
         std::stringstream ss;
         ss << "[soma_array_reader] Selecting " << column_names.size() << " columns";
         tdbs::common::logging::LOG_DEBUG(ss.str());
-    }
-
-    auto tdb_result_order = get_tdb_result_order(result_order);
-
-    // optional timestamp range
-    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
-    if (timestamprange.isNotNull()) {
-        Rcpp::DatetimeVector vec(timestamprange);
-        std::stringstream ss;
-        ss << "[soma_array_reader] timestamp range (" << vec[0] << ", " << vec[1] << ")";
-        tdbs::common::logging::LOG_DEBUG(ss.str());
-    }
-
-    // Read selected columns from the uri (return is unique_ptr<tiledbsoma::SOMAArray>)
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, somactx, tsrng);
-
-    auto mq = sr->create_managed_query("unnamed");
-    mq.set_layout(tdb_result_order);
-    if (!column_names.empty()) {
-        mq.select_columns(column_names);
+        if (!column_names.empty()) {
+            mq.select_columns(column_names);
+        }
     }
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
-    std::shared_ptr<tiledb::ArraySchema> schema = sr->tiledb_schema();
+    std::shared_ptr<tiledb::ArraySchema> schema = soma_array->tiledb_schema();
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
@@ -137,11 +120,9 @@ SEXP soma_array_reader(
     auto sr_data = mq.read_next();
     if (!mq.results_complete()) {
         Rcpp::stop(
-            "Read of '%s' is incomplete.\nConsider increasing the memory "
-            "allocation via the configuration\noption "
-            "'soma.init_buffer_bytes', "
-            "or using iterated partial reads.",
-            uri);
+            "Read of '%s' is incomplete.\nConsider increasing the memory allocation via the configuration\noption "
+            "'soma.init_buffer_bytes', or using iterated partial reads.",
+            soma_array->uri());
     }
     {
         std::stringstream ss;
@@ -174,11 +155,8 @@ SEXP soma_array_reader(
             tdbs::common::logging::LOG_DEBUG(ss.str());
         }
 
-        // this is pair of array and schema pointer
-        auto& pp = pp_vector[i];
+        auto& pp = pp_vector[i];  // this is pair of array and schema pointer
 
-        // memcpy((void*) sch->children[i], pp.second.get(),
-        // sizeof(ArrowSchema)); memcpy((void*) arr->children[i],
         // pp.first.get(), sizeof(ArrowArray));
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
@@ -198,8 +176,54 @@ SEXP soma_array_reader(
 
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
-    sr->close();
     return arrayxp;
+}
+
+// [[Rcpp::export]]
+SEXP soma_array_read(
+    Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array,
+    Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+    Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+    Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+    Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+    std::string batch_size = "auto",
+    std::string result_order = "auto",
+    const std::string& loglevel = "auto",
+    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
+    return soma_array_read_impl(
+        soma_array.get(), colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel);
+}
+
+// [[Rcpp::export]]
+SEXP soma_array_reader_impl(
+    const std::string& uri,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+    Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+    Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+    Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+    std::string batch_size = "auto",
+    std::string result_order = "auto",
+    const std::string& loglevel = "auto",
+    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
+    if (loglevel != "auto") {
+        tdbs::common::logging::LOG_SET_LEVEL(loglevel);
+    }
+
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
+    if (timestamprange.isNotNull()) {
+        Rcpp::DatetimeVector vec(timestamprange);
+        std::stringstream ss;
+        ss << "[soma_array_reader] timestamp range (" << vec[0] << ", " << vec[1] << ")";
+        tdbs::common::logging::LOG_DEBUG(ss.str());
+    }
+
+    auto soma_array = tiledbsoma::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr, tsrng);
+
+    auto retval = soma_array_read_impl(
+        soma_array.get(), colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel);
+    soma_array->close();
+    return retval;
 }
 
 //' Set TileDB-SOMA Logging Level
