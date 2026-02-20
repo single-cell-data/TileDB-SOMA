@@ -77,50 +77,37 @@ namespace tdbs = tiledbsoma;
 // clang-format on
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(
-    const std::string& uri,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array,
     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
     std::string batch_size = "auto",
     std::string result_order = "auto",
-    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
     const std::string& loglevel = "auto") {
+    if (!soma_array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     if (loglevel != "auto") {
         tdbs::common::logging::LOG_SET_LEVEL(loglevel);
     }
 
-    std::stringstream ss;
-    ss << "[mq_setup] Setting up " << uri;
-    tdbs::common::logging::LOG_DEBUG(ss.str());
-
-    std::string_view name = "unnamed";
-    std::vector<std::string> column_names = {};
-
-    // shared pointer to SOMAContext from external pointer wrapper
-    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
-
-    if (!colnames.isNull()) {
-        column_names = Rcpp::as<std::vector<std::string>>(colnames);
-    }
-
-    // optional timestamp range
-    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
+    auto mq = make_xptr<tiledbsoma::common::ManagedQuery>(
+        new tiledbsoma::common::ManagedQuery(soma_array->create_managed_query()));
 
     auto tdb_result_order = get_tdb_result_order(result_order);
-
-    auto arr = tdbs::SOMAArray(OpenMode::soma_read, uri, somactx, tsrng);
-
-    auto mq = new tdbs::common::ManagedQuery(arr.tiledb_array(), somactx->tiledb_ctx(), name);
     mq->set_layout(tdb_result_order);
-    if (!column_names.empty()) {
-        mq->select_columns(column_names);
+
+    std::vector<std::string> column_names = {};
+    if (!colnames.isNull()) {
+        column_names = Rcpp::as<std::vector<std::string>>(colnames);
+        if (!column_names.empty()) {
+            mq->select_columns(column_names);
+        }
     }
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
-    std::shared_ptr<tiledb::ArraySchema> schema = arr.tiledb_schema();
-    tiledb::Domain domain = schema->domain();
+    tiledb::Domain domain = soma_array->tiledb_schema()->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
         std::stringstream ss;
@@ -130,23 +117,17 @@ Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
-    // If we have a query condition, apply it
     if (!qc.isNull()) {
         tdbs::common::logging::LOG_DEBUG("[mq_setup] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         mq->set_condition(*qcxp);
     }
 
-    // If we have dimension points, apply them
-    // The interface is named list, where each (named) list elements is one
-    // (named) dimesion The List element is a simple vector of points and each
-    // point is applied to the named dimension
     if (!dim_points.isNull()) {
         Rcpp::List lst(dim_points);
         apply_dim_points(mq, name2dim, lst);
     }
 
-    // If we have a dimension points, apply them
     if (!dim_ranges.isNull()) {
         Rcpp::List lst(dim_ranges);
         apply_dim_ranges(mq, name2dim, lst);

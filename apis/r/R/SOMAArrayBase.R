@@ -32,6 +32,7 @@ SOMAArrayBase <- R6::R6Class(
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
       private$.open_handle(open_mode, self$tiledb_timestamp)
+      private$.check_handle()
       private$.metadata_cache <- soma_object_get_metadata(private$.handle)
       return(self)
     },
@@ -85,7 +86,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return \code{TRUE} if the underlying TileDB array allows duplicates;
     #' otherwise \code{FALSE}.
     #'
-    allows_duplicates = \() {
+    allows_duplicates = function() {
       private$.check_handle()
       return(c_allows_dups(private$.handle))
     },
@@ -95,7 +96,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
     #' otherwise \code{FALSE}.
     #'
-    is_sparse = \() {
+    is_sparse = function() {
       private$.check_handle()
       return(c_is_sparse(private$.handle))
     },
@@ -105,7 +106,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object.
     #'
-    schema = \() {
+    schema = function() {
       private$.check_handle()
       return(arrow::as_schema(c_schema(private$.handle)))
     },
@@ -132,7 +133,7 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    attributes = \() {
+    attributes = function() {
       private$.check_handle()
       return(c_attributes(private$.handle))
     },
@@ -141,7 +142,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return A character vector with the array's attribute names.
     #'
-    attrnames = \() {
+    attrnames = function() {
       private$.check_handle()
       return(c_attrnames(private$.handle))
     },
@@ -169,7 +170,7 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    dimensions = \() {
+    dimensions = function() {
       private$.check_handle()
       return(c_domain(private$.handle))
     },
@@ -178,7 +179,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return A character vector with the array's dimension names.
     #'
-    dimnames = \() {
+    dimnames = function() {
       private$.check_handle()
       return(c_dimnames(private$.handle))
     },
@@ -210,7 +211,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    shape = \() {
+    shape = function() {
       private$.check_handle()
       return(bit64::as.integer64(shape(private$.handle)))
     },
@@ -221,7 +222,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    maxshape = \() {
+    maxshape = function() {
       private$.check_handle()
       return(bit64::as.integer64(maxshape(private$.handle)))
     },
@@ -260,7 +261,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return A scalar with the number of dimensions.
     #'
-    ndim = \() {
+    ndim = function() {
       private$.check_handle()
       return(ndim(private$.handle))
     },
@@ -278,13 +279,23 @@ SOMAArrayBase <- R6::R6Class(
       return(invisible(self))
     }
   ),
+  active = list(
+    #' @field handle External pointer to the C++ interface
+    #'
+    handle = function(value) {
+      if (!missing(x = value)) {
+        stop("Field `handle` is read-only", call. = FALSE)
+      }
+      return(private$.handle)
+    }
+  ),
   private = list(
     # @description Open the handle for the C++ interface
     .open_handle = function(open_mode, timestamp) {
       stop("No SOMAArray C++ handle. This method must be overridden.")
     },
 
-    .check_handle = \() {
+    .check_handle = function() {
       if (is.null(private$.handle)) {
         stop("Cannot access SOMAArray properties. The array is not open.")
       }

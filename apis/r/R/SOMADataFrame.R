@@ -221,7 +221,7 @@ SOMADataFrame <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$.check_open_for_read()
+      private$.check_handle()
 
       result_order <- match_query_layout(result_order)
 
@@ -262,27 +262,11 @@ SOMADataFrame <- R6::R6Class(
         value_filter <- parsed@ptr
       }
 
-      if (is.null(self$.tiledb_timestamp_range)) {
-        soma_debug(sprintf(
-          "[SOMADataFrame$read] calling mq_setup for %s",
-          self$uri
-        ))
-      } else {
-        soma_debug(sprintf(
-          "[SOMADataFrame$read] calling mq_setup for %s at (%s, %s)",
-          self$uri,
-          self$.tiledb_timestamp_range[1],
-          self$.tiledb_timestamp_range[2]
-        ))
-      }
-
       sr <- mq_setup(
-        uri = self$uri,
-        private$.context$handle,
+        soma_array = private$.handle,
         colnames = column_names,
         qc = value_filter,
         dim_points = coords,
-        timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
         loglevel = log_level
       )
       return(TableReadIter$new(sr))

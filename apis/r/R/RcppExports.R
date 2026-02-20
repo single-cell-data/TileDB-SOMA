@@ -292,8 +292,8 @@ c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols
     invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
 }
 
-mq_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_mq_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
+mq_setup <- function(soma_array, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
+    .Call(`_tiledbsoma_mq_setup`, soma_array, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel)
 }
 
 mq_complete <- function(mq) {

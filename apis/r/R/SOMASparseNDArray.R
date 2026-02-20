@@ -52,11 +52,9 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       sr <- mq_setup(
-        uri = self$uri,
-        private$.context$handle,
+        soma_array = private$.handle,
         dim_points = coords,
         result_order = result_order,
-        timestamprange = self$.tiledb_timestamp_range,
         loglevel = log_level
       )
 
