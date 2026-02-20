@@ -211,7 +211,8 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return A scalar with the number of non-zero elements.
     #'
     nnz = function() {
-      nnz(self$uri, private$.context$handle)
+      private$.check_handle()
+      return(nnz(private$.handle))
     },
 
     #' @description Write a COO table to the array.

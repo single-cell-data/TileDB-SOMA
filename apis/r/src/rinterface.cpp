@@ -271,27 +271,11 @@ void soma_warn(const std::string& msg) {
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& colnames) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri);
-    auto mq = sr->create_managed_query();
-    auto sr_data = mq.read_next();
-    size_t n = colnames.size();
-    Rcpp::CharacterVector vs(n);
-    for (size_t i = 0; i < n; i++) {
-        auto datatype = sr_data->get()->at(colnames[i])->type();
-        vs[i] = std::string(tiledb::impl::to_str(datatype));
+double nnz(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+    if (!array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    vs.attr("names") = colnames;
-    sr->close();
-    return vs;
-}
-
-// [[Rcpp::export]]
-double nnz(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    auto retval = static_cast<double>(sr->nnz());
-    sr->close();
-    return retval;
+    return static_cast<double>(array->nnz());
 }
 
 // [[Rcpp::export]]
@@ -662,19 +646,20 @@ Rcpp::List c_attributes(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 // adapted from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L3027-L3042
 // [[Rcpp::export]]
-Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
-    sr->close();
+Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    auto sch = dataframe->tiledb_schema();
 
     int nattrs = sch->attribute_num();
     Rcpp::LogicalVector has_enum = Rcpp::LogicalVector(nattrs);
     Rcpp::CharacterVector names = Rcpp::CharacterVector(nattrs);
     for (int i = 0; i < nattrs; i++) {
-        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
-        auto enmr = tiledb::AttributeExperimental::get_enumeration_name(*(ctxxp->ctxptr->tiledb_ctx()), *attr.get());
+        auto attr = sch->attribute(i);
+        auto enmr = tiledb::AttributeExperimental::get_enumeration_name(*(dataframe->ctx()->tiledb_ctx()), attr);
         has_enum(i) = enmr != std::nullopt;
-        names(i) = attr->name();
+        names(i) = attr.name();
     }
 
     has_enum.attr("names") = names;
@@ -683,10 +668,11 @@ Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<s
 
 // [[Rcpp::export]]
 Rcpp::CharacterVector c_attribute_enumeration_levels(
-    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string& name) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
-    std::pair<ArrowArray*, ArrowSchema*> enum_values = sr->get_enumeration_values_for_column(name);
-    sr->close();
+    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, const std::string& name) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    std::pair<ArrowArray*, ArrowSchema*> enum_values = dataframe->get_enumeration_values_for_column(name);
 
     if (enum_values.first->length > std::numeric_limits<int32_t>::max()) {
         Rcpp::stop("too many enumeration levels for R");
@@ -856,12 +842,14 @@ std::string upgrade_or_change_domain(
 
 // [[Rcpp::export]]
 void c_update_dataframe_schema(
-    const std::string& uri,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe,
     Rcpp::CharacterVector column_names_to_drop,
     Rcpp::List add_cols_types,
     Rcpp::List add_cols_enum_value_types,
     Rcpp::List add_cols_enum_ordered) {
+    if (!dataframe) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
     // Drop columns is just a list of column names: it goes right through
     // from R to C++.
     std::vector<std::string> drop_attrs = Rcpp::as<std::vector<std::string>>(column_names_to_drop);
@@ -925,7 +913,5 @@ void c_update_dataframe_schema(
         }
     }
 
-    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::soma_write, ctxxp->ctxptr);
-    sdf->update_dataframe_schema(drop_attrs, add_attrs, add_enmrs);
-    sdf->close();
+    dataframe->update_dataframe_schema(drop_attrs, add_attrs, add_enmrs);
 }

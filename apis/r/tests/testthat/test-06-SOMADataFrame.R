@@ -487,7 +487,7 @@ test_that("creation with ordered factors", {
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
   expect_identical(
-    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    c_attributes_enumerated(sdf$handle),
     vapply(
       sdf$attrnames(),
       FUN = function(x) is.factor(df[[x]]),
@@ -1110,7 +1110,7 @@ test_that("missing levels in enums", {
   # Test missingness is preserved
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_identical(
-    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    c_attributes_enumerated(sdf$handle),
     vapply(
       sdf$attrnames(),
       FUN = function(x) is.factor(df[[x]]),
@@ -1138,7 +1138,7 @@ test_that("missing levels in enums", {
   # Test missingness is preserved when updating
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_identical(
-    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    c_attributes_enumerated(sdf$handle),
     vapply(
       sdf$attrnames(),
       FUN = function(x) inherits(tbl0[[x]]$type, "DictionaryType"),

@@ -404,27 +404,14 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// get_column_types
-Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& colnames);
-RcppExport SEXP _tiledbsoma_get_column_types(SEXP uriSEXP, SEXP colnamesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_column_types(uri, colnames));
-    return rcpp_result_gen;
-END_RCPP
-}
 // nnz
-double nnz(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP, SEXP ctxxpSEXP) {
+double nnz(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+RcppExport SEXP _tiledbsoma_nnz(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(nnz(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    rcpp_result_gen = Rcpp::wrap(nnz(array));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -666,27 +653,25 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_attributes_enumerated
-Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_attributes_enumerated(SEXP uriSEXP, SEXP ctxxpSEXP) {
+Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe);
+RcppExport SEXP _tiledbsoma_c_attributes_enumerated(SEXP dataframeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_attributes_enumerated(uri, ctxxp));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_attributes_enumerated(dataframe));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_attribute_enumeration_levels
-Rcpp::CharacterVector c_attribute_enumeration_levels(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string& name);
-RcppExport SEXP _tiledbsoma_c_attribute_enumeration_levels(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP nameSEXP) {
+Rcpp::CharacterVector c_attribute_enumeration_levels(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, const std::string& name);
+RcppExport SEXP _tiledbsoma_c_attribute_enumeration_levels(SEXP dataframeSEXP, SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_attribute_enumeration_levels(uri, ctxxp, name));
+    rcpp_result_gen = Rcpp::wrap(c_attribute_enumeration_levels(dataframe, name));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -758,17 +743,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_update_dataframe_schema
-void c_update_dataframe_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::CharacterVector column_names_to_drop, Rcpp::List add_cols_types, Rcpp::List add_cols_enum_value_types, Rcpp::List add_cols_enum_ordered);
-RcppExport SEXP _tiledbsoma_c_update_dataframe_schema(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP column_names_to_dropSEXP, SEXP add_cols_typesSEXP, SEXP add_cols_enum_value_typesSEXP, SEXP add_cols_enum_orderedSEXP) {
+void c_update_dataframe_schema(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, Rcpp::CharacterVector column_names_to_drop, Rcpp::List add_cols_types, Rcpp::List add_cols_enum_value_types, Rcpp::List add_cols_enum_ordered);
+RcppExport SEXP _tiledbsoma_c_update_dataframe_schema(SEXP dataframeSEXP, SEXP column_names_to_dropSEXP, SEXP add_cols_typesSEXP, SEXP add_cols_enum_value_typesSEXP, SEXP add_cols_enum_orderedSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type column_names_to_drop(column_names_to_dropSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_types(add_cols_typesSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_enum_value_types(add_cols_enum_value_typesSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_enum_ordered(add_cols_enum_orderedSEXP);
-    c_update_dataframe_schema(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered);
+    c_update_dataframe_schema(dataframe, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered);
     return R_NilValue;
 END_RCPP
 }
@@ -1132,8 +1116,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_debug", (DL_FUNC) &_tiledbsoma_soma_debug, 1},
     {"_tiledbsoma_soma_info", (DL_FUNC) &_tiledbsoma_soma_info, 1},
     {"_tiledbsoma_soma_warn", (DL_FUNC) &_tiledbsoma_soma_warn, 1},
-    {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
-    {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 2},
+    {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 1},
     {"_tiledbsoma_check_arrow_schema_tag", (DL_FUNC) &_tiledbsoma_check_arrow_schema_tag, 1},
     {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
     {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 1},
@@ -1155,14 +1138,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_cell_order", (DL_FUNC) &_tiledbsoma_c_cell_order, 2},
     {"_tiledbsoma_c_schema_filters", (DL_FUNC) &_tiledbsoma_c_schema_filters, 2},
     {"_tiledbsoma_c_attributes", (DL_FUNC) &_tiledbsoma_c_attributes, 1},
-    {"_tiledbsoma_c_attributes_enumerated", (DL_FUNC) &_tiledbsoma_c_attributes_enumerated, 2},
-    {"_tiledbsoma_c_attribute_enumeration_levels", (DL_FUNC) &_tiledbsoma_c_attribute_enumeration_levels, 3},
+    {"_tiledbsoma_c_attributes_enumerated", (DL_FUNC) &_tiledbsoma_c_attributes_enumerated, 1},
+    {"_tiledbsoma_c_attribute_enumeration_levels", (DL_FUNC) &_tiledbsoma_c_attribute_enumeration_levels, 2},
     {"_tiledbsoma_c_domain", (DL_FUNC) &_tiledbsoma_c_domain, 1},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 4},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 3},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 4},
     {"_tiledbsoma_upgrade_or_change_domain", (DL_FUNC) &_tiledbsoma_upgrade_or_change_domain, 6},
-    {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
+    {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 5},
     {"_tiledbsoma_mq_setup", (DL_FUNC) &_tiledbsoma_mq_setup, 8},
     {"_tiledbsoma_mq_complete", (DL_FUNC) &_tiledbsoma_mq_complete, 1},
     {"_tiledbsoma_create_empty_arrow_table", (DL_FUNC) &_tiledbsoma_create_empty_arrow_table, 0},

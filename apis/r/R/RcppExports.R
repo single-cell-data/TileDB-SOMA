@@ -168,12 +168,8 @@ soma_warn <- function(msg) {
     invisible(.Call(`_tiledbsoma_soma_warn`, msg))
 }
 
-get_column_types <- function(uri, colnames) {
-    .Call(`_tiledbsoma_get_column_types`, uri, colnames)
-}
-
-nnz <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_nnz`, uri, ctxxp)
+nnz <- function(array) {
+    .Call(`_tiledbsoma_nnz`, array)
 }
 
 check_arrow_schema_tag <- function(xp) {
@@ -260,12 +256,12 @@ c_attributes <- function(array) {
     .Call(`_tiledbsoma_c_attributes`, array)
 }
 
-c_attributes_enumerated <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attributes_enumerated`, uri, ctxxp)
+c_attributes_enumerated <- function(dataframe) {
+    .Call(`_tiledbsoma_c_attributes_enumerated`, dataframe)
 }
 
-c_attribute_enumeration_levels <- function(uri, ctxxp, name) {
-    .Call(`_tiledbsoma_c_attribute_enumeration_levels`, uri, ctxxp, name)
+c_attribute_enumeration_levels <- function(dataframe, name) {
+    .Call(`_tiledbsoma_c_attribute_enumeration_levels`, dataframe, name)
 }
 
 c_domain <- function(array) {
@@ -288,8 +284,8 @@ upgrade_or_change_domain <- function(dataframe, is_change_domain, nadimap, nadim
     .Call(`_tiledbsoma_upgrade_or_change_domain`, dataframe, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only)
 }
 
-c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
-    invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
+c_update_dataframe_schema <- function(dataframe, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
+    invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, dataframe, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
 }
 
 mq_setup <- function(soma_array, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {

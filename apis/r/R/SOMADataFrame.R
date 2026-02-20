@@ -420,8 +420,7 @@ SOMADataFrame <- R6::R6Class(
         length(drop_cols_for_clib) > 0 || length(add_cols_types_for_clib) > 0
       ) {
         c_update_dataframe_schema(
-          self$uri,
-          private$.context$handle,
+          private$.handle,
           drop_cols_for_clib,
           Filter(Negate(is.null), add_cols_types_for_clib),
           Filter(Negate(is.null), add_cols_enum_value_types_for_clib),
@@ -457,7 +456,7 @@ SOMADataFrame <- R6::R6Class(
         "'simplify' must be TRUE or FALSE" = isTRUE(simplify) ||
           isFALSE(simplify)
       )
-      enums <- c_attributes_enumerated(self$uri, private$.context$handle)
+      enums <- c_attributes_enumerated(private$.handle)
       if (!any(enums)) {
         rlang::warn("No enumerated columns present")
         return(NULL)
@@ -472,8 +471,7 @@ SOMADataFrame <- R6::R6Class(
       levels <- sapply(
         X = column_names,
         FUN = c_attribute_enumeration_levels,
-        uri = self$uri,
-        ctxxp = private$.context$handle,
+        dataframe = private$.handle,
         simplify = FALSE,
         USE.NAMES = TRUE
       )
