@@ -74,7 +74,6 @@ SOMANDArrayBase <- R6::R6Class(
         ctxxp = private$.context$handle,
         tsvec = self$.tiledb_timestamp_range
       )
-      # private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
 
       self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
       return(self)
@@ -110,7 +109,8 @@ SOMANDArrayBase <- R6::R6Class(
     #' shape feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_shape = function() {
-      has_current_domain(self$uri, private$.context$handle)
+      private$.check_handle()
+      has_current_domain(private$.handle)
     },
 
     #' @description Increases the shape of the array as specified, up to the hard
@@ -126,6 +126,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' \code{NULL}.
     #'
     resize = function(new_shape, check_only = FALSE) {
+      private$.check_handle()
       stopifnot(
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(
           new_shape,
@@ -136,11 +137,10 @@ SOMANDArrayBase <- R6::R6Class(
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
       reason_string <- resize(
-        uri = self$uri,
+        ndarray = private$.handle,
         new_shape = new_shape,
         function_name_for_messages = .name_of_function(),
-        check_only = check_only,
-        ctxxp = private$.context$handle
+        check_only = check_only
       )
 
       if (isTRUE(check_only)) {
@@ -178,11 +178,10 @@ SOMANDArrayBase <- R6::R6Class(
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
       reason_string <- tiledbsoma_upgrade_shape(
-        uri = self$uri,
+        ndarray = self$.handle,
         new_shape = shape,
         function_name_for_messages = .name_of_function(),
-        check_only = check_only,
-        ctxxp = private$.context$handle
+        check_only = check_only
       )
       if (isTRUE(check_only)) {
         return(reason_string)

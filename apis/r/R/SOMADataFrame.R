@@ -158,7 +158,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     write = function(values) {
-      private$.check_open_for_write()
+      private$.check_handle()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -188,13 +188,10 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(values)$export_to_c(naap, nasp)
       writeArrayFromArrow(
-        uri = self$uri,
+        soma_array = private$.handle,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.context$handle,
-        arraytype = "SOMADataFrame",
-        config = NULL,
-        tsvec = self$.tiledb_timestamp_range
+        arraytype = "SOMADataFrame"
       )
 
       return(invisible(self))
@@ -224,7 +221,7 @@ SOMADataFrame <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$.check_open_for_read()
+      private$.check_handle()
 
       result_order <- match_query_layout(result_order)
 
@@ -265,27 +262,11 @@ SOMADataFrame <- R6::R6Class(
         value_filter <- parsed@ptr
       }
 
-      if (is.null(self$.tiledb_timestamp_range)) {
-        soma_debug(sprintf(
-          "[SOMADataFrame$read] calling mq_setup for %s",
-          self$uri
-        ))
-      } else {
-        soma_debug(sprintf(
-          "[SOMADataFrame$read] calling mq_setup for %s at (%s, %s)",
-          self$uri,
-          self$.tiledb_timestamp_range[1],
-          self$.tiledb_timestamp_range[2]
-        ))
-      }
-
       sr <- mq_setup(
-        uri = self$uri,
-        private$.context$handle,
+        soma_array = private$.handle,
         colnames = column_names,
         qc = value_filter,
         dim_points = coords,
-        timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
         loglevel = log_level
       )
       return(TableReadIter$new(sr))
@@ -439,8 +420,7 @@ SOMADataFrame <- R6::R6Class(
         length(drop_cols_for_clib) > 0 || length(add_cols_types_for_clib) > 0
       ) {
         c_update_dataframe_schema(
-          self$uri,
-          private$.context$handle,
+          private$.handle,
           drop_cols_for_clib,
           Filter(Negate(is.null), add_cols_types_for_clib),
           Filter(Negate(is.null), add_cols_enum_value_types_for_clib),
@@ -476,7 +456,7 @@ SOMADataFrame <- R6::R6Class(
         "'simplify' must be TRUE or FALSE" = isTRUE(simplify) ||
           isFALSE(simplify)
       )
-      enums <- c_attributes_enumerated(self$uri, private$.context$handle)
+      enums <- c_attributes_enumerated(private$.handle)
       if (!any(enums)) {
         rlang::warn("No enumerated columns present")
         return(NULL)
@@ -491,8 +471,7 @@ SOMADataFrame <- R6::R6Class(
       levels <- sapply(
         X = column_names,
         FUN = c_attribute_enumeration_levels,
-        uri = self$uri,
-        ctxxp = private$.context$handle,
+        dataframe = private$.handle,
         simplify = FALSE,
         USE.NAMES = TRUE
       )
@@ -538,9 +517,9 @@ SOMADataFrame <- R6::R6Class(
     #' @return Named list of minimum/maximum values.
     #'
     domain = function() {
+      private$.check_handle()
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(domain(
-        self$uri,
-        private$.context$handle
+        private$.handle
       )))))
     },
 
@@ -551,9 +530,9 @@ SOMADataFrame <- R6::R6Class(
     #' @return Named list of minimum/maximum values.
     #'
     maxdomain = function() {
+      private$.check_handle()
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(maxdomain(
-        self$uri,
-        private$.context$handle
+        private$.handle
       )))))
     },
 
@@ -565,7 +544,8 @@ SOMADataFrame <- R6::R6Class(
     #' domain feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_domain = function() {
-      has_current_domain(self$uri, private$.context$handle)
+      private$.check_handle()
+      has_current_domain(private$.handle)
     },
 
     #' @description Increases the shape of the data frame on the
@@ -583,6 +563,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Invisibly returns \code{NULL}
     #'
     tiledbsoma_resize_soma_joinid_shape = function(new_shape) {
+      private$.check_handle()
       stopifnot(
         "'new_shape' must be an integer" = rlang::is_integerish(
           new_shape,
@@ -592,10 +573,9 @@ SOMADataFrame <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
       return(invisible(resize_soma_joinid_shape(
-        self$uri,
+        private$.handle,
         new_shape,
-        .name_of_function(),
-        private$.context$handle
+        .name_of_function()
       )))
     },
 
@@ -613,8 +593,7 @@ SOMADataFrame <- R6::R6Class(
     #' \code{NULL}
     #'
     tiledbsoma_upgrade_domain = function(new_domain, check_only = FALSE) {
-      # Checking slotwise new shape >= old shape, and <= max_shape, is already
-      # done in libtiledbsoma
+      private$.check_handle()
 
       pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
         new_domain,
@@ -622,13 +601,12 @@ SOMADataFrame <- R6::R6Class(
       )
 
       reason_string <- upgrade_or_change_domain(
-        self$uri,
+        private$.handle,
         FALSE,
         pyarrow_domain_table$array,
         pyarrow_domain_table$schema,
         .name_of_function(),
-        check_only,
-        private$.context$handle
+        check_only
       )
 
       if (isTRUE(check_only)) {
@@ -656,8 +634,7 @@ SOMADataFrame <- R6::R6Class(
     #' \code{NULL}
     #'
     change_domain = function(new_domain, check_only = FALSE) {
-      # Checking slotwise new shape >= old shape, and <= max_shape, is already
-      # done in libtiledbsoma
+      private$.check_handle()
 
       pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
         new_domain,
@@ -665,13 +642,12 @@ SOMADataFrame <- R6::R6Class(
       )
 
       reason_string <- upgrade_or_change_domain(
-        self$uri,
+        private$.handle,
         TRUE,
         pyarrow_domain_table$array,
         pyarrow_domain_table$schema,
         .name_of_function(),
-        check_only,
-        private$.context$handle
+        check_only
       )
 
       if (isTRUE(check_only)) {
@@ -684,6 +660,16 @@ SOMADataFrame <- R6::R6Class(
     }
   ),
   private = list(
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      private$.handle <- open_dataframe_handle(
+        self$uri,
+        open_mode,
+        private$.context$handle,
+        timestamp
+      )
+    },
+
     # @description Validate schema (lifecycle: maturing)
     # Handle default column additions (eg, soma_joinid) and error checking on
     # required columns

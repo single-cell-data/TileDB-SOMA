@@ -25,53 +25,15 @@ SOMAArrayBase <- R6::R6Class(
     #' @return Return s\code{self}.
     #'
     open = function(mode = c("READ", "WRITE", "DELETE")) {
-      envs <- unique(vapply(
-        X = unique(sys.parents()),
-        FUN = function(n) environmentName(environment(sys.function(n))),
-        FUN.VALUE = character(1L)
-      ))
-      if (sys.parent()) {
-        if (
-          inherits(
-            environment(sys.function(sys.parent()))$self,
-            what = "SOMAObject"
-          )
-        ) {
-          envs <- union(envs, "tiledbsoma")
-        }
-      }
-      if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(private$.internal_use_only("open", "collection")),
-            collapse = '\n'
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Set the mode of the array
-      private$.mode <- match.arg(mode)
-
-      if (is.null(self$tiledb_timestamp)) {
-        soma_debug(sprintf(
-          "[SOMAArrayBase$open] Opening %s '%s' in %s mode",
-          self$class(),
-          self$uri,
-          self$mode()
-        ))
-      } else {
-        soma_debug(sprintf(
-          "[SOMAArrayBase$open] Opening %s '%s' in %s mode at (%s)",
-          self$class(),
-          self$uri,
-          mode,
-          self$tiledb_timestamp %||% "now"
-        ))
-      }
-
-      private$.update_metadata_cache(TRUE)
-
+      private$.check_call_is_internal(
+        "open",
+        paste(self$class(), "Open", sep = "")
+      )
+      open_mode <- match.arg(mode)
+      private$.log_open_timestamp(open_mode)
+      private$.open_handle(open_mode, self$tiledb_timestamp)
+      private$.check_handle()
+      private$.metadata_cache <- soma_object_get_metadata(private$.handle)
       return(self)
     },
 
@@ -81,13 +43,42 @@ SOMAArrayBase <- R6::R6Class(
     #'
     close = function() {
       soma_debug(sprintf(
-        "[SOMAArrayBase$close] Closing %s '%s'",
+        "[SOMAObject$close] Closing %s '%s'",
         self$class(),
         self$uri
       ))
-      private$.mode <- NULL
-
+      if (!is.null(private$.handle)) {
+        soma_object_close(private$.handle)
+      }
       return(invisible(self))
+    },
+
+    #' @description Determine if the object is open for reading or writing
+    #'
+    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
+    #'
+    is_open = function() {
+      if (is.null(private$.handle)) {
+        return(TRUE)
+      }
+      return(soma_object_is_open(private$.handle))
+    },
+
+    #' @description Get the mode of the object
+    #'
+    #' @return The mode of the object, one of:
+    #' \itemize{
+    #'  \item \dQuote{\code{CLOSED}}
+    #'  \item \dQuote{\code{READ}}
+    #'  \item \dQuote{\code{WRITE}}
+    #'  \item \dQuote{\code{DELETE}}
+    #' }
+    #'
+    mode = function() {
+      if (is.null(private$.handle)) {
+        return("CLOSED")
+      }
+      return(soma_object_open_mode(private$.handle))
     },
 
     #' @description Does an array allow duplicates?
@@ -95,21 +86,30 @@ SOMAArrayBase <- R6::R6Class(
     #' @return \code{TRUE} if the underlying TileDB array allows duplicates;
     #' otherwise \code{FALSE}.
     #'
-    allows_duplicates = \() c_allows_dups(self$uri, private$.context$handle),
+    allows_duplicates = function() {
+      private$.check_handle()
+      return(c_allows_dups(private$.handle))
+    },
 
     #' @description Is an array sparse?
     #'
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
     #' otherwise \code{FALSE}.
     #'
-    is_sparse = \() c_is_sparse(self$uri, private$.context$handle),
+    is_sparse = function() {
+      private$.check_handle()
+      return(c_is_sparse(private$.handle))
+    },
 
     #' @description Retrieve the array schema as an Arrow schema
     #' (lifecycle: maturing).
     #'
     #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object.
     #'
-    schema = \() arrow::as_schema(c_schema(self$uri, private$.context$handle)),
+    schema = function() {
+      private$.check_handle()
+      return(arrow::as_schema(c_schema(private$.handle)))
+    },
 
     #' @description Retrieve the array attributes.
     #'
@@ -133,13 +133,19 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    attributes = \() c_attributes(self$uri, private$.context$handle),
+    attributes = function() {
+      private$.check_handle()
+      return(c_attributes(private$.handle))
+    },
 
     #' @description Retrieve attribute names (lifecycle: maturing).
     #'
     #' @return A character vector with the array's attribute names.
     #'
-    attrnames = \() c_attrnames(self$uri, private$.context$handle),
+    attrnames = function() {
+      private$.check_handle()
+      return(c_attrnames(private$.handle))
+    },
 
     #' @description Retrieve the array dimensions (lifecycle: maturing)
     #'
@@ -164,26 +170,36 @@ SOMAArrayBase <- R6::R6Class(
     #'   }
     #' }
     #'
-    dimensions = \() c_domain(self$uri, private$.context$handle),
+    dimensions = function() {
+      private$.check_handle()
+      return(c_domain(private$.handle))
+    },
 
     #' @description Retrieve dimension names (lifecycle: maturing).
     #'
     #' @return A character vector with the array's dimension names.
     #'
-    dimnames = \() c_dimnames(self$uri, private$.context$handle),
+    dimnames = function() {
+      private$.check_handle()
+      return(c_dimnames(private$.handle))
+    },
 
     #' @description Retrieve the names of all columns, including dimensions and
     #' attributes (lifecycle: maturing).
     #'
     #' @return A character vector with the array's column names.
     #'
-    colnames = \() c(self$dimnames(), self$attrnames()),
+    colnames = \() {
+      c(self$dimnames(), self$attrnames())
+    },
 
     #' @description Retrieve names of index (dimension) columns (lifecycle: maturing)
     #'
     #' @return A character vector with the array index (dimension) names
     #'
-    index_column_names = \() self$dimnames(),
+    index_column_names = \() {
+      self$dimnames()
+    },
 
     #' @description Retrieve the shape, i.e. the capacity of each dimension
     #' Attempted reads and writes outside the \code{shape} will result in a
@@ -195,7 +211,10 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    shape = \() bit64::as.integer64(shape(self$uri, private$.context$handle)),
+    shape = function() {
+      private$.check_handle()
+      return(bit64::as.integer64(shape(private$.handle)))
+    },
 
     #' @description Retrieve the hard limit up to which the array may be resized
     #' using the \code{$resize()} method (lifecycle: maturing).
@@ -203,8 +222,9 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named vector of dimension length and of the same type as
     #' the dimension.
     #'
-    maxshape = \() {
-      bit64::as.integer64(maxshape(self$uri, private$.context$handle))
+    maxshape = function() {
+      private$.check_handle()
+      return(bit64::as.integer64(maxshape(private$.handle)))
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -219,10 +239,11 @@ SOMAArrayBase <- R6::R6Class(
     #' of maximum values.
     #'
     non_empty_domain = function(index1 = FALSE, max_only = FALSE) {
+      private$.check_handle()
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            non_empty_domain(self$uri, private$.context$handle)
+            non_empty_domain(private$.handle)
           )
         )
       )
@@ -240,7 +261,10 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return A scalar with the number of dimensions.
     #'
-    ndim = \() ndim(self$uri, private$.context$handle),
+    ndim = function() {
+      private$.check_handle()
+      return(ndim(private$.handle))
+    },
 
     #' @description Print-friendly representation of the object.
     #'
@@ -255,10 +279,29 @@ SOMAArrayBase <- R6::R6Class(
       return(invisible(self))
     }
   ),
+  active = list(
+    #' @field handle External pointer to the C++ interface
+    #'
+    handle = function(value) {
+      if (!missing(x = value)) {
+        stop("Field `handle` is read-only", call. = FALSE)
+      }
+      return(private$.handle)
+    }
+  ),
   private = list(
-    write_object_type_metadata = function() {
-      # private$.check_open_for_write()
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      stop("No SOMAArray C++ handle. This method must be overridden.")
+    },
 
+    .check_handle = function() {
+      if (is.null(private$.handle)) {
+        stop("Cannot access SOMAArray properties. The array is not open.")
+      }
+    },
+
+    write_object_type_metadata = function() {
       meta <- list()
       meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION

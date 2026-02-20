@@ -62,7 +62,9 @@ SOMAObject <- R6::R6Class(
 
       # Set the context
       if (is.null(context)) {
-        stop("Internal error: `context` must be provided to SOMAObject$initialize.")
+        stop(
+          "Internal error: `context` must be provided to SOMAObject$initialize."
+        )
       }
       private$.context <- context
       private$.tiledbsoma_ctx <- tiledbsoma_ctx
@@ -87,9 +89,6 @@ SOMAObject <- R6::R6Class(
         self$tiledb_timestamp %||% "now"
       ))
     },
-
-    # NOTE: The create/open/close are necessarily specific to arrays and
-    # collections; this is a bit of re-use at the ABC level
 
     #' @description Determine if the object is open for reading or writing
     #'
@@ -268,9 +267,9 @@ SOMAObject <- R6::R6Class(
         private$.read_only_error("tiledbsoma_ctx")
       }
       .deprecate(
-        what=sprintf("%s$tiledbsoma_ctx", class(self)[1L]),
-        when="2.3.0",
-        details=sprintf("Use `context` instead.")
+        what = sprintf("%s$tiledbsoma_ctx", class(self)[1L]),
+        when = "2.3.0",
+        details = sprintf("Use `context` instead.")
       )
       return(private$.tiledbsoma_ctx)
     },
@@ -321,6 +320,10 @@ SOMAObject <- R6::R6Class(
     }
   ),
   private = list(
+    # @field 'external pointer' to the C++ SOMADataFrame interface
+    #
+    .handle = NULL,
+
     # @field .platform_config ...
     #
     .platform_config = NULL,
@@ -374,6 +377,36 @@ SOMAObject <- R6::R6Class(
       stop("Field ", sQuote(field), " is read-only", call. = FALSE)
     },
 
+    # @description Check that this code is only called internall
+    #
+    .check_call_is_internal = function(internal_method, external_method) {
+      envs <- unique(vapply(
+        X = unique(sys.parents()),
+        FUN = function(n) environmentName(environment(sys.function(n))),
+        FUN.VALUE = character(1L)
+      ))
+      if (sys.parent()) {
+        if (
+          inherits(
+            environment(sys.function(sys.parent()))$self,
+            what = "SOMAObject"
+          )
+        ) {
+          envs <- union(envs, "tiledbsoma")
+        }
+      }
+      if (!"tiledbsoma" %in% envs) {
+        stop(
+          "Use of the '",
+          internal_method,
+          "' method is for internal use only; consider using a factory method such as '",
+          external_method,
+          "' instead",
+          call. = False,
+        )
+      }
+    },
+
     # @description Check that the object is open for reading
     #
     .check_open_for_read = function() {
@@ -420,6 +453,25 @@ SOMAObject <- R6::R6Class(
         )
       }
       return(invisible(NULL))
+    },
+
+    .log_open_timestamp = function(open_mode) {
+      if (is.null(self$tiledb_timestamp)) {
+        soma_debug(sprintf(
+          "[SOMAObject$open] Opening %s '%s' in %s mode",
+          self$class(),
+          self$uri,
+          open_mode
+        ))
+      } else {
+        soma_debug(sprintf(
+          "[SOMAObject$open] Opening %s '%s' in %s mode at (%s)",
+          self$class(),
+          self$uri,
+          open_mode,
+          self$tiledb_timestamp %||% "now"
+        ))
+      }
     },
 
     # @description Update the metadata cache

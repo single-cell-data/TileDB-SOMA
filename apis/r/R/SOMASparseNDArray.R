@@ -52,11 +52,9 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       sr <- mq_setup(
-        uri = self$uri,
-        private$.context$handle,
+        soma_array = private$.handle,
         dim_points = coords,
         result_order = result_order,
-        timestamprange = self$.tiledb_timestamp_range,
         loglevel = log_level
       )
 
@@ -213,7 +211,8 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return A scalar with the number of non-zero elements.
     #'
     nnz = function() {
-      nnz(self$uri, private$.context$handle)
+      private$.check_handle()
+      return(nnz(private$.handle))
     },
 
     #' @description Write a COO table to the array.
@@ -225,7 +224,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     .write_coordinates = function(values) {
-      private$.check_open_for_write()
+      private$.check_handle()
       dnames <- self$dimnames()
       attrn <- self$attrnames()
 
@@ -307,18 +306,25 @@ SOMASparseNDArray <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
       writeArrayFromArrow(
-        uri = self$uri,
+        soma_array = private$.handle,
         naap = naap,
         nasp = nasp,
-        ctxxp = private$.context$handle,
-        arraytype = "SOMASparseNDArray",
-        config = NULL,
-        tsvec = self$.tiledb_timestamp_range
+        arraytype = "SOMASparseNDArray"
       )
       return(invisible(self))
     }
   ),
   private = list(
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      private$.handle <- open_sparse_ndarray_handle(
+        self$uri,
+        open_mode,
+        private$.context$handle,
+        timestamp
+      )
+    },
+
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. If no shape is
     # provided the .Machine$integer.max - 1 is used.

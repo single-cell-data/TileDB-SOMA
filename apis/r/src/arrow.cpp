@@ -186,62 +186,23 @@ void createSchemaForNDArray(
 
 // [[Rcpp::export]]
 void writeArrayFromArrow(
-    const std::string& uri,
-    naxpArray naap,
-    naxpSchema nasp,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
-    const std::string arraytype = "",
-    Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
-    Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
-    // struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
-    // struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
-    //
-    //  or
-    //  auto ap = nanoarrow_array_from_xptr(naap);
-    //  auto sp = nanoarrow_schema_from_xptr(nasp);
-    //
-    //  or:
+    Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype = "") {
+    if (!soma_array) {
+        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    // Move unique arrow array from R to SOMA managed.
     nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
-    nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
-
-    // now move nanoarrow unique arrays (created from objects handed from R)
-    // into proper unique pointers to arrow schema and array
-    auto schema = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
-    sp.move(schema.get());
     auto array = tdbs::common::arrow::make_managed_unique<ArrowArray>();
     ap.move(array.get());
 
-    // shared pointer to SOMAContext from external pointer wrapper
-    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
-    // shared pointer to TileDB Context from SOMAContext -- not needed here
-    // std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
+    // Move unique arrow schema from R to SOMA managed.
+    nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
+    auto schema = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
+    sp.move(schema.get());
 
-    // // if we hae a coonfig, use it
-    // std::shared_ptr<tdbs::SOMAContext> somactx;
-    // if (config.isNotNull()) {
-    //     std::map<std::string, std::string> smap;
-    //     auto config_vec = config.as();
-    //     auto config_names =
-    //     Rcpp::as<Rcpp::CharacterVector>(config_vec.names()); for (auto &name
-    //     : config_names) {
-    //         std::string param = Rcpp::as<std::string>(name);
-    //         std::string value = Rcpp::as<std::string>(config_vec[param]);
-    //         smap[param] = value;
-    //     }
-    //     somactx = std::make_shared<tdbs::SOMAContext>(smap);
-    // } else {
-    //     somactx = std::make_shared<tdbs::SOMAContext>();
-    // }
-
-    // optional timestamp range
-    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
-
-    std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(OpenMode::soma_write, uri, somactx, tsrng);
-
-    auto mq = arrup->create_managed_query("unnamed");
+    auto mq = soma_array->create_managed_query("unnamed");
     mq.set_layout(
         arraytype == "SOMADenseNDArray" ? tdbs::common::ResultOrder::colmajor : tdbs::common::ResultOrder::automatic);
     mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
-    mq.close();
 }
