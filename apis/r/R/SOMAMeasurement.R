@@ -69,5 +69,16 @@ SOMAMeasurement <- R6::R6Class(
     varp = function(value) {
       private$get_or_set_soma_field(value, "varp", "SOMACollection")
     }
+  ),
+  private = list(
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      private$.handle <- open_measurement_handle(
+        self$uri,
+        open_mode,
+        private$.context$handle,
+        timestamp
+      )
+    }
   )
 )
