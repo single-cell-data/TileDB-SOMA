@@ -67,7 +67,10 @@ SOMANDArrayBase <- R6::R6Class(
       }
       createSchemaForNDArray(
         uri = self$uri,
-        format = as_nanoarrow_schema(arrow::schema(arrow::field("soma_data", type)))$children$soma_data$format,
+        format = as_nanoarrow_schema(arrow::schema(arrow::field(
+          "soma_data",
+          type
+        )))$children$soma_data$format,
         shape = as.integer64(shape),
         soma_type = if (sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
@@ -109,7 +112,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' shape feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_shape = function() {
-      private$.check_handle()
+      private$.check_open()
       has_current_domain(private$.handle)
     },
 
@@ -126,7 +129,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' \code{NULL}.
     #'
     resize = function(new_shape, check_only = FALSE) {
-      private$.check_handle()
+      private$.check_open_for_write()
       stopifnot(
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(
           new_shape,

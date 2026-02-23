@@ -211,7 +211,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return A scalar with the number of non-zero elements.
     #'
     nnz = function() {
-      private$.check_handle()
+      private$.check_open()
       return(nnz(private$.handle))
     },
 
@@ -224,7 +224,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     .write_coordinates = function(values) {
-      private$.check_handle()
+      private$.check_open_for_write()
       dnames <- self$dimnames()
       attrn <- self$attrnames()
 

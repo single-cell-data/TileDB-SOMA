@@ -32,7 +32,6 @@ SOMAArrayBase <- R6::R6Class(
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
       private$.open_handle(open_mode, self$tiledb_timestamp)
-      private$.check_handle()
       private$.metadata_cache <- soma_object_get_metadata(private$.handle)
       return(self)
     },
@@ -87,7 +86,7 @@ SOMAArrayBase <- R6::R6Class(
     #' otherwise \code{FALSE}.
     #'
     allows_duplicates = function() {
-      private$.check_handle()
+      private$.check_open()
       return(c_allows_dups(private$.handle))
     },
 
@@ -97,7 +96,7 @@ SOMAArrayBase <- R6::R6Class(
     #' otherwise \code{FALSE}.
     #'
     is_sparse = function() {
-      private$.check_handle()
+      private$.check_open()
       return(c_is_sparse(private$.handle))
     },
 
@@ -107,7 +106,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object.
     #'
     schema = function() {
-      private$.check_handle()
+      private$.check_open()
       return(arrow::as_schema(c_schema(private$.handle)))
     },
 
@@ -134,7 +133,7 @@ SOMAArrayBase <- R6::R6Class(
     #' }
     #'
     attributes = function() {
-      private$.check_handle()
+      private$.check_open()
       return(c_attributes(private$.handle))
     },
 
@@ -143,7 +142,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A character vector with the array's attribute names.
     #'
     attrnames = function() {
-      private$.check_handle()
+      private$.check_open()
       return(c_attrnames(private$.handle))
     },
 
@@ -171,7 +170,7 @@ SOMAArrayBase <- R6::R6Class(
     #' }
     #'
     dimensions = function() {
-      private$.check_handle()
+      private$.check_open()
       return(c_domain(private$.handle))
     },
 
@@ -180,7 +179,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A character vector with the array's dimension names.
     #'
     dimnames = function() {
-      private$.check_handle()
+      private$.check_open()
       return(c_dimnames(private$.handle))
     },
 
@@ -212,7 +211,7 @@ SOMAArrayBase <- R6::R6Class(
     #' the dimension.
     #'
     shape = function() {
-      private$.check_handle()
+      private$.check_open()
       return(bit64::as.integer64(shape(private$.handle)))
     },
 
@@ -223,7 +222,7 @@ SOMAArrayBase <- R6::R6Class(
     #' the dimension.
     #'
     maxshape = function() {
-      private$.check_handle()
+      private$.check_open()
       return(bit64::as.integer64(maxshape(private$.handle)))
     },
 
@@ -239,7 +238,7 @@ SOMAArrayBase <- R6::R6Class(
     #' of maximum values.
     #'
     non_empty_domain = function(index1 = FALSE, max_only = FALSE) {
-      private$.check_handle()
+      private$.check_open()
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
@@ -262,7 +261,7 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A scalar with the number of dimensions.
     #'
     ndim = function() {
-      private$.check_handle()
+      private$.check_open()
       return(ndim(private$.handle))
     },
 
@@ -295,10 +294,87 @@ SOMAArrayBase <- R6::R6Class(
       stop("No SOMAArray C++ handle. This method must be overridden.")
     },
 
-    .check_handle = function() {
-      if (is.null(private$.handle)) {
-        stop("Cannot access SOMAArray properties. The array is not open.")
+    # @description Check that the object is open for reading
+    #
+    .check_open_for_read = function() {
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for reading (closed)",
+          call. = FALSE
+        )
       }
+      if (self$mode() != "READ") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for reading. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
+      }
+      return(invisible(NULL))
+    },
+
+    # @description Check that the object is open for writing
+    #
+    .check_open_for_write = function() {
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for writing (closed)",
+          call. = FALSE
+        )
+      }
+      if (self$mode() != "WRITE") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for writing. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
+      }
+      return(invisible(NULL))
+    },
+
+    # @desciption Check that the object is open for delete
+    .check_open_for_delete = function() {
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for deleting (closed)",
+          call. = FALSE
+        )
+      }
+      if (self$mode() != "DELETE") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for deleting. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
+      }
+      return(invisible(NULL))
+    },
+
+    # @description Check that the object is open
+    #
+    .check_open = function() {
+      if (!self$is_open()) {
+        stop(self$class(), " at '", self$uri, "' is closed", call. = FALSE)
+      }
+      return(invisible(NULL))
     },
 
     write_object_type_metadata = function() {

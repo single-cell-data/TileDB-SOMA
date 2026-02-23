@@ -47,7 +47,7 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$.check_handle()
+      private$.check_open_for_read()
       stopifnot(
         "'log_level' must be character" = is.character(log_level),
         "'result_order' must be character" = is.character(result_order)
@@ -139,7 +139,7 @@ SOMADenseNDArray <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     write = function(values, coords = NULL) {
-      private$.check_handle()
+      private$.check_open_for_write()
       soma_debug("[SOMADenseNDArray::write] entered")
       stopifnot("'values' must be a matrix" = is.matrix(values))
 

@@ -119,6 +119,8 @@ test_that("SOMASparseNDArray write COO assertions", {
     shape = shape
   )
   expect_invisible(ndarray$.write_coordinates(udf))
+
+  ndarray_column_names <- c(ndarray$dimnames(), ndarray$attrnames())
   ndarray$close()
 
   # Test argument assertions
@@ -134,7 +136,7 @@ test_that("SOMASparseNDArray write COO assertions", {
   )
 
   sdf <- df
-  while (identical(names(sdf), c(ndarray$dimnames(), ndarray$attrnames()))) {
+  while (identical(names(sdf), ndarray_column_names)) {
     sdf <- sdf[, sample(names(sdf)), drop = FALSE]
   }
   expect_error(

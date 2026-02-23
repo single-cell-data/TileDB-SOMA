@@ -158,7 +158,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     write = function(values) {
-      private$.check_handle()
+      private$.check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -221,7 +221,7 @@ SOMADataFrame <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$.check_handle()
+      private$.check_open_for_read()
 
       result_order <- match_query_layout(result_order)
 
@@ -517,7 +517,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Named list of minimum/maximum values.
     #'
     domain = function() {
-      private$.check_handle()
+      private$.check_open()
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(domain(
         private$.handle
       )))))
@@ -530,7 +530,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Named list of minimum/maximum values.
     #'
     maxdomain = function() {
-      private$.check_handle()
+      private$.check_open()
       return(as.list(arrow::as_record_batch(arrow::as_arrow_table(maxdomain(
         private$.handle
       )))))
@@ -544,7 +544,7 @@ SOMADataFrame <- R6::R6Class(
     #' domain feature; otherwise, returns \code{FALSE}.
     #'
     tiledbsoma_has_upgraded_domain = function() {
-      private$.check_handle()
+      private$.check_open()
       has_current_domain(private$.handle)
     },
 
@@ -563,7 +563,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Invisibly returns \code{NULL}
     #'
     tiledbsoma_resize_soma_joinid_shape = function(new_shape) {
-      private$.check_handle()
+      private$.check_open_for_write()
       stopifnot(
         "'new_shape' must be an integer" = rlang::is_integerish(
           new_shape,
@@ -593,7 +593,7 @@ SOMADataFrame <- R6::R6Class(
     #' \code{NULL}
     #'
     tiledbsoma_upgrade_domain = function(new_domain, check_only = FALSE) {
-      private$.check_handle()
+      private$.check_open_for_write()
 
       pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
         new_domain,
@@ -634,7 +634,7 @@ SOMADataFrame <- R6::R6Class(
     #' \code{NULL}
     #'
     change_domain = function(new_domain, check_only = FALSE) {
-      private$.check_handle()
+      private$.check_open_for_write()
 
       pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
         new_domain,
