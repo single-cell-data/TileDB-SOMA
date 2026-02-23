@@ -39,7 +39,7 @@ else()
 endif()
 
 if (NOT SPDLOG_FOUND)
-  if(SPDLOG_LINK_SHARED) 
+  if(SPDLOG_LINK_SHARED)
     message(FATAL_ERROR "Unable to find installed spdlog")
   endif()
 
@@ -63,8 +63,8 @@ if (NOT SPDLOG_FOUND)
       PREFIX "externals"
       # Set download name to avoid collisions with only the version number in the filename
       DOWNLOAD_NAME ep_spdlog.zip
-      URL "https://github.com/gabime/spdlog/archive/v1.15.1.zip"
-      URL_HASH SHA1=45ea33890b0b20c00aec2d5605065b9fa68e4df6
+      URL "https://github.com/gabime/spdlog/archive/refs/tags/v1.17.0.zip"
+      URL_HASH SHA1=814447d2656898001f447e26ed121642c308750f
       CMAKE_ARGS
         -DCMAKE_PREFIX_PATH=${EP_INSTALL_PREFIX}
         -DCMAKE_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
