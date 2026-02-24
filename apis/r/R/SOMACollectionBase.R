@@ -318,7 +318,6 @@ SOMACollectionBase <- R6::R6Class(
       stopifnot("Metadata must be a named list" = is_named_list(metadata))
 
       private$.check_open_for_write()
-      private$.update_metadata_cache()
 
       soma_debug(sprintf("Writing metadata to %s '%s'", self$class(), self$uri))
       for (i in seq_along(metadata)) {
@@ -616,33 +615,6 @@ SOMACollectionBase <- R6::R6Class(
         # v2: register with TileDB group
         self$set(object, name)
       }
-      return(invisible(self))
-    },
-
-    # @description Update the metadata cache
-    #
-    # @param force \code{TRUE} or \code{FALSE}
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .update_metadata_cache = function(force = FALSE) {
-      stopifnot(isTRUE(force) || isFALSE(force))
-      private$.check_open()
-
-      # Skip if we already have a member cache and don't want to update
-      if (length(private$.metadata_cache) && !force) {
-        return(invisible(NULL))
-      }
-
-      soma_debug(sprintf(
-        "Updating metadata cache for %s '%s'",
-        self$class(),
-        self$uri
-      ))
-
-      private$.metadata_cache <- soma_group_get_metadata(private$.handle) %||%
-        list()
-
       return(invisible(self))
     },
 
