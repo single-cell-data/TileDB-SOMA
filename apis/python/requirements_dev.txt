@@ -9,3 +9,4 @@ types-setuptools
 more-itertools
 hypothesis
 deepdiff
+somacore@git+https://github.com/single-cell-data/SOMA.git@777e6dc
