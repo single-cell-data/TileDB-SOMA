@@ -25,10 +25,6 @@ soma_group_get_members <- function(group) {
     .Call(`_tiledbsoma_soma_group_get_members`, group)
 }
 
-soma_group_get_metadata <- function(group) {
-    .Call(`_tiledbsoma_soma_group_get_metadata`, group)
-}
-
 soma_group_set <- function(group, uri, uri_type_int, name, soma_type) {
     invisible(.Call(`_tiledbsoma_soma_group_set`, group, uri, uri_type_int, name, soma_type))
 }

@@ -98,17 +98,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// soma_group_get_metadata
-Rcpp::List soma_group_get_metadata(Rcpp::XPtr<tiledbsoma::SOMAGroup> group);
-RcppExport SEXP _tiledbsoma_soma_group_get_metadata(SEXP groupSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
-    rcpp_result_gen = Rcpp::wrap(soma_group_get_metadata(group));
-    return rcpp_result_gen;
-END_RCPP
-}
 // soma_group_set
 void soma_group_set(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& uri, int uri_type_int, const std::string& name, const std::string& soma_type);
 RcppExport SEXP _tiledbsoma_soma_group_set(SEXP groupSEXP, SEXP uriSEXP, SEXP uri_type_intSEXP, SEXP nameSEXP, SEXP soma_typeSEXP) {
@@ -1091,7 +1080,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 4},
     {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
     {"_tiledbsoma_soma_group_get_members", (DL_FUNC) &_tiledbsoma_soma_group_get_members, 1},
-    {"_tiledbsoma_soma_group_get_metadata", (DL_FUNC) &_tiledbsoma_soma_group_get_metadata, 1},
     {"_tiledbsoma_soma_group_set", (DL_FUNC) &_tiledbsoma_soma_group_set, 5},
     {"_tiledbsoma_soma_group_remove_member", (DL_FUNC) &_tiledbsoma_soma_group_remove_member, 2},
     {"_tiledbsoma_soma_group_put_metadata", (DL_FUNC) &_tiledbsoma_soma_group_put_metadata, 3},
