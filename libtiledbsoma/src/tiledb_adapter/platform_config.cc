@@ -14,11 +14,18 @@
 #include "platform_config.h"
 
 #include "../utils/common.h"
+#include "../utils/util.h"
 #include "common/arrow/utils.h"
 #include "common/logging/impl/logger.h"
 
+#include <algorithm>
 #include <limits>
+#include <ranges>
 #include <tiledb/tiledb_experimental>
+#include <unordered_map>
+
+#include "../soma/soma_attribute.h"
+#include "../soma/soma_dimension.h"
 
 using json = nlohmann::json;
 
@@ -412,6 +419,259 @@ ArraySchema create_nd_array_schema(
 
     for (size_t i = 0; i < shape.size(); ++i) {
         rect.set_range<int64_t>(i, 0, shape[i] - 1);
+    }
+
+    current_domain.set_ndrectangle(rect);
+    tiledb::ArraySchemaExperimental::set_current_domain(*ctx, schema, current_domain);
+    schema.check();
+
+    return schema;
+}
+
+ArraySchema create_dataframe_schema(
+    std::string_view soma_type,
+    ArrowSchema* arrow_schema,
+    std::span<const std::string> index_column_names,
+    std::span<const std::any> index_column_domains,
+    std::shared_ptr<tiledb::Context> ctx,
+    PlatformConfig platform_config,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    tiledb::ArraySchema schema = utils::create_base_tiledb_schema(ctx, platform_config, true, timestamp);
+    tiledb::Domain domain(*ctx);
+
+    if (index_column_names.empty()) {
+        throw std::range_error("[create_dataframe_schema] At least one non-index column must be provided");
+    }
+
+    if (index_column_names.size() != index_column_domains.size()) {
+        throw std::range_error(
+            "[create_dataframe_schema] Size mismatch between list of index column names and domains");
+    }
+
+    std::unordered_map<std::string, std::any> index_columns;
+    for (size_t i = 0; i < index_column_names.size(); ++i) {
+        if (index_columns.contains(index_column_names[i])) {
+            throw std::range_error(
+                fmt::format("[create_dataframe_schema] Duplicate index column found '{}'", index_column_names[i]));
+        }
+
+        index_columns.emplace(index_column_names[i], index_column_domains[i]);
+    }
+
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
+
+    for (int64_t i = 0; i < arrow_schema->n_children; ++i) {
+        std::string_view name(arrow_schema->children[i]->name);
+        std::string_view format(arrow_schema->children[i]->format);
+
+        // Verify no illegal use of soma_ prefix
+        if (name.starts_with("soma_")) {
+            if (name != SOMA_JOINID) {
+                throw std::range_error(
+                    fmt::format(
+                        "[create_dataframe_schema] DataFrame schema may not contain fields with name prefix 'soma_': "
+                        "got '{}'",
+                        name));
+            }
+
+            if (name == SOMA_JOINID) {
+                if (common::arrow::to_tiledb_format(format) != TILEDB_INT64) {
+                    throw std::range_error(
+                        fmt::format(
+                            "[create_dataframe_schema] '{}' field must be of type Arrow int64 but is {}",
+                            SOMA_JOINID,
+                            common::arrow::to_arrow_readable(format)));
+                }
+            }
+        }
+
+        if (index_columns.contains(name.data())) {
+            if (arrow_schema->dictionary != nullptr) {
+                std::range_error(
+                    fmt::format(
+                        "[create_dataframe_schema] Cannot set index column '{}' to an enumeration. Index columns do "
+                        "not "
+                        "support enumerations.",
+                        name));
+            }
+
+            if (name == SOMA_JOINID) {
+                int64_t extent = utils::get_dim_extent<int64_t>(
+                    name.data(), platform_config, 2048, std::numeric_limits<int64_t>::max());
+
+                tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
+                    *ctx, name.data(), {{0, std::numeric_limits<int64_t>::max() - extent - 1}}, extent);
+                dimension.set_filter_list(
+                    utils::create_dim_filter_list(name.data(), platform_config, soma_type.data(), ctx));
+
+                columns.push_back(std::make_shared<SOMADimension>(dimension));
+            } else {
+                columns.push_back(
+                    SOMADimension::create(ctx, arrow_schema->children[i], "SOMADataFrame", platform_config));
+            }
+        } else {
+            columns.push_back(SOMAAttribute::create(ctx, arrow_schema->children[i], platform_config));
+        }
+    }
+
+    // Inject missing required columns
+    if (std::none_of(
+            columns.cbegin(), columns.cend(), [](const auto& column) { return column->name() == SOMA_JOINID; })) {
+        if (index_columns.contains(SOMA_JOINID.data())) {
+            int64_t extent = utils::get_dim_extent<int64_t>(
+                SOMA_JOINID.data(), platform_config, 2048, std::numeric_limits<int64_t>::max());
+            tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
+                *ctx, SOMA_JOINID.data(), {{0, std::numeric_limits<int64_t>::max() - 1 - extent}}, extent);
+            dimension.set_filter_list(
+                utils::create_dim_filter_list(SOMA_JOINID.data(), platform_config, "SOMADataFrame", ctx));
+            columns.push_back(std::make_shared<SOMADimension>(dimension));
+        } else {
+            columns.push_back(
+                std::make_shared<SOMAAttribute>(tiledb::Attribute::create<int64_t>(
+                    *ctx,
+                    SOMA_JOINID.data(),
+                    utils::create_attr_filter_list(SOMA_JOINID.data(), platform_config, ctx))));
+        }
+    }
+
+    if (static_cast<size_t>(std::count_if(columns.cbegin(), columns.cend(), [](const auto& col) {
+            return col->isIndexColumn();
+        })) != index_columns.size()) {
+        throw std::range_error("[create_dataframe_schema] Some index columns where not found in dataframe schema");
+    }
+
+    // Unit tests expect dimension order should match the index column schema
+    // and NOT the Arrow schema
+    // We generate the additional schema metadata here to ensure that the
+    // serialized column order matches the expected schema order
+    for (const auto& column_name : index_column_names) {
+        const auto column = util::find_column_by_name(columns, column_name);
+
+        if (column->tiledb_dimensions().has_value()) {
+            // Intermediate variable required to avoid lifetime issues
+            auto dimensions = column->tiledb_dimensions().value();
+            for (const auto& dimension : dimensions) {
+                domain.add_dimension(dimension);
+            }
+        }
+
+        if (column->tiledb_enumerations().has_value()) {
+            auto enumerations = column->tiledb_enumerations().value();
+            for (const auto& enumeration : enumerations) {
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enumeration);
+            }
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                schema.add_attribute(attribute);
+            }
+        }
+    }
+
+    for (const auto& column : columns | std::views::filter([](const auto& col) { return !col->isIndexColumn(); })) {
+        if (column->tiledb_enumerations().has_value()) {
+            auto enumerations = column->tiledb_enumerations().value();
+            for (const auto& enumeration : enumerations) {
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enumeration);
+            }
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                schema.add_attribute(attribute);
+            }
+        }
+    }
+
+    schema.set_domain(domain);
+
+    tiledb::CurrentDomain current_domain(*ctx);
+    tiledb::NDRectangle rect(*ctx, domain);
+
+    auto decode_domain = [&index_columns]<typename T>(std::shared_ptr<SOMAColumn> column) -> std::any {
+        if constexpr (std::is_same_v<T, std::string>) {
+            auto current_domain = std::any_cast<std::optional<std::pair<T, T>>>(index_columns[column->name()])
+                                      .value_or(std::make_pair<T, T>("", ""));
+
+            if (current_domain.first != "" || current_domain.second != "") {
+                throw std::range_error("TileDB str and bytes index-column types do not support domain specification");
+            }
+
+            return std::make_any<std::array<std::string, 2>>(std::array<std::string, 2>{{"", ""}});
+        } else {
+            auto current_domain = std::any_cast<std::optional<std::pair<T, T>>>(index_columns[column->name()])
+                                      .value_or(std::make_pair<T, T>(0, 0));
+
+            if (column->name() == SOMA_JOINID) {
+                if (current_domain.first < 0) {
+                    throw std::range_error(
+                        fmt::format(
+                            "[create_dataframe_schema] '{}' indices cannot be negative; got lower bound {}",
+                            SOMA_JOINID,
+                            current_domain.first));
+                } else if (current_domain.second < 0) {
+                    throw std::range_error(
+                        fmt::format(
+                            "[create_dataframe_schema] '{}' indices cannot be negative; got bound bound {}",
+                            SOMA_JOINID,
+                            current_domain.second));
+                }
+            }
+
+            return std::make_any<std::array<T, 2>>(std::array<T, 2>{{current_domain.first, current_domain.second}});
+        }
+    };
+
+    for (const auto& column : columns | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
+        switch (column->domain_type().value()) {
+            case TILEDB_UINT8:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint8_t>(column)}});
+                break;
+            case TILEDB_UINT16:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint16_t>(column)}});
+                break;
+            case TILEDB_UINT32:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint32_t>(column)}});
+                break;
+            case TILEDB_UINT64:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint64_t>(column)}});
+                break;
+            case TILEDB_INT8:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int8_t>(column)}});
+                break;
+            case TILEDB_INT16:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int16_t>(column)}});
+                break;
+            case TILEDB_INT32:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int32_t>(column)}});
+                break;
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_INT64:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int64_t>(column)}});
+                break;
+            case TILEDB_FLOAT32:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<float_t>(column)}});
+                break;
+            case TILEDB_FLOAT64:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<double_t>(column)}});
+                break;
+            case TILEDB_CHAR:
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<std::string>(column)}});
+                break;
+            default:
+                throw std::runtime_error(
+                    fmt::format(
+                        "[create_dataframe_schema] Unsupported dimension type {} to set current domain",
+                        tiledb::impl::type_to_str(column->domain_type().value())));
+        }
     }
 
     current_domain.set_ndrectangle(rect);

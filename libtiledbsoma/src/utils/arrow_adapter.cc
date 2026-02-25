@@ -378,7 +378,7 @@ std::tuple<ArraySchema, nlohmann::json> ArrowAdapter::tiledb_schema_from_arrow_s
         }
 
         if (isattr) {
-            columns.push_back(SOMAAttribute::create(ctx, child, type_metadata, platform_config));
+            columns.push_back(SOMAAttribute::create(ctx, child, platform_config));
             LOG_DEBUG(fmt::format("[ArrowAdapter] adding attribute {}", child->name));
         }
     }

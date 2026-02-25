@@ -14,8 +14,10 @@
 #ifndef SOMA_DATAFRAME
 #define SOMA_DATAFRAME
 
+#include <any>
 #include <filesystem>
 #include <optional>
+#include <span>
 
 #include "../common/soma_column_selection.h"
 #include "../tiledb_adapter/platform_config.h"
@@ -49,6 +51,26 @@ class SOMADataFrame : public SOMAArray {
         std::string_view uri,
         const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
         const common::arrow::ArrowTable& index_columns,
+        std::shared_ptr<SOMAContext> ctx,
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
+     * @brief Create a SOMADataFrame object at the given URI.
+     *
+     * @param uri URI to create the SOMADataFrame
+     * @param schema Arrow schema
+     * @param index_columns The index column names with associated domains
+     * and tile extents per dimension
+     * @param ctx SOMAContext
+     * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
+     */
+    static void create(
+        std::string_view uri,
+        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+        std::span<const std::string> index_column_names,
+        std::span<const std::any> index_column_domains,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
