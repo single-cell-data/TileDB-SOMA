@@ -14,7 +14,7 @@
 #include <unordered_map>
 
 namespace tiledbsoma::common::arrow {
-    std::unordered_map<std::string, std::string> metadata_string_to_map(const char* metadata_str);
+std::unordered_map<std::string, std::string> metadata_string_to_map(const char* metadata_str);
 }
 
 #endif
