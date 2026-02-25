@@ -402,7 +402,7 @@ SOMAObject <- R6::R6Class(
           "' method is for internal use only; consider using a factory method such as '",
           external_method,
           "' instead",
-          call. = False,
+          call. = FALSE
         )
       }
     },

@@ -58,7 +58,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     is_open = function() {
       if (is.null(private$.handle)) {
-        return(TRUE)
+        return(FALSE)
       }
       return(soma_object_is_open(private$.handle))
     },

@@ -181,7 +181,7 @@ SOMANDArrayBase <- R6::R6Class(
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
       reason_string <- tiledbsoma_upgrade_shape(
-        ndarray = self$.handle,
+        ndarray = private$.handle,
         new_shape = shape,
         function_name_for_messages = .name_of_function(),
         check_only = check_only

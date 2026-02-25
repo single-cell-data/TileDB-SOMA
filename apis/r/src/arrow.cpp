@@ -188,7 +188,7 @@ void createSchemaForNDArray(
 void writeArrayFromArrow(
     Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype = "") {
     if (!soma_array) {
-        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+        Rcpp::stop("Internal error: SOMAObject handle is not initialized.");
     }
     // Move unique arrow array from R to SOMA managed.
     nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
