@@ -48,6 +48,12 @@ class SOMADimension : public SOMAColumn {
         std::string_view type_metadata,
         const PlatformConfig& platform_config);
 
+    static std::shared_ptr<SOMADimension> create(
+        std::shared_ptr<tiledb::Context> ctx,
+        ArrowSchema* schema,
+        const std::string& soma_type,
+        const PlatformConfig& platform_config);
+
     template <typename T>
     static std::shared_ptr<SOMADimension> create(
         std::shared_ptr<tiledb::Context> ctx,
