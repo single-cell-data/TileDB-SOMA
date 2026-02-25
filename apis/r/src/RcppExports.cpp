@@ -29,6 +29,22 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// createSchemaForDataFrame
+void createSchemaForDataFrame(const std::string& uri, naxpSchema nasp, Rcpp::CharacterVector index_column_names, Rcpp::List index_column_domains, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
+RcppExport SEXP _tiledbsoma_createSchemaForDataFrame(SEXP uriSEXP, SEXP naspSEXP, SEXP index_column_namesSEXP, SEXP index_column_domainsSEXP, SEXP pclstSEXP, SEXP ctxxpSEXP, SEXP tsvecSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< naxpSchema >::type nasp(naspSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type index_column_names(index_column_namesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type index_column_domains(index_column_domainsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tsvec(tsvecSEXP);
+    createSchemaForDataFrame(uri, nasp, index_column_names, index_column_domains, pclst, ctxxp, tsvec);
+    return R_NilValue;
+END_RCPP
+}
 // createSchemaForNDArray
 void createSchemaForNDArray(const std::string& uri, const std::string& format, Rcpp::NumericVector shape, const std::string& soma_type, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
 RcppExport SEXP _tiledbsoma_createSchemaForNDArray(SEXP uriSEXP, SEXP formatSEXP, SEXP shapeSEXP, SEXP soma_typeSEXP, SEXP pclstSEXP, SEXP ctxxpSEXP, SEXP tsvecSEXP) {
@@ -998,6 +1014,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 9},
+    {"_tiledbsoma_createSchemaForDataFrame", (DL_FUNC) &_tiledbsoma_createSchemaForDataFrame, 7},
     {"_tiledbsoma_createSchemaForNDArray", (DL_FUNC) &_tiledbsoma_createSchemaForNDArray, 7},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 7},
     {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
