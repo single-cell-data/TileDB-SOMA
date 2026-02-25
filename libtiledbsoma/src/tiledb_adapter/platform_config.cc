@@ -465,7 +465,7 @@ ArraySchema create_dataframe_schema(
         std::string_view format(arrow_schema->children[i]->format);
 
         // Verify no illegal use of soma_ prefix
-        if (name.starts_with("soma_")) {
+        if (!platform_config.override_naming_restriction && name.starts_with("soma_")) {
             if (name != SOMA_JOINID) {
                 throw std::range_error(
                     fmt::format(
@@ -496,15 +496,7 @@ ArraySchema create_dataframe_schema(
             }
 
             if (name == SOMA_JOINID) {
-                int64_t extent = utils::get_dim_extent<int64_t>(
-                    name.data(), platform_config, 2048, std::numeric_limits<int64_t>::max());
-
-                tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
-                    *ctx, name.data(), {{0, std::numeric_limits<int64_t>::max() - extent - 1}}, extent);
-                dimension.set_filter_list(
-                    utils::create_dim_filter_list(name.data(), platform_config, soma_type.data(), ctx));
-
-                columns.push_back(std::make_shared<SOMADimension>(dimension));
+                columns.push_back(SOMADimension::create_soma_joinid(ctx, "SOMADataFrame", platform_config));
             } else {
                 columns.push_back(
                     SOMADimension::create(ctx, arrow_schema->children[i], "SOMADataFrame", platform_config));
@@ -518,13 +510,7 @@ ArraySchema create_dataframe_schema(
     if (std::none_of(
             columns.cbegin(), columns.cend(), [](const auto& column) { return column->name() == SOMA_JOINID; })) {
         if (index_columns.contains(SOMA_JOINID.data())) {
-            int64_t extent = utils::get_dim_extent<int64_t>(
-                SOMA_JOINID.data(), platform_config, 2048, std::numeric_limits<int64_t>::max());
-            tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
-                *ctx, SOMA_JOINID.data(), {{0, std::numeric_limits<int64_t>::max() - 1 - extent}}, extent);
-            dimension.set_filter_list(
-                utils::create_dim_filter_list(SOMA_JOINID.data(), platform_config, "SOMADataFrame", ctx));
-            columns.push_back(std::make_shared<SOMADimension>(dimension));
+            columns.push_back(SOMADimension::create_soma_joinid(ctx, "SOMADataFrame", platform_config));
         } else {
             columns.push_back(
                 std::make_shared<SOMAAttribute>(tiledb::Attribute::create<int64_t>(

@@ -154,6 +154,11 @@ struct PlatformConfig {
     /* Set whether the array should be consolidated and vacuumed after writing
      */
     bool consolidate_and_vacuum = false;
+
+    /**
+     * Set whether to allow arbitrary `soma_` prefixed columns
+     */
+    bool override_naming_restriction = false;
 };
 
 /** TileDB specific configuration options that can be read back from a single
