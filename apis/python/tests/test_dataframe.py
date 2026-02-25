@@ -2370,14 +2370,16 @@ def test_read_indexing(tmp_path, io):
                 next(sdf.read(**read_kwargs))
         else:
             table = next(sdf.read(**read_kwargs))
-            assert table["A"].to_pylist() == io["A"]
+            # Tiling can affect the order of the results thus we sort the results
+            assert sorted(table["A"].to_pylist()) == io["A"]
 
         if throws_ctx:
             with throws_ctx(throws):
                 next(sdf.read(**read_kwargs)).to_pandas()
         else:
             table = next(sdf.read(**read_kwargs)).to_pandas()
-            assert table["A"].to_list() == io["A"]
+            # Tiling can affect the order of the results thus we sort the results
+            assert sorted(table["A"].to_list()) == io["A"]
 
 
 @pytest.mark.parametrize("cfg", [{"soma.read.use_memory_pool": "false"}, {"soma.read.use_memory_pool": "true"}])
