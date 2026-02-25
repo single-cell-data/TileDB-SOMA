@@ -9,8 +9,8 @@ createSchemaForNDArray <- function(uri, format, shape, soma_type, pclst, ctxxp, 
     invisible(.Call(`_tiledbsoma_createSchemaForNDArray`, uri, format, shape, soma_type, pclst, ctxxp, tsvec))
 }
 
-writeArrayFromArrow <- function(uri, naap, nasp, ctxxp, arraytype = "", config = NULL, tsvec = NULL) {
-    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, ctxxp, arraytype, config, tsvec))
+writeArrayFromArrow <- function(soma_array, naap, nasp, arraytype = "") {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, soma_array, naap, nasp, arraytype))
 }
 
 c_group_create <- function(uri, type, ctxxp, timestamp = NULL) {
@@ -101,8 +101,12 @@ reindex_lookup <- function(idx, kvec) {
     .Call(`_tiledbsoma_reindex_lookup`, idx, kvec)
 }
 
+soma_array_read <- function(soma_array, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", timestamprange = NULL) {
+    .Call(`_tiledbsoma_soma_array_read`, soma_array, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
+}
+
 soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", timestamprange = NULL) {
-    .Call(`_tiledbsoma_soma_array_reader`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
+    .Call(`_tiledbsoma_soma_array_reader_impl`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
 }
 
 #' Set TileDB-SOMA Logging Level
@@ -168,12 +172,8 @@ soma_warn <- function(msg) {
     invisible(.Call(`_tiledbsoma_soma_warn`, msg))
 }
 
-get_column_types <- function(uri, colnames) {
-    .Call(`_tiledbsoma_get_column_types`, uri, colnames)
-}
-
-nnz <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_nnz`, uri, ctxxp)
+nnz <- function(array) {
+    .Call(`_tiledbsoma_nnz`, array)
 }
 
 check_arrow_schema_tag <- function(xp) {
@@ -184,24 +184,24 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
-shape <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_shape`, uri, ctxxp)
+shape <- function(array) {
+    .Call(`_tiledbsoma_shape`, array)
 }
 
-maxshape <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_maxshape`, uri, ctxxp)
+maxshape <- function(array) {
+    .Call(`_tiledbsoma_maxshape`, array)
 }
 
-non_empty_domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_non_empty_domain`, uri, ctxxp)
+non_empty_domain <- function(array) {
+    .Call(`_tiledbsoma_non_empty_domain`, array)
 }
 
-domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_domain`, uri, ctxxp)
+domain <- function(dataframe) {
+    .Call(`_tiledbsoma_domain`, dataframe)
 }
 
-maxdomain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_maxdomain`, uri, ctxxp)
+maxdomain <- function(dataframe) {
+    .Call(`_tiledbsoma_maxdomain`, dataframe)
 }
 
 maybe_soma_joinid_shape <- function(uri, ctxxp) {
@@ -212,32 +212,32 @@ maybe_soma_joinid_maxshape <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_maybe_soma_joinid_maxshape`, uri, ctxxp)
 }
 
-has_current_domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_has_current_domain`, uri, ctxxp)
+has_current_domain <- function(array) {
+    .Call(`_tiledbsoma_has_current_domain`, array)
 }
 
-ndim <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_ndim`, uri, ctxxp)
+ndim <- function(array) {
+    .Call(`_tiledbsoma_ndim`, array)
 }
 
-c_dimnames <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_dimnames`, uri, ctxxp)
+c_dimnames <- function(array) {
+    .Call(`_tiledbsoma_c_dimnames`, array)
 }
 
-c_attrnames <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attrnames`, uri, ctxxp)
+c_attrnames <- function(array) {
+    .Call(`_tiledbsoma_c_attrnames`, array)
 }
 
-c_schema <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_schema`, uri, ctxxp)
+c_schema <- function(array) {
+    .Call(`_tiledbsoma_c_schema`, array)
 }
 
-c_is_sparse <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_is_sparse`, uri, ctxxp)
+c_is_sparse <- function(array) {
+    .Call(`_tiledbsoma_c_is_sparse`, array)
 }
 
-c_allows_dups <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_allows_dups`, uri, ctxxp)
+c_allows_dups <- function(array) {
+    .Call(`_tiledbsoma_c_allows_dups`, array)
 }
 
 c_capacity <- function(uri, ctxxp) {
@@ -256,44 +256,44 @@ c_schema_filters <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_schema_filters`, uri, ctxxp)
 }
 
-c_attributes <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attributes`, uri, ctxxp)
+c_attributes <- function(array) {
+    .Call(`_tiledbsoma_c_attributes`, array)
 }
 
-c_attributes_enumerated <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attributes_enumerated`, uri, ctxxp)
+c_attributes_enumerated <- function(dataframe) {
+    .Call(`_tiledbsoma_c_attributes_enumerated`, dataframe)
 }
 
-c_attribute_enumeration_levels <- function(uri, ctxxp, name) {
-    .Call(`_tiledbsoma_c_attribute_enumeration_levels`, uri, ctxxp, name)
+c_attribute_enumeration_levels <- function(dataframe, name) {
+    .Call(`_tiledbsoma_c_attribute_enumeration_levels`, dataframe, name)
 }
 
-c_domain <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_domain`, uri, ctxxp)
+c_domain <- function(array) {
+    .Call(`_tiledbsoma_c_domain`, array)
 }
 
-resize <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
-    .Call(`_tiledbsoma_resize`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
+resize <- function(ndarray, new_shape, function_name_for_messages, check_only) {
+    .Call(`_tiledbsoma_resize`, ndarray, new_shape, function_name_for_messages, check_only)
 }
 
-resize_soma_joinid_shape <- function(uri, new_shape, function_name_for_messages, ctxxp) {
-    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, uri, new_shape, function_name_for_messages, ctxxp))
+resize_soma_joinid_shape <- function(dataframe, new_shape, function_name_for_messages) {
+    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, dataframe, new_shape, function_name_for_messages))
 }
 
-tiledbsoma_upgrade_shape <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
-    .Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
+tiledbsoma_upgrade_shape <- function(ndarray, new_shape, function_name_for_messages, check_only) {
+    .Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, ndarray, new_shape, function_name_for_messages, check_only)
 }
 
-upgrade_or_change_domain <- function(uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only, ctxxp) {
-    .Call(`_tiledbsoma_upgrade_or_change_domain`, uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only, ctxxp)
+upgrade_or_change_domain <- function(dataframe, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only) {
+    .Call(`_tiledbsoma_upgrade_or_change_domain`, dataframe, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only)
 }
 
-c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
-    invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
+c_update_dataframe_schema <- function(dataframe, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
+    invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, dataframe, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
 }
 
-mq_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_mq_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
+mq_setup <- function(soma_array, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
+    .Call(`_tiledbsoma_mq_setup`, soma_array, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel)
 }
 
 mq_complete <- function(mq) {
@@ -396,5 +396,45 @@ get_config_from_soma_context <- function(soma_context) {
 
 get_data_protocol_from_soma_context <- function(soma_context, uri) {
     .Call(`_tiledbsoma_get_data_protocol_from_soma_context`, soma_context, uri)
+}
+
+soma_object_get_metadata <- function(soma_object) {
+    .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
+}
+
+soma_object_close <- function(soma_object) {
+    invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object))
+}
+
+soma_object_is_open <- function(soma_object) {
+    .Call(`_tiledbsoma_soma_object_is_open`, soma_object)
+}
+
+soma_object_open_mode <- function(soma_object) {
+    .Call(`_tiledbsoma_soma_object_open_mode`, soma_object)
+}
+
+open_dataframe_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_dataframe_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_sparse_ndarray_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_sparse_ndarray_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_dense_ndarray_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_dense_ndarray_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_collection_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_collection_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_measurement_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_measurement_handle`, uri, mode, soma_context, tiledb_timestamp)
+}
+
+open_experiment_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_experiment_handle`, uri, mode, soma_context, tiledb_timestamp)
 }
 

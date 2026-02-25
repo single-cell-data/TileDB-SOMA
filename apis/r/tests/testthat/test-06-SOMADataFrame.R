@@ -487,7 +487,7 @@ test_that("creation with ordered factors", {
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
   expect_identical(
-    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    c_attributes_enumerated(sdf$handle),
     vapply(
       sdf$attrnames(),
       FUN = function(x) is.factor(df[[x]]),
@@ -747,7 +747,7 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   expect_length(
-    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    domain <- sdf$dimensions(),
     n = 1L
   )
   dim <- domain[[1]]
@@ -799,7 +799,7 @@ test_that("platform_config defaults", {
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
-    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    domain <- sdf$dimensions(),
     n = 1L
   )
   expect_named(domain, "soma_joinid")
@@ -1110,7 +1110,7 @@ test_that("missing levels in enums", {
   # Test missingness is preserved
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_identical(
-    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    c_attributes_enumerated(sdf$handle),
     vapply(
       sdf$attrnames(),
       FUN = function(x) is.factor(df[[x]]),
@@ -1138,7 +1138,7 @@ test_that("missing levels in enums", {
   # Test missingness is preserved when updating
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_identical(
-    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.context$handle),
+    c_attributes_enumerated(sdf$handle),
     vapply(
       sdf$attrnames(),
       FUN = function(x) inherits(tbl0[[x]]$type, "DictionaryType"),

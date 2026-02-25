@@ -1,11 +1,11 @@
-
-// this file can make headers available for the generated file RcppExports.cpp
-
 #pragma once
+
+#include <Rcpp.h> 
 
 // defining this prevents spdlog to use stderr -- see bottom of spdlog/logger-inl.h
 #define USING_R
 #define R_R_H
+
 // it also needs these R headers to define REprintf and ::R_FlushConsole
 #include <R.h>
 #include <Rinterface.h>

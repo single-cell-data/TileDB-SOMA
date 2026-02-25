@@ -119,6 +119,8 @@ test_that("SOMASparseNDArray write COO assertions", {
     shape = shape
   )
   expect_invisible(ndarray$.write_coordinates(udf))
+
+  ndarray_column_names <- c(ndarray$dimnames(), ndarray$attrnames())
   ndarray$close()
 
   # Test argument assertions
@@ -134,7 +136,7 @@ test_that("SOMASparseNDArray write COO assertions", {
   )
 
   sdf <- df
-  while (identical(names(sdf), c(ndarray$dimnames(), ndarray$attrnames()))) {
+  while (identical(names(sdf), ndarray_column_names)) {
     sdf <- sdf[, sample(names(sdf)), drop = FALSE]
   }
   expect_error(
@@ -511,7 +513,7 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   expect_length(
-    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.context$handle),
+    domain <- snda$dimensions(),
     n = 2L
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
@@ -564,7 +566,7 @@ test_that("platform_config defaults", {
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
   expect_length(
-    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.context$handle),
+    domain <- snda$dimensions(),
     n = 2L
   )
   expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))

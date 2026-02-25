@@ -369,7 +369,6 @@ test_that("SOMADataFrame domain mods", {
 
   # -- first check dry run
   expect_no_condition(sdf$change_domain(domain_for_create, check_only = TRUE))
-  sdf$close()
 
   check <- list(
     soma_joinid = c(0, 3),
@@ -505,6 +504,9 @@ test_that("SOMASparseNDArray shape", {
     new_shape <- c(500, 600)
     #### expect_no_error(ndarray$resize(new_shape))
     ndarray$resize(new_shape)
+    ndarray$close()
+
+    ndarray <- SOMASparseNDArrayOpen(uri, "WRITE")
 
     # Test writes within new bounds
     soma_dim_0 <- c(200, 300)
@@ -589,7 +591,6 @@ test_that("SOMADenseNDArray shape", {
     ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
     mat <- create_dense_matrix_with_int_dims(300, 400)
     expect_error(ndarray$write(mat))
-    ndarray$close()
 
     # Test resize up, dry run
     new_shape <- c(501, 601)

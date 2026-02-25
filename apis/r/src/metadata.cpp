@@ -66,33 +66,7 @@ Rcpp::List get_all_metadata(std::string& uri, bool is_array, Rcpp::XPtr<somactx_
     // SOMA Object unique pointer (aka soup)
     auto soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
     auto mvmap = soup->get_metadata();
-
-    std::vector<std::string> namvec;
-    Rcpp::List lst;
-    for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
-        std::string key = it->first;
-        namvec.push_back(key);
-        tdbs::MetadataValue val = it->second;
-        auto dtype = std::get<0>(val);
-        auto len = std::get<1>(val);
-        const void* ptr = std::get<2>(val);
-        if (dtype == TILEDB_STRING_UTF8 || dtype == TILEDB_STRING_ASCII) {
-            auto str = std::string((char*)ptr, len);
-            lst.push_back(str);
-        } else if (dtype == TILEDB_INT64) {
-            std::vector<int64_t> v(len);
-            std::memcpy(&(v[0]), ptr, len * sizeof(int64_t));
-            lst.push_back(Rcpp::toInteger64(v));
-        } else if (dtype == TILEDB_INT32) {
-            Rcpp::IntegerVector v(len);
-            std::memcpy(v.begin(), ptr, len * sizeof(int32_t));
-        } else {
-            auto txt = tiledb::impl::type_to_str(dtype);
-            Rcpp::stop("Currently unsupported type '%s'", txt.c_str());
-        }
-    }
-    lst.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
-    return lst;
+    return metadata_as_rlist(mvmap);
 }
 
 // Read metadata (as a string)

@@ -18,6 +18,7 @@ test_that("SOMADataFrame", {
     tiledb_timestamp = ts1,
     domain = list(soma_joinid = c(0, 999))
   )
+  expect_equal(sdf$mode(), "WRITE")
 
   ## write part1 at t = 2
   dat2 <- arrow::arrow_table(
@@ -36,6 +37,7 @@ test_that("SOMADataFrame", {
     str = factor(c("c", "b", "c", "c", "b"))
   )
   ts3 <- as.POSIXct(3, tz = "UTC", origin = "1970-01-01")
+  expect_equal(sdf$mode(), "WRITE")
   expect_no_condition(sdf$reopen(sdf$mode(), tiledb_timestamp = ts3))
   expect_no_condition(sdf$write(dat3))
   sdf$close()

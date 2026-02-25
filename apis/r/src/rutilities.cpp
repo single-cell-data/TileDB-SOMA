@@ -701,3 +701,33 @@ SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim) {
             Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
     }
 }
+
+Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap) {
+    std::vector<std::string> namvec;
+    Rcpp::List lst;
+    for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
+        std::string key = it->first;
+        namvec.push_back(key);
+        tdbs::MetadataValue val = it->second;
+        auto dtype = std::get<0>(val);
+        auto len = std::get<1>(val);
+        const void* ptr = std::get<2>(val);
+        if (dtype == TILEDB_STRING_UTF8 || dtype == TILEDB_STRING_ASCII) {
+            auto str = std::string((char*)ptr, len);
+            lst.push_back(str);
+        } else if (dtype == TILEDB_INT64) {
+            std::vector<int64_t> v(len);
+            std::memcpy(&(v[0]), ptr, len * sizeof(int64_t));
+            lst.push_back(Rcpp::toInteger64(v));
+        } else if (dtype == TILEDB_INT32) {
+            Rcpp::IntegerVector v(len);
+            std::memcpy(v.begin(), ptr, len * sizeof(int32_t));
+            lst.push_back(v);
+        } else {
+            auto txt = tiledb::impl::type_to_str(dtype);
+            Rcpp::stop("Currently unsupported type '%s'", txt.c_str());
+        }
+    }
+    lst.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
+    return lst;
+};

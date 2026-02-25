@@ -63,18 +63,18 @@ uns_hint <- function(type = c("1d", "2d")) {
 get_soma_context <- function(context, tiledbsoma_ctx, what = NULL) {
   if (!is.null(tiledbsoma_ctx)) {
     .deprecate(
-        what=what,
-        when="2.3.0",
-        details="Use `context` instead."
+      what = what,
+      when = "2.3.0",
+      details = "Use `context` instead."
     )
   }
   if (is.null(context)) {
     if (is.null(tiledbsoma_ctx)) {
-        context <- .pkgenv[["somactx"]]
-        if (is.null(context)) {
-          return(set_default_context())
-        }
-        return(context)
+      context <- .pkgenv[["somactx"]]
+      if (is.null(context)) {
+        return(set_default_context())
+      }
+      return(context)
     }
     if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
       stop(
@@ -470,10 +470,8 @@ get_soma_context <- function(context, tiledbsoma_ctx, what = NULL) {
   x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
   dimname <- x$dimnames()[axis + 1L]
   sr <- mq_setup(
-    uri = x$uri,
-    x$context$handle,
-    colnames = dimname,
-    timestamprange = x$.tiledb_timestamp_range
+    soma_array = x$handle,
+    colnames = dimname
   )
   return(TableReadIter$new(sr)$concat()$GetColumnByName(dimname)$as_vector())
 }
