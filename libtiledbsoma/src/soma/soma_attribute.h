@@ -44,10 +44,7 @@ class SOMAAttribute : public SOMAColumn {
      * Create a ``SOMAAttribute`` shared pointer from an Arrow schema
      */
     static std::shared_ptr<SOMAAttribute> create(
-        std::shared_ptr<tiledb::Context> ctx,
-        ArrowSchema* schema,
-        std::string_view type_metadata,
-        PlatformConfig platform_config);
+        std::shared_ptr<tiledb::Context> ctx, ArrowSchema* schema, PlatformConfig platform_config);
 
     SOMAAttribute(tiledb::Attribute attribute, std::optional<tiledb::Enumeration> enumeration = std::nullopt)
         : attribute(attribute)
