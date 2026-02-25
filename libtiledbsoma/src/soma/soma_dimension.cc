@@ -228,6 +228,17 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
     }
 }
 
+std::shared_ptr<SOMADimension> SOMADimension::create_soma_joinid(
+    std::shared_ptr<tiledb::Context> ctx, const std::string& soma_type, const PlatformConfig& platform_config) {
+    int64_t extent = utils::get_dim_extent<int64_t>(
+        SOMA_JOINID.data(), platform_config, 2048u, std::numeric_limits<int64_t>::max());
+
+    tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
+        *ctx, SOMA_JOINID.data(), {{0, std::numeric_limits<int64_t>::max() - 1 - extent}}, extent);
+    dimension.set_filter_list(utils::create_dim_filter_list(SOMA_JOINID.data(), platform_config, soma_type, ctx));
+    return std::make_shared<SOMADimension>(dimension);
+}
+
 std::shared_ptr<SOMADimension> SOMADimension::create(
     std::shared_ptr<tiledb::Context> ctx,
     const std::string& name,

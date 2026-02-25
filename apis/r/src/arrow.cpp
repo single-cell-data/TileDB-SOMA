@@ -152,6 +152,7 @@ void createSchemaForDataFrame(
     pltcfg.tile_order = Rcpp::as<std::string>(pclst["tile_order"]);
     pltcfg.attrs = Rcpp::as<std::string>(pclst["attrs"]);
     pltcfg.dims = Rcpp::as<std::string>(pclst["dims"]);
+    pltcfg.override_naming_restriction = Rcpp::as<bool>(pclst["override_naming_restriction"]);
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;

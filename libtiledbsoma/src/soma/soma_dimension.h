@@ -54,6 +54,9 @@ class SOMADimension : public SOMAColumn {
         const std::string& soma_type,
         const PlatformConfig& platform_config);
 
+    static std::shared_ptr<SOMADimension> create_soma_joinid(
+        std::shared_ptr<tiledb::Context> ctx, const std::string& soma_type, const PlatformConfig& platform_config);
+
     template <typename T>
     static std::shared_ptr<SOMADimension> create(
         std::shared_ptr<tiledb::Context> ctx,
