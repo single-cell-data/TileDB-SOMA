@@ -37,12 +37,7 @@ class SOMAMeasurement : public SOMACollectionBase {
      * @param ctx TileDB context
      */
     static void create(
-        std::string_view uri,
-        const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
-        const common::arrow::ArrowTable& index_columns,
-        std::shared_ptr<SOMAContext> ctx,
-        PlatformConfig platform_config = PlatformConfig(),
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMAMeasurement

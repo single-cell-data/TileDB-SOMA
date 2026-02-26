@@ -65,36 +65,28 @@ std::map<std::string, SOMAGroupEntry> create_member_cache(Group& group) {
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAGroup> SOMAGroup::create(
+void SOMAGroup::create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
     std::string_view soma_type,
+    const std::unordered_map<std::string, std::string>& schema_metadata,
     std::optional<TimestampRange> timestamp) {
     ctx->validate_create_uri(uri);
     try {
-        Group::create(*ctx->tiledb_ctx(), std::string(uri));
-
+        tiledb::Group::create(*ctx->tiledb_ctx(), std::string(uri));
         auto group = std::make_shared<Group>(
             *ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE, _set_timestamp(ctx, timestamp));
-
         group->put_metadata(
             SOMA_OBJECT_TYPE_KEY, TILEDB_STRING_UTF8, static_cast<uint32_t>(soma_type.length()), soma_type.data());
-
         group->put_metadata(
             ENCODING_VERSION_KEY,
             TILEDB_STRING_UTF8,
             static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
             ENCODING_VERSION_VAL.c_str());
-
-        // Root SOMA objects include a `dataset_type` entry to allow the
-        // TileDB Cloud UI to detect that they are SOMA datasets.
-        if (soma_type == "SOMAExperiment") {
-            std::string key = "dataset_type";
-            std::string dataset_type = "soma";
-            group->put_metadata(
-                key, TILEDB_STRING_UTF8, static_cast<uint32_t>(dataset_type.length()), dataset_type.c_str());
+        for (const auto& [key, value] : schema_metadata) {
+            group->put_metadata(key, TILEDB_STRING_UTF8, static_cast<uint32_t>(value.length()), value.data());
         }
-        return std::make_unique<SOMAGroup>(ctx, group, timestamp);
+        group->close();
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

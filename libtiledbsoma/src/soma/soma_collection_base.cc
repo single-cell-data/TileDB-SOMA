@@ -99,15 +99,12 @@ std::shared_ptr<SOMAExperiment> SOMACollectionBase::add_new_experiment(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
-    const common::arrow::ArrowTable& index_columns,
-    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
         timestamp = this->timestamp();
     }
 
-    SOMAExperiment::create(uri, schema, index_columns, ctx, platform_config, timestamp);
+    SOMAExperiment::create(uri, ctx, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
@@ -123,15 +120,12 @@ std::shared_ptr<SOMAMeasurement> SOMACollectionBase::add_new_measurement(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
-    const common::arrow::ArrowTable& index_columns,
-    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
         timestamp = this->timestamp();
     }
 
-    SOMAMeasurement::create(uri, schema, index_columns, ctx, platform_config, timestamp);
+    SOMAMeasurement::create(uri, ctx, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache

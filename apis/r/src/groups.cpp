@@ -35,7 +35,7 @@ void c_group_create(
     }
     tdbs::common::logging::LOG_DEBUG(ss.str());
 
-    tdbs::SOMAGroup::create(sctx, uri, type, tsrng);
+    tdbs::SOMAGroup::create(sctx, uri, type, {}, tsrng);
 }
 
 // [[Rcpp::export]]

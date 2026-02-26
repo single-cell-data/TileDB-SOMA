@@ -28,7 +28,7 @@ void load_soma_group(py::module& m) {
                std::string soma_type,
                std::optional<TimestampRange> timestamp) {
                 try {
-                    SOMAGroup::create(ctx, uri, soma_type, timestamp);
+                    SOMAGroup::create(ctx, uri, soma_type, {}, timestamp);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }

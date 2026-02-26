@@ -18,26 +18,10 @@ void create_soma_object(std::string_view soma_type, std::string_view uri, std::s
         return SOMACollection::create(uri, context);
     }
     if (soma_type == "SOMAExperiment") {
-        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
-            {helper::DimInfo(
-                {.name = "soma_joinid",
-                 .tiledb_datatype = TILEDB_INT64,
-                 .dim_max = 100,
-                 .string_lo = "N/A",
-                 .string_hi = "N/A"})},
-            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_STRING_ASCII})});
-        return SOMAExperiment::create(uri, schema, index_columns, context);
+        return SOMAExperiment::create(uri, context);
     }
     if (soma_type == "SOMAMeasurement") {
-        auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(
-            {helper::DimInfo(
-                {.name = "soma_joinid",
-                 .tiledb_datatype = TILEDB_INT64,
-                 .dim_max = 100,
-                 .string_lo = "N/A",
-                 .string_hi = "N/A"})},
-            {helper::AttrInfo({.name = "attr1", .tiledb_datatype = TILEDB_STRING_ASCII})});
-        return SOMAMeasurement::create(uri, schema, index_columns, context);
+        return SOMAMeasurement::create(uri, context);
     }
     if (soma_type == "SOMAScene") {
         return SOMAScene::create(uri, context, std::nullopt);

@@ -41,12 +41,14 @@ class SOMAGroup : public SOMAObject {
      * @param ctx TileDB context
      * @param uri URI to create the SOMAGroup
      * @param soma_type SOMACollection, SOMAMeasurement, or SOMAExperiment
+     * @param schema_metadata Metadata to add to the basic 
      * @param timestamp Optional pair indicating timestamp start and end
      */
-    static std::unique_ptr<SOMAGroup> create(
+    static void create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
         std::string_view soma_type,
+        const std::unordered_map<std::string, std::string>& schema_metadata,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
