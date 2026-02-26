@@ -26,15 +26,13 @@ from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._funcs import typeguard_ignore
 from ._soma_context import SOMAContext
 from ._soma_group import SOMAGroup
 from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
-from ._util import tiledb_timestamp_to_ms
-from .options import SOMATileDBContext, _update_context_and_timestamp
+from .options import SOMATileDBContext
 
 # A collection can hold any sub-type of SOMAObject
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
@@ -94,34 +92,7 @@ class CollectionBase(
         Lifecycle:
             Maturing.
         """
-        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
-        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
-
-        try:
-            clib.SOMAGroup.create(
-                uri=uri,
-                soma_type=cls._handle_type.__name__,
-                ctx=context._handle,
-                timestamp=(0, timestamp_ms),
-            )
-        except SOMAError as e:
-            raise map_exception_for_create(e, uri) from None
-
-        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
-        try:
-            handle = cls._handle_type.open(
-                uri,
-                mode=clib.OpenMode.soma_write,
-                context=context._handle,
-                timestamp=(0, timestamp_ms),
-            )
-        except (RuntimeError, SOMAError) as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls._create(uri, tiledb_timestamp, context)
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.

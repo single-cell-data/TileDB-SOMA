@@ -15,7 +15,7 @@ from typing_extensions import Self
 
 from . import _tdb_handles
 from . import pytiledbsoma as clib
-from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._soma_context import SOMAContext
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
@@ -89,6 +89,38 @@ class SOMAObject(somacore.SOMAObject):
                 timestamp=(0, timestamp_ms),
             )
 
+        except (RuntimeError, SOMAError) as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(tdbe) from tdbe
+            raise SOMAError(tdbe) from tdbe
+        return cls(
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+        )
+
+    @classmethod
+    def _create(
+        cls,
+        uri: str,
+        tiledb_timestamp: OpenTimestamp | None,
+        context: SOMAContext | SOMATileDBContext | None = None,
+        **kwargs: Any,  # noqa: ANN401
+    ) -> Self:
+        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
+
+        try:
+            cls._handle_type.create(uri=uri, ctx=context._handle, timestamp=(0, timestamp_ms), **kwargs)
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
+
+        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)  # re-grab in case using None (now)
+        try:
+            handle = cls._handle_type.open(
+                uri,
+                mode=clib.OpenMode.soma_write,
+                context=context._handle,
+                timestamp=(0, timestamp_ms),
+            )
         except (RuntimeError, SOMAError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
