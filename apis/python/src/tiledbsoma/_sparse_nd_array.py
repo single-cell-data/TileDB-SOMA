@@ -25,13 +25,12 @@ from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._coordinate_selection import CoordinateValueFilters
 from ._dask.util import SOMADaskConfig
-from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
 from ._managed_query import ManagedQuery
 from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseCOOTensorReadIter, TableReadIter
 from ._soma_context import SOMAContext
 from ._types import NTuple, OpenTimestamp
-from ._util import from_clib_result_order, tiledb_timestamp_to_ms
-from .options._soma_tiledb_context import SOMATileDBContext, _update_context_and_timestamp
+from ._util import from_clib_result_order
+from .options._soma_tiledb_context import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 
@@ -152,64 +151,15 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Lifecycle:
             Maturing.
         """
-        # SOMA-to-core mappings:
-        #
-        # Before the current-domain feature was enabled (possible after core 2.25):
-        #
-        # * SOMA shape <-> core domain, AKA "max domain" which is a name we'll use for clarity
-        #   o Specifically, (0, SOMA shape minus 1) = core domain
-        # * core current domain did not exist
-        #
-        # After the current-domain feature was enabled:
-        #
-        # * SOMA maxshape <-> core domain, AKA "max domain" which is a name we'll use for clarity
-        #   o Specifically, (0, SOMA maxshape minus 1) = core max domain
-        # * SOMA shape <-> core current domain
-        #   o Specifically, (0, SOMA shape minus 1) = core current domain
-
-        # As far as the user is concerned, the SOMA shape is the _only_ thing they see and care
-        # about. It's resizeable (up to max_domain anyway), reads and writes are bounds-checked
-        # against it, etc.
-
         if None in shape:
             warnings.warn(
                 f"Using ``None`` in the shape is deprecated. Updating shape={shape} to shape={tuple(1 if col_size is None else col_size for col_size in shape)}.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = build_clib_platform_config(platform_config)
-        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
-        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
-        try:
-            clib.SOMASparseNDArray.create(
-                uri,
-                format=carrow_type,
-                shape=shape,
-                ctx=context._handle,
-                platform_config=plt_cfg,
-                timestamp=(0, timestamp_ms),
-            )
-        except SOMAError as e:
-            raise map_exception_for_create(e, uri) from None
-
-        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
-        try:
-            handle = clib.SOMASparseNDArray.open(
-                uri,
-                mode=clib.OpenMode.soma_write,
-                context=context._handle,
-                timestamp=(0, timestamp_ms),
-            )
-
-        except (RuntimeError, SOMAError) as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls._create(uri, tiledb_timestamp, context, format=carrow_type, shape=shape, platform_config=plt_cfg)
 
     @property
     def nnz(self) -> int:
