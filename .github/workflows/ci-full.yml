@@ -67,7 +67,7 @@ jobs:
           - {os: macos-latest, r: 'release', report_codecov: false}
           - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', report_codecov: false}
           - {os: ubuntu-latest, r: 'release', report_codecov: true}
-          - {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false}
+          #- {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false} # BPCells dep ggrepel not available
     uses: ./.github/workflows/test-r.yml
     with:
       os: ${{ matrix.config.os }}
