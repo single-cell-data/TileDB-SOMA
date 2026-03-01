@@ -22,6 +22,7 @@
 
 #include <tiledb/tiledb>
 
+#include "../utils/common.h"
 #include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
 
@@ -407,7 +408,7 @@ ArraySchema create_dataframe_schema(
     std::string_view soma_type,
     ArrowSchema* arrow_schema,
     std::span<const std::string> index_column_names,
-    std::span<const std::any> index_column_domains,
+    std::span<const DomainRange> index_column_domains,
     std::shared_ptr<tiledb::Context> ctx,
     PlatformConfig platform_config,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp);

@@ -46,7 +46,7 @@ size_t sanitize_string(std::span<const T> string_raw, size_t num_elements) {
     return num_elements;
 }
 
-std::any encode_domain(std::string_view format, py::object domain);
+DomainRange encode_domain(std::string_view format, py::object domain);
 
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num);
 

@@ -17,12 +17,12 @@ using namespace pybind11::literals;  // to bring in the `_a` literal
 
 namespace tiledbsoma {
 
-std::any encode_domain(std::string_view format, py::object domain) {
-    auto encode_element = [&]<typename T>() -> std::any {
+DomainRange encode_domain(std::string_view format, py::object domain) {
+    auto encode_element = [&]<typename T>() -> DomainRange {
         if (domain.is_none()) {
-            return std::make_any<std::optional<std::pair<T, T>>>(std::nullopt);
+            return std::optional<std::pair<T, T>>();
         }
-        return std::make_any<std::optional<std::pair<T, T>>>(domain.cast<std::pair<T, T>>());
+        return std::make_optional<std::pair<T, T>>(domain.cast<std::pair<T, T>>());
     };
 
     switch (tiledbsoma::common::arrow::to_tiledb_format(format)) {

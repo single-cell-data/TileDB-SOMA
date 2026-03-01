@@ -70,7 +70,7 @@ class SOMADataFrame : public SOMAArray {
         std::string_view uri,
         const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
         std::span<const std::string> index_column_names,
-        std::span<const std::any> index_column_domains,
+        std::span<const DomainRange> index_column_domains,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);

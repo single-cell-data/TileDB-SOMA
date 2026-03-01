@@ -16,10 +16,13 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <string>
 #include <string_view>
 #include <tiledb/tiledb>
+#include <utility>
+#include <variant>
 
 namespace tiledbsoma {
 
@@ -61,6 +64,21 @@ using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
 enum MetadataInfo { dtype = 0, num, value };
 
 using TimestampRange = std::pair<uint64_t, uint64_t>;
+
+template <typename T>
+using DomainRangeEntry = std::optional<std::pair<T, T>>;
+using DomainRange = std::variant<
+    DomainRangeEntry<std::string>,
+    DomainRangeEntry<int64_t>,
+    DomainRangeEntry<uint64_t>,
+    DomainRangeEntry<double>,
+    DomainRangeEntry<int32_t>,
+    DomainRangeEntry<uint32_t>,
+    DomainRangeEntry<float>,
+    DomainRangeEntry<int16_t>,
+    DomainRangeEntry<uint16_t>,
+    DomainRangeEntry<int8_t>,
+    DomainRangeEntry<uint8_t>>;
 
 class TileDBSOMAError : public std::runtime_error {
    public:

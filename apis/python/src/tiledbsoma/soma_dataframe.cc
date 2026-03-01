@@ -69,11 +69,11 @@ void load_soma_dataframe(py::module& m) {
                     }
                 }
 
-                std::vector<std::any> domain;
+                std::vector<DomainRange> domain;
                 for (size_t i = 0; i < index_column_names.size(); ++i) {
                     if (index_column_names[i] == SOMA_JOINID) {
-                        domain.emplace_back(encode_domain(
-                            common::arrow::to_arrow_format(TILEDB_INT64), py::cast<py::list>(index_column_domains[i])));
+                        domain.emplace_back(
+                            encode_domain(common::arrow::to_arrow_format(TILEDB_INT64), index_column_domains[i]));
                         continue;
                     }
 

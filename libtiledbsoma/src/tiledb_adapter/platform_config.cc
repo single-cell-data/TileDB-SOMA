@@ -432,7 +432,7 @@ ArraySchema create_dataframe_schema(
     std::string_view soma_type,
     ArrowSchema* arrow_schema,
     std::span<const std::string> index_column_names,
-    std::span<const std::any> index_column_domains,
+    std::span<const DomainRange> index_column_domains,
     std::shared_ptr<tiledb::Context> ctx,
     PlatformConfig platform_config,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -448,7 +448,7 @@ ArraySchema create_dataframe_schema(
             "[create_dataframe_schema] Size mismatch between list of index column names and domains");
     }
 
-    std::unordered_map<std::string, std::any> index_columns;
+    std::unordered_map<std::string, DomainRange> index_columns;
     for (size_t i = 0; i < index_column_names.size(); ++i) {
         if (index_columns.contains(index_column_names[i])) {
             throw std::range_error(
@@ -577,10 +577,10 @@ ArraySchema create_dataframe_schema(
     tiledb::CurrentDomain current_domain(*ctx);
     tiledb::NDRectangle rect(*ctx, domain);
 
-    auto decode_domain = [&index_columns]<typename T>(std::shared_ptr<SOMAColumn> column) -> std::any {
+    auto decode_domain = []<typename T>(
+                             std::shared_ptr<SOMAColumn> column, std::optional<std::pair<T, T>> domain) -> std::any {
         if constexpr (std::is_same_v<T, std::string>) {
-            auto current_domain = std::any_cast<std::optional<std::pair<T, T>>>(index_columns[column->name()])
-                                      .value_or(std::make_pair<T, T>("", ""));
+            auto current_domain = domain.value_or(std::make_pair<T, T>("", ""));
 
             if (current_domain.first != "" || current_domain.second != "") {
                 throw std::range_error("TileDB str and bytes index-column types do not support domain specification");
@@ -588,8 +588,7 @@ ArraySchema create_dataframe_schema(
 
             return std::make_any<std::array<std::string, 2>>(std::array<std::string, 2>{{"", ""}});
         } else {
-            auto current_domain = std::any_cast<std::optional<std::pair<T, T>>>(index_columns[column->name()])
-                                      .value_or(std::make_pair<T, T>(0, 0));
+            auto current_domain = domain.value_or(std::make_pair<T, T>(0, 0));
 
             if (column->name() == SOMA_JOINID) {
                 if (current_domain.first < 0) {
@@ -612,52 +611,59 @@ ArraySchema create_dataframe_schema(
     };
 
     for (const auto& column : columns | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
-        switch (column->domain_type().value()) {
-            case TILEDB_UINT8:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint8_t>(column)}});
-                break;
-            case TILEDB_UINT16:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint16_t>(column)}});
-                break;
-            case TILEDB_UINT32:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint32_t>(column)}});
-                break;
-            case TILEDB_UINT64:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint64_t>(column)}});
-                break;
-            case TILEDB_INT8:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int8_t>(column)}});
-                break;
-            case TILEDB_INT16:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int16_t>(column)}});
-                break;
-            case TILEDB_INT32:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int32_t>(column)}});
-                break;
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_INT64:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<int64_t>(column)}});
-                break;
-            case TILEDB_FLOAT32:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<float_t>(column)}});
-                break;
-            case TILEDB_FLOAT64:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<double_t>(column)}});
-                break;
-            case TILEDB_CHAR:
-            case TILEDB_STRING_ASCII:
-            case TILEDB_STRING_UTF8:
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<std::string>(column)}});
-                break;
-            default:
-                throw std::runtime_error(
-                    fmt::format(
-                        "[create_dataframe_schema] Unsupported dimension type {} to set current domain",
-                        tiledb::impl::type_to_str(column->domain_type().value())));
-        }
+        std::visit(
+            [&](auto&& domain) {
+                using T = std::decay_t<decltype(domain)>::value_type::first_type;
+
+                column->set_current_domain_slot(rect, {{decode_domain.template operator()<T>(column, domain)}});
+            },
+            index_columns[column->name()]);
+        // switch (column->domain_type().value()) {
+        //     case TILEDB_UINT8:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint8_t>(column)}});
+        //         break;
+        //     case TILEDB_UINT16:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint16_t>(column)}});
+        //         break;
+        //     case TILEDB_UINT32:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint32_t>(column)}});
+        //         break;
+        //     case TILEDB_UINT64:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint64_t>(column)}});
+        //         break;
+        //     case TILEDB_INT8:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int8_t>(column)}});
+        //         break;
+        //     case TILEDB_INT16:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int16_t>(column)}});
+        //         break;
+        //     case TILEDB_INT32:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int32_t>(column)}});
+        //         break;
+        //     case TILEDB_DATETIME_SEC:
+        //     case TILEDB_DATETIME_MS:
+        //     case TILEDB_DATETIME_US:
+        //     case TILEDB_DATETIME_NS:
+        //     case TILEDB_INT64:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int64_t>(column)}});
+        //         break;
+        //     case TILEDB_FLOAT32:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<float_t>(column)}});
+        //         break;
+        //     case TILEDB_FLOAT64:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<double_t>(column)}});
+        //         break;
+        //     case TILEDB_CHAR:
+        //     case TILEDB_STRING_ASCII:
+        //     case TILEDB_STRING_UTF8:
+        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<std::string>(column)}});
+        //         break;
+        //     default:
+        //         throw std::runtime_error(
+        //             fmt::format(
+        //                 "[create_dataframe_schema] Unsupported dimension type {} to set current domain",
+        //                 tiledb::impl::type_to_str(column->domain_type().value())));
+        //}
     }
 
     current_domain.set_ndrectangle(rect);

@@ -162,29 +162,26 @@ void createSchemaForDataFrame(
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
-    auto encode_domain = [&](std::string_view datatype, Rcpp::RObject domain) -> std::any {
-        auto encode = [&]<typename DomainType, typename ElementType>() -> std::any {
+    auto encode_domain = [&](std::string_view datatype, Rcpp::RObject domain) -> tdbs::DomainRange {
+        auto encode = [&]<typename DomainType, typename ElementType>() -> tdbs::DomainRange {
             if (domain.isNULL()) {
-                return std::make_any<std::optional<std::pair<DomainType, DomainType>>>(std::nullopt);
+                return std::optional<std::pair<DomainType, DomainType>>();
             }
 
             auto dom = Rcpp::as<std::vector<ElementType>>(domain);
 
             if constexpr (std::is_integral_v<DomainType> || std::is_floating_point_v<DomainType>) {
                 if (domain.isObject()) {
-                    return std::make_any<std::optional<std::pair<DomainType, DomainType>>>(
-                        std::make_pair<DomainType, DomainType>(
-                            static_cast<DomainType>(*reinterpret_cast<int64_t*>(&dom[0])),
-                            static_cast<DomainType>(*reinterpret_cast<int64_t*>(&dom[1]))));
+                    return std::make_optional<std::pair<DomainType, DomainType>>(std::make_pair<DomainType, DomainType>(
+                        static_cast<DomainType>(*reinterpret_cast<int64_t*>(&dom[0])),
+                        static_cast<DomainType>(*reinterpret_cast<int64_t*>(&dom[1]))));
                 } else {
-                    return std::make_any<std::optional<std::pair<DomainType, DomainType>>>(
-                        std::make_pair<DomainType, DomainType>(
-                            static_cast<DomainType>(dom[0]), static_cast<DomainType>(dom[1])));
+                    return std::make_optional<std::pair<DomainType, DomainType>>(std::make_pair<DomainType, DomainType>(
+                        static_cast<DomainType>(dom[0]), static_cast<DomainType>(dom[1])));
                 }
             } else {
-                return std::make_any<std::optional<std::pair<DomainType, DomainType>>>(
-                    std::make_pair<DomainType, DomainType>(
-                        static_cast<DomainType>(dom[0]), static_cast<DomainType>(dom[1])));
+                return std::make_optional<std::pair<DomainType, DomainType>>(std::make_pair<DomainType, DomainType>(
+                    static_cast<DomainType>(dom[0]), static_cast<DomainType>(dom[1])));
             }
         };
 
@@ -227,7 +224,7 @@ void createSchemaForDataFrame(
         }
     };
 
-    std::vector<std::any> domains;
+    std::vector<tdbs::DomainRange> domains;
     for (size_t i = 0; i < index_column_names.size(); ++i) {
         std::string column = Rcpp::as<std::string>(index_column_names[i]);
         if (column == tdbs::SOMA_JOINID) {
