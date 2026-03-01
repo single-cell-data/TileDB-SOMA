@@ -19,7 +19,6 @@
 #include <string>
 #include "../utils/common.h"
 
-using namespace tiledb;
 namespace tiledbsoma {
 
 class SOMAContext;

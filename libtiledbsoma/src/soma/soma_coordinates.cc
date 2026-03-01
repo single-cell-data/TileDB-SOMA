@@ -19,6 +19,8 @@
 
 #include "soma_coordinates.h"
 
+#include "common/datatype/utils.h"
+
 using json = nlohmann::json;
 
 namespace nlohmann {
@@ -46,6 +48,7 @@ struct adl_serializer<tiledbsoma::SOMAAxis> {
 }  // namespace nlohmann
 
 namespace tiledbsoma {
+using namespace common::type;
 
 SOMACoordinateSpace::SOMACoordinateSpace()
     : axes_{{"x", std::nullopt}, {"y", std::nullopt}} {
@@ -114,15 +117,15 @@ SOMACoordinateSpace::SOMACoordinateSpace(
 }
 
 SOMACoordinateSpace SOMACoordinateSpace::from_metadata(
-    tiledb_datatype_t value_type, uint32_t value_num, const void* value) {
-    if (value_type != TILEDB_STRING_UTF8 && value_type != TILEDB_STRING_ASCII) {
+    common::DataType value_type, uint32_t value_num, const void* value) {
+    if (value_type != common::DataType::STRING_UTF8 && value_type != common::DataType::STRING_ASCII) {
         throw TileDBSOMAError(
             fmt::format(
                 "[SOMACoordinateSpace]: Unexpected datatype for coordinate space "
                 "metadata. Expected {} or {}; got {}",
-                tiledb::impl::type_to_str(TILEDB_STRING_UTF8),
-                tiledb::impl::type_to_str(TILEDB_STRING_ASCII),
-                tiledb::impl::type_to_str(value_type)));
+                common::getName(common::DataType::STRING_UTF8),
+                common::getName(common::DataType::STRING_ASCII),
+                common::getName(value_type)));
     }
     if (value == nullptr) {
         throw TileDBSOMAError(

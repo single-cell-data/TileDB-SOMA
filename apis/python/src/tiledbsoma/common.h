@@ -50,7 +50,7 @@ DomainRange encode_domain(std::string_view format, py::object domain);
 
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num);
 
-tiledb_datatype_t np_to_tdb_dtype(py::dtype type);
+common::DataType np_to_tdb_dtype(py::dtype type);
 
 bool is_tdb_str(tiledb_datatype_t type);
 

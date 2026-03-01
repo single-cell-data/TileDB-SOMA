@@ -22,6 +22,16 @@
 #include "common.h"
 #include "nanoarrow/nanoarrow.hpp"
 
+#pragma region Forward declarations
+
+namespace tiledb {
+class Array;
+class Context;
+class Enumeration;
+}  // namespace tiledb
+
+#pragma endregion
+
 namespace tiledbsoma::util {
 
 using VarlenBufferPair = std::pair<std::string, std::vector<uint64_t>>;
@@ -96,8 +106,11 @@ std::string get_enmr_label(ArrowSchema* index_schema, ArrowSchema* value_schema)
  * tiledbsoma >= 1.16.0 as well as old-style names of the form {attr_name},
  * e.g. "foo" for attributes written by tiledbsoma < 1.16.0.
  */
-Enumeration get_enumeration(
-    std::shared_ptr<Context> ctx_, std::shared_ptr<Array> array_, ArrowSchema* index_schema, ArrowSchema* value_schema);
+tiledb::Enumeration get_enumeration(
+    std::shared_ptr<tiledb::Context> ctx_,
+    std::shared_ptr<tiledb::Array> array_,
+    ArrowSchema* index_schema,
+    ArrowSchema* value_schema);
 }  // namespace tiledbsoma::util
 
 #endif

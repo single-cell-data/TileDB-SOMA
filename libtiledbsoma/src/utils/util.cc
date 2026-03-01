@@ -11,9 +11,12 @@
  * This file defines utilities.
  */
 
-#include "utils/util.h"
+#include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
+
 #include <cstring>
 #include "common/logging/impl/logger.h"
+#include "utils/util.h"
 
 namespace tiledbsoma::util {
 
@@ -91,19 +94,22 @@ std::string get_enmr_label(ArrowSchema* index_schema, ArrowSchema* value_schema)
     return std::string(index_schema->name) + "_" + format;
 }
 
-Enumeration get_enumeration(
-    std::shared_ptr<Context> ctx, std::shared_ptr<Array> arr, ArrowSchema* index_schema, ArrowSchema* value_schema) {
+tiledb::Enumeration get_enumeration(
+    std::shared_ptr<tiledb::Context> ctx,
+    std::shared_ptr<tiledb::Array> arr,
+    ArrowSchema* index_schema,
+    ArrowSchema* value_schema) {
     std::string new_way = util::get_enmr_label(index_schema, value_schema);
     std::string old_way = std::string(index_schema->name);
     try {
         // New-style names of the form {attr_name}_{arrow_format}, e.g. "foo_U"
         // for attributes written by tiledbsoma >= 1.16.0
-        return ArrayExperimental::get_enumeration(*ctx, *arr, new_way);
+        return tiledb::ArrayExperimental::get_enumeration(*ctx, *arr, new_way);
     } catch (const std::exception& e) {
         // Old-style names of the form {attr_name}, e.g. "foo"
         // for attributes written by tiledbsoma < 1.16.0
         try {
-            return ArrayExperimental::get_enumeration(*ctx, *arr, old_way);
+            return tiledb::ArrayExperimental::get_enumeration(*ctx, *arr, old_way);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(
                 fmt::format(

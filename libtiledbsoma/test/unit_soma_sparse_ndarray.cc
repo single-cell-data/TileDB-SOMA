@@ -219,7 +219,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
-    snda->set_metadata("md", TILEDB_INT32, 1, &val);
+    snda->set_metadata("md", common::DataType::INT32, 1, &val);
     snda->close();
 
     // Read metadata
@@ -229,7 +229,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     REQUIRE(snda->has_metadata("soma_encoding_version"));
     REQUIRE(snda->has_metadata("md"));
     auto mdval = snda->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     snda->close();

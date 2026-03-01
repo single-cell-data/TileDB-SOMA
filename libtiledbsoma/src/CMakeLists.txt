@@ -283,6 +283,11 @@ install(FILES
 )
 
 install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/datatype/datatype.h
+  DESTINATION "include/tiledbsoma/common/datatype"
+)
+
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/logger.h
   DESTINATION "include/tiledbsoma/common/logging"
 )

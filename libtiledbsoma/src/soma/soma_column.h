@@ -499,7 +499,7 @@ std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>() 
 
 template <>
 std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(
-    const SOMAContext& ctx, Array& array) const;
+    const SOMAContext& ctx, tiledb::Array& array) const;
 
 template <>
 std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(

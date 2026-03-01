@@ -13,12 +13,39 @@
 #include <regex>
 #include <thread>
 
+#include <tiledb/tiledb>
+
 #include <thread_pool/thread_pool.h>
 #include "../utils/common.h"
 #include "common/logging/impl/logger.h"
 #include "soma_context.h"
 
 namespace tiledbsoma {
+
+SOMAContext::SOMAContext()
+    : ctx_(std::make_shared<tiledb::Context>(tiledb::Config({})))
+    , thread_pool_mutex_() {
+}
+
+SOMAContext::SOMAContext(std::map<std::string, std::string> tiledb_config)
+    : ctx_(std::make_shared<tiledb::Context>(tiledb::Config(tiledb_config)))
+    , thread_pool_mutex_() {
+}
+
+bool SOMAContext::operator==(const SOMAContext& other) const {
+    return ctx_ == other.ctx_;
+}
+
+std::shared_ptr<tiledb::Context> SOMAContext::tiledb_ctx() const {
+    return ctx_;
+}
+
+std::map<std::string, std::string> SOMAContext::tiledb_config() const {
+    std::map<std::string, std::string> cfg;
+    for (auto& it : ctx_->config())
+        cfg[it.first] = it.second;
+    return cfg;
+}
 
 std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
     const std::lock_guard<std::mutex> lock(thread_pool_mutex_);

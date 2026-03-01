@@ -15,15 +15,24 @@
 #define SOMA_CONTEXT
 
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
-#include <tiledb/tiledb>
+
+#pragma region Forward declarations
+
+namespace tiledb {
+class Config;
+class Context;
+}  // namespace tiledb
 
 namespace tiledbsoma {
 class ThreadPool;
+}  // namespace tiledbsoma
 
-using namespace tiledb;
+#pragma endregion
 
+namespace tiledbsoma {
 class SOMAContext {
     // Controls concurrency level for SOMA compute thread pool. Defaults to host
     // CPU count.
@@ -33,28 +42,15 @@ class SOMAContext {
     //===================================================================
     //= public non-static
     //===================================================================
-    SOMAContext()
-        : ctx_(std::make_shared<Context>(Config({})))
-        , thread_pool_mutex_() {};
+    SOMAContext();
 
-    SOMAContext(std::map<std::string, std::string> tiledb_config)
-        : ctx_(std::make_shared<Context>(Config(tiledb_config)))
-        , thread_pool_mutex_() {};
+    SOMAContext(std::map<std::string, std::string> tiledb_config);
 
-    bool operator==(const SOMAContext& other) const {
-        return ctx_ == other.ctx_;
-    }
+    bool operator==(const SOMAContext& other) const;
 
-    std::shared_ptr<Context> tiledb_ctx() const {
-        return ctx_;
-    }
+    std::shared_ptr<tiledb::Context> tiledb_ctx() const;
 
-    std::map<std::string, std::string> tiledb_config() const {
-        std::map<std::string, std::string> cfg;
-        for (auto& it : ctx_->config())
-            cfg[it.first] = it.second;
-        return cfg;
-    }
+    std::map<std::string, std::string> tiledb_config() const;
 
     std::shared_ptr<ThreadPool>& thread_pool();
 
@@ -79,7 +75,7 @@ class SOMAContext {
     //===================================================================
 
     // TileDB context
-    std::shared_ptr<Context> ctx_;
+    std::shared_ptr<tiledb::Context> ctx_;
 
     // Threadpool
     std::shared_ptr<ThreadPool> thread_pool_ = nullptr;

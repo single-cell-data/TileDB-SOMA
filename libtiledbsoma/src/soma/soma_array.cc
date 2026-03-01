@@ -19,6 +19,8 @@
 #include "../utils/arrow_adapter.h"
 #include "../utils/util.h"
 #include "common/arrow/utils.h"
+#include "common/datatype/datatype.h"
+#include "common/datatype/utils.h"
 #include "common/logging/impl/logger.h"
 #include "common/query/managed_query.h"
 #include "coordinate_value_filters.h"
@@ -31,6 +33,7 @@
 
 namespace tiledbsoma {
 using namespace common::logging;
+using namespace common::type;
 
 //==================================================================
 // helper functions
@@ -78,7 +81,7 @@ std::map<std::string, MetadataValue> create_metadata_cache(tiledb::Array& array)
         uint32_t value_num;
         const void* value;
         array.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-        MetadataValue mdval(value_type, value_num, value);
+        MetadataValue mdval(as<DataTypeFormat::SOMA>(value_type), value_num, value);
         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
         metadata_cache.insert(mdpair);
     }
@@ -363,14 +366,14 @@ PlatformSchemaConfig SOMAArray::schema_config_options() const {
 }
 
 void SOMAArray::set_metadata(
-    const std::string& key, tiledb_datatype_t value_type, uint32_t value_num, const void* value, bool force) {
+    const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force) {
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
     if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
-    arr_->put_metadata(key, value_type, value_num, value);
+    arr_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
 
     MetadataValue mdval(value_type, value_num, value);
     std::pair<std::string, const MetadataValue> mdpair(key, mdval);

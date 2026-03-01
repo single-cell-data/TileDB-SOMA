@@ -344,7 +344,7 @@ TEST_CASE("SOMAArray: metadata", "[SOMAArray]") {
     auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx);
 
     int32_t val = 100;
-    soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
+    soma_array->set_metadata("md", common::DataType::INT32, 1, &val);
     soma_array->close();
 
     // Read metadata
@@ -354,7 +354,7 @@ TEST_CASE("SOMAArray: metadata", "[SOMAArray]") {
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
     REQUIRE(soma_array->has_metadata("md"));
     auto mdval = soma_array->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_array->close();

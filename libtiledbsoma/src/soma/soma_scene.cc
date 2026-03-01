@@ -15,8 +15,11 @@
 #include "soma_collection.h"
 #include "utils/common.h"
 
+#include "common/datatype/datatype.h"
+#include "common/datatype/utils.h"
+
 namespace tiledbsoma {
-using namespace tiledb;
+using namespace common::type;
 
 //===================================================================
 //= public static

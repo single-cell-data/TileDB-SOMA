@@ -19,6 +19,8 @@
 /** Defines whether the SOMAObject should be opened in read or write mode */
 enum class OpenMode { soma_read, soma_write, soma_delete };
 
+enum class ObjectType { INVALID, ARRAY, GROUP };
+
 /** Defines whether the result should be opened in row-major or column-major
  * order */
 enum class ResultOrder { automatic = 0, rowmajor, colmajor, unordered, global };

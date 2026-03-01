@@ -4,6 +4,7 @@
 
 #include "../utils/util.h"
 #include "common/logging/impl/logger.h"
+#include "enums.h"
 #include "soma_array.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"
@@ -157,24 +158,24 @@ void SOMAObject::check_encoding_version() {
     }
 };
 
-tiledb_object_t SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) {
-    const std::map<std::string, tiledb_object_t> typeMap = {
-        {"SOMAArray", tiledb_object_t::TILEDB_ARRAY},
-        {"SOMACollection", tiledb_object_t::TILEDB_GROUP},
-        {"SOMADataFrame", tiledb_object_t::TILEDB_ARRAY},
-        {"SOMADenseNDArray", tiledb_object_t::TILEDB_ARRAY},
-        {"SOMAExperiment", tiledb_object_t::TILEDB_GROUP},
-        {"SOMAGeometryDataFrame", tiledb_object_t::TILEDB_ARRAY},
-        {"SOMAGroup", tiledb_object_t::TILEDB_GROUP},
-        {"SOMAMeasurement", tiledb_object_t::TILEDB_GROUP},
-        {"SOMAMultiscaleImage", tiledb_object_t::TILEDB_GROUP},
-        {"SOMAPointCloudDataFrame", tiledb_object_t::TILEDB_ARRAY},
-        {"SOMAScene", tiledb_object_t::TILEDB_GROUP},
-        {"SOMASparseNDArray", tiledb_object_t::TILEDB_ARRAY},
+ObjectType SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) {
+    const std::map<std::string, ObjectType> typeMap = {
+        {"SOMAArray", ObjectType::ARRAY},
+        {"SOMACollection", ObjectType::GROUP},
+        {"SOMADataFrame", ObjectType::ARRAY},
+        {"SOMADenseNDArray", ObjectType::ARRAY},
+        {"SOMAExperiment", ObjectType::GROUP},
+        {"SOMAGeometryDataFrame", ObjectType::ARRAY},
+        {"SOMAGroup", ObjectType::GROUP},
+        {"SOMAMeasurement", ObjectType::GROUP},
+        {"SOMAMultiscaleImage", ObjectType::GROUP},
+        {"SOMAPointCloudDataFrame", ObjectType::ARRAY},
+        {"SOMAScene", ObjectType::GROUP},
+        {"SOMASparseNDArray", ObjectType::ARRAY},
     };
-    const std::map<std::string, tiledb_object_t>::const_iterator iTileDBType = typeMap.find(soma_type);
+    const std::map<std::string, ObjectType>::const_iterator iTileDBType = typeMap.find(soma_type);
     if (iTileDBType == typeMap.end())
-        return tiledb_object_t::TILEDB_INVALID;
+        return ObjectType::INVALID;
     return iTileDBType->second;
 };
 
