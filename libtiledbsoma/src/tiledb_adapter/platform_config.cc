@@ -527,7 +527,9 @@ ArraySchema create_dataframe_schema(
         if (index_columns.contains(SOMA_JOINID.data())) {
             columns.push_back(SOMADimension::create_soma_joinid(ctx, "SOMADataFrame", platform_config));
         } else {
-            columns.push_back(
+            // If 'soma_joinid' is missing add it as the first attribute
+            columns.emplace(
+                columns.begin(),
                 std::make_shared<SOMAAttribute>(tiledb::Attribute::create<int64_t>(
                     *ctx,
                     SOMA_JOINID.data(),
