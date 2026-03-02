@@ -129,10 +129,10 @@ TEST_CASE("SOMAGroup: basic") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri_main_group = "mem://main-group";
-    SOMAGroup::create(ctx, uri_main_group, "NONE");
+    SOMAGroup::create(ctx, uri_main_group, "NONE", {});
 
     std::string uri_sub_group = "mem://sub-group";
-    SOMAGroup::create(ctx, uri_sub_group, "NONE");
+    SOMAGroup::create(ctx, uri_sub_group, "NONE", {});
 
     auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx->tiledb_ctx());
 
@@ -170,7 +170,7 @@ TEST_CASE("SOMAGroup: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-group";
-    SOMAGroup::create(ctx, uri, "NONE", TimestampRange(0, 2));
+    SOMAGroup::create(ctx, uri, "NONE", {}, TimestampRange(0, 2));
     auto soma_group = SOMAGroup::open(OpenMode::soma_write, uri, ctx, "metadata", TimestampRange(1, 1));
     int32_t val = 100;
     soma_group->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -217,11 +217,11 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(soma_group->metadata_num() == 2);
 }
 
-TEST_CASE("SOMAGroup: dataset_type") {
+TEST_CASE("SOMAExperiment: dataset_type") {
     auto ctx = std::make_shared<SOMAContext>();
-    SOMAGroup::create(ctx, "mem://experiment", "SOMAExperiment");
-    SOMAGroup::create(ctx, "mem://collection", "SOMACollection");
-    SOMAGroup::create(ctx, "mem://measurement", "SOMAMeasurement");
+    SOMAExperiment::create("mem://experiment", ctx);
+    SOMACollection::create("mem://collection", ctx);
+    SOMAMeasurement::create("mem://measurement", ctx);
 
     auto experiment = SOMAGroup::open(OpenMode::soma_read, "mem://experiment", ctx);
     auto collection = SOMAGroup::open(OpenMode::soma_read, "mem://collection", ctx);

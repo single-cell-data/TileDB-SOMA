@@ -25,33 +25,9 @@ using namespace tiledb;
 //===================================================================
 
 void SOMAMeasurement::create(
-    std::string_view uri,
-    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
-    const common::arrow::ArrowTable& index_columns,
-    std::shared_ptr<SOMAContext> ctx,
-    PlatformConfig platform_config,
-    std::optional<TimestampRange> timestamp) {
+    std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        std::filesystem::path measurement_uri(uri);
-
-        SOMAGroup::create(ctx, measurement_uri.string(), "SOMAMeasurement", timestamp);
-        SOMADataFrame::create(
-            (measurement_uri / "var").string(), schema, index_columns, ctx, platform_config, timestamp);
-        SOMACollection::create((measurement_uri / "X").string(), ctx, timestamp);
-        SOMACollection::create((measurement_uri / "obsm").string(), ctx, timestamp);
-        SOMACollection::create((measurement_uri / "obsp").string(), ctx, timestamp);
-        SOMACollection::create((measurement_uri / "varm").string(), ctx, timestamp);
-        SOMACollection::create((measurement_uri / "varp").string(), ctx, timestamp);
-
-        auto name = std::string(std::filesystem::path(uri).filename());
-        auto group = SOMAGroup::open(OpenMode::soma_write, uri, ctx, name, timestamp);
-        group->set((measurement_uri / "var").string(), URIType::absolute, "var", "SOMADataFrame");
-        group->set((measurement_uri / "X").string(), URIType::absolute, "X", "SOMACollection");
-        group->set((measurement_uri / "obsm").string(), URIType::absolute, "obsm", "SOMACollection");
-        group->set((measurement_uri / "obsp").string(), URIType::absolute, "obsp", "SOMACollection");
-        group->set((measurement_uri / "varm").string(), URIType::absolute, "varm", "SOMACollection");
-        group->set((measurement_uri / "varp").string(), URIType::absolute, "varp", "SOMACollection");
-        group->close();
+        SOMAGroup::create(ctx, uri, "SOMAMeasurement", {}, timestamp);
     } catch (tiledb::TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

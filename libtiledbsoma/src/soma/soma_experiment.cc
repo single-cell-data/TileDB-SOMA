@@ -24,25 +24,10 @@ using namespace tiledb;
 //===================================================================
 
 void SOMAExperiment::create(
-    std::string_view uri,
-    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
-    const common::arrow::ArrowTable& index_columns,
-    std::shared_ptr<SOMAContext> ctx,
-    PlatformConfig platform_config,
-    std::optional<TimestampRange> timestamp) {
+    std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        std::filesystem::path experiment_uri(uri);
-
-        SOMAGroup::create(ctx, experiment_uri.string(), "SOMAExperiment", timestamp);
-        SOMADataFrame::create(
-            (experiment_uri / "obs").string(), schema, index_columns, ctx, platform_config, timestamp);
-        SOMACollection::create((experiment_uri / "ms").string(), ctx, timestamp);
-
-        auto name = std::string(std::filesystem::path(uri).filename());
-        auto group = SOMAGroup::open(OpenMode::soma_write, experiment_uri.string(), ctx, name, timestamp);
-        group->set((experiment_uri / "obs").string(), URIType::absolute, "obs", "SOMADataFrame");
-        group->set((experiment_uri / "ms").string(), URIType::absolute, "ms", "SOMACollection");
-        group->close();
+        // Root SOMA objects include a `dataset_type` entry to allow the TileDB Cloud UI to detect that they are SOMA datasets.
+        SOMAGroup::create(ctx, uri, "SOMAExperiment", {{"dataset_type", "soma"}}, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

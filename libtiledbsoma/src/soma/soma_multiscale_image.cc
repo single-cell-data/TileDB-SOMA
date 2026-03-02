@@ -27,26 +27,13 @@ void SOMAMultiscaleImage::create(
     const SOMACoordinateSpace& coordinate_space,
     std::optional<TimestampRange> timestamp) {
     try {
-        std::filesystem::path image_uri(uri);
-        auto group = SOMAGroup::create(ctx, image_uri.string(), "SOMAMultiscaleImage", timestamp);
-
-        // Set spatial-encoding metadata.
-        group->set_metadata(
-            SPATIAL_ENCODING_VERSION_KEY,
-            TILEDB_STRING_UTF8,
-            static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
-            SPATIAL_ENCODING_VERSION_VAL.c_str(),
-            true);
-
-        // Set coordinate space metadata.
-        const auto coord_space_metadata = coordinate_space.to_string();
-        group->set_metadata(
-            SOMA_COORDINATE_SPACE_KEY,
-            TILEDB_STRING_UTF8,
-            static_cast<uint32_t>(coord_space_metadata.size()),
-            coord_space_metadata.c_str(),
-            true);
-
+        SOMAGroup::create(
+            ctx,
+            uri,
+            "SOMAMultiscaleImage",
+            {{SPATIAL_ENCODING_VERSION_KEY, SPATIAL_ENCODING_VERSION_VAL},
+             {SOMA_COORDINATE_SPACE_KEY, coordinate_space.to_string()}},
+            timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

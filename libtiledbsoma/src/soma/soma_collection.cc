@@ -20,7 +20,7 @@ using namespace tiledb;
 void SOMACollection::create(
     std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        SOMAGroup::create(ctx, uri, "SOMACollection", timestamp);
+        SOMAGroup::create(ctx, uri, "SOMACollection", {}, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

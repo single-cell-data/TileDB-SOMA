@@ -27,28 +27,13 @@ void SOMAScene::create(
     std::shared_ptr<SOMAContext> ctx,
     const std::optional<SOMACoordinateSpace>& coordinate_space,
     std::optional<TimestampRange> timestamp) {
+    std::unordered_map<std::string, std::string> schema_metadata{
+        {SPATIAL_ENCODING_VERSION_KEY, SPATIAL_ENCODING_VERSION_VAL}};
+    if (coordinate_space.has_value()) {
+        schema_metadata[SOMA_COORDINATE_SPACE_KEY] = coordinate_space->to_string();
+    }
     try {
-        std::filesystem::path scene_uri(uri);
-        auto group = SOMAGroup::create(ctx, scene_uri.string(), "SOMAScene", timestamp);
-
-        group->set_metadata(
-            SPATIAL_ENCODING_VERSION_KEY,
-            TILEDB_STRING_UTF8,
-            static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
-            SPATIAL_ENCODING_VERSION_VAL.c_str(),
-            true);
-
-        if (coordinate_space.has_value()) {
-            const auto coord_space_metadata = coordinate_space->to_string();
-            group->set_metadata(
-                SOMA_COORDINATE_SPACE_KEY,
-                TILEDB_STRING_UTF8,
-                static_cast<uint32_t>(coord_space_metadata.size()),
-                coord_space_metadata.c_str(),
-                true);
-        }
-
-        group->close();
+        SOMAGroup::create(ctx, uri, "SOMAScene", schema_metadata, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

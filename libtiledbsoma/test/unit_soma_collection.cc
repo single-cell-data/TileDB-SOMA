@@ -205,20 +205,10 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
 
     SOMACollection::create(base_uri, ctx);
 
-    std::vector<helper::DimInfo> dim_infos(
-        {{.name = dim_name,
-          .tiledb_datatype = tiledb_datatype,
-          .dim_max = DIM_MAX,
-          .string_lo = "N/A",
-          .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
-
     std::map<std::string, SOMAGroupEntry> expected_map{{"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx);
-    auto soma_experiment = soma_collection->add_new_experiment(
-        "experiment", sub_uri, URIType::absolute, ctx, schema, index_columns);
+    auto soma_experiment = soma_collection->add_new_experiment("experiment", sub_uri, URIType::absolute, ctx);
 
     REQUIRE(soma_collection->members_map() == expected_map);
     REQUIRE(soma_experiment->uri() == sub_uri);
@@ -243,20 +233,10 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
 
     SOMACollection::create(base_uri, ctx);
 
-    std::vector<helper::DimInfo> dim_infos(
-        {{.name = dim_name,
-          .tiledb_datatype = tiledb_datatype,
-          .dim_max = DIM_MAX,
-          .string_lo = "N/A",
-          .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
-
     std::map<std::string, SOMAGroupEntry> expected_map{{"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx);
-    auto soma_measurement = soma_collection->add_new_measurement(
-        "measurement", sub_uri, URIType::absolute, ctx, schema, index_columns);
+    auto soma_measurement = soma_collection->add_new_measurement("measurement", sub_uri, URIType::absolute, ctx);
 
     REQUIRE(soma_collection->members_map() == expected_map);
     REQUIRE(soma_measurement->uri() == sub_uri);
@@ -327,21 +307,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-experiment";
-    std::string dim_name = "soma_dim_0";
-    std::string attr_name = "soma_data";
-    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-    std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(tiledb_datatype);
 
-    std::vector<helper::DimInfo> dim_infos(
-        {{.name = dim_name,
-          .tiledb_datatype = tiledb_datatype,
-          .dim_max = DIM_MAX,
-          .string_lo = "N/A",
-          .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
-
-    SOMAExperiment::create(uri, schema, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2));
+    SOMAExperiment::create(uri, ctx, TimestampRange(0, 2));
 
     auto soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
@@ -397,21 +364,8 @@ TEST_CASE("SOMAExperiment: metadata") {
 TEST_CASE("SOMAMeasurement: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-measurement";
-    std::string dim_name = "soma_dim_0";
-    std::string attr_name = "soma_data";
-    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-    std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(tiledb_datatype);
 
-    std::vector<helper::DimInfo> dim_infos(
-        {{.name = dim_name,
-          .tiledb_datatype = tiledb_datatype,
-          .dim_max = DIM_MAX,
-          .string_lo = "N/A",
-          .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
-
-    SOMAMeasurement::create(uri, schema, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2));
+    SOMAMeasurement::create(uri, ctx, TimestampRange(0, 2));
 
     auto soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 

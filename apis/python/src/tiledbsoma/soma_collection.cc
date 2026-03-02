@@ -48,7 +48,20 @@ void load_soma_collection(py::module& m) {
             "mode"_a,
             "context"_a,
             "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>());
+            py::call_guard<py::gil_scoped_release>())
+        .def_static(
+            "create",
+            [](std::shared_ptr<SOMAContext> ctx, std::string_view uri, std::optional<TimestampRange> timestamp) {
+                try {
+                    SOMACollection::create(uri, ctx, timestamp);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            py::kw_only(),
+            "ctx"_a,
+            "uri"_a,
+            "timestamp"_a = py::none());
 
     py::class_<SOMAExperiment, SOMACollectionBase>(m, "SOMAExperiment")
         .def_static(
@@ -59,7 +72,20 @@ void load_soma_collection(py::module& m) {
             "mode"_a,
             "context"_a,
             "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>());
+            py::call_guard<py::gil_scoped_release>())
+        .def_static(
+            "create",
+            [](std::shared_ptr<SOMAContext> ctx, std::string_view uri, std::optional<TimestampRange> timestamp) {
+                try {
+                    SOMAExperiment::create(uri, ctx, timestamp);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            py::kw_only(),
+            "ctx"_a,
+            "uri"_a,
+            "timestamp"_a = py::none());
 
     py::class_<SOMAMeasurement, SOMACollectionBase>(m, "SOMAMeasurement")
         .def_static(
@@ -70,7 +96,20 @@ void load_soma_collection(py::module& m) {
             "mode"_a,
             "context"_a,
             "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>());
+            py::call_guard<py::gil_scoped_release>())
+        .def_static(
+            "create",
+            [](std::shared_ptr<SOMAContext> ctx, std::string_view uri, std::optional<TimestampRange> timestamp) {
+                try {
+                    SOMAMeasurement::create(uri, ctx, timestamp);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            py::kw_only(),
+            "ctx"_a,
+            "uri"_a,
+            "timestamp"_a = py::none());
 
     py::class_<SOMAScene, SOMACollectionBase>(m, "SOMAScene")
         .def_static(
