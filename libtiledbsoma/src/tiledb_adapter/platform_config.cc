@@ -443,8 +443,30 @@ ArraySchema create_dataframe_schema(
         throw std::range_error("At least one non-index column must be provided");
     }
 
+    if (arrow_schema->n_children) {
+        for (const auto& name : index_column_names) {
+            auto column_occurrences = std::count_if(
+                arrow_schema->children,
+                arrow_schema->children + arrow_schema->n_children,
+                [&](const auto child_schema) { return name == child_schema->name; });
+
+            if (column_occurrences == 0) {
+                // 'soma_joinid` will be added in the schema by default if missing
+                if (name != SOMA_JOINID) {
+                    throw std::range_error(fmt::format("Missing index column '{}' from schema", name));
+                }
+            } else if (column_occurrences != 1) {
+                throw std::range_error(fmt::format("Multiple columns found in schema for index column '{}'", name));
+            }
+        }
+    }
+
     if (index_column_names.size() != index_column_domains.size()) {
-        throw std::range_error("Size mismatch between list of index column names and domains");
+        throw std::range_error(
+            fmt::format(
+                "Size mismatch between list of index column names and domains; {} != {}",
+                index_column_names.size(),
+                index_column_domains.size()));
     }
 
     std::unordered_map<std::string, DomainRange> index_columns;
@@ -518,6 +540,7 @@ ArraySchema create_dataframe_schema(
     // We generate the additional schema metadata here to ensure that the
     // serialized column order matches the expected schema order
     for (const auto& column_name : index_column_names) {
+        // If a column is specified as `index column` but it isn't present in the schema the following call is expected to throw
         const auto column = util::find_column_by_name(columns, column_name);
 
         if (column->tiledb_dimensions().has_value()) {
@@ -596,9 +619,19 @@ ArraySchema create_dataframe_schema(
     for (const auto& column : columns | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
         std::visit(
             [&](auto&& domain) {
-                using T = std::decay_t<decltype(domain)>::value_type::first_type;
+                using T = std::decay_t<decltype(domain)>;
 
-                column->set_current_domain_slot(rect, {{decode_domain.template operator()<T>(column, domain)}});
+                if constexpr (std::is_same_v<T, std::monostate>) {
+                    throw std::runtime_error(
+                        fmt::format(
+                            "Index column '{}' has no domain attached. This can be caused by the column not being "
+                            "present in the schema provided.",
+                            column->name()));
+                } else {
+                    using E = std::decay_t<decltype(domain)>::value_type::first_type;
+
+                    column->set_current_domain_slot(rect, {{decode_domain.template operator()<E>(column, domain)}});
+                }
             },
             index_columns[column->name()]);
     }

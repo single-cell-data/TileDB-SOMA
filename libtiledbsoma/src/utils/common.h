@@ -68,6 +68,7 @@ using TimestampRange = std::pair<uint64_t, uint64_t>;
 template <typename T>
 using DomainRangeEntry = std::optional<std::pair<T, T>>;
 using DomainRange = std::variant<
+    std::monostate,
     DomainRangeEntry<std::string>,
     DomainRangeEntry<int64_t>,
     DomainRangeEntry<uint64_t>,

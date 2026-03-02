@@ -233,11 +233,19 @@ void createSchemaForDataFrame(
             continue;
         }
 
+        bool column_found = false;
         for (int64_t j = 0; j < schema->n_children; ++j) {
             if (schema->children[j]->name == column) {
                 domains.emplace_back(encode_domain(schema->children[j]->format, index_column_domains[i]));
+                column_found = true;
                 break;
             }
+        }
+
+        if (!column_found) {
+            // If the index column is missing from schema just append an empty pair as domain.
+            // The C++ layer is responsible for catching the missing index column from schema and report back the proper error.
+            domains.emplace_back(tdbs::DomainRange());
         }
     }
 

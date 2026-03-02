@@ -77,11 +77,17 @@ void load_soma_dataframe(py::module& m) {
                         continue;
                     }
 
+                    bool index_found = false;
                     for (int64_t j = 0; j < schema.n_children; ++j) {
                         if (schema.children[j]->name == index_column_names[i]) {
                             domain.emplace_back(encode_domain(schema.children[j]->format, index_column_domains[i]));
+                            index_found = true;
                             break;
                         }
+                    }
+
+                    if (!index_found) {
+                        domain.emplace_back(DomainRange());
                     }
                 }
 

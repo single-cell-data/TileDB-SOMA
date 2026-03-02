@@ -5,7 +5,7 @@ test_that("Basic mechanics", {
 
   expect_error(
     SOMADataFrameCreate(uri, asch, index_column_names = "qux", domain = list(qux = NULL)),
-    "Index column 'qux' missing"
+    "Missing index column 'qux' from schema"
   )
   if (dir.exists(uri)) {
     unlink(uri, recursive = TRUE)
@@ -198,7 +198,7 @@ test_that("Basic mechanics with default index_column_names", {
 
   expect_error(
     SOMADataFrameCreate(tempfile(), schema = asch, index_column_names = "qux", domain = list(qux = NULL)),
-    regexp = "Index column 'qux' missing"
+    regexp = "Missing index column 'qux' from schema"
   )
 
   if (dir.exists(uri)) {
