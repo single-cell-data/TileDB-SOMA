@@ -126,6 +126,134 @@ void createSchemaFromArrow(
 }
 
 // [[Rcpp::export]]
+void createSchemaForDataFrame(
+    const std::string& uri,
+    naxpSchema nasp,
+    Rcpp::CharacterVector index_column_names,
+    Rcpp::List index_column_domains,
+    Rcpp::List pclst,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::Nullable<Rcpp::DatetimeVector> tsvec) {
+    nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
+    auto schema = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
+    sp.move(schema.get());
+
+    tdbs::PlatformConfig pltcfg;
+    pltcfg.dataframe_dim_zstd_level = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
+    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
+    pltcfg.dense_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["dense_nd_array_dim_zstd_level"]);
+    pltcfg.write_X_chunked = Rcpp::as<bool>(pclst["write_X_chunked"]);
+    pltcfg.goal_chunk_nnz = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
+    pltcfg.capacity = Rcpp::as<double>(pclst["capacity"]);
+    pltcfg.offsets_filters = Rcpp::as<std::string>(pclst["offsets_filters"]);
+    pltcfg.validity_filters = Rcpp::as<std::string>(pclst["validity_filters"]);
+    pltcfg.allows_duplicates = Rcpp::as<bool>(pclst["allows_duplicates"]);
+    pltcfg.cell_order = Rcpp::as<std::string>(pclst["cell_order"]);
+    pltcfg.tile_order = Rcpp::as<std::string>(pclst["tile_order"]);
+    pltcfg.attrs = Rcpp::as<std::string>(pclst["attrs"]);
+    pltcfg.dims = Rcpp::as<std::string>(pclst["dims"]);
+    pltcfg.override_naming_restriction = Rcpp::as<bool>(pclst["override_naming_restriction"]);
+
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext
+    std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
+
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
+
+    auto encode_domain = [&](std::string_view datatype, Rcpp::RObject domain) -> tdbs::DomainRange {
+        auto encode = [&]<typename DomainType, typename ElementType>() -> tdbs::DomainRange {
+            if (domain.isNULL()) {
+                return std::optional<std::pair<DomainType, DomainType>>();
+            }
+
+            auto dom = Rcpp::as<std::vector<ElementType>>(domain);
+
+            if constexpr (std::is_integral_v<DomainType> || std::is_floating_point_v<DomainType>) {
+                if (domain.isObject()) {
+                    return std::make_optional<std::pair<DomainType, DomainType>>(std::make_pair<DomainType, DomainType>(
+                        static_cast<DomainType>(*reinterpret_cast<int64_t*>(&dom[0])),
+                        static_cast<DomainType>(*reinterpret_cast<int64_t*>(&dom[1]))));
+                } else {
+                    return std::make_optional<std::pair<DomainType, DomainType>>(std::make_pair<DomainType, DomainType>(
+                        static_cast<DomainType>(dom[0]), static_cast<DomainType>(dom[1])));
+                }
+            } else {
+                return std::make_optional<std::pair<DomainType, DomainType>>(std::make_pair<DomainType, DomainType>(
+                    static_cast<DomainType>(dom[0]), static_cast<DomainType>(dom[1])));
+            }
+        };
+
+        switch (tdbs::common::arrow::to_tiledb_format(datatype)) {
+            case TILEDB_CHAR:
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_BLOB:
+            case TILEDB_GEOM_WKT:
+            case TILEDB_GEOM_WKB:
+                return encode.template operator()<std::string, std::string>();
+            case TILEDB_INT8:
+                return encode.template operator()<int8_t, double_t>();
+            case TILEDB_UINT8:
+                return encode.template operator()<uint8_t, double_t>();
+            case TILEDB_INT16:
+                return encode.template operator()<int16_t, double_t>();
+            case TILEDB_UINT16:
+                return encode.template operator()<uint16_t, double_t>();
+            case TILEDB_INT32:
+                return encode.template operator()<int32_t, double_t>();
+            case TILEDB_UINT32:
+                return encode.template operator()<uint32_t, double_t>();
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_INT64:
+                return encode.template operator()<int64_t, double_t>();
+            case TILEDB_UINT64:
+                return encode.template operator()<uint64_t, double_t>();
+            case TILEDB_FLOAT32:
+                return encode.template operator()<float_t, double_t>();
+            case TILEDB_FLOAT64:
+                return encode.template operator()<double_t, double_t>();
+            default:
+                throw std::runtime_error(
+                    "[encode_domain] Unsupported type " +
+                    tiledb::impl::type_to_str(tdbs::common::arrow::to_tiledb_format(datatype)));
+        }
+    };
+
+    std::vector<tdbs::DomainRange> domains;
+    for (size_t i = 0; i < index_column_names.size(); ++i) {
+        std::string column = Rcpp::as<std::string>(index_column_names[i]);
+        if (column == tdbs::SOMA_JOINID) {
+            domains.emplace_back(
+                encode_domain(tdbs::common::arrow::to_arrow_format(TILEDB_INT64), index_column_domains[i]));
+            continue;
+        }
+
+        bool column_found = false;
+        for (int64_t j = 0; j < schema->n_children; ++j) {
+            if (schema->children[j]->name == column) {
+                domains.emplace_back(encode_domain(schema->children[j]->format, index_column_domains[i]));
+                column_found = true;
+                break;
+            }
+        }
+
+        if (!column_found) {
+            // If the index column is missing from schema just append an empty pair as domain.
+            // The C++ layer is responsible for catching the missing index column from schema and report back the proper error.
+            domains.emplace_back(tdbs::DomainRange());
+        }
+    }
+
+    tdbs::SOMADataFrame::create(
+        uri, std::move(schema), Rcpp::as<std::vector<std::string>>(index_column_names), domains, sctx, pltcfg, tsrng);
+}
+
+// [[Rcpp::export]]
 void createSchemaForNDArray(
     const std::string& uri,
     const std::string& format,

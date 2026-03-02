@@ -14,6 +14,7 @@
 #ifndef SOMA_PLATFORM_CONFIG_H
 #define SOMA_PLATFORM_CONFIG_H
 
+#include <any>
 #include <cstdint>
 #include <optional>
 #include <span>
@@ -21,6 +22,8 @@
 
 #include <tiledb/tiledb>
 
+#include "../utils/common.h"
+#include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
 
 namespace tiledbsoma {
@@ -152,6 +155,11 @@ struct PlatformConfig {
     /* Set whether the array should be consolidated and vacuumed after writing
      */
     bool consolidate_and_vacuum = false;
+
+    /**
+     * Set whether to allow arbitrary `soma_` prefixed columns
+     */
+    bool override_naming_restriction = false;
 };
 
 /** TileDB specific configuration options that can be read back from a single
@@ -396,6 +404,14 @@ ArraySchema create_nd_array_schema(
     PlatformConfig platform_config,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
+ArraySchema create_dataframe_schema(
+    std::string_view soma_type,
+    ArrowSchema* arrow_schema,
+    std::span<const std::string> index_column_names,
+    std::span<const DomainRange> index_column_domains,
+    std::shared_ptr<tiledb::Context> ctx,
+    PlatformConfig platform_config,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 }  // namespace utils
 
 }  // namespace tiledbsoma

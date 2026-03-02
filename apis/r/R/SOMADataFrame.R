@@ -66,73 +66,44 @@ SOMADataFrame <- R6::R6Class(
         )
       }
 
-      schema <- private$validate_schema(schema, index_column_names)
-
-      if (is.null(domain)) {
+      soma_domain <- domain;
+      if (is.null(soma_domain)) {
         .deprecate(
           when = "2.1.0",
           what = "create(domain = 'must be a named list')",
         )
+
+        soma_domain <- vector(mode = 'list', length = length(index_column_names))
+        names(soma_domain) <- index_column_names
       }
-      if (!(is.null(domain) || .is_domain(domain, index_column_names))) {
+      if (!(is.null(soma_domain) || .is_domain(soma_domain, index_column_names))) {
         stop(
           "domain must be NULL or a named list, with values being 2-element vectors or NULL"
         )
-      }
-
-      attr_column_names <- setdiff(schema$names, index_column_names)
-      stopifnot(
-        "At least one non-index column must be defined in the schema" = length(
-          attr_column_names
-        ) >
-          0
-      )
-
-      if ("soma_joinid" %in% index_column_names && !is.null(domain)) {
-        lower_bound <- domain[["soma_joinid"]][1]
-        upper_bound <- domain[["soma_joinid"]][2]
-        stopifnot(
-          "The lower bound for soma_joinid domain must be >= 0" = lower_bound >=
-            0,
-          "The upper bound for soma_joinid domain must be >= 0" = upper_bound >=
-            0,
-          "The upper bound for soma_joinid domain must be >= the lower bound" = upper_bound >=
-            lower_bound
-        )
+      } else {
+        # We cast all integer values to int64
+        for (name in index_column_names) {
+          if (is.integer(soma_domain[[name]])) {
+            soma_domain[[name]] <- as.integer64(soma_domain[[name]])
+          }
+        }
       }
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
-
-      # We currently pass domain and extent values in an arrow table (i.e. data.frame alike)
-      # where each dimension is one column (of the same type as in the schema followed by:
-      # * Before the new shape feature: three values for the domain pair and the extent;
-      # * After the new shape feature: five values for the maxdomain pair, extent, and domain.
-      dom_ext_tbl <- get_domain_and_extent_dataframe(
-        schema,
-        ind_col_names = index_column_names,
-        domain = domain,
-        tdco = tiledb_create_options
-      )
-
-      ## we transfer to the arrow table via a pair of array and schema pointers
-      dnaap <- nanoarrow::nanoarrow_allocate_array()
-      dnasp <- nanoarrow::nanoarrow_allocate_schema()
-      arrow::as_record_batch(dom_ext_tbl)$export_to_c(dnaap, dnasp)
+      tiledb_create_options$set("override_naming_restriction", getOption("tiledbsoma.write_soma.internal", default = FALSE))
 
       ## we need a schema pointer to transfer the schema information
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
 
       soma_debug("[SOMADataFrame$create] about to create schema from arrow")
-      createSchemaFromArrow(
+      createSchemaForDataFrame(
         uri = self$uri,
         nasp = nasp,
-        nadimap = dnaap,
-        nadimsp = dnasp,
-        sparse = TRUE,
-        datatype = "SOMADataFrame",
+        index_column_names = index_column_names,
+        index_column_domains = soma_domain,
         pclst = tiledb_create_options$to_list(FALSE),
         ctxxp = private$.context$handle,
         tsvec = self$.tiledb_timestamp_range

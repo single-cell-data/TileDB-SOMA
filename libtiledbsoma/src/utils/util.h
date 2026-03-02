@@ -98,7 +98,6 @@ std::string get_enmr_label(ArrowSchema* index_schema, ArrowSchema* value_schema)
  */
 Enumeration get_enumeration(
     std::shared_ptr<Context> ctx_, std::shared_ptr<Array> array_, ArrowSchema* index_schema, ArrowSchema* value_schema);
-
 }  // namespace tiledbsoma::util
 
 #endif

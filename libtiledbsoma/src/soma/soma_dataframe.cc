@@ -14,8 +14,14 @@
 #include "soma_dataframe.h"
 
 #include "../utils/arrow_adapter.h"
+#include "../utils/common.h"
 #include "common/logging/impl/logger.h"
+#include "soma_attribute.h"
 #include "soma_coordinates.h"
+#include "soma_dimension.h"
+
+#include <algorithm>
+#include <ranges>
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -34,6 +40,26 @@ void SOMADataFrame::create(
     std::optional<TimestampRange> timestamp) {
     auto [tiledb_schema, soma_schema_extension] = ArrowAdapter::tiledb_schema_from_arrow_schema(
         ctx->tiledb_ctx(), schema, index_columns, std::nullopt, "SOMADataFrame", true, platform_config, timestamp);
+
+    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", std::nullopt, timestamp);
+}
+
+void SOMADataFrame::create(
+    std::string_view uri,
+    const common::arrow::managed_unique_ptr<ArrowSchema>& schema,
+    std::span<const std::string> index_column_names,
+    std::span<const DomainRange> index_column_domains,
+    std::shared_ptr<SOMAContext> ctx,
+    PlatformConfig platform_config,
+    std::optional<TimestampRange> timestamp) {
+    tiledb::ArraySchema tiledb_schema = utils::create_dataframe_schema(
+        "SOMADataFrame",
+        schema.get(),
+        index_column_names,
+        index_column_domains,
+        ctx->tiledb_ctx(),
+        platform_config,
+        timestamp);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", std::nullopt, timestamp);
 }

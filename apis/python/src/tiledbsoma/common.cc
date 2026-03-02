@@ -17,6 +17,53 @@ using namespace pybind11::literals;  // to bring in the `_a` literal
 
 namespace tiledbsoma {
 
+DomainRange encode_domain(std::string_view format, py::object domain) {
+    auto encode_element = [&]<typename T>() -> DomainRange {
+        if (domain.is_none()) {
+            return std::optional<std::pair<T, T>>();
+        }
+        return std::make_optional<std::pair<T, T>>(domain.cast<std::pair<T, T>>());
+    };
+
+    switch (tiledbsoma::common::arrow::to_tiledb_format(format)) {
+        case TILEDB_UINT8:
+            return encode_element.template operator()<uint8_t>();
+        case TILEDB_UINT16:
+            return encode_element.template operator()<uint16_t>();
+        case TILEDB_UINT32:
+            return encode_element.template operator()<uint32_t>();
+        case TILEDB_UINT64:
+            return encode_element.template operator()<uint64_t>();
+        case TILEDB_INT8:
+            return encode_element.template operator()<int8_t>();
+        case TILEDB_INT16:
+            return encode_element.template operator()<int16_t>();
+        case TILEDB_INT32:
+            return encode_element.template operator()<int32_t>();
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_INT64:
+            return encode_element.template operator()<int64_t>();
+        case TILEDB_FLOAT32:
+            return encode_element.template operator()<float_t>();
+        case TILEDB_FLOAT64:
+            return encode_element.template operator()<double_t>();
+        case TILEDB_CHAR:
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKT:
+        case TILEDB_GEOM_WKB:
+            return encode_element.template operator()<std::string>();
+        default:
+            throw py::type_error(
+                "[encode_domain] Unsupported type " +
+                tiledb::impl::type_to_str(tiledbsoma::common::arrow::to_tiledb_format(format)));
+    }
+}
+
 std::unordered_map<tiledb_datatype_t, std::string> _tdb_to_np_name_dtype = {
     {TILEDB_INT32, "int32"},
     {TILEDB_INT64, "int64"},

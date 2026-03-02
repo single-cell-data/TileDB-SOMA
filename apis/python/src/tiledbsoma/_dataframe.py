@@ -22,7 +22,7 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-from . import _arrow_types, _util
+from . import _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._coordinate_selection import CoordinateValueFilters
@@ -208,106 +208,24 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        schema = _canonicalize_schema(schema, index_column_names)
+        _util.check_type("schema", schema, (pa.Schema,))
 
-        # SOMA-to-core mappings:
-        #
-        # Before the current-domain feature was enabled (possible after core 2.25):
-        #
-        # * SOMA domain <-> core domain, AKA "max domain" which is a name we'll use for clarity
-        # * core current domain did not exist
-        #
-        # After the current-domain feature was enabled:
-        #
-        # * SOMA max_domain <-> core domain
-        # * SOMA domain <-> core current domain
-        #
-        # As far as the user is concerned, the SOMA-level domain is the only
-        # thing they see and care about. Before 2.25 support, it was immutable
-        # (since it was implemented by core domain). After 2.25 support, it is
-        # mutable/up-resizeable (since it is implemented by core current domain).
-
-        # At this point shift from API terminology "domain" to specifying a soma_ or core_
-        # prefix for these variables. This is crucial to avoid developer confusion.
-        soma_domain = domain
-        domain = None
-
-        if soma_domain is None:
+        soma_domain: list[tuple[Any, Any] | None] = []
+        if domain is None:
             warnings.warn(
                 "Setting ``domain=None`` is deprecated. Please specify the desired domain for the dataframe.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            soma_domain = tuple(None for _ in index_column_names)
+            soma_domain = [None for _ in index_column_names]
         else:
-            ndom = len(soma_domain)
-            nidx = len(index_column_names)
-            if ndom != nidx:
+            if len(index_column_names) != len(domain):
                 raise ValueError(
-                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}",
+                    f"if domain is specified, it must have the same length as index_column_names; got {len(domain)} != {len(index_column_names)}",
                 )
 
-        index_column_schema = []
-        index_column_data = {}
-
-        for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
-            pa_field = schema.field(index_column_name)
-            dtype = _arrow_types.tiledb_type_from_arrow_type(pa_field.type, is_indexed_column=True)
-
-            (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain,
-                False,
-                index_column_name,
-                pa_field.type,
-                dtype,
-            )
-            (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None,
-                True,
-                index_column_name,
-                pa_field.type,
-                dtype,
-            )
-
-            extent = _find_extent_for_domain(
-                index_column_name,
-                TileDBCreateOptions.from_platform_config(platform_config),
-                dtype,
-                slot_core_max_domain,
-            )
-
-            # Necessary to avoid core array-creation error "Reduce domain max by
-            # 1 tile extent to allow for expansion."
-            slot_core_current_domain = _revise_domain_for_extent(slot_core_current_domain, extent, saturated_cd)
-            slot_core_max_domain = _revise_domain_for_extent(slot_core_max_domain, extent, saturated_md)
-
-            if index_column_name == "soma_joinid":
-                lower = slot_core_current_domain[0]
-                upper = slot_core_current_domain[1]
-                if lower < 0 or upper < 0 or upper < lower:
-                    raise ValueError(
-                        f"domain for soma_joinid must be non-negative with lower <= upper; got ({lower}, {upper})",
-                    )
-
-            # Here is our Arrow data API for communicating schema info between
-            # Python/R and C++ libtiledbsoma:
-            #
-            # [0] core max domain lo
-            # [1] core max domain hi
-            # [2] core extent parameter
-            # If present, these next two signal to use the current-domain feature:
-            # [3] core current domain lo
-            # [4] core current domain hi
-
-            index_column_schema.append(pa_field)
-
-            index_column_data[pa_field.name] = [
-                *slot_core_max_domain,
-                extent,
-                *slot_core_current_domain,
-            ]
-
-        index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
+            for index_column_name, slot_soma_domain in zip(index_column_names, domain):
+                soma_domain.append(_cast_domain_to_cpp_type(slot_soma_domain, schema, index_column_name))
 
         plt_cfg = build_clib_platform_config(platform_config)
         context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
@@ -316,7 +234,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             clib.SOMADataFrame.create(
                 uri,
                 schema=schema,
-                index_column_info=index_column_info,
+                index_column_names=index_column_names,
+                index_column_domains=soma_domain,
                 ctx=context._handle,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
@@ -1093,6 +1012,24 @@ def _fill_out_slot_soma_domain(
         raise TypeError(f"Unsupported dtype {dtype}")
 
     return (slot_domain, saturated_range)
+
+
+def _cast_domain_to_cpp_type(
+    slot_domain: AxisDomain, schema: pa.Schema, index_column_name: str
+) -> tuple[Any, Any] | None:
+    if slot_domain is None:
+        return None
+
+    if index_column_name in schema.names:
+        domain_array = pa.RecordBatch.from_pydict(
+            {index_column_name: slot_domain}, pa.schema([schema.field(index_column_name)])
+        )
+
+        if isinstance(domain_array[0][0], pa.TimestampScalar):
+            return domain_array[0][0].value, domain_array[0][1].value
+        return domain_array[0][0].as_py(), domain_array[0][1].as_py()
+
+    return slot_domain[0], slot_domain[1]
 
 
 def _find_extent_for_domain(

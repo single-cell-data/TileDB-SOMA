@@ -34,7 +34,8 @@ void load_soma_dataframe(py::module& m) {
             "create",
             [](std::string_view uri,
                py::object py_schema,
-               py::object index_column_info,
+               const std::vector<std::string>& index_column_names,
+               py::list index_column_domains,
                std::shared_ptr<SOMAContext> context,
                PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -68,24 +69,41 @@ void load_soma_dataframe(py::module& m) {
                     }
                 }
 
-                ArrowSchema index_column_schema;
-                ArrowArray index_column_array;
-                uintptr_t index_column_schema_ptr = (uintptr_t)(&index_column_schema);
-                uintptr_t index_column_array_ptr = (uintptr_t)(&index_column_array);
-                index_column_info.attr("_export_to_c")(index_column_array_ptr, index_column_schema_ptr);
+                std::vector<DomainRange> domain;
+                for (size_t i = 0; i < index_column_names.size(); ++i) {
+                    if (index_column_names[i] == SOMA_JOINID) {
+                        domain.emplace_back(
+                            encode_domain(common::arrow::to_arrow_format(TILEDB_INT64), index_column_domains[i]));
+                        continue;
+                    }
+
+                    bool index_found = false;
+                    for (int64_t j = 0; j < schema.n_children; ++j) {
+                        if (schema.children[j]->name == index_column_names[i]) {
+                            domain.emplace_back(encode_domain(schema.children[j]->format, index_column_domains[i]));
+                            index_found = true;
+                            break;
+                        }
+                    }
+
+                    if (!index_found) {
+                        domain.emplace_back(DomainRange());
+                    }
+                }
 
                 try {
                     SOMADataFrame::create(
                         uri,
                         common::arrow::make_managed_unique<ArrowSchema>(schema),
-                        common::arrow::ArrowTable(
-                            common::arrow::make_managed_unique<ArrowArray>(index_column_array),
-                            common::arrow::make_managed_unique<ArrowSchema>(index_column_schema)),
+                        index_column_names,
+                        domain,
                         context,
                         platform_config,
                         timestamp);
                 } catch (const std::out_of_range& e) {
                     throw py::type_error(e.what());
+                } catch (const std::range_error& e) {
+                    throw py::value_error(e.what());
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
@@ -93,7 +111,8 @@ void load_soma_dataframe(py::module& m) {
             "uri"_a,
             py::kw_only(),
             "schema"_a,
-            "index_column_info"_a,
+            "index_column_names"_a,
+            "index_column_domains"_a,
             "ctx"_a,
             "platform_config"_a,
             "timestamp"_a = py::none())

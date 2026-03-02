@@ -14,11 +14,18 @@
 #include "platform_config.h"
 
 #include "../utils/common.h"
+#include "../utils/util.h"
 #include "common/arrow/utils.h"
 #include "common/logging/impl/logger.h"
 
+#include <algorithm>
 #include <limits>
+#include <ranges>
 #include <tiledb/tiledb_experimental>
+#include <unordered_map>
+
+#include "../soma/soma_attribute.h"
+#include "../soma/soma_dimension.h"
 
 using json = nlohmann::json;
 
@@ -412,6 +419,223 @@ ArraySchema create_nd_array_schema(
 
     for (size_t i = 0; i < shape.size(); ++i) {
         rect.set_range<int64_t>(i, 0, shape[i] - 1);
+    }
+
+    current_domain.set_ndrectangle(rect);
+    tiledb::ArraySchemaExperimental::set_current_domain(*ctx, schema, current_domain);
+    schema.check();
+
+    return schema;
+}
+
+ArraySchema create_dataframe_schema(
+    std::string_view soma_type,
+    ArrowSchema* arrow_schema,
+    std::span<const std::string> index_column_names,
+    std::span<const DomainRange> index_column_domains,
+    std::shared_ptr<tiledb::Context> ctx,
+    PlatformConfig platform_config,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    tiledb::ArraySchema schema = utils::create_base_tiledb_schema(ctx, platform_config, true, timestamp);
+    tiledb::Domain domain(*ctx);
+
+    if (index_column_names.empty()) {
+        throw std::range_error("At least one non-index column must be provided");
+    }
+
+    if (arrow_schema->n_children) {
+        for (const auto& name : index_column_names) {
+            auto column_occurrences = std::count_if(
+                arrow_schema->children,
+                arrow_schema->children + arrow_schema->n_children,
+                [&](const auto child_schema) { return name == child_schema->name; });
+
+            if (column_occurrences == 0) {
+                // 'soma_joinid` will be added in the schema by default if missing
+                if (name != SOMA_JOINID) {
+                    throw std::range_error(fmt::format("Missing index column '{}' from schema", name));
+                }
+            } else if (column_occurrences != 1) {
+                throw std::range_error(fmt::format("Multiple columns found in schema for index column '{}'", name));
+            }
+        }
+    }
+
+    if (index_column_names.size() != index_column_domains.size()) {
+        throw std::range_error(
+            fmt::format(
+                "Size mismatch between list of index column names and domains; {} != {}",
+                index_column_names.size(),
+                index_column_domains.size()));
+    }
+
+    std::unordered_map<std::string, DomainRange> index_columns;
+    for (size_t i = 0; i < index_column_names.size(); ++i) {
+        if (index_columns.contains(index_column_names[i])) {
+            throw std::range_error(fmt::format("Duplicate index column found '{}'", index_column_names[i]));
+        }
+
+        index_columns.emplace(index_column_names[i], index_column_domains[i]);
+    }
+
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
+
+    for (int64_t i = 0; i < arrow_schema->n_children; ++i) {
+        std::string_view name(arrow_schema->children[i]->name);
+        std::string_view format(arrow_schema->children[i]->format);
+
+        // Verify no illegal use of soma_ prefix
+        if (!platform_config.override_naming_restriction && name.starts_with("soma_")) {
+            if (name != SOMA_JOINID) {
+                throw std::range_error(
+                    fmt::format("DataFrame schema may not contain fields with name prefix 'soma_': got '{}'", name));
+            }
+
+            if (name == SOMA_JOINID) {
+                if (common::arrow::to_tiledb_format(format) != TILEDB_INT64) {
+                    throw std::range_error(
+                        fmt::format(
+                            "'{}' field must be of type Arrow int64 but is {}",
+                            SOMA_JOINID,
+                            common::arrow::to_arrow_readable(format)));
+                }
+            }
+        }
+
+        if (index_columns.contains(name.data())) {
+            if (arrow_schema->dictionary != nullptr) {
+                std::range_error(
+                    fmt::format(
+                        "Cannot set index column '{}' to an enumeration. Index columns do not support enumerations.",
+                        name));
+            }
+
+            if (name == SOMA_JOINID) {
+                columns.push_back(SOMADimension::create_soma_joinid(ctx, "SOMADataFrame", platform_config));
+            } else {
+                columns.push_back(
+                    SOMADimension::create(ctx, arrow_schema->children[i], "SOMADataFrame", platform_config));
+            }
+        } else {
+            columns.push_back(SOMAAttribute::create(ctx, arrow_schema->children[i], platform_config));
+        }
+    }
+
+    // Inject missing required columns
+    if (std::none_of(
+            columns.cbegin(), columns.cend(), [](const auto& column) { return column->name() == SOMA_JOINID; })) {
+        if (index_columns.contains(SOMA_JOINID.data())) {
+            columns.push_back(SOMADimension::create_soma_joinid(ctx, "SOMADataFrame", platform_config));
+        } else {
+            // If 'soma_joinid' is missing add it as the first attribute
+            columns.emplace(
+                columns.begin(),
+                std::make_shared<SOMAAttribute>(tiledb::Attribute::create<int64_t>(
+                    *ctx,
+                    SOMA_JOINID.data(),
+                    utils::create_attr_filter_list(SOMA_JOINID.data(), platform_config, ctx))));
+        }
+    }
+
+    // Unit tests expect dimension order should match the index column schema
+    // and NOT the Arrow schema
+    // We generate the additional schema metadata here to ensure that the
+    // serialized column order matches the expected schema order
+    for (const auto& column_name : index_column_names) {
+        // If a column is specified as `index column` but it isn't present in the schema the following call is expected to throw
+        const auto column = util::find_column_by_name(columns, column_name);
+
+        if (column->tiledb_dimensions().has_value()) {
+            // Intermediate variable required to avoid lifetime issues
+            auto dimensions = column->tiledb_dimensions().value();
+            for (const auto& dimension : dimensions) {
+                domain.add_dimension(dimension);
+            }
+        }
+
+        if (column->tiledb_enumerations().has_value()) {
+            auto enumerations = column->tiledb_enumerations().value();
+            for (const auto& enumeration : enumerations) {
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enumeration);
+            }
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                schema.add_attribute(attribute);
+            }
+        }
+    }
+
+    for (const auto& column : columns | std::views::filter([](const auto& col) { return !col->isIndexColumn(); })) {
+        if (column->tiledb_enumerations().has_value()) {
+            auto enumerations = column->tiledb_enumerations().value();
+            for (const auto& enumeration : enumerations) {
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enumeration);
+            }
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                schema.add_attribute(attribute);
+            }
+        }
+    }
+
+    schema.set_domain(domain);
+
+    tiledb::CurrentDomain current_domain(*ctx);
+    tiledb::NDRectangle rect(*ctx, domain);
+
+    auto decode_domain = []<typename T>(
+                             std::shared_ptr<SOMAColumn> column, std::optional<std::pair<T, T>> domain) -> std::any {
+        if constexpr (std::is_same_v<T, std::string>) {
+            auto current_domain = domain.value_or(std::make_pair<T, T>("", ""));
+
+            if (current_domain.first != "" || current_domain.second != "") {
+                throw std::range_error("TileDB str and bytes index-column types do not support domain specification");
+            }
+
+            return std::make_any<std::array<std::string, 2>>(std::array<std::string, 2>{{"", ""}});
+        } else {
+            auto current_domain = domain.value_or(std::make_pair<T, T>(0, 0));
+
+            if (column->name() == SOMA_JOINID) {
+                if (current_domain.first < 0) {
+                    throw std::range_error(
+                        fmt::format(
+                            "'{}' indices cannot be negative; got lower bound {}", SOMA_JOINID, current_domain.first));
+                } else if (current_domain.second < 0) {
+                    throw std::range_error(
+                        fmt::format(
+                            "'{}' indices cannot be negative; got bound bound {}", SOMA_JOINID, current_domain.second));
+                }
+            }
+
+            return std::make_any<std::array<T, 2>>(std::array<T, 2>{{current_domain.first, current_domain.second}});
+        }
+    };
+
+    for (const auto& column : columns | std::views::filter([](const auto& col) { return col->isIndexColumn(); })) {
+        std::visit(
+            [&](auto&& domain) {
+                using T = std::decay_t<decltype(domain)>;
+
+                if constexpr (std::is_same_v<T, std::monostate>) {
+                    throw std::runtime_error(
+                        fmt::format(
+                            "Index column '{}' has no domain attached. This can be caused by the column not being "
+                            "present in the schema provided.",
+                            column->name()));
+                } else {
+                    using E = std::decay_t<decltype(domain)>::value_type::first_type;
+
+                    column->set_current_domain_slot(rect, {{decode_domain.template operator()<E>(column, domain)}});
+                }
+            },
+            index_columns[column->name()]);
     }
 
     current_domain.set_ndrectangle(rect);

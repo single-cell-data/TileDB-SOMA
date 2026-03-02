@@ -149,6 +149,98 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
 
 std::shared_ptr<SOMADimension> SOMADimension::create(
     std::shared_ptr<tiledb::Context> ctx,
+    ArrowSchema* schema,
+    const std::string& soma_type,
+    const PlatformConfig& platform_config) {
+    auto create_dimension = [&]<typename TMin, typename TMax = TMin>() -> std::shared_ptr<SOMADimension> {
+        TMin extent = utils::get_dim_extent<TMin>(
+            schema->name,
+            platform_config,
+            tiledb::impl::type_size(common::arrow::to_tiledb_format(schema->format)) == 1 ? 1u : 2048u,
+            static_cast<TMin>(std::numeric_limits<TMax>::max()));
+
+        auto datatype = common::arrow::to_tiledb_format(schema->format);
+        std::array<TMin, 2> domain;
+        switch (datatype) {
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+                domain[0] = std::numeric_limits<TMin>::lowest() + 1;
+                domain[1] = static_cast<TMin>(std::numeric_limits<TMax>::max()) - 1000000;
+                break;
+            case TILEDB_INT32:
+            case TILEDB_INT64:
+                domain[0] = std::numeric_limits<TMin>::lowest() + 1;
+                domain[1] = static_cast<TMin>(std::numeric_limits<TMax>::max()) - 1 - extent;
+                break;
+            default:
+                domain[0] = std::numeric_limits<TMin>::lowest();
+                domain[1] = static_cast<TMin>(std::numeric_limits<TMax>::max()) - 1 - extent;
+        }
+
+        tiledb::Dimension dimension = tiledb::Dimension::create(*ctx, schema->name, datatype, domain.data(), &extent);
+        dimension.set_filter_list(utils::create_dim_filter_list(schema->name, platform_config, soma_type, ctx));
+
+        return std::make_shared<SOMADimension>(dimension);
+    };
+
+    switch (common::arrow::to_tiledb_format(schema->format)) {
+        case TILEDB_CHAR:
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_BLOB: {
+            tiledb::Dimension dimension = tiledb::Dimension::create(
+                *ctx, schema->name, TILEDB_STRING_ASCII, nullptr, nullptr);
+            dimension.set_filter_list(utils::create_dim_filter_list(schema->name, platform_config, soma_type, ctx));
+
+            return std::make_shared<SOMADimension>(dimension);
+        }
+        case TILEDB_INT8:
+            return create_dimension.template operator()<int8_t>();
+        case TILEDB_UINT8:
+            return create_dimension.template operator()<uint8_t>();
+        case TILEDB_INT16:
+            return create_dimension.template operator()<int16_t>();
+        case TILEDB_UINT16:
+            return create_dimension.template operator()<uint16_t>();
+        case TILEDB_INT32:
+            return create_dimension.template operator()<int32_t>();
+        case TILEDB_UINT32:
+            return create_dimension.template operator()<uint32_t>();
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_INT64:
+            return create_dimension.template operator()<int64_t>();
+        case TILEDB_UINT64:
+            return create_dimension.template operator()<uint64_t, int64_t>();
+        case TILEDB_FLOAT32:
+            return create_dimension.template operator()<float_t>();
+        case TILEDB_FLOAT64:
+            return create_dimension.template operator()<double_t>();
+        default:
+            throw TileDBSOMAError(
+                fmt::format(
+                    "[SOMADimension][create] Unsupported TileDB dimension: {} ",
+                    tiledb::impl::type_to_str(common::arrow::to_tiledb_format(schema->format))));
+    }
+}
+
+std::shared_ptr<SOMADimension> SOMADimension::create_soma_joinid(
+    std::shared_ptr<tiledb::Context> ctx, const std::string& soma_type, const PlatformConfig& platform_config) {
+    int64_t extent = utils::get_dim_extent<int64_t>(
+        SOMA_JOINID.data(), platform_config, 2048u, std::numeric_limits<int64_t>::max());
+
+    tiledb::Dimension dimension = tiledb::Dimension::create<int64_t>(
+        *ctx, SOMA_JOINID.data(), {{0, std::numeric_limits<int64_t>::max() - 1 - extent}}, extent);
+    dimension.set_filter_list(utils::create_dim_filter_list(SOMA_JOINID.data(), platform_config, soma_type, ctx));
+    return std::make_shared<SOMADimension>(dimension);
+}
+
+std::shared_ptr<SOMADimension> SOMADimension::create(
+    std::shared_ptr<tiledb::Context> ctx,
     const std::string& name,
     const std::string& soma_type,
     tiledb_datatype_t tiledb_type,

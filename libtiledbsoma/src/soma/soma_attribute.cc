@@ -13,6 +13,7 @@
 
 #include "soma_attribute.h"
 #include "../utils/arrow_adapter.h"
+#include "common/arrow/decode.h"
 #include "common/logging/impl/logger.h"
 
 namespace tiledbsoma {
@@ -56,11 +57,10 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
 }
 
 std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
-    std::shared_ptr<tiledb::Context> ctx,
-    ArrowSchema* schema,
-    std::string_view type_metadata,
-    PlatformConfig platform_config) {
-    auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(ctx, schema, type_metadata, platform_config);
+    std::shared_ptr<tiledb::Context> ctx, ArrowSchema* schema, PlatformConfig platform_config) {
+    auto metadata = common::arrow::metadata_string_to_map(schema->metadata);
+    auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(
+        ctx, schema, metadata[ARROW_DATATYPE_METADATA_KEY], platform_config);
 
     return std::make_shared<SOMAAttribute>(SOMAAttribute(attribute.first, attribute.second));
 }
