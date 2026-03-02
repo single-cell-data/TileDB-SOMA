@@ -646,7 +646,7 @@ test_that("soma_joinid validations", {
       index_column_names = "int_column",
       domain = list("int_column" = c(0, 0))
     ),
-    "'soma_joinid' field must be of type Arrow int64 but is int32""
+    "'soma_joinid' field must be of type Arrow int64 but is int32"
   )
 })
 
