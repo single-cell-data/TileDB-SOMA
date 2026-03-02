@@ -79,7 +79,7 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
     auto column_it = std::find_if(columns.begin(), columns.end(), [&](auto col) { return col->name() == name; });
 
     if (column_it == columns.end()) {
-        throw TileDBSOMAError(fmt::format("[find_column_by_name] Index column '{}' missing", name));
+        throw TileDBSOMAError(fmt::format("Index column '{}' missing", name));
     }
 
     return *column_it;

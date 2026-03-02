@@ -4,8 +4,8 @@ test_that("Basic mechanics", {
   asch <- create_arrow_schema()
 
   expect_error(
-    SOMADataFrameCreate(uri, asch, index_column_names = "qux"),
-    "The following indexed field does not exist: qux"
+    SOMADataFrameCreate(uri, asch, index_column_names = "qux", domain = list(qux = NULL)),
+    "Index column 'qux' missing"
   )
   if (dir.exists(uri)) {
     unlink(uri, recursive = TRUE)
@@ -197,8 +197,8 @@ test_that("Basic mechanics with default index_column_names", {
   asch <- create_arrow_schema(foo_first = FALSE)
 
   expect_error(
-    SOMADataFrameCreate(tempfile(), schema = asch, index_column_names = "qux"),
-    regexp = "The following indexed field does not exist: qux"
+    SOMADataFrameCreate(tempfile(), schema = asch, index_column_names = "qux", domain = list(qux = NULL)),
+    regexp = "Index column 'qux' missing"
   )
 
   if (dir.exists(uri)) {
@@ -602,7 +602,7 @@ test_that("soma_ prefix is reserved", {
       index_column_names = "int_column",
       domain = list("int_column" = c(0, 0))
     ),
-    "Column names must not start with reserved prefix 'soma_'"
+    "DataFrame schema may not contain fields with name prefix 'soma_': got 'soma_foo'"
   )
 })
 
@@ -646,7 +646,7 @@ test_that("soma_joinid validations", {
       index_column_names = "int_column",
       domain = list("int_column" = c(0, 0))
     ),
-    "soma_joinid field must be of type Arrow int64"
+    "'soma_joinid' field must be of type Arrow int64 but is int32""
   )
 })
 

@@ -440,19 +440,17 @@ ArraySchema create_dataframe_schema(
     tiledb::Domain domain(*ctx);
 
     if (index_column_names.empty()) {
-        throw std::range_error("[create_dataframe_schema] At least one non-index column must be provided");
+        throw std::range_error("At least one non-index column must be provided");
     }
 
     if (index_column_names.size() != index_column_domains.size()) {
-        throw std::range_error(
-            "[create_dataframe_schema] Size mismatch between list of index column names and domains");
+        throw std::range_error("Size mismatch between list of index column names and domains");
     }
 
     std::unordered_map<std::string, DomainRange> index_columns;
     for (size_t i = 0; i < index_column_names.size(); ++i) {
         if (index_columns.contains(index_column_names[i])) {
-            throw std::range_error(
-                fmt::format("[create_dataframe_schema] Duplicate index column found '{}'", index_column_names[i]));
+            throw std::range_error(fmt::format("Duplicate index column found '{}'", index_column_names[i]));
         }
 
         index_columns.emplace(index_column_names[i], index_column_domains[i]);
@@ -468,17 +466,14 @@ ArraySchema create_dataframe_schema(
         if (!platform_config.override_naming_restriction && name.starts_with("soma_")) {
             if (name != SOMA_JOINID) {
                 throw std::range_error(
-                    fmt::format(
-                        "[create_dataframe_schema] DataFrame schema may not contain fields with name prefix 'soma_': "
-                        "got '{}'",
-                        name));
+                    fmt::format("DataFrame schema may not contain fields with name prefix 'soma_': got '{}'", name));
             }
 
             if (name == SOMA_JOINID) {
                 if (common::arrow::to_tiledb_format(format) != TILEDB_INT64) {
                     throw std::range_error(
                         fmt::format(
-                            "[create_dataframe_schema] '{}' field must be of type Arrow int64 but is {}",
+                            "'{}' field must be of type Arrow int64 but is {}",
                             SOMA_JOINID,
                             common::arrow::to_arrow_readable(format)));
                 }
@@ -489,9 +484,7 @@ ArraySchema create_dataframe_schema(
             if (arrow_schema->dictionary != nullptr) {
                 std::range_error(
                     fmt::format(
-                        "[create_dataframe_schema] Cannot set index column '{}' to an enumeration. Index columns do "
-                        "not "
-                        "support enumerations.",
+                        "Cannot set index column '{}' to an enumeration. Index columns do not support enumerations.",
                         name));
             }
 
@@ -518,12 +511,6 @@ ArraySchema create_dataframe_schema(
                     SOMA_JOINID.data(),
                     utils::create_attr_filter_list(SOMA_JOINID.data(), platform_config, ctx))));
         }
-    }
-
-    if (static_cast<size_t>(std::count_if(columns.cbegin(), columns.cend(), [](const auto& col) {
-            return col->isIndexColumn();
-        })) != index_columns.size()) {
-        throw std::range_error("[create_dataframe_schema] Some index columns where not found in dataframe schema");
     }
 
     // Unit tests expect dimension order should match the index column schema
@@ -594,15 +581,11 @@ ArraySchema create_dataframe_schema(
                 if (current_domain.first < 0) {
                     throw std::range_error(
                         fmt::format(
-                            "[create_dataframe_schema] '{}' indices cannot be negative; got lower bound {}",
-                            SOMA_JOINID,
-                            current_domain.first));
+                            "'{}' indices cannot be negative; got lower bound {}", SOMA_JOINID, current_domain.first));
                 } else if (current_domain.second < 0) {
                     throw std::range_error(
                         fmt::format(
-                            "[create_dataframe_schema] '{}' indices cannot be negative; got bound bound {}",
-                            SOMA_JOINID,
-                            current_domain.second));
+                            "'{}' indices cannot be negative; got bound bound {}", SOMA_JOINID, current_domain.second));
                 }
             }
 
@@ -618,52 +601,6 @@ ArraySchema create_dataframe_schema(
                 column->set_current_domain_slot(rect, {{decode_domain.template operator()<T>(column, domain)}});
             },
             index_columns[column->name()]);
-        // switch (column->domain_type().value()) {
-        //     case TILEDB_UINT8:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint8_t>(column)}});
-        //         break;
-        //     case TILEDB_UINT16:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint16_t>(column)}});
-        //         break;
-        //     case TILEDB_UINT32:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint32_t>(column)}});
-        //         break;
-        //     case TILEDB_UINT64:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<uint64_t>(column)}});
-        //         break;
-        //     case TILEDB_INT8:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int8_t>(column)}});
-        //         break;
-        //     case TILEDB_INT16:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int16_t>(column)}});
-        //         break;
-        //     case TILEDB_INT32:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int32_t>(column)}});
-        //         break;
-        //     case TILEDB_DATETIME_SEC:
-        //     case TILEDB_DATETIME_MS:
-        //     case TILEDB_DATETIME_US:
-        //     case TILEDB_DATETIME_NS:
-        //     case TILEDB_INT64:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<int64_t>(column)}});
-        //         break;
-        //     case TILEDB_FLOAT32:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<float_t>(column)}});
-        //         break;
-        //     case TILEDB_FLOAT64:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<double_t>(column)}});
-        //         break;
-        //     case TILEDB_CHAR:
-        //     case TILEDB_STRING_ASCII:
-        //     case TILEDB_STRING_UTF8:
-        //         column->set_current_domain_slot(rect, {{decode_domain.template operator()<std::string>(column)}});
-        //         break;
-        //     default:
-        //         throw std::runtime_error(
-        //             fmt::format(
-        //                 "[create_dataframe_schema] Unsupported dimension type {} to set current domain",
-        //                 tiledb::impl::type_to_str(column->domain_type().value())));
-        //}
     }
 
     current_domain.set_ndrectangle(rect);
