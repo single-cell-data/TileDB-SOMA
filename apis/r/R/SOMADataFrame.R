@@ -109,13 +109,7 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      soma_debug(
-        "[SOMADataFrame$create] about to call write_object_type_metadata"
-      )
       self$open("WRITE")
-      private$write_object_type_metadata()
-      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
-
       return(self)
     },
 

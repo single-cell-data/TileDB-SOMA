@@ -110,18 +110,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// soma_group_put_metadata
-void soma_group_put_metadata(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, std::string key, SEXP obj);
-RcppExport SEXP _tiledbsoma_soma_group_put_metadata(SEXP groupSEXP, SEXP keySEXP, SEXP objSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
-    Rcpp::traits::input_parameter< std::string >::type key(keySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type obj(objSEXP);
-    soma_group_put_metadata(group, key, obj);
-    return R_NilValue;
-END_RCPP
-}
 // get_metadata_num
 int32_t get_metadata_num(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_get_metadata_num(SEXP uriSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
@@ -979,6 +967,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// soma_object_set_metadata
+void soma_object_set_metadata(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object, const std::string& key, SEXP value);
+RcppExport SEXP _tiledbsoma_soma_object_set_metadata(SEXP soma_objectSEXP, SEXP keySEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
+    soma_object_set_metadata(soma_object, key, value);
+    return R_NilValue;
+END_RCPP
+}
 // soma_object_close
 void soma_object_close(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
 RcppExport SEXP _tiledbsoma_soma_object_close(SEXP soma_objectSEXP) {
@@ -1104,7 +1104,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_group_get_members", (DL_FUNC) &_tiledbsoma_soma_group_get_members, 1},
     {"_tiledbsoma_soma_group_set", (DL_FUNC) &_tiledbsoma_soma_group_set, 5},
     {"_tiledbsoma_soma_group_remove_member", (DL_FUNC) &_tiledbsoma_soma_group_remove_member, 2},
-    {"_tiledbsoma_soma_group_put_metadata", (DL_FUNC) &_tiledbsoma_soma_group_put_metadata, 3},
     {"_tiledbsoma_get_metadata_num", (DL_FUNC) &_tiledbsoma_get_metadata_num, 3},
     {"_tiledbsoma_get_all_metadata", (DL_FUNC) &_tiledbsoma_get_all_metadata, 3},
     {"_tiledbsoma_get_metadata", (DL_FUNC) &_tiledbsoma_get_metadata, 4},
@@ -1177,6 +1176,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_experiment_create", (DL_FUNC) &_tiledbsoma_soma_experiment_create, 3},
     {"_tiledbsoma_soma_measurement_create", (DL_FUNC) &_tiledbsoma_soma_measurement_create, 3},
     {"_tiledbsoma_soma_object_get_metadata", (DL_FUNC) &_tiledbsoma_soma_object_get_metadata, 1},
+    {"_tiledbsoma_soma_object_set_metadata", (DL_FUNC) &_tiledbsoma_soma_object_set_metadata, 3},
     {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 1},
     {"_tiledbsoma_soma_object_is_open", (DL_FUNC) &_tiledbsoma_soma_object_is_open, 1},
     {"_tiledbsoma_soma_object_open_mode", (DL_FUNC) &_tiledbsoma_soma_object_open_mode, 1},
