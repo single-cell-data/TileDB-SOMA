@@ -79,6 +79,16 @@ SOMAMeasurement <- R6::R6Class(
         private$.context$handle,
         timestamp
       )
+    },
+
+    # @description Implementation for creating a collection.
+    .create = function() {
+        soma_measurement_create(
+            uri = self$uri,
+            context = private$.context$handle,
+            timestamp = self$.tiledb_timestamp_range
+        )
     }
+ 
   )
 )
