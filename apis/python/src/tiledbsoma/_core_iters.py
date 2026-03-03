@@ -3,9 +3,6 @@
 # Licensed under the MIT License.
 """Definitions of data storage interfaces for SOMA implementations.
 
-SOMA users should ordinarily not need to import this module directly; relevant
-members will be exported to the ``somacore`` namespace.
-
 Default values are provided here as a reference for implementors.
 """
 
