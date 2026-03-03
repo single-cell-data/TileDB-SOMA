@@ -264,14 +264,6 @@ SOMAArrayBase <- R6::R6Class(
     # @description Open the handle for the C++ interface
     .open_handle = function(open_mode, timestamp) {
       stop("No SOMAArray C++ handle. This method must be overridden.")
-    },
-
-    write_object_type_metadata = function() {
-      meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      soma_debug("[SOMAArrayBase::write_object_metadata] calling set metadata")
-      self$set_metadata(meta)
     }
   )
 )
