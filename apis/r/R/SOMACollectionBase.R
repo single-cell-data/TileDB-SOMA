@@ -559,16 +559,6 @@ SOMACollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    # Add standard SOMA metadata values to the object with the option to include
-    # additional metadata.
-    write_object_type_metadata = function(metadata = list()) {
-      stopifnot(is.list(metadata))
-      ## these entriess are now written by libtiledbsoma
-      ##   metadata[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      ##   metadata[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      if (length(metadata) > 0) self$set_metadata(metadata)
-    },
-
     # Instantiate a soma member object.
     # Responsible for calling the appropriate R6 class constructor.
     construct_member = function(uri, type) {
