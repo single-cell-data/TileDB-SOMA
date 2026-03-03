@@ -13,10 +13,13 @@
 
 #include "soma_group.h"
 #include "../utils/util.h"
+#include "common/datatype/datatype.h"
+#include "common/datatype/utils.h"
 #include "common/logging/impl/logger.h"
+#include "enums.h"
 
 namespace tiledbsoma {
-using namespace tiledb;
+using namespace common::type;
 
 //==================================================================
 // helper functions
@@ -30,7 +33,8 @@ std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
         uint32_t value_num;
         const void* value;
         group.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-        metadata_cache[key] = MetadataValue(value_type, value_num, value);
+
+        metadata_cache[key] = MetadataValue(as<DataTypeFormat::SOMA>(value_type), value_num, value);
     }
     return metadata_cache;
 }
@@ -218,7 +222,7 @@ void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string&
     if (uri_type == URIType::automatic) {
         relative = !((uri.find("://") != std::string::npos) || (uri.find("/") == 0));
     }
-    group_->add_member(uri, relative, name, tiledb_type);
+    group_->add_member(uri, relative, name, tiledb_type == ObjectType::array ? TILEDB_ARRAY : TILEDB_GROUP);
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
 }
 
@@ -239,14 +243,14 @@ std::optional<TimestampRange> SOMAGroup::timestamp() {
 }
 
 void SOMAGroup::set_metadata(
-    const std::string& key, tiledb_datatype_t value_type, uint32_t value_num, const void* value, bool force) {
+    const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force) {
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
     if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
-    group_->put_metadata(key, value_type, value_num, value);
+    group_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
     MetadataValue mdval(value_type, value_num, value);
     std::pair<std::string, const MetadataValue> mdpair(key, mdval);
     metadata_.insert(mdpair);

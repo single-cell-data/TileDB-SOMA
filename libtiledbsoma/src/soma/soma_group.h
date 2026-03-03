@@ -23,6 +23,14 @@
 #include "enums.h"
 #include "soma_object.h"
 
+#pragma region Forward declarations
+
+namespace tiledbsoma::common {
+enum class DataType;
+}  // namespace tiledbsoma::common
+
+#pragma endregion
+
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -230,11 +238,7 @@ class SOMAGroup : public SOMAObject {
      * @note The writes will take effect only upon closing the array.
      */
     void set_metadata(
-        const std::string& key,
-        tiledb_datatype_t value_type,
-        uint32_t value_num,
-        const void* value,
-        bool force = false);
+        const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force = false);
 
     /**
      * Delete a metadata key-value item from an open group. The group must

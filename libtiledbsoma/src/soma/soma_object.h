@@ -19,10 +19,23 @@
 #include <filesystem>
 #include <map>
 #include <string>
-#include <tiledb/tiledb>
 
 #include "../utils/common.h"
+#include "enums.h"
 #include "soma_context.h"
+
+#pragma region Forward declarations
+
+namespace tiledb {
+class Config;
+class Context;
+}  // namespace tiledb
+
+namespace tiledbsoma::common {
+enum class DataType;
+}  // namespace tiledbsoma::common
+
+#pragma endregion
 
 namespace tiledbsoma {
 
@@ -101,7 +114,7 @@ class SOMAObject {
      */
     virtual void set_metadata(
         const std::string& key,
-        tiledb_datatype_t value_type,
+        common::DataType value_type,
         uint32_t value_num,
         const void* value,
         bool force = false) = 0;
@@ -176,7 +189,7 @@ class SOMAObject {
     /**
      * @brief Given a soma_type, return the underlying TileDB type.
      */
-    static tiledb_object_t tiledb_type_from_soma_type(const std::string& soma_type);
+    static ObjectType tiledb_type_from_soma_type(const std::string& soma_type);
 };
 }  // namespace tiledbsoma
 

@@ -91,9 +91,9 @@ std::string get_metadata(std::string& uri, std::string& key, bool is_array, Rcpp
     }
     tdbs::MetadataValue val = *mv;
     auto dtype = std::get<0>(val);
-    auto txt = tiledb::impl::type_to_str(dtype);
+    auto txt = tdbs::common::getName(dtype);
     if (txt != "STRING_UTF8" && txt != "STRING_ASCII") {
-        Rcpp::stop("Currently unsupported type '%s'", txt.c_str());
+        Rcpp::stop("Currently unsupported type '%s'", txt.data());
     }
     auto len = std::get<1>(val);
     const void* ptr = std::get<2>(val);
@@ -165,14 +165,14 @@ void set_metadata(
     auto soup = getObjectUniquePointer(is_array, OpenMode::soma_write, uri, sctx, tsvec);
 
     if (type == "character") {
-        const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
+        const tdbs::common::DataType value_type = tdbs::common::DataType::string_utf8;
         std::string value = Rcpp::as<std::string>(valuesxp);
         std::stringstream ss;
         ss << "[set_metadata] key " << key << " value " << value << " is_array " << is_array << " type " << type;
         tdbs::common::logging::LOG_DEBUG(ss.str());
         soup->set_metadata(key, value_type, value.length(), (void*)value.c_str(), true);
     } else if (type == "integer64") {
-        const tiledb_datatype_t value_type = TILEDB_INT64;
+        const tdbs::common::DataType value_type = tdbs::common::DataType::int64;
         double dv = Rcpp::as<double>(valuesxp);
         int64_t value = Rcpp::fromInteger64(dv);
         std::stringstream ss;

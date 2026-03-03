@@ -14,6 +14,8 @@
 #include "soma_multiscale_image.h"
 #include "soma_collection.h"
 
+#include "common/datatype/datatype.h"
+
 namespace tiledbsoma {
 using namespace tiledb;
 

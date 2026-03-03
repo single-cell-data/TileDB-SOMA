@@ -32,6 +32,7 @@ class ArraySchema;
 class ArraySchemaEvolution;
 class Enumeration;
 class CurrentDomain;
+class QueryCondition;
 }  // namespace tiledb
 
 struct ArrowArray;
@@ -289,7 +290,7 @@ class SOMAArray : public SOMAObject {
      * @param coord_filter Coordinate value filter defining the coordinates to delete.
      * @param value_filter Additional value filter to constrain the delete by.
      */
-    void delete_cells(const CoordinateValueFilters& coord_filters, const QueryCondition& value_filter);
+    void delete_cells(const CoordinateValueFilters& coord_filters, const tiledb::QueryCondition& value_filter);
 
     /**
      * @brief Get the TileDB ArraySchema. This should eventually
@@ -341,11 +342,7 @@ class SOMAArray : public SOMAObject {
      * @note The writes will take effect only upon closing the array.
      */
     void set_metadata(
-        const std::string& key,
-        tiledb_datatype_t value_type,
-        uint32_t value_num,
-        const void* value,
-        bool force = false);
+        const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force = false);
 
     /**
      * Delete a metadata key-value item from an open array. The array must
@@ -740,12 +737,12 @@ class SOMAArray : public SOMAObject {
      *
      * @param delete_cond The query condition that specifies which cells to delete.
      */
-    void delete_cells_impl(const QueryCondition& delete_cond);
+    void delete_cells_impl(const tiledb::QueryCondition& delete_cond);
 
     static tiledb::Array _create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
-        ArraySchema schema,
+        tiledb::ArraySchema schema,
         std::string_view soma_type,
         std::optional<std::string_view> soma_schema,
         std::optional<TimestampRange> timestamp);

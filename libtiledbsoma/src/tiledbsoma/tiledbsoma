@@ -20,6 +20,7 @@
 
 #include "common/soma_column_selection.h"
 #include "common/arrow/utils.h"
+#include "common/datatype/datatype.h"
 #include "common/logging/logger.h"
 #include "common/query/array_buffers.h"
 #include "common/query/column_buffer.h"
