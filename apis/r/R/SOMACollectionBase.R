@@ -271,28 +271,6 @@ SOMACollectionBase <- R6::R6Class(
       return(names(self$members) %||% character(length = 0L))
     },
 
-    #' @description Add list of metadata (lifecycle: maturing).
-    #'
-    #' @param metadata Named list of metadata to add.
-    #'
-    #' @return Invisibly returns \code{self}.
-    #'
-    set_metadata = function(metadata) {
-      stopifnot("Metadata must be a named list" = is_named_list(metadata))
-
-      private$.check_open_for_write()
-
-      soma_debug(sprintf("Writing metadata to %s '%s'", self$class(), self$uri))
-      for (i in seq_along(metadata)) {
-        key <- names(metadata)[i]
-        obj <- metadata[[i]]
-        soma_group_put_metadata(group = private$.handle, key = key, obj = obj)
-        private$.metadata_cache[[key]] <- obj
-      }
-
-      return(invisible(self))
-    },
-
     #' @description Add a new SOMA collection to this collection
     #'  (lifecycle: maturing).
     #'

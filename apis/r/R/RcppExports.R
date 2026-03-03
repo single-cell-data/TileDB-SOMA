@@ -29,10 +29,6 @@ soma_group_remove_member <- function(group, name) {
     invisible(.Call(`_tiledbsoma_soma_group_remove_member`, group, name))
 }
 
-soma_group_put_metadata <- function(group, key, obj) {
-    invisible(.Call(`_tiledbsoma_soma_group_put_metadata`, group, key, obj))
-}
-
 get_metadata_num <- function(uri, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_metadata_num`, uri, is_array, ctxxp)
 }
@@ -396,6 +392,10 @@ soma_measurement_create <- function(uri, context, timestamp = NULL) {
 
 soma_object_get_metadata <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
+}
+
+soma_object_set_metadata <- function(soma_object, key, value) {
+    invisible(.Call(`_tiledbsoma_soma_object_set_metadata`, soma_object, key, value))
 }
 
 soma_object_close <- function(soma_object) {

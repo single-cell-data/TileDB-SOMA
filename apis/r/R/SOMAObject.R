@@ -212,27 +212,12 @@ SOMAObject <- R6::R6Class(
       stopifnot("Metadata must be a named list" = is_named_list(metadata))
 
       private$.check_open_for_write()
-      private$.update_metadata_cache()
 
-      for (i in seq_along(metadata)) {
-        key <- names(metadata)[i]
-        value <- metadata[[i]]
-        soma_debug(sprintf(
-          "[SOMAObject$set_metadata] setting key %s to %s (%s)",
-          key,
-          value,
-          class(value)
-        ))
-        set_metadata(
-          uri = self$uri,
-          key = key,
-          valuesxp = value,
-          type = class(value),
-          is_array = inherits(self, "SOMAArrayBase"),
-          ctxxp = private$.context$handle,
-          tsvec = self$.tiledb_timestamp_range
-        )
-        private$.metadata_cache[[key]] <- value
+      for(i in seq_along(metadata)) {
+         key <- names(metadata)[i]
+         value <- metadata[[i]]
+         soma_object_set_metadata(private$.handle, key, value)
+         private$.metadata_cache[[key]] <- value
       }
 
       return(invisible(self))
