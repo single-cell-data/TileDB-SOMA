@@ -74,19 +74,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// c_group_create
-void c_group_create(std::string& uri, std::string& type, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
-RcppExport SEXP _tiledbsoma_c_group_create(SEXP uriSEXP, SEXP typeSEXP, SEXP ctxxpSEXP, SEXP timestampSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< std::string& >::type type(typeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
-    c_group_create(uri, type, ctxxp, timestamp);
-    return R_NilValue;
-END_RCPP
-}
 // soma_group_get_members
 Rcpp::List soma_group_get_members(Rcpp::XPtr<tiledbsoma::SOMAGroup> group);
 RcppExport SEXP _tiledbsoma_soma_group_get_members(SEXP groupSEXP) {
@@ -911,6 +898,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// soma_collection_create
+void soma_collection_create(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> context, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_soma_collection_create(SEXP uriSEXP, SEXP contextSEXP, SEXP timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type context(contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    soma_collection_create(uri, context, timestamp);
+    return R_NilValue;
+END_RCPP
+}
 // create_soma_context
 Rcpp::XPtr<somactx_wrap_t> create_soma_context(Rcpp::Nullable<Rcpp::CharacterVector> config);
 RcppExport SEXP _tiledbsoma_create_soma_context(SEXP configSEXP) {
@@ -943,6 +942,30 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     rcpp_result_gen = Rcpp::wrap(get_data_protocol_from_soma_context(soma_context, uri));
     return rcpp_result_gen;
+END_RCPP
+}
+// soma_experiment_create
+void soma_experiment_create(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> context, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_soma_experiment_create(SEXP uriSEXP, SEXP contextSEXP, SEXP timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type context(contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    soma_experiment_create(uri, context, timestamp);
+    return R_NilValue;
+END_RCPP
+}
+// soma_measurement_create
+void soma_measurement_create(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> context, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_soma_measurement_create(SEXP uriSEXP, SEXP contextSEXP, SEXP timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type context(contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    soma_measurement_create(uri, context, timestamp);
+    return R_NilValue;
 END_RCPP
 }
 // soma_object_get_metadata
@@ -1078,7 +1101,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaForDataFrame", (DL_FUNC) &_tiledbsoma_createSchemaForDataFrame, 7},
     {"_tiledbsoma_createSchemaForNDArray", (DL_FUNC) &_tiledbsoma_createSchemaForNDArray, 7},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 4},
-    {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
     {"_tiledbsoma_soma_group_get_members", (DL_FUNC) &_tiledbsoma_soma_group_get_members, 1},
     {"_tiledbsoma_soma_group_set", (DL_FUNC) &_tiledbsoma_soma_group_set, 5},
     {"_tiledbsoma_soma_group_remove_member", (DL_FUNC) &_tiledbsoma_soma_group_remove_member, 2},
@@ -1148,9 +1170,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledb_datatype_max_value", (DL_FUNC) &_tiledbsoma_tiledb_datatype_max_value, 1},
     {"_tiledbsoma_get_soma_object_type", (DL_FUNC) &_tiledbsoma_get_soma_object_type, 2},
     {"_tiledbsoma_get_tiledb_object_type", (DL_FUNC) &_tiledbsoma_get_tiledb_object_type, 2},
+    {"_tiledbsoma_soma_collection_create", (DL_FUNC) &_tiledbsoma_soma_collection_create, 3},
     {"_tiledbsoma_create_soma_context", (DL_FUNC) &_tiledbsoma_create_soma_context, 1},
     {"_tiledbsoma_get_config_from_soma_context", (DL_FUNC) &_tiledbsoma_get_config_from_soma_context, 1},
     {"_tiledbsoma_get_data_protocol_from_soma_context", (DL_FUNC) &_tiledbsoma_get_data_protocol_from_soma_context, 2},
+    {"_tiledbsoma_soma_experiment_create", (DL_FUNC) &_tiledbsoma_soma_experiment_create, 3},
+    {"_tiledbsoma_soma_measurement_create", (DL_FUNC) &_tiledbsoma_soma_measurement_create, 3},
     {"_tiledbsoma_soma_object_get_metadata", (DL_FUNC) &_tiledbsoma_soma_object_get_metadata, 1},
     {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 1},
     {"_tiledbsoma_soma_object_is_open", (DL_FUNC) &_tiledbsoma_soma_object_is_open, 1},

@@ -24,49 +24,15 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns \code{self}.
     #'
     create = function() {
-      # browser()
-      envs <- unique(vapply(
-        X = unique(sys.parents()),
-        FUN = function(n) environmentName(environment(sys.function(n))),
-        FUN.VALUE = character(1L)
-      ))
-      if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(private$.internal_use_only("create", "collection")),
-            collapse = "\n"
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Instantiate the TileDB group
+      private$.check_call_is_internal("create", paste(self$class(), "Create", sep = ""))
       soma_debug(sprintf(
         "[SOMACollectionBase$create] Creating new %s at '%s' at %s",
         self$class(),
         self$uri,
         self$tiledb_timestamp %||% "now"
       ))
-      c_group_create(
-        uri = self$uri,
-        type = self$class(),
-        ctxxp = private$.context$handle,
-        timestamp = self$.tiledb_timestamp_range
-      )
-
-      # Root SOMA objects include a `dataset_type` entry to allow the
-      # TileDB Cloud UI to detect that they are SOMA datasets.
-      metadata <- switch(
-        self$class(),
-        SOMAExperiment = list(dataset_type = "soma"),
-        list()
-      )
-
-      # TODO: this feels like it could be resolved through improved caching.
+      private$.create()
       self$open("WRITE")
-      private$write_object_type_metadata(metadata)
-      self$reopen(mode = "WRITE")
-
       return(self)
     },
 
@@ -90,7 +56,6 @@ SOMACollectionBase <- R6::R6Class(
       private$.open_handle(open_mode, self$tiledb_timestamp)
       private$.metadata_cache <- soma_object_get_metadata(private$.handle)
       private$.update_member_cache(TRUE) # TODO: Clean-up this method
-
       return(self)
     },
 
@@ -104,7 +69,6 @@ SOMACollectionBase <- R6::R6Class(
           member$object$close()
         }
       }
-
       soma_debug(sprintf(
         "[SOMAObject$close] Closing %s '%s'",
         self$class(),
@@ -113,7 +77,6 @@ SOMACollectionBase <- R6::R6Class(
       if (!is.null(private$.handle)) {
         soma_object_close(private$.handle)
       }
-
       return(invisible(self))
     },
 

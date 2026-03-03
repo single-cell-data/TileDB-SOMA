@@ -14,31 +14,6 @@
 namespace tdbs = tiledbsoma;
 
 // [[Rcpp::export]]
-void c_group_create(
-    std::string& uri,
-    std::string& type,
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
-    Rcpp::Nullable<Rcpp::DatetimeVector> timestamp = R_NilValue) {
-    // shared pointer to SOMAContext from external pointer wrapper
-    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    // shared pointer to TileDB Context from SOMAContext
-    // not needed here:  std::shared_ptr<tiledb::Context> ctx =
-    // sctx->tiledb_ctx();
-
-    // optional timestamp range
-    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
-    std::stringstream ss;
-    ss << "[c_group_create] uri " << uri;
-    if (timestamp.isNotNull()) {
-        Rcpp::DatetimeVector v(timestamp);
-        ss << " ts (" << v[0] << ", " << v[1] << ")";
-    }
-    tiledbsoma::common::logging::LOG_DEBUG(ss.str());
-
-    tiledbsoma::SOMAGroup::create(sctx, uri, type, {}, tsrng);
-}
-
-// [[Rcpp::export]]
 Rcpp::List soma_group_get_members(Rcpp::XPtr<tiledbsoma::SOMAGroup> group) {
     auto mm = group->members_map();
     auto n = mm.size();
