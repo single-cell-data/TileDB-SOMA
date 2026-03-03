@@ -348,8 +348,6 @@ setuptools.setup(
         "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
-        # Note: the somacore version is also in .pre-commit-config.yaml
-        "somacore==1.0.29",
         "typing-extensions>=4.5.0",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

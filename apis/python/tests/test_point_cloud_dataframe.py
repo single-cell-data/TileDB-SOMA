@@ -7,9 +7,9 @@ import pyarrow as pa
 import pytest
 import shapely
 import typeguard
-from somacore.options import BatchSize
 
 import tiledbsoma as soma
+from tiledbsoma._core_options import BatchSize
 
 
 def test_point_cloud_bad_create(tmp_path):

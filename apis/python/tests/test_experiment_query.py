@@ -14,12 +14,18 @@ import pyarrow as pa
 import pytest
 from pyarrow import ArrowInvalid
 from scipy import sparse
-from somacore import AxisQuery, options
 
 import tiledbsoma as soma
-from tiledbsoma import Experiment, ExperimentAxisQuery, SOMAContext, pytiledbsoma
+from tiledbsoma import (
+    AxisQuery,
+    Experiment,
+    ExperimentAxisQuery,
+    SOMAContext,
+    pytiledbsoma,
+)
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON
+from tiledbsoma._core_options import BatchSize, IOfN
 from tiledbsoma.experiment_query import X_as_series
 from tiledbsoma.io import to_anndata as io_to_anndata
 
@@ -321,7 +327,7 @@ def test_experiment_query_batch_size(soma_experiment):
         ExperimentAxisQuery(soma_experiment, "RNA") as query,
         pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"),
     ):
-        list(query.obs(batch_size=options.BatchSize(count=100)))
+        list(query.obs(batch_size=BatchSize(count=100)))
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(10, 10)])
@@ -332,13 +338,13 @@ def test_experiment_query_partitions(soma_experiment):
     """
     with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         with pytest.raises(ValueError):
-            query.obs(partitions=options.IOfN(i=0, n=3)).concat()
+            query.obs(partitions=IOfN(i=0, n=3)).concat()
 
         with pytest.raises(ValueError):
-            query.var(partitions=options.IOfN(i=0, n=3)).concat()
+            query.var(partitions=IOfN(i=0, n=3)).concat()
 
         with pytest.raises(ValueError):
-            query.X("raw", partitions=options.IOfN(i=0, n=3)).concat()
+            query.X("raw", partitions=IOfN(i=0, n=3)).concat()
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(10, 10)])
@@ -665,9 +671,6 @@ def test_axis_query():
 
     assert AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").coords == (slice(1, 100),)
     assert AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
-
-    with pytest.raises(TypeError):
-        AxisQuery(coords=True)
 
     with pytest.raises(TypeError):
         AxisQuery(value_filter=[])

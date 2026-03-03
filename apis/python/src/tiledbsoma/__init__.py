@@ -139,24 +139,23 @@ except ImportError:
         ctypes.CDLL(libtiledbsoma_name)
 
 
-from somacore import (
-    AffineTransform,
-    Axis,
-    AxisColumnNames,
-    AxisQuery,
-    CoordinateSpace,
-    IdentityTransform,
-    ScaleTransform,
-    UniformScaleTransform,
-)
-from somacore.options import ResultOrder
-
 # This is important since we need to do the above dll/dylib/so business
 # _before_ imports, but, ruff will tell us that imports need to be
 # at the top of the file:
 #
+from ._axis import AxisQuery
 from ._collection import Collection
 from ._constants import SOMA_JOINID
+from ._coordinate_space import (
+    AffineTransform,
+    Axis,
+    CoordinateSpace,
+    CoordinateTransform,
+    IdentityTransform,
+    ScaleTransform,
+    UniformScaleTransform,
+)
+from ._core_options import ResultOrder
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import (
@@ -181,7 +180,7 @@ from ._indexer import IntIndexer
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
-from ._query import ExperimentAxisQuery
+from ._query import AxisColumnNames, ExperimentAxisQuery
 from ._scene import Scene
 from ._soma_context import SOMAContext
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
@@ -209,6 +208,7 @@ __all__ = [
     "AxisQuery",
     "Collection",
     "CoordinateSpace",
+    "CoordinateTransform",
     "DataFrame",
     "DenseNDArray",
     "DoesNotExistError",

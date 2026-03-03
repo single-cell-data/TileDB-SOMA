@@ -9,8 +9,14 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
-import somacore
 from anndata import AnnData
+
+from tiledbsoma import (
+    AffineTransform,
+    CoordinateTransform,
+    IdentityTransform,
+    ScaleTransform,
+)
 
 try:
     import spatialdata as sd
@@ -73,7 +79,7 @@ def _convert_axis_names(
     return spatial_data_axes, dim_map
 
 
-def _get_transform_from_collection(key: str, metadata: Mapping[str, Any]) -> somacore.CoordinateTransform | None:
+def _get_transform_from_collection(key: str, metadata: Mapping[str, Any]) -> CoordinateTransform | None:
     transform_key = f"soma_scene_registry_{key}"
     if transform_key in metadata:
         transform_json = metadata[transform_key]
@@ -82,7 +88,7 @@ def _get_transform_from_collection(key: str, metadata: Mapping[str, Any]) -> som
 
 
 def _transform_to_spatialdata(
-    transform: somacore.CoordinateTransform,
+    transform: CoordinateTransform,
     input_dim_map: dict[str, str],
     output_dim_map: dict[str, str],
 ) -> sd.transformations.BaseTransformation:
@@ -96,12 +102,12 @@ def _transform_to_spatialdata(
     Returns:
         Equivalent SpatialData transformation.
     """
-    if isinstance(transform, somacore.IdentityTransform):
+    if isinstance(transform, IdentityTransform):
         return sd.transformations.Identity()
-    if isinstance(transform, somacore.ScaleTransform):
+    if isinstance(transform, ScaleTransform):
         input_axes = tuple(input_dim_map[name] for name in transform.input_axes)
         return sd.transformations.Scale(transform.scale_factors, input_axes)
-    if isinstance(transform, somacore.AffineTransform):
+    if isinstance(transform, AffineTransform):
         input_axes = tuple(input_dim_map[name] for name in transform.input_axes)
         output_axes = tuple(output_dim_map[name] for name in transform.output_axes)
         return sd.transformations.Affine(transform.augmented_matrix, input_axes, output_axes)
@@ -117,7 +123,7 @@ def to_spatialdata_points(
     key: str,
     scene_id: str,
     scene_dim_map: dict[str, str],
-    transform: somacore.CoordinateTransform | None,
+    transform: CoordinateTransform | None,
     soma_joinid_name: str = SOMA_JOINID,
 ) -> dd.DataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
@@ -157,7 +163,7 @@ def to_spatialdata_shapes(
     key: str,
     scene_id: str,
     scene_dim_map: dict[str, str],
-    transform: somacore.CoordinateTransform | None,
+    transform: CoordinateTransform | None,
     soma_joinid_name: str = SOMA_JOINID,
 ) -> gpd.GeoDataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
@@ -223,7 +229,7 @@ def to_spatialdata_image(
     key: str,
     scene_id: str,
     scene_dim_map: dict[str, str],
-    transform: somacore.CoordinateTransform | None,
+    transform: CoordinateTransform | None,
 ) -> DataArray:
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
@@ -269,7 +275,7 @@ def to_spatialdata_image(
         # transformations.
         inv_transform = transform.inverse_transform()
         scale_transform = image.get_transform_from_level(level)
-        if isinstance(transform, somacore.ScaleTransform) or isinstance(scale_transform, somacore.IdentityTransform):
+        if isinstance(transform, ScaleTransform) or isinstance(scale_transform, IdentityTransform):
             # inv_transform @ scale_transform -> applies scale_transform first
             sd_transform = _transform_to_spatialdata(inv_transform @ scale_transform, image_dim_map, scene_dim_map)
         else:
@@ -294,7 +300,7 @@ def to_spatialdata_multiscale_image(
     key: str,
     scene_id: str,
     scene_dim_map: dict[str, str],
-    transform: somacore.CoordinateTransform | None,
+    transform: CoordinateTransform | None,
 ) -> DataTree:
     """Export a MultiscaleImage to a DataTree.
 
@@ -335,7 +341,7 @@ def to_spatialdata_multiscale_image(
         # single transformation. Otherwise, convert to a SpatialData sequence of
         # transformations.
         inv_transform = transform.inverse_transform()
-        if isinstance(transform, somacore.ScaleTransform):
+        if isinstance(transform, ScaleTransform):
             # inv_transform @ scale_transform -> applies scale_transform first
             spatial_data_transformations = tuple(
                 _transform_to_spatialdata(

@@ -24,6 +24,7 @@ from itertools import repeat
 from typing import (
     Any,
     Literal,
+    Optional,
     TypedDict,
     TypeVar,
     cast,
@@ -48,7 +49,6 @@ try:
 except (AttributeError, ModuleNotFoundError):
     from anndata.experimental import CSCDataset
 
-from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
 from tiledbsoma import (
@@ -68,6 +68,7 @@ from tiledbsoma import (
 from tiledbsoma._collection import AnyTileDBCollection, CollectionBase
 from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
+from tiledbsoma._core_options import PlatformConfig
 from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, SOMAError
 from tiledbsoma._soma_array import SOMAArray
 from tiledbsoma._soma_object import SOMAObject
@@ -473,7 +474,7 @@ def from_h5ad(
 class IngestCtx(TypedDict):
     """Convenience type-alias for kwargs passed to ingest functions."""
 
-    context: SOMAContext | None
+    context: Optional[SOMAContext]  # noqa: UP045
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
 
@@ -484,7 +485,7 @@ class IngestPlatformCtx(IngestCtx):
     Extends :class:`IngestCtx`, adds ``platform_config``.
     """
 
-    platform_config: PlatformConfig | None
+    platform_config: Optional[PlatformConfig]  # noqa: UP045
 
 
 # ----------------------------------------------------------------

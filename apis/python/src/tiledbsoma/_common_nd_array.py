@@ -10,10 +10,9 @@ from collections.abc import Sequence
 from typing import cast
 
 import pyarrow as pa
-import somacore
-from somacore import options
 from typing_extensions import Self
 
+from ._core_options import PlatformConfig
 from ._soma_array import SOMAArray
 from ._soma_context import SOMAContext
 from ._types import OpenTimestamp, StatusAndReason
@@ -21,7 +20,7 @@ from .options._soma_tiledb_context import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBCreateOptions
 
 
-class NDArray(SOMAArray, somacore.NDArray):
+class NDArray(SOMAArray):
     """Abstract base for the common behaviors of both kinds of NDArray."""
 
     __slots__ = ()
@@ -33,7 +32,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         *,
         type: pa.DataType,
         shape: Sequence[int | None],
-        platform_config: options.PlatformConfig | None = None,
+        platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
@@ -129,6 +128,15 @@ class NDArray(SOMAArray, somacore.NDArray):
             Maturing.
         """
         return cast("tuple[int, ...]", tuple(self._handle.maxshape))
+
+    @property
+    def ndim(self) -> int:
+        """The number of dimensions in this array.
+
+        Lifecycle:
+            Maturing.
+        """
+        return len(self.shape)
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:

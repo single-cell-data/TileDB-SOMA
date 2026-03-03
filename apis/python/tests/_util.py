@@ -33,7 +33,9 @@ from anndata import AnnData
 from numpy import array_equal
 from pandas._testing import assert_frame_equal, assert_series_equal
 from scipy.sparse import sparray, spmatrix
-from somacore import (
+from typeguard import suppress_type_checks
+
+from tiledbsoma import (
     AffineTransform,
     AxisQuery,
     CoordinateTransform,
@@ -41,7 +43,6 @@ from somacore import (
     ScaleTransform,
     UniformScaleTransform,
 )
-from typeguard import suppress_type_checks
 
 
 def assert_uns_equal(uns0, uns1):
