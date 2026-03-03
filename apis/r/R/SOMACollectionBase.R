@@ -55,7 +55,7 @@ SOMACollectionBase <- R6::R6Class(
       private$.log_open_timestamp(open_mode)
       private$.open_handle(open_mode, self$tiledb_timestamp)
       private$.metadata_cache <- soma_object_get_metadata(private$.handle)
-      private$.update_member_cache(TRUE) # TODO: Clean-up this method
+      private$.member_cache <- soma_group_get_members(private$.handle) %||% vector(mode = "list", length = 0L)
       return(self)
     },
 
@@ -257,7 +257,6 @@ SOMACollectionBase <- R6::R6Class(
     #'
     length = function() {
       private$.check_open()
-      private$.update_member_cache()
       return(length(self$members))
     },
 
@@ -267,7 +266,6 @@ SOMACollectionBase <- R6::R6Class(
     #'
     names = function() {
       private$.check_open()
-      private$.update_member_cache()
       return(names(self$members) %||% character(length = 0L))
     },
 
@@ -438,7 +436,6 @@ SOMACollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error("members")
       }
-      private$.update_member_cache()
       return(private$.member_cache %||% NULL)
     }
   ),
@@ -446,53 +443,6 @@ SOMACollectionBase <- R6::R6Class(
     # @field .member_cache ...
     #
     .member_cache = NULL,
-
-    # @description Update the member cache
-    # The member cache will always force update for the v3 data model.
-    #
-    # @param force \code{TRUE} or \code{FALSE}
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .update_member_cache = function(force = FALSE) {
-      stopifnot(isTRUE(force) || isFALSE(force))
-      private$.check_open()
-
-      # Carrara URIs may have external changes due to auto-registration
-      # but skip in DELETE mode to preserve uncommitted local changes
-      if (self$context$is_tiledbv3(self$uri) && self$mode() != "DELETE") {
-        force <- TRUE
-      }
-
-      # Skip if we already have a member cache and don't want to update
-      if (!is.null(private$.member_cache) && !force) {
-        return(invisible(NULL))
-      }
-
-      soma_debug(sprintf(
-        "[SOMACollectionBase$updating_member_cache] class %s uri '%s'",
-        self$class(),
-        self$uri
-      ))
-      members <- soma_group_get_members(private$.handle) %||%
-        vector(mode = "list", length = 0L)
-
-      # Don't clobber existing cache
-      if (!length(private$.member_cache)) {
-        private$.member_cache <- members
-      } else {
-        members <- members[setdiff(
-          names(members),
-          names(private$.member_cache)
-        )]
-        private$.member_cache <- utils::modifyList(
-          private$.member_cache,
-          members
-        )
-      }
-
-      return(invisible(self))
-    },
 
     # @description Explicitly add a member to the cache in order to preserve
     # original URIs; otherwise, TileDB-Cloud creation URIs are retrieved which
@@ -520,7 +470,6 @@ SOMACollectionBase <- R6::R6Class(
         name = name,
         object = object
       )
-      private$.update_member_cache(force = TRUE) # TODO: Remove this.
       return(invisible(self))
     },
 
