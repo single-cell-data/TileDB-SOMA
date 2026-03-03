@@ -173,7 +173,7 @@ TEST_CASE("SOMAGroup: metadata") {
     SOMAGroup::create(ctx, uri, "NONE", {}, TimestampRange(0, 2));
     auto soma_group = SOMAGroup::open(OpenMode::soma_write, uri, ctx, "metadata", TimestampRange(1, 1));
     int32_t val = 100;
-    soma_group->set_metadata("md", common::DataType::INT32, 1, &val);
+    soma_group->set_metadata("md", common::DataType::int32, 1, &val);
     soma_group->close();
 
     // Read metadata
@@ -183,7 +183,7 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(soma_group->has_metadata("soma_encoding_version"));
     REQUIRE(soma_group->has_metadata("md"));
     auto mdval = soma_group->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_group->close();

@@ -24,91 +24,91 @@ using namespace std::string_view_literals;
 constexpr DataType tiledb_to_datatype(tiledb_datatype_t type) {
     switch (type) {
         case TILEDB_BOOL:
-            return DataType::BOOL;
+            return DataType::boolean;
         case TILEDB_INT8:
-            return DataType::INT8;
+            return DataType::int8;
         case TILEDB_INT16:
-            return DataType::INT16;
+            return DataType::int16;
         case TILEDB_INT32:
-            return DataType::INT32;
+            return DataType::int32;
         case TILEDB_INT64:
-            return DataType::INT64;
+            return DataType::int64;
         case TILEDB_UINT8:
-            return DataType::UINT8;
+            return DataType::uint8;
         case TILEDB_UINT16:
-            return DataType::UINT16;
+            return DataType::uint16;
         case TILEDB_UINT32:
-            return DataType::UINT32;
+            return DataType::uint32;
         case TILEDB_UINT64:
-            return DataType::UINT64;
+            return DataType::uint64;
         case TILEDB_FLOAT32:
-            return DataType::FLOAT32;
+            return DataType::float32;
         case TILEDB_FLOAT64:
-            return DataType::FLOAT64;
+            return DataType::float64;
         case TILEDB_DATETIME_YEAR:
-            return DataType::DATETIME_YEAR;
+            return DataType::datetime_year;
         case TILEDB_DATETIME_MONTH:
-            return DataType::DATETIME_MONTH;
+            return DataType::datetime_month;
         case TILEDB_DATETIME_WEEK:
-            return DataType::DATETIME_WEEK;
+            return DataType::datetime_week;
         case TILEDB_DATETIME_DAY:
-            return DataType::DATETIME_DAY;
+            return DataType::datetime_day;
         case TILEDB_DATETIME_HR:
-            return DataType::DATETIME_HR;
+            return DataType::datetime_hr;
         case TILEDB_DATETIME_MIN:
-            return DataType::DATETIME_MIN;
+            return DataType::datetime_min;
         case TILEDB_DATETIME_SEC:
-            return DataType::DATETIME_SEC;
+            return DataType::datetime_sec;
         case TILEDB_DATETIME_MS:
-            return DataType::DATETIME_MS;
+            return DataType::datetime_ms;
         case TILEDB_DATETIME_US:
-            return DataType::DATETIME_US;
+            return DataType::datetime_us;
         case TILEDB_DATETIME_NS:
-            return DataType::DATETIME_NS;
+            return DataType::datetime_ns;
         case TILEDB_DATETIME_PS:
-            return DataType::DATETIME_PS;
+            return DataType::datetime_ps;
         case TILEDB_DATETIME_FS:
-            return DataType::DATETIME_FS;
+            return DataType::datetime_fs;
         case TILEDB_DATETIME_AS:
-            return DataType::DATETIME_AS;
+            return DataType::datetime_as;
         case TILEDB_TIME_HR:
-            return DataType::TIME_HR;
+            return DataType::time_hr;
         case TILEDB_TIME_MIN:
-            return DataType::TIME_MIN;
+            return DataType::time_min;
         case TILEDB_TIME_SEC:
-            return DataType::TIME_SEC;
+            return DataType::time_sec;
         case TILEDB_TIME_MS:
-            return DataType::TIME_MS;
+            return DataType::time_ms;
         case TILEDB_TIME_US:
-            return DataType::TIME_US;
+            return DataType::time_us;
         case TILEDB_TIME_NS:
-            return DataType::TIME_NS;
+            return DataType::time_ns;
         case TILEDB_TIME_PS:
-            return DataType::TIME_PS;
+            return DataType::time_ps;
         case TILEDB_TIME_FS:
-            return DataType::TIME_FS;
+            return DataType::time_fs;
         case TILEDB_TIME_AS:
-            return DataType::TIME_AS;
+            return DataType::time_as;
         case TILEDB_CHAR:
-            return DataType::CHAR;
+            return DataType::character;
         case TILEDB_STRING_ASCII:
-            return DataType::STRING_ASCII;
+            return DataType::string_ascii;
         case TILEDB_STRING_UTF8:
-            return DataType::STRING_UTF8;
+            return DataType::string_utf8;
         case TILEDB_STRING_UTF16:
-            return DataType::STRING_UTF16;
+            return DataType::string_utf16;
         case TILEDB_STRING_UTF32:
-            return DataType::STRING_UTF32;
+            return DataType::string_utf32;
         case TILEDB_STRING_UCS2:
-            return DataType::STRING_UCS2;
+            return DataType::string_ucs2;
         case TILEDB_STRING_UCS4:
-            return DataType::STRING_UCS4;
+            return DataType::string_ucs4;
         case TILEDB_BLOB:
-            return DataType::BLOB;
+            return DataType::blob;
         case TILEDB_GEOM_WKB:
-            return DataType::GEOM_WKB;
+            return DataType::geom_wkb;
         case TILEDB_GEOM_WKT:
-            return DataType::GEOM_WKT;
+            return DataType::geom_wkt;
         default:
             throw std::invalid_argument("Unsupported datatype");
     }
@@ -118,91 +118,91 @@ constexpr DataType tiledb_to_datatype(tiledb_datatype_t type) {
 
 constexpr tiledb_datatype_t datatype_to_tiledb(DataType type) {
     switch (type) {
-        case DataType::BOOL:
+        case DataType::boolean:
             return TILEDB_BOOL;
-        case DataType::INT8:
+        case DataType::int8:
             return TILEDB_INT8;
-        case DataType::INT16:
+        case DataType::int16:
             return TILEDB_INT16;
-        case DataType::INT32:
+        case DataType::int32:
             return TILEDB_INT32;
-        case DataType::INT64:
+        case DataType::int64:
             return TILEDB_INT64;
-        case DataType::UINT8:
+        case DataType::uint8:
             return TILEDB_UINT8;
-        case DataType::UINT16:
+        case DataType::uint16:
             return TILEDB_UINT16;
-        case DataType::UINT32:
+        case DataType::uint32:
             return TILEDB_UINT32;
-        case DataType::UINT64:
+        case DataType::uint64:
             return TILEDB_UINT64;
-        case DataType::FLOAT32:
+        case DataType::float32:
             return TILEDB_FLOAT32;
-        case DataType::FLOAT64:
+        case DataType::float64:
             return TILEDB_FLOAT64;
-        case DataType::DATETIME_YEAR:
+        case DataType::datetime_year:
             return TILEDB_DATETIME_YEAR;
-        case DataType::DATETIME_MONTH:
+        case DataType::datetime_month:
             return TILEDB_DATETIME_MONTH;
-        case DataType::DATETIME_WEEK:
+        case DataType::datetime_week:
             return TILEDB_DATETIME_WEEK;
-        case DataType::DATETIME_DAY:
+        case DataType::datetime_day:
             return TILEDB_DATETIME_DAY;
-        case DataType::DATETIME_HR:
+        case DataType::datetime_hr:
             return TILEDB_DATETIME_HR;
-        case DataType::DATETIME_MIN:
+        case DataType::datetime_min:
             return TILEDB_DATETIME_MIN;
-        case DataType::DATETIME_SEC:
+        case DataType::datetime_sec:
             return TILEDB_DATETIME_SEC;
-        case DataType::DATETIME_MS:
+        case DataType::datetime_ms:
             return TILEDB_DATETIME_MS;
-        case DataType::DATETIME_US:
+        case DataType::datetime_us:
             return TILEDB_DATETIME_US;
-        case DataType::DATETIME_NS:
+        case DataType::datetime_ns:
             return TILEDB_DATETIME_NS;
-        case DataType::DATETIME_PS:
+        case DataType::datetime_ps:
             return TILEDB_DATETIME_PS;
-        case DataType::DATETIME_FS:
+        case DataType::datetime_fs:
             return TILEDB_DATETIME_FS;
-        case DataType::DATETIME_AS:
+        case DataType::datetime_as:
             return TILEDB_DATETIME_AS;
-        case DataType::TIME_HR:
+        case DataType::time_hr:
             return TILEDB_TIME_HR;
-        case DataType::TIME_MIN:
+        case DataType::time_min:
             return TILEDB_TIME_MIN;
-        case DataType::TIME_SEC:
+        case DataType::time_sec:
             return TILEDB_TIME_SEC;
-        case DataType::TIME_MS:
+        case DataType::time_ms:
             return TILEDB_TIME_MS;
-        case DataType::TIME_US:
+        case DataType::time_us:
             return TILEDB_TIME_US;
-        case DataType::TIME_NS:
+        case DataType::time_ns:
             return TILEDB_TIME_NS;
-        case DataType::TIME_PS:
+        case DataType::time_ps:
             return TILEDB_TIME_PS;
-        case DataType::TIME_FS:
+        case DataType::time_fs:
             return TILEDB_TIME_FS;
-        case DataType::TIME_AS:
+        case DataType::time_as:
             return TILEDB_TIME_AS;
-        case DataType::CHAR:
+        case DataType::character:
             return TILEDB_CHAR;
-        case DataType::STRING_ASCII:
+        case DataType::string_ascii:
             return TILEDB_STRING_ASCII;
-        case DataType::STRING_UTF8:
+        case DataType::string_utf8:
             return TILEDB_STRING_UTF8;
-        case DataType::STRING_UTF16:
+        case DataType::string_utf16:
             return TILEDB_STRING_UTF16;
-        case DataType::STRING_UTF32:
+        case DataType::string_utf32:
             return TILEDB_STRING_UTF32;
-        case DataType::STRING_UCS2:
+        case DataType::string_ucs2:
             return TILEDB_STRING_UCS2;
-        case DataType::STRING_UCS4:
+        case DataType::string_ucs4:
             return TILEDB_STRING_UCS4;
-        case DataType::BLOB:
+        case DataType::blob:
             return TILEDB_BLOB;
-        case DataType::GEOM_WKB:
+        case DataType::geom_wkb:
             return TILEDB_GEOM_WKB;
-        case DataType::GEOM_WKT:
+        case DataType::geom_wkt:
             return TILEDB_GEOM_WKT;
         default:
             throw std::invalid_argument("Unsupported datatype");
@@ -214,47 +214,47 @@ constexpr std::string_view datatype_to_arrow(DataType type, bool use_large = tru
     auto z = use_large ? "Z"sv : "z"sv;
 
     switch (type) {
-        case DataType::BOOL:
+        case DataType::boolean:
             return "b"sv;
-        case DataType::INT8:
+        case DataType::int8:
             return "c"sv;
-        case DataType::INT16:
+        case DataType::int16:
             return "s"sv;
-        case DataType::INT32:
+        case DataType::int32:
             return "i"sv;
-        case DataType::INT64:
+        case DataType::int64:
             return "l"sv;
-        case DataType::UINT8:
+        case DataType::uint8:
             return "C"sv;
-        case DataType::UINT16:
+        case DataType::uint16:
             return "S"sv;
-        case DataType::UINT32:
+        case DataType::uint32:
             return "I"sv;
-        case DataType::UINT64:
+        case DataType::uint64:
             return "L"sv;
-        case DataType::FLOAT32:
+        case DataType::float32:
             return "f"sv;
-        case DataType::FLOAT64:
+        case DataType::float64:
             return "g"sv;
-        case DataType::DATETIME_SEC:
+        case DataType::datetime_sec:
             return "tss:"sv;
-        case DataType::DATETIME_MS:
+        case DataType::datetime_ms:
             return "tsm:"sv;
-        case DataType::DATETIME_US:
+        case DataType::datetime_us:
             return "tsu:"sv;
-        case DataType::DATETIME_NS:
+        case DataType::datetime_ns:
             return "tsn:"sv;
-        case DataType::CHAR:
+        case DataType::character:
             return z;
-        case DataType::STRING_ASCII:
+        case DataType::string_ascii:
             return u;
-        case DataType::STRING_UTF8:
+        case DataType::string_utf8:
             return u;
-        case DataType::BLOB:
+        case DataType::blob:
             return z;
-        case DataType::GEOM_WKB:
+        case DataType::geom_wkb:
             return z;
-        case DataType::GEOM_WKT:
+        case DataType::geom_wkt:
             return u;
         default:
             throw std::invalid_argument("Unsuported type by Arrow");
@@ -263,9 +263,9 @@ constexpr std::string_view datatype_to_arrow(DataType type, bool use_large = tru
 
 constexpr std::optional<std::string_view> datatype_to_arrow_metadata(DataType type) {
     switch (type) {
-        case DataType::GEOM_WKB:
+        case DataType::geom_wkb:
             return "WKB"sv;
-        case DataType::GEOM_WKT:
+        case DataType::geom_wkt:
             return "WKT"sv;
         default:
             return std::nullopt;

@@ -16,144 +16,144 @@ namespace tiledbsoma::common {
 using namespace std::string_view_literals;
 
 enum class DataType {
-    BOOL,
+    boolean,
     /** Integral types */
-    INT8,
-    INT16,
-    INT32,
-    INT64,
-    UINT8,
-    UINT16,
-    UINT32,
-    UINT64,
+    int8,
+    int16,
+    int32,
+    int64,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
     /** Floating point types */
-    FLOAT32,
-    FLOAT64,
+    float32,
+    float64,
     /** Temporal types */
-    DATETIME_YEAR,
-    DATETIME_MONTH,
-    DATETIME_WEEK,
-    DATETIME_DAY,
-    DATETIME_HR,
-    DATETIME_MIN,
-    DATETIME_SEC,
-    DATETIME_MS,
-    DATETIME_US,
-    DATETIME_NS,
-    DATETIME_PS,
-    DATETIME_FS,
-    DATETIME_AS,
-    TIME_HR,
-    TIME_MIN,
-    TIME_SEC,
-    TIME_MS,
-    TIME_US,
-    TIME_NS,
-    TIME_PS,
-    TIME_FS,
-    TIME_AS,
+    datetime_year,
+    datetime_month,
+    datetime_week,
+    datetime_day,
+    datetime_hr,
+    datetime_min,
+    datetime_sec,
+    datetime_ms,
+    datetime_us,
+    datetime_ns,
+    datetime_ps,
+    datetime_fs,
+    datetime_as,
+    time_hr,
+    time_min,
+    time_sec,
+    time_ms,
+    time_us,
+    time_ns,
+    time_ps,
+    time_fs,
+    time_as,
     /** String types */
-    CHAR,
-    STRING_ASCII,
-    STRING_UTF8,
-    STRING_UTF16,
-    STRING_UTF32,
-    STRING_UCS2,
-    STRING_UCS4,
+    character,
+    string_ascii,
+    string_utf8,
+    string_utf16,
+    string_utf32,
+    string_ucs2,
+    string_ucs4,
     /** Binary types */
-    BLOB,
+    blob,
     /** Geometry types */
-    GEOM_WKB,
-    GEOM_WKT
+    geom_wkb,
+    geom_wkt
 };
 
 constexpr std::string_view getName(DataType type) {
     switch (type) {
-        case DataType::BOOL:
+        case DataType::boolean:
             return "BOOL"sv;
-        case DataType::INT8:
+        case DataType::int8:
             return "INT8"sv;
-        case DataType::INT16:
+        case DataType::int16:
             return "INT16"sv;
-        case DataType::INT32:
+        case DataType::int32:
             return "INT32"sv;
-        case DataType::INT64:
+        case DataType::int64:
             return "INT64"sv;
-        case DataType::UINT8:
+        case DataType::uint8:
             return "UINT8"sv;
-        case DataType::UINT16:
+        case DataType::uint16:
             return "UINT16"sv;
-        case DataType::UINT32:
+        case DataType::uint32:
             return "UINT32"sv;
-        case DataType::UINT64:
+        case DataType::uint64:
             return "UINT64"sv;
-        case DataType::FLOAT32:
+        case DataType::float32:
             return "FLOAT32"sv;
-        case DataType::FLOAT64:
+        case DataType::float64:
             return "FLOAT64"sv;
-        case DataType::DATETIME_YEAR:
+        case DataType::datetime_year:
             return "DATETIME_YEAR"sv;
-        case DataType::DATETIME_MONTH:
+        case DataType::datetime_month:
             return "DATETIME_MONTH"sv;
-        case DataType::DATETIME_WEEK:
+        case DataType::datetime_week:
             return "DATETIME_WEEK"sv;
-        case DataType::DATETIME_DAY:
+        case DataType::datetime_day:
             return "DATETIME_DAY"sv;
-        case DataType::DATETIME_HR:
+        case DataType::datetime_hr:
             return "DATETIME_HR"sv;
-        case DataType::DATETIME_MIN:
+        case DataType::datetime_min:
             return "DATETIME_MIN"sv;
-        case DataType::DATETIME_SEC:
+        case DataType::datetime_sec:
             return "DATETIME_SEC"sv;
-        case DataType::DATETIME_MS:
+        case DataType::datetime_ms:
             return "DATETIME_MS"sv;
-        case DataType::DATETIME_US:
+        case DataType::datetime_us:
             return "DATETIME_US"sv;
-        case DataType::DATETIME_NS:
+        case DataType::datetime_ns:
             return "DATETIME_NS"sv;
-        case DataType::DATETIME_PS:
+        case DataType::datetime_ps:
             return "DATETIME_PS"sv;
-        case DataType::DATETIME_FS:
+        case DataType::datetime_fs:
             return "DATETIME_FS"sv;
-        case DataType::DATETIME_AS:
+        case DataType::datetime_as:
             return "DATETIME_AS"sv;
-        case DataType::TIME_HR:
+        case DataType::time_hr:
             return "TIME_HR"sv;
-        case DataType::TIME_MIN:
+        case DataType::time_min:
             return "TIME_MIN"sv;
-        case DataType::TIME_SEC:
+        case DataType::time_sec:
             return "TIME_SEC"sv;
-        case DataType::TIME_MS:
+        case DataType::time_ms:
             return "TIME_MS"sv;
-        case DataType::TIME_US:
+        case DataType::time_us:
             return "TIME_US"sv;
-        case DataType::TIME_NS:
+        case DataType::time_ns:
             return "TIME_NS"sv;
-        case DataType::TIME_PS:
+        case DataType::time_ps:
             return "TIME_PS"sv;
-        case DataType::TIME_FS:
+        case DataType::time_fs:
             return "TIME_FS"sv;
-        case DataType::TIME_AS:
+        case DataType::time_as:
             return "TIME_AS"sv;
-        case DataType::CHAR:
+        case DataType::character:
             return "CHAR"sv;
-        case DataType::STRING_ASCII:
+        case DataType::string_ascii:
             return "STRING_ASCII"sv;
-        case DataType::STRING_UTF8:
+        case DataType::string_utf8:
             return "STRING_UTF8"sv;
-        case DataType::STRING_UTF16:
+        case DataType::string_utf16:
             return "STRING_UTF16"sv;
-        case DataType::STRING_UTF32:
+        case DataType::string_utf32:
             return "STRING_UTF32"sv;
-        case DataType::STRING_UCS2:
+        case DataType::string_ucs2:
             return "STRING_UCS2"sv;
-        case DataType::STRING_UCS4:
+        case DataType::string_ucs4:
             return "STRING_UCS4"sv;
-        case DataType::BLOB:
+        case DataType::blob:
             return "BLOB"sv;
-        case DataType::GEOM_WKB:
+        case DataType::geom_wkb:
             return "GEOM_WKB"sv;
-        case DataType::GEOM_WKT:
+        case DataType::geom_wkt:
             return "GEOM_WKT"sv;
     }
 }

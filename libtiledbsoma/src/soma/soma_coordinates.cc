@@ -118,13 +118,13 @@ SOMACoordinateSpace::SOMACoordinateSpace(
 
 SOMACoordinateSpace SOMACoordinateSpace::from_metadata(
     common::DataType value_type, uint32_t value_num, const void* value) {
-    if (value_type != common::DataType::STRING_UTF8 && value_type != common::DataType::STRING_ASCII) {
+    if (value_type != common::DataType::string_utf8 && value_type != common::DataType::string_ascii) {
         throw TileDBSOMAError(
             fmt::format(
                 "[SOMACoordinateSpace]: Unexpected datatype for coordinate space "
                 "metadata. Expected {} or {}; got {}",
-                common::getName(common::DataType::STRING_UTF8),
-                common::getName(common::DataType::STRING_ASCII),
+                common::getName(common::DataType::string_utf8),
+                common::getName(common::DataType::string_ascii),
                 common::getName(value_type)));
     }
     if (value == nullptr) {

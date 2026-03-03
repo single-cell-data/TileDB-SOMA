@@ -160,22 +160,22 @@ void SOMAObject::check_encoding_version() {
 
 ObjectType SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) {
     const std::map<std::string, ObjectType> typeMap = {
-        {"SOMAArray", ObjectType::ARRAY},
-        {"SOMACollection", ObjectType::GROUP},
-        {"SOMADataFrame", ObjectType::ARRAY},
-        {"SOMADenseNDArray", ObjectType::ARRAY},
-        {"SOMAExperiment", ObjectType::GROUP},
-        {"SOMAGeometryDataFrame", ObjectType::ARRAY},
-        {"SOMAGroup", ObjectType::GROUP},
-        {"SOMAMeasurement", ObjectType::GROUP},
-        {"SOMAMultiscaleImage", ObjectType::GROUP},
-        {"SOMAPointCloudDataFrame", ObjectType::ARRAY},
-        {"SOMAScene", ObjectType::GROUP},
-        {"SOMASparseNDArray", ObjectType::ARRAY},
+        {"SOMAArray", ObjectType::array},
+        {"SOMACollection", ObjectType::group},
+        {"SOMADataFrame", ObjectType::array},
+        {"SOMADenseNDArray", ObjectType::array},
+        {"SOMAExperiment", ObjectType::group},
+        {"SOMAGeometryDataFrame", ObjectType::array},
+        {"SOMAGroup", ObjectType::group},
+        {"SOMAMeasurement", ObjectType::group},
+        {"SOMAMultiscaleImage", ObjectType::group},
+        {"SOMAPointCloudDataFrame", ObjectType::array},
+        {"SOMAScene", ObjectType::group},
+        {"SOMASparseNDArray", ObjectType::array},
     };
     const std::map<std::string, ObjectType>::const_iterator iTileDBType = typeMap.find(soma_type);
     if (iTileDBType == typeMap.end())
-        return ObjectType::INVALID;
+        return ObjectType::invalid;
     return iTileDBType->second;
 };
 

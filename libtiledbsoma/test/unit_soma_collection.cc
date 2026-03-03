@@ -258,7 +258,7 @@ TEST_CASE("SOMACollection: metadata") {
     auto soma_collection = SOMACollection::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
-    soma_collection->set_metadata("md", common::DataType::INT32, 1, &val);
+    soma_collection->set_metadata("md", common::DataType::int32, 1, &val);
     soma_collection->close();
 
     // Read metadata
@@ -268,7 +268,7 @@ TEST_CASE("SOMACollection: metadata") {
     REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
     REQUIRE(soma_collection->has_metadata("md"));
     auto mdval = soma_collection->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_collection->close();
@@ -313,7 +313,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     auto soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
-    soma_experiment->set_metadata("md", common::DataType::INT32, 1, &val);
+    soma_experiment->set_metadata("md", common::DataType::int32, 1, &val);
     soma_experiment->close();
 
     // Read metadata
@@ -324,7 +324,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
     REQUIRE(soma_experiment->has_metadata("md"));
     auto mdval = soma_experiment->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_experiment->close();
@@ -370,7 +370,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
     auto soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
-    soma_measurement->set_metadata("md", common::DataType::INT32, 1, &val);
+    soma_measurement->set_metadata("md", common::DataType::int32, 1, &val);
     soma_measurement->close();
 
     // Read metadata
@@ -380,7 +380,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
     REQUIRE(soma_measurement->has_metadata("md"));
     auto mdval = soma_measurement->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_measurement->close();

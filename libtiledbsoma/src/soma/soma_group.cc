@@ -222,7 +222,7 @@ void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string&
     if (uri_type == URIType::automatic) {
         relative = !((uri.find("://") != std::string::npos) || (uri.find("/") == 0));
     }
-    group_->add_member(uri, relative, name, tiledb_type == ObjectType::ARRAY ? TILEDB_ARRAY : TILEDB_GROUP);
+    group_->add_member(uri, relative, name, tiledb_type == ObjectType::array ? TILEDB_ARRAY : TILEDB_GROUP);
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
 }
 

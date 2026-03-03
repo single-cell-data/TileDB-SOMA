@@ -165,7 +165,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     auto dnda = SOMADenseNDArray::open(uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
-    dnda->set_metadata("md", common::DataType::INT32, 1, &val);
+    dnda->set_metadata("md", common::DataType::int32, 1, &val);
     dnda->close();
 
     // Read metadata
@@ -175,7 +175,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
     REQUIRE(dnda->has_metadata("md"));
     auto mdval = dnda->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     dnda->close();

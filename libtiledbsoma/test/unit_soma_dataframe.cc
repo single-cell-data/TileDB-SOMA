@@ -302,7 +302,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: metadata", "[
     auto sdf = open(OpenMode::soma_write, TimestampRange(0, 2));
 
     int32_t val = 100;
-    sdf->set_metadata("md", common::DataType::INT32, 1, &val);
+    sdf->set_metadata("md", common::DataType::int32, 1, &val);
     sdf->close();
 
     // Read metadata
@@ -312,7 +312,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: metadata", "[
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
     REQUIRE(sdf->has_metadata("md"));
     auto mdval = sdf->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::INT32);
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     sdf->close();

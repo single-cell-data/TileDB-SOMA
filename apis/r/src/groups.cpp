@@ -111,15 +111,15 @@ Rcpp::IntegerVector copy_int_vector(const uint32_t v_num, const void* v) {
 SEXP _metadata_to_sexp(const tdbs::common::DataType v_type, const uint32_t v_num, const void* v) {
     // This supports a limited set of basic types as the metadata
     // annotation is not meant to support complete serialization
-    if (v_type == tdbs::common::DataType::INT32) {
+    if (v_type == tdbs::common::DataType::int32) {
         Rcpp::IntegerVector vec(v_num);
         std::memcpy(vec.begin(), v, v_num * sizeof(int32_t));
         return (vec);
-    } else if (v_type == tdbs::common::DataType::FLOAT64) {
+    } else if (v_type == tdbs::common::DataType::float64) {
         Rcpp::NumericVector vec(v_num);
         std::memcpy(vec.begin(), v, v_num * sizeof(double));
         return (vec);
-    } else if (v_type == tdbs::common::DataType::FLOAT32) {
+    } else if (v_type == tdbs::common::DataType::float32) {
         Rcpp::NumericVector vec(v_num);
         const float* fvec = static_cast<const float*>(v);
         size_t n = static_cast<size_t>(v_num);
@@ -127,33 +127,33 @@ SEXP _metadata_to_sexp(const tdbs::common::DataType v_type, const uint32_t v_num
             vec[i] = static_cast<double>(fvec[i]);
         return (vec);
     } else if (
-        v_type == tdbs::common::DataType::CHAR || v_type == tdbs::common::DataType::STRING_ASCII ||
-        v_type == tdbs::common::DataType::STRING_UTF8) {
+        v_type == tdbs::common::DataType::character || v_type == tdbs::common::DataType::string_ascii ||
+        v_type == tdbs::common::DataType::string_utf8) {
         std::string s(static_cast<const char*>(v), v_num);
         return (Rcpp::wrap(s));
-    } else if (v_type == tdbs::common::DataType::INT8) {
+    } else if (v_type == tdbs::common::DataType::int8) {
         Rcpp::LogicalVector vec(v_num);
         const int8_t* ivec = static_cast<const int8_t*>(v);
         size_t n = static_cast<size_t>(v_num);
         for (size_t i = 0; i < n; i++)
             vec[i] = static_cast<bool>(ivec[i]);
         return (vec);
-    } else if (v_type == tdbs::common::DataType::UINT8) {
+    } else if (v_type == tdbs::common::DataType::uint8) {
         // Strictly speaking a check for under/overflow would be needed here
         // (and below) yet this is for metadata annotation (and not data
         // payload) so extreme ranges are less likely
         return copy_int_vector<uint8_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::INT16) {
+    } else if (v_type == tdbs::common::DataType::int16) {
         return copy_int_vector<int16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::UINT16) {
+    } else if (v_type == tdbs::common::DataType::uint16) {
         return copy_int_vector<uint16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::UINT32) {
+    } else if (v_type == tdbs::common::DataType::uint32) {
         return copy_int_vector<uint32_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::INT64) {
+    } else if (v_type == tdbs::common::DataType::int64) {
         std::vector<int64_t> iv(v_num);
         std::memcpy(&(iv[0]), v, v_num * sizeof(int64_t));
         return Rcpp::toInteger64(iv);
-    } else if (v_type == tdbs::common::DataType::UINT64) {
+    } else if (v_type == tdbs::common::DataType::uint64) {
         return copy_int_vector<uint64_t>(v_num, v);
     } else {
         Rcpp::stop("No support yet for TileDB data type %s", tdbs::common::getName(v_type));
@@ -223,15 +223,15 @@ void c_group_put_metadata(Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP o
         case REALSXP: {
             Rcpp::NumericVector v(obj);
             if (Rcpp::isInteger64(obj)) {
-                xp->grpptr->set_metadata(key, tdbs::common::DataType::INT64, v.size(), v.begin());
+                xp->grpptr->set_metadata(key, tdbs::common::DataType::int64, v.size(), v.begin());
             } else {
-                xp->grpptr->set_metadata(key, tdbs::common::DataType::FLOAT64, v.size(), v.begin());
+                xp->grpptr->set_metadata(key, tdbs::common::DataType::float64, v.size(), v.begin());
             }
             break;
         }
         case INTSXP: {
             Rcpp::IntegerVector v(obj);
-            xp->grpptr->set_metadata(key, tdbs::common::DataType::INT32, v.size(), v.begin());
+            xp->grpptr->set_metadata(key, tdbs::common::DataType::int32, v.size(), v.begin());
             break;
         }
         case STRSXP: {
@@ -240,7 +240,7 @@ void c_group_put_metadata(Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP o
             // We use TILEDB_CHAR interchangeably with TILEDB_STRING_ASCII is
             // this best string type?
             // Use TILEDB_STRING_UTF8 for compatibility with Python API
-            xp->grpptr->set_metadata(key, tdbs::common::DataType::STRING_UTF8, s.length(), s.c_str());
+            xp->grpptr->set_metadata(key, tdbs::common::DataType::string_utf8, s.length(), s.c_str());
             break;
         }
         case LGLSXP: {  // experimental: map R logical (ie TRUE, FALSE, NA) to

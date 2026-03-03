@@ -712,14 +712,14 @@ Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& m
         auto dtype = std::get<0>(val);
         auto len = std::get<1>(val);
         const void* ptr = std::get<2>(val);
-        if (dtype == tdbs::common::DataType::STRING_UTF8 || dtype == tdbs::common::DataType::STRING_ASCII) {
+        if (dtype == tdbs::common::DataType::string_utf8 || dtype == tdbs::common::DataType::string_ascii) {
             auto str = std::string((char*)ptr, len);
             lst.push_back(str);
-        } else if (dtype == tdbs::common::DataType::INT64) {
+        } else if (dtype == tdbs::common::DataType::int64) {
             std::vector<int64_t> v(len);
             std::memcpy(&(v[0]), ptr, len * sizeof(int64_t));
             lst.push_back(Rcpp::toInteger64(v));
-        } else if (dtype == tdbs::common::DataType::INT32) {
+        } else if (dtype == tdbs::common::DataType::int32) {
             Rcpp::IntegerVector v(len);
             std::memcpy(v.begin(), ptr, len * sizeof(int32_t));
             lst.push_back(v);
