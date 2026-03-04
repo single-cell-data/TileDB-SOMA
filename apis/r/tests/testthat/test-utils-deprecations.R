@@ -1,4 +1,37 @@
-test_that("input type validation", {
+# .deprecate() ----------------------------------------------------------
+
+test_that(".deprecate() validates inputs", {
+  # what must be a length-1 character string
+  expect_error(.deprecate(when = "1.0.0", what = 1))
+  expect_error(.deprecate(when = "1.0.0", what = c("a", "b")))
+  # dots must be empty
+  expect_error(.deprecate(when = "1.0.0", what = "foo()", extra = TRUE))
+})
+
+test_that(".deprecate() is silent for future deprecations", {
+  local_mocked_bindings(.deprecation_stage = function(...) NULL)
+  expect_silent(.deprecate(when = "99.0.0", what = "foo()"))
+})
+
+test_that(".deprecate() warns during deprecation stage", {
+  local_mocked_bindings(.deprecation_stage = function(...) "deprecate")
+  expect_warning(
+    .deprecate(when = "1.0.0", what = "foo()"),
+    class = "lifecycle_warning_deprecated"
+  )
+})
+
+test_that(".deprecate() errors during defunct stage", {
+  local_mocked_bindings(.deprecation_stage = function(...) "defunct")
+  expect_error(
+    .deprecate(when = "1.0.0", what = "foo()"),
+    class = "lifecycle_error_deprecated"
+  )
+})
+
+# .deprecation_stage() --------------------------------------------------
+
+test_that(".deprecation_stage() validates inputs", {
   # when must be string parseable as a version
   expect_error(.deprecation_stage(1))
   expect_error(.deprecation_stage(""))
