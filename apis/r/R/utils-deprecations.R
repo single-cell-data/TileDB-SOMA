@@ -66,10 +66,8 @@
       what = I(what),
       with = with,
       details = details,
-      # lifecycle tries to be clever when determining when to warn; however,
-      # it's actually pretty bad at it. It doesn't work well with R6 nor does
-      # it accurately track testthat usage. We need to force it
-      # to throw a deprecation warning
+      # lifecycle's default warning deduplication doesn't work well with R6
+      # or testthat, so force every call to produce a warning
       id = id %||% as.character(Sys.time()),
       always = always,
       env = env,
