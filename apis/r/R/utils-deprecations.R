@@ -1,4 +1,3 @@
-
 #' Signal a Deprecation
 #'
 #' Signal a deprecation/defunct stage using \CRANpkg{lifecycle}
@@ -131,42 +130,10 @@
   if (rlang::is_na(when)) {
     rlang::abort("'when' must be a valid version")
   }
+
   # Get list of releases
-  releases <- as.data.frame(read.dcf(system.file(
-    "extdata",
-    "releases.dcf",
-    package = .pkgenv$pkgname,
-    lib.loc = .pkgenv$libname,
-    mustWork = TRUE
-  )))
-  # Add fake release for current minor release if needed
-  mm <- unique(vapply(
-    X = releases$Version,
-    FUN = function(x) {
-      x <- unlist(strsplit(x = x, split = "\\."))
-      return(paste0(x[1:2], collapse = "."))
-    },
-    FUN.VALUE = character(length = 1L),
-    USE.NAMES = FALSE
-  ))
-  cmm <- unlist(strsplit(
-    x = as.character(utils::packageVersion(.pkgenv$pkgname)),
-    split = "\\."
-  ))
-  if (all(paste0(cmm[1:2], collapse = ".") > mm)) {
-    dates <- file.info(list.files(
-      base::system.file(package = .pkgenv$pkgname),
-      full.names = TRUE,
-      recursive = TRUE
-    ))$mtime
-    releases <- rbind(
-      releases,
-      data.frame(
-        Version = sprintf(fmt = "%s.%s.0", cmm[1L], cmm[2L]),
-        Date = format(as.POSIXlt(dates[which.max(dates)]), format = "%Y-%m-%d")
-      )
-    )
-  }
+  releases <- .release_history()
+
   # Check to see if the deprecation is scheduled for a future release
   # If so, exit out
   if (all(when > releases$Version)) {
@@ -237,4 +204,70 @@
     return("defunct")
   }
   return("deprecate")
+}
+
+# Helpers ----------------------------------------------------------------
+
+#' Read the release history from releases.dcf
+#'
+#' If the current package minor version is newer than all releases in
+#' releases.dcf (i.e., a dev build), a synthetic entry is added using the
+#' package's install timestamp as the release date.
+#' @return A data.frame with columns `Version` (character) and `Date`
+#'   (character, YYYY-MM-DD format)
+#' @noRd
+.release_history <- function() {
+  releases <- as.data.frame(read.dcf(system.file(
+    "extdata",
+    "releases.dcf",
+    package = .pkgenv$pkgname,
+    lib.loc = .pkgenv$libname,
+    mustWork = TRUE
+  )))
+
+  # Extract the set of known major.minor versions from the release history
+  known_minors <- unique(vapply(
+    X = releases$Version,
+    FUN = function(x) {
+      parts <- unlist(strsplit(x = x, split = "\\."))
+      paste0(parts[1:2], collapse = ".")
+    },
+    FUN.VALUE = character(length = 1L),
+    USE.NAMES = FALSE
+  ))
+
+  # Construct the current package's version in major.minor format
+  pkg_version <- as.character(utils::packageVersion(.pkgenv$pkgname))
+  pkg_parts <- unlist(strsplit(x = pkg_version, split = "\\."))
+  pkg_minor <- paste0(pkg_parts[1:2], collapse = ".")
+
+  # Add dummy release if current minor version is newer than all known minors
+  if (all(pkg_minor > known_minors)) {
+    releases <- rbind(
+      releases,
+      data.frame(
+        Version = sprintf(fmt = "%s.%s.0", pkg_parts[1L], pkg_parts[2L]),
+        Date = format(.pkg_install_date(), format = "%Y-%m-%d")
+      )
+    )
+  }
+
+  releases
+}
+
+#' Estimate the package installation date
+#'
+#' Uses the most recent file modification timestamp from package source files
+#' as an estimated released date. This is used when no official release
+#' date is available (e.g., dev builds installed from source).
+#' @return A `POSIXlt` date
+#' @noRd
+.pkg_install_date <- function() {
+  files <- list.files(
+    base::system.file(package = .pkgenv$pkgname),
+    full.names = TRUE,
+    recursive = TRUE
+  )
+  mod_times <- file.info(files)$mtime
+  as.POSIXlt(mod_times[which.max(mod_times)])
 }
