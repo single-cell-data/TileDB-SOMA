@@ -155,36 +155,18 @@
     return(invisible(NULL))
   }
 
-  # Get current package's release date
-  if (current %in% releases$Version) {
-    date <- as.POSIXlt(releases[releases$Version == current, "Date"], format = "%Y-%m-%d")
-  } else {
-    date <- as.POSIXlt(read.dcf(
-      system.file(
-        "DESCRIPTION",
-        package = .pkgenv$pkgname,
-        lib.loc = .pkgenv$libname,
-        mustWork = TRUE
-      ),
-      fields = "Date/Publication"
-    ), format = "%Y-%m-%d")
-    if (is.na(date)) {
-      dates <- file.info(list.files(
-        base::system.file(package = .pkgenv$pkgname),
-        full.names = TRUE,
-        recursive = TRUE
-      ))$mtime
-      date <- as.POSIXlt(dates[which.max(dates)])
-    }
-  }
+  # Get the known (or estimated) release date for the current version
+  current_date <- .release_date(current, releases)
+
   weeks <- as.double(
     difftime(
-      time1 = date,
-      time2 = as.POSIXlt(releases[releases$Version == when, "Date"], format = "%Y-%m-%d"),
+      time1 = current_date,
+      time2 = as.Date(releases[releases$Version == when, "Date"]),
       units = "weeks"
     ),
     units = "weeks"
   )
+
   .as_integer_version <- function(x) {
     x <- vapply(
       X = unlist(strsplit(as.character(x), split = "\\.")),
@@ -273,4 +255,37 @@
   )
   mod_times <- file.info(files)$mtime
   as.POSIXlt(mod_times[which.max(mod_times)])
+}
+
+#' Determine the release date for a version
+#'
+#' For known releases dates are retrieved from the release history. For unknown
+#' versions (e.g., dev builds), falls back to the DESCRIPTION Date/Publication
+#' field, then to the package's install timestamp.
+#' @param version A `package_version` or `numeric_version` object
+#' @param releases A data.frame from `.release_history()`
+#' @return A `Date` or `POSIXlt` object
+#' @noRd
+.release_date <- function(version, releases) {
+  if (version %in% releases$Version) {
+    return(as.Date(releases[releases$Version == version, "Date"]))
+  }
+
+  # Try the DESCRIPTION Date/Publication field first
+  date <- as.Date(read.dcf(
+    system.file(
+      "DESCRIPTION",
+      package = .pkgenv$pkgname,
+      lib.loc = .pkgenv$libname,
+      mustWork = TRUE
+    ),
+    fields = "Date/Publication"
+  ))
+
+  if (!is.na(date)) {
+    return(date)
+  }
+
+  # Use the most recent file modification time as a fallback
+  .pkg_install_date()
 }
