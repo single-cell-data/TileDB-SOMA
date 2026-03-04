@@ -189,7 +189,7 @@
   }
   # Get current package's release date
   if (current %in% releases$Version) {
-    date <- as.POSIXlt(releases[releases$Version == current, "Date"])
+    date <- as.POSIXlt(releases[releases$Version == current, "Date"], format = "%Y-%m-%d")
   } else {
     date <- as.POSIXlt(read.dcf(
       system.file(
@@ -199,7 +199,7 @@
         mustWork = TRUE
       ),
       fields = "Date/Publication"
-    ))
+    ), format = "%Y-%m-%d")
     if (is.na(date)) {
       dates <- file.info(list.files(
         base::system.file(package = .pkgenv$pkgname),
@@ -212,7 +212,7 @@
   weeks <- as.double(
     difftime(
       time1 = date,
-      time2 = as.POSIXlt(x = releases[releases$Version == when, "Date"]),
+      time2 = as.POSIXlt(releases[releases$Version == when, "Date"], format = "%Y-%m-%d"),
       units = "weeks"
     ),
     units = "weeks"
