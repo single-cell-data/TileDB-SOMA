@@ -177,10 +177,11 @@
   # Defunct if:
   #   1. major version has been bumped, OR
   #   2. same major, minor diff >= 2, AND >= 12 weeks since deprecation release
-  is_defunct <- cur[["major"]] > dep[["major"]] ||
-    (cur[["major"]] == dep[["major"]] &&
-      (cur[["minor"]] - dep[["minor"]]) >= 2L &&
-      weeks_elapsed > 12L)
+  major_bump <- cur[["major"]] > dep[["major"]]
+  minor_gap <- (cur[["minor"]] - dep[["minor"]]) >= 2L
+  grace_period_over <- weeks_elapsed > 12L
+  is_defunct <- major_bump ||
+    (cur[["major"]] == dep[["major"]] && minor_gap && grace_period_over)
 
   if (is_defunct) "defunct" else "deprecate"
 }
