@@ -158,7 +158,9 @@
   # Get the known (or estimated) release date for the current version
   current_date <- .release_date(current, releases)
 
-  weeks <- as.double(
+  # Calculate the number of weeks between the current version's release date and
+  # the `when` release date
+  weeks_elapsed <- as.double(
     difftime(
       time1 = current_date,
       time2 = as.Date(releases[releases$Version == when, "Date"]),
@@ -167,28 +169,20 @@
     units = "weeks"
   )
 
-  .as_integer_version <- function(x) {
-    x <- vapply(
-      X = unlist(strsplit(as.character(x), split = "\\.")),
-      FUN = as.integer,
-      FUN.VALUE = integer(length = 1L)
-    )
-    if (length(x) > 4L) {
-      x <- x[1:4]
-    }
-    names(x) <- c("major", "minor", "patch", "devel")[seq_along(x)]
-    return(x)
-  }
-  cc <- .as_integer_version(current)
-  ww <- .as_integer_version(when)
-  defunct <- cc[["major"]] > ww[["major"]] || (
-    weeks > 12L &&
-      cc[["major"]] == ww[["major"]] && (cc[["minor"]] - ww[["minor"]]) >= 2L
-  )
-  if (defunct) {
-    return("defunct")
-  }
-  return("deprecate")
+  # Current version
+  cur <- .version_parts(current)
+  # When deprecation version
+  dep <- .version_parts(when)
+
+  # Defunct if:
+  #   1. major version has been bumped, OR
+  #   2. same major, minor diff >= 2, AND >= 12 weeks since deprecation release
+  is_defunct <- cur[["major"]] > dep[["major"]] ||
+    (cur[["major"]] == dep[["major"]] &&
+      (cur[["minor"]] - dep[["minor"]]) >= 2L &&
+      weeks_elapsed > 12L)
+
+  if (is_defunct) "defunct" else "deprecate"
 }
 
 # Helpers ----------------------------------------------------------------
@@ -288,4 +282,23 @@
 
   # Use the most recent file modification time as a fallback
   .pkg_install_date()
+}
+
+#' Parse a version into named major/minor/patch/devel components
+#' @param x A `package_version` or `numeric_version` object
+#' @return A named integer vector with elements `major`, `minor`, and
+#'   optionally `patch` and `devel`
+#' @noRd
+
+.version_parts <- function(x) {
+  parts <- vapply(
+    X = unlist(strsplit(as.character(x), split = "\\.")),
+    FUN = as.integer,
+    FUN.VALUE = integer(length = 1L)
+  )
+  if (length(parts) > 4L) {
+    parts <- parts[1:4]
+  }
+  names(parts) <- c("major", "minor", "patch", "devel")[seq_along(parts)]
+  parts
 }
