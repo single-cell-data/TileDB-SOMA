@@ -134,11 +134,12 @@
   # Get list of releases
   releases <- .release_history()
 
-  # Check to see if the deprecation is scheduled for a future release
-  # If so, exit out
+  # If `when` is newer than all known releases, it's a future deprecation
   if (all(when > releases$Version)) {
     return(invisible(NULL))
   }
+
+  # Error if `when` is not in the release history
   if (!when %in% releases$Version) {
     stop(sprintf(
       fmt = "Unknown %s release: '%s'",
@@ -146,12 +147,14 @@
       as.character(when)
     ))
   }
-  # Get current package version
+
+  # Get current package version if major.minor format, rolling up dev versions
+  # to the next minor version if necessary
   current <- .tiledbsoma_deprecation_version()
   if (current < when) {
-    # Deprecation will happen in the future
     return(invisible(NULL))
   }
+
   # Get current package's release date
   if (current %in% releases$Version) {
     date <- as.POSIXlt(releases[releases$Version == current, "Date"], format = "%Y-%m-%d")
