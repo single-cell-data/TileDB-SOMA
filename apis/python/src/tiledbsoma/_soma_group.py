@@ -99,8 +99,9 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                     clib_type=None if entry.tiledb_type is None else entry.tiledb_type.name,
                 )
 
-                # Since we just opened this object, we own it and should close it.
-                self._close_stack.enter_context(entry.soma)
+                if self._is_running_in_context:
+                    # Since we just opened this object, we own it and should close it.
+                    self._close_stack.enter_context(entry.soma)
 
         return cast("CollectionElementType", entry.soma)
 
