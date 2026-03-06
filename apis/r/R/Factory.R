@@ -74,7 +74,6 @@ SOMADataFrameCreate <- function(
   sdf <- SOMADataFrame$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     tiledb_timestamp = tiledb_timestamp
   )
@@ -131,7 +130,6 @@ SOMADataFrameOpen <- function(
   sdf <- SOMADataFrame$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     tiledb_timestamp = tiledb_timestamp
   )
@@ -186,7 +184,6 @@ SOMASparseNDArrayCreate <- function(
   snda <- SOMASparseNDArray$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     tiledb_timestamp = tiledb_timestamp
   )
@@ -230,7 +227,6 @@ SOMASparseNDArrayOpen <- function(
   snda <- SOMASparseNDArray$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -283,7 +279,6 @@ SOMADenseNDArrayCreate <- function(
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -318,7 +313,6 @@ SOMADenseNDArrayOpen <- function(
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -366,7 +360,6 @@ SOMACollectionCreate <- function(
   coll <- SOMACollection$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -412,7 +405,6 @@ SOMACollectionOpen <- function(
   coll <- SOMACollection$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -472,7 +464,6 @@ SOMAMeasurementCreate <- function(
   meas <- SOMAMeasurement$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -516,7 +507,6 @@ SOMAMeasurementOpen <- function(
   meas <- SOMAMeasurement$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -576,7 +566,6 @@ SOMAExperimentCreate <- function(
   exp <- SOMAExperiment$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )
@@ -619,7 +608,6 @@ SOMAExperimentOpen <- function(
   exp <- SOMAExperiment$new(
     uri,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     tiledb_timestamp = tiledb_timestamp,
     context = context
   )

@@ -111,12 +111,10 @@ load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL, context =
     metadata$soma_object_type %||% "",
     SOMAExperiment = SOMAExperimentOpen(
       dataset_uri,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     ),
     SOMADataFrame = SOMADataFrameOpen(
       dataset_uri,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     ),
     stop("The dataset is an unsupported SOMA object", call. = FALSE)

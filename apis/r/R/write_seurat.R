@@ -573,7 +573,6 @@ write_soma.Seurat <- function(
     uri = uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
@@ -587,7 +586,6 @@ write_soma.Seurat <- function(
     uri = file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   withCallingHandlers(
@@ -607,7 +605,6 @@ write_soma.Seurat <- function(
             soma_parent = expms,
             ingest_mode = ingest_mode,
             platform_config = platform_config,
-            tiledbsoma_ctx = tiledbsoma_ctx,
             context = context
           ),
           soma_parent = expms,
@@ -637,7 +634,6 @@ write_soma.Seurat <- function(
     key = 'obs',
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
 
@@ -700,7 +696,6 @@ write_soma.Seurat <- function(
         nfeatures = nfeatures,
         ingest_mode = ingest_mode,
         platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx,
         context = context
       ),
       error = err_to_warn
@@ -737,7 +732,6 @@ write_soma.Seurat <- function(
         soma_parent = ms,
         ingest_mode = ingest_mode,
         platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx,
         context = context
       ),
       error = err_to_warn
@@ -759,7 +753,6 @@ write_soma.Seurat <- function(
     uri = file_path(experiment$uri, "uns"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   withCallingHandlers(
@@ -777,7 +770,6 @@ write_soma.Seurat <- function(
       soma_parent = expuns,
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   }
