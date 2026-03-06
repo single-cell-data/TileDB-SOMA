@@ -175,8 +175,7 @@ Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
         // uint32_t, const void*>
         auto tpl = key.second;
         auto sxp = _metadata_to_sexp(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
-        Rcpp::List row = Rcpp::List::create(Rcpp::Named("name") = sxp);
-        lst[i] = row;
+        lst[i] = sxp;
         i++;
     }
     lst.attr("names") = names;
