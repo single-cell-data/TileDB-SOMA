@@ -5,7 +5,7 @@ createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype,
     invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec))
 }
 
-createSchemaForDataFrame <- function(uri, nasp, index_column_names, index_column_domains, pclst, ctxxp, tsvec = NULL) {
+createSchemaForDataFrame <- function(uri, nasp, index_column_names, index_column_domains, pclst, ctxxp, tsvec) {
     invisible(.Call(`_tiledbsoma_createSchemaForDataFrame`, uri, nasp, index_column_names, index_column_domains, pclst, ctxxp, tsvec))
 }
 
