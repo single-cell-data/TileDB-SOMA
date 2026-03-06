@@ -16,6 +16,7 @@
 
 ## Fixed
 
+- Metadata values retrieved from collection-based classes (`SOMACollection`, `SOMAExperiment`, `SOMAMeasurement`) are no longer wrapped in a named list, consistent with array-based classes ([#4429](https://github.com/single-cell-data/TileDB-SOMA/pull/4429)).
 - [BREAKING] Use stored handle to access `SOMAArrayBase` properties rather than re-opening the `SOMAArrayBase`. Array properties can no longer be accessed on an unopened array. ([#4414](https://github.com/single-cell-data/TileDB-SOMA/pull/4414))
 - Use stored handle to read and write to `SOMASparseNDArray`, `SOMADenseNDArray`, and `SOMADataFrame` rather than re-opening the SOMA oobjects for each read/write. ([#4414](https://github.com/single-cell-data/TileDB-SOMA/pull/4414))
 
