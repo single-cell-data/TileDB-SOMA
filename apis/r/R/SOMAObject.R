@@ -184,7 +184,6 @@ SOMAObject <- R6::R6Class(
         stop("'key' must be a single, non-empty string", call. = FALSE)
       }
       private$.check_open()
-      private$.update_metadata_cache()
 
       soma_debug(sprintf(
         "Retrieving metadata for %s '%s'",
@@ -499,42 +498,6 @@ SOMAObject <- R6::R6Class(
           self$tiledb_timestamp %||% "now"
         ))
       }
-    },
-
-    # @description Update the metadata cache
-    #
-    # @param force \code{TRUE} or \code{FALSE}
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .update_metadata_cache = function(force = FALSE) {
-      stopifnot(isTRUE(force) || isFALSE(force))
-
-      if (is.null(private$.metadata_cache)) {
-        private$.metadata_cache <- list()
-      }
-
-      # Skip if we already have a member cache and don't want to update
-      if (length(private$.metadata_cache) && !force) {
-        return(invisible(NULL))
-      }
-
-      soma_debug(sprintf(
-        "[SOMAObject$update_metadata_cache] updating metadata cache for %s '%s' in %s",
-        self$class(),
-        self$uri,
-        self$mode()
-      ))
-
-      private$.metadata_cache <- get_all_metadata(
-        uri = self$uri,
-        is_array = inherits(self, "SOMAArrayBase"),
-        ctxxp = private$.context$handle
-      ) %||%
-        list()
-
-      # Allow method chaining
-      return(invisible(self))
     }
   )
 )
