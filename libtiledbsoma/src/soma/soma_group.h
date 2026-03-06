@@ -15,15 +15,21 @@
 #define SOMA_GROUP
 
 #include <future>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <stdexcept>
-#include <tiledb/tiledb>
-#include <tiledb/tiledb_experimental>
 
 #include "../utils/common.h"
 #include "enums.h"
 #include "soma_object.h"
 
 #pragma region Forward declarations
+
+namespace tiledb {
+class Config;
+class Group;
+}  // namespace tiledb
 
 namespace tiledbsoma::common {
 enum class DataType;
@@ -32,7 +38,6 @@ enum class DataType;
 #pragma endregion
 
 namespace tiledbsoma {
-using namespace tiledb;
 
 // Pair storing uri and soma type
 using SOMAGroupEntry = std::pair<std::string, std::string>;
@@ -107,12 +112,15 @@ class SOMAGroup : public SOMAObject {
      * or write mode.
      * @param timestamp
      */
-    SOMAGroup(std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Group> group, std::optional<TimestampRange> timestamp);
+    SOMAGroup(
+        std::shared_ptr<SOMAContext> ctx,
+        std::shared_ptr<tiledb::Group> group,
+        std::optional<TimestampRange> timestamp);
 
     SOMAGroup() = delete;
     SOMAGroup(const SOMAGroup&) = default;
     SOMAGroup(SOMAGroup&&) = default;
-    virtual ~SOMAGroup() = default;
+    virtual ~SOMAGroup();
 
     /**
      * Open the SOMAGroup object.
@@ -298,6 +306,9 @@ class SOMAGroup : public SOMAObject {
      */
     uint64_t metadata_num() const;
 
+    bool has_member(const std::string& name) const;
+    std::shared_ptr<SOMAObject> get_member(const std::string& name);
+
    private:
     //===================================================================
     //= private non-static
@@ -307,7 +318,7 @@ class SOMAGroup : public SOMAObject {
      * Helper function to set the pass in timestamp in the config associated
      * with the SOMAContext passed in
      */
-    static Config _set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp);
+    static tiledb::Config _set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp);
 
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
@@ -319,7 +330,7 @@ class SOMAGroup : public SOMAObject {
     std::string name_;
 
     // TileDB Group associated with the SOMAGroup
-    std::shared_ptr<Group> group_;
+    std::shared_ptr<tiledb::Group> group_;
 
     // Metadata values need to be accessible in write mode as well. When adding
     // or deleting values in the group, instead of closing to update to
@@ -331,7 +342,7 @@ class SOMAGroup : public SOMAObject {
     // Group associated with metadata_. We need to keep this read-mode group
     // alive in order for the metadata value pointers in the cache to be
     // accessible
-    std::shared_ptr<Group> cache_group_;
+    std::shared_ptr<tiledb::Group> cache_group_;
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
@@ -339,6 +350,9 @@ class SOMAGroup : public SOMAObject {
     // Current mode of the group.
     OpenMode soma_mode_;
 
+    // Member-to-mutex map
+    std::map<std::string, std::shared_ptr<std::once_flag>> members_flag_;
+    std::map<std::string, std::shared_ptr<SOMAObject>> object_map_;
     // Member-to-URI cache
     std::map<std::string, SOMAGroupEntry> members_map_;
 };

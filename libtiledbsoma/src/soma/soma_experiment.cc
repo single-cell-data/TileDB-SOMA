@@ -43,18 +43,14 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
 }
 
 std::shared_ptr<SOMADataFrame> SOMAExperiment::obs() {
-    if (obs_ == nullptr) {
-        obs_ = SOMADataFrame::open(
-            (std::filesystem::path(uri()) / "obs").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*obs_flag_, [&]() { obs_ = std::dynamic_pointer_cast<SOMADataFrame>(get_member("obs")); });
+
     return obs_;
 }
 
 std::shared_ptr<SOMACollection> SOMAExperiment::ms() {
-    if (ms_ == nullptr) {
-        ms_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "ms").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*ms_flag_, [&]() { ms_ = std::dynamic_pointer_cast<SOMACollection>(get_member("ms")); });
+
     return ms_;
 }
 

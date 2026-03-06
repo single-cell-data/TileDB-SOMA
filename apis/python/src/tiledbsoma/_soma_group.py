@@ -74,6 +74,9 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self._mutated_keys: set[str] = set()
         self._reify_lock = Lock()
 
+    def __contains__(self, key: object) -> bool:
+        return key in self._handle
+
     def __len__(self) -> int:
         """Return the number of members in the collection."""
         return len(self._contents)
@@ -82,28 +85,22 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         """Gets the value associated with the key."""
         err_str = f"{self.__class__.__name__} has no item {key!r}"
 
-        try:
-            entry = self._contents[key]
-        except KeyError:
+        if key not in self._handle:
             raise KeyError(err_str) from None
 
-        with self._reify_lock:
-            if entry.soma is None:
-                from . import _factory  # Delayed binding to resolve circular import.
+        handle: clib = getattr(self._handle, key) if hasattr(self._handle, key) else self._handle.get_member(key)
 
-                entry.soma = _factory._open_soma_object(
-                    uri=entry.uri,
-                    mode=self.mode,
-                    context=self.context,
-                    tiledb_timestamp=self.tiledb_timestamp_ms,
-                    clib_type=None if entry.tiledb_type is None else entry.tiledb_type.name,
-                )
+        from . import _factory  # Delayed binding to resolve circular import.
 
-                if self._is_running_in_context:
-                    # Since we just opened this object, we own it and should close it.
-                    self._close_stack.enter_context(entry.soma)
+        cls: type[SOMAObject] = _factory._type_name_to_cls(handle.type.lower())
+        soma_object = cls(
+            handle,
+            uri=handle.uri,
+            context=self.context,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
-        return cast("CollectionElementType", entry.soma)
+        return cast("CollectionElementType", soma_object)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """Default collection __setattr__."""

@@ -178,7 +178,6 @@ class SOMAObject:
         self._uri = uri
         self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
-        self._close_stack.enter_context(self._handle)
         self._parse_special_metadata()
 
     def _parse_special_metadata(self) -> None:
@@ -236,6 +235,7 @@ class SOMAObject:
 
     def __enter__(self) -> Self:
         self._is_running_in_context = True
+        self._close_stack.enter_context(self._handle)
         return self
 
     def __exit__(self, *_: Any) -> None:  # noqa: ANN401
