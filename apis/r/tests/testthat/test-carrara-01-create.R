@@ -52,7 +52,7 @@ test_that("SOMADataFrame creation", {
   expect_equal(sdf1$domain(), domain)
   expect_equal(sdf1$schema(), tbl$schema)
 
-  expect_equivalent(sdf1$read()$concat(), tbl)
+  expect_equal(sdf1$read()$concat(), tbl)
   sdf1$close()
 })
 
@@ -64,8 +64,7 @@ test_that("SOMACollection creation", {
   SOMACollectionCreate(uri = uri)$close()
 
   collection2 <- SOMACollectionOpen(uri)
-  # Testing equivalence because soma_type returns a named string for collections
-  expect_equivalent(collection2$soma_type, "SOMACollection")
+  expect_equal(collection2$soma_type, "SOMACollection")
   expect_equal(length(collection2$names()), 0)
   collection2$close()
 })
@@ -121,7 +120,7 @@ test_that("SOMACollection add_new_* methods", {
   SOMAExperimentCreate(child2_uri)$close()
   child2 <- SOMACollectionOpen(child2_uri)
   expect_true(child2$exists())
-  expect_equivalent(child2$soma_type, "SOMAExperiment")
+  expect_equal(child2$soma_type, "SOMAExperiment")
   child2$close()
 
   # child3: SOMAMeasurement
@@ -129,7 +128,7 @@ test_that("SOMACollection add_new_* methods", {
   SOMAMeasurementCreate(child3_uri)$close()
   child3 <- SOMACollectionOpen(child3_uri)
   expect_true(child3$exists())
-  expect_equivalent(child3$soma_type, "SOMAMeasurement")
+  expect_equal(child3$soma_type, "SOMAMeasurement")
   child3$close()
 
   # child4: SOMACollection
@@ -137,7 +136,7 @@ test_that("SOMACollection add_new_* methods", {
   SOMACollectionCreate(child4_uri)$close()
   child4 <- SOMACollectionOpen(child4_uri)
   expect_true(child4$exists())
-  expect_equivalent(child4$soma_type, "SOMACollection")
+  expect_equal(child4$soma_type, "SOMACollection")
   child4$close()
 
   # child5: SOMADataFrame
@@ -178,13 +177,13 @@ test_that("SOMACollection add_new_* methods", {
   expect_setequal(collection$names(), children)
 
   # Verify types on retrieval
-  expect_equivalent(collection$get("child1")$soma_type, "SOMACollection")
-  expect_equivalent(collection$get("child2")$soma_type, "SOMAExperiment")
-  expect_equivalent(collection$get("child3")$soma_type, "SOMAMeasurement")
-  expect_equivalent(collection$get("child4")$soma_type, "SOMACollection")
-  expect_equivalent(collection$get("child5")$soma_type, "SOMADataFrame")
-  expect_equivalent(collection$get("child6")$soma_type, "SOMASparseNDArray")
-  expect_equivalent(collection$get("child7")$soma_type, "SOMADenseNDArray")
+  expect_equal(collection$get("child1")$soma_type, "SOMACollection")
+  expect_equal(collection$get("child2")$soma_type, "SOMAExperiment")
+  expect_equal(collection$get("child3")$soma_type, "SOMAMeasurement")
+  expect_equal(collection$get("child4")$soma_type, "SOMACollection")
+  expect_equal(collection$get("child5")$soma_type, "SOMADataFrame")
+  expect_equal(collection$get("child6")$soma_type, "SOMASparseNDArray")
+  expect_equal(collection$get("child7")$soma_type, "SOMADenseNDArray")
 
   # Verify properties for child5, child6, child7
   c5 <- collection$get("child5")
@@ -245,7 +244,7 @@ test_that("SOMACollection path encoding validation", {
   # Verify each collection can be opened and has correct type
   for (name in test_names) {
     child <- collection$get(name)
-    expect_equivalent(child$soma_type, "SOMACollection")
+    expect_equal(child$soma_type, "SOMACollection")
     child$close()
   }
 
@@ -270,7 +269,7 @@ test_that("SOMACollection path encoding validation", {
   expect_true("dataframe_αβγ" %in% collection$names())
 
   df <- collection$get("dataframe_αβγ")
-  expect_equivalent(df$soma_type, "SOMADataFrame")
+  expect_equal(df$soma_type, "SOMADataFrame")
   df$close()
 
   collection$close()

@@ -17,7 +17,7 @@ test_that("SOMACollection basics", {
     ),
     "GROUP"
   )
-  expect_true(collection$soma_type == "SOMACollection")
+  expect_equal(collection$soma_type, "SOMACollection")
   expect_true(collection$exists())
   expect_equal(collection$length(), 0)
   collection$close()
@@ -44,7 +44,7 @@ test_that("SOMACollection basics", {
 
   subcollection <- collection$get("subcollection")
   subcollection <- SOMACollectionOpen(subcollection$uri)
-  expect_true(subcollection$soma_type == "SOMACollection")
+  expect_equal(subcollection$soma_type, "SOMACollection")
   expect_true(subcollection$exists())
   subcollection$close()
 
@@ -57,7 +57,7 @@ test_that("SOMACollection basics", {
   )$close()
   df3 <- collection$get("new_df")
   df3 <- SOMADataFrameOpen(df3$uri)
-  expect_true(df3$soma_type == "SOMADataFrame")
+  expect_equal(df3$soma_type, "SOMADataFrame")
   df3$close()
 
   # Add new DenseNDArray to the collection
@@ -68,7 +68,7 @@ test_that("SOMACollection basics", {
   )$close()
   arr <- collection$get("nd_d_arr")
   arr <- SOMADenseNDArrayOpen(arr$uri)
-  expect_true(arr$soma_type == "SOMADenseNDArray")
+  expect_equal(arr$soma_type, "SOMADenseNDArray")
   arr$close()
 
   # Add new SparseNDArray to the collection
@@ -79,7 +79,7 @@ test_that("SOMACollection basics", {
   )$close()
   arr <- collection$get("nd_s_arr")
   arr <- SOMASparseNDArrayOpen(arr$uri)
-  expect_true(arr$soma_type == "SOMASparseNDArray")
+  expect_equal(arr$soma_type, "SOMASparseNDArray")
   arr$close()
 
   collection$close()

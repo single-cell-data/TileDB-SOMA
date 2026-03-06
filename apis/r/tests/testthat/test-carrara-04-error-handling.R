@@ -83,14 +83,14 @@ test_that("SOMACollection relative URI behavior", {
 
   # Verify we can open the child
   child <- parent$get(child_name)
-  expect_equivalent(child$soma_type, "SOMACollection")
+  expect_equal(child$soma_type, "SOMACollection")
   child$close()
 
   parent$close()
 
   # Verify child can be opened directly via its full URI
   child_direct <- SOMACollectionOpen(child_uri, mode = "READ")
-  expect_equivalent(child_direct$soma_type, "SOMACollection")
+  expect_equal(child_direct$soma_type, "SOMACollection")
   child_direct$close()
 })
 
@@ -184,16 +184,16 @@ test_that("Opening nested child paths directly works", {
   collection$close()
 
   # Verify we can open each nested path directly
-  expect_equivalent(SOMACollectionOpen(uri)$soma_type, "SOMACollection")
+  expect_equal(SOMACollectionOpen(uri)$soma_type, "SOMACollection")
   expect_equal(
     SOMASparseNDArrayOpen(file_path(uri, "snda1"))$soma_type,
     "SOMASparseNDArray"
   )
-  expect_equivalent(
+  expect_equal(
     SOMACollectionOpen(file_path(uri, "c1"))$soma_type,
     "SOMACollection"
   )
-  expect_equivalent(
+  expect_equal(
     SOMACollectionOpen(file_path(uri, "c1/c1.1"))$soma_type,
     "SOMACollection"
   )

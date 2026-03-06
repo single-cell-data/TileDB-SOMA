@@ -84,7 +84,7 @@ test_that("Basic mechanics", {
 
   # Read back the data (ignore attributes)
   sdf <- SOMADataFrameOpen(uri)
-  expect_match(sdf$soma_type, "SOMADataFrame")
+  expect_equal(sdf$soma_type, "SOMADataFrame")
 
   expect_error(sdf$shape(), class = "notYetImplementedError")
   expect_warning(sdf$levels())
@@ -215,7 +215,7 @@ test_that("Basic mechanics with default index_column_names", {
   expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
-  expect_match(sdf$soma_type, "SOMADataFrame")
+  expect_equal(sdf$soma_type, "SOMADataFrame")
 
   # check for missing columns
   expect_error(

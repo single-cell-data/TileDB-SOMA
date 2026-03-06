@@ -10,7 +10,7 @@ test_that("Ephemeral Collection mechanics", {
   ))
   expect_false(collection$exists())
   expect_s3_class(collection$create(), collection$class())
-  expect_true(collection$soma_type == "SOMACollection")
+  expect_equal(collection$soma_type, "SOMACollection")
   expect_equal(collection$length(), 0)
 
   # Add a dataframe to the collection
@@ -24,7 +24,7 @@ test_that("Ephemeral Collection mechanics", {
   expect_error(collection$add_new_collection(collection, "collection"))
   expect_no_condition(collection$set(collection, "collection"))
   collection2 <- collection$get("collection")
-  expect_true(collection2$soma_type == "SOMACollection")
+  expect_equal(collection2$soma_type, "SOMACollection")
   expect_false(collection2$exists())
   expect_s3_class(df2 <- collection2$get("sdf"), "SOMADataFrame")
 
@@ -48,7 +48,7 @@ test_that("Ephemeral Collection mechanics", {
     "new_df"
   ))
   expect_s3_class(df3 <- collection$get("new_df"), "SOMADataFrame")
-  expect_true(df3$soma_type == "SOMADataFrame")
+  expect_equal(df3$soma_type, "SOMADataFrame")
   df3$close()
 
   # Add new DenseNdArray to the collection
@@ -66,7 +66,7 @@ test_that("Ephemeral Collection mechanics", {
     "nd_d_arr"
   ))
   expect_s3_class(arr <- collection$get("nd_d_arr"), "SOMADenseNDArray")
-  expect_true(arr$soma_type == "SOMADenseNDArray")
+  expect_equal(arr$soma_type, "SOMADenseNDArray")
   arr$close()
 
   # Add new SparseNdArray to the collection
@@ -84,6 +84,6 @@ test_that("Ephemeral Collection mechanics", {
     "nd_s_arr"
   ))
   expect_s3_class(arr <- collection$get("nd_s_arr"), "SOMASparseNDArray")
-  expect_true(arr$soma_type == "SOMASparseNDArray")
+  expect_equal(arr$soma_type, "SOMASparseNDArray")
   arr$close()
 })
