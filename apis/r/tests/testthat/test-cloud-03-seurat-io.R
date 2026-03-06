@@ -33,7 +33,7 @@ test_that("Ingest Seurat object to cloud with write_soma", {
 
   # Verify measurement
   ms_rna <- exp$ms$get("RNA")
-  expect_equivalent(ms_rna$soma_type, "SOMAMeasurement")
+  expect_equal(ms_rna$soma_type, "SOMAMeasurement")
 
   # Verify var dataframe
   var_data <- ms_rna$var$read()$concat()

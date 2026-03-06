@@ -164,7 +164,6 @@ SEXP _metadata_to_sexp(const tdbs::common::DataType v_type, const uint32_t v_num
 Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
     // unique pointer to SOMAGroup from external pointer wrapper
-    // 'members map': a map from string to pair of strings
     auto mm = xp->grpptr->get_metadata();
     auto n = mm.size();
     Rcpp::List lst(n);
@@ -176,8 +175,7 @@ Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
         // uint32_t, const void*>
         auto tpl = key.second;
         auto sxp = _metadata_to_sexp(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
-        Rcpp::List row = Rcpp::List::create(Rcpp::Named("name") = sxp);
-        lst[i] = row;
+        lst[i] = sxp;
         i++;
     }
     lst.attr("names") = names;
