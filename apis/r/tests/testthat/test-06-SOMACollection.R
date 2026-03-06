@@ -85,6 +85,52 @@ test_that("SOMACollection basics", {
   collection$close()
 })
 
+test_that("SOMACollection metadata", {
+  uri <- withr::local_tempdir("collection-metadata")
+  collection <- SOMACollectionCreate(uri)
+
+  # Check standard soma_type
+  expect_equal(collection$soma_type, "SOMACollection")
+
+  # Set metadata with different value types
+  md <- list(string_key = "abc", int_key = 42L, float_key = 3.14)
+  collection$set_metadata(md)
+
+  # Read individual keys while still open for write
+  expect_equal(collection$get_metadata("string_key"), "abc")
+  expect_equal(collection$get_metadata("int_key"), 42L)
+  expect_equal(collection$get_metadata("float_key"), 3.14)
+
+  # Read all metadata while still open for write
+  readmd <- collection$get_metadata()
+  expect_equal(readmd[["string_key"]], "abc")
+  expect_equal(readmd[["int_key"]], 42L)
+  expect_equal(readmd[["float_key"]], 3.14)
+  collection$close()
+
+  # Read metadata after reopening for read
+  collection <- SOMACollectionOpen(uri)
+  expect_equal(collection$soma_type, "SOMACollection")
+  readmd <- collection$get_metadata()
+  expect_equal(readmd[["string_key"]], "abc")
+  expect_equal(readmd[["int_key"]], 42L)
+  expect_equal(readmd[["float_key"]], 3.14)
+
+  # Non-existent key returns NULL
+  expect_null(collection$get_metadata("no_such_key"))
+  collection$close()
+
+  # Overwrite an existing key in a second write session
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$set_metadata(list(string_key = "xyz"))
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri)
+  expect_equal(collection$get_metadata("string_key"), "xyz")
+  expect_equal(collection$get_metadata("int_key"), 42L)
+  collection$close()
+})
+
 test_that("SOMACollection timestamped ops", {
   skip_if(!extended_tests())
   # Create a collection @ t0
