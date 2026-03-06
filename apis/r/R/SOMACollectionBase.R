@@ -24,57 +24,15 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns \code{self}.
     #'
     create = function() {
-      # browser()
-      envs <- unique(vapply(
-        X = unique(sys.parents()),
-        FUN = function(n) environmentName(environment(sys.function(n))),
-        FUN.VALUE = character(1L)
-      ))
-      if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(private$.internal_use_only("create", "collection")),
-            collapse = "\n"
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Instantiate the TileDB group
+      private$.check_call_is_internal("create", paste(self$class(), "Create", sep = ""))
       soma_debug(sprintf(
         "[SOMACollectionBase$create] Creating new %s at '%s' at %s",
         self$class(),
         self$uri,
         self$tiledb_timestamp %||% "now"
       ))
-      private$.tiledb_group <- c_group_create(
-        uri = self$uri,
-        type = self$class(),
-        ctxxp = private$.context$handle,
-        timestamp = self$.tiledb_timestamp_range
-      )
-
-      # Root SOMA objects include a `dataset_type` entry to allow the
-      # TileDB Cloud UI to detect that they are SOMA datasets.
-      metadata <- switch(
-        self$class(),
-        SOMAExperiment = list(dataset_type = "soma"),
-        list()
-      )
-
-      # Key constraint on the TileDB Group API:
-      # * tiledb_group_create is synchronous: new items appear on disk once that
-      #   function has returned.
-      # * When we have an open handle for write and we do tiledb_group_put_metadata,
-      #   metadata items do _not_ appear on disk until tiledb_group_close has been
-      #   called.
-      # To avoid confusion, we pay the price of a reopen here.
-      #
-      # TODO: this feels like it could be resolved through improved caching.
+      private$.create()
       self$open("WRITE")
-      private$write_object_type_metadata(metadata)
-      self$reopen(mode = "WRITE")
-
       return(self)
     },
 
@@ -89,54 +47,15 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns \code{self}.
     #'
     open = function(mode = c("READ", "WRITE", "DELETE")) {
-      envs <- unique(vapply(
-        X = unique(sys.parents()),
-        FUN = function(n) environmentName(environment(sys.function(n))),
-        FUN.VALUE = character(1L)
-      ))
-      if (sys.parent()) {
-        if (
-          inherits(
-            environment(sys.function(sys.parent()))$self,
-            what = "SOMAObject"
-          )
-        ) {
-          envs <- union(envs, "tiledbsoma")
-        }
-      }
-      if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(private$.internal_use_only("open", "collection")),
-            collapse = "\n"
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Set the mode of the collection
-      private$.mode <- match.arg(mode)
-
-      # Set the group timestamp
-      # In READ mode, if the opener supplied no timestamp then we default to the time of
-      # opening, providing a temporal snapshot of all group members.
-      private$.group_open_timestamp <- if (
-        self$mode() == "READ" && is.null(self$tiledbtimestamp)
-      ) {
-        Sys.time()
-      } else {
-        self$tiledb_timestamp
-      }
-
-      private$.tiledb_group <- c_group_open(
-        uri = self$uri,
-        type = self$mode(),
-        ctxxp = private$.context$handle,
-        timestamp = self$.tiledb_timestamp_range
+      private$.check_call_is_internal(
+        "open",
+        paste(self$class(), "Open", sep = "")
       )
-
-      private$.update_member_cache(TRUE)
-
+      open_mode <- match.arg(mode)
+      private$.log_open_timestamp(open_mode)
+      private$.open_handle(open_mode, self$tiledb_timestamp)
+      private$.metadata_cache <- soma_object_get_metadata(private$.handle)
+      private$.member_cache <- soma_group_get_members(private$.handle) %||% vector(mode = "list", length = 0L)
       return(self)
     },
 
@@ -145,20 +64,19 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}.
     #'
     close = function() {
-      if (self$is_open()) {
-        for (member in private$.member_cache) {
-          if (!is.null(member$object) && member$object$is_open()) {
-            member$object$close()
-          }
+      for (member in private$.member_cache) {
+        if (!is.null(member$object)) {
+          member$object$close()
         }
-
-        soma_debug(sprintf("Closing %s '%s'", self$class(), self$uri))
-        c_group_close(private$.tiledb_group)
-        private$.mode <- NULL
-        private$.tiledb_group <- NULL
-        private$.group_open_timestamp <- NULL
       }
-
+      soma_debug(sprintf(
+        "[SOMAObject$close] Closing %s '%s'",
+        self$class(),
+        self$uri
+      ))
+      if (!is.null(private$.handle)) {
+        soma_object_close(private$.handle)
+      }
       return(invisible(self))
     },
 
@@ -236,8 +154,8 @@ SOMACollectionBase <- R6::R6Class(
         relative
       ))
 
-      c_group_set(
-        xp = private$.tiledb_group,
+      soma_group_set(
+        group = private$.handle,
         uri = uri,
         uri_type_int = 0, # -> use 'automatic' as opposed to 'relative' or 'absolute'
         name = name,
@@ -263,7 +181,6 @@ SOMACollectionBase <- R6::R6Class(
         stop("'name' must be a single, non-empty string", call. = FALSE)
       }
       private$.check_open()
-      private$.update_member_cache()
 
       if (is.null(member <- self$members[[name]])) {
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
@@ -323,7 +240,7 @@ SOMACollectionBase <- R6::R6Class(
       }
       private$.check_open()
 
-      c_group_remove_member(private$.tiledb_group, name)
+      soma_group_remove_member(private$.handle, name)
 
       # Drop member if cache has been initialized
       if (length(self$members)) {
@@ -340,7 +257,6 @@ SOMACollectionBase <- R6::R6Class(
     #'
     length = function() {
       private$.check_open()
-      private$.update_member_cache()
       return(length(self$members))
     },
 
@@ -350,31 +266,7 @@ SOMACollectionBase <- R6::R6Class(
     #'
     names = function() {
       private$.check_open()
-      private$.update_member_cache()
       return(names(self$members) %||% character(length = 0L))
-    },
-
-    #' @description Add list of metadata (lifecycle: maturing).
-    #'
-    #' @param metadata Named list of metadata to add.
-    #'
-    #' @return Invisibly returns \code{self}.
-    #'
-    set_metadata = function(metadata) {
-      stopifnot("Metadata must be a named list" = is_named_list(metadata))
-
-      private$.check_open_for_write()
-      private$.update_metadata_cache()
-
-      soma_debug(sprintf("Writing metadata to %s '%s'", self$class(), self$uri))
-      for (i in seq_along(metadata)) {
-        key <- names(metadata)[i]
-        obj <- metadata[[i]]
-        c_group_put_metadata(xp = private$.tiledb_group, key = key, obj = obj)
-        private$.metadata_cache[[key]] <- obj
-      }
-
-      return(invisible(self))
     },
 
     #' @description Add a new SOMA collection to this collection
@@ -544,98 +436,13 @@ SOMACollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error("members")
       }
-      private$.update_member_cache()
       return(private$.member_cache %||% NULL)
     }
   ),
   private = list(
-    # @field .tiledb_group ...
-    #
-    .tiledb_group = NULL,
-
-    # @field .group_open_timestamp ...
-    #
-    .group_open_timestamp = NULL,
-
     # @field .member_cache ...
     #
     .member_cache = NULL,
-
-    # @description Update the member cache
-    # The member cache will always force update for the v3 data model.
-    #
-    # @param force \code{TRUE} or \code{FALSE}
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .update_member_cache = function(force = FALSE) {
-      stopifnot(isTRUE(force) || isFALSE(force))
-
-      # Carrara URIs may have external changes due to auto-registration
-      # but skip in DELETE mode to preserve uncommitted local changes
-      if (self$context$is_tiledbv3(self$uri) && self$mode() != "DELETE") {
-        force <- TRUE
-      }
-
-      # Skip if we already have a member cache and don't want to update
-      if (!is.null(private$.member_cache) && !force) {
-        return(invisible(NULL))
-      }
-
-      soma_debug(sprintf(
-        "[SOMACollectionBase$updating_member_cache] class %s uri '%s'",
-        self$class(),
-        self$uri
-      ))
-
-      # Get a read-handle for the group for write or delete mode
-      handle <- if (self$mode() != "READ") {
-        soma_debug(sprintf(
-          "[SOMACollectionBase$updating_member_cache] re-opening %s uri '%s' ctx null %s time null %s",
-          self$class(),
-          self$uri,
-          is.null(private$.context),
-          is.null(self$.tiledb_timestamp_range)
-        ))
-        c_group_open(
-          uri = self$uri,
-          type = "READ",
-          ctxxp = private$.context$handle %||% create_soma_context(),
-          timestamp = self$.tiledb_timestamp_range
-        )
-      } else {
-        private$.tiledb_group
-      }
-
-      # Get the group members
-      members <- if (!c_group_member_count(xp = handle)) {
-        vector(mode = "list", length = 0L)
-      } else {
-        c_group_members(xp = handle)
-      }
-
-      # Don't clobber existing cache
-      if (!length(private$.member_cache)) {
-        private$.member_cache <- members
-      } else {
-        members <- members[setdiff(
-          names(members),
-          names(private$.member_cache)
-        )]
-        private$.member_cache <- utils::modifyList(
-          private$.member_cache,
-          members
-        )
-      }
-
-      # Close the read-handle if the group is open for writing
-      if (self$mode() != "READ") {
-        c_group_close(xp = handle)
-      }
-
-      # Allow method chaining
-      return(invisible(self))
-    },
 
     # @description Explicitly add a member to the cache in order to preserve
     # original URIs; otherwise, TileDB-Cloud creation URIs are retrieved which
@@ -651,20 +458,18 @@ SOMACollectionBase <- R6::R6Class(
         is.character(name) && length(name) == 1L && nzchar(name),
         inherits(object, "SOMAObject")
       )
+      # TODO: Remove this - should only be adding a cache member when the cache has been initialized.
       if (is.null(private$.member_cache)) {
         private$.member_cache <- list()
       }
 
       private$.member_cache[[name]] <- list(
-        # TODO: do we really need the type here?
-        # Calling `get_tiledb_object_type()` on remote storage has a cost;
-        # perhaps unnecessary to incur.
+        # TODO: Get the type from the object without re-opening
         type = get_tiledb_object_type(object$uri, private$.context$handle),
         uri = object$uri,
         name = name,
         object = object
       )
-      private$.update_member_cache(force = TRUE)
       return(invisible(self))
     },
 
@@ -701,67 +506,6 @@ SOMACollectionBase <- R6::R6Class(
         self$set(object, name)
       }
       return(invisible(self))
-    },
-
-    # @description Update the metadata cache
-    #
-    # @param force \code{TRUE} or \code{FALSE}
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .update_metadata_cache = function(force = FALSE) {
-      stopifnot(isTRUE(force) || isFALSE(force))
-
-      # Skip if we already have a member cache and don't want to update
-      if (length(private$.metadata_cache) && !force) {
-        return(invisible(NULL))
-      }
-
-      soma_debug(sprintf(
-        "Updating metadata cache for %s '%s'",
-        self$class(),
-        self$uri
-      ))
-
-      # Get a read-handle for the group
-      handle <- if (self$mode() == "WRITE") {
-        soma_debug(sprintf(
-          "[SOMACollectionBase$updating_member_cache] re-opening %s uri '%s' ctx null %s time null %s",
-          self$class(),
-          self$uri,
-          is.null(private$.context),
-          is.null(self$.tiledb_timestamp_range)
-        ))
-        c_group_open(
-          uri = self$uri,
-          type = "READ",
-          ctxxp = private$.context$handle %||% create_soma_context(),
-          timestamp = self$.tiledb_timestamp_range
-        )
-      } else {
-        private$.tiledb_group
-      }
-
-      # Get the group metadata
-      private$.metadata_cache <- c_group_get_metadata(xp = handle) %||% list()
-
-      # Close the read-handle if the group is open for writing
-      if (self$mode() == "WRITE") {
-        c_group_close(xp = handle)
-      }
-
-      # Allow method chaining
-      return(invisible(self))
-    },
-
-    # Add standard SOMA metadata values to the object with the option to include
-    # additional metadata.
-    write_object_type_metadata = function(metadata = list()) {
-      stopifnot(is.list(metadata))
-      ## these entriess are now written by libtiledbsoma
-      ##   metadata[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      ##   metadata[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      if (length(metadata) > 0) self$set_metadata(metadata)
     },
 
     # Instantiate a soma member object.

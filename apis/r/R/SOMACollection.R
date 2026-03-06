@@ -15,5 +15,25 @@
 #'
 SOMACollection <- R6::R6Class(
   classname = "SOMACollection",
-  inherit = SOMACollectionBase
+  inherit = SOMACollectionBase,
+  private = list(
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      private$.handle <- open_collection_handle(
+        self$uri,
+        open_mode,
+        private$.context$handle,
+        timestamp
+      )
+    },
+
+    # @description Implementation for creating a collection.
+    .create = function() {
+        soma_collection_create(
+            uri = self$uri,
+            context = private$.context$handle,
+            timestamp = self$.tiledb_timestamp_range
+        )
+    }
+  )
 )

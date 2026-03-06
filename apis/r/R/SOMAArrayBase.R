@@ -52,34 +52,6 @@ SOMAArrayBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Determine if the object is open for reading or writing
-    #'
-    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
-    #'
-    is_open = function() {
-      if (is.null(private$.handle)) {
-        return(FALSE)
-      }
-      return(soma_object_is_open(private$.handle))
-    },
-
-    #' @description Get the mode of the object
-    #'
-    #' @return The mode of the object, one of:
-    #' \itemize{
-    #'  \item \dQuote{\code{CLOSED}}
-    #'  \item \dQuote{\code{READ}}
-    #'  \item \dQuote{\code{WRITE}}
-    #'  \item \dQuote{\code{DELETE}}
-    #' }
-    #'
-    mode = function() {
-      if (is.null(private$.handle)) {
-        return("CLOSED")
-      }
-      return(soma_object_open_mode(private$.handle))
-    },
-
     #' @description Does an array allow duplicates?
     #'
     #' @return \code{TRUE} if the underlying TileDB array allows duplicates;
@@ -292,97 +264,6 @@ SOMAArrayBase <- R6::R6Class(
     # @description Open the handle for the C++ interface
     .open_handle = function(open_mode, timestamp) {
       stop("No SOMAArray C++ handle. This method must be overridden.")
-    },
-
-    # @description Check that the object is open for reading
-    #
-    .check_open_for_read = function() {
-      if (!self$is_open()) {
-        stop(
-          self$class(),
-          " at '",
-          self$uri,
-          "' must be open for reading (closed)",
-          call. = FALSE
-        )
-      }
-      if (self$mode() != "READ") {
-        stop(
-          self$class(),
-          " at '",
-          self$uri,
-          "' must be open for reading. Mode is ",
-          self$mode(),
-          call. = FALSE
-        )
-      }
-      return(invisible(NULL))
-    },
-
-    # @description Check that the object is open for writing
-    #
-    .check_open_for_write = function() {
-      if (!self$is_open()) {
-        stop(
-          self$class(),
-          " at '",
-          self$uri,
-          "' must be open for writing (closed)",
-          call. = FALSE
-        )
-      }
-      if (self$mode() != "WRITE") {
-        stop(
-          self$class(),
-          " at '",
-          self$uri,
-          "' must be open for writing. Mode is ",
-          self$mode(),
-          call. = FALSE
-        )
-      }
-      return(invisible(NULL))
-    },
-
-    # @desciption Check that the object is open for delete
-    .check_open_for_delete = function() {
-      if (!self$is_open()) {
-        stop(
-          self$class(),
-          " at '",
-          self$uri,
-          "' must be open for deleting (closed)",
-          call. = FALSE
-        )
-      }
-      if (self$mode() != "DELETE") {
-        stop(
-          self$class(),
-          " at '",
-          self$uri,
-          "' must be open for deleting. Mode is ",
-          self$mode(),
-          call. = FALSE
-        )
-      }
-      return(invisible(NULL))
-    },
-
-    # @description Check that the object is open
-    #
-    .check_open = function() {
-      if (!self$is_open()) {
-        stop(self$class(), " at '", self$uri, "' is closed", call. = FALSE)
-      }
-      return(invisible(NULL))
-    },
-
-    write_object_type_metadata = function() {
-      meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      soma_debug("[SOMAArrayBase::write_object_metadata] calling set metadata")
-      self$set_metadata(meta)
     }
   )
 )

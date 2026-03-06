@@ -42,15 +42,6 @@ struct SOMAContextWrapper {
 };
 typedef struct SOMAContextWrapper somactx_wrap_t;
 
-struct SOMAGroupWrapper {
-    SOMAGroupWrapper(std::unique_ptr<tdbs::SOMAGroup> grpptr_) : grpptr(std::move(grpptr_)) {
-    }
-    ~SOMAGroupWrapper() {
-    }
-    std::unique_ptr<tdbs::SOMAGroup> grpptr;
-};
-typedef struct SOMAGroupWrapper somagrp_wrap_t;
-
 
 // make the function signature nicer as using an uppercase SEXP 'screams'
 // we can not tag these as we do in xptrUtils.h they pass through to the

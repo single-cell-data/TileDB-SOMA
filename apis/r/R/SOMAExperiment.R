@@ -89,5 +89,26 @@ SOMAExperiment <- R6::R6Class(
     ms = function(value) {
       private$get_or_set_soma_field(value, "ms", "SOMACollection")
     }
+  ),
+  private = list(
+    # @description Open the handle for the C++ interface
+    .open_handle = function(open_mode, timestamp) {
+      private$.handle <- open_experiment_handle(
+        self$uri,
+        open_mode,
+        private$.context$handle,
+        timestamp
+      )
+    },
+
+    # @description Implementation for creating a collection.
+    .create = function() {
+        soma_experiment_create(
+            uri = self$uri,
+            context = private$.context$handle,
+            timestamp = self$.tiledb_timestamp_range
+        )
+    }
+ 
   )
 )
