@@ -31,7 +31,7 @@ class SOMAObject:
     _handle_type: ClassVar[_tdb_handles.RawHandle]
     """Class variable of the clib class handle used to open this object type."""
 
-    __slots__ = ("_close_stack", "_context", "_handle", "_metadata", "_timestamp_ms", "_uri")
+    __slots__ = ("_close_stack", "_context", "_handle", "_is_running_in_context", "_metadata", "_timestamp_ms", "_uri")
 
     soma_type: ClassVar[LiteralString]
     """A string describing the SOMA type of this object. This is constant.
@@ -154,6 +154,7 @@ class SOMAObject:
         if not isinstance(handle, self._handle_type):
             raise TypeError("Internal error: Unexpected handle type {type(handle)}. Expected {self._handle_type}.")
         self._close_stack = ExitStack()
+        self._is_running_in_context = False
         """An exit stack to manage closing handles owned by this object.
 
         This is used to manage both our direct handle (in the case of simple
@@ -234,9 +235,11 @@ class SOMAObject:
     __hash__ = object.__hash__
 
     def __enter__(self) -> Self:
+        self._is_running_in_context = True
         return self
 
     def __exit__(self, *_: Any) -> None:  # noqa: ANN401
+        self._is_running_in_context = False
         self.close()
 
     def __del__(self) -> None:
