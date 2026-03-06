@@ -59,7 +59,6 @@ SOMAOpen <- function(
       mode = mode,
       platform_config = platform_config,
       context = context,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
     SOMADataFrame = SOMADataFrameOpen(
@@ -67,7 +66,6 @@ SOMAOpen <- function(
       mode = mode,
       platform_config = platform_config,
       context = context,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
     SOMADenseNDArray = SOMADenseNDArrayOpen(
@@ -75,7 +73,6 @@ SOMAOpen <- function(
       mode = mode,
       platform_config = platform_config,
       context = context,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
     SOMASparseNDArray = SOMASparseNDArrayOpen(
@@ -83,7 +80,6 @@ SOMAOpen <- function(
       mode = mode,
       platform_config = platform_config,
       context = context,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
     SOMAExperiment = SOMAExperimentOpen(
@@ -91,7 +87,6 @@ SOMAOpen <- function(
       mode = mode,
       platform_config = platform_config,
       context = context,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
     SOMAMeasurement = SOMAMeasurementOpen(
@@ -99,7 +94,6 @@ SOMAOpen <- function(
       mode = mode,
       platform_config = platform_config,
       context = context,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
     stop(
