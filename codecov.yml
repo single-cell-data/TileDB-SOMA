@@ -1,6 +1,3 @@
-coverage:
-  range: "90...95"
-
 ignore:
   - "apis/r/inst/tiledb/"
   - "apis/r/inst/tiledbsoma/include"
@@ -26,7 +23,19 @@ component_management:
         - libtiledbsoma/src/soma/**
         - libtiledbsoma/src/utils/**
 
+flags:
+  python:
+    paths:
+      - apis/python/src/
+    carryforward: true
+  r:
+    paths:
+      - apis/r/R/
+      - apis/r/src/
+    carryforward: true
+
 coverage:
+  range: "90...95"
   status:
     patch:
       default:
