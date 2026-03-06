@@ -39,7 +39,7 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
 }
 
 void load_soma_array(py::module& m) {
-    py::class_<SOMAArray, SOMAObject>(m, "SOMAArray")
+    py::class_<SOMAArray, SOMAObject, py::smart_holder>(m, "SOMAArray")
         .def(
             py::init([](std::string_view uri,
                         std::map<std::string, std::string> platform_config,

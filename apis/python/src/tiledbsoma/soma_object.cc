@@ -29,7 +29,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_object(py::module& m) {
-    py::class_<SOMAObject>(m, "SOMAObject")
+    py::class_<SOMAObject, py::smart_holder>(m, "SOMAObject")
 
         .def_static(
             "open",

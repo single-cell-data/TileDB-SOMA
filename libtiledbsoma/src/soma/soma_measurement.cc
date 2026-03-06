@@ -43,50 +43,38 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
 }
 
 std::shared_ptr<SOMADataFrame> SOMAMeasurement::var() {
-    if (var_ == nullptr) {
-        var_ = SOMADataFrame::open(
-            (std::filesystem::path(uri()) / "var").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*var_flag_, [&]() { var_ = std::dynamic_pointer_cast<SOMADataFrame>(get_member("var")); });
+
     return var_;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::X() {
-    if (X_ == nullptr) {
-        X_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "X").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*X_flag_, [&]() { X_ = std::dynamic_pointer_cast<SOMACollection>(get_member("X")); });
+
     return X_;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::obsm() {
-    if (obsm_ == nullptr) {
-        obsm_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "obsm").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*obsm_flag_, [&]() { obsm_ = std::dynamic_pointer_cast<SOMACollection>(get_member("obsm")); });
+
     return obsm_;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::obsp() {
-    if (obsp_ == nullptr) {
-        obsp_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "obsp").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*obsp_flag_, [&]() { obsp_ = std::dynamic_pointer_cast<SOMACollection>(get_member("obsp")); });
+
     return obsp_;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::varm() {
-    if (varm_ == nullptr) {
-        varm_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "varm").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*varm_flag_, [&]() { varm_ = std::dynamic_pointer_cast<SOMACollection>(get_member("varm")); });
+
     return varm_;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::varp() {
-    if (varp_ == nullptr) {
-        varp_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "varp").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
+    std::call_once(*varp_flag_, [&]() { varp_ = std::dynamic_pointer_cast<SOMACollection>(get_member("varp")); });
+
     return varp_;
 }
 }  // namespace tiledbsoma

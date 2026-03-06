@@ -28,7 +28,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_sparse_ndarray(py::module& m) {
-    py::class_<SOMASparseNDArray, SOMAArray, SOMAObject>(m, "SOMASparseNDArray")
+    py::class_<SOMASparseNDArray, SOMAArray, SOMAObject, py::smart_holder>(m, "SOMASparseNDArray")
 
         .def_static(
             "create",

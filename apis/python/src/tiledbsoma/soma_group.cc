@@ -20,7 +20,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_group(py::module& m) {
-    py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
+    py::class_<SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMAGroup")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
@@ -42,6 +42,7 @@ void load_soma_group(py::module& m) {
         .def(
             "__exit__",
             [](SOMAGroup& group, py::object exc_type, py::object exc_value, py::object traceback) { group.close(); })
+        .def("__contains__", &SOMAGroup::has_member)
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {
@@ -87,6 +88,8 @@ void load_soma_group(py::module& m) {
 
         .def("has_metadata", &SOMAGroup::has_metadata)
 
-        .def("metadata_num", &SOMAGroup::metadata_num);
+        .def("metadata_num", &SOMAGroup::metadata_num)
+
+        .def("get_member", &SOMAGroup::get_member);
 }
 }  // namespace libtiledbsomacpp

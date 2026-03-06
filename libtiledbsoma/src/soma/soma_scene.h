@@ -110,12 +110,15 @@ class SOMAScene : public SOMACollectionBase {
 
     // A collection of imagery data.
     std::shared_ptr<SOMACollection> img_ = nullptr;
+    std::shared_ptr<std::once_flag> img_flag_ = std::make_shared<std::once_flag>();
 
     // A collection of observation location data.
     std::shared_ptr<SOMACollection> obsl_ = nullptr;
+    std::shared_ptr<std::once_flag> obsl_flag_ = std::make_shared<std::once_flag>();
 
     // A collection of collections of variable location data for measurements.
     std::shared_ptr<SOMACollection> varl_ = nullptr;
+    std::shared_ptr<std::once_flag> varl_flag_ = std::make_shared<std::once_flag>();
 };
 }  // namespace tiledbsoma
 

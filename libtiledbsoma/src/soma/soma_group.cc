@@ -16,7 +16,11 @@
 #include "common/datatype/datatype.h"
 #include "common/datatype/utils.h"
 #include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
 #include "enums.h"
+
+#include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
 
 namespace tiledbsoma {
 using namespace common::type;
@@ -25,7 +29,7 @@ using namespace common::type;
 // helper functions
 //==================================================================
 
-std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
+std::map<std::string, MetadataValue> create_metadata_cache(tiledb::Group& group) {
     std::map<std::string, MetadataValue> metadata_cache{};
     for (uint64_t idx = 0; idx < group.metadata_num(); ++idx) {
         std::string key;
@@ -39,12 +43,12 @@ std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
     return metadata_cache;
 }
 
-std::map<std::string, SOMAGroupEntry> create_member_cache(Group& group) {
+std::map<std::string, SOMAGroupEntry> create_member_cache(tiledb::Group& group) {
     auto get_object_type_string = [](tiledb::Object& group_member) {
         switch (group_member.type()) {
-            case Object::Type::Array:
+            case tiledb::Object::Type::Array:
                 return "SOMAArray";
-            case Object::Type::Group:
+            case tiledb::Object::Type::Group:
                 return "SOMAGroup";
             default:
                 throw TileDBSOMAError(
@@ -78,7 +82,7 @@ void SOMAGroup::create(
     ctx->validate_create_uri(uri);
     try {
         tiledb::Group::create(*ctx->tiledb_ctx(), std::string(uri));
-        auto group = std::make_shared<Group>(
+        auto group = std::make_shared<tiledb::Group>(
             *ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE, _set_timestamp(ctx, timestamp));
         group->put_metadata(
             SOMA_OBJECT_TYPE_KEY, TILEDB_STRING_UTF8, static_cast<uint32_t>(soma_type.length()), soma_type.data());
@@ -91,7 +95,7 @@ void SOMAGroup::create(
             group->put_metadata(key, TILEDB_STRING_UTF8, static_cast<uint32_t>(value.length()), value.data());
         }
         group->close();
-    } catch (TileDBError& e) {
+    } catch (tiledb::TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }
@@ -104,7 +108,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
     std::optional<TimestampRange> timestamp) {
     try {
         return std::make_unique<SOMAGroup>(mode, uri, ctx, name, timestamp);
-    } catch (TileDBError& e) {
+    } catch (tiledb::TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }
@@ -126,20 +130,36 @@ SOMAGroup::SOMAGroup(
     , soma_mode_(mode) {
     // Note: both OpenMode.write and OpenMode.del should be opened in
     // TILEDB_WRITE mode.
-    group_ = std::make_shared<Group>(
+    group_ = std::make_shared<tiledb::Group>(
         *ctx_->tiledb_ctx(),
         std::string(uri),
         mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE,
         _set_timestamp(ctx, timestamp));
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
-                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+                       std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
+    std::transform(
+        members_map_.begin(),
+        members_map_.end(),
+        std::inserter(members_flag_, members_flag_.begin()),
+        [](const auto& entry) {
+            return std::pair<std::string, std::shared_ptr<std::once_flag>>(
+                entry.first, std::make_shared<std::once_flag>());
+        });
+    std::transform(
+        members_map_.begin(),
+        members_map_.end(),
+        std::inserter(object_map_, object_map_.begin()),
+        [](const auto& entry) {
+            return std::pair<std::string, std::shared_ptr<SOMAObject>>(
+                entry.first, std::shared_ptr<SOMAObject>(nullptr));
+        });
 }
 
 SOMAGroup::SOMAGroup(
-    std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Group> group, std::optional<TimestampRange> timestamp)
+    std::shared_ptr<SOMAContext> ctx, std::shared_ptr<tiledb::Group> group, std::optional<TimestampRange> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(group->uri()))
     , group_(group)
@@ -164,9 +184,31 @@ SOMAGroup::SOMAGroup(
     }
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
-                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+                       std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
+    std::transform(
+        members_map_.begin(),
+        members_map_.end(),
+        std::inserter(members_flag_, members_flag_.begin()),
+        [](const auto& entry) {
+            return std::pair<std::string, std::shared_ptr<std::once_flag>>(
+                entry.first, std::make_shared<std::once_flag>());
+        });
+    std::transform(
+        members_map_.begin(),
+        members_map_.end(),
+        std::inserter(object_map_, object_map_.begin()),
+        [](const auto& entry) {
+            return std::pair<std::string, std::shared_ptr<SOMAObject>>(
+                entry.first, std::shared_ptr<SOMAObject>(nullptr));
+        });
+}
+
+SOMAGroup::~SOMAGroup() {
+    // common::logging::LOG_DEBUG(fmt::format("Closing group '{}'", uri()));
+
+    // close();
 }
 
 void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
@@ -178,9 +220,25 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     group_->open(mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE);
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
-                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+                       std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
+    std::transform(
+        members_map_.begin(),
+        members_map_.end(),
+        std::inserter(members_flag_, members_flag_.begin()),
+        [](const auto& entry) {
+            return std::pair<std::string, std::shared_ptr<std::once_flag>>(
+                entry.first, std::make_shared<std::once_flag>());
+        });
+    std::transform(
+        members_map_.begin(),
+        members_map_.end(),
+        std::inserter(object_map_, object_map_.begin()),
+        [](const auto& entry) {
+            return std::pair<std::string, std::shared_ptr<SOMAObject>>(
+                entry.first, std::shared_ptr<SOMAObject>(nullptr));
+        });
 }
 
 void SOMAGroup::close() {
@@ -210,7 +268,7 @@ tiledb::Object SOMAGroup::get(const std::string& name) const {
 bool SOMAGroup::has(const std::string& name) {
     try {
         group_->member(name);
-    } catch (const TileDBError& e) {
+    } catch (const tiledb::TileDBError& e) {
         return false;
     }
     return true;
@@ -224,6 +282,8 @@ void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string&
     }
     group_->add_member(uri, relative, name, tiledb_type == ObjectType::array ? TILEDB_ARRAY : TILEDB_GROUP);
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
+    members_flag_[name] = std::make_shared<std::once_flag>();
+    object_map_[name] = nullptr;
 }
 
 uint64_t SOMAGroup::count() const {
@@ -288,7 +348,27 @@ uint64_t SOMAGroup::metadata_num() const {
     return metadata_.size();
 }
 
-Config SOMAGroup::_set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
+bool SOMAGroup::has_member(const std::string& name) const {
+    return members_map_.contains(name);
+}
+
+std::shared_ptr<SOMAObject> SOMAGroup::get_member(const std::string& name) {
+    if (!members_map_.contains(name)) {
+        throw std::range_error(fmt::format("Group member '{}' is missing", name));
+    }
+
+    auto& [uri, type] = members_map_[name];
+    auto& handle = object_map_[name];
+
+    if (handle == nullptr) {
+        std::call_once(
+            *members_flag_[name], [&]() { handle = SOMAObject::open(uri, mode(), ctx(), timestamp(), type); });
+    }
+
+    return handle;
+}
+
+tiledb::Config SOMAGroup::_set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     auto cfg = ctx->tiledb_ctx()->config();
     if (timestamp) {
         if (timestamp->first > timestamp->second) {
