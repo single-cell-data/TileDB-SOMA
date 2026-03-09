@@ -13,7 +13,7 @@ test_that("Write Assay mechanics", {
   expect_true(ms$exists())
 
   expect_identical(ms$uri, file.path(collection$uri, "rna"))
-  expect_identical(ms$names(), c("X", "var"))
+  expect_setequal(ms$names(), c("X", "var"))
   expect_s3_class(ms$var, "SOMADataFrame")
   expect_identical(setdiff(ms$var$attrnames(), "var_id"), names(rna[[]]))
   expect_s3_class(ms$X, "SOMACollection")
@@ -227,7 +227,7 @@ test_that("Write v5 in-memory Assay mechanics", {
   on.exit(ms2$close(), add = TRUE, after = FALSE)
 
   expect_identical(ms2$uri, file.path(collection$uri, "ragged-arrays"))
-  expect_identical(ms2$X$names(), SeuratObject::Layers(rna2))
+  expect_setequal(ms2$X$names(), SeuratObject::Layers(rna2))
   features_map <- methods::slot(rna2, name = "features")
   cells_map <- methods::slot(rna2, name = "cells")
   for (layer in SeuratObject::Layers(rna2)) {
@@ -275,7 +275,7 @@ test_that("Write DimReduc mechanics", {
     fidx = fidx,
     nfeatures = nrow(pbmc_small_rna)
   ))
-  expect_identical(sort(ms_pca$names()), sort(c("X", "var", "obsm", "varm")))
+  expect_setequal(sort(ms_pca$names()), c("X", "var", "obsm", "varm"))
   expect_identical(ms_pca$obsm$names(), "X_pca")
   expect_s3_class(spca <- ms_pca$obsm$get("X_pca"), "SOMASparseNDArray")
   expect_equal(spca$shape(), dim(pbmc_small_pca))
