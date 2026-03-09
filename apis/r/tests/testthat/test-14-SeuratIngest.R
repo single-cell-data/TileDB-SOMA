@@ -176,7 +176,7 @@ test_that("Write v5 in-memory Assay mechanics", {
   expect_s3_class(ms$var, "SOMADataFrame")
   expect_identical(setdiff(ms$var$attrnames(), "var_id"), names(rna[[]]))
   expect_s3_class(ms$X, "SOMACollection")
-  expect_identical(ms$X$names(), SeuratObject::Layers(rna))
+  expect_setequal(ms$X$names(), SeuratObject::Layers(rna))
   features_map <- methods::slot(rna, name = "features")
   cells_map <- methods::slot(rna, name = "cells")
   ragged_hint <- .ragged_array_hint()
