@@ -17,7 +17,7 @@ test_that("SOMACollection basics", {
     ),
     "GROUP"
   )
-  expect_true(collection$soma_type == "SOMACollection")
+  expect_equal(collection$soma_type, "SOMACollection")
   expect_true(collection$exists())
   expect_equal(collection$length(), 0)
   collection$close()
@@ -44,7 +44,7 @@ test_that("SOMACollection basics", {
 
   subcollection <- collection$get("subcollection")
   subcollection <- SOMACollectionOpen(subcollection$uri)
-  expect_true(subcollection$soma_type == "SOMACollection")
+  expect_equal(subcollection$soma_type, "SOMACollection")
   expect_true(subcollection$exists())
   subcollection$close()
 
@@ -57,7 +57,7 @@ test_that("SOMACollection basics", {
   )$close()
   df3 <- collection$get("new_df")
   df3 <- SOMADataFrameOpen(df3$uri)
-  expect_true(df3$soma_type == "SOMADataFrame")
+  expect_equal(df3$soma_type, "SOMADataFrame")
   df3$close()
 
   # Add new DenseNDArray to the collection
@@ -68,7 +68,7 @@ test_that("SOMACollection basics", {
   )$close()
   arr <- collection$get("nd_d_arr")
   arr <- SOMADenseNDArrayOpen(arr$uri)
-  expect_true(arr$soma_type == "SOMADenseNDArray")
+  expect_equal(arr$soma_type, "SOMADenseNDArray")
   arr$close()
 
   # Add new SparseNDArray to the collection
@@ -79,9 +79,55 @@ test_that("SOMACollection basics", {
   )$close()
   arr <- collection$get("nd_s_arr")
   arr <- SOMASparseNDArrayOpen(arr$uri)
-  expect_true(arr$soma_type == "SOMASparseNDArray")
+  expect_equal(arr$soma_type, "SOMASparseNDArray")
   arr$close()
 
+  collection$close()
+})
+
+test_that("SOMACollection metadata", {
+  uri <- withr::local_tempdir("collection-metadata")
+  collection <- SOMACollectionCreate(uri)
+
+  # Check standard soma_type
+  expect_equal(collection$soma_type, "SOMACollection")
+
+  # Set metadata with different value types
+  md <- list(string_key = "abc", int_key = 42L, float_key = 3.14)
+  collection$set_metadata(md)
+
+  # Read individual keys while still open for write
+  expect_equal(collection$get_metadata("string_key"), "abc")
+  expect_equal(collection$get_metadata("int_key"), 42L)
+  expect_equal(collection$get_metadata("float_key"), 3.14)
+
+  # Read all metadata while still open for write
+  readmd <- collection$get_metadata()
+  expect_equal(readmd[["string_key"]], "abc")
+  expect_equal(readmd[["int_key"]], 42L)
+  expect_equal(readmd[["float_key"]], 3.14)
+  collection$close()
+
+  # Read metadata after reopening for read
+  collection <- SOMACollectionOpen(uri)
+  expect_equal(collection$soma_type, "SOMACollection")
+  readmd <- collection$get_metadata()
+  expect_equal(readmd[["string_key"]], "abc")
+  expect_equal(readmd[["int_key"]], 42L)
+  expect_equal(readmd[["float_key"]], 3.14)
+
+  # Non-existent key returns NULL
+  expect_null(collection$get_metadata("no_such_key"))
+  collection$close()
+
+  # Overwrite an existing key in a second write session
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$set_metadata(list(string_key = "xyz"))
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri)
+  expect_equal(collection$get_metadata("string_key"), "xyz")
+  expect_equal(collection$get_metadata("int_key"), 42L)
   collection$close()
 })
 

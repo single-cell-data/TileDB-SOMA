@@ -22,4 +22,4 @@ class TestCharacterMetadataWritePythonReadR(TestWritePythonReadR):
         """
 
     def test_r_character(self, experiment):
-        self.r_assert(r"stopifnot(all(vapply(md, \(x) is.character(x$name), logical(1L))))")
+        self.r_assert(r"stopifnot(all(vapply(md, is.character, logical(1L))))")
