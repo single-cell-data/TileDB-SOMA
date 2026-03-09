@@ -41,8 +41,10 @@ void load_soma_group(py::module& m) {
         .def("__enter__", [](SOMAGroup& group) { return group; })
         .def(
             "__exit__",
-            [](SOMAGroup& group, py::object exc_type, py::object exc_value, py::object traceback) { group.close(); })
-        .def("__contains__", &SOMAGroup::has_member)
+            [](SOMAGroup& group, py::object exc_type, py::object exc_value, py::object traceback) {
+                group.close(true);
+            })
+        .def("__contains__", &SOMAGroup::has)
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {
@@ -88,8 +90,6 @@ void load_soma_group(py::module& m) {
 
         .def("has_metadata", &SOMAGroup::has_metadata)
 
-        .def("metadata_num", &SOMAGroup::metadata_num)
-
-        .def("get_member", &SOMAGroup::get_member);
+        .def("metadata_num", &SOMAGroup::metadata_num);
 }
 }  // namespace libtiledbsomacpp

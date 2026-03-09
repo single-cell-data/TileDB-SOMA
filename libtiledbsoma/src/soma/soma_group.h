@@ -120,7 +120,7 @@ class SOMAGroup : public SOMAObject {
     SOMAGroup() = delete;
     SOMAGroup(const SOMAGroup&) = default;
     SOMAGroup(SOMAGroup&&) = default;
-    virtual ~SOMAGroup();
+    virtual ~SOMAGroup() = default;
 
     /**
      * Open the SOMAGroup object.
@@ -133,7 +133,7 @@ class SOMAGroup : public SOMAObject {
     /**
      * Close the SOMAGroup object.
      */
-    void close();
+    void close([[maybe_unused]] bool recursive = false) override;
 
     /**
      * Check if the SOMAGroup is open.
@@ -306,9 +306,6 @@ class SOMAGroup : public SOMAObject {
      */
     uint64_t metadata_num() const;
 
-    bool has_member(const std::string& name) const;
-    std::shared_ptr<SOMAObject> get_member(const std::string& name);
-
    private:
     //===================================================================
     //= private non-static
@@ -350,9 +347,6 @@ class SOMAGroup : public SOMAObject {
     // Current mode of the group.
     OpenMode soma_mode_;
 
-    // Member-to-mutex map
-    std::map<std::string, std::shared_ptr<std::once_flag>> members_flag_;
-    std::map<std::string, std::shared_ptr<SOMAObject>> object_map_;
     // Member-to-URI cache
     std::map<std::string, SOMAGroupEntry> members_map_;
 };

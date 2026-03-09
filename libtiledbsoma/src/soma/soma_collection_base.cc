@@ -56,21 +56,48 @@ SOMACollectionBase::SOMACollectionBase(
         }
     }
     check_encoding_version();
+
+    for (const auto [key, _] : members_map()) {
+        children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
+        flags_[key] = std::make_shared<std::once_flag>();
+    }
 }
 
-void SOMACollectionBase::close() {
-    for (auto mem : children_) {
-        if (mem.second->is_open()) {
-            mem.second->close();
+SOMACollectionBase::SOMACollectionBase(const SOMAGroup& other)
+    : SOMAGroup(other) {
+    for (const auto [key, _] : members_map()) {
+        children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
+        flags_[key] = std::make_shared<std::once_flag>();
+    }
+}
+
+void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
+    if (recursive) {
+        for (auto [key, member] : children_) {
+            if (!member || !member->is_open()) {
+                continue;
+            }
+
+            member->close();
         }
     }
+
     SOMAGroup::close();
 }
 
-std::unique_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
-    auto tiledb_obj = SOMAGroup::get(key);
-    auto soma_obj = SOMAObject::open(tiledb_obj.uri(), OpenMode::soma_read, this->ctx(), this->timestamp());
-    return soma_obj;
+std::shared_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
+    if (!has(key)) {
+        throw std::range_error(fmt::format("Group member '{}' is missing", key));
+    }
+
+    auto [uri, type] = members_map()[key];
+    auto& handle = children_[key];
+
+    if (handle == nullptr) {
+        std::call_once(*flags_[key], [&]() { handle = SOMAObject::open(uri, mode(), ctx(), timestamp()); });
+    }
+
+    return handle;
 }
 
 std::shared_ptr<SOMACollection> SOMACollectionBase::add_new_collection(

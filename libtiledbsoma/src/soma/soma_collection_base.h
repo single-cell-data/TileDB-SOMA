@@ -55,36 +55,26 @@ class SOMACollectionBase : public SOMAGroup {
         std::optional<TimestampRange> timestamp,
         std::optional<std::string> soma_type);
 
-    SOMACollectionBase(const SOMAGroup& other)
-        : SOMAGroup(other) {
-    }
+    SOMACollectionBase(const SOMAGroup& other);
 
     SOMACollectionBase() = delete;
     SOMACollectionBase(const SOMACollectionBase&) = default;
     SOMACollectionBase(SOMACollectionBase&&) = default;
     virtual ~SOMACollectionBase() = default;
 
-    using iterator = typename std::map<std::string, std::shared_ptr<SOMAObject>>::iterator;
-    iterator begin() {
-        return children_.begin();
-    }
-    iterator end() {
-        return children_.end();
-    }
-
     using SOMAGroup::open;
 
     /**
      * Closes the SOMACollectionBase object.
      */
-    void close();
+    void close([[maybe_unused]] bool recursive = false);
 
     /**
      * Get the SOMAObject associated with the key.
      *
      * @param key of member
      */
-    std::unique_ptr<SOMAObject> get(const std::string& key);
+    std::shared_ptr<SOMAObject> get(const std::string& key);
 
     /**
      * Create and add a SOMACollection to the SOMACollectionBase.
@@ -213,6 +203,9 @@ class SOMACollectionBase : public SOMAGroup {
 
     // Members of the SOMACollectionBase
     std::map<std::string, std::shared_ptr<SOMAObject>> children_;
+
+   private:
+    std::map<std::string, std::shared_ptr<std::once_flag>> flags_;
 };
 }  // namespace tiledbsoma
 

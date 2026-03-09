@@ -216,7 +216,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Close the SOMAArray object.
      */
-    void close();
+    void close([[maybe_unused]] bool recursive = false) override;
 
     /**
      * Check if the SOMAArray is open.

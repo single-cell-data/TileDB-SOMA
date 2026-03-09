@@ -43,13 +43,13 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
 }
 
 std::shared_ptr<SOMADataFrame> SOMAExperiment::obs() {
-    std::call_once(*obs_flag_, [&]() { obs_ = std::dynamic_pointer_cast<SOMADataFrame>(get_member("obs")); });
+    std::call_once(*obs_flag_, [&]() { obs_ = std::dynamic_pointer_cast<SOMADataFrame>(get("obs")); });
 
     return obs_;
 }
 
 std::shared_ptr<SOMACollection> SOMAExperiment::ms() {
-    std::call_once(*ms_flag_, [&]() { ms_ = std::dynamic_pointer_cast<SOMACollection>(get_member("ms")); });
+    std::call_once(*ms_flag_, [&]() { ms_ = std::dynamic_pointer_cast<SOMACollection>(get("ms")); });
 
     return ms_;
 }

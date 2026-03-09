@@ -29,10 +29,10 @@ using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
     py::class_<SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMACollectionBase")
-        .def(
-            "__iter__",
-            [](SOMACollectionBase& collection) { return py::make_iterator(collection.begin(), collection.end()); },
-            py::keep_alive<0, 1>())
+        // .def(
+        //     "__iter__",
+        //     [](SOMACollectionBase& collection) { return py::make_iterator(collection.begin(), collection.end()); },
+        //     py::keep_alive<0, 1>())
         .def("get", &SOMACollectionBase::get);
 
     py::class_<SOMACollection, SOMACollectionBase, py::smart_holder>(m, "SOMACollection")

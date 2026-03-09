@@ -89,7 +89,7 @@ class SOMAObject {
     /**
      * @brief Close the SOMAObject.
      */
-    virtual void close() = 0;
+    virtual void close([[maybe_unused]] bool recursive = false) = 0;
 
     /**
      * @brief Check if the SOMAObject is open.

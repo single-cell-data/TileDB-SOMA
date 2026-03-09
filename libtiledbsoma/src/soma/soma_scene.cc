@@ -64,19 +64,19 @@ SOMAScene::SOMAScene(
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::img() {
-    std::call_once(*img_flag_, [&]() { img_ = std::dynamic_pointer_cast<SOMACollection>(get_member("img")); });
+    std::call_once(*img_flag_, [&]() { img_ = std::dynamic_pointer_cast<SOMACollection>(get("img")); });
 
     return img_;
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::obsl() {
-    std::call_once(*obsl_flag_, [&]() { obsl_ = std::dynamic_pointer_cast<SOMACollection>(get_member("obsl")); });
+    std::call_once(*obsl_flag_, [&]() { obsl_ = std::dynamic_pointer_cast<SOMACollection>(get("obsl")); });
 
     return obsl_;
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::varl() {
-    std::call_once(*varl_flag_, [&]() { varl_ = std::dynamic_pointer_cast<SOMACollection>(get_member("varl")); });
+    std::call_once(*varl_flag_, [&]() { varl_ = std::dynamic_pointer_cast<SOMACollection>(get("varl")); });
 
     return varl_;
 }

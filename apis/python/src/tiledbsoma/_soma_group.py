@@ -88,7 +88,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         if key not in self._handle:
             raise KeyError(err_str) from None
 
-        handle: clib = getattr(self._handle, key) if hasattr(self._handle, key) else self._handle.get_member(key)
+        handle: clib = getattr(self._handle, key) if hasattr(self._handle, key) else self._handle.get(key)
 
         from . import _factory  # Delayed binding to resolve circular import.
 

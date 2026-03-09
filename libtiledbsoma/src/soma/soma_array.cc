@@ -269,7 +269,7 @@ CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
         has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain);
 }
 
-void SOMAArray::close() {
+void SOMAArray::close([[maybe_unused]] bool recursive) {
     arr_->close();
     meta_cache_arr_->close();
     metadata_.clear();
