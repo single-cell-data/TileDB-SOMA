@@ -100,6 +100,21 @@ std::shared_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
     return handle;
 }
 
+void SOMACollectionBase::set(
+    const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type) {
+    SOMAGroup::set(uri, uri_type, name, soma_type);
+
+    children_[name] = std::shared_ptr<SOMAObject>(nullptr);
+    flags_[name] = std::make_shared<std::once_flag>();
+}
+
+void SOMACollectionBase::del(const std::string& name) {
+    SOMAGroup::del(name);
+
+    children_.erase(name);
+    flags_.erase(name);
+}
+
 std::shared_ptr<SOMACollection> SOMACollectionBase::add_new_collection(
     std::string_view key,
     std::string_view uri,

@@ -73,14 +73,7 @@ class SOMAExperiment : public SOMACollectionBase {
     SOMAExperiment() = delete;
     SOMAExperiment(const SOMAExperiment&) = default;
     SOMAExperiment(SOMAExperiment&&) = default;
-    ~SOMAExperiment() {
-        std::cout << "Deleting experiment" << std::endl;
-        if (obs_) {
-            std::cout << "Obs use count: " << obs_.use_count() << std::endl;
-        } else {
-            std::cout << "Obs is null" << std::endl;
-        }
-    }
+    ~SOMAExperiment() = default;
 
     /**
      * @brief Get the primary annotations on the observation axis
@@ -108,14 +101,6 @@ class SOMAExperiment : public SOMACollectionBase {
     //===================================================================
     //= private non-static
     //===================================================================
-
-    // Primary annotations on the observation axis
-    std::shared_ptr<SOMADataFrame> obs_ = nullptr;
-    std::shared_ptr<std::once_flag> obs_flag_ = std::make_shared<std::once_flag>();
-
-    // A collection of named measurements
-    std::shared_ptr<SOMACollection> ms_ = nullptr;
-    std::shared_ptr<std::once_flag> ms_flag_ = std::make_shared<std::once_flag>();
 
     // A collection of spatial scenes
     std::shared_ptr<SOMACollection> spatial_ = nullptr;

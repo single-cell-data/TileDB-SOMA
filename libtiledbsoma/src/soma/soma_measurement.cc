@@ -43,38 +43,27 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
 }
 
 std::shared_ptr<SOMADataFrame> SOMAMeasurement::var() {
-    std::call_once(*var_flag_, [&]() { var_ = std::dynamic_pointer_cast<SOMADataFrame>(get("var")); });
-
-    return var_;
+    return std::dynamic_pointer_cast<SOMADataFrame>(get("var"));
+    ;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::X() {
-    std::call_once(*X_flag_, [&]() { X_ = std::dynamic_pointer_cast<SOMACollection>(get("X")); });
-
-    return X_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("X"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::obsm() {
-    std::call_once(*obsm_flag_, [&]() { obsm_ = std::dynamic_pointer_cast<SOMACollection>(get("obsm")); });
-
-    return obsm_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("obsm"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::obsp() {
-    std::call_once(*obsp_flag_, [&]() { obsp_ = std::dynamic_pointer_cast<SOMACollection>(get("obsp")); });
-
-    return obsp_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("obsp"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::varm() {
-    std::call_once(*varm_flag_, [&]() { varm_ = std::dynamic_pointer_cast<SOMACollection>(get("varm")); });
-
-    return varm_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("varm"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::varp() {
-    std::call_once(*varp_flag_, [&]() { varp_ = std::dynamic_pointer_cast<SOMACollection>(get("varp")); });
-
-    return varp_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("varp"));
 }
 }  // namespace tiledbsoma

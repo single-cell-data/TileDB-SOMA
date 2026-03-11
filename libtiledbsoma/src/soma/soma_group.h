@@ -19,6 +19,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <stdexcept>
+#include <undordered_set>
 
 #include "../utils/common.h"
 #include "enums.h"
@@ -203,7 +204,7 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param soma_type the soma_type of the member
      */
-    void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type);
+    virtual void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type);
 
     /**
      * Get the number of members in the SOMAGroup.
@@ -215,7 +216,7 @@ class SOMAGroup : public SOMAObject {
      *
      * @param name of member
      */
-    void del(const std::string& name);
+    virtual void del(const std::string& name);
 
     /**
      * Return a mapping of all members in the group with its uri and type.
@@ -349,6 +350,9 @@ class SOMAGroup : public SOMAObject {
 
     // Member-to-URI cache
     std::map<std::string, SOMAGroupEntry> members_map_;
+
+    // Set of mutated members for Group write ops
+    std::unordered_set<std::string> mutated_members_;
 };
 
 }  // namespace tiledbsoma

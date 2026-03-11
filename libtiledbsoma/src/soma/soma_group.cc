@@ -219,29 +219,43 @@ tiledb::Object SOMAGroup::get(const std::string& name) const {
 
 bool SOMAGroup::has(const std::string& name) {
     try {
-        cache_group_->member(name);
+        group_->member(name);
     } catch (const tiledb::TileDBError& e) {
-        return false;
+        return members_map_.contains(name) || false;
     }
     return true;
 }
 
 void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type) {
-    auto tiledb_type = this->tiledb_type_from_soma_type(soma_type);
-    bool relative = uri_type == URIType::relative;
-    if (uri_type == URIType::automatic) {
-        relative = !((uri.find("://") != std::string::npos) || (uri.find("/") == 0));
+    if (mutated_members_.contains(name) || members_map_.contains(name)) {
+        throw std::runtime_error(fmt::format("replacing key '{}' is unsupported", name));
     }
-    group_->add_member(uri, relative, name, tiledb_type == ObjectType::array ? TILEDB_ARRAY : TILEDB_GROUP);
+
+    auto protocol = ctx_->tiledb_ctx()->data_protocol(uri);
+    if (protocol == tiledb::Context::DataProtocol::v2) {
+        auto tiledb_type = this->tiledb_type_from_soma_type(soma_type);
+        bool relative = uri_type == URIType::relative;
+        if (uri_type == URIType::automatic) {
+            relative = !((uri.find("://") != std::string::npos) || (uri.find("/") == 0));
+        }
+
+        group_->add_member(uri, relative, name, tiledb_type == ObjectType::array ? TILEDB_ARRAY : TILEDB_GROUP);
+    }
+
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
 }
 
 uint64_t SOMAGroup::count() const {
-    return cache_group_->member_count();
+    return members_map_.size();
 }
 
 void SOMAGroup::del(const std::string& name) {
+    if (mutated_members_.contains(name)) {
+        throw std::runtime_error(fmt::format("Cannot delete previously-mutated key '{}'.", name));
+    }
+
     group_->remove_member(name);
+    members_map_.erase(name);
 }
 
 std::map<std::string, SOMAGroupEntry> SOMAGroup::members_map() const {

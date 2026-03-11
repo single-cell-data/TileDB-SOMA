@@ -134,32 +134,6 @@ class SOMAMeasurement : public SOMACollectionBase {
     //===================================================================
     //= private non-static
     //===================================================================
-
-    // Primary annotations on the variable axis
-    std::shared_ptr<SOMADataFrame> var_ = nullptr;
-    std::shared_ptr<std::once_flag> var_flag_ = std::make_shared<std::once_flag>();
-
-    // A collection of matrices, each containing measured feature vaues
-    std::shared_ptr<SOMACollection> X_ = nullptr;
-    std::shared_ptr<std::once_flag> X_flag_ = std::make_shared<std::once_flag>();
-
-    // A collection of dense matrices containing annotations of each obs row
-    std::shared_ptr<SOMACollection> obsm_ = nullptr;
-    std::shared_ptr<std::once_flag> obsm_flag_ = std::make_shared<std::once_flag>();
-
-    // A collection of sparse matrices containing pairwise annotations of each
-    // obs row
-    std::shared_ptr<SOMACollection> obsp_ = nullptr;
-    std::shared_ptr<std::once_flag> obsp_flag_ = std::make_shared<std::once_flag>();
-
-    // A collection of dense matrices containing annotations of each var row
-    std::shared_ptr<SOMACollection> varm_ = nullptr;
-    std::shared_ptr<std::once_flag> varm_flag_ = std::make_shared<std::once_flag>();
-
-    // A collection of sparse matrices containing pairwise annotations of each
-    // var row
-    std::shared_ptr<SOMACollection> varp_ = nullptr;
-    std::shared_ptr<std::once_flag> varp_flag_ = std::make_shared<std::once_flag>();
 };
 }  // namespace tiledbsoma
 

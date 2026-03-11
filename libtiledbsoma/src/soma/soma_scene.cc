@@ -64,21 +64,15 @@ SOMAScene::SOMAScene(
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::img() {
-    std::call_once(*img_flag_, [&]() { img_ = std::dynamic_pointer_cast<SOMACollection>(get("img")); });
-
-    return img_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("img"));
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::obsl() {
-    std::call_once(*obsl_flag_, [&]() { obsl_ = std::dynamic_pointer_cast<SOMACollection>(get("obsl")); });
-
-    return obsl_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("obsl"));
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::varl() {
-    std::call_once(*varl_flag_, [&]() { varl_ = std::dynamic_pointer_cast<SOMACollection>(get("varl")); });
-
-    return varl_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("varl"));
 }
 
 }  // namespace tiledbsoma

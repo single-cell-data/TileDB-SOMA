@@ -76,6 +76,15 @@ class SOMACollectionBase : public SOMAGroup {
      */
     std::shared_ptr<SOMAObject> get(const std::string& key);
 
+    void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type) override;
+
+    /**
+     * Remove a named member from the SOMAGroup.
+     *
+     * @param name of member
+     */
+    void del(const std::string& name) override;
+
     /**
      * Create and add a SOMACollection to the SOMACollectionBase.
      *
