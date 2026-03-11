@@ -16,6 +16,8 @@
 #include "soma_dataframe.h"
 #include "soma_measurement.h"
 
+#include "common/logging/impl/logger.h"
+
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -48,6 +50,10 @@ std::shared_ptr<SOMADataFrame> SOMAExperiment::obs() {
 
 std::shared_ptr<SOMACollection> SOMAExperiment::ms() {
     return std::dynamic_pointer_cast<SOMACollection>(get("ms"));
+}
+
+std::string SOMAExperiment::classname() const {
+    return "Experiment";
 }
 
 }  // namespace tiledbsoma

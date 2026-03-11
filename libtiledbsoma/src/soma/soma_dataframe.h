@@ -242,6 +242,11 @@ class SOMADataFrame : public SOMAArray {
      * @return std::optional<int64_t>
      */
     std::optional<int64_t> maybe_soma_joinid_maxshape();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 
 }  // namespace tiledbsoma

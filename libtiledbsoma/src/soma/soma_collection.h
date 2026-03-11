@@ -80,6 +80,11 @@ class SOMACollection : public SOMACollectionBase {
     SOMACollection(const SOMACollection&) = default;
     SOMACollection(SOMACollection&&) = default;
     virtual ~SOMACollection() = default;
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 }  // namespace tiledbsoma
 

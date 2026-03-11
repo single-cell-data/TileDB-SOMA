@@ -205,6 +205,8 @@ class SOMACollectionBase : public SOMAGroup {
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
+    std::ostream& print(std::ostream& stream, int level = 0) const override;
+
    protected:
     //===================================================================
     //= protected non-static

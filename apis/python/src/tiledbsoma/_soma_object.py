@@ -210,7 +210,7 @@ class SOMAObject:
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
         self._metadata._write()
-        self._handle.close()
+        self._handle.close(True)
         self._handle = self._handle_type.open(
             uri=self._uri, mode=open_mode, context=self._context._handle, timestamp=(0, timestamp_ms)
         )

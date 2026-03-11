@@ -19,7 +19,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <stdexcept>
-#include <undordered_set>
+#include <unordered_set>
 
 #include "../utils/common.h"
 #include "enums.h"
@@ -306,6 +306,11 @@ class SOMAGroup : public SOMAObject {
      * be opened in READ mode, otherwise the function will error out.
      */
     uint64_t metadata_num() const;
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 
    private:
     //===================================================================

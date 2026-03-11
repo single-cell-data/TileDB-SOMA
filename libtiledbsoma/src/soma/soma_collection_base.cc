@@ -250,4 +250,32 @@ std::shared_ptr<SOMASparseNDArray> SOMACollectionBase::add_new_sparse_ndarray(
     return member;
 }
 
+std::ostream& SOMACollectionBase::print(std::ostream& stream, int level) const {
+    std::string indentation(level * 4, ' ');
+    std::string item_count = children_.size() == 0 ? "empty" :
+                             children_.size() == 1 ? "1 item" :
+                                                     fmt::format("{} items", children_.size());
+    stream << fmt::format(
+                  "{}{} '{}' ({} for {}) ({})",
+                  indentation,
+                  classname(),
+                  uri(),
+                  is_open() ? "open" : "CLOSED",
+                  open_mode_to_string(mode()),
+                  item_count)
+           << std::endl;
+
+    auto members = members_map();
+
+    for (const auto& [key, child] : children_) {
+        if (child == nullptr) {
+            stream << fmt::format(" {}{} '{}' (unopened)", indentation, key, members[key].first) << std::endl;
+        } else {
+            child->print(stream, level + 1);
+        }
+    }
+
+    return stream;
+}
+
 }  // namespace tiledbsoma

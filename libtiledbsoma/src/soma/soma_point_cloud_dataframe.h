@@ -142,6 +142,11 @@ class SOMAPointCloudDataFrame : public SOMAArray {
      */
     uint64_t count();
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     SOMACoordinateSpace coord_space_;
 };

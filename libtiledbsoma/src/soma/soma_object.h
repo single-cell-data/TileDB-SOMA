@@ -187,9 +187,18 @@ class SOMAObject {
     virtual uint64_t metadata_num() const = 0;
 
     /**
+     * Return the display name of the class.
+     */
+    virtual std::string classname() const = 0;
+
+    /**
      * @brief Given a soma_type, return the underlying TileDB type.
      */
     static ObjectType tiledb_type_from_soma_type(const std::string& soma_type);
+
+    virtual std::ostream& print(std::ostream& stream, int level = 0) const;
+
+    friend std::ostream& operator<<(std::ostream& stream, const SOMAObject& object);
 };
 }  // namespace tiledbsoma
 

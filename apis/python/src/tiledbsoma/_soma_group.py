@@ -76,7 +76,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
 
     def __len__(self) -> int:
         """Return the number of members in the collection."""
-        return self._handle.__len__()
+        return int(self._handle.__len__())
 
     def __getitem__(self, key: str) -> CollectionElementType:
         """Gets the value associated with the key."""
@@ -113,17 +113,17 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self._del_element(key)
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._handle)
+        return iter(self._handle.members())
 
     def _contents_lines(self, last_indent: str) -> Iterable[str]:
         indent = last_indent + "    "
         if self.closed:
             return
-        for key, entry in self._contents.items():
-            obj = entry.soma
+        for key, (uri, _) in self._handle.members().items():
+            # obj = entry.soma
             if obj is None:
                 # We haven't reified this SOMA object yet. Don't try to open it.
-                yield f"{indent}{key!r}: {entry.uri!r} (unopened)"
+                yield f"{indent}{key!r}: {uri!r} (unopened)"
             else:
                 yield f"{indent}{key!r}: {obj._my_repr()}"
                 if isinstance(obj, SOMAGroup):

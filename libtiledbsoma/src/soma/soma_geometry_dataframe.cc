@@ -84,6 +84,10 @@ uint64_t SOMAGeometryDataFrame::count() {
     return this->nnz();
 }
 
+std::string SOMAGeometryDataFrame::classname() const {
+    return "GeometryDataFrame";
+}
+
 //===================================================================
 //= private non-static
 //===================================================================

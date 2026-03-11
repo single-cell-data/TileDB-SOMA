@@ -179,4 +179,22 @@ ObjectType SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) 
     return iTileDBType->second;
 };
 
+std::ostream& SOMAObject::print(std::ostream& stream, int level) const {
+    std::string indentation(level * 4, ' ');
+    stream << fmt::format(
+                  "{}{} '{}' ({} for {})",
+                  indentation,
+                  classname(),
+                  uri(),
+                  is_open() ? "open" : "CLOSED",
+                  open_mode_to_string(mode()))
+           << std::endl;
+
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SOMAObject& object) {
+    return object.print(stream);
+}
+
 }  // namespace tiledbsoma

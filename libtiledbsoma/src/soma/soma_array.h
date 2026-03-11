@@ -760,6 +760,11 @@ class SOMAArray : public SOMAObject {
     // Array associated with SOMAArray
     std::shared_ptr<tiledb::Array> arr_;
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static

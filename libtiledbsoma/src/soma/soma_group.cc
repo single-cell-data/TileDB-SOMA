@@ -312,6 +312,10 @@ uint64_t SOMAGroup::metadata_num() const {
     return metadata_.size();
 }
 
+std::string SOMAGroup::classname() const {
+    return "Group";
+}
+
 tiledb::Config SOMAGroup::_set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     auto cfg = ctx->tiledb_ctx()->config();
     if (timestamp) {

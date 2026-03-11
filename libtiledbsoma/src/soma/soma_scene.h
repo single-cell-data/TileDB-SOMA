@@ -101,6 +101,11 @@ class SOMAScene : public SOMACollectionBase {
      */
     std::shared_ptr<SOMACollection> varl();
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static

@@ -66,4 +66,8 @@ std::shared_ptr<SOMACollection> SOMAMeasurement::varm() {
 std::shared_ptr<SOMACollection> SOMAMeasurement::varp() {
     return std::dynamic_pointer_cast<SOMACollection>(get("varp"));
 }
+
+std::string SOMAMeasurement::classname() const {
+    return "Measurement";
+}
 }  // namespace tiledbsoma

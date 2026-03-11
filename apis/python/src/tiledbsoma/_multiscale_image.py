@@ -625,7 +625,9 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
 
     def levels(self) -> dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
-        return {level.name: (self._contents[level.name].uri, level.shape) for level in self._levels}
+        members = self._handle.members()
+
+        return {level.name: (members[level.name].uri, level.shape) for level in self._levels}
 
     @property
     def level_count(self) -> int:
@@ -657,7 +659,7 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
         """
         if isinstance(level, int):
             level = self._levels[level].name
-        return self._contents[level].uri
+        return str(self._handle.members()[level].uri)
 
     @property
     def nchannels(self) -> int:

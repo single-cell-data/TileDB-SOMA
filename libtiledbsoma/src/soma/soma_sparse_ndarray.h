@@ -150,6 +150,11 @@ class SOMASparseNDArray : public SOMAArray {
      * @return std::string_view Arrow format string.
      */
     std::string_view soma_data_type();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 }  // namespace tiledbsoma
 

@@ -697,6 +697,10 @@ std::vector<int64_t> SOMAArray::maxshape() {
     return _shape_via_tiledb_domain();
 }
 
+std::string SOMAArray::classname() const {
+    return "Array";
+}
+
 // This is a helper for can_upgrade_shape and can_resize, which have
 // much overlap.
 StatusAndReason SOMAArray::_can_set_shape_helper(

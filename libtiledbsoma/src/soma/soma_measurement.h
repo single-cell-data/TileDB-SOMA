@@ -130,6 +130,11 @@ class SOMAMeasurement : public SOMACollectionBase {
      */
     std::shared_ptr<SOMACollection> varp();
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static

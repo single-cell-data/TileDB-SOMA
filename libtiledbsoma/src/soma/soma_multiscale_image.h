@@ -80,6 +80,11 @@ class SOMAMultiscaleImage : public SOMACollectionBase {
         return coord_space_;
     }
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static

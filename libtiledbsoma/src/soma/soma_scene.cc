@@ -75,4 +75,8 @@ std::shared_ptr<SOMACollection> SOMAScene::varl() {
     return std::dynamic_pointer_cast<SOMACollection>(get("varl"));
 }
 
+std::string SOMAScene::classname() const {
+    return "Scene";
+}
+
 }  // namespace tiledbsoma
