@@ -18,6 +18,7 @@ SOMAObject <- R6::R6Class(
     #'
     #' @param uri URI for the SOMA object
     #' @param ... Ignored
+    #' @param tiledb_handle Optional SOMAObject C++ handle
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional (DEPRECATED) TileDB SOMA context
     #' @param tiledb_timestamp Optional timestamp (\code{\link[base]{POSIXct}})
@@ -29,6 +30,7 @@ SOMAObject <- R6::R6Class(
     initialize = function(
       uri,
       ...,
+      tiledb_handle = NULL,
       platform_config = NULL,
       tiledbsoma_ctx = NULL,
       tiledb_timestamp = NULL,
@@ -80,6 +82,12 @@ SOMAObject <- R6::R6Class(
             !is.na(tiledb_timestamp)
         )
         private$.tiledb_timestamp <- tiledb_timestamp
+      }
+
+      if (!is.null(tiledb_handle)) {
+        private$.set_handle(tiledb_handle)
+        private$.mode <- soma_object_open_mode(self$handle)
+        private$.metadata_cache <- soma_object_get_metadata(self$handle)
       }
 
       soma_debug(sprintf(
@@ -236,6 +244,15 @@ SOMAObject <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field handle External pointer to the C++ interface
+    #'
+    handle = function(value) {
+      if (!missing(x = value)) {
+        stop("Field `handle` is read-only", call. = FALSE)
+      }
+      return(private$.handle)
+    },
+
     #' @field platform_config Platform configuration
     #'
     platform_config = function(value) {
@@ -314,7 +331,7 @@ SOMAObject <- R6::R6Class(
     }
   ),
   private = list(
-    # @field 'external pointer' to the C++ SOMADataFrame interface
+    # @field .platform_config ...
     #
     .handle = NULL,
 
@@ -345,6 +362,10 @@ SOMAObject <- R6::R6Class(
     # @field .metadata_cache ...
     #
     .metadata_cache = NULL,
+
+    .set_handle = function(handle) {
+      private$.handle <- handle
+    },
 
     # @description Create a message saying that a method is for
     # internal use only

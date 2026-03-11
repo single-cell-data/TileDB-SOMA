@@ -45,6 +45,7 @@ void load_soma_group(py::module& m) {
                 group.close(true);
             })
         .def("__contains__", &SOMAGroup::has)
+        .def("__len__", &SOMAGroup::count)
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {

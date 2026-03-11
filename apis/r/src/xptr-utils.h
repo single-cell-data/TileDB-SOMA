@@ -79,6 +79,8 @@ inline const int32_t XPtrTagType<tdbs::IntIndexer> = tiledb_soma_rindexer_t;
 
 template <>
 inline const int32_t XPtrTagType<somactx_wrap_t> = tiledb_xptr_somactx_wrapper_t;
+template <>
+inline const int32_t XPtrTagType<somaobj_wrap_t> = tiledb_xptr_somagrp_wrapper_t;
 
 template <typename T>
 Rcpp::XPtr<T> make_xptr(T* p, bool finalize = true) {
