@@ -43,7 +43,7 @@ void soma_group_set(
     const std::string& name,
     const std::string& soma_type) {
     if (!group) {
-        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+        throw Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
     group->set(uri, uritypemap[uri_type_int], name, soma_type);
 }
@@ -51,7 +51,7 @@ void soma_group_set(
 // [[Rcpp::export]]
 void soma_group_remove_member(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name) {
     if (!group) {
-        Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+        throw Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
     group->del(name);
 }

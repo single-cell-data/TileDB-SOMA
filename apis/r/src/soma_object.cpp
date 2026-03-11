@@ -48,7 +48,7 @@ void soma_object_set_metadata(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object, co
             break;
         }
         case LGLSXP: {  // experimental: map R logical (ie TRUE, FALSE, NA) toint8
-            Rcpp::stop("Writing logical vectos to metadata is not supported.");
+            Rcpp::stop("Writing logical vectors to metadata is not supported.");
             break;
         }
         default: {
