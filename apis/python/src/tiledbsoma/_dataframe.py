@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import inspect
-import warnings
 from collections.abc import Sequence
 from typing import Any, Final, Literal, Union, cast
 
@@ -126,12 +125,9 @@ class DataFrame(SOMAArray):
         1  2.7182    e            1
         2  3.1214   pi            2
 
-        Here the index-column names are specified. The domain is entirely optional: if
-        it's omitted, defaults will be applied yielding the largest possible domain for
-        each index column's datatype.  If the domain is specified, it must be a
-        tuple/list of equal length to ``index_column_names``. It can be ``None`` in
-        a given slot, meaning use the largest possible domain. For string/bytes types,
-        it must be ``None``.
+        Here the index-column names are specified. The domain is a tuple/list equal to the length
+        of ``index_column_names``. For string/bytes types, the domain is not specified and must
+        be ``None``.
     """
 
     __slots__ = ()
@@ -144,7 +140,7 @@ class DataFrame(SOMAArray):
         uri: str,
         *,
         schema: pa.Schema,
-        domain: Domain | None = None,
+        domain: Domain,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
@@ -207,20 +203,14 @@ class DataFrame(SOMAArray):
 
         soma_domain: list[tuple[Any, Any] | None] = []
         if domain is None:
-            warnings.warn(
-                "Setting ``domain=None`` is deprecated. Please specify the desired domain for the dataframe.",
-                DeprecationWarning,
-                stacklevel=2,
+            raise TypeError("Cannot set `domain=None`. Please specify the desired domain for the dataframe.")
+        if len(index_column_names) != len(domain):
+            raise ValueError(
+                f"Invalid domain='{domain}'. The domain must have the same length as index_columns_names (length={len(index_column_names)})."
             )
-            soma_domain = [None for _ in index_column_names]
-        else:
-            if len(index_column_names) != len(domain):
-                raise ValueError(
-                    f"if domain is specified, it must have the same length as index_column_names; got {len(domain)} != {len(index_column_names)}",
-                )
 
-            for index_column_name, slot_soma_domain in zip(index_column_names, domain):
-                soma_domain.append(_cast_domain_to_cpp_type(slot_soma_domain, schema, index_column_name))
+        for index_column_name, slot_soma_domain in zip(index_column_names, domain):
+            soma_domain.append(_cast_domain_to_cpp_type(slot_soma_domain, schema, index_column_name))
 
         plt_cfg = build_clib_platform_config(platform_config)
         context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
