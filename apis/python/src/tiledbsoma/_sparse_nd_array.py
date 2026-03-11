@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Final
 
@@ -103,7 +102,7 @@ class SparseNDArray(NDArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[int | None],
+        shape: Sequence[int],
         platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -149,11 +148,7 @@ class SparseNDArray(NDArray):
             Maturing.
         """
         if None in shape:
-            warnings.warn(
-                f"Using ``None`` in the shape is deprecated. Updating shape={shape} to shape={tuple(1 if col_size is None else col_size for col_size in shape)}.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            raise ValueError(f"Invalid shape={shape}. The shape must be a sequence of integers.")
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = build_clib_platform_config(platform_config)
         return cls._create(uri, tiledb_timestamp, context, format=carrow_type, shape=shape, platform_config=plt_cfg)
