@@ -247,13 +247,15 @@
         )
         next
       }
-      type <- .type_hint(if (is.matrix(ldat)) {
-        "matrix"
-      } else if (methods::is(ldat, "IterableMatrix")) {
-        "dgCMatrix"
-      } else {
-        class(ldat)
-      })
+      type <- .type_hint(
+        if (is.matrix(ldat)) {
+          "matrix"
+        } else if (methods::is(ldat, "IterableMatrix")) {
+          "dgCMatrix"
+        } else {
+          class(ldat)
+        }
+      )
       if (all(features_matrix[, layer]) && all(cells_matrix[, layer])) {
         soma_info(sprintf("Adding '%s' matrix as '%s'", layer, layer))
         tryCatch(

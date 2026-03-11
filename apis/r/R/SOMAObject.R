@@ -212,11 +212,11 @@ SOMAObject <- R6::R6Class(
 
       private$.check_open_for_write()
 
-      for(i in seq_along(metadata)) {
-         key <- names(metadata)[i]
-         value <- metadata[[i]]
-         soma_object_set_metadata(private$.handle, key, value)
-         private$.metadata_cache[[key]] <- value
+      for (i in seq_along(metadata)) {
+        key <- names(metadata)[i]
+        value <- metadata[[i]]
+        soma_object_set_metadata(private$.handle, key, value)
+        private$.metadata_cache[[key]] <- value
       }
 
       return(invisible(self))
@@ -479,7 +479,6 @@ SOMAObject <- R6::R6Class(
       }
       return(invisible(NULL))
     },
-
 
     .log_open_timestamp = function(open_mode) {
       if (is.null(self$tiledb_timestamp)) {

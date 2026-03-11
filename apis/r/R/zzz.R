@@ -68,7 +68,11 @@ NULL
 #' @export
 #'
 soma_context <- function(config = NULL) {
-  .deprecate(when = "2.3.0", what = "soma_context()", details = "Use new `SOMAContext` class instead.")
+  .deprecate(
+    when = "2.3.0",
+    what = "soma_context()",
+    details = "Use new `SOMAContext` class instead."
+  )
   context <- SOMAContext$new(config)
   .pkgenv[["somactx"]] <- context
   return(SOMAContext$new(config))

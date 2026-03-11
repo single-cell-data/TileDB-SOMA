@@ -103,12 +103,11 @@ SOMAExperiment <- R6::R6Class(
 
     # @description Implementation for creating a collection.
     .create = function() {
-        soma_experiment_create(
-            uri = self$uri,
-            context = private$.context$handle,
-            timestamp = self$.tiledb_timestamp_range
-        )
+      soma_experiment_create(
+        uri = self$uri,
+        context = private$.context$handle,
+        timestamp = self$.tiledb_timestamp_range
+      )
     }
- 
   )
 )

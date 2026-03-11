@@ -379,9 +379,10 @@ write_soma.IterableMatrix <- function(
     ))
   }
   # Create the array
-  type <- type %||% arrow::infer_type(
-    suppressMessages(suppressWarnings(as.matrix(x[1, 1])))
-  )
+  type <- type %||%
+    arrow::infer_type(
+      suppressMessages(suppressWarnings(as.matrix(x[1, 1])))
+    )
   array <- SOMASparseNDArrayCreate(
     uri = uri,
     type = type,
@@ -840,7 +841,12 @@ write_soma.TsparseMatrix <- function(
 #'   Carrara.
 #'
 #' @noRd
-.check_soma_uri <- function(uri, soma_parent = NULL, relative = TRUE, key = NULL) {
+.check_soma_uri <- function(
+  uri,
+  soma_parent = NULL,
+  relative = TRUE,
+  key = NULL
+) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
@@ -865,7 +871,9 @@ write_soma.TsparseMatrix <- function(
       if (key != uri_basename) {
         stop(
           "TileDB Carrara data model requires Collection member name and uri ",
-          "to be equal. key=", sQuote(key), " but uri basename=",
+          "to be equal. key=",
+          sQuote(key),
+          " but uri basename=",
           sQuote(uri_basename),
           call. = FALSE
         )

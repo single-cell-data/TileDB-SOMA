@@ -24,7 +24,10 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns \code{self}.
     #'
     create = function() {
-      private$.check_call_is_internal("create", paste(self$class(), "Create", sep = ""))
+      private$.check_call_is_internal(
+        "create",
+        paste(self$class(), "Create", sep = "")
+      )
       soma_debug(sprintf(
         "[SOMACollectionBase$create] Creating new %s at '%s' at %s",
         self$class(),
@@ -55,7 +58,8 @@ SOMACollectionBase <- R6::R6Class(
       private$.log_open_timestamp(open_mode)
       private$.open_handle(open_mode, self$tiledb_timestamp)
       private$.metadata_cache <- soma_object_get_metadata(private$.handle)
-      private$.member_cache <- soma_group_get_members(private$.handle) %||% vector(mode = "list", length = 0L)
+      private$.member_cache <- soma_group_get_members(private$.handle) %||%
+        vector(mode = "list", length = 0L)
       return(self)
     },
 
