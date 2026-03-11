@@ -218,7 +218,7 @@ class SOMAObject:
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(
             self._handle,
         )
-        self._close_stack.enter_context(self._handle)
+        # self._close_stack.enter_context(self._handle)
         self._parse_special_metadata()
         return self
 

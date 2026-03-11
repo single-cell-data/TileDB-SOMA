@@ -64,9 +64,6 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(handle, uri=uri, context=context, **kwargs)
-        self._contents = {
-            name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
-        }
         """The contents of the persisted TileDB Group.
 
         This is loaded at startup when we have a read handle.
@@ -79,7 +76,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
 
     def __len__(self) -> int:
         """Return the number of members in the collection."""
-        return len(self._contents)
+        return self._handle.__len__()
 
     def __getitem__(self, key: str) -> CollectionElementType:
         """Gets the value associated with the key."""
@@ -116,7 +113,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self._del_element(key)
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._contents)
+        return iter(self._handle)
 
     def _contents_lines(self, last_indent: str) -> Iterable[str]:
         indent = last_indent + "    "
@@ -152,25 +149,25 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             value:
                 The reified SOMA object to store locally.
         """
-        if key in self._mutated_keys.union(self._contents):
-            # TileDB groups currently do not support replacing elements.
-            # If we use a hack to flush writes, corruption is possible.
-            raise SOMAError(f"replacing key {key!r} is unsupported")
-        clib_collection = self._handle
+        # if key in self._mutated_keys.union(self._contents):
+        #     # TileDB groups currently do not support replacing elements.
+        #     # If we use a hack to flush writes, corruption is possible.
+        #     raise SOMAError(f"replacing key {key!r} is unsupported")
+        # clib_collection = self._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
-        if self.context.is_tiledbv2_uri(self.uri):
-            clib_collection.add(
-                uri=uri,
-                uri_type=relative_type,
-                name=key,
-                soma_type=soma_object.soma_type,
-            )
-        self._contents[key] = _CachedElement(uri=soma_object.uri, tiledb_type=None, soma=soma_object)
-        self._mutated_keys.add(key)
+        # if self.context.is_tiledbv2_uri(self.uri):
+        self._handle.add(
+            uri=uri,
+            uri_type=relative_type,
+            name=key,
+            soma_type=soma_object.soma_type,
+        )
+        # self._contents[key] = _CachedElement(uri=soma_object.uri, tiledb_type=None, soma=soma_object)
+        # self._mutated_keys.add(key)
 
     def _del_element(self, key: str) -> None:
-        if key in self._mutated_keys:
-            raise SOMAError(f"Cannot delete previously-mutated key '{key!r}'.")
+        # if key in self._mutated_keys:
+        #     raise SOMAError(f"Cannot delete previously-mutated key '{key!r}'.")
         try:
             if self.closed:
                 raise SOMAError(f"Cannot delete '{key!r}'. {self} is closed")
@@ -191,8 +188,8 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe
             raise
-        self._contents.pop(key, None)
-        self._mutated_keys.add(key)
+        # self._contents.pop(key, None)
+        # self._mutated_keys.add(key)
 
     def _add_new_element(
         self,
@@ -283,10 +280,10 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             Experimental.
         """
         super().reopen(mode, tiledb_timestamp)
-        self._contents = {
-            name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
-        }
-        self._mutated_keys = set()
+        # self._contents = {
+        #     name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
+        # }
+        # self._mutated_keys = set()
         return self
 
     def set(
