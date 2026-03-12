@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import pathlib
 import sys
 from collections.abc import Iterator
@@ -11,7 +12,9 @@ from contextlib import contextmanager
 
 import anndata as ad
 import pyarrow as pa
+import scipy
 from anndata._core import file_backing
+from packaging.version import Version
 
 from tiledbsoma import pytiledbsoma as clib
 from tiledbsoma._exception import SOMAError
@@ -45,6 +48,19 @@ def read_h5ad(
     input_path: Path | str, *, mode: str | None = "r", ctx: SOMAContext | SOMATileDBContext | None = None
 ) -> Iterator[ad.AnnData]:
     """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/3920
+    # TODO: remove if/when min anndata version is > 0.11.2
+    scipy_version = Version(importlib.metadata.version("scipy"))
+    anndata_version = Version(importlib.metadata.version("anndata"))
+    if (
+        anndata_version >= Version("0.10.7")
+        and anndata_version < Version("0.11.2")
+        and scipy_version >= Version("1.15.0")
+    ):
+        raise RuntimeError(
+            f"anndata '{ad.__version__}' is incompatible with '{scipy.__version__}', and more generally, anndata 0.10.7-0.11.1 are incompatible with scipy 0.15. Please upgrade your anndata to >= 0.11.2, or downgrade your scipy to < 0.15.",
+        )
+
     if ctx is None:
         if not SOMAContext.has_default():
             SOMAContext.set_default()
