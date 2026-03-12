@@ -66,17 +66,22 @@ SOMADataFrame <- R6::R6Class(
         )
       }
 
-      soma_domain <- domain;
+      soma_domain <- domain
       if (is.null(soma_domain)) {
         .deprecate(
           when = "2.1.0",
           what = "create(domain = 'must be a named list')",
         )
 
-        soma_domain <- vector(mode = 'list', length = length(index_column_names))
+        soma_domain <- vector(
+          mode = 'list',
+          length = length(index_column_names)
+        )
         names(soma_domain) <- index_column_names
       }
-      if (!(is.null(soma_domain) || .is_domain(soma_domain, index_column_names))) {
+      if (
+        !(is.null(soma_domain) || .is_domain(soma_domain, index_column_names))
+      ) {
         stop(
           "domain must be NULL or a named list, with values being 2-element vectors or NULL"
         )
@@ -92,7 +97,10 @@ SOMADataFrame <- R6::R6Class(
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
-      tiledb_create_options$set("override_naming_restriction", getOption("tiledbsoma.write_soma.internal", default = FALSE))
+      tiledb_create_options$set(
+        "override_naming_restriction",
+        getOption("tiledbsoma.write_soma.internal", default = FALSE)
+      )
 
       ## we need a schema pointer to transfer the schema information
       nasp <- nanoarrow::nanoarrow_allocate_schema()
@@ -109,13 +117,7 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      soma_debug(
-        "[SOMADataFrame$create] about to call write_object_type_metadata"
-      )
       self$open("WRITE")
-      private$write_object_type_metadata()
-      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
-
       return(self)
     },
 

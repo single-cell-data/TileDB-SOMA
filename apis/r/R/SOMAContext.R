@@ -99,7 +99,7 @@ set_default_context <- function(config = NULL, replace = FALSE) {
 }
 
 #' Get the Default SOMA Context
-#' 
+#'
 #' Retrieve the current default \code{\link{SOMAContext}} used by TileDB-SOMA
 #' operations.
 #'

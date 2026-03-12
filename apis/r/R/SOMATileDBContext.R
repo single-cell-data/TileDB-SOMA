@@ -21,9 +21,9 @@ SOMATileDBContext <- R6::R6Class(
     #'
     initialize = function(config = NULL, cached = TRUE) {
       .deprecate(
-        what="SOMATileDBContext$new()",
-        when="2.3.0",
-        details="Use `SOMAContext` instead."
+        what = "SOMATileDBContext$new()",
+        when = "2.3.0",
+        details = "Use `SOMAContext` instead."
       )
       config <- config %||% character()
       # Identify options that are SOMA-specific

@@ -92,11 +92,20 @@ extract_dataset <- function(name, dir = tempdir()) {
 #' exp$close()
 #' }
 #'
-load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL, context = NULL) {
+load_dataset <- function(
+  name,
+  dir = tempdir(),
+  tiledbsoma_ctx = NULL,
+  context = NULL
+) {
   dataset_uri <- extract_dataset(name, dir)
 
   # Inspect the object's metadata
-  context <- get_soma_context(context, tiledbsoma_ctx, what="load_dataset(tiledbsoma_ctx)")
+  context <- get_soma_context(
+    context,
+    tiledbsoma_ctx,
+    what = "load_dataset(tiledbsoma_ctx)"
+  )
   metadata <- get_all_metadata(
     dataset_uri,
     is_array = switch(

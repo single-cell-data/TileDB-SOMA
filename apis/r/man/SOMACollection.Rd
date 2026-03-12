@@ -10,6 +10,13 @@ the values are any SOMA-defined foundational or composed type, including
 \code{\link{SOMADenseNDArray}}, \code{\link{SOMASparseNDArray}}, or
 \code{\link{SOMAExperiment}} (lifecycle: maturing).
 }
+\details{
+Unlike \link[base]{list}s in \R, SOMA collections are unordered. The
+first item added to a collection is not guaranteed to be the first item
+listed in the collection. Take care when looking through the \code{$names()}
+of a SOMA collection, or use \code{\link[base:match]{\%in\%}} to assert
+that a specific member is present in a SOMA collection.
+}
 \section{Adding new objects to a collection}{
 
 
@@ -75,6 +82,7 @@ col$close()
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_collection"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_collection'><code>tiledbsoma::SOMACollectionBase$add_new_collection()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dataframe"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dataframe'><code>tiledbsoma::SOMACollectionBase$add_new_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dense_ndarray"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dense_ndarray'><code>tiledbsoma::SOMACollectionBase$add_new_dense_ndarray()</code></a></span></li>
@@ -88,7 +96,6 @@ col$close()
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="print"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-print'><code>tiledbsoma::SOMACollectionBase$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="remove"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-remove'><code>tiledbsoma::SOMACollectionBase$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="set"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-set'><code>tiledbsoma::SOMACollectionBase$set()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-set_metadata'><code>tiledbsoma::SOMACollectionBase$set_metadata()</code></a></span></li>
 </ul>
 </details>
 }}

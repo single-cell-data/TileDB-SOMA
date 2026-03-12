@@ -36,7 +36,11 @@ SOMAOpen <- function(
   context = NULL,
   tiledb_timestamp = NULL
 ) {
-  context <- get_soma_context(context, tiledbsoma_ctx, what="SOMAOpen(tiledbsoma_ctx)")
+  context <- get_soma_context(
+    context,
+    tiledbsoma_ctx,
+    what = "SOMAOpen(tiledbsoma_ctx)"
+  )
   type <- get_tiledb_object_type(uri, ctxxp = context$handle)
   metadata <- get_all_metadata(
     uri,

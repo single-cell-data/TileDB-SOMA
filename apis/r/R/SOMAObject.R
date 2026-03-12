@@ -94,7 +94,12 @@ SOMAObject <- R6::R6Class(
     #'
     #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
     #'
-    is_open = \() self$mode() != "CLOSED",
+    is_open = function() {
+      if (is.null(private$.handle)) {
+        return(FALSE)
+      }
+      return(soma_object_is_open(private$.handle))
+    },
 
     #' @description Print the name of the R6 class
     #'
@@ -112,7 +117,12 @@ SOMAObject <- R6::R6Class(
     #'  \item \dQuote{\code{DELETE}}
     #' }
     #'
-    mode = \() private$.mode %||% "CLOSED",
+    mode = function() {
+      if (is.null(private$.handle)) {
+        return("CLOSED")
+      }
+      return(soma_object_open_mode(private$.handle))
+    },
 
     #' @description Close and reopen the TileDB object in a new mode
     #'
@@ -174,7 +184,6 @@ SOMAObject <- R6::R6Class(
         stop("'key' must be a single, non-empty string", call. = FALSE)
       }
       private$.check_open()
-      private$.update_metadata_cache()
 
       soma_debug(sprintf(
         "Retrieving metadata for %s '%s'",
@@ -202,26 +211,11 @@ SOMAObject <- R6::R6Class(
       stopifnot("Metadata must be a named list" = is_named_list(metadata))
 
       private$.check_open_for_write()
-      private$.update_metadata_cache()
 
       for (i in seq_along(metadata)) {
         key <- names(metadata)[i]
         value <- metadata[[i]]
-        soma_debug(sprintf(
-          "[SOMAObject$set_metadata] setting key %s to %s (%s)",
-          key,
-          value,
-          class(value)
-        ))
-        set_metadata(
-          uri = self$uri,
-          key = key,
-          valuesxp = value,
-          type = class(value),
-          is_array = inherits(self, "SOMAArrayBase"),
-          ctxxp = private$.context$handle,
-          tsvec = self$.tiledb_timestamp_range
-        )
+        soma_object_set_metadata(private$.handle, key, value)
         private$.metadata_cache[[key]] <- value
       }
 
@@ -344,10 +338,6 @@ SOMAObject <- R6::R6Class(
     #
     .soma_type = character(1L),
 
-    # @field .mode ...
-    #
-    .mode = character(1L),
-
     # @field .uri ...
     #
     .uri = character(1L),
@@ -410,8 +400,24 @@ SOMAObject <- R6::R6Class(
     # @description Check that the object is open for reading
     #
     .check_open_for_read = function() {
-      if (!switch(self$mode() %||% "", READ = TRUE, FALSE)) {
-        stop("Item must be open for read: ", self$uri, call. = FALSE)
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for reading (closed)",
+          call. = FALSE
+        )
+      }
+      if (self$mode() != "READ") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for reading. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
@@ -419,25 +425,48 @@ SOMAObject <- R6::R6Class(
     # @description Check that the object is open for writing
     #
     .check_open_for_write = function() {
-      if (!switch(self$mode() %||% "", WRITE = TRUE, FALSE)) {
-        stop("Item must be open for write: ", self$uri, call. = FALSE)
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for writing (closed)",
+          call. = FALSE
+        )
+      }
+      if (self$mode() != "WRITE") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for writing. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
 
     # @desciption Check that the object is open for delete
     .check_open_for_delete = function() {
-      if (self$mode() != "DELETE") {
-        stop("Item must be open for delete: ", self$uri, call. = FALSE)
+      if (!self$is_open()) {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for deleting (closed)",
+          call. = FALSE
+        )
       }
-      return(invisible(NULL))
-    },
-
-    # @description Check that the object is open
-    #
-    .check_open_for_read_or_write = function() {
-      if (!switch(self$mode() %||% "", READ = , WRITE = TRUE, FALSE)) {
-        stop("Item must be open for read or write: ", self$uri, call. = FALSE)
+      if (self$mode() != "DELETE") {
+        stop(
+          self$class(),
+          " at '",
+          self$uri,
+          "' must be open for deleting. Mode is ",
+          self$mode(),
+          call. = FALSE
+        )
       }
       return(invisible(NULL))
     },
@@ -446,11 +475,7 @@ SOMAObject <- R6::R6Class(
     #
     .check_open = function() {
       if (!self$is_open()) {
-        stop(
-          "Item must be open for read, write, or, delete: ",
-          self$uri,
-          call. = FALSE
-        )
+        stop(self$class(), " at '", self$uri, "' is closed", call. = FALSE)
       }
       return(invisible(NULL))
     },
@@ -472,42 +497,6 @@ SOMAObject <- R6::R6Class(
           self$tiledb_timestamp %||% "now"
         ))
       }
-    },
-
-    # @description Update the metadata cache
-    #
-    # @param force \code{TRUE} or \code{FALSE}
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .update_metadata_cache = function(force = FALSE) {
-      stopifnot(isTRUE(force) || isFALSE(force))
-
-      if (is.null(private$.metadata_cache)) {
-        private$.metadata_cache <- list()
-      }
-
-      # Skip if we already have a member cache and don't want to update
-      if (length(private$.metadata_cache) && !force) {
-        return(invisible(NULL))
-      }
-
-      soma_debug(sprintf(
-        "[SOMAObject$update_metadata_cache] updating metadata cache for %s '%s' in %s",
-        self$class(),
-        self$uri,
-        self$mode()
-      ))
-
-      private$.metadata_cache <- get_all_metadata(
-        uri = self$uri,
-        is_array = inherits(self, "SOMAArrayBase"),
-        ctxxp = private$.context$handle
-      ) %||%
-        list()
-
-      # Allow method chaining
-      return(invisible(self))
     }
   )
 )

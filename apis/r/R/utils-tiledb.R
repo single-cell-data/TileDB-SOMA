@@ -53,7 +53,10 @@ get_tiledb_version <- function(compact = FALSE) {
     .standard_regexps()$valid_R_system_version
   )
   if (grepl(pattern = pattern, x = current)) {
-    current <- package_version(paste0(c(current$major, current$minor + 1L, 0L), collapse = "."))
+    current <- package_version(paste0(
+      c(current$major, current$minor + 1L, 0L),
+      collapse = "."
+    ))
   }
   return(current)
 }

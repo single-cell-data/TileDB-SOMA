@@ -508,7 +508,7 @@ test_that("write_soma.IterableMatrix registration", {
 
     expect_s3_class(collection, "SOMACollection")
     expect_identical(collection$length(), i, info = info)
-    expect_identical(collection$names(), formats[1:i], info = info)
+    expect_setequal(collection$names(), formats[1:i])
     expect_s3_class(cmat <- collection$get(fmt), "SOMASparseNDArray")
     expect_s4_class(mat <- cmat$read()$sparse_matrix()$concat(), "dgTMatrix")
     expect_identical(as.matrix(mat), as.matrix(unname(mat)))
