@@ -10,6 +10,13 @@ the values are any SOMA-defined foundational or composed type, including
 \code{\link{SOMADenseNDArray}}, \code{\link{SOMASparseNDArray}}, or
 \code{\link{SOMAExperiment}} (lifecycle: maturing).
 }
+\details{
+Unlike \link[base]{list}s in \R, SOMA collections are unordered. The
+first item added to a collection is not guaranteed to be the first item
+listed in the collection. Take care when looking through the \code{$names()}
+of a SOMA collection, or use \code{\link[base:match]{\%in\%}} to assert
+that a specific member is present in a SOMA collection.
+}
 \section{Adding new objects to a collection}{
 
 

@@ -3,6 +3,12 @@
 #' @description Base class for objects containing persistent collection of SOMA
 #' objects, mapping string keys to any SOMA object (lifecycle: maturing).
 #'
+#' @details Unlike \link[base]{list}s in \R, SOMA collections are unordered. The
+#' first item added to a collection is not guaranteed to be the first item
+#' listed in the collection. Take care when looking through the \code{$names()}
+#' of a SOMA collection, or use \code{\link[base:match]{\%in\%}} to assert
+#' that a specific member is present in a SOMA collection.
+#'
 #' @keywords internal
 #'
 #' @export

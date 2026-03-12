@@ -6,6 +6,8 @@
 #' \code{\link{SOMADenseNDArray}}, \code{\link{SOMASparseNDArray}}, or
 #' \code{\link{SOMAExperiment}} (lifecycle: maturing).
 #'
+#' @inherit SOMACollectionBase details
+#'
 #' @templateVar class SOMACollection
 #' @template section-add-object-to-collection
 #'
