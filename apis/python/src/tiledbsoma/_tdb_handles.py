@@ -123,6 +123,12 @@ class MetadataWrapper(MutableMapping[str, Any]):
     def from_handle(cls, owner: RawHandle) -> Self:
         return cls(owner, dict(owner.meta))
 
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *_: Any) -> None:  # noqa: ANN401
+        self._write()
+
     def __len__(self) -> int:
         if self.owner.closed:
             raise SOMAError("Cannot get length of metadata; object is closed. Open in mode='r'.")

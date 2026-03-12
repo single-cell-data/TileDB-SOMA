@@ -188,16 +188,11 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 }
 
 void SOMAGroup::close([[maybe_unused]] bool recursive) {
-    if (!is_open()) {
-        return;
-    }
-
-    common::logging::LOG_DEBUG(fmt::format("Closing group '{}'", uri()));
-
-    if (cache_group_ != nullptr) {
+    if (cache_group_)
         cache_group_->close();
-    }
-    group_->close();
+    if (group_)
+        group_->close();
+
     metadata_.clear();
 }
 
@@ -228,7 +223,7 @@ bool SOMAGroup::has(const std::string& name) {
 
 void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type) {
     if (mutated_members_.contains(name) || members_map_.contains(name)) {
-        throw std::runtime_error(fmt::format("replacing key '{}' is unsupported", name));
+        throw std::range_error(fmt::format("replacing key '{}' is unsupported", name));
     }
 
     auto protocol = ctx_->tiledb_ctx()->data_protocol(uri);

@@ -67,8 +67,8 @@ class SOMAMultiscaleImage : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAMultiscaleImage") {
     }
 
-    SOMAMultiscaleImage(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAMultiscaleImage(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAMultiscaleImage() = delete;

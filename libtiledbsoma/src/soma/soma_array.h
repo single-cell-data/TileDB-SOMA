@@ -159,7 +159,7 @@ class SOMAArray : public SOMAObject {
     SOMAArray(SOMAArray&&) = default;
 
     SOMAArray() = delete;
-    virtual ~SOMAArray() = default;
+    virtual ~SOMAArray();
 
     /**
      * @brief Get URI of the SOMAArray.

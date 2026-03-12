@@ -111,8 +111,8 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         initialize();
     }
 
-    SOMAGeometryDataFrame(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMAGeometryDataFrame(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
         initialize();
     }
 

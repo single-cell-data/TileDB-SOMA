@@ -66,8 +66,8 @@ class SOMAScene : public SOMACollectionBase {
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
-    SOMAScene(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAScene(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAScene() = delete;

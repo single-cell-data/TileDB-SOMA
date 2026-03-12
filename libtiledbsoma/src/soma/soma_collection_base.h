@@ -55,12 +55,12 @@ class SOMACollectionBase : public SOMAGroup {
         std::optional<TimestampRange> timestamp,
         std::optional<std::string> soma_type);
 
-    SOMACollectionBase(const SOMAGroup& other);
+    SOMACollectionBase(SOMAGroup&& other);
 
     SOMACollectionBase() = delete;
     SOMACollectionBase(const SOMACollectionBase&) = default;
     SOMACollectionBase(SOMACollectionBase&&) = default;
-    virtual ~SOMACollectionBase() = default;
+    virtual ~SOMACollectionBase();
 
     using SOMAGroup::open;
 
@@ -205,7 +205,8 @@ class SOMACollectionBase : public SOMAGroup {
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
-    std::ostream& print(std::ostream& stream, int level = 0) const override;
+    std::ostream& print(
+        std::ostream& stream, int level = 0, std::optional<std::string> key = std::nullopt) const override;
 
    protected:
     //===================================================================

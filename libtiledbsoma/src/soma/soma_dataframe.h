@@ -192,8 +192,8 @@ class SOMADataFrame : public SOMAArray {
         : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp, "SOMADataFrame") {
     }
 
-    SOMADataFrame(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMADataFrame(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMADataFrame() = delete;

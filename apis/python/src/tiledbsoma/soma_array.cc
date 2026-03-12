@@ -52,10 +52,12 @@ void load_soma_array(py::module& m) {
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
 
-        .def("__enter__", [](SOMAArray& array) { return array; })
+        .def("__enter__", [](std::shared_ptr<SOMAArray> array) { return array; })
         .def(
             "__exit__",
-            [](SOMAArray& array, py::object exc_type, py::object exc_value, py::object traceback) { array.close(); })
+            [](std::shared_ptr<SOMAArray> array, py::object exc_type, py::object exc_value, py::object traceback) {
+                array->close();
+            })
 
         .def_property_readonly("type", &SOMAArray::type)
         .def("close", &SOMAArray::close)

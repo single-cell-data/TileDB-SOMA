@@ -116,8 +116,8 @@ class SOMASparseNDArray : public SOMAArray {
         : SOMAArray(mode, uri, ctx, timestamp, "SOMASparseNDArray") {
     }
 
-    SOMASparseNDArray(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMASparseNDArray(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMASparseNDArray() = delete;

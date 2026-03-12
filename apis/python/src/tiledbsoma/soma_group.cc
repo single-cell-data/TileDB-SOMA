@@ -38,11 +38,11 @@ void load_soma_group(py::module& m) {
             "uri"_a,
             "soma_type"_a,
             "timestamp"_a = py::none())
-        .def("__enter__", [](SOMAGroup& group) { return group; })
+        .def("__enter__", [](std::shared_ptr<SOMAGroup> group) { return group; })
         .def(
             "__exit__",
-            [](SOMAGroup& group, py::object exc_type, py::object exc_value, py::object traceback) {
-                group.close(true);
+            [](std::shared_ptr<SOMAGroup> group, py::object exc_type, py::object exc_value, py::object traceback) {
+                group->close(true);
             })
         .def("__contains__", &SOMAGroup::has)
         .def("__len__", &SOMAGroup::count)
@@ -61,7 +61,7 @@ void load_soma_group(py::module& m) {
                         throw TileDBSOMAError("Internal error: unrecognized mode.");
                 }
             })
-        .def("close", &SOMAGroup::close)
+        .def("close", &SOMAGroup::close, py::arg("recursive") = false)
         .def_property_readonly("closed", [](SOMAGroup& group) -> bool { return not group.is_open(); })
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)

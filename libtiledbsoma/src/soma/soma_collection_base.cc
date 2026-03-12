@@ -57,23 +57,27 @@ SOMACollectionBase::SOMACollectionBase(
     }
     check_encoding_version();
 
-    for (const auto [key, _] : members_map()) {
+    for (const auto& [key, _] : members_map()) {
         children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
         flags_[key] = std::make_shared<std::once_flag>();
     }
 }
 
-SOMACollectionBase::SOMACollectionBase(const SOMAGroup& other)
-    : SOMAGroup(other) {
-    for (const auto [key, _] : members_map()) {
+SOMACollectionBase::SOMACollectionBase(SOMAGroup&& other)
+    : SOMAGroup(std::move(other)) {
+    for (const auto& [key, _] : members_map()) {
         children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
         flags_[key] = std::make_shared<std::once_flag>();
     }
+}
+
+SOMACollectionBase::~SOMACollectionBase() {
+    close();
 }
 
 void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
     if (recursive) {
-        for (auto [key, member] : children_) {
+        for (auto& [key, member] : children_) {
             if (!member || !member->is_open()) {
                 continue;
             }
@@ -250,28 +254,43 @@ std::shared_ptr<SOMASparseNDArray> SOMACollectionBase::add_new_sparse_ndarray(
     return member;
 }
 
-std::ostream& SOMACollectionBase::print(std::ostream& stream, int level) const {
+std::ostream& SOMACollectionBase::print(std::ostream& stream, int level, std::optional<std::string> key) const {
     std::string indentation(level * 4, ' ');
+    std::string subindentation((level + 1) * 4, ' ');
     std::string item_count = children_.size() == 0 ? "empty" :
                              children_.size() == 1 ? "1 item" :
                                                      fmt::format("{} items", children_.size());
-    stream << fmt::format(
-                  "{}{} '{}' ({} for {}) ({})",
-                  indentation,
-                  classname(),
-                  uri(),
-                  is_open() ? "open" : "CLOSED",
-                  open_mode_to_string(mode()),
-                  item_count)
-           << std::endl;
+
+    if (key) {
+        stream << fmt::format(
+                      "{}'{}': {} '{}' ({} for {}) ({})",
+                      indentation,
+                      key.value(),
+                      classname(),
+                      uri(),
+                      is_open() ? "open" : "CLOSED",
+                      open_mode_to_string(mode()),
+                      item_count)
+               << std::endl;
+    } else {
+        stream << fmt::format(
+                      "{}{} '{}' ({} for {}) ({})",
+                      indentation,
+                      classname(),
+                      uri(),
+                      is_open() ? "open" : "CLOSED",
+                      open_mode_to_string(mode()),
+                      item_count)
+               << std::endl;
+    }
 
     auto members = members_map();
 
-    for (const auto& [key, child] : children_) {
+    for (const auto& [name, child] : children_) {
         if (child == nullptr) {
-            stream << fmt::format(" {}{} '{}' (unopened)", indentation, key, members[key].first) << std::endl;
+            stream << fmt::format("{}'{}': '{}' (unopened)", subindentation, name, members[name].first) << std::endl;
         } else {
-            child->print(stream, level + 1);
+            child->print(stream, level + 1, name);
         }
     }
 

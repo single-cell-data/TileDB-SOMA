@@ -106,8 +106,8 @@ class SOMAPointCloudDataFrame : public SOMAArray {
         : SOMAArray(mode, uri, ctx, timestamp, "SOMAPointCloudDataFrame") {
     }
 
-    SOMAPointCloudDataFrame(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMAPointCloudDataFrame(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMAPointCloudDataFrame() = delete;

@@ -72,8 +72,8 @@ class SOMACollection : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMACollection") {
     }
 
-    SOMACollection(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMACollection(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMACollection() = delete;

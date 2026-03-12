@@ -66,8 +66,8 @@ class SOMAMeasurement : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAMeasurement") {
     }
 
-    SOMAMeasurement(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAMeasurement(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAMeasurement() = delete;

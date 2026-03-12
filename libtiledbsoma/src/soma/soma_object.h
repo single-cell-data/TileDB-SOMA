@@ -196,7 +196,8 @@ class SOMAObject {
      */
     static ObjectType tiledb_type_from_soma_type(const std::string& soma_type);
 
-    virtual std::ostream& print(std::ostream& stream, int level = 0) const;
+    virtual std::ostream& print(
+        std::ostream& stream, int level = 0, std::optional<std::string> key = std::nullopt) const;
 
     friend std::ostream& operator<<(std::ostream& stream, const SOMAObject& object);
 };

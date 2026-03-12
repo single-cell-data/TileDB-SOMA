@@ -236,24 +236,19 @@ class SOMAObject:
     def __enter__(self) -> Self:
         self._is_running_in_context = True
         self._close_stack.enter_context(self._handle)
+        self._close_stack.enter_context(self._metadata)
         return self
 
     def __exit__(self, *_: Any) -> None:  # noqa: ANN401
         self._is_running_in_context = False
-        self.close()
+        self._close_stack.close()
 
     def __del__(self) -> None:
-        self.close()
         super_del = getattr(super(), "__del__", lambda: None)
         super_del()
 
     def __repr__(self) -> str:
-        return f"<{self._my_repr()}>"
-
-    def _my_repr(self) -> str:
-        """``__repr__``, but without the ``<>``."""
-        open_str = "CLOSED" if self.closed else "open"
-        return f"{type(self).__name__} {self.uri!r} ({open_str} for {self.mode!r})"
+        return f"{self._handle}"
 
     @property
     def uri(self) -> str:
@@ -280,6 +275,8 @@ class SOMAObject:
         """
         if not self.closed:
             self._metadata._write()
+            self._handle.close(False)
+
         self._close_stack.close()
 
     @property

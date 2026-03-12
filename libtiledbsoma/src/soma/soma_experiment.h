@@ -66,8 +66,8 @@ class SOMAExperiment : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAExperiment") {
     }
 
-    SOMAExperiment(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAExperiment(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAExperiment() = delete;

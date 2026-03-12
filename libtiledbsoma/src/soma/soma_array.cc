@@ -236,6 +236,10 @@ SOMAArray::SOMAArray(
     }
 }
 
+SOMAArray::~SOMAArray() {
+    close();
+}
+
 const std::string SOMAArray::uri() const {
     return uri_;
 };
@@ -270,8 +274,11 @@ CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
 }
 
 void SOMAArray::close([[maybe_unused]] bool recursive) {
-    arr_->close();
-    meta_cache_arr_->close();
+    if (arr_)
+        arr_->close();
+    if (meta_cache_arr_)
+        meta_cache_arr_->close();
+
     metadata_.clear();
 }
 
