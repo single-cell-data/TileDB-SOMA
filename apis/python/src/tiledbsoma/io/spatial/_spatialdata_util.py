@@ -31,7 +31,7 @@ except ImportError as err:
     raise err
 
 try:
-    import geopandas as gpd
+    import geopandas
 except ImportError as err:
     warnings.warn("Experimental spatial outgestor requires the geopandas package.", stacklevel=1)
     raise err
@@ -165,7 +165,7 @@ def to_spatialdata_shapes(
     scene_dim_map: dict[str, str],
     transform: CoordinateTransform | None,
     soma_joinid_name: str = SOMA_JOINID,
-) -> gpd.GeoDataFrame:
+) -> geopandas.GeoDataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
 
     Args:
@@ -212,12 +212,12 @@ def to_spatialdata_shapes(
     data.insert(len(data.columns), "radius", radius)
     ndim = len(orig_axis_names)
     if ndim == 2:
-        geometry = gpd.points_from_xy(data.pop(orig_axis_names[0]), data.pop(orig_axis_names[1]))
+        geometry = geopandas.points_from_xy(data.pop(orig_axis_names[0]), data.pop(orig_axis_names[1]))
     else:
         raise NotImplementedError(
             f"Support for export {ndim}D point cloud dataframes to SpatialData shapes is not yet implemented.",
         )
-    df = gpd.GeoDataFrame(data, geometry=geometry)
+    df = geopandas.GeoDataFrame(data, geometry=geometry)
     df.attrs["transform"] = transforms
     return df
 

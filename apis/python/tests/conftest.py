@@ -9,12 +9,16 @@ from typing import Any
 import anndata as ad
 import pytest
 from anndata import AnnData
+from typeguard import install_import_hook
 
-import tiledbsoma
-import tiledbsoma.io
-from tiledbsoma import Experiment
+# Must be called before tiledbsoma imports
+install_import_hook("tiledbsoma")
 
-from ._util import TESTDATA
+import tiledbsoma  # noqa:  E402
+import tiledbsoma.io  # noqa:  E402
+from tiledbsoma import Experiment  # noqa:  E402
+
+from ._util import TESTDATA  # noqa:  E402
 
 
 @pytest.fixture(scope="session")

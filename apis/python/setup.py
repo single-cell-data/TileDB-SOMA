@@ -108,7 +108,7 @@ def get_libtiledbsoma_library_name():
 def find_libtiledbsoma_full_path_on_linux(lib_name):
     # https://stackoverflow.com/questions/35682600/get-absolute-path-of-shared-library-in-python
     class LINKMAP(ctypes.Structure):
-        _fields_ = [("l_addr", ctypes.c_void_p), ("l_name", ctypes.c_char_p)]  # noqa: RUF012
+        _fields_ = [("l_addr", ctypes.c_void_p), ("l_name", ctypes.c_char_p)]
 
     libdl = ctypes.CDLL(lib_name)
     dlinfo = libdl.dlinfo
