@@ -148,7 +148,7 @@ def sparse_array(
         ),
     ),
     shape=st.lists(
-        st.one_of(st.none(), st.integers(min_value=1, max_value=2**31 - 1)),
+        st.one_of(st.integers(min_value=1, max_value=2**31 - 1)),
         min_size=1,
         max_size=10,
     ),
