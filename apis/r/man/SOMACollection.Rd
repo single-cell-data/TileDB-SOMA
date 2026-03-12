@@ -75,6 +75,7 @@ col$close()
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_collection"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_collection'><code>tiledbsoma::SOMACollectionBase$add_new_collection()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dataframe"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dataframe'><code>tiledbsoma::SOMACollectionBase$add_new_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dense_ndarray"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dense_ndarray'><code>tiledbsoma::SOMACollectionBase$add_new_dense_ndarray()</code></a></span></li>
@@ -88,7 +89,6 @@ col$close()
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="print"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-print'><code>tiledbsoma::SOMACollectionBase$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="remove"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-remove'><code>tiledbsoma::SOMACollectionBase$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="set"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-set'><code>tiledbsoma::SOMACollectionBase$set()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-set_metadata'><code>tiledbsoma::SOMACollectionBase$set_metadata()</code></a></span></li>
 </ul>
 </details>
 }}

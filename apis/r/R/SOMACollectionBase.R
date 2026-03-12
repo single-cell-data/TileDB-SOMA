@@ -266,6 +266,8 @@ SOMACollectionBase <- R6::R6Class(
 
     #' @description Retrieve the names of members (lifecycle: maturing).
     #'
+    #' Note: the order of the member names is not guaranteed.
+    #'
     #' @return A character vector of member names.
     #'
     names = function() {

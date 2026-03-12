@@ -48,7 +48,6 @@ Derived classes: \code{\link{SOMACollection}},
 \item \href{#method-SOMACollectionBase-remove}{\code{SOMACollectionBase$remove()}}
 \item \href{#method-SOMACollectionBase-length}{\code{SOMACollectionBase$length()}}
 \item \href{#method-SOMACollectionBase-names}{\code{SOMACollectionBase$names()}}
-\item \href{#method-SOMACollectionBase-set_metadata}{\code{SOMACollectionBase$set_metadata()}}
 \item \href{#method-SOMACollectionBase-add_new_collection}{\code{SOMACollectionBase$add_new_collection()}}
 \item \href{#method-SOMACollectionBase-add_new_dataframe}{\code{SOMACollectionBase$add_new_dataframe()}}
 \item \href{#method-SOMACollectionBase-add_new_dense_ndarray}{\code{SOMACollectionBase$add_new_dense_ndarray()}}
@@ -67,6 +66,7 @@ Derived classes: \code{\link{SOMACollection}},
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -216,32 +216,14 @@ The number of members in this collection.
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-names}{}}}
 \subsection{Method \code{names()}}{
 Retrieve the names of members (lifecycle: maturing).
+
+Note: the order of the member names is not guaranteed.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$names()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 A character vector of member names.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMACollectionBase-set_metadata"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMACollectionBase-set_metadata}{}}}
-\subsection{Method \code{set_metadata()}}{
-Add list of metadata (lifecycle: maturing).
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$set_metadata(metadata)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{metadata}}{Named list of metadata to add.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
