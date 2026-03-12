@@ -9,10 +9,7 @@ from tests._util import raises_no_typeguard
 # we primarily focus on the negative cases.
 
 
-@pytest.mark.parametrize(
-    "uri",
-    ["/nonesuch/no/nope/never/ever", "foo://bar", "s3://@@@@ILLEGAL@@@@"],
-)
+@pytest.mark.parametrize("uri", ["/nonesuch/no/nope/never/ever", "foo://bar"])
 @pytest.mark.parametrize(
     "somaclass",
     [

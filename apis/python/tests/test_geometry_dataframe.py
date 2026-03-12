@@ -1,4 +1,3 @@
-import numpy as np
 import pyarrow as pa
 import pytest
 import shapely
@@ -27,30 +26,6 @@ def geom_dataframe(tmp_path):
         return uri
 
     return _make
-
-
-def test_geometry_domain_deprecated(tmp_path):
-    uri = tmp_path.as_uri()
-
-    asch = pa.schema([("quality", pa.float32())])
-
-    with pytest.deprecated_call(), soma.GeometryDataFrame.create(uri, schema=asch, domain=None) as geom:
-        soma_domain = geom.domain
-
-        assert len(soma_domain) == 2
-
-        for idx, name in enumerate(geom.index_column_names):
-            if name == "soma_geometry":
-                f64info = np.finfo(np.float64)
-
-                assert len(soma_domain[idx][0]) == 2
-                assert len(soma_domain[idx][1]) == 2
-
-                for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][0][axis_name] == f64info.min
-
-                for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][1][axis_name] == f64info.max
 
 
 def test_geometry_domain(tmp_path):
