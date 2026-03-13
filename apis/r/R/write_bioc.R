@@ -24,10 +24,17 @@ write_soma.DataFrame <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
+      what = "DataFrame.write_soma(tiledbsoma_ctx)",
+      when = "2.3.0",
+      details = "Use `context` instead."
+    )
+  }
   # Check for compound non-atomic/factor types
   for (i in names(x)) {
     if (!(is.atomic(x[[i]]) || is.factor(x[[i]]))) {
@@ -46,7 +53,6 @@ write_soma.DataFrame <- function(
     ...,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     relative = relative
   ))
@@ -81,10 +87,17 @@ write_soma.Hits <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
+      what = "Hits.write_soma(tiledbsoma_ctx)",
+      when = "2.3.0",
+      details = "Use `context` instead."
+    )
+  }
   return(write_soma(
     x = .hits_to_mat(x),
     uri = uri,
@@ -95,7 +108,6 @@ write_soma.Hits <- function(
     ...,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     relative = relative
   ))
@@ -164,9 +176,16 @@ write_soma.SingleCellExperiment <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
+      what = "SingleCellExperiment.write_soma(tiledbsoma_ctx)",
+      when = "2.3.0",
+      details = "Use `context` instead."
+    )
+  }
   check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
   if ("shape" %in% names(args <- rlang::dots_list(...))) {
@@ -188,14 +207,12 @@ write_soma.SingleCellExperiment <- function(
     ...,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   experiment <- SOMAExperimentOpen(
     uri = uri,
     mode = "WRITE",
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   on.exit(expr = experiment$close(), add = TRUE, after = FALSE)
@@ -213,7 +230,6 @@ write_soma.SingleCellExperiment <- function(
       uri = file_path(ms$uri, "obsm"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else {
@@ -240,7 +256,6 @@ write_soma.SingleCellExperiment <- function(
         c(shape[2L], ncol(SingleCellExperiment::reducedDim(x, rd)))
       },
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   }
@@ -251,7 +266,6 @@ write_soma.SingleCellExperiment <- function(
       uri = file_path(ms$uri, "obsp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else {
@@ -278,7 +292,6 @@ write_soma.SingleCellExperiment <- function(
         rep_len(shape[2L], length.out = 2L)
       },
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   }
@@ -289,7 +302,6 @@ write_soma.SingleCellExperiment <- function(
       uri = file_path(ms$uri, "varp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else {
@@ -316,7 +328,6 @@ write_soma.SingleCellExperiment <- function(
         rep_len(shape[1L], length.out = 2L)
       },
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   }
@@ -385,10 +396,17 @@ write_soma.SummarizedExperiment <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
-  check_package("SummarizedExperiment", "1.28.0")
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
+      what = "SummarizedExperiment.write_soma(tiledbsoma_ctx)",
+      when = "2.3.0",
+      details = "Use `context` instead."
+    )
+  }
+   check_package("SummarizedExperiment", "1.28.0")
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
@@ -413,7 +431,6 @@ write_soma.SummarizedExperiment <- function(
     uri = uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
@@ -429,7 +446,6 @@ write_soma.SummarizedExperiment <- function(
     key = "obs",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
 
@@ -439,7 +455,6 @@ write_soma.SummarizedExperiment <- function(
     file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   withCallingHandlers(
@@ -451,7 +466,6 @@ write_soma.SummarizedExperiment <- function(
     uri = ms_uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   on.exit(ms$close(), add = TRUE, after = FALSE)
@@ -461,7 +475,6 @@ write_soma.SummarizedExperiment <- function(
       uri = file_path(ms$uri, "X"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else {
@@ -485,7 +498,6 @@ write_soma.SummarizedExperiment <- function(
       ingest_mode = ingest_mode,
       shape = rev(shape),
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   }
@@ -503,7 +515,6 @@ write_soma.SummarizedExperiment <- function(
     key = "var",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
 

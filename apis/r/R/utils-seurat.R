@@ -152,7 +152,6 @@
   ...,
   ingest_mode = 'write',
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
   context = NULL,
   relative = TRUE
 ) {
@@ -204,7 +203,6 @@
     uri = uri,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   ms$set_metadata(.assay_version_hint(ifelse(v5, yes = 'v5', no = 'v3')))
@@ -213,7 +211,6 @@
       uri = file_path(ms$uri, 'X'),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else if (isTRUE(relative)) {
@@ -270,7 +267,6 @@
               shape = shape,
               key = layer,
               platform_config = platform_config,
-              tiledbsoma_ctx = tiledbsoma_ctx,
               context = context
             )
             arr$set_metadata(type)
@@ -353,7 +349,6 @@
           shape = shape,
           key = layer,
           platform_config = platform_config,
-          tiledbsoma_ctx = tiledbsoma_ctx,
           context = context
         ),
         error = function(err) {
@@ -382,7 +377,6 @@
     key = 'var',
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
 

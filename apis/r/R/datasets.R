@@ -95,7 +95,7 @@ extract_dataset <- function(name, dir = tempdir()) {
 load_dataset <- function(
   name,
   dir = tempdir(),
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
   dataset_uri <- extract_dataset(name, dir)
