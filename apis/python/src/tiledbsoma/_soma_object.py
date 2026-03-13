@@ -9,6 +9,7 @@ from collections.abc import MutableMapping
 from contextlib import ExitStack
 from typing import Any, ClassVar
 
+import attrs
 from typing_extensions import LiteralString, Self
 
 from . import _tdb_handles
@@ -21,6 +22,7 @@ from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
 from .options import SOMATileDBContext, _update_context_and_timestamp
 
 
+@attrs.define(slots=True)
 class SOMAObject:
     """Base class for all TileDB SOMA objects.
 
@@ -31,7 +33,13 @@ class SOMAObject:
     _handle_type: ClassVar[_tdb_handles.RawHandle]
     """Class variable of the clib class handle used to open this object type."""
 
-    __slots__ = ("_close_stack", "_context", "_handle", "_is_running_in_context", "_metadata", "_timestamp_ms", "_uri")
+    _close_stack: ExitStack = attrs.field(eq=False)
+    _context: SOMAContext = attrs.field(eq=False)
+    _handle: _tdb_handles.RawHandle
+    _is_running_in_context: bool = attrs.field(eq=False)
+    _metadata: _tdb_handles.MetadataWrapper
+    _timestamp_ms: int
+    _uri: str
 
     soma_type: ClassVar[LiteralString]
     """A string describing the SOMA type of this object. This is constant.
@@ -230,7 +238,6 @@ class SOMAObject:
     def metadata(self) -> MutableMapping[str, Any]:
         return self._metadata
 
-    __eq__ = object.__eq__
     __hash__ = object.__hash__
 
     def __enter__(self) -> Self:

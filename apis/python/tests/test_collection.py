@@ -175,7 +175,7 @@ def test_collection_mapping(soma_object, tmp_path):
 
     # TEMPORARY: This should no longer raise an error once TileDB supports
     # replacing an existing group member.
-    with pytest.raises(soma.SOMAError):
+    with pytest.raises(SOMAError):
         del c["mumble"]
         assert "mumble" not in c
         assert not c.get("mumble", False)

@@ -33,6 +33,30 @@ void load_soma_collection(py::module& m) {
         //     "__iter__",
         //     [](SOMACollectionBase& collection) { return py::make_iterator(collection.begin(), collection.end()); },
         //     py::keep_alive<0, 1>())
+        .def(
+            "add",
+            [](std::shared_ptr<SOMACollectionBase> collection,
+               const std::string& uri,
+               URIType uri_type,
+               const std::string& name,
+               const std::string& soma_type) { collection->set(uri, uri_type, name, soma_type); },
+            "uri"_a,
+            "uri_type"_a,
+            "name"_a,
+            "soma_type"_a)
+        .def(
+            "add",
+            [](std::shared_ptr<SOMACollectionBase> collection,
+               const std::string& uri,
+               URIType uri_type,
+               const std::string& name,
+               const std::string& soma_type,
+               std::shared_ptr<SOMAObject> member) { collection->set(uri, uri_type, name, soma_type, member); },
+            "uri"_a,
+            "uri_type"_a,
+            "name"_a,
+            "soma_type"_a,
+            "member"_a)
         .def("get", &SOMACollectionBase::get);
 
     py::class_<SOMACollection, SOMACollectionBase, py::smart_holder>(m, "SOMACollection")

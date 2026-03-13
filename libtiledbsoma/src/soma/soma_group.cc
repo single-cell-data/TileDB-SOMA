@@ -238,6 +238,7 @@ void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string&
     }
 
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
+    mutated_members_.emplace(name);
 }
 
 uint64_t SOMAGroup::count() const {
@@ -246,11 +247,12 @@ uint64_t SOMAGroup::count() const {
 
 void SOMAGroup::del(const std::string& name) {
     if (mutated_members_.contains(name)) {
-        throw std::runtime_error(fmt::format("Cannot delete previously-mutated key '{}'.", name));
+        throw std::range_error(fmt::format("Cannot delete previously-mutated key '{}'.", name));
     }
 
     group_->remove_member(name);
     members_map_.erase(name);
+    mutated_members_.emplace(name);
 }
 
 std::map<std::string, SOMAGroupEntry> SOMAGroup::members_map() const {

@@ -112,6 +112,16 @@ void SOMACollectionBase::set(
     flags_[name] = std::make_shared<std::once_flag>();
 }
 
+void SOMACollectionBase::set(
+    const std::string& uri,
+    URIType uri_type,
+    const std::string& name,
+    const std::string& soma_type,
+    std::shared_ptr<SOMAObject> member) {
+    set(uri, uri_type, name, soma_type);
+    children_[name] = member;
+}
+
 void SOMACollectionBase::del(const std::string& name) {
     SOMAGroup::del(name);
 

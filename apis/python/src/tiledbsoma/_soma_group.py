@@ -53,8 +53,6 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         Experimental.
     """
 
-    __slots__ = ("_contents", "_reify_lock")
-
     def __init__(
         self,
         handle: _tdb_handles.RawHandle,
@@ -135,12 +133,12 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                 The reified SOMA object to store locally.
         """
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
-        self._handle.add(
-            uri=uri,
-            uri_type=relative_type,
-            name=key,
-            soma_type=soma_object.soma_type,
-        )
+        try:
+            self._handle.add(
+                uri=uri, uri_type=relative_type, name=key, soma_type=soma_object.soma_type, member=soma_object._handle
+            )
+        except ValueError as err:
+            raise SOMAError(err) from err
 
     def _del_element(self, key: str) -> None:
         try:
@@ -159,6 +157,8 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                 raise SOMAError(
                     f"Deleting is not allowed in mode '{self.mode}'. {self} should be reopened with mode='d'."
                 )
+        except ValueError as err:
+            raise SOMAError(err) from err
         except Exception as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe
