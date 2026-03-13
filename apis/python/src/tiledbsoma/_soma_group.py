@@ -133,14 +133,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                 if isinstance(obj, SOMAGroup):
                     yield from obj._contents_lines(indent)
 
-    def _set_element(
-        self,
-        key: str,
-        *,
-        uri: str,
-        relative: bool,
-        soma_object: _TDBO,
-    ) -> None:
+    def _set_element(self, key: str, *, uri: str, relative: bool, soma_object: _TDBO, managed: bool = False) -> None:
         """Internal implementation of element setting.
 
         Args:
@@ -221,12 +214,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             )
 
         child = factory(child_uri.full_uri)
-        self._set_element(
-            key,
-            uri=child_uri.add_uri,
-            relative=child_uri.relative,
-            soma_object=child,
-        )
+        self._set_element(key, uri=child_uri.add_uri, relative=child_uri.relative, soma_object=child, managed=True)
         self._close_stack.enter_context(child)
         return child
 

@@ -135,6 +135,7 @@ SOMAGroup::SOMAGroup(
                        group_ :
                        std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
+    metadata_decoded_ = create_metadata_decoded_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -166,6 +167,7 @@ SOMAGroup::SOMAGroup(
                        group_ :
                        std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
+    metadata_decoded_ = create_metadata_decoded_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -180,6 +182,7 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
                        group_ :
                        std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
+    metadata_decoded_ = create_metadata_decoded_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -267,6 +270,13 @@ void SOMAGroup::delete_metadata(const std::string& key, bool force) {
 
     group_->delete_metadata(key);
     metadata_.erase(key);
+}
+
+std::optional<MetadataEntry> SOMAGroup::get_metadata_exp(const std::string& key) {
+    if (metadata_decoded_.count(key) == 0)
+        return std::nullopt;
+
+    return metadata_decoded_[key];
 }
 
 std::optional<MetadataValue> SOMAGroup::get_metadata(const std::string& key) {

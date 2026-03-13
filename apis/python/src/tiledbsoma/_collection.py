@@ -389,7 +389,7 @@ class CollectionBase(
                 The reified SOMA object to store locally.
         """
         self._check_allows_child(key, type(soma_object))
-        super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object)
+        super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object, managed=managed)
 
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:
