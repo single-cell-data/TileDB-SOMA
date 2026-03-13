@@ -349,14 +349,7 @@ class CollectionBase(
     # PRIVATE METHODS FROM HERE ON DOWN
     # ================================================================
 
-    def _set_element(
-        self,
-        key: str,
-        *,
-        uri: str,
-        relative: bool,
-        soma_object: _TDBO,
-    ) -> None:
+    def _set_element(self, key: str, *, uri: str, relative: bool, soma_object: _TDBO, managed: bool = False) -> None:
         """Internal implementation of element setting.
 
         Args:
@@ -370,7 +363,7 @@ class CollectionBase(
                 The reified SOMA object to store locally.
         """
         self._check_allows_child(key, type(soma_object))
-        super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object)
+        super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object, managed=managed)
 
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:

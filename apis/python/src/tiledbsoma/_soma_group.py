@@ -112,14 +112,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
     def __iter__(self) -> Iterator[str]:
         return iter(self._handle.members())
 
-    def _set_element(
-        self,
-        key: str,
-        *,
-        uri: str,
-        relative: bool,
-        soma_object: _TDBO,
-    ) -> None:
+    def _set_element(self, key: str, *, uri: str, relative: bool, soma_object: _TDBO, managed: bool = False) -> None:
         """Internal implementation of element setting.
 
         Args:
@@ -135,7 +128,12 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
         try:
             self._handle.add(
-                uri=uri, uri_type=relative_type, name=key, soma_type=soma_object.soma_type, member=soma_object._handle
+                uri=uri,
+                uri_type=relative_type,
+                name=key,
+                soma_type=soma_object.soma_type,
+                member=soma_object._handle,
+                managed=managed,
             )
         except ValueError as err:
             raise SOMAError(err) from err
@@ -197,12 +195,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             )
 
         child = factory(child_uri.full_uri)
-        self._set_element(
-            key,
-            uri=child_uri.add_uri,
-            relative=child_uri.relative,
-            soma_object=child,
-        )
+        self._set_element(key, uri=child_uri.add_uri, relative=child_uri.relative, soma_object=child, managed=True)
         self._close_stack.enter_context(child)
         return child
 

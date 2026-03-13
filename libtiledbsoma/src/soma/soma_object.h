@@ -162,6 +162,7 @@ class SOMAObject {
      * @return std::optional<MetadataValue>
      */
     virtual std::optional<MetadataValue> get_metadata(const std::string& key) = 0;
+    virtual std::optional<MetadataEntry> get_metadata_exp(const std::string& key) = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,

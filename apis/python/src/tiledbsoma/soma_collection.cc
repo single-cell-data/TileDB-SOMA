@@ -51,12 +51,14 @@ void load_soma_collection(py::module& m) {
                URIType uri_type,
                const std::string& name,
                const std::string& soma_type,
-               std::shared_ptr<SOMAObject> member) { collection->set(uri, uri_type, name, soma_type, member); },
+               std::shared_ptr<SOMAObject> member,
+               bool managed) { collection->set(uri, uri_type, name, soma_type, member, managed); },
             "uri"_a,
             "uri_type"_a,
             "name"_a,
             "soma_type"_a,
-            "member"_a)
+            "member"_a,
+            "managed"_a)
         .def("get", &SOMACollectionBase::get);
 
     py::class_<SOMACollection, SOMACollectionBase, py::smart_holder>(m, "SOMACollection")

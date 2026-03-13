@@ -60,6 +60,7 @@ SOMACollectionBase::SOMACollectionBase(
     for (const auto& [key, _] : members_map()) {
         children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
         flags_[key] = std::make_shared<std::once_flag>();
+        managed_children_.emplace(key);
     }
 }
 
@@ -68,6 +69,7 @@ SOMACollectionBase::SOMACollectionBase(SOMAGroup&& other)
     for (const auto& [key, _] : members_map()) {
         children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
         flags_[key] = std::make_shared<std::once_flag>();
+        managed_children_.emplace(key);
     }
 }
 
@@ -78,7 +80,7 @@ SOMACollectionBase::~SOMACollectionBase() {
 void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
     if (recursive) {
         for (auto& [key, member] : children_) {
-            if (!member || !member->is_open()) {
+            if (!member || !member->is_open() || !managed_children_.contains(key)) {
                 continue;
             }
 
@@ -110,6 +112,7 @@ void SOMACollectionBase::set(
 
     children_[name] = std::shared_ptr<SOMAObject>(nullptr);
     flags_[name] = std::make_shared<std::once_flag>();
+    managed_children_.emplace(name);
 }
 
 void SOMACollectionBase::set(
@@ -117,9 +120,15 @@ void SOMACollectionBase::set(
     URIType uri_type,
     const std::string& name,
     const std::string& soma_type,
-    std::shared_ptr<SOMAObject> member) {
-    set(uri, uri_type, name, soma_type);
+    std::shared_ptr<SOMAObject> member,
+    bool managed) {
+    SOMAGroup::set(uri, uri_type, name, soma_type);
+
     children_[name] = member;
+    flags_[name] = std::make_shared<std::once_flag>();
+
+    if (managed)
+        managed_children_.emplace(name);
 }
 
 void SOMACollectionBase::del(const std::string& name) {

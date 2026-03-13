@@ -384,6 +384,7 @@ class SOMAArray : public SOMAObject {
      * uint32_t, const void*>)
      */
     std::optional<MetadataValue> get_metadata(const std::string& key);
+    std::optional<MetadataEntry> get_metadata_exp(const std::string& key);
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
@@ -878,6 +879,8 @@ class SOMAArray : public SOMAObject {
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
+
+    std::map<std::string, MetadataEntry> metadata_decoded_;
 
     // SOMAColumn list
     std::vector<std::shared_ptr<SOMAColumn>> columns_;

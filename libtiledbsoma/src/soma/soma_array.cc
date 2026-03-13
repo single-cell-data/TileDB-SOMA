@@ -88,6 +88,20 @@ std::map<std::string, MetadataValue> create_metadata_cache(tiledb::Array& array)
     return metadata_cache;
 }
 
+std::map<std::string, MetadataEntry> create_metadata_decoded_cache(tiledb::Array& array) {
+    std::map<std::string, MetadataEntry> metadata_cache{};
+    for (uint64_t idx = 0; idx < array.metadata_num(); ++idx) {
+        std::string key;
+        tiledb_datatype_t value_type;
+        uint32_t value_num;
+        const void* value;
+        array.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
+
+        metadata_cache[key] = util::decode_metadata(as<DataTypeFormat::SOMA>(value_type), value_num, value);
+    }
+    return metadata_cache;
+}
+
 //===================================================================
 //= public static
 //===================================================================
@@ -179,6 +193,7 @@ SOMAArray::SOMAArray(
     , arr_(open_tiledb_array(get_tiledb_mode(mode), uri_, *ctx_->tiledb_ctx(), timestamp))
     , meta_cache_arr_{(mode == OpenMode::soma_read) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
     , metadata_{create_metadata_cache(*meta_cache_arr_)}
+    , metadata_decoded_{create_metadata_decoded_cache(*meta_cache_arr_)}
     , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
     , soma_mode_(mode)
@@ -213,6 +228,7 @@ SOMAArray::SOMAArray(
     , arr_(arr)
     , meta_cache_arr_{(arr_->query_type() == TILEDB_READ) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
     , metadata_{create_metadata_cache(*meta_cache_arr_)}
+    , metadata_decoded_{create_metadata_decoded_cache(*meta_cache_arr_)}
     , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
     , schema_(std::make_shared<tiledb::ArraySchema>(arr->schema())) {
@@ -252,6 +268,7 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
                           arr_ :
                           open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp);
     metadata_ = create_metadata_cache(*meta_cache_arr_);
+    metadata_decoded_ = create_metadata_decoded_cache(*meta_cache_arr_);
     columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_);
     schema_ = std::make_shared<tiledb::ArraySchema>(arr_->schema());
 }
@@ -398,6 +415,14 @@ void SOMAArray::delete_metadata(const std::string& key, bool force) {
 
     arr_->delete_metadata(key);
     metadata_.erase(key);
+}
+
+std::optional<MetadataEntry> SOMAArray::get_metadata_exp(const std::string& key) {
+    if (metadata_decoded_.count(key) == 0) {
+        return std::nullopt;
+    }
+
+    return metadata_decoded_[key];
 }
 
 std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {

@@ -83,7 +83,8 @@ class SOMACollectionBase : public SOMAGroup {
         URIType uri_type,
         const std::string& name,
         const std::string& soma_type,
-        std::shared_ptr<SOMAObject> member);
+        std::shared_ptr<SOMAObject> member,
+        bool managed = true);
 
     /**
      * Remove a named member from the SOMAGroup.
@@ -225,6 +226,7 @@ class SOMACollectionBase : public SOMAGroup {
 
    private:
     std::map<std::string, std::shared_ptr<std::once_flag>> flags_;
+    std::unordered_set<std::string> managed_children_;
 };
 }  // namespace tiledbsoma
 

@@ -290,6 +290,7 @@ class SOMAGroup : public SOMAObject {
      */
     std::map<std::string, MetadataValue> get_metadata();
     std::optional<MetadataValue> get_metadata(const std::string& key);
+    std::optional<MetadataEntry> get_metadata_exp(const std::string& key);
 
     /**
      * Check if the key exists in metadata from an open group. The group must
@@ -341,6 +342,8 @@ class SOMAGroup : public SOMAObject {
     // restore the group back to write mode, we just store the modifications to
     // this cache
     std::map<std::string, MetadataValue> metadata_;
+
+    std::map<std::string, MetadataEntry> metadata_decoded_;
 
     // Group associated with metadata_. We need to keep this read-mode group
     // alive in order for the metadata value pointers in the cache to be
