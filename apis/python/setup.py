@@ -344,7 +344,7 @@ setuptools.setup(
         "attrs>=22.2",
         "more-itertools",
         "numpy",
-        "pandas<3.0.0",
+        "pandas",
         "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
