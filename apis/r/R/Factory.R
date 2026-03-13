@@ -65,7 +65,7 @@ SOMADataFrameCreate <- function(
   domain = NULL,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -121,7 +121,7 @@ SOMADataFrameOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -183,7 +183,7 @@ SOMASparseNDArrayCreate <- function(
   shape,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -231,7 +231,7 @@ SOMASparseNDArrayOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -283,7 +283,7 @@ SOMADenseNDArrayCreate <- function(
   type,
   shape,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -325,7 +325,7 @@ SOMADenseNDArrayOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -375,7 +375,7 @@ SOMACollectionCreate <- function(
   uri,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -425,7 +425,7 @@ SOMACollectionOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -487,7 +487,7 @@ SOMAMeasurementCreate <- function(
   uri,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -535,7 +535,7 @@ SOMAMeasurementOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -597,7 +597,7 @@ SOMAExperimentCreate <- function(
   uri,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -644,7 +644,7 @@ SOMAExperimentOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {

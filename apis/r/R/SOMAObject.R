@@ -67,7 +67,6 @@ SOMAObject <- R6::R6Class(
         )
       }
       private$.context <- context
-      private$.tiledbsoma_ctx <- tiledbsoma_ctx
 
       # Set the timestamp
       if (!is.null(tiledb_timestamp)) {
@@ -328,10 +327,6 @@ SOMAObject <- R6::R6Class(
     # @field .context ...
     #
     .context = NULL,
-
-    # @field .tiledbsoma_ctx (DEPRECATED) ...
-    #
-    .tiledbsoma_ctx = NULL,
 
     # @field .soma_type ...
     #
