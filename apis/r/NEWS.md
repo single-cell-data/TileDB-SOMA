@@ -6,13 +6,17 @@
 
 ## Changed
 
-- Removed `data.table` package dependency by leveraging `rlang::obj_address()` for generating ephemeral collection URIs.
+- Remove `data.table` package dependency by leveraging `rlang::obj_address()` for generating ephemeral collection URIs.
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 - Default log level changed from `info` to `warn` to reduce verbosity. Use `set_log_level("info")` or the `SPDLOG_LEVEL` environment variable to restore verbose logging. ([#4393](https://github.com/single-cell-data/TileDB-SOMA/pull/4393))
 
 ## Deprecated
 
 ## Removed
+
+- Remove deprecated support for removing collection-based class members in "WRITE" mode. Collections must now be in "DELETE" mode to remove members. ([]()) # TODO: Add PR number
+- Remove deprecated support using `domain=NULL` in `SOMADataFrameCreate`. ([]()) # TODO: Add PR number
+- Remove deprecated `SOMATileDBContext` class.
 
 ## Fixed
 
