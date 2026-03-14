@@ -48,7 +48,7 @@ class SOMAColumn {
     static std::vector<std::shared_ptr<SOMAColumn>> deserialize(
         const tiledb::Context& ctx,
         const tiledb::Array& array,
-        std::map<std::string, tiledbsoma::MetadataValue>& metadata,
+        std::map<std::string, tiledbsoma::MetadataEntry>& metadata,
         std::string_view uri);
 
     //===================================================================

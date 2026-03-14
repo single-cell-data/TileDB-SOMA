@@ -38,7 +38,7 @@ struct SOMAAxis {
 
 class SOMACoordinateSpace {
    public:
-    static SOMACoordinateSpace from_metadata(common::DataType value_type, uint32_t value_num, const void* value);
+    static SOMACoordinateSpace from_metadata(MetadataEntry metadata);
 
     static SOMACoordinateSpace from_string(std::string_view metadata);
 

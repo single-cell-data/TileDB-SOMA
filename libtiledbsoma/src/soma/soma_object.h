@@ -148,7 +148,7 @@ class SOMAObject {
      * // Open the group for reading
      * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
      "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
+     * tiledbsoma::MetadataEntry meta_val = soma_group->get_metadata("key");
      * std::string key = std::get<MetadataInfo::key>(meta_val);
      * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
      * uint32_t num = std::get<MetadataInfo::num>(meta_val);
@@ -159,18 +159,17 @@ class SOMAObject {
      * @param key The key of the metadata item to be retrieved. UTF-8
      encodings
      *     are acceptable.
-     * @return std::optional<MetadataValue>
+     * @return std::optional<MetadataEntry>
      */
-    virtual std::optional<MetadataValue> get_metadata(const std::string& key) = 0;
-    virtual std::optional<MetadataEntry> get_metadata_exp(const std::string& key) = 0;
+    virtual std::optional<MetadataEntry> get_metadata(const std::string& key) = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
      * number of values, and value in binary form.
      *
-     * @return std::map<std::string, MetadataValue>
+     * @return std::map<std::string, MetadataEntry>
      */
-    virtual std::map<std::string, MetadataValue> get_metadata() = 0;
+    virtual std::map<std::string, MetadataEntry> get_metadata() = 0;
 
     /**
      * Check if the key exists in metadata from an open SOMAObject.

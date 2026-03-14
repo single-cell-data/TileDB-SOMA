@@ -81,9 +81,10 @@ TEST_CASE("SOMACoordinateSpace: from_metadata", "[metadata][spatial]") {
 
     // Check `from_metadata` creates the expected SOMACoordinateSpace.
     auto actual_coord_space = SOMACoordinateSpace::from_metadata(
-        common::DataType::string_ascii,
-        static_cast<uint32_t>(metadata.size()),
-        static_cast<const void*>(metadata.c_str()));
+        util::decode_metadata(
+            common::DataType::string_ascii,
+            static_cast<uint32_t>(metadata.size()),
+            static_cast<const void*>(metadata.c_str())));
     REQUIRE(actual_coord_space == expected_coord_space);
 }
 
@@ -117,9 +118,10 @@ TEST_CASE("SOMACoordinateSpace: mock metadata round-trip", "[metadata][spatial]"
     auto coord_json = coord_space.to_string();
 
     auto coord_space_result = SOMACoordinateSpace::from_metadata(
-        common::DataType::string_ascii,
-        static_cast<uint32_t>(coord_json.size()),
-        static_cast<const void*>(coord_json.c_str()));
+        util::decode_metadata(
+            common::DataType::string_ascii,
+            static_cast<uint32_t>(coord_json.size()),
+            static_cast<const void*>(coord_json.c_str())));
 
     REQUIRE(coord_space == coord_space_result);
 }

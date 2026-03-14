@@ -183,9 +183,7 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(soma_group->has_metadata("soma_encoding_version"));
     REQUIRE(soma_group->has_metadata("md"));
     auto mdval = soma_group->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
-    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    REQUIRE(std::get<int32_t>(mdval.value()) == 100);
     soma_group->close();
 
     // md should not be available at (2, 2)
@@ -203,7 +201,7 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(soma_group->has_metadata("soma_encoding_version"));
     REQUIRE(soma_group->has_metadata("md"));
     mdval = soma_group->get_metadata("md");
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    REQUIRE(std::get<int32_t>(mdval.value()) == 100);
 
     // Delete and have it reflected when reading metadata while in write mode
     soma_group->delete_metadata("md");
@@ -236,9 +234,7 @@ TEST_CASE("SOMAExperiment: dataset_type") {
 
     // tuple of dtype, count, void*:
     auto dataset_type = experiment->get_metadata("dataset_type");
-    auto bytes = (const char*)std::get<MetadataInfo::value>(*dataset_type);
-    auto count = std::get<MetadataInfo::num>(*dataset_type);
-    auto actual = std::string(bytes, count);
+    auto actual = std::get<std::string>(dataset_type.value());
 
     REQUIRE(actual == expect);
 }

@@ -25,8 +25,8 @@ using namespace common::type;
 // helper functions
 //==================================================================
 
-std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
-    std::map<std::string, MetadataValue> metadata_cache{};
+std::map<std::string, MetadataEntry> create_metadata_cache(tiledb::Group& group) {
+    std::map<std::string, MetadataEntry> metadata_cache{};
     for (uint64_t idx = 0; idx < group.metadata_num(); ++idx) {
         std::string key;
         tiledb_datatype_t value_type;
@@ -34,7 +34,7 @@ std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
         const void* value;
         group.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
 
-        metadata_cache[key] = MetadataValue(as<DataTypeFormat::SOMA>(value_type), value_num, value);
+        metadata_cache[key] = util::decode_metadata(as<DataTypeFormat::SOMA>(value_type), value_num, value);
     }
     return metadata_cache;
 }
@@ -135,7 +135,6 @@ SOMAGroup::SOMAGroup(
                        group_ :
                        std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
-    metadata_decoded_ = create_metadata_decoded_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -167,7 +166,6 @@ SOMAGroup::SOMAGroup(
                        group_ :
                        std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
-    metadata_decoded_ = create_metadata_decoded_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -182,7 +180,6 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
                        group_ :
                        std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_ = create_metadata_cache(*cache_group_);
-    metadata_decoded_ = create_metadata_decoded_cache(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -254,8 +251,7 @@ void SOMAGroup::set_metadata(
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
     group_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
-    MetadataValue mdval(value_type, value_num, value);
-    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+    std::pair<std::string, MetadataEntry> mdpair(key, util::decode_metadata(value_type, value_num, value));
     metadata_.insert(mdpair);
 }
 
@@ -272,21 +268,14 @@ void SOMAGroup::delete_metadata(const std::string& key, bool force) {
     metadata_.erase(key);
 }
 
-std::optional<MetadataEntry> SOMAGroup::get_metadata_exp(const std::string& key) {
-    if (metadata_decoded_.count(key) == 0)
-        return std::nullopt;
-
-    return metadata_decoded_[key];
-}
-
-std::optional<MetadataValue> SOMAGroup::get_metadata(const std::string& key) {
+std::optional<MetadataEntry> SOMAGroup::get_metadata(const std::string& key) {
     if (metadata_.count(key) == 0)
         return std::nullopt;
 
     return metadata_[key];
 }
 
-std::map<std::string, MetadataValue> SOMAGroup::get_metadata() {
+std::map<std::string, MetadataEntry> SOMAGroup::get_metadata() {
     return metadata_;
 }
 
