@@ -370,7 +370,7 @@ class SOMAArray : public SOMAObject {
      * // Open the array for reading
      * tiledbsoma::SOMAArray soma_array = SOMAArray::open(TILEDB_READ,
      "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_array->get_metadata("key");
+     * tiledbsoma::MetadataEntry meta_val = soma_array->get_metadata("key");
      * std::string key = std::get<MetadataInfo::key>(meta_val);
      * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
      * uint32_t num = std::get<MetadataInfo::num>(meta_val);
@@ -380,19 +380,18 @@ class SOMAArray : public SOMAObject {
      *
      * @param key The key of the metadata item to be retrieved. UTF-8
      * encodings are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * @return MetadataEntry (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::optional<MetadataValue> get_metadata(const std::string& key);
-    std::optional<MetadataEntry> get_metadata_exp(const std::string& key);
+    std::optional<MetadataEntry> get_metadata(const std::string& key);
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
      * number of values, and value in binary form.
      *
-     * @return std::map<std::string, MetadataValue>
+     * @return std::map<std::string, MetadataEntry>
      */
-    std::map<std::string, MetadataValue> get_metadata();
+    std::map<std::string, MetadataEntry> get_metadata();
 
     /**
      * Check if the key exists in metadata from an open array. The array
@@ -878,9 +877,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<tiledb::Array> meta_cache_arr_;
 
     // Metadata cache
-    std::map<std::string, MetadataValue> metadata_;
-
-    std::map<std::string, MetadataEntry> metadata_decoded_;
+    std::map<std::string, MetadataEntry> metadata_;
 
     // SOMAColumn list
     std::vector<std::shared_ptr<SOMAColumn>> columns_;

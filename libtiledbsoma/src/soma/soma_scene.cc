@@ -56,10 +56,7 @@ SOMAScene::SOMAScene(
     : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAScene") {
     auto coord_space_metadata = get_metadata(SOMA_COORDINATE_SPACE_KEY);
     if (coord_space_metadata.has_value()) {
-        coord_space_ = SOMACoordinateSpace::from_metadata(
-            std::get<0>(coord_space_metadata.value()),
-            std::get<1>(coord_space_metadata.value()),
-            std::get<2>(coord_space_metadata.value()));
+        coord_space_ = SOMACoordinateSpace::from_metadata(coord_space_metadata.value());
     }
 }
 

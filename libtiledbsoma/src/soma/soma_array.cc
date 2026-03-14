@@ -73,22 +73,7 @@ std::shared_ptr<tiledb::Array> open_tiledb_array(
     }
 }
 
-std::map<std::string, MetadataValue> create_metadata_cache(tiledb::Array& array) {
-    std::map<std::string, MetadataValue> metadata_cache;
-    for (uint64_t idx = 0; idx < array.metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        array.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-        MetadataValue mdval(as<DataTypeFormat::SOMA>(value_type), value_num, value);
-        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-        metadata_cache.insert(mdpair);
-    }
-    return metadata_cache;
-}
-
-std::map<std::string, MetadataEntry> create_metadata_decoded_cache(tiledb::Array& array) {
+std::map<std::string, MetadataEntry> create_metadata_cache(tiledb::Array& array) {
     std::map<std::string, MetadataEntry> metadata_cache{};
     for (uint64_t idx = 0; idx < array.metadata_num(); ++idx) {
         std::string key;
@@ -193,7 +178,6 @@ SOMAArray::SOMAArray(
     , arr_(open_tiledb_array(get_tiledb_mode(mode), uri_, *ctx_->tiledb_ctx(), timestamp))
     , meta_cache_arr_{(mode == OpenMode::soma_read) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
     , metadata_{create_metadata_cache(*meta_cache_arr_)}
-    , metadata_decoded_{create_metadata_decoded_cache(*meta_cache_arr_)}
     , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
     , soma_mode_(mode)
@@ -228,7 +212,6 @@ SOMAArray::SOMAArray(
     , arr_(arr)
     , meta_cache_arr_{(arr_->query_type() == TILEDB_READ) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
     , metadata_{create_metadata_cache(*meta_cache_arr_)}
-    , metadata_decoded_{create_metadata_decoded_cache(*meta_cache_arr_)}
     , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
     , timestamp_(timestamp)
     , schema_(std::make_shared<tiledb::ArraySchema>(arr->schema())) {
@@ -268,7 +251,6 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
                           arr_ :
                           open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp);
     metadata_ = create_metadata_cache(*meta_cache_arr_);
-    metadata_decoded_ = create_metadata_decoded_cache(*meta_cache_arr_);
     columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_);
     schema_ = std::make_shared<tiledb::ArraySchema>(arr_->schema());
 }
@@ -295,8 +277,6 @@ void SOMAArray::close([[maybe_unused]] bool recursive) {
         arr_->close();
     if (meta_cache_arr_)
         meta_cache_arr_->close();
-
-    metadata_.clear();
 }
 
 bool SOMAArray::is_open() const {
@@ -399,8 +379,7 @@ void SOMAArray::set_metadata(
 
     arr_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
 
-    MetadataValue mdval(value_type, value_num, value);
-    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+    std::pair<std::string, MetadataEntry> mdpair(key, util::decode_metadata(value_type, value_num, value));
     metadata_.insert(mdpair);
 }
 
@@ -417,15 +396,7 @@ void SOMAArray::delete_metadata(const std::string& key, bool force) {
     metadata_.erase(key);
 }
 
-std::optional<MetadataEntry> SOMAArray::get_metadata_exp(const std::string& key) {
-    if (metadata_decoded_.count(key) == 0) {
-        return std::nullopt;
-    }
-
-    return metadata_decoded_[key];
-}
-
-std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
+std::optional<MetadataEntry> SOMAArray::get_metadata(const std::string& key) {
     if (metadata_.count(key) == 0) {
         return std::nullopt;
     }
@@ -433,7 +404,7 @@ std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
     return metadata_[key];
 }
 
-std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
+std::map<std::string, MetadataEntry> SOMAArray::get_metadata() {
     return metadata_;
 }
 

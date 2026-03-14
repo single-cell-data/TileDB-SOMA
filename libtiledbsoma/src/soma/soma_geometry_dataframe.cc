@@ -103,7 +103,7 @@ void SOMAGeometryDataFrame::initialize() {
                 SOMA_COORDINATE_SPACE_KEY));
     }
 
-    coord_space_ = std::apply(SOMACoordinateSpace::from_metadata, coordinate_space_meta.value());
+    coord_space_ = SOMACoordinateSpace::from_metadata(coordinate_space_meta.value());
 }
 
 }  // namespace tiledbsoma

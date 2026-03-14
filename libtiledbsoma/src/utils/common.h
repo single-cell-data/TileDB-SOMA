@@ -62,9 +62,6 @@ const std::string TILEDB_SOMA_SCHEMA_COL_TYPE_KEY = "tiledb_column_type";
 const std::string TILEDB_SOMA_SCHEMA_COL_DIM_KEY = "tiledb_dimensions";
 const std::string TILEDB_SOMA_SCHEMA_COL_ATTR_KEY = "tiledb_attributes";
 
-using MetadataValue = std::tuple<common::DataType, uint32_t, const void*>;
-enum MetadataInfo { dtype = 0, num, value };
-
 using TimestampRange = std::pair<uint64_t, uint64_t>;
 
 template <typename T>

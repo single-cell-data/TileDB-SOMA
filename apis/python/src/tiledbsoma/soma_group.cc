@@ -85,8 +85,6 @@ void load_soma_group(py::module& m) {
 
         .def("get_metadata", py::overload_cast<const std::string&>(&SOMAGroup::get_metadata))
 
-        .def("get_metadata_exp", &SOMAGroup::get_metadata_exp)
-
         .def("set_metadata", set_metadata, py::arg("key"), py::arg("value"), py::arg("force") = false)
 
         .def("delete_metadata", &SOMAGroup::delete_metadata, py::arg("key"), py::arg("force") = false)
