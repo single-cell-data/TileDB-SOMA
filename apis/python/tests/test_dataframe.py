@@ -1875,6 +1875,7 @@ def test_columns(tmp_path):
             (tmp_path / "B").as_posix(),
             schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
+            domain=((0, 0),),
         )
 
     D = soma.DataFrame.create(
