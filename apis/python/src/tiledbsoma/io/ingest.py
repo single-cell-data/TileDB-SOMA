@@ -920,7 +920,7 @@ def _maybe_set(
 
     try:
         coll.set(key, value, use_relative_uri=use_relative_uri)
-    except ValueError:
+    except SOMAError:
         # This is already a member of the collection.
         pass
 

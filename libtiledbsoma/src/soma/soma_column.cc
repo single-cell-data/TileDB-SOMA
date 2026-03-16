@@ -45,7 +45,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
         }
         auto soma_schema_extension_raw = metadata.at(TILEDB_SOMA_SCHEMA_KEY);
         auto data = std::get<std::string>(soma_schema_extension_raw);
-        auto soma_schema_extension = data.empty() ? nlohmann::json::parse(data) : nlohmann::json::object();
+        auto soma_schema_extension = data.empty() ? nlohmann::json::object() : nlohmann::json::parse(data);
 
         if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
             throw TileDBSOMAError(

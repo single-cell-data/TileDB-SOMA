@@ -31,7 +31,9 @@ struct MetadataValueTypeHelper<V, std::integer_sequence<int, S...>> {
         std::variant_alternative_t<S, V>...>;
 };
 
-using MetadataValue = MetadataValueTypeHelper<MetadataSingleValueType, std::make_integer_sequence<int, std::variant_size_v<MetadataSingleValueType>>>::type;
-}
+using MetadataValue = MetadataValueTypeHelper<
+    MetadataSingleValueType,
+    std::make_integer_sequence<int, std::variant_size_v<MetadataSingleValueType>>>::type;
+}  // namespace tiledbsoma::common
 
 #endif

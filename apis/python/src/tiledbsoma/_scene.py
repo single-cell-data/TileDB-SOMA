@@ -163,9 +163,7 @@ class Scene(CollectionBase[SOMAObject]):
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     def _parse_special_metadata(self) -> None:
         coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
