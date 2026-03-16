@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterator
-from threading import Lock
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import attrs
@@ -17,7 +16,7 @@ from . import _tdb_handles
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._core_options import OpenMode
-from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
+from ._exception import DoesNotExistError, SOMAError, UnsupportedOperationError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
@@ -57,16 +56,14 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self,
         handle: _tdb_handles.RawHandle,
         *,
-        uri: str,
         context: SOMAContext,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
-        super().__init__(handle, uri=uri, context=context, **kwargs)
+        super().__init__(handle, context=context, **kwargs)
         """The contents of the persisted TileDB Group.
 
         This is loaded at startup when we have a read handle.
         """
-        self._reify_lock = Lock()
 
     def __contains__(self, key: object) -> bool:
         return key in self._handle
@@ -82,14 +79,18 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         if key not in self._handle:
             raise KeyError(err_str) from None
 
-        handle: clib = getattr(self._handle, key) if hasattr(self._handle, key) else self._handle.get(key)
+        try:
+            handle: clib = getattr(self._handle, key) if hasattr(self._handle, key) else self._handle.get(key)
+        except (RuntimeError, SOMAError) as err:
+            if is_does_not_exist_error(err):
+                raise DoesNotExistError(err) from err
+            raise err
 
         from . import _factory  # Delayed binding to resolve circular import.
 
         cls: type[SOMAObject] = _factory._type_name_to_cls(handle.type.lower())
         soma_object = cls(
             handle,
-            uri=handle.uri,
             context=self.context,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )

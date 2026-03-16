@@ -17,6 +17,8 @@
 #include "common/datatype/utils.h"
 #include "common/logging/impl/logger.h"
 #include "common/logging/logger.h"
+#include "common/metadata/metadata.h"
+#include "common/metadata/utils.h"
 #include "enums.h"
 
 #include <tiledb/tiledb>
@@ -28,20 +30,6 @@ using namespace common::type;
 //==================================================================
 // helper functions
 //==================================================================
-
-std::map<std::string, MetadataEntry> create_metadata_cache(tiledb::Group& group) {
-    std::map<std::string, MetadataEntry> metadata_cache{};
-    for (uint64_t idx = 0; idx < group.metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        group.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-
-        metadata_cache[key] = util::decode_metadata(as<DataTypeFormat::SOMA>(value_type), value_num, value);
-    }
-    return metadata_cache;
-}
 
 std::map<std::string, SOMAGroupEntry> create_member_cache(tiledb::Group& group) {
     auto get_object_type_string = [](tiledb::Object& group_member) {
@@ -138,7 +126,7 @@ SOMAGroup::SOMAGroup(
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
                        std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    metadata_ = create_metadata_cache(*cache_group_);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -169,7 +157,7 @@ SOMAGroup::SOMAGroup(
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
                        std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    metadata_ = create_metadata_cache(*cache_group_);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -183,11 +171,13 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
                        std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    metadata_ = create_metadata_cache(*cache_group_);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
 void SOMAGroup::close([[maybe_unused]] bool recursive) {
+    if (metadata_cache_)
+        metadata_cache_->write(*group_);
     if (cache_group_)
         cache_group_->close();
     if (group_)
@@ -269,9 +259,7 @@ void SOMAGroup::set_metadata(
     if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
-    group_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
-    std::pair<std::string, MetadataEntry> mdpair(key, util::decode_metadata(value_type, value_num, value));
-    metadata_.insert(mdpair);
+    metadata_cache_->set(key, common::decode_metadata(value_type, value_num, value));
 }
 
 void SOMAGroup::delete_metadata(const std::string& key, bool force) {
@@ -283,27 +271,23 @@ void SOMAGroup::delete_metadata(const std::string& key, bool force) {
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
     }
 
-    group_->delete_metadata(key);
-    metadata_.erase(key);
+    metadata_cache_->del(key);
 }
 
-std::optional<MetadataEntry> SOMAGroup::get_metadata(const std::string& key) {
-    if (metadata_.count(key) == 0)
-        return std::nullopt;
-
-    return metadata_[key];
+std::optional<common::MetadataValue> SOMAGroup::get_metadata(const std::string& key) {
+    return metadata_cache_->get(key);
 }
 
-std::map<std::string, MetadataEntry> SOMAGroup::get_metadata() {
-    return metadata_;
+std::map<std::string, common::MetadataValue> SOMAGroup::get_metadata() {
+    return metadata_cache_->get();
 }
 
 bool SOMAGroup::has_metadata(const std::string& key) const {
-    return metadata_.count(key) != 0;
+    return metadata_cache_->contains(key);
 }
 
 uint64_t SOMAGroup::metadata_num() const {
-    return metadata_.size();
+    return metadata_cache_->size();
 }
 
 std::string SOMAGroup::classname() const {

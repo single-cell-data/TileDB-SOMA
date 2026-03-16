@@ -22,7 +22,7 @@ from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
 from .options import SOMATileDBContext, _update_context_and_timestamp
 
 
-@attrs.define(slots=True)
+@attrs.define(slots=True, init=False)
 class SOMAObject:
     """Base class for all TileDB SOMA objects.
 
@@ -110,9 +110,7 @@ class SOMAObject:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     @classmethod
     def _create(
@@ -142,15 +140,12 @@ class SOMAObject:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     def __init__(
         self,
         handle: _tdb_handles.RawHandle,
         *,
-        uri: str,
         context: SOMAContext,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ) -> None:
@@ -183,7 +178,7 @@ class SOMAObject:
             )
         self._handle = handle
         self._context = context
-        self._uri = uri
+        self._uri = handle.uri
         self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._parse_special_metadata()
@@ -217,7 +212,6 @@ class SOMAObject:
         """
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
-        self._metadata._write()
         self._handle.close(True)
         self._handle = self._handle_type.open(
             uri=self._uri, mode=open_mode, context=self._context._handle, timestamp=(0, timestamp_ms)
@@ -226,7 +220,6 @@ class SOMAObject:
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(
             self._handle,
         )
-        # self._close_stack.enter_context(self._handle)
         self._parse_special_metadata()
         return self
 
@@ -243,7 +236,6 @@ class SOMAObject:
     def __enter__(self) -> Self:
         self._is_running_in_context = True
         self._close_stack.enter_context(self._handle)
-        self._close_stack.enter_context(self._metadata)
         return self
 
     def __exit__(self, *_: Any) -> None:  # noqa: ANN401
@@ -281,8 +273,7 @@ class SOMAObject:
             Maturing.
         """
         if not self.closed:
-            self._metadata._write()
-            self._handle.close(False)
+            self._handle.close(True)
 
         self._close_stack.close()
 

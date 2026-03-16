@@ -177,22 +177,26 @@ std::ostream& SOMAObject::print(std::ostream& stream, int level, std::optional<s
     std::string indentation(level * 4, ' ');
     if (key) {
         stream << fmt::format(
-                      "{}'{}': {} '{}' ({} for {})",
+                      "{}'{}': {} '{}' ({} for '{}')",
                       indentation,
                       key.value(),
                       classname(),
                       uri(),
                       is_open() ? "open" : "CLOSED",
-                      open_mode_to_string(mode()))
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d")
                << std::endl;
     } else {
         stream << fmt::format(
-                      "{}{} '{}' ({} for {})",
+                      "{}{} '{}' ({} for '{}')",
                       indentation,
                       classname(),
                       uri(),
                       is_open() ? "open" : "CLOSED",
-                      open_mode_to_string(mode()))
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d")
                << std::endl;
     }
 

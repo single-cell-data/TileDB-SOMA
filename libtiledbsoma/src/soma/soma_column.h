@@ -29,6 +29,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include "common/metadata/types.h"
 #include "common/query/managed_query.h"
 #include "enums.h"
 #include "nanoarrow/nanoarrow.hpp"
@@ -48,7 +49,7 @@ class SOMAColumn {
     static std::vector<std::shared_ptr<SOMAColumn>> deserialize(
         const tiledb::Context& ctx,
         const tiledb::Array& array,
-        std::map<std::string, tiledbsoma::MetadataEntry>& metadata,
+        const std::map<std::string, common::MetadataValue>& metadata,
         std::string_view uri);
 
     //===================================================================

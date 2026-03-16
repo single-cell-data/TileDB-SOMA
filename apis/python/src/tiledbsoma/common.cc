@@ -268,7 +268,7 @@ std::optional<py::object> to_table(std::optional<std::shared_ptr<common::ArrayBu
     return std::nullopt;
 }
 
-py::dict meta(std::map<std::string, MetadataEntry> metadata_mapping) {
+py::dict meta(std::map<std::string, common::MetadataValue> metadata_mapping) {
     py::dict results;
 
     for (auto [key, val] : metadata_mapping) {

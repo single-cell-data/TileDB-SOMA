@@ -84,11 +84,11 @@ void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
                 continue;
             }
 
-            member->close();
+            member->close(recursive);
         }
     }
 
-    SOMAGroup::close();
+    SOMAGroup::close(recursive);
 }
 
 std::shared_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
@@ -282,34 +282,41 @@ std::ostream& SOMACollectionBase::print(std::ostream& stream, int level, std::op
 
     if (key) {
         stream << fmt::format(
-                      "{}'{}': {} '{}' ({} for {}) ({})",
+                      "{}'{}': {} '{}' ({} for '{}'){}",
                       indentation,
                       key.value(),
                       classname(),
                       uri(),
                       is_open() ? "open" : "CLOSED",
-                      open_mode_to_string(mode()),
-                      item_count)
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d",
+                      is_open() ? fmt::format(" ({})", item_count) : "")
                << std::endl;
     } else {
         stream << fmt::format(
-                      "{}{} '{}' ({} for {}) ({})",
+                      "{}{} '{}' ({} for '{}'){}",
                       indentation,
                       classname(),
                       uri(),
                       is_open() ? "open" : "CLOSED",
-                      open_mode_to_string(mode()),
-                      item_count)
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d",
+                      is_open() ? fmt::format(" ({})", item_count) : "")
                << std::endl;
     }
 
-    auto members = members_map();
+    if (is_open()) {
+        auto members = members_map();
 
-    for (const auto& [name, child] : children_) {
-        if (child == nullptr) {
-            stream << fmt::format("{}'{}': '{}' (unopened)", subindentation, name, members[name].first) << std::endl;
-        } else {
-            child->print(stream, level + 1, name);
+        for (const auto& [name, child] : children_) {
+            if (child == nullptr) {
+                stream << fmt::format("{}'{}': '{}' (unopened)", subindentation, name, members[name].first)
+                       << std::endl;
+            } else {
+                child->print(stream, level + 1, name);
+            }
         }
     }
 

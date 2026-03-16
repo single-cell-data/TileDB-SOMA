@@ -40,6 +40,7 @@ struct ArrowSchema;
 
 namespace tiledbsoma::common {
 class ManagedQuery;
+class MetadataCache;
 }  // namespace tiledbsoma::common
 
 namespace tiledbsoma::common::arrow {
@@ -380,18 +381,17 @@ class SOMAArray : public SOMAObject {
      *
      * @param key The key of the metadata item to be retrieved. UTF-8
      * encodings are acceptable.
-     * @return MetadataEntry (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
+     * @return common::MetadataValue (std::variant<std::vector<uint64_t>, ..., int8_t>)
      */
-    std::optional<MetadataEntry> get_metadata(const std::string& key);
+    std::optional<common::MetadataValue> get_metadata(const std::string& key);
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
      * number of values, and value in binary form.
      *
-     * @return std::map<std::string, MetadataEntry>
+     * @return std::map<std::string, common::MetadataValue>
      */
-    std::map<std::string, MetadataEntry> get_metadata();
+    std::map<std::string, common::MetadataValue> get_metadata();
 
     /**
      * Check if the key exists in metadata from an open array. The array
@@ -877,7 +877,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<tiledb::Array> meta_cache_arr_;
 
     // Metadata cache
-    std::map<std::string, MetadataEntry> metadata_;
+    std::shared_ptr<common::MetadataCache> metadata_cache_;
 
     // SOMAColumn list
     std::vector<std::shared_ptr<SOMAColumn>> columns_;

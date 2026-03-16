@@ -21,6 +21,7 @@
 #include <string>
 
 #include "../utils/common.h"
+#include "common/metadata/types.h"
 #include "enums.h"
 #include "soma_context.h"
 
@@ -161,7 +162,7 @@ class SOMAObject {
      *     are acceptable.
      * @return std::optional<MetadataEntry>
      */
-    virtual std::optional<MetadataEntry> get_metadata(const std::string& key) = 0;
+    virtual std::optional<common::MetadataValue> get_metadata(const std::string& key) = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
@@ -169,7 +170,7 @@ class SOMAObject {
      *
      * @return std::map<std::string, MetadataEntry>
      */
-    virtual std::map<std::string, MetadataEntry> get_metadata() = 0;
+    virtual std::map<std::string, common::MetadataValue> get_metadata() = 0;
 
     /**
      * Check if the key exists in metadata from an open SOMAObject.

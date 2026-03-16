@@ -160,9 +160,7 @@ def _open_soma_object(
             raise SOMAError(tdbe) from tdbe
         try:
             cls: type[SOMAObject] = _type_name_to_cls(handle.type.lower())
-            return cls(
-                handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-            )
+            return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
         except KeyError:
             raise SOMAError(f"{uri!r} has unknown storage type {clib_type!r}") from None
 

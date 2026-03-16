@@ -80,20 +80,6 @@ using DomainRange = std::variant<
     DomainRangeEntry<int8_t>,
     DomainRangeEntry<uint8_t>>;
 
-using MetadataSingleType =
-    std::variant<std::string, int64_t, uint64_t, double, int32_t, uint32_t, float, int16_t, uint16_t, int8_t, uint8_t>;
-
-template <typename V, typename Seq>
-struct MetadataTypeHelper;
-template <typename V, int... S>
-struct MetadataTypeHelper<V, std::integer_sequence<int, S...>> {
-    using type = std::variant<std::vector<std::variant_alternative_t<S, V>>..., std::variant_alternative_t<S, V>...>;
-};
-
-using MetadataEntry = MetadataTypeHelper<
-    MetadataSingleType,
-    std::make_integer_sequence<int, std::variant_size_v<MetadataSingleType>>>::type;
-
 class TileDBSOMAError : public std::runtime_error {
    public:
     explicit TileDBSOMAError(const char* m)
