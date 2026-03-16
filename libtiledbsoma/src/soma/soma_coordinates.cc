@@ -117,7 +117,7 @@ SOMACoordinateSpace::SOMACoordinateSpace(
 }
 
 SOMACoordinateSpace SOMACoordinateSpace::from_metadata(common::MetadataValue metadata) {
-    if (std::holds_alternative<std::string>(metadata)) {
+    if (!std::holds_alternative<std::string>(metadata)) {
         throw TileDBSOMAError(
             fmt::format(
                 "[SOMACoordinateSpace]: Unexpected datatype for coordinate space "
