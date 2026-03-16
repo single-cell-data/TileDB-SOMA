@@ -45,7 +45,7 @@ jobs:
             scanpy:   1.10.3
             scipy:    1.13.1
 
-        - name: pandas3
+          - name: pandas3
             os: ubuntu-24.04
             python_version: 3.12
             cc: gcc
@@ -57,7 +57,7 @@ jobs:
             pandas:   3.0.1
             pyarrow:  23.0.1
             scanpy:   1.12.0
-            scipy:    1.13.1
+            scipy:    1.17.1
 
 
     runs-on: ${{ matrix.os }}
