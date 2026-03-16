@@ -24,8 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
-- \[[](<>)\] Remove deprecated support for allowing a dimension in `shape` to be `None` in the `SparseNDArray`.
-- \[[](<>)\] Remove deprecated support for setting `domain=None` in the `create` method for `DataFrame`, `PointCloudDataFrame`, and `GeometryDataFrame`.
+- \[[#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431)\] Remove deprecated support for allowing a dimension in `shape` to be `None` in the `SparseNDArray`.
+- \[[#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431)\] Remove deprecated support for setting `domain=None` in the `create` method for `DataFrame`, `PointCloudDataFrame`, and `GeometryDataFrame`.
 
 ### Fixed
 
