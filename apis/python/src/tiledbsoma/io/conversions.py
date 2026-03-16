@@ -165,9 +165,9 @@ def obs_or_var_to_tiledb_supported_array_type(obs_or_var: pd.DataFrame) -> pd.Da
     columns (cardinality > 4096) to plain string.
     """
     if len(obs_or_var.columns) == 0:
-        return obs_or_var.copy()
+        return obs_or_var.copy()  # type: ignore[no-any-return]
 
-    return pd.DataFrame.from_dict(
+    return pd.DataFrame.from_dict(  # type: ignore[no-any-return]
         {str(k): to_tiledb_supported_array_type(str(k), v) for k, v in obs_or_var.items()},
     )
 

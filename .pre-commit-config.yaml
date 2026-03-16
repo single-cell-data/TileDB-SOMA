@@ -21,7 +21,7 @@ repos:
     hooks:
     - id: mypy
       additional_dependencies:
-        - "pandas-stubs>=2"
+        - pandas-stubs
         - types-setuptools
         - attrs
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
