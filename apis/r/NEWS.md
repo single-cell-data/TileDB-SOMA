@@ -14,8 +14,8 @@
 
 ## Removed
 
-- Remove deprecated support for removing collection-based class members in "WRITE" mode. Collections must now be in "DELETE" mode to remove members. ([]()) # TODO: Add PR number
-- Remove deprecated support using `domain=NULL` in `SOMADataFrameCreate`. ([]()) # TODO: Add PR number
+- Remove deprecated support for removing collection-based class members in "WRITE" mode. Collections must now be in "DELETE" mode to remove members. ([](<>)) # TODO: Add PR number
+- Remove deprecated support using `domain=NULL` in `SOMADataFrameCreate`. ([](<>)) # TODO: Add PR number
 - Remove deprecated `SOMATileDBContext` class.
 
 ## Fixed

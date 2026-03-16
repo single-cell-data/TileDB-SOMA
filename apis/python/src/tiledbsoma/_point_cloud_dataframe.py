@@ -159,9 +159,7 @@ class PointCloudDataFrame(SpatialDataFrame):
         domain = None
 
         if soma_domain is None:
-            raise TypeError(
-                "Cannot set domain=None. Please specify the desired domain for the point cloud dataframe."
-            )
+            raise TypeError("Cannot set domain=None. Please specify the desired domain for the point cloud dataframe.")
         if len(soma_domain) != len(index_column_names):
             raise ValueError(
                 f"Invalid domain={soma_domain}. The domain must have an entry for each axis in the coordinate space "
