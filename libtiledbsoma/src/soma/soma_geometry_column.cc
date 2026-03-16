@@ -20,7 +20,7 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
     const nlohmann::json& soma_schema,
     const tiledb::Context&,
     const tiledb::Array& array,
-    const std::map<std::string, tiledbsoma::MetadataEntry>& metadata) {
+    const std::map<std::string, common::MetadataValue>& metadata) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
             "[SOMAGeometryColumn][deserialize] Missing required field "

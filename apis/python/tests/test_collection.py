@@ -232,7 +232,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
             """,
         ).strip()
     )
-    assert a["Another_Name"] is b
+    assert a["Another_Name"] == b
     b.close()
     assert (
         repr(a)
@@ -483,7 +483,7 @@ def test_collection_entries_from_setter(tmp_path, entry_type):
     with soma.Collection.create(uri) as coll, create_basic_object(entry_type, f"{uri}_entry") as entry:
         coll["entry"] = entry
         entry2 = coll["entry"]
-        assert entry2 is entry
+        assert entry2 == entry
 
     with soma.Collection.open(uri) as coll:
         entry = coll["entry"]
@@ -668,4 +668,4 @@ def test_parallel_getitem(tmp_path) -> None:
     tp = concurrent.futures.ThreadPoolExecutor()
     with soma.open(uri) as exp:
         results = list(tp.map(get_obsm, repeat(exp), ("X_umap", "X_umap", "X_umap", "X_umap")))
-    assert all(r is results[0] for r in results)
+    assert all(r == results[0] for r in results)

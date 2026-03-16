@@ -116,7 +116,7 @@ SOMACoordinateSpace::SOMACoordinateSpace(
     }
 }
 
-SOMACoordinateSpace SOMACoordinateSpace::from_metadata(MetadataEntry metadata) {
+SOMACoordinateSpace SOMACoordinateSpace::from_metadata(common::MetadataValue metadata) {
     if (std::holds_alternative<std::string>(metadata)) {
         throw TileDBSOMAError(
             fmt::format(

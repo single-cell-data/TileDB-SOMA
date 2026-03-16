@@ -39,6 +39,8 @@ add_library(TILEDB_COMMON_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/query/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/common/common.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/metadata/metadata.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/metadata/utils.cc
 )
 
 target_link_libraries(TILEDB_COMMON_OBJECTS PUBLIC spdlog::spdlog)
@@ -290,6 +292,13 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/logging/logger.h
   DESTINATION "include/tiledbsoma/common/logging"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/metadata/metadata.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/metadata/utils.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/metadata/types.h
+  DESTINATION "include/tiledbsoma/common/metadata"
 )
 
 install(FILES

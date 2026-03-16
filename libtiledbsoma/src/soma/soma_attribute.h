@@ -38,7 +38,7 @@ class SOMAAttribute : public SOMAColumn {
         const nlohmann::json& soma_schema,
         const tiledb::Context& ctx,
         const tiledb::Array& array,
-        const std::map<std::string, tiledbsoma::MetadataEntry>& metadata);
+        const std::map<std::string, common::MetadataValue>& metadata);
 
     /**
      * Create a ``SOMAAttribute`` shared pointer from an Arrow schema

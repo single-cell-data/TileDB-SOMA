@@ -16,7 +16,7 @@ from . import _tdb_handles
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._core_options import OpenMode
-from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
+from ._exception import DoesNotExistError, SOMAError, UnsupportedOperationError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
@@ -58,7 +58,6 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self,
         handle: _tdb_handles.RawHandle,
         *,
-        uri: str,
         context: SOMAContext,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:

@@ -49,49 +49,6 @@ VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow) {
 
 template VarlenBufferPair to_varlen_buffers(std::vector<std::string>, bool arrow);
 
-MetadataEntry decode_metadata(common::DataType type, uint32_t elements, const void* data) {
-    auto decode = [&]<typename T>() -> MetadataEntry {
-        if constexpr (std::is_same_v<T, std::string>) {
-            return MetadataEntry(std::string(static_cast<const char*>(data), elements));
-        } else {
-            if (elements == 1) {
-                return MetadataEntry(reinterpret_cast<const T*>(data)[0]);
-            } else {
-                return MetadataEntry(
-                    std::vector<T>(reinterpret_cast<const T*>(data), reinterpret_cast<const T*>(data) + elements));
-            }
-        }
-    };
-
-    switch (type) {
-        case common::DataType::int8:
-            return decode.template operator()<int8_t>();
-        case common::DataType::int16:
-            return decode.template operator()<int16_t>();
-        case common::DataType::int32:
-            return decode.template operator()<int32_t>();
-        case common::DataType::int64:
-            return decode.template operator()<int64_t>();
-        case common::DataType::uint8:
-            return decode.template operator()<uint8_t>();
-        case common::DataType::uint16:
-            return decode.template operator()<uint16_t>();
-        case common::DataType::uint32:
-            return decode.template operator()<uint32_t>();
-        case common::DataType::uint64:
-            return decode.template operator()<uint64_t>();
-        case common::DataType::float32:
-            return decode.template operator()<float>();
-        case common::DataType::float64:
-            return decode.template operator()<double>();
-        case common::DataType::string_ascii:
-        case common::DataType::string_utf8:
-            return decode.template operator()<std::string>();
-        default:
-            throw std::runtime_error(fmt::format("Unsupported metadata type '{}'", common::getName(type)));
-    }
-}
-
 bool is_tiledb_uri(std::string_view uri) {
     return uri.find("tiledb://") == 0;
 }

@@ -44,7 +44,7 @@ class SOMAGeometryColumn : public SOMAColumn {
         const nlohmann::json& soma_schema,
         const tiledb::Context& ctx,
         const tiledb::Array& array,
-        const std::map<std::string, tiledbsoma::MetadataEntry>&);
+        const std::map<std::string, common::MetadataValue>&);
 
     static std::shared_ptr<SOMAGeometryColumn> create(
         std::shared_ptr<tiledb::Context> ctx,

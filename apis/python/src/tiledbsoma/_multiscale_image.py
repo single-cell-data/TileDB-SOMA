@@ -222,10 +222,8 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
             )
             metadata = _tdb_handles.MetadataWrapper.from_handle(handle)
             metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
-            metadata._write()
             multiscale = cls(
                 handle,
-                uri=uri,
                 context=context,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )

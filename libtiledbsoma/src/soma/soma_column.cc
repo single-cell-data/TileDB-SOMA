@@ -23,7 +23,7 @@ namespace tiledbsoma {
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
     const tiledb::Context& ctx,
     const tiledb::Array& array,
-    std::map<std::string, tiledbsoma::MetadataEntry>& metadata,
+    const std::map<std::string, common::MetadataValue>& metadata,
     std::string_view uri) {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
@@ -31,7 +31,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
 
     std::string soma_type{""};
     if (metadata.count(SOMA_OBJECT_TYPE_KEY) != 0) {
-        auto soma_object_type = metadata[SOMA_OBJECT_TYPE_KEY];
+        auto soma_object_type = metadata.at(SOMA_OBJECT_TYPE_KEY);
         soma_type = std::get<std::string>(soma_object_type);
     }
     if (soma_type == "SOMAGeometryDataFrame") {

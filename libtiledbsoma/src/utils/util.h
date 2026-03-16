@@ -44,8 +44,6 @@ std::vector<T> to_vector(const std::span<T>& s) {
     return std::vector<T>(s.begin(), s.end());
 }
 
-MetadataEntry decode_metadata(common::DataType type, uint32_t elements, const void* data);
-
 /**
  * @brief Check if the provided URI is a TileDB Cloud URI.
  *
