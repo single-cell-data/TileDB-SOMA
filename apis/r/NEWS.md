@@ -14,9 +14,9 @@
 
 ## Removed
 
-- Remove deprecated support for removing collection-based class members in "WRITE" mode. Collections must now be in "DELETE" mode to remove members. ([](<>)) # TODO: Add PR number
-- Remove deprecated support using `domain=NULL` in `SOMADataFrameCreate`. ([](<>)) # TODO: Add PR number
-- Remove deprecated `SOMATileDBContext` class.
+- Remove deprecated support for removing collection-based class members in "WRITE" mode. Collections must now be in "DELETE" mode to remove members. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Remove deprecated support using `domain=NULL` in `SOMADataFrameCreate`. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Remove deprecated `SOMATileDBContext` class. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
 
 ## Fixed
 
