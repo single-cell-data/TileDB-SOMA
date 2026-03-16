@@ -221,6 +221,10 @@ class SOMAObject:
             self._handle,
         )
         self._parse_special_metadata()
+
+        if self._is_running_in_context:
+            self._close_stack.enter_context(self._handle)
+
         return self
 
     @property

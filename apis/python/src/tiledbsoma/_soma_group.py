@@ -76,7 +76,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         """Gets the value associated with the key."""
         err_str = f"{self.__class__.__name__} has no item {key!r}"
 
-        if key not in self._handle:
+        if not isinstance(key, str) or key not in self._handle:
             raise KeyError(err_str) from None
 
         try:

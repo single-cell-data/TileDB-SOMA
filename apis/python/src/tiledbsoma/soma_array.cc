@@ -60,7 +60,7 @@ void load_soma_array(py::module& m) {
             })
 
         .def_property_readonly("type", &SOMAArray::type)
-        .def("close", &SOMAArray::close)
+        .def("close", &SOMAArray::close, py::arg("recursive") = false)
         .def_property_readonly("closed", [](SOMAArray& array) -> bool { return not array.is_open(); })
         .def_property_readonly(
             "mode",
