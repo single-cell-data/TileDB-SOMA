@@ -16,7 +16,6 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
   context = NULL,
   relative = TRUE
 )
@@ -28,7 +27,6 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
   context = NULL,
   relative = TRUE
 )
@@ -42,7 +40,7 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -54,7 +52,7 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -66,7 +64,7 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -96,8 +94,6 @@ exists, simply open it for writing.
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}.}
 
-\item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
-
 \item{context}{Optional \code{SOMAContext} object used for TileDB operations.
 If a context is not provided, then the default context will be used. Call
 \code{set_default_context} once before other SOMA operations to configure
@@ -112,6 +108,8 @@ relative or absolute.}
 
 \item{nfeatures}{The number of features present in \code{soma_parent}
 (eg. \code{nrow(assay)}).}
+
+\item{tiledbsoma_ctx}{Optional (DEPRECATED) \code{\link{SOMATileDBContext}}.}
 }
 \value{
 \code{Assay} and \code{Assay5} methods: a

@@ -7,13 +7,6 @@
 Virtual base class to add ND-array-specific functionality to the
 \code{\link{SOMAArrayBase}} class (lifecycle: maturing).
 }
-\section{Lifecycle}{
-
-As of \pkg{tiledbsoma} 2.1.0, \code{$set_data_type()} is deprecated; this
-functionality is no longer needed as \code{libtiledbsoma} now accurately
-sets the TileDB data type upon array opening
-}
-
 \seealso{
 Derived classes: \code{\link{SOMADenseNDArray}},
 \code{\link{SOMASparseNDArray}}
@@ -26,7 +19,6 @@ Derived classes: \code{\link{SOMADenseNDArray}},
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SOMANDArrayBase-create}{\code{SOMANDArrayBase$create()}}
-\item \href{#method-SOMANDArrayBase-set_data_type}{\code{SOMANDArrayBase$set_data_type()}}
 \item \href{#method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape}{\code{SOMANDArrayBase$tiledbsoma_has_upgraded_shape()}}
 \item \href{#method-SOMANDArrayBase-resize}{\code{SOMANDArrayBase$resize()}}
 \item \href{#method-SOMANDArrayBase-tiledbsoma_upgrade_shape}{\code{SOMANDArrayBase$tiledbsoma_upgrade_shape()}}
@@ -92,23 +84,6 @@ object}
 }
 \subsection{Returns}{
 Returns \code{self}.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
-\subsection{Method \code{set_data_type()}}{
-Sets a cache value for the datatype.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{type}}{A character value describing the TileDB data type.}
-}
-\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
