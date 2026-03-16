@@ -1,6 +1,9 @@
 name: TileDB-SOMA Python CI with varying dependencies
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/python-dependency-variation.yml"
   push:
     branches:
       - main
@@ -42,6 +45,21 @@ jobs:
             scanpy:   1.10.3
             scipy:    1.13.1
 
+        - name: pandas3
+            os: ubuntu-24.04
+            python_version: 3.12
+            cc: gcc
+            cxx: g++
+
+            anndata:  0.12.6
+            numba:    0.64.0
+            numpy:    2.4.3
+            pandas:   3.0.1
+            pyarrow:  23.0.1
+            scanpy:   1.12.0
+            scipy:    1.13.1
+
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -50,17 +68,6 @@ jobs:
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
-
-      - name: Checkout vcpkg
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/vcpkg
-          path: vcpkg
-          
-      - name: Bootstrap vcpkg
-        run: |
-          ./vcpkg/bootstrap-vcpkg.sh
-          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
