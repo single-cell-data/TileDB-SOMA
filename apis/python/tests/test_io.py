@@ -101,6 +101,9 @@ def test_write_arrow_table_enum_to_values(tmp_path, num_rows, cap_nbytes):
     Additional focus-testing for tiledbsoma.io._write_arrow_table
     """
 
+    if pa.__version__ == "11.0.0" and num_rows == 0:
+        pytest.skip("Skip due to bug with empty dictionaries.")
+
     array_schema = pa.schema(
         [
             ("bool", pa.bool_()),
