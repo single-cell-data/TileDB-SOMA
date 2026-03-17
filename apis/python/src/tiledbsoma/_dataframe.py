@@ -1016,6 +1016,11 @@ def _cast_domain_to_cpp_type(
         return None
 
     if index_column_name in schema.names:
+        if isinstance(slot_domain[0], pa.TimestampScalar) and not isinstance(
+            schema.field(index_column_name).type, pa.TimestampType
+        ):
+            return slot_domain[0].value, slot_domain[1].value
+
         domain_array = pa.RecordBatch.from_pydict(
             {index_column_name: slot_domain}, pa.schema([schema.field(index_column_name)])
         )
