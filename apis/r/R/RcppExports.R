@@ -81,8 +81,28 @@ delete_metadata <- function(uri, key, is_array, ctxxp) {
     invisible(.Call(`_tiledbsoma_delete_metadata`, uri, key, is_array, ctxxp))
 }
 
-set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
+set_object_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
     invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
+}
+
+soma_get_all_metadata <- function(xp) {
+    .Call(`_tiledbsoma_soma_get_all_metadata`, xp)
+}
+
+soma_get_metadata <- function(xp, key) {
+    .Call(`_tiledbsoma_soma_get_metadata`, xp, key)
+}
+
+soma_has_metadata <- function(xp, key) {
+    .Call(`_tiledbsoma_soma_has_metadata`, xp, key)
+}
+
+soma_delete_metadata <- function(xp, key) {
+    invisible(.Call(`_tiledbsoma_soma_delete_metadata`, xp, key))
+}
+
+soma_set_metadata <- function(xp, key, value) {
+    invisible(.Call(`_tiledbsoma_soma_set_metadata`, xp, key, value))
 }
 
 libtiledbsoma_empty_query_condition <- function(ctxxp) {

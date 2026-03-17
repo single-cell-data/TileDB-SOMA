@@ -87,7 +87,6 @@ SOMAObject <- R6::R6Class(
       if (!is.null(tiledb_handle)) {
         private$.set_handle(tiledb_handle)
         private$.mode <- soma_object_open_mode(self$handle)
-        private$.metadata_cache <- soma_object_get_metadata(self$handle)
       }
 
       soma_debug(sprintf(
@@ -200,9 +199,9 @@ SOMAObject <- R6::R6Class(
       ))
 
       if (is.null(key)) {
-        return(private$.metadata_cache)
+        return(soma_get_metadata(private$.handle))
       }
-      val <- private$.metadata_cache[[key]]
+      val <- soma_get_metadata(private$.handle, key)
       if (is.list(val)) {
         val <- unlist(val)
       }
@@ -223,8 +222,14 @@ SOMAObject <- R6::R6Class(
       for (i in seq_along(metadata)) {
         key <- names(metadata)[i]
         value <- metadata[[i]]
-        soma_object_set_metadata(private$.handle, key, value)
-        private$.metadata_cache[[key]] <- value
+        soma_debug(sprintf(
+          "[SOMAObject$set_metadata] setting key %s to %s (%s)",
+          key,
+          value,
+          class(value)
+        ))
+
+        soma_set_metadata(private$.handle, key, value)
       }
 
       return(invisible(self))
@@ -358,10 +363,6 @@ SOMAObject <- R6::R6Class(
     # @field .uri ...
     #
     .uri = character(1L),
-
-    # @field .metadata_cache ...
-    #
-    .metadata_cache = NULL,
 
     .set_handle = function(handle) {
       private$.handle <- handle

@@ -33,7 +33,6 @@ SOMAArrayBase <- R6::R6Class(
       private$.log_open_timestamp(open_mode)
       # private$.open_handle(open_mode, self$tiledb_timestamp)
       private$.set_handle(open_soma_handle(self$uri, open_mode, private$.context$handle, self$tiledb_timestamp))
-      private$.metadata_cache <- soma_object_get_metadata(private$.handle)
       return(self)
     },
 

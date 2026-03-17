@@ -5,6 +5,7 @@
 
 #include <tiledbsoma/tiledbsoma>
 
+#include "metadata.h"
 #include "rutilities.h"
 #include "xptr-utils.h"  // xptr taggging utilities
 
@@ -13,8 +14,8 @@ Rcpp::List soma_object_get_metadata(Rcpp::XPtr<somaobj_wrap_t> soma_object) {
     if (!soma_object) {
         throw Rcpp::exception("Internal error: SOMA object handle is not initialized.");
     }
-    auto metadata = soma_object->ptr()->get_metadata();
-    return metadata_as_rlist(metadata);
+
+    return soma_get_all_metadata(soma_object);
 }
 
 // [[Rcpp::export]]

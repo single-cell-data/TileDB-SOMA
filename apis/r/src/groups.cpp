@@ -8,6 +8,7 @@
 #include <tiledbsoma/reindexer/reindexer.h>
 #include <tiledbsoma/tiledbsoma>
 
+#include "metadata.h"
 #include "rutilities.h"  // local declarations
 #include "xptr-utils.h"  // xptr taggging utilities
 
@@ -108,95 +109,10 @@ Rcpp::List c_group_members(Rcpp::XPtr<somaobj_wrap_t> xp) {
     return lst;
 }
 
-// borrowed with a tip-of-the-hat from tiledb::src/libtiledb.coo
-// helper function to copy int vector
-template <typename T>
-Rcpp::IntegerVector copy_int_vector(const uint32_t v_num, const void* v) {
-    // Strictly speaking a check for under/overflow would be needed here yet
-    // this for metadata annotation (and not data payload) so extreme ranges are
-    // less likely
-    Rcpp::IntegerVector vec(v_num);
-    const T* ivec = static_cast<const T*>(v);
-    size_t n = static_cast<size_t>(v_num);
-    for (size_t i = 0; i < n; i++)
-        vec[i] = static_cast<int32_t>(ivec[i]);
-    return (vec);
-}
-// helper function to convert_metadata
-SEXP _metadata_to_sexp(const tdbs::common::DataType v_type, const uint32_t v_num, const void* v) {
-    // This supports a limited set of basic types as the metadata
-    // annotation is not meant to support complete serialization
-    if (v_type == tdbs::common::DataType::int32) {
-        Rcpp::IntegerVector vec(v_num);
-        std::memcpy(vec.begin(), v, v_num * sizeof(int32_t));
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::float64) {
-        Rcpp::NumericVector vec(v_num);
-        std::memcpy(vec.begin(), v, v_num * sizeof(double));
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::float32) {
-        Rcpp::NumericVector vec(v_num);
-        const float* fvec = static_cast<const float*>(v);
-        size_t n = static_cast<size_t>(v_num);
-        for (size_t i = 0; i < n; i++)
-            vec[i] = static_cast<double>(fvec[i]);
-        return (vec);
-    } else if (
-        v_type == tdbs::common::DataType::character || v_type == tdbs::common::DataType::string_ascii ||
-        v_type == tdbs::common::DataType::string_utf8) {
-        std::string s(static_cast<const char*>(v), v_num);
-        return (Rcpp::wrap(s));
-    } else if (v_type == tdbs::common::DataType::int8) {
-        Rcpp::LogicalVector vec(v_num);
-        const int8_t* ivec = static_cast<const int8_t*>(v);
-        size_t n = static_cast<size_t>(v_num);
-        for (size_t i = 0; i < n; i++)
-            vec[i] = static_cast<bool>(ivec[i]);
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::uint8) {
-        // Strictly speaking a check for under/overflow would be needed here
-        // (and below) yet this is for metadata annotation (and not data
-        // payload) so extreme ranges are less likely
-        return copy_int_vector<uint8_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::int16) {
-        return copy_int_vector<int16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::uint16) {
-        return copy_int_vector<uint16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::uint32) {
-        return copy_int_vector<uint32_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::int64) {
-        std::vector<int64_t> iv(v_num);
-        std::memcpy(&(iv[0]), v, v_num * sizeof(int64_t));
-        return Rcpp::toInteger64(iv);
-    } else if (v_type == tdbs::common::DataType::uint64) {
-        return copy_int_vector<uint64_t>(v_num, v);
-    } else {
-        Rcpp::stop("No support yet for TileDB data type %s", tdbs::common::getName(v_type));
-    }
-}
-
 // [[Rcpp::export]]
 Rcpp::List c_group_get_metadata(Rcpp::XPtr<somaobj_wrap_t> xp) {
     check_xptr_tag<somaobj_wrap_t>(xp);  // throws if mismatched
-    // unique pointer to SOMAGroup from external pointer wrapper
-    // 'members map': a map from string to pair of strings
-    auto mm = xp->ptr<tdbs::SOMAGroup>()->get_metadata();
-    auto n = mm.size();
-    Rcpp::List lst(n);
-    Rcpp::CharacterVector names(n);
-    int i = 0;
-    for (auto const& key : mm) {
-        names[i] = key.first;
-        // what is keyed using MetadataValue = std::tuple<tiledb_datatype_t,
-        // uint32_t, const void*>
-        auto tpl = key.second;
-        auto sxp = _metadata_to_sexp(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
-        Rcpp::List row = Rcpp::List::create(Rcpp::Named("name") = sxp);
-        lst[i] = row;
-        i++;
-    }
-    lst.attr("names") = names;
-    return lst;
+    return soma_get_all_metadata(xp);
 }
 
 // [[Rcpp::export]]
@@ -231,52 +147,5 @@ void c_group_put_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, std::string key, SEXP o
     // we implement a simpler interface here as the 'type' is given from the
     // supplied SEXP, as is the extent
 
-    tdbs::SOMAGroup* grp = xp->ptr<tdbs::SOMAGroup>();
-    switch (TYPEOF(obj)) {
-        case VECSXP: {
-            Rcpp::stop("List objects are not supported.");
-            break;  // not reached
-        }
-        case REALSXP: {
-            Rcpp::NumericVector v(obj);
-            if (Rcpp::isInteger64(obj)) {
-                grp->set_metadata(key, tdbs::common::DataType::int64, v.size(), v.begin());
-            } else {
-                grp->set_metadata(key, tdbs::common::DataType::float64, v.size(), v.begin());
-            }
-            break;
-        }
-        case INTSXP: {
-            Rcpp::IntegerVector v(obj);
-            grp->set_metadata(key, tdbs::common::DataType::int32, v.size(), v.begin());
-            break;
-        }
-        case STRSXP: {
-            Rcpp::CharacterVector v(obj);
-            std::string s(v[0]);
-            // We use TILEDB_CHAR interchangeably with TILEDB_STRING_ASCII is
-            // this best string type?
-            // Use TILEDB_STRING_UTF8 for compatibility with Python API
-            grp->set_metadata(key, tdbs::common::DataType::string_utf8, s.length(), s.c_str());
-            break;
-        }
-        case LGLSXP: {  // experimental: map R logical (ie TRUE, FALSE, NA) to
-                        // int8
-            Rcpp::stop("Logical vector objects are not supported.");
-            break;  // not reached
-        }
-        default: {
-            Rcpp::stop("No support (yet) for type '%s'.", Rf_type2char(TYPEOF(obj)));
-            break;  // not reached
-        }
-    }
-    group->set(uri, uritypemap[uri_type_int], name, soma_type);
-}
-
-// [[Rcpp::export]]
-void soma_group_remove_member(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name) {
-    if (!group) {
-        throw Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
-    }
-    group->del(name);
+    soma_set_metadata(xp, key, obj);
 }

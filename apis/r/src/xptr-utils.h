@@ -1,4 +1,4 @@
-
+#pragma once
 
 // enum for TileDB XPtr Object type using int32_t payload (for R)
 enum tiledb_xptr_object : int32_t {};

@@ -285,6 +285,65 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// soma_delete_metadata
+void soma_delete_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_delete_metadata(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    soma_delete_metadata(xp, key);
+    return R_NilValue;
+END_RCPP
+}
+// soma_has_metadata
+bool soma_has_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_has_metadata(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    rcpp_result_gen = soma_has_metadata(xp, key);
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_get_metadata
+Rcpp::List soma_get_all_metadata(Rcpp::XPtr<somaobj_wrap_t> xp);
+RcppExport SEXP _tiledbsoma_soma_get_all_metadata(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    rcpp_result_gen = soma_get_all_metadata(xp);
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_get_metadata
+SEXP soma_get_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_get_metadata(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    rcpp_result_gen = soma_get_metadata(xp, key);
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_set_metadata
+void soma_set_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key, SEXP value);
+RcppExport SEXP _tiledbsoma_soma_set_metadata(SEXP xpSEXP, SEXP keySEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
+    soma_set_metadata(xp, key, value);
+    return R_NilValue;
+END_RCPP
+}
 // libtiledbsoma_empty_query_condition
 Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_empty_query_condition(Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_libtiledbsoma_empty_query_condition(SEXP ctxxpSEXP) {
@@ -1224,6 +1283,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 4},
     {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 4},
     {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 7},
+    {"_tiledbsoma_soma_delete_metadata", (DL_FUNC) &_tiledbsoma_soma_delete_metadata, 2},
+    {"_tiledbsoma_soma_has_metadata", (DL_FUNC) &_tiledbsoma_soma_has_metadata, 2},
+    {"_tiledbsoma_soma_get_all_metadata", (DL_FUNC) &_tiledbsoma_soma_get_all_metadata, 1},
+    {"_tiledbsoma_soma_get_metadata", (DL_FUNC) &_tiledbsoma_soma_get_metadata, 2},
+    {"_tiledbsoma_soma_set_metadata", (DL_FUNC) &_tiledbsoma_soma_set_metadata, 3},
     {"_tiledbsoma_libtiledbsoma_empty_query_condition", (DL_FUNC) &_tiledbsoma_libtiledbsoma_empty_query_condition, 1},
     {"_tiledbsoma_libtiledbsoma_query_condition_from_triple", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_from_triple, 5},
     {"_tiledbsoma_libtiledbsoma_query_condition_combine", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_combine, 3},

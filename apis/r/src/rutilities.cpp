@@ -702,82 +702,32 @@ SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim) {
     }
 }
 
-// borrowed with a tip-of-the-hat from tiledb::src/libtiledb.coo
-// helper function to copy int vector
-template <typename T>
-Rcpp::IntegerVector copy_int_vector(const uint32_t v_num, const void* v) {
-    // Strictly speaking a check for under/overflow would be needed here yet
-    // this for metadata annotation (and not data payload) so extreme ranges are
-    // less likely
-    Rcpp::IntegerVector vec(v_num);
-    const T* ivec = static_cast<const T*>(v);
-    size_t n = static_cast<size_t>(v_num);
-    for (size_t i = 0; i < n; i++)
-        vec[i] = static_cast<int32_t>(ivec[i]);
-    return (vec);
-}
-
-SEXP _metadata_to_r(const tdbs::common::DataType v_type, const uint32_t v_num, const void* v) {
-    // This supports a limited set of basic types as the metadata
-    // annotation is not meant to support complete serialization
-    if (v_type == tdbs::common::DataType::int32) {
-        Rcpp::IntegerVector vec(v_num);
-        std::memcpy(vec.begin(), v, v_num * sizeof(int32_t));
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::float64) {
-        Rcpp::NumericVector vec(v_num);
-        std::memcpy(vec.begin(), v, v_num * sizeof(double));
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::float32) {
-        Rcpp::NumericVector vec(v_num);
-        const float* fvec = static_cast<const float*>(v);
-        size_t n = static_cast<size_t>(v_num);
-        for (size_t i = 0; i < n; i++)
-            vec[i] = static_cast<double>(fvec[i]);
-        return (vec);
-    } else if (
-        v_type == tdbs::common::DataType::character || v_type == tdbs::common::DataType::string_ascii ||
-        v_type == tdbs::common::DataType::string_utf8) {
-        std::string s(static_cast<const char*>(v), v_num);
-        return (Rcpp::wrap(s));
-    } else if (v_type == tdbs::common::DataType::int8) {
-        Rcpp::LogicalVector vec(v_num);
-        const int8_t* ivec = static_cast<const int8_t*>(v);
-        size_t n = static_cast<size_t>(v_num);
-        for (size_t i = 0; i < n; i++)
-            vec[i] = static_cast<bool>(ivec[i]);
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::uint8) {
-        // Strictly speaking a check for under/overflow would be needed here
-        // (and below) yet this is for metadata annotation (and not data
-        // payload) so extreme ranges are less likely
-        return copy_int_vector<uint8_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::int16) {
-        return copy_int_vector<int16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::uint16) {
-        return copy_int_vector<uint16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::uint32) {
-        return copy_int_vector<uint32_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::int64) {
-        std::vector<int64_t> iv(v_num);
-        std::memcpy(&(iv[0]), v, v_num * sizeof(int64_t));
-        return Rcpp::toInteger64(iv);
-    } else if (v_type == tdbs::common::DataType::uint64) {
-        return copy_int_vector<uint64_t>(v_num, v);
-    } else {
-        Rcpp::stop("No support yet for TileDB data type %s", tdbs::common::getName(v_type));
-    }
-}
-
-Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap) {
-    std::vector<std::string> namvec;
-    Rcpp::List list;
-    for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
-        std::string key = it->first;
-        namvec.push_back(key);
-        tdbs::MetadataValue val = it->second;
-        list.push_back(_metadata_to_r(std::get<0>(val), std::get<1>(val), std::get<2>(val)));
-    }
-    list.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
-    return list;
-};
+// Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap) {
+//     std::vector<std::string> namvec;
+//     Rcpp::List lst;
+//     for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
+//         std::string key = it->first;
+//         namvec.push_back(key);
+//         tdbs::MetadataValue val = it->second;
+//         auto dtype = std::get<0>(val);
+//         auto len = std::get<1>(val);
+//         const void* ptr = std::get<2>(val);
+//         if (dtype == tdbs::common::DataType::string_utf8 || dtype == tdbs::common::DataType::string_ascii) {
+//             auto str = std::string((char*)ptr, len);
+//             lst.push_back(str);
+//         } else if (dtype == tdbs::common::DataType::int64) {
+//             std::vector<int64_t> v(len);
+//             std::memcpy(&(v[0]), ptr, len * sizeof(int64_t));
+//             lst.push_back(Rcpp::toInteger64(v));
+//         } else if (dtype == tdbs::common::DataType::int32) {
+//             Rcpp::IntegerVector v(len);
+//             std::memcpy(v.begin(), ptr, len * sizeof(int32_t));
+//                 lst.push_back(v);
+//             } else {
+//             auto txt = tdbs::common::getName(dtype);
+//             Rcpp::stop("Currently unsupported type '%s'", txt.data());
+//         }
+//     }
+//     lst.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
+//     return lst;
+// };
