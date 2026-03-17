@@ -34,6 +34,7 @@ class _CachedElement:
     uri: str
     tiledb_type: SOMABaseTileDBType | None = None
     soma: SOMAObject | None = None
+    managed: bool = False
     """The reified object, if it has been opened."""
 
     @classmethod
@@ -91,6 +92,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             if entry.soma is None:
                 from . import _factory  # Delayed binding to resolve circular import.
 
+                entry.managed = True
                 entry.soma = _factory._open_soma_object(
                     uri=entry.uri,
                     mode=self.mode,
@@ -346,6 +348,14 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
 
         self._set_element(key, uri=uri_to_add, relative=use_relative_uri, soma_object=value)
         return self
+
+    def close(self, recursive: bool = True) -> None:
+        if recursive:
+            for [_, value] in self._contents.items():
+                if value.soma is not None and value.managed:
+                    value.soma.close(recursive)
+
+        super().close(recursive)
 
 
 @attrs.define(frozen=True, kw_only=True)
