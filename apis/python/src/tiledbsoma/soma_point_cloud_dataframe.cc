@@ -132,7 +132,7 @@ void load_soma_point_cloud_dataframe(py::module& m) {
 
         .def_static("exists", &SOMAPointCloudDataFrame::exists)
         .def_property_readonly("index_column_names", &SOMAPointCloudDataFrame::index_column_names)
-        .def_property_readonly("count", [](SOMAPointCloudDataFrame& df) {
+        .def("count", [](SOMAPointCloudDataFrame& df) {
             py::gil_scoped_release release;
             return df.count();
         });

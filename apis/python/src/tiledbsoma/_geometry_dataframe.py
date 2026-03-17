@@ -317,7 +317,7 @@ class GeometryDataFrame(SpatialDataFrame):
     def count(self) -> int:
         """Returns the number of rows in the geometry dataframe."""
         self._verify_open_for_reading()
-        return int(self._handle.count)
+        return int(self._handle.count())
 
     def delete_cells(
         self,

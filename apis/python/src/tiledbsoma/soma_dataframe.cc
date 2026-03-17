@@ -220,7 +220,7 @@ void load_soma_dataframe(py::module& m) {
             "values"_a,
             "deduplicate"_a)
 
-        .def_property_readonly(
+        .def(
             "count",
             [](SOMADataFrame& sdf) {
                 py::gil_scoped_release release;

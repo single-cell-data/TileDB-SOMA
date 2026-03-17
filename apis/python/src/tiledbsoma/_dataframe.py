@@ -362,7 +362,7 @@ class DataFrame(SOMAArray):
             Maturing.
         """
         self._verify_open_for_reading()
-        return int(self._handle.count)
+        return int(self._handle.count())
 
     @property
     def _maybe_soma_joinid_shape(self) -> int | None:
