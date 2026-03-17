@@ -1016,6 +1016,17 @@ def _cast_domain_to_cpp_type(
         return None
 
     if index_column_name in schema.names:
+        # Fow older version of pyarrow creating a RecordBatch with timestamp as input fails
+        # The following workaround directly get the int representation of timestamp if the types match
+        # otherwise throw an error
+        if isinstance(slot_domain[0], pa.TimestampScalar) and isinstance(
+            schema.field(index_column_name).type, pa.TimestampType
+        ):
+            if slot_domain[0].type != schema.field(index_column_name).type:
+                raise TypeError(f"Type mismatch between domain and schema for column '{index_column_name}'")
+
+            return slot_domain[0].value, slot_domain[1].value
+
         domain_array = pa.RecordBatch.from_pydict(
             {index_column_name: slot_domain}, pa.schema([schema.field(index_column_name)])
         )
