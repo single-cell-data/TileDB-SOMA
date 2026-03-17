@@ -93,8 +93,11 @@ RcppExport SEXP _tiledbsoma_c_group_open(SEXP uriSEXP, SEXP typeSEXP, SEXP ctxxp
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
-    rcpp_result_gen = Rcpp::wrap(soma_group_get_members(group));
+    Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< std::string& >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_group_open(uri, type, ctxxp, timestamp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -175,7 +178,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type uri_type_int(uri_type_intSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type soma_type(soma_typeSEXP);
-    soma_group_set(group, uri, uri_type_int, name, soma_type);
+    c_group_set(xp, uri, uri_type_int, name, soma_type);
     return R_NilValue;
 END_RCPP
 }
@@ -1118,18 +1121,7 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// soma_object_set_metadata
-void soma_object_set_metadata(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object, const std::string& key, SEXP value);
-RcppExport SEXP _tiledbsoma_soma_object_set_metadata(SEXP soma_objectSEXP, SEXP keySEXP, SEXP valueSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    soma_object_set_metadata(soma_object, key, value);
-    return R_NilValue;
-END_RCPP
-}
+
 // soma_object_close
 void soma_object_close(Rcpp::XPtr<somaobj_wrap_t> soma_object);
 RcppExport SEXP _tiledbsoma_soma_object_close(SEXP soma_objectSEXP) {
@@ -1354,7 +1346,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_experiment_create", (DL_FUNC) &_tiledbsoma_soma_experiment_create, 3},
     {"_tiledbsoma_soma_measurement_create", (DL_FUNC) &_tiledbsoma_soma_measurement_create, 3},
     {"_tiledbsoma_soma_object_get_metadata", (DL_FUNC) &_tiledbsoma_soma_object_get_metadata, 1},
-    {"_tiledbsoma_soma_object_set_metadata", (DL_FUNC) &_tiledbsoma_soma_object_set_metadata, 3},
     {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 1},
     {"_tiledbsoma_soma_object_is_open", (DL_FUNC) &_tiledbsoma_soma_object_is_open, 1},
     {"_tiledbsoma_soma_object_open_mode", (DL_FUNC) &_tiledbsoma_soma_object_open_mode, 1},

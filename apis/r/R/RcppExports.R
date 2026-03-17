@@ -21,10 +21,6 @@ soma_group_get_members <- function(group) {
     .Call(`_tiledbsoma_soma_group_get_members`, group)
 }
 
-soma_group_set <- function(group, uri, uri_type_int, name, soma_type) {
-    invisible(.Call(`_tiledbsoma_soma_group_set`, group, uri, uri_type_int, name, soma_type))
-}
-
 c_group_has_member <- function(xp, key) {
     .Call(`_tiledbsoma_c_group_has_member`, xp, key)
 }
@@ -444,10 +440,6 @@ soma_measurement_create <- function(uri, context, timestamp = NULL) {
 
 soma_object_get_metadata <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
-}
-
-soma_object_set_metadata <- function(soma_object, key, value) {
-    invisible(.Call(`_tiledbsoma_soma_object_set_metadata`, soma_object, key, value))
 }
 
 soma_object_close <- function(soma_object) {
