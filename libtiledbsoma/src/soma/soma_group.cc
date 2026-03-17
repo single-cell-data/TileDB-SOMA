@@ -173,6 +173,7 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
                        std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
+    mutated_members_.clear();
 }
 
 void SOMAGroup::close([[maybe_unused]] bool recursive) {
