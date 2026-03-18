@@ -181,7 +181,8 @@ Rcpp::List soma_get_all_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp) {
 SEXP soma_get_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp, const std::string& key) {
     auto result = objxp->ptr()->get_metadata(key);
     if (!result.has_value()) {
-        Rcpp::stop("No value for '%s'", key.c_str());
+        // Rcpp::stop("No value for '%s'", key.c_str());
+        return R_NilValue;
     }
 
     return _metadata_to_sexp(result.value());

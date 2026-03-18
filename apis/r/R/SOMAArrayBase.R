@@ -31,8 +31,7 @@ SOMAArrayBase <- R6::R6Class(
       )
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
-      # private$.open_handle(open_mode, self$tiledb_timestamp)
-      private$.set_handle(open_soma_handle(self$uri, open_mode, private$.context$handle, self$tiledb_timestamp))
+      private$.open_handle(open_mode, self$tiledb_timestamp)
       return(self)
     },
 
@@ -40,14 +39,14 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return Invisibly returns \code{self}.
     #'
-    close = function() {
+    close = function(recursive = TRUE) {
       soma_debug(sprintf(
         "[SOMAObject$close] Closing %s '%s'",
         self$class(),
         self$uri
       ))
       if (!is.null(private$.handle)) {
-        soma_object_close(private$.handle)
+        soma_object_close(private$.handle, recursive)
       }
       return(invisible(self))
     },
@@ -248,16 +247,6 @@ SOMAArrayBase <- R6::R6Class(
         cat("  attributes:", string_collapse(self$attrnames()), "\n")
       }
       return(invisible(self))
-    }
-  ),
-  active = list(
-    #' @field handle External pointer to the C++ interface
-    #'
-    handle = function(value) {
-      if (!missing(x = value)) {
-        stop("Field `handle` is read-only", call. = FALSE)
-      }
-      return(private$.handle)
     }
   ),
   private = list(

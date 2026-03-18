@@ -49,8 +49,8 @@ struct SOMAWrapper {
 
     template <class T = tdbs::SOMAObject>
     requires std::derived_from<T, tdbs::SOMAObject>
-    T* ptr() {
-        auto result = dynamic_cast<T*>(objptr_.get());
+    std::shared_ptr<T> ptr() {
+        auto result = std::dynamic_pointer_cast<T>(objptr_);
 
         if (objptr_.get() == nullptr) {
             throw std::runtime_error("Unexpected SOMA handle null pointer");

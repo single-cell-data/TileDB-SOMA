@@ -77,7 +77,7 @@ bool c_group_has_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key) {
 }
 
 // [[Rcpp::export]]
-Rcpp::XPtr<somaobj_wrap_t> c_collection_get_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key) {
+Rcpp::XPtr<somaobj_wrap_t> soma_group_get_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key) {
     check_xptr_tag<somaobj_wrap_t>(xp);  // throws if mismatched
 
     somaobj_wrap_t* somaobj_p = new SOMAWrapper(xp->ptr<tdbs::SOMACollectionBase>()->get(key));
@@ -87,7 +87,7 @@ Rcpp::XPtr<somaobj_wrap_t> c_collection_get_member(Rcpp::XPtr<somaobj_wrap_t> xp
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_group_members(Rcpp::XPtr<somaobj_wrap_t> xp) {
+Rcpp::List soma_group_get_members(Rcpp::XPtr<somaobj_wrap_t> xp) {
     check_xptr_tag<somaobj_wrap_t>(xp);  // throws if mismatched
     // unique pointer to SOMAGroup from external pointer wrapper
     // 'members map': a map from string to pair of strings
@@ -125,18 +125,22 @@ void c_group_close(Rcpp::XPtr<somaobj_wrap_t> xp) {
 std::map<int, URIType> uritypemap = {{0, URIType::automatic}, {1, URIType::absolute}, {2, URIType::relative}};
 
 // [[Rcpp::export]]
-void c_group_set(
+void soma_group_set(
     Rcpp::XPtr<somaobj_wrap_t> xp,
     const std::string& uri,
     int uri_type_int,  // "automatic", "absolute", "relative"
     const std::string& name,
-    const std::string& soma_type) {
+    const std::string& soma_type,
+    Rcpp::XPtr<somaobj_wrap_t> member,
+    bool managed) {
     check_xptr_tag<somaobj_wrap_t>(xp);  // throws if mismatched
-    xp->ptr<tdbs::SOMACollectionBase>()->set(uri, uritypemap[uri_type_int], name, soma_type);
+    check_xptr_tag<somaobj_wrap_t>(member);
+
+    xp->ptr<tdbs::SOMACollectionBase>()->set(uri, uritypemap[uri_type_int], name, soma_type, member->ptr(), managed);
 }
 
 // [[Rcpp::export]]
-void c_group_remove_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& name) {
+void soma_group_remove_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& name) {
     check_xptr_tag<somaobj_wrap_t>(xp);  // throws if mismatched
     xp->ptr<tdbs::SOMACollectionBase>()->del(name);
 }

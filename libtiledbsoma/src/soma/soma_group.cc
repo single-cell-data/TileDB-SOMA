@@ -24,6 +24,8 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include <filesystem>
+
 namespace tiledbsoma {
 using namespace common::type;
 
@@ -205,12 +207,17 @@ bool SOMAGroup::has(const std::string& name) {
     try {
         group_->member(name);
     } catch (const tiledb::TileDBError& e) {
-        return members_map_.contains(name) || false;
+        return members_map_.contains(name);
     }
     return true;
 }
 
-void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type) {
+void SOMAGroup::set(
+    const std::string& uri,
+    URIType uri_type,
+    const std::string& name,
+    const std::string& soma_type,
+    const std::string& absolute_uri) {
     if (mutated_members_.contains(name) || members_map_.contains(name)) {
         throw std::range_error(fmt::format("replacing key '{}' is unsupported", name));
     }
@@ -226,7 +233,7 @@ void SOMAGroup::set(const std::string& uri, URIType uri_type, const std::string&
         group_->add_member(uri, relative, name, tiledb_type == ObjectType::array ? TILEDB_ARRAY : TILEDB_GROUP);
     }
 
-    members_map_[name] = SOMAGroupEntry(uri, soma_type);
+    members_map_[name] = SOMAGroupEntry(absolute_uri, soma_type);
     mutated_members_.emplace(name);
 }
 

@@ -137,8 +137,8 @@ TEST_CASE("SOMAGroup: basic") {
     auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx->tiledb_ctx());
 
     auto soma_group = SOMAGroup::open(OpenMode::soma_write, uri_main_group, ctx, "metadata", TimestampRange(0, 1));
-    soma_group->set(uri_sub_group, URIType::absolute, "subgroup", "SOMAGroup");
-    soma_group->set(uri_sub_array, URIType::absolute, "subarray", "SOMAArray");
+    soma_group->set(uri_sub_group, URIType::absolute, "subgroup", "SOMAGroup", uri_sub_group);
+    soma_group->set(uri_sub_array, URIType::absolute, "subarray", "SOMAArray", uri_sub_array);
     soma_group->close();
 
     std::map<std::string, SOMAGroupEntry> expected_map{

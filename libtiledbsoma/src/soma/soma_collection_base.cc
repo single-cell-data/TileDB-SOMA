@@ -107,22 +107,13 @@ std::shared_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
 }
 
 void SOMACollectionBase::set(
-    const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type) {
-    SOMAGroup::set(uri, uri_type, name, soma_type);
-
-    children_[name] = std::shared_ptr<SOMAObject>(nullptr);
-    flags_[name] = std::make_shared<std::once_flag>();
-    managed_children_.emplace(name);
-}
-
-void SOMACollectionBase::set(
     const std::string& uri,
     URIType uri_type,
     const std::string& name,
     const std::string& soma_type,
     std::shared_ptr<SOMAObject> member,
     bool managed) {
-    SOMAGroup::set(uri, uri_type, name, soma_type);
+    SOMAGroup::set(uri, uri_type, name, soma_type, member->uri());
 
     children_[name] = member;
     flags_[name] = std::make_shared<std::once_flag>();
@@ -154,8 +145,7 @@ std::shared_ptr<SOMACollection> SOMACollectionBase::add_new_collection(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMACollection> member = SOMACollection::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup", member, true);
     return member;
 }
 
@@ -175,8 +165,7 @@ std::shared_ptr<SOMAExperiment> SOMACollectionBase::add_new_experiment(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup", member, true);
     return member;
 }
 
@@ -196,8 +185,7 @@ std::shared_ptr<SOMAMeasurement> SOMACollectionBase::add_new_measurement(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup", member, true);
     return member;
 }
 
@@ -220,8 +208,7 @@ std::shared_ptr<SOMADataFrame> SOMACollectionBase::add_new_dataframe(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray", member, true);
     return member;
 }
 
@@ -244,8 +231,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollectionBase::add_new_dense_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADenseNDArray> member = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray", member, true);
     return member;
 }
 
@@ -268,8 +254,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollectionBase::add_new_sparse_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMASparseNDArray> member = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray", member, true);
     return member;
 }
 

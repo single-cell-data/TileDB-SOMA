@@ -17,24 +17,20 @@ writeArrayFromArrow <- function(soma_array, naap, nasp, arraytype = "") {
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, soma_array, naap, nasp, arraytype))
 }
 
-soma_group_get_members <- function(group) {
-    .Call(`_tiledbsoma_soma_group_get_members`, group)
-}
-
 c_group_has_member <- function(xp, key) {
     .Call(`_tiledbsoma_c_group_has_member`, xp, key)
 }
 
-c_collection_get_member <- function(xp, key) {
-    .Call(`_tiledbsoma_c_collection_get_member`, xp, key)
+soma_group_get_member <- function(xp, key) {
+    .Call(`_tiledbsoma_soma_group_get_member`, xp, key)
 }
 
 c_group_member_count <- function(xp) {
     .Call(`_tiledbsoma_c_group_member_count`, xp)
 }
 
-c_group_members <- function(xp) {
-    .Call(`_tiledbsoma_c_group_members`, xp)
+soma_group_get_members <- function(xp) {
+    .Call(`_tiledbsoma_soma_group_get_members`, xp)
 }
 
 c_group_get_metadata <- function(xp) {
@@ -45,12 +41,12 @@ c_group_close <- function(xp) {
     invisible(.Call(`_tiledbsoma_c_group_close`, xp))
 }
 
-c_group_set <- function(xp, uri, uri_type_int, name, soma_type) {
-    invisible(.Call(`_tiledbsoma_c_group_set`, xp, uri, uri_type_int, name, soma_type))
+soma_group_set <- function(xp, uri, uri_type_int, name, soma_type, child, managed) {
+    invisible(.Call(`_tiledbsoma_soma_group_set`, xp, uri, uri_type_int, name, soma_type, child, managed))
 }
 
-c_group_remove_member <- function(xp, name) {
-    invisible(.Call(`_tiledbsoma_c_group_remove_member`, xp, name))
+soma_group_remove_member <- function(xp, name) {
+    invisible(.Call(`_tiledbsoma_soma_group_remove_member`, xp, name))
 }
 
 c_group_put_metadata <- function(xp, key, obj) {
@@ -442,8 +438,8 @@ soma_object_get_metadata <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
 }
 
-soma_object_close <- function(soma_object) {
-    invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object))
+soma_object_close <- function(soma_object, recursive) {
+    invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object, recursive))
 }
 
 soma_object_is_open <- function(soma_object) {

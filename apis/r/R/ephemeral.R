@@ -73,7 +73,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #'
     #' @return Invisibly returns \code{NULL}.
     #'
-    close = function() {
+    close = function(recursive = TRUE) {
       tryCatch(
         expr = private$.ephemeral_error("custom", "and cannot be closed"),
         error = function(e) {
@@ -375,7 +375,6 @@ EphemeralCollectionBase <- R6::R6Class(
     .check_open = \() invisible(NULL),
 
     # Override SOMACollectionBase private fields
-    .member_cache = NULL,
     .update_member_cache = \() invisible(self),
 
     # Ephemeral fields

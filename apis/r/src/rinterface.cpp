@@ -191,7 +191,7 @@ SEXP soma_array_read(
     const std::string& loglevel = "auto",
     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
     return soma_array_read_impl(
-        soma_array->ptr<tiledbsoma::SOMAArray>(),
+        soma_array->ptr<tiledbsoma::SOMAArray>().get(),
         colnames,
         qc,
         dim_points,

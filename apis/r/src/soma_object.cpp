@@ -19,9 +19,9 @@ Rcpp::List soma_object_get_metadata(Rcpp::XPtr<somaobj_wrap_t> soma_object) {
 }
 
 // [[Rcpp::export]]
-void soma_object_close(Rcpp::XPtr<somaobj_wrap_t> soma_object) {
+void soma_object_close(Rcpp::XPtr<somaobj_wrap_t> soma_object, bool recursive) {
     if (soma_object) {
-        soma_object->ptr()->close();
+        soma_object->ptr()->close(recursive);
     }
 }
 

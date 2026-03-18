@@ -86,7 +86,6 @@ SOMAObject <- R6::R6Class(
 
       if (!is.null(tiledb_handle)) {
         private$.set_handle(tiledb_handle)
-        private$.mode <- soma_object_open_mode(self$handle)
       }
 
       soma_debug(sprintf(
@@ -153,7 +152,7 @@ SOMAObject <- R6::R6Class(
             length(tiledb_timestamp) == 1L &&
             !is.na(tiledb_timestamp))
       )
-      self$close()
+      self$close(TRUE)
       private$.tiledb_timestamp <- tiledb_timestamp
       self$open(mode)
       return(invisible(self))
@@ -199,7 +198,7 @@ SOMAObject <- R6::R6Class(
       ))
 
       if (is.null(key)) {
-        return(soma_get_metadata(private$.handle))
+        return(soma_get_all_metadata(private$.handle))
       }
       val <- soma_get_metadata(private$.handle, key)
       if (is.list(val)) {

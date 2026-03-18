@@ -205,7 +205,12 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param soma_type the soma_type of the member
      */
-    virtual void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type);
+    virtual void set(
+        const std::string& uri,
+        URIType uri_type,
+        const std::string& name,
+        const std::string& soma_type,
+        const std::string& absolute_uri);
 
     /**
      * Get the number of members in the SOMAGroup.

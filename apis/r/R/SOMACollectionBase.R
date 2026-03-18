@@ -41,30 +41,6 @@ SOMACollectionBase <- R6::R6Class(
         self$tiledb_timestamp %||% "now"
       ))
       private$.create()
-      private$.set_handle(c_group_create(
-        uri = self$uri,
-        type = self$class(),
-        ctxxp = private$.context$handle,
-        timestamp = self$.tiledb_timestamp_range
-      ))
-
-      # Root SOMA objects include a `dataset_type` entry to allow the
-      # TileDB Cloud UI to detect that they are SOMA datasets.
-      metadata <- switch(
-        self$class(),
-        SOMAExperiment = list(dataset_type = "soma"),
-        list()
-      )
-
-      # Key constraint on the TileDB Group API:
-      # * tiledb_group_create is synchronous: new items appear on disk once that
-      #   function has returned.
-      # * When we have an open handle for write and we do tiledb_group_put_metadata,
-      #   metadata items do _not_ appear on disk until tiledb_group_close has been
-      #   called.
-      # To avoid confusion, we pay the price of a reopen here.
-      #
-      # TODO: this feels like it could be resolved through improved caching.
       self$open("WRITE")
       return(self)
     },
@@ -87,57 +63,6 @@ SOMACollectionBase <- R6::R6Class(
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
       private$.open_handle(open_mode, self$tiledb_timestamp)
-      private$.metadata_cache <- soma_object_get_metadata(private$.handle)
-      private$.member_cache <- soma_group_get_members(private$.handle) %||%
-        vector(mode = "list", length = 0L)
-      envs <- unique(vapply(
-        X = unique(sys.parents()),
-        FUN = function(n) environmentName(environment(sys.function(n))),
-        FUN.VALUE = character(1L)
-      ))
-      if (sys.parent()) {
-        if (
-          inherits(
-            environment(sys.function(sys.parent()))$self,
-            what = "SOMAObject"
-          )
-        ) {
-          envs <- union(envs, "tiledbsoma")
-        }
-      }
-      if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(private$.internal_use_only("open", "collection")),
-            collapse = "\n"
-          ),
-          call. = FALSE
-        )
-      }
-
-      # Set the mode of the collection
-      private$.mode <- match.arg(mode)
-
-      # Set the group timestamp
-      # In READ mode, if the opener supplied no timestamp then we default to the time of
-      # opening, providing a temporal snapshot of all group members.
-      private$.group_open_timestamp <- if (
-        self$mode() == "READ" && is.null(self$tiledbtimestamp)
-      ) {
-        Sys.time()
-      } else {
-        self$tiledb_timestamp
-      }
-
-      private$.set_handle(open_soma_handle(self$uri, self$mode(), private$.context$handle, self$.tiledb_timestamp_range))
-
-      # private$.set_handle(c_group_open(
-      #   uri = self$uri,
-      #   type = self$mode(),
-      #   ctxxp = private$.context$handle,
-      #   timestamp = self$.tiledb_timestamp_range
-      # ))
-
       return(self)
     },
 
@@ -145,21 +70,14 @@ SOMACollectionBase <- R6::R6Class(
     #'
     #' @return Invisibly returns \code{self}.
     #'
-    close = function() {
-      if (self$is_open()) {
-        soma_debug(sprintf("Closing %s '%s'", self$class(), self$uri))
-        c_group_close(super$handle)
-        private$.mode <- NULL
-        private$.set_handle(NULL)
-        private$.group_open_timestamp <- NULL
-      }
+    close = function(recursive = TRUE) {
       soma_debug(sprintf(
         "[SOMAObject$close] Closing %s '%s'",
         self$class(),
         self$uri
       ))
-      if (!is.null(private$.handle)) {
-        soma_object_close(private$.handle)
+      if (!is.null(super$handle)) {
+        soma_object_close(super$handle, recursive)
       }
       return(invisible(self))
     },
@@ -195,18 +113,6 @@ SOMACollectionBase <- R6::R6Class(
 
       private$.check_open_for_write()
 
-      # Carrara data model does not support set()
-      if (self$context$is_tiledbv3(self$uri)) {
-        stop(errorCondition(
-          message = paste(
-            "TileDB Carrara data model does not support the set operation",
-            "on this object."
-          ),
-          class = "unsupportedOperationError",
-          call = NULL
-        ))
-      }
-
       # Default name to URI basename
       name <- name %||% basename(object$uri)
 
@@ -238,7 +144,7 @@ SOMACollectionBase <- R6::R6Class(
         relative
       ))
 
-      c_group_set(
+      soma_group_set(
         xp = super$handle,
         uri = uri,
         uri_type_int = 0, # -> use 'automatic' as opposed to 'relative' or 'absolute'
@@ -247,7 +153,9 @@ SOMACollectionBase <- R6::R6Class(
           test = inherits(object, "SOMACollectionBase"),
           yes = "SOMAGroup",
           no = "SOMAArray"
-        )
+        ),
+        object$handle,
+        TRUE
       )
 
       return(invisible(self))
@@ -269,21 +177,35 @@ SOMACollectionBase <- R6::R6Class(
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
       }
 
-      handle <- c_collection_get_member(super$handle, name)
+      handle <- soma_group_get_member(super$handle, name)
 
       soma_debug(sprintf(
         "[SOMACollectionBase$get] open check, mode %s",
         self$mode()
       ))
 
-      return(SOMAObjectWrap(
+      obj <- SOMAObjectWrap(
         self$members[[name]]$uri,
         tiledb_handle = handle,
         platform_config = self$platform_config,
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp,
         tiledbsoma_ctx = private$.tiledbsoma_ctx
+      )
+
+      soma_debug(sprintf(
+        "[SOMACollectionBase$get] open check, mode %s",
+        self$mode()
       ))
+      if (!obj$is_open()) {
+        switch(
+          EXPR = (mode <- self$mode()),
+          READ = obj$open(mode),
+          WRITE = obj$reopen(mode)
+        )
+      }
+
+      return(obj)
     },
 
     #' @description Remove member. (lifecycle: maturing)
@@ -313,7 +235,7 @@ SOMACollectionBase <- R6::R6Class(
       }
       private$.check_open()
 
-      c_group_remove_member(super$handle, name)
+      soma_group_remove_member(super$handle, name)
 
       return(invisible(self))
     },
@@ -506,7 +428,7 @@ SOMACollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error("members")
       }
-      return(c_group_members(super$handle))
+      return(soma_group_get_members(super$handle))
     }
   ),
   private = list(
@@ -541,65 +463,12 @@ SOMACollectionBase <- R6::R6Class(
           )
         }
         # Carrara: children are auto-registered, just update cache
-      } else {
-        # v2: register with TileDB group
-        self$set(object, name)
       }
+
+      # v2: register with TileDB group
+      self$set(object, name)
+      
       return(invisible(self))
-    },
-
-    # Instantiate a soma member object.
-    # Responsible for calling the appropriate R6 class constructor.
-    construct_member = function(uri, type) {
-      stopifnot(is_scalar_character(uri), is_scalar_character(type))
-      soma_debug(sprintf(
-        "[SOMACollectionBase$construct_member] entered, uri %s type %s",
-        uri,
-        type
-      ))
-
-      array <- switch(
-        EXPR = type,
-        ARRAY = ,
-        SOMAArray = TRUE,
-        GROUP = ,
-        SOMAGroup = FALSE,
-        stop("Unknown member SOMA type: ", type, call. = FALSE)
-      )
-      metadata <- get_all_metadata(
-        uri,
-        is_array = array,
-        ctxxp = private$.context$handle
-      )
-      soma_type <- metadata$soma_object_type
-      if (is.null(soma_type)) {
-        stop(
-          "SOMA object type metadata is missing; cannot construct",
-          call. = FALSE
-        )
-      }
-      soma_debug(sprintf(
-        "[SOMACollectionBase$construct_member] Instantiating %s object at: '%s'",
-        soma_type,
-        uri
-      ))
-
-      fxn <- tryCatch(
-        base::get(
-          sprintf("%sOpen", soma_type),
-          envir = getNamespace("tiledbsoma"),
-          mode = "function"
-        ),
-        error = \() stop("Unknown member SOMA type: ", soma_type, call. = FALSE)
-      )
-
-      return(fxn(
-        uri,
-        mode = self$mode(),
-        platform_config = self$platform_config,
-        context = self$context,
-        tiledb_timestamp = self$tiledb_timestamp
-      ))
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings
