@@ -1,9 +1,13 @@
 import os
 
 import pytest
+from typeguard import install_import_hook
 
-import tiledbsoma
-import tiledb.cloud
+# Must be called before tiledbsoma imports
+install_import_hook("tiledbsoma")
+
+import tiledbsoma  # noqa: E402
+import tiledb.cloud  # noqa: E402
 
 
 @pytest.fixture

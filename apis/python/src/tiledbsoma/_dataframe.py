@@ -374,7 +374,7 @@ class DataFrame(SOMAArray):
         Lifecycle:
             Experimental.
         """
-        return cast("Union[int, None]", self._handle.maybe_soma_joinid_shape)
+        return cast("Union[int, None]", self._handle.maybe_soma_joinid_shape)  # noqa: UP007
 
     @property
     def _maybe_soma_joinid_maxshape(self) -> int | None:
@@ -385,7 +385,7 @@ class DataFrame(SOMAArray):
         Lifecycle:
             Experimental.
         """
-        return cast("Union[int, None]", self._handle.maybe_soma_joinid_maxshape)
+        return cast("Union[int, None]", self._handle.maybe_soma_joinid_maxshape)  # noqa: UP007
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:

@@ -180,7 +180,7 @@ class AffineTransform(CoordinateTransform):
         # Create and validate the augmented matrix.
         self._matrix: npt.NDArray[np.float64] = np.array(matrix, dtype=np.float64)
         if self._matrix.shape == (rank + 1, rank + 1):
-            if not (self._matrix[-1, -1] == 1.0 and np.array_equal(self._matrix[-1, :-1], np.zeros((rank,)))):
+            if not (self._matrix[-1, -1] == 1 and np.array_equal(self._matrix[-1, :-1], np.zeros((rank,)))):
                 raise ValueError(
                     f"Input matrix {self._matrix} has augmented matrix shape, but is not a valid augmented matrix."
                 )

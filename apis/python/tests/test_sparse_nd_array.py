@@ -23,8 +23,7 @@ from tiledbsoma import SOMAContext, _factory
 from tiledbsoma._core_options import BatchSize
 from tiledbsoma.options import SOMATileDBContext
 
-from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
-from ._util import raises_no_typeguard
+from ._util import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED, raises_no_typeguard
 
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
 
