@@ -29,7 +29,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_object(py::module& m) {
-    py::class_<SOMAObject>(m, "SOMAObject")
+    py::class_<SOMAObject, py::smart_holder>(m, "SOMAObject")
 
         .def_static(
             "open",
@@ -38,7 +38,7 @@ void load_soma_object(py::module& m) {
                std::shared_ptr<SOMAContext> context,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp,
                std::optional<std::string> clib_type) -> py::object {
-                auto soma_obj = ([&]() {
+                std::shared_ptr<SOMAObject> soma_obj = ([&]() {
                     py::gil_scoped_release release;
                     return SOMAObject::open(uri, mode, context, timestamp, clib_type);
                 })();
@@ -65,25 +65,25 @@ void load_soma_object(py::module& m) {
                     });
 
                 if (soma_obj_type == "somadataframe")
-                    return py::cast(dynamic_cast<SOMADataFrame&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMADataFrame>(soma_obj));
                 else if (soma_obj_type == "somapointclouddataframe")
-                    return py::cast(dynamic_cast<SOMAPointCloudDataFrame&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMAPointCloudDataFrame>(soma_obj));
                 else if (soma_obj_type == "somageometrydataframe")
-                    return py::cast(dynamic_cast<SOMAGeometryDataFrame&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMAGeometryDataFrame>(soma_obj));
                 else if (soma_obj_type == "somasparsendarray")
-                    return py::cast(dynamic_cast<SOMASparseNDArray&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMASparseNDArray>(soma_obj));
                 else if (soma_obj_type == "somadensendarray")
-                    return py::cast(dynamic_cast<SOMADenseNDArray&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMADenseNDArray>(soma_obj));
                 else if (soma_obj_type == "somacollection")
-                    return py::cast(dynamic_cast<SOMACollection&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMACollection>(soma_obj));
                 else if (soma_obj_type == "somaexperiment")
-                    return py::cast(dynamic_cast<SOMAExperiment&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMAExperiment>(soma_obj));
                 else if (soma_obj_type == "somameasurement")
-                    return py::cast(dynamic_cast<SOMAMeasurement&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMAMeasurement>(soma_obj));
                 else if (soma_obj_type == "somascene")
-                    return py::cast(dynamic_cast<SOMAScene&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMAScene>(soma_obj));
                 else if (soma_obj_type == "somamultiscaleimage")
-                    return py::cast(dynamic_cast<SOMAMultiscaleImage&>(*soma_obj));
+                    return py::cast(dynamic_pointer_cast<SOMAMultiscaleImage>(soma_obj));
 
                 assert(
                     false &&
@@ -101,6 +101,13 @@ void load_soma_object(py::module& m) {
             py::kw_only(),
             "timestamp"_a = py::none(),
             "clib_type"_a = py::none())
+        .def(
+            "__repr__",
+            [](const SOMAObject& object) {
+                std::stringstream stream;
+                stream << object;
+                return stream.str();
+            })
         .def_property_readonly("type", &SOMAObject::type);
 };
 }  // namespace libtiledbsomacpp

@@ -111,4 +111,8 @@ common::arrow::managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const
     return this->arrow_schema(true);
 }
 
+std::string SOMASparseNDArray::classname() const {
+    return "SparseNDArray";
+}
+
 }  // namespace tiledbsoma

@@ -62,10 +62,11 @@ SOMACollectionBase <- R6::R6Class(
       )
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
-      private$.open_handle(open_mode, self$tiledb_timestamp)
-      private$.metadata_cache <- soma_object_get_metadata(private$.handle)
-      private$.member_cache <- soma_group_get_members(private$.handle) %||%
-        vector(mode = "list", length = 0L)
+      if (is.null(super$handle)) {
+        private$.open_handle(open_mode, self$tiledb_timestamp)
+      } else {
+        soma_object_open(super$handle, open_mode, self$tiledb_timestamp)
+      }
       return(self)
     },
 
@@ -73,19 +74,14 @@ SOMACollectionBase <- R6::R6Class(
     #'
     #' @return Invisibly returns \code{self}.
     #'
-    close = function() {
-      for (member in private$.member_cache) {
-        if (!is.null(member$object)) {
-          member$object$close()
-        }
-      }
+    close = function(recursive = TRUE) {
       soma_debug(sprintf(
         "[SOMAObject$close] Closing %s '%s'",
         self$class(),
         self$uri
       ))
-      if (!is.null(private$.handle)) {
-        soma_object_close(private$.handle)
+      if (!is.null(super$handle)) {
+        soma_object_close(super$handle, recursive)
       }
       return(invisible(self))
     },
@@ -121,18 +117,6 @@ SOMACollectionBase <- R6::R6Class(
 
       private$.check_open_for_write()
 
-      # Carrara data model does not support set()
-      if (self$context$is_tiledbv3(self$uri)) {
-        stop(errorCondition(
-          message = paste(
-            "TileDB Carrara data model does not support the set operation",
-            "on this object."
-          ),
-          class = "unsupportedOperationError",
-          call = NULL
-        ))
-      }
-
       # Default name to URI basename
       name <- name %||% basename(object$uri)
 
@@ -165,7 +149,7 @@ SOMACollectionBase <- R6::R6Class(
       ))
 
       soma_group_set(
-        group = private$.handle,
+        xp = super$handle,
         uri = uri,
         uri_type_int = 0, # -> use 'automatic' as opposed to 'relative' or 'absolute'
         name = name,
@@ -173,10 +157,11 @@ SOMACollectionBase <- R6::R6Class(
           test = inherits(object, "SOMACollectionBase"),
           yes = "SOMAGroup",
           no = "SOMAArray"
-        )
+        ),
+        object$handle,
+        TRUE
       )
 
-      private$.add_cache_member(name, object)
       return(invisible(self))
     },
 
@@ -192,26 +177,32 @@ SOMACollectionBase <- R6::R6Class(
       }
       private$.check_open()
 
-      if (is.null(member <- self$members[[name]])) {
+      if (!c_group_has_member(super$handle, name)) {
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
       }
 
-      obj <- if (is.null(member$object)) {
-        soma_debug(sprintf(
-          "[SOMACollectionBase$get] construct member %s type %s",
-          member$uri,
-          member$type
-        ))
-        private$construct_member(member$uri, member$type)
-      } else {
-        member$object
-      }
+      handle <- soma_group_get_member(super$handle, name)
+
+      soma_debug(sprintf(
+        "[SOMACollectionBase$get] open check, mode %s",
+        self$mode()
+      ))
+
+      obj <- SOMAObjectWrap(
+        self$members[[name]]$uri,
+        tiledb_handle = handle,
+        platform_config = self$platform_config,
+        context = self$context,
+        tiledb_timestamp = self$tiledb_timestamp,
+        tiledbsoma_ctx = private$.tiledbsoma_ctx
+      )
 
       soma_debug(sprintf(
         "[SOMACollectionBase$get] open check, mode %s",
         self$mode()
       ))
       if (!obj$is_open()) {
+        print("OBJECT closed")
         switch(
           EXPR = (mode <- self$mode()),
           READ = obj$open(mode),
@@ -219,7 +210,6 @@ SOMACollectionBase <- R6::R6Class(
         )
       }
 
-      private$.add_cache_member(name, obj)
       return(obj)
     },
 
@@ -250,12 +240,7 @@ SOMACollectionBase <- R6::R6Class(
       }
       private$.check_open()
 
-      soma_group_remove_member(private$.handle, name)
-
-      # Drop member if cache has been initialized
-      if (length(self$members)) {
-        private$.member_cache[[name]] <- NULL
-      }
+      soma_group_remove_member(super$handle, name)
 
       return(invisible(self))
     },
@@ -448,42 +433,13 @@ SOMACollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error("members")
       }
-      return(private$.member_cache %||% NULL)
+      return(soma_group_get_members(super$handle))
     }
   ),
   private = list(
-    # @field .member_cache ...
+    # @field .group_open_timestamp ...
     #
-    .member_cache = NULL,
-
-    # @description Explicitly add a member to the cache in order to preserve
-    # original URIs; otherwise, TileDB-Cloud creation URIs are retrieved which
-    # prevent appending children
-    #
-    # @param name Name of object
-    # @param object A SOMA object
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .add_cache_member = function(name, object) {
-      stopifnot(
-        is.character(name) && length(name) == 1L && nzchar(name),
-        inherits(object, "SOMAObject")
-      )
-      # TODO: Remove this - should only be adding a cache member when the cache has been initialized.
-      if (is.null(private$.member_cache)) {
-        private$.member_cache <- list()
-      }
-
-      private$.member_cache[[name]] <- list(
-        # TODO: Get the type from the object without re-opening
-        type = get_tiledb_object_type(object$uri, private$.context$handle),
-        uri = object$uri,
-        name = name,
-        object = object
-      )
-      return(invisible(self))
-    },
+    .group_open_timestamp = NULL,
 
     # @description Internal method to add a newly-created element to a
     # collection. For Carrara (v3) URIs, children are auto-registered when
@@ -512,66 +468,12 @@ SOMACollectionBase <- R6::R6Class(
           )
         }
         # Carrara: children are auto-registered, just update cache
-        private$.add_cache_member(name, object)
-      } else {
-        # v2: register with TileDB group
-        self$set(object, name)
       }
+
+      # v2: register with TileDB group
+      self$set(object, name)
+      
       return(invisible(self))
-    },
-
-    # Instantiate a soma member object.
-    # Responsible for calling the appropriate R6 class constructor.
-    construct_member = function(uri, type) {
-      stopifnot(is_scalar_character(uri), is_scalar_character(type))
-      soma_debug(sprintf(
-        "[SOMACollectionBase$construct_member] entered, uri %s type %s",
-        uri,
-        type
-      ))
-
-      array <- switch(
-        EXPR = type,
-        ARRAY = ,
-        SOMAArray = TRUE,
-        GROUP = ,
-        SOMAGroup = FALSE,
-        stop("Unknown member SOMA type: ", type, call. = FALSE)
-      )
-      metadata <- get_all_metadata(
-        uri,
-        is_array = array,
-        ctxxp = private$.context$handle
-      )
-      soma_type <- metadata$soma_object_type
-      if (is.null(soma_type)) {
-        stop(
-          "SOMA object type metadata is missing; cannot construct",
-          call. = FALSE
-        )
-      }
-      soma_debug(sprintf(
-        "[SOMACollectionBase$construct_member] Instantiating %s object at: '%s'",
-        soma_type,
-        uri
-      ))
-
-      fxn <- tryCatch(
-        base::get(
-          sprintf("%sOpen", soma_type),
-          envir = getNamespace("tiledbsoma"),
-          mode = "function"
-        ),
-        error = \() stop("Unknown member SOMA type: ", soma_type, call. = FALSE)
-      )
-
-      return(fxn(
-        uri,
-        mode = self$mode(),
-        platform_config = self$platform_config,
-        context = self$context,
-        tiledb_timestamp = self$tiledb_timestamp
-      ))
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings

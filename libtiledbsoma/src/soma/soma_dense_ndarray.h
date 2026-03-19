@@ -111,8 +111,8 @@ class SOMADenseNDArray : public SOMAArray {
         : SOMAArray(mode, uri, ctx, timestamp, "SOMADenseNDArray") {
     }
 
-    SOMADenseNDArray(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMADenseNDArray(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMADenseNDArray() = delete;
@@ -145,6 +145,11 @@ class SOMADenseNDArray : public SOMAArray {
      * @return std::string_view Arrow format string.
      */
     std::string_view soma_data_type();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 }  // namespace tiledbsoma
 

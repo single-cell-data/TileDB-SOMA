@@ -28,7 +28,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_geometry_dataframe(py::module& m) {
-    py::class_<SOMAGeometryDataFrame, SOMAArray, SOMAObject>(m, "SOMAGeometryDataFrame")
+    py::class_<SOMAGeometryDataFrame, SOMAArray, SOMAObject, py::smart_holder>(m, "SOMAGeometryDataFrame")
 
         .def_static(
             "create",

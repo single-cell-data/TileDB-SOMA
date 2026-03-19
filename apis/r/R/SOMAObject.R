@@ -18,6 +18,7 @@ SOMAObject <- R6::R6Class(
     #'
     #' @param uri URI for the SOMA object
     #' @param ... Ignored
+    #' @param tiledb_handle Optional SOMAObject C++ handle
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional (DEPRECATED) TileDB SOMA context
     #' @param tiledb_timestamp Optional timestamp (\code{\link[base]{POSIXct}})
@@ -29,6 +30,7 @@ SOMAObject <- R6::R6Class(
     initialize = function(
       uri,
       ...,
+      tiledb_handle = NULL,
       platform_config = NULL,
       tiledbsoma_ctx = NULL,
       tiledb_timestamp = NULL,
@@ -80,6 +82,10 @@ SOMAObject <- R6::R6Class(
             !is.na(tiledb_timestamp)
         )
         private$.tiledb_timestamp <- tiledb_timestamp
+      }
+
+      if (!is.null(tiledb_handle)) {
+        private$.set_handle(tiledb_handle)
       }
 
       soma_debug(sprintf(
@@ -146,7 +152,7 @@ SOMAObject <- R6::R6Class(
             length(tiledb_timestamp) == 1L &&
             !is.na(tiledb_timestamp))
       )
-      self$close()
+      self$close(TRUE)
       private$.tiledb_timestamp <- tiledb_timestamp
       self$open(mode)
       return(invisible(self))
@@ -192,9 +198,9 @@ SOMAObject <- R6::R6Class(
       ))
 
       if (is.null(key)) {
-        return(private$.metadata_cache)
+        return(soma_get_all_metadata(private$.handle))
       }
-      val <- private$.metadata_cache[[key]]
+      val <- soma_get_metadata(private$.handle, key)
       if (is.list(val)) {
         val <- unlist(val)
       }
@@ -215,8 +221,14 @@ SOMAObject <- R6::R6Class(
       for (i in seq_along(metadata)) {
         key <- names(metadata)[i]
         value <- metadata[[i]]
-        soma_object_set_metadata(private$.handle, key, value)
-        private$.metadata_cache[[key]] <- value
+        soma_debug(sprintf(
+          "[SOMAObject$set_metadata] setting key %s to %s (%s)",
+          key,
+          value,
+          class(value)
+        ))
+
+        soma_set_metadata(private$.handle, key, value)
       }
 
       return(invisible(self))
@@ -236,6 +248,15 @@ SOMAObject <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field handle External pointer to the C++ interface
+    #'
+    handle = function(value) {
+      if (!missing(x = value)) {
+        stop("Field `handle` is read-only", call. = FALSE)
+      }
+      return(private$.handle)
+    },
+
     #' @field platform_config Platform configuration
     #'
     platform_config = function(value) {
@@ -314,7 +335,7 @@ SOMAObject <- R6::R6Class(
     }
   ),
   private = list(
-    # @field 'external pointer' to the C++ SOMADataFrame interface
+    # @field .platform_config ...
     #
     .handle = NULL,
 
@@ -342,9 +363,9 @@ SOMAObject <- R6::R6Class(
     #
     .uri = character(1L),
 
-    # @field .metadata_cache ...
-    #
-    .metadata_cache = NULL,
+    .set_handle = function(handle) {
+      private$.handle <- handle
+    },
 
     # @description Create a message saying that a method is for
     # internal use only

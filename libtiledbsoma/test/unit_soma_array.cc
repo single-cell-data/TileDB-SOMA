@@ -354,9 +354,7 @@ TEST_CASE("SOMAArray: metadata", "[SOMAArray]") {
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
     REQUIRE(soma_array->has_metadata("md"));
     auto mdval = soma_array->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
-    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    REQUIRE(std::get<int32_t>(mdval.value()) == 100);
     soma_array->close();
 
     // Metadata should also be retrievable in write mode
@@ -366,7 +364,7 @@ TEST_CASE("SOMAArray: metadata", "[SOMAArray]") {
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
     REQUIRE(soma_array->has_metadata("md"));
     mdval = soma_array->get_metadata("md");
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    REQUIRE(std::get<int32_t>(mdval.value()) == 100);
 
     // Delete and have it reflected when reading metadata while in write mode
     soma_array->delete_metadata("md");

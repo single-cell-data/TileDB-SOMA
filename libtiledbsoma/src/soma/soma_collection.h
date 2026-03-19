@@ -72,14 +72,19 @@ class SOMACollection : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMACollection") {
     }
 
-    SOMACollection(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMACollection(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMACollection() = delete;
     SOMACollection(const SOMACollection&) = default;
     SOMACollection(SOMACollection&&) = default;
     virtual ~SOMACollection() = default;
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 }  // namespace tiledbsoma
 

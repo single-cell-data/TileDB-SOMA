@@ -111,8 +111,8 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         initialize();
     }
 
-    SOMAGeometryDataFrame(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMAGeometryDataFrame(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
         initialize();
     }
 
@@ -147,6 +147,11 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      * @return int64_t
      */
     uint64_t count();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 
    private:
     //===================================================================

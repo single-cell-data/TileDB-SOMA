@@ -62,11 +62,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // writeArrayFromArrow
-void writeArrayFromArrow(Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype);
+void writeArrayFromArrow(Rcpp::XPtr<somaobj_wrap_t> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype);
 RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP soma_arraySEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP arraytypeSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type soma_array(soma_arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_array(soma_arraySEXP);
     Rcpp::traits::input_parameter< naxpArray >::type naap(naapSEXP);
     Rcpp::traits::input_parameter< naxpSchema >::type nasp(naspSEXP);
     Rcpp::traits::input_parameter< const std::string >::type arraytype(arraytypeSEXP);
@@ -74,39 +74,136 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// soma_group_get_members
-Rcpp::List soma_group_get_members(Rcpp::XPtr<tiledbsoma::SOMAGroup> group);
-RcppExport SEXP _tiledbsoma_soma_group_get_members(SEXP groupSEXP) {
+// c_group_create
+void c_group_create(std::string& uri, std::string& type, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_c_group_create(SEXP uriSEXP, SEXP typeSEXP, SEXP ctxxpSEXP, SEXP timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< std::string& >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    c_group_create(uri, type, ctxxp, timestamp);
+    return R_NilValue;
+END_RCPP
+}
+// c_group_open
+Rcpp::XPtr<somaobj_wrap_t> c_group_open(std::string& uri, std::string& type, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_c_group_open(SEXP uriSEXP, SEXP typeSEXP, SEXP ctxxpSEXP, SEXP timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
-    rcpp_result_gen = Rcpp::wrap(soma_group_get_members(group));
+    Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< std::string& >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_group_open(uri, type, ctxxp, timestamp));
     return rcpp_result_gen;
 END_RCPP
 }
-// soma_group_set
-void soma_group_set(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& uri, int uri_type_int, const std::string& name, const std::string& soma_type);
-RcppExport SEXP _tiledbsoma_soma_group_set(SEXP groupSEXP, SEXP uriSEXP, SEXP uri_type_intSEXP, SEXP nameSEXP, SEXP soma_typeSEXP) {
+// c_group_member_count
+double c_group_member_count(Rcpp::XPtr<somaobj_wrap_t> xp);
+RcppExport SEXP _tiledbsoma_c_group_member_count(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_group_member_count(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_group_has_member
+bool c_group_has_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_c_group_has_member(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
+    rcpp_result_gen = Rcpp::wrap(c_group_has_member(xp, key));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_group_has_member
+Rcpp::XPtr<somaobj_wrap_t> soma_group_get_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_group_get_member(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_group_get_member(xp, key));
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_group_get_members
+Rcpp::List soma_group_get_members(Rcpp::XPtr<somaobj_wrap_t> xp);
+RcppExport SEXP _tiledbsoma_soma_group_get_members(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_group_get_members(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_group_get_metadata
+Rcpp::List c_group_get_metadata(Rcpp::XPtr<somaobj_wrap_t> xp);
+RcppExport SEXP _tiledbsoma_c_group_get_metadata(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_group_get_metadata(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_group_close
+void c_group_close(Rcpp::XPtr<somaobj_wrap_t> xp);
+RcppExport SEXP _tiledbsoma_c_group_close(SEXP xpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    c_group_close(xp);
+    return R_NilValue;
+END_RCPP
+}
+// soma_group_set
+void soma_group_set(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& uri, int uri_type_int, const std::string& name, const std::string& soma_type, Rcpp::XPtr<somaobj_wrap_t> member, bool managed);
+RcppExport SEXP _tiledbsoma_soma_group_set(SEXP xpSEXP, SEXP uriSEXP, SEXP uri_type_intSEXP, SEXP nameSEXP, SEXP soma_typeSEXP, SEXP memberSEXP, SEXP managedSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< int >::type uri_type_int(uri_type_intSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type soma_type(soma_typeSEXP);
-    soma_group_set(group, uri, uri_type_int, name, soma_type);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type member(memberSEXP);
+    Rcpp::traits::input_parameter< bool >::type managed(managedSEXP);
+    soma_group_set(xp, uri, uri_type_int, name, soma_type, member, managed);
     return R_NilValue;
 END_RCPP
 }
 // soma_group_remove_member
-void soma_group_remove_member(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name);
-RcppExport SEXP _tiledbsoma_soma_group_remove_member(SEXP groupSEXP, SEXP nameSEXP) {
+void soma_group_remove_member(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& name);
+RcppExport SEXP _tiledbsoma_soma_group_remove_member(SEXP xpSEXP, SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
-    soma_group_remove_member(group, name);
+    soma_group_remove_member(xp, name);
+    return R_NilValue;
+END_RCPP
+}
+// c_group_put_metadata
+void c_group_put_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, std::string key, SEXP obj);
+RcppExport SEXP _tiledbsoma_c_group_put_metadata(SEXP xpSEXP, SEXP keySEXP, SEXP objSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::string >::type key(keySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type obj(objSEXP);
+    c_group_put_metadata(xp, key, obj);
     return R_NilValue;
 END_RCPP
 }
@@ -190,6 +287,65 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tsvec(tsvecSEXP);
     set_metadata(uri, key, valuesxp, type, is_array, ctxxp, tsvec);
+    return R_NilValue;
+END_RCPP
+}
+// soma_delete_metadata
+void soma_delete_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_delete_metadata(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    soma_delete_metadata(xp, key);
+    return R_NilValue;
+END_RCPP
+}
+// soma_has_metadata
+bool soma_has_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_has_metadata(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    rcpp_result_gen = soma_has_metadata(xp, key);
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_get_metadata
+Rcpp::List soma_get_all_metadata(Rcpp::XPtr<somaobj_wrap_t> xp);
+RcppExport SEXP _tiledbsoma_soma_get_all_metadata(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    rcpp_result_gen = soma_get_all_metadata(xp);
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_get_metadata
+SEXP soma_get_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key);
+RcppExport SEXP _tiledbsoma_soma_get_metadata(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    rcpp_result_gen = soma_get_metadata(xp, key);
+    return rcpp_result_gen;
+END_RCPP
+}
+// soma_set_metadata
+void soma_set_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, const std::string& key, SEXP value);
+RcppExport SEXP _tiledbsoma_soma_set_metadata(SEXP xpSEXP, SEXP keySEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
+    soma_set_metadata(xp, key, value);
     return R_NilValue;
 END_RCPP
 }
@@ -280,12 +436,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // soma_array_read
-SEXP soma_array_read(Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange);
+SEXP soma_array_read(Rcpp::XPtr<somaobj_wrap_t> soma_array, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange);
 RcppExport SEXP _tiledbsoma_soma_array_read(SEXP soma_arraySEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP loglevelSEXP, SEXP timestamprangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type soma_array(soma_arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_array(soma_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type colnames(colnamesSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> >::type qc(qcSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_points(dim_pointsSEXP);
@@ -369,12 +525,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // nnz
-double nnz(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+double nnz(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_nnz(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(nnz(array));
     return rcpp_result_gen;
 END_RCPP
@@ -402,56 +558,56 @@ BEGIN_RCPP
 END_RCPP
 }
 // shape
-Rcpp::NumericVector shape(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::NumericVector shape(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_shape(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(shape(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // maxshape
-Rcpp::NumericVector maxshape(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::NumericVector maxshape(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_maxshape(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(maxshape(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // non_empty_domain
-SEXP non_empty_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+SEXP non_empty_domain(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_non_empty_domain(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(non_empty_domain(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // domain
-SEXP domain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe);
+SEXP domain(Rcpp::XPtr<somaobj_wrap_t> dataframe);
 RcppExport SEXP _tiledbsoma_domain(SEXP dataframeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     rcpp_result_gen = Rcpp::wrap(domain(dataframe));
     return rcpp_result_gen;
 END_RCPP
 }
 // maxdomain
-SEXP maxdomain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe);
+SEXP maxdomain(Rcpp::XPtr<somaobj_wrap_t> dataframe);
 RcppExport SEXP _tiledbsoma_maxdomain(SEXP dataframeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     rcpp_result_gen = Rcpp::wrap(maxdomain(dataframe));
     return rcpp_result_gen;
 END_RCPP
@@ -481,78 +637,78 @@ BEGIN_RCPP
 END_RCPP
 }
 // has_current_domain
-Rcpp::LogicalVector has_current_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::LogicalVector has_current_domain(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_has_current_domain(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(has_current_domain(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // ndim
-Rcpp::NumericVector ndim(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::NumericVector ndim(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_ndim(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(ndim(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_dimnames
-Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_dimnames(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_dimnames(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_attrnames
-Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_attrnames(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_attrnames(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_schema
-SEXP c_schema(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+SEXP c_schema(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_schema(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_schema(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_is_sparse
-bool c_is_sparse(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+bool c_is_sparse(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_is_sparse(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_is_sparse(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_allows_dups
-bool c_allows_dups(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+bool c_allows_dups(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_allows_dups(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_allows_dups(array));
     return rcpp_result_gen;
 END_RCPP
@@ -606,57 +762,57 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_attributes
-Rcpp::List c_attributes(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::List c_attributes(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_attributes(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_attributes(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_attributes_enumerated
-Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe);
+Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<somaobj_wrap_t> dataframe);
 RcppExport SEXP _tiledbsoma_c_attributes_enumerated(SEXP dataframeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     rcpp_result_gen = Rcpp::wrap(c_attributes_enumerated(dataframe));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_attribute_enumeration_levels
-Rcpp::CharacterVector c_attribute_enumeration_levels(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, const std::string& name);
+Rcpp::CharacterVector c_attribute_enumeration_levels(Rcpp::XPtr<somaobj_wrap_t> dataframe, const std::string& name);
 RcppExport SEXP _tiledbsoma_c_attribute_enumeration_levels(SEXP dataframeSEXP, SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(c_attribute_enumeration_levels(dataframe, name));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_domain
-Rcpp::List c_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array);
+Rcpp::List c_domain(Rcpp::XPtr<somaobj_wrap_t> array);
 RcppExport SEXP _tiledbsoma_c_domain(SEXP arraySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type array(arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type array(arraySEXP);
     rcpp_result_gen = Rcpp::wrap(c_domain(array));
     return rcpp_result_gen;
 END_RCPP
 }
 // resize
-std::string resize(Rcpp::XPtr<tiledbsoma::SOMAArray> ndarray, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only);
+std::string resize(Rcpp::XPtr<somaobj_wrap_t> ndarray, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only);
 RcppExport SEXP _tiledbsoma_resize(SEXP ndarraySEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type ndarray(ndarraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type ndarray(ndarraySEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
     Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
     Rcpp::traits::input_parameter< bool >::type check_only(check_onlySEXP);
@@ -665,11 +821,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // resize_soma_joinid_shape
-void resize_soma_joinid_shape(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, Rcpp::NumericVector new_shape, std::string function_name_for_messages);
+void resize_soma_joinid_shape(Rcpp::XPtr<somaobj_wrap_t> dataframe, Rcpp::NumericVector new_shape, std::string function_name_for_messages);
 RcppExport SEXP _tiledbsoma_resize_soma_joinid_shape(SEXP dataframeSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
     Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
     resize_soma_joinid_shape(dataframe, new_shape, function_name_for_messages);
@@ -677,12 +833,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // tiledbsoma_upgrade_shape
-std::string tiledbsoma_upgrade_shape(Rcpp::XPtr<tiledbsoma::SOMAArray> ndarray, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only);
+std::string tiledbsoma_upgrade_shape(Rcpp::XPtr<somaobj_wrap_t> ndarray, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only);
 RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP ndarraySEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type ndarray(ndarraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type ndarray(ndarraySEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
     Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
     Rcpp::traits::input_parameter< bool >::type check_only(check_onlySEXP);
@@ -691,12 +847,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // upgrade_or_change_domain
-std::string upgrade_or_change_domain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, bool is_change_domain, naxpArray nadimap, naxpSchema nadimsp, std::string function_name_for_messages, bool check_only);
+std::string upgrade_or_change_domain(Rcpp::XPtr<somaobj_wrap_t> dataframe, bool is_change_domain, naxpArray nadimap, naxpSchema nadimsp, std::string function_name_for_messages, bool check_only);
 RcppExport SEXP _tiledbsoma_upgrade_or_change_domain(SEXP dataframeSEXP, SEXP is_change_domainSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     Rcpp::traits::input_parameter< bool >::type is_change_domain(is_change_domainSEXP);
     Rcpp::traits::input_parameter< naxpArray >::type nadimap(nadimapSEXP);
     Rcpp::traits::input_parameter< naxpSchema >::type nadimsp(nadimspSEXP);
@@ -707,11 +863,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // c_update_dataframe_schema
-void c_update_dataframe_schema(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, Rcpp::CharacterVector column_names_to_drop, Rcpp::List add_cols_types, Rcpp::List add_cols_enum_value_types, Rcpp::List add_cols_enum_ordered);
+void c_update_dataframe_schema(Rcpp::XPtr<somaobj_wrap_t> dataframe, Rcpp::CharacterVector column_names_to_drop, Rcpp::List add_cols_types, Rcpp::List add_cols_enum_value_types, Rcpp::List add_cols_enum_ordered);
 RcppExport SEXP _tiledbsoma_c_update_dataframe_schema(SEXP dataframeSEXP, SEXP column_names_to_dropSEXP, SEXP add_cols_typesSEXP, SEXP add_cols_enum_value_typesSEXP, SEXP add_cols_enum_orderedSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMADataFrame> >::type dataframe(dataframeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type dataframe(dataframeSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type column_names_to_drop(column_names_to_dropSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_types(add_cols_typesSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_enum_value_types(add_cols_enum_value_typesSEXP);
@@ -721,12 +877,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // mq_setup
-Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel);
+Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(Rcpp::XPtr<somaobj_wrap_t> soma_array, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_mq_setup(SEXP soma_arraySEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAArray> >::type soma_array(soma_arraySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_array(soma_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type colnames(colnamesSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> >::type qc(qcSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_points(dim_pointsSEXP);
@@ -957,62 +1113,77 @@ BEGIN_RCPP
 END_RCPP
 }
 // soma_object_get_metadata
-Rcpp::List soma_object_get_metadata(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
+Rcpp::List soma_object_get_metadata(Rcpp::XPtr<somaobj_wrap_t> soma_object);
 RcppExport SEXP _tiledbsoma_soma_object_get_metadata(SEXP soma_objectSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_object(soma_objectSEXP);
     rcpp_result_gen = Rcpp::wrap(soma_object_get_metadata(soma_object));
     return rcpp_result_gen;
 END_RCPP
 }
-// soma_object_set_metadata
-void soma_object_set_metadata(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object, const std::string& key, SEXP value);
-RcppExport SEXP _tiledbsoma_soma_object_set_metadata(SEXP soma_objectSEXP, SEXP keySEXP, SEXP valueSEXP) {
+// soma_object_open
+void soma_object_open(Rcpp::XPtr<somaobj_wrap_t> soma_object, const std::string& mode, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_soma_object_open(SEXP soma_objectSEXP, SEXP modeSEXP, SEXP timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type key(keySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    soma_object_set_metadata(soma_object, key, value);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    soma_object_open(soma_object, mode, timestamp);
     return R_NilValue;
 END_RCPP
 }
 // soma_object_close
-void soma_object_close(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
-RcppExport SEXP _tiledbsoma_soma_object_close(SEXP soma_objectSEXP) {
+void soma_object_close(Rcpp::XPtr<somaobj_wrap_t> soma_object, bool recursive);
+RcppExport SEXP _tiledbsoma_soma_object_close(SEXP soma_objectSEXP, SEXP recursiveSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
-    soma_object_close(soma_object);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< bool >::type recursive(recursiveSEXP);
+    soma_object_close(soma_object, recursive);
     return R_NilValue;
 END_RCPP
 }
 // soma_object_is_open
-bool soma_object_is_open(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
+bool soma_object_is_open(Rcpp::XPtr<somaobj_wrap_t> soma_object);
 RcppExport SEXP _tiledbsoma_soma_object_is_open(SEXP soma_objectSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_object(soma_objectSEXP);
     rcpp_result_gen = Rcpp::wrap(soma_object_is_open(soma_object));
     return rcpp_result_gen;
 END_RCPP
 }
 // soma_object_open_mode
-std::string soma_object_open_mode(Rcpp::XPtr<tiledbsoma::SOMAObject> soma_object);
+std::string soma_object_open_mode(Rcpp::XPtr<somaobj_wrap_t> soma_object);
 RcppExport SEXP _tiledbsoma_soma_object_open_mode(SEXP soma_objectSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAObject> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_object(soma_objectSEXP);
     rcpp_result_gen = Rcpp::wrap(soma_object_open_mode(soma_object));
     return rcpp_result_gen;
 END_RCPP
 }
+// open_soma_handle
+Rcpp::XPtr<somaobj_wrap_t> open_soma_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+RcppExport SEXP _tiledbsoma_open_soma_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type soma_context(soma_contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type tiledb_timestamp(tiledb_timestampSEXP);
+    rcpp_result_gen = Rcpp::wrap(open_soma_handle(uri, mode, soma_context, tiledb_timestamp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // open_dataframe_handle
-Rcpp::XPtr<tiledbsoma::SOMADataFrame> open_dataframe_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+Rcpp::XPtr<somaobj_wrap_t> open_dataframe_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
 RcppExport SEXP _tiledbsoma_open_dataframe_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -1026,7 +1197,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // open_sparse_ndarray_handle
-Rcpp::XPtr<tiledbsoma::SOMASparseNDArray> open_sparse_ndarray_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+Rcpp::XPtr<somaobj_wrap_t> open_sparse_ndarray_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
 RcppExport SEXP _tiledbsoma_open_sparse_ndarray_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -1040,7 +1211,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // open_dense_ndarray_handle
-Rcpp::XPtr<tiledbsoma::SOMADenseNDArray> open_dense_ndarray_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+Rcpp::XPtr<somaobj_wrap_t> open_dense_ndarray_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
 RcppExport SEXP _tiledbsoma_open_dense_ndarray_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -1054,7 +1225,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // open_collection_handle
-Rcpp::XPtr<tiledbsoma::SOMACollection> open_collection_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+Rcpp::XPtr<somaobj_wrap_t> open_collection_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
 RcppExport SEXP _tiledbsoma_open_collection_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -1068,7 +1239,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // open_measurement_handle
-Rcpp::XPtr<tiledbsoma::SOMAMeasurement> open_measurement_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+Rcpp::XPtr<somaobj_wrap_t> open_measurement_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
 RcppExport SEXP _tiledbsoma_open_measurement_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -1082,7 +1253,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // open_experiment_handle
-Rcpp::XPtr<tiledbsoma::SOMAExperiment> open_experiment_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
+Rcpp::XPtr<somaobj_wrap_t> open_experiment_handle(const std::string& uri, const std::string& mode, Rcpp::XPtr<somactx_wrap_t> soma_context, Rcpp::Nullable<Rcpp::DatetimeVector> tiledb_timestamp);
 RcppExport SEXP _tiledbsoma_open_experiment_handle(SEXP uriSEXP, SEXP modeSEXP, SEXP soma_contextSEXP, SEXP tiledb_timestampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -1101,15 +1272,28 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSchemaForDataFrame", (DL_FUNC) &_tiledbsoma_createSchemaForDataFrame, 7},
     {"_tiledbsoma_createSchemaForNDArray", (DL_FUNC) &_tiledbsoma_createSchemaForNDArray, 7},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 4},
+    {"_tiledbsoma_c_group_create", (DL_FUNC) &_tiledbsoma_c_group_create, 4},
+    {"_tiledbsoma_c_group_open", (DL_FUNC) &_tiledbsoma_c_group_open, 4},
+    {"_tiledbsoma_c_group_has_member", (DL_FUNC) &_tiledbsoma_c_group_has_member, 2},
+    {"_tiledbsoma_soma_group_get_member", (DL_FUNC) &_tiledbsoma_soma_group_get_member, 2},
+    {"_tiledbsoma_c_group_member_count", (DL_FUNC) &_tiledbsoma_c_group_member_count, 1},
     {"_tiledbsoma_soma_group_get_members", (DL_FUNC) &_tiledbsoma_soma_group_get_members, 1},
-    {"_tiledbsoma_soma_group_set", (DL_FUNC) &_tiledbsoma_soma_group_set, 5},
+    {"_tiledbsoma_c_group_get_metadata", (DL_FUNC) &_tiledbsoma_c_group_get_metadata, 1},
+    {"_tiledbsoma_c_group_close", (DL_FUNC) &_tiledbsoma_c_group_close, 1},
+    {"_tiledbsoma_soma_group_set", (DL_FUNC) &_tiledbsoma_soma_group_set, 7},
     {"_tiledbsoma_soma_group_remove_member", (DL_FUNC) &_tiledbsoma_soma_group_remove_member, 2},
+    {"_tiledbsoma_c_group_put_metadata", (DL_FUNC) &_tiledbsoma_c_group_put_metadata, 3},
     {"_tiledbsoma_get_metadata_num", (DL_FUNC) &_tiledbsoma_get_metadata_num, 3},
     {"_tiledbsoma_get_all_metadata", (DL_FUNC) &_tiledbsoma_get_all_metadata, 3},
     {"_tiledbsoma_get_metadata", (DL_FUNC) &_tiledbsoma_get_metadata, 4},
     {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 4},
     {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 4},
     {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 7},
+    {"_tiledbsoma_soma_delete_metadata", (DL_FUNC) &_tiledbsoma_soma_delete_metadata, 2},
+    {"_tiledbsoma_soma_has_metadata", (DL_FUNC) &_tiledbsoma_soma_has_metadata, 2},
+    {"_tiledbsoma_soma_get_all_metadata", (DL_FUNC) &_tiledbsoma_soma_get_all_metadata, 1},
+    {"_tiledbsoma_soma_get_metadata", (DL_FUNC) &_tiledbsoma_soma_get_metadata, 2},
+    {"_tiledbsoma_soma_set_metadata", (DL_FUNC) &_tiledbsoma_soma_set_metadata, 3},
     {"_tiledbsoma_libtiledbsoma_empty_query_condition", (DL_FUNC) &_tiledbsoma_libtiledbsoma_empty_query_condition, 1},
     {"_tiledbsoma_libtiledbsoma_query_condition_from_triple", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_from_triple, 5},
     {"_tiledbsoma_libtiledbsoma_query_condition_combine", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_combine, 3},
@@ -1176,10 +1360,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_experiment_create", (DL_FUNC) &_tiledbsoma_soma_experiment_create, 3},
     {"_tiledbsoma_soma_measurement_create", (DL_FUNC) &_tiledbsoma_soma_measurement_create, 3},
     {"_tiledbsoma_soma_object_get_metadata", (DL_FUNC) &_tiledbsoma_soma_object_get_metadata, 1},
-    {"_tiledbsoma_soma_object_set_metadata", (DL_FUNC) &_tiledbsoma_soma_object_set_metadata, 3},
-    {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 1},
+    {"_tiledbsoma_soma_object_open", (DL_FUNC) &_tiledbsoma_soma_object_open, 3},
+    {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 2},
     {"_tiledbsoma_soma_object_is_open", (DL_FUNC) &_tiledbsoma_soma_object_is_open, 1},
     {"_tiledbsoma_soma_object_open_mode", (DL_FUNC) &_tiledbsoma_soma_object_open_mode, 1},
+    {"_tiledbsoma_open_soma_handle", (DL_FUNC) &_tiledbsoma_open_soma_handle, 4},
     {"_tiledbsoma_open_dataframe_handle", (DL_FUNC) &_tiledbsoma_open_dataframe_handle, 4},
     {"_tiledbsoma_open_sparse_ndarray_handle", (DL_FUNC) &_tiledbsoma_open_sparse_ndarray_handle, 4},
     {"_tiledbsoma_open_dense_ndarray_handle", (DL_FUNC) &_tiledbsoma_open_dense_ndarray_handle, 4},

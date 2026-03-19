@@ -56,21 +56,91 @@ SOMACollectionBase::SOMACollectionBase(
         }
     }
     check_encoding_version();
+
+    for (const auto& [key, _] : members_map()) {
+        children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
+        flags_[key] = std::make_shared<std::once_flag>();
+        managed_children_.emplace(key);
+    }
 }
 
-void SOMACollectionBase::close() {
-    for (auto mem : children_) {
-        if (mem.second->is_open()) {
-            mem.second->close();
+SOMACollectionBase::SOMACollectionBase(SOMAGroup&& other)
+    : SOMAGroup(std::move(other)) {
+    for (const auto& [key, _] : members_map()) {
+        children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
+        flags_[key] = std::make_shared<std::once_flag>();
+        managed_children_.emplace(key);
+    }
+}
+
+SOMACollectionBase::~SOMACollectionBase() {
+    close();
+}
+
+void SOMACollectionBase::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    SOMAGroup::open(mode, timestamp);
+
+    children_.clear();
+    flags_.clear();
+    managed_children_.clear();
+
+    for (const auto& [key, _] : members_map()) {
+        children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
+        flags_[key] = std::make_shared<std::once_flag>();
+        managed_children_.emplace(key);
+    }
+}
+
+void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
+    if (recursive) {
+        for (auto& [key, member] : children_) {
+            if (!member || !member->is_open() || !managed_children_.contains(key)) {
+                continue;
+            }
+
+            member->close(recursive);
         }
     }
-    SOMAGroup::close();
+
+    SOMAGroup::close(recursive);
 }
 
-std::unique_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
-    auto tiledb_obj = SOMAGroup::get(key);
-    auto soma_obj = SOMAObject::open(tiledb_obj.uri(), OpenMode::soma_read, this->ctx(), this->timestamp());
-    return soma_obj;
+std::shared_ptr<SOMAObject> SOMACollectionBase::get(const std::string& key) {
+    if (!has(key)) {
+        throw std::range_error(fmt::format("Group member '{}' is missing", key));
+    }
+
+    auto [uri, type] = members_map()[key];
+    auto& handle = children_[key];
+
+    if (handle == nullptr) {
+        std::call_once(*flags_[key], [&]() { handle = SOMAObject::open(uri, mode(), ctx(), timestamp()); });
+    }
+
+    return handle;
+}
+
+void SOMACollectionBase::set(
+    const std::string& uri,
+    URIType uri_type,
+    const std::string& name,
+    const std::string& soma_type,
+    std::shared_ptr<SOMAObject> member,
+    bool managed) {
+    SOMAGroup::set(uri, uri_type, name, soma_type, member->uri());
+
+    children_[name] = member;
+    flags_[name] = std::make_shared<std::once_flag>();
+
+    if (managed)
+        managed_children_.emplace(name);
+}
+
+void SOMACollectionBase::del(const std::string& name) {
+    SOMAGroup::del(name);
+
+    children_.erase(name);
+    flags_.erase(name);
 }
 
 std::shared_ptr<SOMACollection> SOMACollectionBase::add_new_collection(
@@ -89,8 +159,7 @@ std::shared_ptr<SOMACollection> SOMACollectionBase::add_new_collection(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMACollection> member = SOMACollection::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup", member, true);
     return member;
 }
 
@@ -110,8 +179,7 @@ std::shared_ptr<SOMAExperiment> SOMACollectionBase::add_new_experiment(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup", member, true);
     return member;
 }
 
@@ -131,8 +199,7 @@ std::shared_ptr<SOMAMeasurement> SOMACollectionBase::add_new_measurement(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup", member, true);
     return member;
 }
 
@@ -155,8 +222,7 @@ std::shared_ptr<SOMADataFrame> SOMACollectionBase::add_new_dataframe(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray", member, true);
     return member;
 }
 
@@ -179,8 +245,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollectionBase::add_new_dense_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADenseNDArray> member = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray", member, true);
     return member;
 }
 
@@ -203,9 +268,58 @@ std::shared_ptr<SOMASparseNDArray> SOMACollectionBase::add_new_sparse_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMASparseNDArray> member = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
-    children_[std::string(key)] = member;
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray", member, true);
     return member;
+}
+
+std::ostream& SOMACollectionBase::print(std::ostream& stream, int level, std::optional<std::string> key) const {
+    std::string indentation(level * 4, ' ');
+    std::string subindentation((level + 1) * 4, ' ');
+    std::string item_count = children_.size() == 0 ? "empty" :
+                             children_.size() == 1 ? "1 item" :
+                                                     fmt::format("{} items", children_.size());
+
+    if (key) {
+        stream << fmt::format(
+                      "{}'{}': {} '{}' ({} for '{}'){}",
+                      indentation,
+                      key.value(),
+                      classname(),
+                      uri(),
+                      is_open() ? "open" : "CLOSED",
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d",
+                      is_open() ? fmt::format(" ({})", item_count) : "")
+               << std::endl;
+    } else {
+        stream << fmt::format(
+                      "{}{} '{}' ({} for '{}'){}",
+                      indentation,
+                      classname(),
+                      uri(),
+                      is_open() ? "open" : "CLOSED",
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d",
+                      is_open() ? fmt::format(" ({})", item_count) : "")
+               << std::endl;
+    }
+
+    if (is_open()) {
+        auto members = members_map();
+
+        for (const auto& [name, child] : children_) {
+            if (child == nullptr) {
+                stream << fmt::format("{}'{}': '{}' (unopened)", subindentation, name, members[name].first)
+                       << std::endl;
+            } else {
+                child->print(stream, level + 1, name);
+            }
+        }
+    }
+
+    return stream;
 }
 
 }  // namespace tiledbsoma

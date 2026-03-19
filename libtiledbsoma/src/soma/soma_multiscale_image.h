@@ -67,8 +67,8 @@ class SOMAMultiscaleImage : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAMultiscaleImage") {
     }
 
-    SOMAMultiscaleImage(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAMultiscaleImage(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAMultiscaleImage() = delete;
@@ -76,9 +76,16 @@ class SOMAMultiscaleImage : public SOMACollectionBase {
     SOMAMultiscaleImage(SOMAMultiscaleImage&&) = default;
     ~SOMAMultiscaleImage() = default;
 
+    using SOMACollectionBase::open;
+
     inline const SOMACoordinateSpace& coordinate_space() const {
         return coord_space_;
     }
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 
    private:
     //===================================================================

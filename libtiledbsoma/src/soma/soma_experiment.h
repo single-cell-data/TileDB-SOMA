@@ -66,14 +66,16 @@ class SOMAExperiment : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAExperiment") {
     }
 
-    SOMAExperiment(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAExperiment(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAExperiment() = delete;
     SOMAExperiment(const SOMAExperiment&) = default;
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
+
+    using SOMAGroup::open;
 
     /**
      * @brief Get the primary annotations on the observation axis
@@ -97,16 +99,15 @@ class SOMAExperiment : public SOMACollectionBase {
      */
     std::shared_ptr<SOMACollection> ms();
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static
     //===================================================================
-
-    // Primary annotations on the observation axis
-    std::shared_ptr<SOMADataFrame> obs_ = nullptr;
-
-    // A collection of named measurements
-    std::shared_ptr<SOMACollection> ms_ = nullptr;
 
     // A collection of spatial scenes
     std::shared_ptr<SOMACollection> spatial_ = nullptr;

@@ -662,3 +662,33 @@ SOMAExperimentOpen <- function(
   exp$open(mode)
   return(exp)
 }
+
+SOMAObjectWrap <- function(
+  uri,
+  tiledb_handle,
+  platform_config,
+  context,
+  tiledb_timestamp,
+  tiledbsoma_ctx
+) {
+  metadata <- soma_object_get_metadata(tiledb_handle)
+  soma_type <- metadata[[SOMA_OBJECT_TYPE_METADATA_KEY]]
+
+  cls <- tryCatch(
+    base::get(
+      soma_type,
+      envir = getNamespace("tiledbsoma"),
+      mode = "any"
+    ),
+    error = \() stop("Unknown member SOMA type: ", soma_type, call. = FALSE)
+  )
+
+  return(cls$new(
+    uri,
+    tiledb_handle = tiledb_handle,
+    platform_config = platform_config,
+    context = context,
+    tiledb_timestamp = tiledb_timestamp,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  ))
+}

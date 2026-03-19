@@ -66,14 +66,16 @@ class SOMAScene : public SOMACollectionBase {
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
-    SOMAScene(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAScene(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAScene() = delete;
     SOMAScene(const SOMAScene&) = default;
     SOMAScene(SOMAScene&&) = default;
     ~SOMAScene() = default;
+
+    using SOMACollectionBase::open;
 
     inline const std::optional<SOMACoordinateSpace>& coordinate_space() const {
         return coord_space_;
@@ -101,21 +103,17 @@ class SOMAScene : public SOMACollectionBase {
      */
     std::shared_ptr<SOMACollection> varl();
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static
     //===================================================================
 
     std::optional<SOMACoordinateSpace> coord_space_ = std::nullopt;
-
-    // A collection of imagery data.
-    std::shared_ptr<SOMACollection> img_ = nullptr;
-
-    // A collection of observation location data.
-    std::shared_ptr<SOMACollection> obsl_ = nullptr;
-
-    // A collection of collections of variable location data for measurements.
-    std::shared_ptr<SOMACollection> varl_ = nullptr;
 };
 }  // namespace tiledbsoma
 
