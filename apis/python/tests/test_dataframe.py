@@ -52,15 +52,18 @@ def test_dataframe(tmp_path, arrow_schema, cfg):
     uri = tmp_path.as_posix()
     # Create
     asch = arrow_schema()
+    with pytest.raises(TypeError):
+        # requires domain
+        soma.DataFrame.create(uri, schema=asch, index_column_names=[])
     with pytest.raises(ValueError):
         # requires one or more index columns
-        soma.DataFrame.create(uri, schema=asch, index_column_names=[])
+        soma.DataFrame.create(uri, schema=asch, index_column_names=[], domain=[])
     with raises_no_typeguard(TypeError):
         # invalid schema type
-        soma.DataFrame.create(uri, schema=asch.to_string(), index_column_names=[])
+        soma.DataFrame.create(uri, schema=asch.to_string(), index_column_names=[], domain=[])
     with pytest.raises(ValueError):
         # nonexistent indexed column
-        soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
+        soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"], domain=[(0, 10)])
     soma.DataFrame.create(uri, schema=asch, index_column_names=["myint"], domain=[[0, 99]]).close()
 
     assert soma.DataFrame.exists(uri)
@@ -1872,6 +1875,7 @@ def test_columns(tmp_path):
             (tmp_path / "B").as_posix(),
             schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
+            domain=((0, 0),),
         )
 
     D = soma.DataFrame.create(

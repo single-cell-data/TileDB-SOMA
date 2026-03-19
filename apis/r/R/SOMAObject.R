@@ -30,7 +30,7 @@ SOMAObject <- R6::R6Class(
       uri,
       ...,
       platform_config = NULL,
-      tiledbsoma_ctx = NULL,
+      tiledbsoma_ctx = lifecycle::deprecated(),
       tiledb_timestamp = NULL,
       context = NULL
     ) {
@@ -67,7 +67,6 @@ SOMAObject <- R6::R6Class(
         )
       }
       private$.context <- context
-      private$.tiledbsoma_ctx <- tiledbsoma_ctx
 
       # Set the timestamp
       if (!is.null(tiledb_timestamp)) {
@@ -260,12 +259,11 @@ SOMAObject <- R6::R6Class(
       if (!missing(x = value)) {
         private$.read_only_error("tiledbsoma_ctx")
       }
-      .deprecate(
+      lifecycle::deprecate_stop(
         what = sprintf("%s$tiledbsoma_ctx", class(self)[1L]),
         when = "2.3.0",
         details = sprintf("Use `context` instead.")
       )
-      return(private$.tiledbsoma_ctx)
     },
 
     #' @field tiledb_timestamp Time that object was opened at
@@ -329,10 +327,6 @@ SOMAObject <- R6::R6Class(
     # @field .context ...
     #
     .context = NULL,
-
-    # @field .tiledbsoma_ctx (DEPRECATED) ...
-    #
-    .tiledbsoma_ctx = NULL,
 
     # @field .soma_type ...
     #

@@ -38,9 +38,8 @@ SOMADataFrame <- R6::R6Class(
     #' \code{list(soma_joinid=c(100, 200))} to indicate that values between 100
     #' and 200, inclusive, can be stored in that column.  If provided, this
     #' sequence must have the same length as \code{index_column_names}, and the
-    #' index-column domain will be as specified. Omitting or setting the domain
-    #' to \code{NULL} is deprecated. See also \code{change_domain} which allows
-    #' you to expand the domain after create.
+    #' index-column domain will be as specified. See also \code{change_domain}
+    #' which allows you to expand the domain after create.
     #' @template param-platform-config
     #'
     #' @return Returns \code{self}.
@@ -60,7 +59,7 @@ SOMADataFrame <- R6::R6Class(
         stop(
           paste(
             strwrap(private$.internal_use_only("create", "collection")),
-            collapse = '\n'
+            collapse = "\n"
           ),
           call. = FALSE
         )
@@ -68,29 +67,22 @@ SOMADataFrame <- R6::R6Class(
 
       soma_domain <- domain
       if (is.null(soma_domain)) {
-        .deprecate(
+        lifecycle::deprecate_stop(
           when = "2.1.0",
           what = "create(domain = 'must be a named list')",
         )
-
-        soma_domain <- vector(
-          mode = 'list',
-          length = length(index_column_names)
-        )
-        names(soma_domain) <- index_column_names
       }
       if (
         !(is.null(soma_domain) || .is_domain(soma_domain, index_column_names))
       ) {
         stop(
-          "domain must be NULL or a named list, with values being 2-element vectors or NULL"
+          "domain must be a named list, with values being 2-element vectors or NULL (for string columns only)"
         )
-      } else {
-        # We cast all integer values to int64
-        for (name in index_column_names) {
-          if (is.integer(soma_domain[[name]])) {
-            soma_domain[[name]] <- as.integer64(soma_domain[[name]])
-          }
+      }
+      # We cast all integer values to int64
+      for (name in index_column_names) {
+        if (is.integer(soma_domain[[name]])) {
+          soma_domain[[name]] <- as.integer64(soma_domain[[name]])
         }
       }
 

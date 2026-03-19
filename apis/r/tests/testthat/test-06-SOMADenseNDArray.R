@@ -303,35 +303,3 @@ test_that("SOMADenseNDArray timestamped ops", {
   dnda$close()
 })
 
-test_that("`SOMADenseNDArray$set_data_type()` deprecations", {
-  skip_if(!extended_tests())
-  uri <- tempfile(pattern = "soma-dense-nd-array-timestamps")
-
-  dnda <- SOMADenseNDArrayCreate(
-    uri = uri,
-    type = arrow::int16(),
-    shape = c(2, 2)
-  )
-  M1 <- matrix(rep(1, 4), 2, 2)
-  dnda$write(M1)
-  dnda$close()
-
-  dnda <- SOMADenseNDArrayOpen(uri = uri)
-
-  with_mocked_bindings(
-    .tiledbsoma_deprecation_version = function() "2.1.0",
-    .deprecation_stage = function(when) "deprecate",
-    {
-      lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16()))
-    }
-  )
-
-  # Per POLICIES.md:
-  # deprecated in 2.1.0, defunct after two minor releases (2.3.0)
-  pkg_version <- utils::packageVersion("tiledbsoma")
-  if (pkg_version >= "2.3.0") {
-    lifecycle::expect_defunct(dnda$set_data_type(arrow::int16()))
-  } else if (pkg_version >= "2.1.0") {
-    lifecycle::expect_deprecated(dnda$set_data_type(arrow::int16()))
-  }
-})

@@ -21,7 +21,7 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -36,7 +36,7 @@
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -49,7 +49,7 @@
   key = NULL,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -64,7 +64,7 @@
   key = NULL,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -81,7 +81,7 @@
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -98,7 +98,7 @@
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -115,7 +115,7 @@
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )
@@ -131,7 +131,7 @@
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = tiledbsoma_ctx,
   context = NULL,
   relative = TRUE
 )

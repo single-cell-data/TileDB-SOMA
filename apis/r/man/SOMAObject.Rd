@@ -57,7 +57,7 @@ Create a new SOMA object. (lifecycle: maturing)
   uri,
   ...,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 )}\if{html}{\out{</div>}}
