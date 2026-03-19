@@ -62,7 +62,13 @@ class SOMACollectionBase : public SOMAGroup {
     SOMACollectionBase(SOMACollectionBase&&) = default;
     virtual ~SOMACollectionBase();
 
-    using SOMAGroup::open;
+    /**
+     * Open the SOMAGroup object.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
      * Closes the SOMACollectionBase object.

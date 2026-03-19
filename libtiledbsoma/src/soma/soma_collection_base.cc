@@ -77,6 +77,20 @@ SOMACollectionBase::~SOMACollectionBase() {
     close();
 }
 
+void SOMACollectionBase::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    SOMAGroup::open(mode, timestamp);
+
+    children_.clear();
+    flags_.clear();
+    managed_children_.clear();
+
+    for (const auto& [key, _] : members_map()) {
+        children_[key] = std::shared_ptr<SOMAGroup>(nullptr);
+        flags_[key] = std::make_shared<std::once_flag>();
+        managed_children_.emplace(key);
+    }
+}
+
 void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
     if (recursive) {
         for (auto& [key, member] : children_) {
