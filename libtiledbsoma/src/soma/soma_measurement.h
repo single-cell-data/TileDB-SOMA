@@ -75,6 +75,8 @@ class SOMAMeasurement : public SOMACollectionBase {
     SOMAMeasurement(SOMAMeasurement&&) = default;
     ~SOMAMeasurement() = default;
 
+    using SOMACollectionBase::open;
+
     /**
      * @brief Get the primary annotations on the variable axis
      * @param column_names A list of column names to use as user-defined

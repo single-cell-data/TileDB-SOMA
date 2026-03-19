@@ -1123,7 +1123,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-
+// soma_object_open
+void soma_object_open(Rcpp::XPtr<somaobj_wrap_t> soma_object, const std::string& mode, Rcpp::Nullable<Rcpp::DatetimeVector> timestamp);
+RcppExport SEXP _tiledbsoma_soma_object_open(SEXP soma_objectSEXP, SEXP modeSEXP, SEXP timestampSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somaobj_wrap_t> >::type soma_object(soma_objectSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamp(timestampSEXP);
+    soma_object_open(soma_object, mode, timestamp);
+    return R_NilValue;
+END_RCPP
+}
 // soma_object_close
 void soma_object_close(Rcpp::XPtr<somaobj_wrap_t> soma_object, bool recursive);
 RcppExport SEXP _tiledbsoma_soma_object_close(SEXP soma_objectSEXP, SEXP recursiveSEXP) {
@@ -1349,6 +1360,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_experiment_create", (DL_FUNC) &_tiledbsoma_soma_experiment_create, 3},
     {"_tiledbsoma_soma_measurement_create", (DL_FUNC) &_tiledbsoma_soma_measurement_create, 3},
     {"_tiledbsoma_soma_object_get_metadata", (DL_FUNC) &_tiledbsoma_soma_object_get_metadata, 1},
+    {"_tiledbsoma_soma_object_open", (DL_FUNC) &_tiledbsoma_soma_object_open, 3},
     {"_tiledbsoma_soma_object_close", (DL_FUNC) &_tiledbsoma_soma_object_close, 2},
     {"_tiledbsoma_soma_object_is_open", (DL_FUNC) &_tiledbsoma_soma_object_is_open, 1},
     {"_tiledbsoma_soma_object_open_mode", (DL_FUNC) &_tiledbsoma_soma_object_open_mode, 1},

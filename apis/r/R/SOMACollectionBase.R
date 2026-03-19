@@ -62,7 +62,11 @@ SOMACollectionBase <- R6::R6Class(
       )
       open_mode <- match.arg(mode)
       private$.log_open_timestamp(open_mode)
-      private$.open_handle(open_mode, self$tiledb_timestamp)
+      if (is.null(super$handle)) {
+        private$.open_handle(open_mode, self$tiledb_timestamp)
+      } else {
+        soma_object_open(super$handle, open_mode, self$tiledb_timestamp)
+      }
       return(self)
     },
 
@@ -198,6 +202,7 @@ SOMACollectionBase <- R6::R6Class(
         self$mode()
       ))
       if (!obj$is_open()) {
+        print("OBJECT closed")
         switch(
           EXPR = (mode <- self$mode()),
           READ = obj$open(mode),

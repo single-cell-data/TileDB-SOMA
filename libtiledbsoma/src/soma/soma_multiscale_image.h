@@ -76,6 +76,8 @@ class SOMAMultiscaleImage : public SOMACollectionBase {
     SOMAMultiscaleImage(SOMAMultiscaleImage&&) = default;
     ~SOMAMultiscaleImage() = default;
 
+    using SOMACollectionBase::open;
+
     inline const SOMACoordinateSpace& coordinate_space() const {
         return coord_space_;
     }

@@ -75,6 +75,8 @@ class SOMAScene : public SOMACollectionBase {
     SOMAScene(SOMAScene&&) = default;
     ~SOMAScene() = default;
 
+    using SOMACollectionBase::open;
+
     inline const std::optional<SOMACoordinateSpace>& coordinate_space() const {
         return coord_space_;
     };

@@ -438,6 +438,10 @@ soma_object_get_metadata <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
 }
 
+soma_object_open <- function(soma_object, mode, timestamp = NULL) {
+    .Call(`_tiledbsoma_soma_object_open`, soma_object, mode, timestamp)
+}
+
 soma_object_close <- function(soma_object, recursive) {
     invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object, recursive))
 }

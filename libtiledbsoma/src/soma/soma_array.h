@@ -184,7 +184,7 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
      * Returns a shared pointer of the internal TileDB array.

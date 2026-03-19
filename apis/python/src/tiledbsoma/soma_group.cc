@@ -46,6 +46,14 @@ void load_soma_group(py::module& m) {
             })
         .def("__contains__", &SOMAGroup::has)
         .def("__len__", &SOMAGroup::count)
+        .def(
+            "reopen",
+            [](std::shared_ptr<SOMAGroup> group, OpenMode mode, std::optional<TimestampRange> timestamp) {
+                group->close(true);
+                group->open(mode, timestamp);
+            },
+            "mode"_a,
+            "timestamp"_a = py::none())
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {
@@ -67,7 +75,6 @@ void load_soma_group(py::module& m) {
         .def("context", &SOMAGroup::ctx)
         .def("is_relative", &SOMAGroup::is_relative)
         .def("has", &SOMAGroup::has)
-        .def("add", &SOMAGroup::set, "uri"_a, "uri_type"_a, "name"_a, "soma_type"_a)
         .def("count", &SOMAGroup::count)
         .def("remove", &SOMAGroup::del)
         .def("members", &SOMAGroup::members_map)

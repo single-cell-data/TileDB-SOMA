@@ -75,6 +75,8 @@ class SOMAExperiment : public SOMACollectionBase {
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
 
+    using SOMAGroup::open;
+
     /**
      * @brief Get the primary annotations on the observation axis
      * @param column_names A list of column names to use as user-defined
