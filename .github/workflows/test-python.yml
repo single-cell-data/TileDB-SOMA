@@ -49,13 +49,13 @@ jobs:
           brew install automake llvm
 
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
 
       - name: Download pre-built C++ library
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: cpp-build-Release-${{ inputs.os }}
 
@@ -63,7 +63,7 @@ jobs:
         run: make data
 
       - name: Set up Python ${{ inputs.python_version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python_version }}
           cache: pip

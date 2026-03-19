@@ -45,7 +45,7 @@ jobs:
     name: ${{ matrix.img.name }}${{ matrix.os.suffix }}
     runs-on: ${{ matrix.os.runs-on }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: docker build
         run: |
           args=()
@@ -65,7 +65,7 @@ jobs:
     if: (failure() || cancelled()) && github.event_name == 'schedule' && github.run_attempt == 1
     steps:
       - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Create Issue if Build Fails
         uses: JasonEtco/create-an-issue@v2
         env:

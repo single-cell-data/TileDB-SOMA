@@ -45,7 +45,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
@@ -55,19 +55,19 @@ jobs:
         run: cat /proc/cpuinfo
 
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
           cache-dependency-path: ./apis/python/setup.py
 
       - name: Check out TileDB-SOMA
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # ensure we get all tags to inform package version determination
 
       - name: Download pre-built C++ library
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: cpp-build-Release-${{ matrix.os }}
 
