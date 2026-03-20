@@ -202,7 +202,6 @@ SOMACollectionBase <- R6::R6Class(
         self$mode()
       ))
       if (!obj$is_open()) {
-        print("OBJECT closed")
         switch(
           EXPR = (mode <- self$mode()),
           READ = obj$open(mode),
