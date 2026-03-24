@@ -327,3 +327,19 @@ test_that("remove() requires DELETE mode", {
   expect_error(collection$remove("x"), regexp = "delete")
   collection$close()
 })
+
+test_that("SOMACollection$is_relative", {
+  uri <- withr::local_tempdir("collection-is-relative")
+  collection <- SOMACollectionCreate(uri)
+  withr::defer(collection$close())
+
+  sdf <- create_and_populate_soma_dataframe(file.path(uri, "sdf"))
+  collection$set(sdf, name = "sdf_rel", relative = TRUE)
+  collection$set(sdf, name = "sdf_abs", relative = FALSE)
+  collection$close()
+
+  collection <- SOMACollectionOpen(uri, mode = "READ")
+  collection$names()
+  expect_true(collection$is_relative("sdf_rel"))
+  expect_false(collection$is_relative("sdf_abs"))
+})
