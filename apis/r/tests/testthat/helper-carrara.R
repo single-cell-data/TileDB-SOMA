@@ -11,7 +11,7 @@ skip_if_no_carrara <- function() {
 # Read from environment variables or use defaults
 get_carrara_config <- function() {
   list(
-    profile = Sys.getenv("CARRARA_TEST_PROFILE", "carrara"),
+    profile = Sys.getenv("CARRARA_TEST_PROFILE", "default"),
     workspace = Sys.getenv("CARRARA_TEST_WORKSPACE", "TileDB-Inc-Staging"),
     teamspace = Sys.getenv("CARRARA_TEST_TEAMSPACE", "aaron-dev"),
     folder = Sys.getenv("CARRARA_TEST_FOLDER", "remote_test"),
