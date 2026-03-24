@@ -110,6 +110,18 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// soma_group_member_is_relative
+bool soma_group_member_is_relative(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name);
+RcppExport SEXP _tiledbsoma_soma_group_member_is_relative(SEXP groupSEXP, SEXP nameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledbsoma::SOMAGroup> >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
+    rcpp_result_gen = Rcpp::wrap(soma_group_member_is_relative(group, name));
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_metadata_num
 int32_t get_metadata_num(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_get_metadata_num(SEXP uriSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
@@ -1104,6 +1116,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_group_get_members", (DL_FUNC) &_tiledbsoma_soma_group_get_members, 1},
     {"_tiledbsoma_soma_group_set", (DL_FUNC) &_tiledbsoma_soma_group_set, 5},
     {"_tiledbsoma_soma_group_remove_member", (DL_FUNC) &_tiledbsoma_soma_group_remove_member, 2},
+    {"_tiledbsoma_soma_group_member_is_relative", (DL_FUNC) &_tiledbsoma_soma_group_member_is_relative, 2},
     {"_tiledbsoma_get_metadata_num", (DL_FUNC) &_tiledbsoma_get_metadata_num, 3},
     {"_tiledbsoma_get_all_metadata", (DL_FUNC) &_tiledbsoma_get_all_metadata, 3},
     {"_tiledbsoma_get_metadata", (DL_FUNC) &_tiledbsoma_get_metadata, 4},

@@ -223,6 +223,18 @@ SOMACollectionBase <- R6::R6Class(
       return(obj)
     },
 
+    #' @description Check if a member's URI is stored as relative.
+    #'
+    #' @param name The name of the member.
+    #'
+    #' @return Logical value indicating whether the member's URI is relative.
+    #'
+    is_relative = function(name) {
+      stopifnot(is_scalar_character(name) && nzchar(name))
+      private$.check_open()
+      soma_group_member_is_relative(private$.handle, name)
+    },
+
     #' @description Remove member. (lifecycle: maturing)
     #'
     #' @param name Name of the member to remove.
