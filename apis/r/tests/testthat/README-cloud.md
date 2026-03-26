@@ -39,7 +39,11 @@ export CLOUD_TEST_PROFILE="cloudStaging"            # Profile name (default: "de
 export CLOUD_TEST_NAMESPACE="your-namespace"        # Namespace name (default: "TileDB-Inc")
 ```
 
-**Note:** `TILEDB_REST_TOKEN` should *not* be set. The tests automatically unset it to avoid conflicts with the profile-based authentication.
+**Note:** `TILEDB_REST_TOKEN` should *not* be set. The tests automatically unset it to avoid conflicts with the profile-based authentication. If you have it set in your shell environment, the tests will override it.
+
+## Cleanup Caveat
+
+The tiledb-r package does not provide a method for deleting and deregistering arrays from TileDB Cloud. Test cleanup removes the underlying data from S3 via VFS, but the registered assets remain in the TileDB Cloud catalog. After running the tests you may need to manually delete leftover registered assets in the TileDB Cloud UI.
 
 ## Running Tests
 
@@ -63,5 +67,6 @@ The `helper-cloud.R` file provides utility functions for cloud tests:
 - `get_cloud_config()` - Returns configuration (profile, namespace, bucket) from environment variables
 - `with_cloud_env()` - Sets `TILEDB_PROFILE_NAME` and unsets `TILEDB_REST_TOKEN` for the test scope
 - `get_cloud_base_uri()` - Builds the base URI for test objects (`tiledb://<namespace>/<bucket>`)
-- `cloud_path()` - Creates a unique cloud URI with automatic cleanup
+- `cloud_group_path()` - Creates a unique cloud URI for groups with automatic cleanup
+- `cloud_array_path()` - Creates a unique cloud URI for arrays with automatic cleanup (see cleanup caveat above)
 - `get_test_seurat_object()` - Returns a simplified Seurat object for testing

@@ -10,7 +10,7 @@ test_that("Ingest Seurat object to cloud with write_soma", {
   pbmc_small <- get_test_seurat_object()
 
   # Create cloud experiment path
-  uri <- cloud_path()
+  uri <- cloud_group_path()
 
   # Ingest Seurat object to cloud --------------------------------------------
   expect_no_error(result_uri <- write_soma(pbmc_small, uri = uri))

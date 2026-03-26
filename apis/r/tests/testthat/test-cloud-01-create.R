@@ -3,7 +3,7 @@
 test_that("SOMACollection member operations in cloud", {
   skip_if_no_cloud()
   with_cloud_env()
-  uri <- cloud_path()
+  uri <- cloud_group_path()
 
   # Create collection with multiple member types
   SOMACollectionCreate(uri = uri)$close()

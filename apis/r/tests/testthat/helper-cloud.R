@@ -32,9 +32,19 @@ get_cloud_base_uri <- function() {
   sprintf("tiledb://%s/%s", cfg$namespace, cfg$bucket)
 }
 
-# Create a unique cloud uri with automatic cleanup
-cloud_path <- function(env = parent.frame()) {
-  remote_path(get_cloud_base_uri(), "tiledbsoma-r-test-", cleanup_group, env)
+# Create a unique cloud array path with automatic cleanup.
+#
+# NOTE: tiledb-r does not provide a method for deleting and
+# deregistering arrays from TileDB Cloud. The cleanup function
+# only removes the array from S3 via VFS. Registered assets
+# must be cleaned up manually in the TileDB Cloud UI.
+cloud_array_path <- function(env = parent.frame()) {
+  remote_path(get_cloud_base_uri(), "tiledbsoma-r-", cleanup_array, env)
+}
+
+# Create a unique cloud group path with automatic cleanup
+cloud_group_path <- function(env = parent.frame()) {
+  remote_path(get_cloud_base_uri(), "tiledbsoma-r-group-", cleanup_group, env)
 }
 
 # Get a simplified Seurat object for faster testing
