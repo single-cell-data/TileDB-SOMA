@@ -21,12 +21,9 @@ get_cloud_config <- function() {
   )
 }
 
-# Set cloud-related environment variables and unset existing TILEDB_REST_TOKEN
+# Activate the cloud TileDB profile for the test scope
 with_cloud_env <- function(env = parent.frame()) {
-  withr::local_envvar(list(
-    TILEDB_PROFILE_NAME = get_cloud_config()$profile,
-    TILEDB_REST_TOKEN = NA_character_
-  ), .local_envir = env)
+  with_tiledb_profile(get_cloud_config()$profile, env = env)
 }
 
 # Build base URI for cloud tests
