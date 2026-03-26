@@ -2,6 +2,7 @@
 
 test_that("DELETE mode member removal in cloud", {
   skip_if_no_cloud()
+  with_cloud_env()
   uri <- cloud_path()
 
   # Create collection with members

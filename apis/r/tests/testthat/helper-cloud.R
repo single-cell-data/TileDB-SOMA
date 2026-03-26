@@ -7,17 +7,26 @@ skip_if_no_cloud <- function() {
     "Cloud tests not enabled. Set SOMA_TEST_CLOUD=true to run."
   )
   testthat::skip_if_not(
-    nzchar(Sys.getenv("TILEDB_REST_TOKEN")),
-    "TILEDB_REST_TOKEN not set; skipping cloud tests."
+    nzchar(Sys.getenv("CLOUD_TEST_BUCKET")),
+    "CLOUD_TEST_BUCKET not set; skipping cloud tests."
   )
 }
 
 # Read from environment variables or use defaults
 get_cloud_config <- function() {
   list(
+    profile = Sys.getenv("CLOUD_TEST_PROFILE", "default"),
     namespace = Sys.getenv("CLOUD_TEST_NAMESPACE", "TileDB-Inc"),
     bucket = Sys.getenv("CLOUD_TEST_BUCKET")
   )
+}
+
+# Set cloud-related environment variables and unset existing TILEDB_REST_TOKEN
+with_cloud_env <- function(env = parent.frame()) {
+  withr::local_envvar(list(
+    TILEDB_PROFILE_NAME = get_cloud_config()$profile,
+    TILEDB_REST_TOKEN = NA_character_
+  ), .local_envir = env)
 }
 
 # Build base URI for cloud tests

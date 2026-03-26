@@ -2,6 +2,8 @@
 
 test_that("Ingest Seurat object to cloud with write_soma", {
   skip_if_no_cloud()
+  with_cloud_env()
+
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
 
   # Get test Seurat object

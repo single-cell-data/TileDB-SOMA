@@ -2,6 +2,7 @@
 
 test_that("Error handling for cloud operations", {
   skip_if_no_cloud()
+  with_cloud_env()
 
   # Test 1: Opening non-existent URI should error
   nonexistent_uri <- file_path(get_cloud_base_uri(), "does_not_exist_12345")
