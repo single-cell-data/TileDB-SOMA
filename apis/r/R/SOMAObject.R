@@ -234,6 +234,25 @@ SOMAObject <- R6::R6Class(
       return(invisible(self))
     },
 
+    #' @description Delete a metadata entry. (lifecycle: experimental)
+    #'
+    #' @param key The name of the metadata attribute to delete
+    #' is not NULL.
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    delete_metadata = function(key) {
+      if (!(is.null(key) || (is_scalar_character(key) && nzchar(key)))) {
+        stop("'key' must be a single, non-empty string", call. = FALSE)
+      }
+
+      private$.check_open_for_write()
+
+      soma_delete_metadata(private$.handle, key)
+
+      return(invisible(self))
+    },
+
     #' @description Print-friendly representation of the object
     #'
     #' @return Invisibly returns \code{self}
