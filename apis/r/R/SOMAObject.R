@@ -152,9 +152,12 @@ SOMAObject <- R6::R6Class(
             length(tiledb_timestamp) == 1L &&
             !is.na(tiledb_timestamp))
       )
-      self$close(TRUE)
-      private$.tiledb_timestamp <- tiledb_timestamp
-      self$open(mode)
+
+      if (self$mode() != mode) {
+        self$close(TRUE)
+        private$.tiledb_timestamp <- tiledb_timestamp
+        self$open(mode)
+      }
       return(invisible(self))
     },
 
