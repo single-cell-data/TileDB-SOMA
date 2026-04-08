@@ -53,6 +53,7 @@ class SOMACollection : public SOMACollectionBase {
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     using SOMACollectionBase::open;
+    using SOMACollectionBase::reopen;
 
     //===================================================================
     //= public non-static

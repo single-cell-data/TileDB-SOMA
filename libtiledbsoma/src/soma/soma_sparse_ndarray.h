@@ -126,6 +126,7 @@ class SOMASparseNDArray : public SOMAArray {
     ~SOMASparseNDArray() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     /**
      * Return whether the SOMASparseNDArray is sparse.

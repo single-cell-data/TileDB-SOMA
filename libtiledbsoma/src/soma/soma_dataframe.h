@@ -202,6 +202,7 @@ class SOMADataFrame : public SOMAArray {
     ~SOMADataFrame() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     /**
      * Return the data schema, in the form of a ArrowSchema.

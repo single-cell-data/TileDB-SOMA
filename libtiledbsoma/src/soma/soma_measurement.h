@@ -76,6 +76,7 @@ class SOMAMeasurement : public SOMACollectionBase {
     ~SOMAMeasurement() = default;
 
     using SOMACollectionBase::open;
+    using SOMACollectionBase::reopen;
 
     /**
      * @brief Get the primary annotations on the variable axis

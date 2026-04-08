@@ -75,7 +75,8 @@ class SOMAExperiment : public SOMACollectionBase {
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
 
-    using SOMAGroup::open;
+    using SOMACollectionBase::open;
+    using SOMACollectionBase::reopen;
 
     /**
      * @brief Get the primary annotations on the observation axis

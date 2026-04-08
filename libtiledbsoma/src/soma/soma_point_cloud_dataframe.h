@@ -116,6 +116,7 @@ class SOMAPointCloudDataFrame : public SOMAArray {
     ~SOMAPointCloudDataFrame() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     inline const SOMACoordinateSpace& coordinate_space() const {
         return coord_space_;

@@ -122,6 +122,7 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
     ~SOMAGeometryDataFrame() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     /**
      * Return the data schema, in the form of a ArrowSchema.
