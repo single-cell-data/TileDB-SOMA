@@ -133,6 +133,14 @@ class SOMAGroup : public SOMAObject {
     void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
+     * Reopen the SOMAGroup object.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
+
+    /**
      * Close the SOMAGroup object.
      */
     void close([[maybe_unused]] bool recursive = false) override;

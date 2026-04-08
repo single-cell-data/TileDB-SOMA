@@ -243,6 +243,11 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     schema_ = std::make_shared<tiledb::ArraySchema>(arr_->schema());
 }
 
+void SOMAArray::reopen(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    close();
+    open(mode, timestamp);
+}
+
 common::ManagedQuery SOMAArray::create_managed_query(std::string_view name) const {
     return common::ManagedQuery(arr_, ctx_->tiledb_ctx(), name);
 }

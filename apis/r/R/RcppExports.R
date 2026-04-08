@@ -442,6 +442,10 @@ soma_object_open <- function(soma_object, mode, timestamp = NULL) {
     .Call(`_tiledbsoma_soma_object_open`, soma_object, mode, timestamp)
 }
 
+soma_object_reopen <- function(soma_object, mode, timestamp = NULL) {
+    .Call(`_tiledbsoma_soma_object_reopen`, soma_object, mode, timestamp)
+}
+
 soma_object_close <- function(soma_object, recursive) {
     invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object, recursive))
 }

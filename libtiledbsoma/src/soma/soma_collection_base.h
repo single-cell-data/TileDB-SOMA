@@ -71,6 +71,14 @@ class SOMACollectionBase : public SOMAGroup {
     void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
+     * Open the SOMAGroup object.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
+
+    /**
      * Closes the SOMACollectionBase object.
      */
     void close([[maybe_unused]] bool recursive = false);

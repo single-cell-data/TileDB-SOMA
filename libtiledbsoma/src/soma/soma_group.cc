@@ -178,6 +178,11 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     mutated_members_.clear();
 }
 
+void SOMAGroup::reopen(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    close(true);
+    open(mode, timestamp);
+}
+
 void SOMAGroup::close([[maybe_unused]] bool recursive) {
     if (metadata_cache_)
         metadata_cache_->write(*group_);

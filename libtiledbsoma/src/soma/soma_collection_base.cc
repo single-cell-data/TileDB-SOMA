@@ -91,6 +91,11 @@ void SOMACollectionBase::open(OpenMode mode, std::optional<TimestampRange> times
     }
 }
 
+void SOMACollectionBase::reopen(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    close(true);
+    open(mode, timestamp);
+}
+
 void SOMACollectionBase::close([[maybe_unused]] bool recursive) {
     if (recursive) {
         for (auto& [key, member] : children_) {

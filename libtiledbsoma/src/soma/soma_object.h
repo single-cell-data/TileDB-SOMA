@@ -96,6 +96,14 @@ class SOMAObject {
     virtual void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) = 0;
 
     /**
+     * Reopen the SOMAObject.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    virtual void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) = 0;
+
+    /**
      * @brief Close the SOMAObject.
      */
     virtual void close([[maybe_unused]] bool recursive = false) = 0;
