@@ -226,7 +226,7 @@ write_soma.DimReduc <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "DimReduc.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.DimReduc(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -425,7 +425,7 @@ write_soma.Graph <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "Graph.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.Graph(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -548,7 +548,7 @@ write_soma.Seurat <- function(
   context <- get_soma_context(
     context,
     tiledbsoma_ctx,
-    what = "Seurat.write_soma(tiledbsoma_ctx)"
+    what = "write_soma.Seurat(tiledbsoma_ctx)"
   )
   # Allow writing `soma_` prefixed columns to SOMADataFrames
   # (normally disallowed as a reserved prefix)
@@ -813,7 +813,7 @@ write_soma.SeuratCommand <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "SeuratCommand.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.SeuratCommand(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )

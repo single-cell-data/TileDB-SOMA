@@ -30,7 +30,7 @@ write_soma.DataFrame <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "DataFrame.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.DataFrame(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -93,7 +93,7 @@ write_soma.Hits <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "Hits.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.Hits(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -181,7 +181,7 @@ write_soma.SingleCellExperiment <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "SingleCellExperiment.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.SingleCellExperiment(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -401,7 +401,7 @@ write_soma.SummarizedExperiment <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "SummarizedExperiment.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.SummarizedExperiment(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )

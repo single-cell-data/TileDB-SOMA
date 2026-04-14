@@ -103,7 +103,7 @@ write_soma.character <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "character.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.character(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -184,7 +184,7 @@ write_soma.data.frame <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "data.frame(tiledbsoma_ctx)",
+      what = "write_soma.data.frame(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -349,7 +349,7 @@ write_soma.IterableMatrix <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "IterableMatrix.write_soma",
+      what = "write_soma.IterableMatrix(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -497,7 +497,7 @@ write_soma.matrix <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "matrix.write_soma(tiledbsoma_ctx)",
+      what = "write_soma.matrix(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
@@ -671,7 +671,7 @@ write_soma.TsparseMatrix <- function(
 ) {
   if (lifecycle::is_present(tiledbsoma_ctx)) {
     lifecycle::deprecate_stop(
-      what = "TsparseMatrix(tiledbsoma_ctx)",
+      what = "write_soma.TsparseMatrix(tiledbsoma_ctx)",
       when = "2.3.0",
       details = "Use `context` instead."
     )
