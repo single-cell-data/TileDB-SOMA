@@ -362,6 +362,8 @@ def from_visium(
     # - Create `ingest_ctx` for keyword args for creating SOMAGroup objects.
     # - Create `ingestion_platform_ctx` for keyword args for creating SOMAArray objects.
     if context is None:
+        if not SOMAContext.has_default():
+            SOMAContext.set_default()
         context = SOMAContext.get_default()
     elif isinstance(context, SOMATileDBContext):
         context = context._to_soma_context()
