@@ -84,7 +84,7 @@ class PointCloudDataFrame(SpatialDataFrame):
         uri: str,
         *,
         schema: pa.Schema,
-        domain: Domain | None,
+        domain: Domain,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
