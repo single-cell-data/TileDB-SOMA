@@ -37,6 +37,13 @@ write_soma <- function(
   tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
+      what = "write_soma(tiledbsoma_ctx)",
+      when = "2.3.0",
+      details = "Use `context` instead."
+    )
+  }
   UseMethod(generic = "write_soma", object = x)
 }
 
@@ -101,13 +108,6 @@ write_soma.character <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.character(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   sdf <- write_soma(
     x = data.frame(values = x),
     uri = uri,
@@ -182,13 +182,6 @@ write_soma.data.frame <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.data.frame(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   stopifnot(
     "'x' must be named" = is_named(x, allow_empty = FALSE),
     "'x' must have at lease one row and one column" = dim(x) > 0L,
@@ -347,13 +340,6 @@ write_soma.IterableMatrix <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.IterableMatrix(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   stopifnot(
     "Cannot find 'BPCells'" = requireNamespace("BPCells", quietly = TRUE),
     "'sparse' must be a single logical value" = is_scalar_logical(sparse),
@@ -495,13 +481,6 @@ write_soma.matrix <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.matrix(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   stopifnot(
     "'sparse' must be a single logical value" = is_scalar_logical(sparse),
     "'type' must be an Arrow type" = is.null(type) || is_arrow_data_type(type),
@@ -665,17 +644,10 @@ write_soma.TsparseMatrix <- function(
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = tiledbsoma_ctx,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.TsparseMatrix(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   stopifnot(
     "'x' must be a general sparse matrix" = inherits(
       x = x,
