@@ -131,7 +131,7 @@
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = tiledbsoma_ctx,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 )

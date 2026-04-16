@@ -2,13 +2,6 @@
 #'
 #' Context map for TileDB-backed SOMA objects
 #'
-#' @export
-#'
-#' @examplesIf requireNamespace("tiledb", quietly = TRUE)
-#' (ctx <- SOMATileDBContext$new())
-#' ctx$get("sm.mem.reader.sparse_global_order.ratio_array_data")
-#'
-#' ctx$to_tiledb_context()
 #'
 SOMATileDBContext <- R6::R6Class(
   classname = "SOMATileDBContext",

@@ -6,14 +6,6 @@
 \description{
 Context map for TileDB-backed SOMA objects
 }
-\examples{
-\dontshow{if (requireNamespace("tiledb", quietly = TRUE)) withAutoprint(\{ # examplesIf}
-(ctx <- SOMATileDBContext$new())
-ctx$get("sm.mem.reader.sparse_global_order.ratio_array_data")
-
-ctx$to_tiledb_context()
-\dontshow{\}) # examplesIf}
-}
 \section{Super classes}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{\link[tiledbsoma:ScalarMap]{tiledbsoma::ScalarMap}} -> \code{\link[tiledbsoma:SOMAContextBase]{tiledbsoma::SOMAContextBase}} -> \code{SOMATileDBContext}
 }
