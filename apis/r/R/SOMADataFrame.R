@@ -72,7 +72,7 @@ SOMADataFrame <- R6::R6Class(
           what = "create(domain = 'must be a named list')",
         )
       }
-if (!.is_domain(soma_domain, index_column_names)) {
+      if (!.is_domain(soma_domain, index_column_names)) {
         stop(
           "domain must be a named list, with values being 2-element vectors or NULL (for string columns only)"
         )
