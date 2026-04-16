@@ -2,6 +2,7 @@
 #'
 #' Context map for TileDB-backed SOMA objects
 #'
+#' @noRd
 #'
 SOMATileDBContext <- R6::R6Class(
   classname = "SOMATileDBContext",
