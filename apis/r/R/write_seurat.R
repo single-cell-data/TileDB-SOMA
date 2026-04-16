@@ -534,7 +534,7 @@ write_soma.Seurat <- function(
   context <- get_soma_context(
     context,
     tiledbsoma_ctx,
-    what = "write_soma.Seurat(tiledbsoma_ctx)"
+    what = "write_soma(tiledbsoma_ctx)"
   )
   # Allow writing `soma_` prefixed columns to SOMADataFrames
   # (normally disallowed as a reserved prefix)
