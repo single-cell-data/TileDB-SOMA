@@ -224,13 +224,6 @@ write_soma.DimReduc <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.DimReduc(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be NULL" = is.null(uri),
@@ -423,13 +416,6 @@ write_soma.Graph <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.Graph(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'soma_parent' must be a SOMAMeasurement" = inherits(
@@ -811,13 +797,6 @@ write_soma.SeuratCommand <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.SeuratCommand(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   check_package("jsonlite")
   stopifnot(

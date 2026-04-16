@@ -28,13 +28,6 @@ write_soma.DataFrame <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.DataFrame(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   # Check for compound non-atomic/factor types
   for (i in names(x)) {
     if (!(is.atomic(x[[i]]) || is.factor(x[[i]]))) {
@@ -91,13 +84,6 @@ write_soma.Hits <- function(
   context = NULL,
   relative = TRUE
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.Hits(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   return(write_soma(
     x = .hits_to_mat(x),
     uri = uri,
@@ -179,13 +165,6 @@ write_soma.SingleCellExperiment <- function(
   tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.SingleCellExperiment(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
   check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
   if ("shape" %in% names(args <- rlang::dots_list(...))) {
@@ -399,14 +378,7 @@ write_soma.SummarizedExperiment <- function(
   tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
-  if (lifecycle::is_present(tiledbsoma_ctx)) {
-    lifecycle::deprecate_stop(
-      what = "write_soma.SummarizedExperiment(tiledbsoma_ctx)",
-      when = "2.3.0",
-      details = "Use `context` instead."
-    )
-  }
-   check_package("SummarizedExperiment", "1.28.0")
+  check_package("SummarizedExperiment", "1.28.0")
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
