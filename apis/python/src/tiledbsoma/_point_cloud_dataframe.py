@@ -156,7 +156,6 @@ class PointCloudDataFrame(SpatialDataFrame):
         schema = _canonicalize_schema(schema, index_column_names)
 
         soma_domain = domain
-        domain = None
 
         if soma_domain is None:
             raise TypeError("Cannot set domain=None. Please specify the desired domain for the point cloud dataframe.")
