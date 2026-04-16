@@ -20,40 +20,11 @@ SOMATileDBContext <- R6::R6Class(
     #' @return An instantiated \code{SOMATileDBContext} object
     #'
     initialize = function(config = NULL, cached = TRUE) {
-      .deprecate(
+      lifecycle::deprecate_stop(
         what = "SOMATileDBContext$new()",
         when = "2.3.0",
         details = "Use `SOMAContext` instead."
       )
-      config <- config %||% character()
-      # Identify options that are SOMA-specific
-      soma_opts <- which(names(config) %in% names(.SOMA_CONTEXTS()))
-      if (length(soma_opts)) {
-        soma_config <- config[soma_opts]
-        config <- config[-soma_opts]
-      } else {
-        soma_config <- NULL
-      }
-      super$initialize(soma_config)
-      if (is.list(config)) {
-        config <- unlist(config)
-      }
-      stopifnot(
-        "'config' must be a character vector" = !length(config) ||
-          is.character(config),
-        "'config' must be named" = !length(config) ||
-          is_named(config, allow_empty = FALSE)
-      )
-      ratio_array_data_key = "sm.mem.reader.sparse_global_order.ratio_array_data"
-      if (is.null(config) || !(ratio_array_data_key %in% names(config))) {
-        config["sm.mem.reader.sparse_global_order.ratio_array_data"] <- "0.3"
-      }
-      # Add the TileDB context
-      cfg <- tiledb::tiledb_config()
-      for (opt in names(config)) {
-        cfg[opt] <- config[opt]
-      }
-      private$.tiledb_ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
     },
 
     #' @return The keys of the map
