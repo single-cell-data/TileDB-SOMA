@@ -43,13 +43,6 @@ test_that("SOMAContext set config", {
   expect_equal(unname(value2), expected_value2)
 })
 
-test_that("SOMATileDBContext is defunct", {
-  lifecycle::expect_defunct(SOMATileDBContext$new())
-})
-
-test_that("soma_context() is defunct", {
-  lifecycle::expect_defunct(soma_context())
-})
 
 test_that("get_soma_context() tiledbsoma_ctx parameter is defunct", {
   lifecycle::expect_defunct(
