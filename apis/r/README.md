@@ -13,7 +13,7 @@ install.packages("tiledbsoma", repos = c("https://tiledb-inc.r-universe.dev",
                                          "https://cloud.r-project.org"))
 ```
 
-Installing from source on Unix-like platforms requires `cmake`, `git`, and a C++ compiler with C++20 support (e.g., `g++` 10+).
+Installing from source on Unix-like platforms requires `cmake`, `git`, and a C++ compiler with C++20 support (e.g., `g++` 13+).
 
 ### From Conda
 
