@@ -52,7 +52,9 @@ To set up and install from a local clone of this git repository:
 - Clone this repository: `git clone https://github.com/single-cell-data/TileDB-SOMA.git`.
 - Change into the R API package directory: `cd TileDB-SOMA/apis/r`.
 - Optionally, clean the files in the repo: `./cleanup` (this is not needed the first time).
-- Optionally, add on optional package with more more test data: `install.packages("pbmc3k.tiledb",  repos="https://ghrr.github.io/drat")`.
+- Optionally, install additional data packages used for testing:
+  - `pbmc3k` provides single-cell data for SingleCellExperiment and SummarizedExperiment ingestion tests: `install.packages("pbmc3k", repos = "https://tiledb-inc.r-universe.dev")`
+  - `pbmc3k.tiledb` provides pre-built SOMA test data: `install.packages("pbmc3k.tiledb", repos = "https://ghrr.github.io/drat")`
 - If you have edited any `src/*.cpp` files and changed any function signatures, then running `Rscript -e 'Rcpp::compileAttributes()'` will update the `Rcpp`-generated glue code.
 - If you have changed any C++ function header documentation, run `Rscript -e 'roxygen2::roxygenise()'` to update the corresponding R files.
 - Build the R package source tarball from the repository sources: `R CMD build .` (which will also include the `libtiledbsoma` source via a repository soft-link); other dependencies are required as described in the previous section).
