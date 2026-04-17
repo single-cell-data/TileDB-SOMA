@@ -1,73 +1,109 @@
-# Overview
+# tiledbsoma (R)
 
-This is the R implementation of the [SOMA API specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).
+R implementation of the [SOMA API specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).
 
-# Installation
+## Installation
 
-## Release packages
+### From R-universe (recommended)
 
-TileDB-SOMA releases can be installed from R-universe, which serves macOS binaries and the source
-package for other Unix-like platforms.
+R-universe serves macOS binaries and source packages for other Unix-like platforms.
 
 ```r
-install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
-                                         'https://cloud.r-project.org'))
+install.packages("tiledbsoma", repos = c("https://tiledb-inc.r-universe.dev",
+                                         "https://cloud.r-project.org"))
 ```
 
-Installing from source on Unix-like platforms requires `cmake`, `git`, and a recent-enough C++ compiler (`g++` version 10.\* or above).
+Installing from source on Unix-like platforms requires `cmake`, `git`, and a C++ compiler with C++20 support (e.g., `g++` 13+).
 
-Alternatively, tiledbsoma can be installed directly from [Conda](https://anaconda.org/tiledb/r-tiledbsoma), which serves binaries for multiple architectures.
+### From Conda
+
+Binary packages for multiple architectures are available from [Conda](https://anaconda.org/tiledb/r-tiledbsoma):
 
 ```bash
-mamba install -c conda-forge -c tiledb r-tiledbsoma
+conda install -c conda-forge -c tiledb r-tiledbsoma
 ```
 
-*Note, we're using `mamba` here as a drop-in replacement for `conda` to accelerate the install process.*
+### From GitHub (development)
 
-## From source
-
-To install the very latest tiledbsoma development version (our `main` branch), use [`remotes::install_github()`](https://cran.r-project.org/package=remotes/readme/README.html):
+To install the latest development version from the `main` branch:
 
 ```r
 remotes::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdir = "apis/r")
 ```
 
-A note about the `fmt` and `spdlog` packages:
-
-- If you encounter an install-time error like `undefined symbol: _ZTIN3fmt2v912format_errorE` then you should uninstall your systemversions of `fmt` and `spdlog`. On Linux, this means `dpkg -l | egrep "lib(spdlog|fmt)"` should now come up empty.
-- If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
-
 ### Requirements
 
-- Source installation requires the [`tiledb` R package](https://github.com/TileDB-Inc/TileDB-R) -- which in turn depends on either a local installation of [TileDB Core library](https://github.com/TileDB-Inc/TileDB) or the provided build artifacts.
-- In general, source installation of TileDB Core and its packages requires `cmake` and `git` to be installed; these are common tools each operating system provides readily.
-- All other R package dependencies are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g._
-  `remotes::install_deps(".", dependencies=TRUE)` which will also install suggested packages. In order to build vignettes, `knitr` and `rmarkdown` are required (and will be installed), as is `testthat` for testing. If `testthat` is invoked directly then `pkgbuild` is also needed (but is not installed as not listed in `DESCRIPTION`).
-- In addition, this R package also depends on the [`libtiledbsoma` library](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma) from this repository. It is either installed with the package (as described in the next section), or can be used as a system library (if one is found). A system installation can be provided by following the steps in the [`libtiledbsoma` directory](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma).
+Source installation requires:
 
-### Development setup
+- [`tiledb` R package](https://github.com/TileDB-Inc/TileDB-R), which depends on a local installation of [TileDB Core](https://github.com/TileDB-Inc/TileDB) or its provided build artifacts
+- `cmake` and `git`
+- [`libtiledbsoma`](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma), which is built automatically during package installation or can be provided as a system library (see the [`libtiledbsoma` directory](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma) for manual installation)
 
-To set up and install from a local clone of this git repository:
+All other R package dependencies are listed in [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) and can be installed with:
 
-- Clone this repository: `git clone https://github.com/single-cell-data/TileDB-SOMA.git`.
-- Change into the R API package directory: `cd TileDB-SOMA/apis/r`.
-- Optionally, clean the files in the repo: `./cleanup` (this is not needed the first time).
-- Optionally, add on optional package with more more test data: `install.packages("pbmc3k.tiledb",  repos="https://ghrr.github.io/drat")`.
-- If you have edited any `src/*.cpp` files and changed any function signatures, then running `Rscript -e 'Rcpp::compileAttributes()'` will update the `Rcpp`-generated glue code.
-- If you have changed any C++ function header documentation, run `Rscript -e 'roxygen2::roxygenise()'` to update the corresponding R files.
-- Build the R package source tarball from the repository sources: `R CMD build .` (which will also include the `libtiledbsoma` source via a repository soft-link); other dependencies are required as described in the previous section).
-- Optionally, check and test the package from the tarball skipping vignettes and manuals (which need `texlive` or equivalent): `R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz`.
-- Finally, install the package from the tarball: `R CMD INSTALL tiledbsoma_*.tar.gz`. During this installation presence of the two C++ libraries (TileDB Core, TileDB-SOMA) is tested for. TileDB Core builds can be downloaded as needed, and the TileDB-SOMA library is built if needed. (We plan to provide a downloadable artifact for it too.)
+```r
+remotes::install_deps(".", dependencies = TRUE)
+```
 
-Once installed successfully, the package sources can be edited and re-installed iteratively.
-The optional clean step ensures a full rebuild, and the optional copy of `libtiledbsoma` ensures it is updated too.
+### Troubleshooting: `fmt` and `spdlog` conflicts
 
-# Status
+If you have system versions of `fmt` or `spdlog` installed, they can conflict with the versions vendored by TileDB.
 
-Please see [https://github.com/single-cell-data/TileDB-SOMA/issues](https://github.com/single-cell-data/TileDB-SOMA/issues).
+- **`undefined symbol: _ZTIN3fmt2v912format_errorE`**: Uninstall your system versions of `fmt` and `spdlog`. On Linux, verify removal with `dpkg -l | egrep "lib(spdlog|fmt)"`.
+- **`fatal error: spdlog/spdlog.h: No such file or directory`**: Remove the leftover cmake config directory at `/usr/local/lib/cmake/spdlog`, which the system uninstall of `spdlog` fails to clean up.
 
-# Information for developers
+## Development
 
-Please see the [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
+### Setup
 
-This `main` branch implements the [updated specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md). Please also see the `main-old` branch for an implementation of the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/single-cell-data/TileDB-SOMA.git
+   cd TileDB-SOMA/apis/r
+   ```
+
+1. Install R package dependencies:
+
+   ```r
+   remotes::install_deps(".", dependencies = TRUE)
+   ```
+
+1. Optionally, install additional data packages used by tests:
+
+   - **`pbmc3k`** provides single-cell data for SingleCellExperiment and SummarizedExperiment ingestion tests:
+
+     ```r
+     install.packages("pbmc3k", repos = "https://tiledb-inc.r-universe.dev")
+     ```
+
+   - **`pbmc3k.tiledb`** provides pre-built SOMA test data:
+
+     ```r
+     install.packages("pbmc3k.tiledb", repos = "https://ghrr.github.io/drat")
+     ```
+
+### Build and install
+
+```bash
+# Clean previous build artifacts (not needed on first build)
+./cleanup
+
+# Build the source tarball (includes libtiledbsoma via symlink)
+R CMD build .
+
+# Check the package (skipping vignettes and manual, which require texlive)
+R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz
+
+# Install
+R CMD INSTALL tiledbsoma_*.tar.gz
+```
+
+During installation, TileDB Core is downloaded if needed and `libtiledbsoma` is built if a system installation is not found.
+
+### After editing source files
+
+- **Changed `src/*.cpp` function signatures**: Run `Rscript -e 'Rcpp::compileAttributes()'` to update Rcpp-generated glue code.
+- **Changed C++ function header documentation**: Run `Rscript -e 'roxygen2::roxygenise()'` to update the corresponding R files.
+
+Once installed, the package sources can be edited and re-installed iteratively. Running `./cleanup` before rebuilding ensures a full rebuild including `libtiledbsoma`.
