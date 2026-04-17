@@ -220,7 +220,7 @@ write_soma.DimReduc <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -273,7 +273,6 @@ write_soma.DimReduc <- function(
       uri = file_path(soma_parent$uri, "obsm"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else if (isTRUE(relative)) {
@@ -301,7 +300,6 @@ write_soma.DimReduc <- function(
     ingest_mode = ingest_mode,
     shape = demb,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
 
@@ -350,7 +348,6 @@ write_soma.DimReduc <- function(
         uri = file_path(soma_parent$uri, "varm"),
         ingest_mode = ingest_mode,
         platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx,
         context = context
       )
     } else if (isTRUE(relative)) {
@@ -390,7 +387,6 @@ write_soma.DimReduc <- function(
       ingest_mode = ingest_mode,
       shape = dload,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   }
@@ -416,7 +412,7 @@ write_soma.Graph <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -436,7 +432,6 @@ write_soma.Graph <- function(
       uri = obsp_uri,
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
   } else if (isTRUE(relative)) {
@@ -481,7 +476,6 @@ write_soma.Graph <- function(
     ingest_mode = ingest_mode,
     shape = shape,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
 
@@ -534,13 +528,13 @@ write_soma.Seurat <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
-  context = get_soma_context(
+  context <- get_soma_context(
     context,
     tiledbsoma_ctx,
-    what = "Seurat.write_soma(tiledbsoma_ctx)"
+    what = "write_soma(tiledbsoma_ctx)"
   )
   # Allow writing `soma_` prefixed columns to SOMADataFrames
   # (normally disallowed as a reserved prefix)
@@ -799,7 +793,7 @@ write_soma.SeuratCommand <- function(
   ...,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -830,7 +824,6 @@ write_soma.SeuratCommand <- function(
       uri = logs_uri,
       ingest_mode = ingest_mode,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context
     )
     soma_parent$add_new_collection(logs, key)
@@ -897,7 +890,6 @@ write_soma.SeuratCommand <- function(
     key = basename(uri),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     relative = relative
   )

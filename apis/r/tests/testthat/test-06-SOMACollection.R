@@ -309,3 +309,21 @@ test_that("SOMACollection set() rejects duplicate key after reopen", {
   expect_s3_class(collection$get("foo"), "SOMADataFrame")
   expect_equal(collection$get("foo")$read()$concat()$num_rows, 5)
 })
+
+test_that("remove() requires DELETE mode", {
+  skip_if(!extended_tests())
+  uri <- tempfile(pattern = "collection-remove-mode")
+
+  collection <- SOMACollectionCreate(uri)
+  collection$close()
+
+  # READ mode: should error
+  collection <- SOMACollectionOpen(uri, mode = "READ")
+  expect_error(collection$remove("x"), regexp = "delete")
+  collection$close()
+
+  # WRITE mode: deprecated WRITE-mode removal was removed in 3.0.0
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  expect_error(collection$remove("x"), regexp = "delete")
+  collection$close()
+})

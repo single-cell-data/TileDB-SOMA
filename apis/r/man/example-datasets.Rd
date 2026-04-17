@@ -11,7 +11,12 @@ list_datasets()
 
 extract_dataset(name, dir = tempdir())
 
-load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL, context = NULL)
+load_dataset(
+  name,
+  dir = tempdir(),
+  tiledbsoma_ctx = lifecycle::deprecated(),
+  context = NULL
+)
 }
 \arguments{
 \item{name}{The name of the dataset.}

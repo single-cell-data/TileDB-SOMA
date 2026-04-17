@@ -32,7 +32,7 @@ SOMAOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   tiledb_timestamp = NULL
 ) {

@@ -84,8 +84,8 @@ class PointCloudDataFrame(SpatialDataFrame):
         uri: str,
         *,
         schema: pa.Schema,
+        domain: Domain,
         coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
-        domain: Domain | None = None,
         platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -112,8 +112,7 @@ class PointCloudDataFrame(SpatialDataFrame):
             domain: A sequence of tuples, each specifying the range of storable values for an index column. Must contain
                 a domain for each axis and the ``soma_joinid``. For example, for a floating-pointing 2D coordinate space
                 the domain ``domain=[(-10.5, 10.5), (0, 5.5), (0, 10_0000)]`` indicates values in the 2D region
-                ``(-10.5, 10.5) x (0, 5.5)`` with `soma_joinid` in the range ``(0, 10_000)`` (inclusive) are valid. Leaving
-                the domain as ``None`` is deprecated.
+                ``(-10.5, 10.5) x (0, 5.5)`` with `soma_joinid` in the range ``(0, 10_000)`` (inclusive) are valid.
 
         Returns:
             The newly created point cloud, opened for writing.
@@ -156,42 +155,15 @@ class PointCloudDataFrame(SpatialDataFrame):
 
         schema = _canonicalize_schema(schema, index_column_names)
 
-        # SOMA-to-core mappings:
-        #
-        # Before the current-domain feature was enabled (possible after core 2.25):
-        #
-        # * SOMA domain <-> core domain, AKA "max domain" which is a name we'll use for clarity
-        # * core current domain did not exist
-        #
-        # After the current-domain feature was enabled:
-        #
-        # * SOMA max_domain <-> core domain
-        # * SOMA domain <-> core current domain
-        #
-        # As far as the user is concerned, the SOMA-level domain is the only
-        # thing they see and care about. Before 2.25 support, it was immutable
-        # (since it was implemented by core domain). After 2.25 support, it is
-        # mutable/up-resizeable (since it is implemented by core current domain).
-
-        # At this point shift from API terminology "domain" to specifying a soma_ or core_
-        # prefix for these variables. This is crucial to avoid developer confusion.
         soma_domain = domain
-        domain = None
 
         if soma_domain is None:
-            warnings.warn(
-                "Setting ``domain=None`` is deprecated. Please specify the desired domain for the point cloud dataframe.",
-                DeprecationWarning,
-                stacklevel=2,
+            raise TypeError("Cannot set domain=None. Please specify the desired domain for the point cloud dataframe.")
+        if len(soma_domain) != len(index_column_names):
+            raise ValueError(
+                f"Invalid domain={soma_domain}. The domain must have an entry for each axis in the coordinate space "
+                f"and the soma_joinid."
             )
-            soma_domain = tuple(None for _ in index_column_names)
-        else:
-            ndom = len(soma_domain)
-            nidx = len(index_column_names)
-            if ndom != nidx:
-                raise ValueError(
-                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}",
-                )
 
         index_column_schema = []
         index_column_data = {}

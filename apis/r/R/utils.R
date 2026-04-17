@@ -61,35 +61,21 @@ uns_hint <- function(type = c("1d", "2d")) {
 }
 
 get_soma_context <- function(context, tiledbsoma_ctx, what = NULL) {
-  if (!is.null(tiledbsoma_ctx)) {
-    .deprecate(
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
       what = what,
       when = "2.3.0",
       details = "Use `context` instead."
     )
   }
   if (is.null(context)) {
-    if (is.null(tiledbsoma_ctx)) {
-      context <- .pkgenv[["somactx"]]
-      if (is.null(context)) {
-        return(set_default_context())
-      }
-      return(context)
+    context <- .pkgenv[["somactx"]]
+    if (is.null(context)) {
+      return(set_default_context())
     }
-    if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
-      stop(
-        "'tiledbsoma_ctx' must be a SOMATileDBContext object",
-        call. = FALSE
-      )
-    }
-    return(SOMAContext$new(config = unlist(tiledbsoma_ctx$to_list())))
+    return(context)
   }
-  if (!is.null(tiledbsoma_ctx)) {
-    warning(
-      "Both 'context' and 'tiledbsoma_ctx' were provided, using 'context' only"
-    )
-  }
-  if (!inherits(x = context, what = 'SOMAContext')) {
+  if (!inherits(x = context, what = "SOMAContext")) {
     stop(
       "'context' must be a SOMAContext object",
       call. = FALSE
