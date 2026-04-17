@@ -3,6 +3,7 @@
 ## Added
 
 - Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
+- New `is_relative(name)` method on collection classes (`SOMACollection`, `SOMAExperiment`, `SOMAMeasurement`) to check whether a named member is stored as a relative URI. ([#4444](https://github.com/single-cell-data/TileDB-SOMA/pull/4444))
 
 ## Changed
 
