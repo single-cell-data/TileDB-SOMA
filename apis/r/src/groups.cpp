@@ -55,3 +55,11 @@ void soma_group_remove_member(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std
     }
     group->del(name);
 }
+
+// [[Rcpp::export]]
+bool soma_group_member_is_relative(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name) {
+    if (!group) {
+        throw Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
+    }
+    return group->is_relative(name);
+}

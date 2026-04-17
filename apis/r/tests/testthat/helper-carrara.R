@@ -11,7 +11,7 @@ skip_if_no_carrara <- function() {
 # Read from environment variables or use defaults
 get_carrara_config <- function() {
   list(
-    profile = Sys.getenv("CARRARA_TEST_PROFILE", "carrara"),
+    profile = Sys.getenv("CARRARA_TEST_PROFILE", "default"),
     workspace = Sys.getenv("CARRARA_TEST_WORKSPACE", "TileDB-Inc-Staging"),
     teamspace = Sys.getenv("CARRARA_TEST_TEAMSPACE", "aaron-dev"),
     folder = Sys.getenv("CARRARA_TEST_FOLDER", "remote_test"),
@@ -22,13 +22,14 @@ get_carrara_config <- function() {
   )
 }
 
-# Set carrara-related environment variables and unset existing TILEDB_REST_TOKEN
+# Activate the carrara TileDB profile for the test scope
 with_carrara_env <- function(env = parent.frame()) {
-  withr::local_envvar(list(
-    TILEDB_PROFILE_NAME = get_carrara_config()$profile,
-    TILEDB_REST_SERVER_ADDRESS = get_carrara_config()$rest_server,
-    TILEDB_REST_TOKEN = NA_character_
-  ), .local_envir = env)
+  cfg <- get_carrara_config()
+  with_tiledb_profile(
+    cfg$profile,
+    TILEDB_REST_SERVER_ADDRESS = cfg$rest_server,
+    env = env
+  )
 }
 
 # Build base URI for carrara tests

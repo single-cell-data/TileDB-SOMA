@@ -29,6 +29,10 @@ soma_group_remove_member <- function(group, name) {
     invisible(.Call(`_tiledbsoma_soma_group_remove_member`, group, name))
 }
 
+soma_group_member_is_relative <- function(group, name) {
+    .Call(`_tiledbsoma_soma_group_member_is_relative`, group, name)
+}
+
 get_metadata_num <- function(uri, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_metadata_num`, uri, is_array, ctxxp)
 }

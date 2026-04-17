@@ -32,6 +32,24 @@ cleanup_array <- function(path) {
   )
 }
 
+# Activate a TileDB profile for the test scope
+#
+# Sets TILEDB_PROFILE_NAME and unsets TILEDB_REST_TOKEN to ensure the profile's
+# credentials are used without interference from any existing token. Additional
+# environment variables can be passed via `...`.
+#
+# @param profile Name of the TileDB profile to activate
+# @param ... Additional environment variables to set (name = value pairs)
+# @param env Environment for withr::defer scoping
+with_tiledb_profile <- function(profile, ..., env = parent.frame()) {
+  envvars <- list(
+    TILEDB_PROFILE_NAME = profile,
+    TILEDB_REST_TOKEN = NA_character_,
+    ...
+  )
+  withr::local_envvar(envvars, .local_envir = env)
+}
+
 # Create a unique remote path with automatic cleanup
 # @param base_uri Base URI for the remote storage
 # @param prefix Pattern prefix for the unique ID

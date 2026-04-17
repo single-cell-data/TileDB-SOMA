@@ -52,6 +52,7 @@ Derived classes: \code{\link{SOMACollection}},
 \item \href{#method-SOMACollectionBase-close}{\code{SOMACollectionBase$close()}}
 \item \href{#method-SOMACollectionBase-set}{\code{SOMACollectionBase$set()}}
 \item \href{#method-SOMACollectionBase-get}{\code{SOMACollectionBase$get()}}
+\item \href{#method-SOMACollectionBase-is_relative}{\code{SOMACollectionBase$is_relative()}}
 \item \href{#method-SOMACollectionBase-remove}{\code{SOMACollectionBase$remove()}}
 \item \href{#method-SOMACollectionBase-length}{\code{SOMACollectionBase$length()}}
 \item \href{#method-SOMACollectionBase-names}{\code{SOMACollectionBase$names()}}
@@ -182,6 +183,26 @@ Retrieve a SOMA object by name. (lifecycle: maturing)
 }
 \subsection{Returns}{
 The SOMA object stored as \code{name}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-is_relative"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-is_relative}{}}}
+\subsection{Method \code{is_relative()}}{
+Check if a member's URI is stored as relative.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$is_relative(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{The name of the member.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Logical value indicating whether the member's URI is relative.
 }
 }
 \if{html}{\out{<hr>}}

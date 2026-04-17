@@ -2,6 +2,7 @@
 
 test_that("Error handling for cloud operations", {
   skip_if_no_cloud()
+  with_cloud_env()
 
   # Test 1: Opening non-existent URI should error
   nonexistent_uri <- file_path(get_cloud_base_uri(), "does_not_exist_12345")
@@ -14,7 +15,7 @@ test_that("Error handling for cloud operations", {
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
 
   pbmc_small <- get_test_seurat_object()
-  uri <- cloud_path()
+  uri <- cloud_group_path()
   write_soma(pbmc_small, uri = uri)
 
   exp <- SOMAExperimentOpen(uri, mode = "READ")
@@ -31,8 +32,9 @@ test_that("Error handling for cloud operations", {
 
 test_that("SOMACollection set() rejects duplicate key in same session", {
   skip_if_no_cloud()
+  with_cloud_env()
 
-  uri <- cloud_path()
+  uri <- cloud_group_path()
   collection <- SOMACollectionCreate(uri)
   withr::defer(collection$close())
 
@@ -84,8 +86,9 @@ test_that("SOMACollection set() rejects duplicate key in same session", {
 
 test_that("SOMACollection set() rejects duplicate key after reopen", {
   skip_if_no_cloud()
+  with_cloud_env()
 
-  uri <- cloud_path()
+  uri <- cloud_group_path()
   collection <- SOMACollectionCreate(uri)
 
   # Create and add first dataframe
@@ -136,8 +139,9 @@ test_that("SOMACollection set() rejects duplicate key after reopen", {
 
 test_that("write_soma throws existingKeyWarning for duplicate keys", {
   skip_if_no_cloud()
+  with_cloud_env()
 
-  uri <- cloud_path()
+  uri <- cloud_group_path()
   collection <- SOMACollectionCreate(uri)
   withr::defer(collection$close())
 
