@@ -118,7 +118,7 @@ test_that("SOMACollection add_new_* methods", {
   # child2: SOMAExperiment
   child2_uri <- file.path(uri, "child2")
   SOMAExperimentCreate(child2_uri)$close()
-  child2 <- SOMACollectionOpen(child2_uri)
+  child2 <- SOMAExperimentOpen(child2_uri)
   expect_true(child2$exists())
   expect_equal(child2$soma_type, "SOMAExperiment")
   child2$close()
@@ -126,7 +126,7 @@ test_that("SOMACollection add_new_* methods", {
   # child3: SOMAMeasurement
   child3_uri <- file.path(uri, "child3")
   SOMAMeasurementCreate(child3_uri)$close()
-  child3 <- SOMACollectionOpen(child3_uri)
+  child3 <- SOMAMeasurementOpen(child3_uri)
   expect_true(child3$exists())
   expect_equal(child3$soma_type, "SOMAMeasurement")
   child3$close()

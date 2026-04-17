@@ -409,6 +409,13 @@ SOMACollectionCreate <- function(
 #' Factory function to open a \link[tiledbsoma:SOMACollection]{SOMA collection}
 #' for reading (lifecycle: maturing).
 #'
+#' The \code{uri} must point to a \code{SOMACollection}. An error is raised if
+#' it points to a collection subtype such as
+#' \code{\link{SOMAExperiment}} or \code{\link{SOMAMeasurement}}. Use the
+#' corresponding type-specific factory function for those types, or use
+#' \code{\link{SOMAOpen}()} to automatically open any SOMA object with the
+#' appropriate type.
+#'
 #' @inheritParams SOMADataFrameOpen
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp;
 #' defaults to the current time. If not \code{NULL}, all members accessed
