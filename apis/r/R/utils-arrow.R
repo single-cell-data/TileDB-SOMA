@@ -254,7 +254,7 @@ check_arrow_data_types <- function(from, to) {
 
 #' Validate compatibility of Arrow schemas
 #'
-#' This is essentially a vectorized version of [`check_arrow_data_types`] that
+#' This is essentially a vectorized version of `check_arrow_data_types()` that
 #' checks the compatibility of each field in the schemas.
 #' @param from an [`arrow::Schema`]
 #' @param to an [`arrow::Schema`] with the same set of fields as `from`
