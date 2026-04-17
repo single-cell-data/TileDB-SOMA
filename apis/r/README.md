@@ -59,17 +59,7 @@ To set up and install from a local clone of this git repository:
 - If you have changed any C++ function header documentation, run `Rscript -e 'roxygen2::roxygenise()'` to update the corresponding R files.
 - Build the R package source tarball from the repository sources: `R CMD build .` (which will also include the `libtiledbsoma` source via a repository soft-link); other dependencies are required as described in the previous section).
 - Optionally, check and test the package from the tarball skipping vignettes and manuals (which need `texlive` or equivalent): `R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz`.
-- Finally, install the package from the tarball: `R CMD INSTALL tiledbsoma_*.tar.gz`. During this installation presence of the two C++ libraries (TileDB Core, TileDB-SOMA) is tested for. TileDB Core builds can be downloaded as needed, and the TileDB-SOMA library is built if needed. (We plan to provide a downloadable artifact for it too.)
+- Finally, install the package from the tarball: `R CMD INSTALL tiledbsoma_*.tar.gz`. During this installation presence of the two C++ libraries (TileDB Core, TileDB-SOMA) is tested for. TileDB Core builds can be downloaded as needed, and the TileDB-SOMA library is built if needed.
 
 Once installed successfully, the package sources can be edited and re-installed iteratively.
 The optional clean step ensures a full rebuild, and the optional copy of `libtiledbsoma` ensures it is updated too.
-
-# Status
-
-Please see [https://github.com/single-cell-data/TileDB-SOMA/issues](https://github.com/single-cell-data/TileDB-SOMA/issues).
-
-# Information for developers
-
-Please see the [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
-
-This `main` branch implements the [updated specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md). Please also see the `main-old` branch for an implementation of the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
