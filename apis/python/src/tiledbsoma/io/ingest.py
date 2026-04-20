@@ -39,7 +39,6 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 from more_itertools import batched
-from typing_extensions import deprecated
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
 # But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
@@ -70,7 +69,6 @@ from tiledbsoma._common_nd_array import NDArray
 from tiledbsoma._constants import SOMA_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from tiledbsoma._core_options import PlatformConfig
 from tiledbsoma._exception import AlreadyExistsError, DoesNotExistError, SOMAError
-from tiledbsoma._soma_array import SOMAArray
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._tdb_handles import RawHandle
 from tiledbsoma._types import _INGEST_MODES, INGEST_MODES, IngestMode, NPNDArray, Path, _IngestMode
@@ -113,7 +111,6 @@ class IngestionParams:
 
     write_schema_no_data: bool
     error_if_already_exists: bool
-    skip_existing_nonempty_domain: bool
     appending: bool
 
     def __init__(
@@ -124,41 +121,23 @@ class IngestionParams:
         if ingest_mode == "schema_only":
             self.write_schema_no_data = True
             self.error_if_already_exists = False
-            self.skip_existing_nonempty_domain = False
             self.appending = False
 
         elif ingest_mode == "write":
             if label_mapping is None:
                 self.write_schema_no_data = False
                 self.error_if_already_exists = True
-                self.skip_existing_nonempty_domain = False
                 self.appending = False
             else:
                 # append mode, but, the user supplying non-null registration information suffices
                 # for us to understand "append"
                 self.write_schema_no_data = False
                 self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = False
-                self.appending = True
-
-        elif ingest_mode == "resume":
-            if label_mapping is None:
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = True
-                self.appending = False
-            else:
-                # resume-append mode, but, the user supplying non-null registration information
-                # suffices for us to understand "resume-append"
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = True
                 self.appending = True
 
         elif ingest_mode == "update":
             self.write_schema_no_data = False
             self.error_if_already_exists = False
-            self.skip_existing_nonempty_domain = False
             self.appending = False
 
         else:
@@ -363,20 +342,9 @@ def from_h5ad(
         ingest_mode: The ingestion type to perform:
 
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
-            - ``resume``: (deprecated) Adds data to an existing SOMA, skipping writing data
-              that was previously written. Useful for continuing after a partial
-              or interrupted ingestion operation.
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
-
-          The 'resume' ingest_mode is deprecated and will be removed in a future version. The
-          current implementation has a known issue that can can cause multi-dataset appends to
-          not resume correctly.
-
-          The recommended and safest approach for recovering from a failed ingestion is to delete
-          the partially written SOMA Experiment and restart the ingestion process from the original
-          input files or a known-good backup.
 
         X_kind: Which type of matrix is used to store dense X data from the
           H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
@@ -434,7 +402,6 @@ def from_h5ad(
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"')
-    _check_for_deprecated_modes(ingest_mode)
 
     if isinstance(input_path, ad.AnnData):
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
@@ -539,7 +506,7 @@ def from_anndata(
 
         raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
 
-        ingest_mode: One of ``"write"``, ``"resume"`` (deprecated), or ``"schema_only"``.
+        ingest_mode: One of ``"write"`` or ``"schema_only"``.
           See :func:`from_h5ad` for details.
 
         use_relative_uri: Whether to use relative URIs for nested objects.
@@ -570,7 +537,6 @@ def from_anndata(
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"')
-    _check_for_deprecated_modes(ingest_mode)
 
     return _from_anndata(
         experiment_uri,
@@ -695,11 +661,6 @@ def _from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
 
-    # For local disk and S3, this is the same as experiment.ms.uri.
-    # For ingest_mode="resume" on TileDB Cloud, experiment_uri will be of the form
-    # tiledb://namespace/s3://bucket/path/to/exp whereas experiment.ms.uri will
-    # be of the form tiledb://namespace/uuid. Only for the former is it suitable
-    # to append "/ms" so that is what we do here.
     experiment_ms_uri = f"{experiment_uri}/ms"
 
     with _create_or_open_collection(
@@ -1281,28 +1242,10 @@ def _write_dataframe_impl(
             raise ValueError("internal coding error: id_column_name unspecified")
         arrow_table = _extract_new_values_for_append(df_uri, arrow_table, filter_existing_joinids, context)
 
-    def check_for_containment(
-        df: pd.DataFrame,
-        soma_df: DataFrame,
-        ingestion_params: IngestionParams,
-    ) -> bool:
-        """For resume mode, check if the non-empty domain has already been written."""
-        if ingestion_params.skip_existing_nonempty_domain:
-            storage_ned = _read_nonempty_domain(soma_df)
-            dim_range = ((int(df.index.min()), int(df.index.max())),)
-            if _chunk_is_contained_in(dim_range, storage_ned):
-                logging.log_io(
-                    f"Skipped {df_uri}",
-                    _util.format_elapsed(s, f"SKIPPED {df_uri}"),
-                )
-                return True
-        return False
-
     if must_exist:
         # For update_obs, update_var, append_obs, and append_var, it's
         # an error situation if the dataframe doesn't already exist.
         soma_df = DataFrame.open(df_uri, "w", context=context)
-        check_for_containment(df, soma_df, ingestion_params)
 
     else:
         # We could (and used to) do:
@@ -1315,11 +1258,6 @@ def _write_dataframe_impl(
         # try create, doing the open if the create threw already-exists.
         # When the dataframe doesn't exist, this is just one round-trip request,
         # and when it does, it's two (as before).
-        #
-        # Note that for append/update, the dataframe must exist; but for
-        # resume mode, the dataframe may or may not exist. (The point of
-        # resume mode is to continue from a previous ingest which ended
-        # prematurely.)
         try:
             soma_df = DataFrame.create(
                 df_uri,
@@ -1337,7 +1275,6 @@ def _write_dataframe_impl(
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{df_uri} already exists") from e
             soma_df = DataFrame.open(df_uri, "w", context=context)
-            check_for_containment(df, soma_df, ingestion_params)
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
@@ -1429,7 +1366,6 @@ def _create_from_matrix(
             matrix,
             tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
             tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
-            ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
@@ -1438,7 +1374,6 @@ def _create_from_matrix(
             matrix,
             tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
             tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
-            ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
             axis_0_mapping=axis_0_mapping,
             axis_1_mapping=axis_1_mapping,
@@ -1687,7 +1622,6 @@ def update_matrix(
     )
 
     context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
-    ingestion_params = IngestionParams("write", None)
 
     if isinstance(soma_ndarray, DenseNDArray):
         _write_matrix_to_denseNDArray(
@@ -1695,7 +1629,6 @@ def update_matrix(
             new_data,
             tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
             tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
-            ingestion_params=ingestion_params,
             additional_metadata=None,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
@@ -1704,7 +1637,6 @@ def update_matrix(
             new_data,
             tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
             tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
-            ingestion_params=ingestion_params,
             additional_metadata=None,
             axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
             axis_1_mapping=AxisIDMapping.identity(new_data.shape[1]),
@@ -1843,7 +1775,6 @@ def add_X_layer(
         Maturing.
     """
     exp.verify_open_for_writing()
-    _check_for_deprecated_modes(ingest_mode)
     context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
     add_matrix_to_collection(
         exp,
@@ -1906,7 +1837,6 @@ def add_matrix_to_collection(
     """
     ingestion_params = IngestionParams(ingest_mode, None)
     context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
-    _check_for_deprecated_modes(ingest_mode)
 
     # For local disk and S3, creation and storage URIs are identical.  For
     # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
@@ -1960,7 +1890,6 @@ def _write_matrix_to_denseNDArray(
     matrix: Matrix | h5py.Dataset,
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,  # noqa: ARG001
-    ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
     """Write a matrix to an empty DenseNDArray."""
@@ -1969,27 +1898,6 @@ def _write_matrix_to_denseNDArray(
     # TileDB does not support big-endian so coerce to little-endian
     if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
         matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
-
-    # There is a chunk-by-chunk already-done check for resume mode, below.
-    # This full-matrix-level check here might seem redundant, but in fact it's important:
-    # * By checking input bounds against storage NED here, we can see if the entire matrix
-    #   was already ingested and avoid even loading chunks;
-    # * By checking chunkwise we can catch the case where a matrix was already *partly*
-    #   ingested.
-    # * Of course, this also helps us catch already-completed writes in the non-chunked case.
-    # TODO: make sure we're not using an old timestamp for this
-    storage_ned = None
-    if ingestion_params.skip_existing_nonempty_domain:
-        # This lets us check for already-ingested chunks, when in resume-ingest mode.
-        storage_ned = _read_nonempty_domain(soma_ndarray)
-        matrix_bounds = [(0, int(n - 1)) for n in matrix.shape]  # Cast for lint in case np.int64
-        logging.log_io(
-            None,
-            f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
-        )
-        if _chunk_is_contained_in(matrix_bounds, storage_ned):
-            logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
-            return
 
     # Write all at once?
     if not tiledb_create_options.write_X_chunked:
@@ -2043,21 +1951,6 @@ def _write_matrix_to_denseNDArray(
 
         chunk = matrix[i:i2, :] if matrix.ndim == 2 else matrix[i:i2]
 
-        if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
-            chunk_bounds = matrix_bounds
-            chunk_bounds[0] = (
-                int(i),
-                int(i2 - 1),
-            )  # Cast for lint in case np.int64
-            if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
-                # Print doubly inclusive lo..hi like 0..17 and 18..31.
-                logging.log_io(
-                    "... %7.3f%% done" % chunk_percent,  # noqa: UP031
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),  # noqa: UP031
-                )
-                i = i2
-                continue
-
         tensor = pa.Tensor.from_numpy(chunk) if isinstance(chunk, np.ndarray) else pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
             soma_ndarray.write((slice(i, i2 - 1), slice(0, ncol - 1)), tensor)
@@ -2077,20 +1970,6 @@ def _write_matrix_to_denseNDArray(
         i = i2
 
     return
-
-
-def _read_nonempty_domain(arr: SOMAArray) -> Any:  # noqa: ANN401
-    try:
-        return arr.non_empty_domain()
-    except (SOMAError, RuntimeError):
-        # This means that we're open in write-only mode.
-        # Reopen the array in read mode.
-        # TODO macOS throws RuntimeError instead of SOMAError
-        pass
-
-    cls = type(arr)
-    with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
-        return readarr.non_empty_domain()
 
 
 def _find_sparse_chunk_size(
@@ -2336,7 +2215,6 @@ def _write_matrix_to_sparseNDArray(
     matrix: Matrix,
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
-    ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata,
     axis_0_mapping: AxisIDMapping,
     axis_1_mapping: AxisIDMapping,
@@ -2367,28 +2245,6 @@ def _write_matrix_to_sparseNDArray(
         }
 
         return pa.Table.from_pydict(pydict)
-
-    # There is a chunk-by-chunk already-done check for resume mode, below.
-    # This full-matrix-level check here might seem redundant, but in fact it's important:
-    # * By checking input bounds against storage NED here, we can see if the entire matrix
-    #   was already ingested and avoid even loading chunks;
-    # * By checking chunkwise we can catch the case where a matrix was already *partly*
-    #   ingested.
-    # * Of course, this also helps us catch already-completed writes in the non-chunked case.
-    # TODO: make sure we're not using an old timestamp for this
-    storage_ned = None
-    if ingestion_params.skip_existing_nonempty_domain:
-        # This lets us check for already-ingested chunks, when in resume-ingest mode.
-        # THIS IS A HACK AND ONLY WORKS BECAUSE WE ARE DOING THIS BEFORE ALL WRITES.
-        storage_ned = _read_nonempty_domain(soma_ndarray)
-        matrix_bounds = [(0, int(n - 1)) for n in matrix.shape]  # Cast for lint in case np.int64
-        logging.log_io(
-            None,
-            f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
-        )
-        if _chunk_is_contained_in(matrix_bounds, storage_ned):
-            logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
-            return
 
     add_metadata(soma_ndarray, additional_metadata)
 
@@ -2502,29 +2358,6 @@ def _write_matrix_to_sparseNDArray(
 
         chunk_percent = min(100, 100 * i2 / dim_max_size)
 
-        if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
-            chunk_bounds = matrix_bounds
-            chunk_bounds[stride_axis] = (
-                int(i),
-                int(i2 - 1),
-            )  # Cast for lint in case np.int64
-            if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
-                # Print doubly inclusive lo..hi like 0..17 and 18..31.
-                logging.log_io(
-                    "... %7.3f%% done" % chunk_percent,  # noqa: UP031
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"  # noqa: UP031
-                    % (
-                        i,
-                        i2 - 1,
-                        dim_max_size,
-                        chunk_percent,
-                        chunk_coo.nnz,
-                        tiledb_create_options.goal_chunk_nnz,
-                    ),
-                )
-                i = i2
-                continue
-
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
@@ -2553,55 +2386,6 @@ def _write_matrix_to_sparseNDArray(
             )
 
         i = i2
-
-
-def _chunk_is_contained_in(
-    chunk_bounds: Sequence[tuple[int, int]],
-    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
-) -> bool:
-    """Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
-    on both endpoints.  This is a helper for resume-ingest mode.
-
-    We say "bounds" not "MBR" with the "M" for minimum: a sparse matrix might not _have_ any
-    elements for some initial/final rows or columns. Suppose an input array has shape 100 x 200, so
-    bounds ``((0, 99), (0, 199))`` -- and also suppose there are no matrix elements for column 1.
-    Also suppose the matrix has already been written to TileDB-SOMA storage. The TileDB non-empty
-    domain _is_ tight -- it'd say ``((0, 99), (3, 197))`` for example.  When we come back for a
-    resume-mode ingest, we'd see the input bounds aren't contained within the storage non-empty
-    domain, and erroneously declare that the data need to be rewritten.
-
-    This is why we take the stride axis as an argument. In resume mode, it's our contract with the
-    user that they declare they are retrying the exact same input file -- and we do our best to
-    fulfill their ask by checking the dimension being strided on.
-    """
-    if len(storage_nonempty_domain) == 0:
-        return False
-
-    if len(chunk_bounds) != len(storage_nonempty_domain):
-        raise SOMAError(
-            f"internal error: ingest data ndim {len(chunk_bounds)} != storage ndim {len(storage_nonempty_domain)}",
-        )
-    return all(_chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i) for i in range(len(chunk_bounds)))
-
-
-def _chunk_is_contained_in_axis(
-    chunk_bounds: Sequence[tuple[int, int]],
-    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
-    stride_axis: int,
-) -> bool:
-    """Helper function for ``_chunk_is_contained_in``."""
-    if len(storage_nonempty_domain) == 0:
-        return False
-
-    storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
-    if storage_lo is None or storage_hi is None:
-        # E.g. an array has had its schema created but no data written yet
-        return False
-
-    chunk_lo, chunk_hi = chunk_bounds[stride_axis]
-    if chunk_lo < storage_lo or chunk_lo > storage_hi:
-        return False
-    return not (chunk_hi < storage_lo or chunk_hi > storage_hi)
 
 
 def _maybe_ingest_uns(
@@ -2776,7 +2560,9 @@ def _ingest_uns_array(
             key,
             value,
             use_relative_uri=use_relative_uri,
-            **ingest_platform_ctx,
+            context=ingest_platform_ctx["context"],
+            additional_metadata=ingest_platform_ctx["additional_metadata"],
+            platform_config=ingest_platform_ctx["platform_config"],
         )
 
 
@@ -2922,7 +2708,6 @@ def _ingest_uns_ndarray(
     context: SOMAContext | None,
     *,
     use_relative_uri: bool | None,
-    ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
     data_protocol = coll.context.data_protocol(coll.uri)
@@ -2950,18 +2735,6 @@ def _ingest_uns_ndarray(
     except AlreadyExistsError:
         soma_arr = DenseNDArray.open(arr_uri, "w", context=context)
 
-    # If resume mode: don't re-write existing data. This is the user's explicit request
-    # that we not re-write things that have already been written.
-    if ingestion_params.skip_existing_nonempty_domain:
-        storage_ned = _read_nonempty_domain(soma_arr)
-        dim_range = ((0, value.shape[0] - 1),)
-        if _chunk_is_contained_in(dim_range, storage_ned):
-            logging.log_io(
-                f"Skipped {soma_arr.uri}",
-                f"Skipped {soma_arr.uri}",
-            )
-            return
-
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
 
@@ -2970,7 +2743,6 @@ def _ingest_uns_ndarray(
             value,
             tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
             tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
-            ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
 
@@ -2992,18 +2764,3 @@ def _concurrency_level(context: SOMAContext) -> int:
             int(context.config.get("soma.compute_concurrency_level", concurrency_level)),
         )
     return concurrency_level
-
-
-@deprecated(
-    """The 'resume' ingest_mode is deprecated and will be removed in a future version. The current implementation has a known issue that can can cause multi-dataset appends to not resume correctly.
-
-The recommended and safest approach for recovering from a failed ingestion is to delete the partially written SOMA Experiment and restart the ingestion process from the original input files or a known-good backup.""",
-    stacklevel=3,
-)
-def _resume_mode_is_deprecated() -> None:
-    pass
-
-
-def _check_for_deprecated_modes(ingest_mode: str) -> None:
-    if ingest_mode == "resume":
-        _resume_mode_is_deprecated()
