@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
@@ -34,7 +34,7 @@ jobs:
 
 
       - name: Upload sdist artifact to GitHub Actions storage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: apis/python/dist/
@@ -49,11 +49,11 @@ jobs:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python_version }}
       - name: Download sdist artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sdist
           path: apis/python/dist/
@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
@@ -118,7 +118,7 @@ jobs:
           pip list
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.1
+        uses: pypa/cibuildwheel@v3.4.0
         with:
           package-dir: apis/python/
           output-dir: wheelhouse
@@ -136,7 +136,7 @@ jobs:
         run: ls -l ./wheelhouse/*.whl
 
       - name: Upload wheel-${{ matrix.python_name }}-${{ matrix.platform }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-${{ matrix.python_name }}-${{ matrix.platform }}
           path: ./wheelhouse/*.whl
@@ -182,11 +182,11 @@ jobs:
       fail-fast: false
     steps:
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python_version }}
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: wheel-${{ matrix.python_name }}-${{ matrix.platform }}
       - name: Install numba to prevent building from source
@@ -225,7 +225,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
       - name: Create dist
         run: |
           set -x
@@ -252,7 +252,7 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
       - name: Create dist
         run: |
           set -x
@@ -273,7 +273,7 @@ jobs:
     if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && github.run_attempt == 1
     steps:
       - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Create Issue if Build Fails
         uses: JasonEtco/create-an-issue@v2
         env:

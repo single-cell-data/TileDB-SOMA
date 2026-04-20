@@ -9,7 +9,7 @@ write_soma(
   uri,
   ...,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 )
 }

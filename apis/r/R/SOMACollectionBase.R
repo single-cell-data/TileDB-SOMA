@@ -212,6 +212,18 @@ SOMACollectionBase <- R6::R6Class(
       return(obj)
     },
 
+    #' @description Check if a member's URI is stored as relative.
+    #'
+    #' @param name The name of the member.
+    #'
+    #' @return Logical value indicating whether the member's URI is relative.
+    #'
+    is_relative = function(name) {
+      stopifnot(is_scalar_character(name) && nzchar(name))
+      private$.check_open()
+      soma_group_member_is_relative(private$.handle, name)
+    },
+
     #' @description Remove member. (lifecycle: maturing)
     #'
     #' @param name Name of the member to remove.
@@ -219,15 +231,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}
     #'
     remove = function(name) {
-      if (self$mode() == "WRITE") {
-        .Deprecated(
-          msg = sprintf(
-            "Removing a member in %s mode is deprecated. Collection should be opened in %s mode.",
-            sQuote("WRITE"),
-            sQuote("DELETE")
-          )
-        )
-      } else if (self$mode() != "DELETE") {
+      if (self$mode() != "DELETE") {
         stop(
           "SOMA object is not opened in 'delete' mode; cannot remove member.",
           call. = FALSE

@@ -33,7 +33,8 @@ jobs:
       matrix:
         config:
           - {os: macos-latest, r: 'release', report_codecov: false}
-          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', report_codecov: false}
+          # TODO(SOMA-941): re-enable once S4Vectors is compatible with R-devel
+          # - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', report_codecov: false}
           - {os: ubuntu-latest, r: 'release', report_codecov: true}
           #- {os: ubuntu-latest, r: 'oldrel-1', report_codecov: false} # BPCells dep ggrepel not available
     uses: ./.github/workflows/test-r.yml

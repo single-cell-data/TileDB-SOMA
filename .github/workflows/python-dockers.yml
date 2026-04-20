@@ -2,8 +2,6 @@
 name: TileDB-SOMA docker builds
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "42 9 * * *"
   pull_request:
     paths:
       - .github/workflows/python-dockers.yml
@@ -19,33 +17,25 @@ jobs:
           - runs-on: ubuntu-24.04-arm
             suffix: ' ARM'
         img:
-          - name: Ubuntu 1.15.7
+          - name: Ubuntu 2.3.0
             file: ubuntu
-            args: v=1.15.7
-          - name: Ubuntu 1.16.2
-            file: ubuntu
-            args: v=1.16.2
-          - name: Debian 1.15.7 gcc12
+            args: v=2.3.0
+          - name: Debian 2.3.0 gcc12
             file: bookworm
-            args: gcc=12 v=1.15.7
-          - name: Debian 1.15.7 gcc13
+            args: gcc=12 v=2.3.0
+          - name: Debian 2.3.0 gcc13
             file: bookworm
-            args: gcc=13 v=1.15.7
-          - name: Debian 1.16.2 gcc13
-            file: bookworm
-            args: gcc=13 v=1.16.2
+            args: gcc=13 v=2.3.0
           - name: Langchain
             file: langchain
-          - name: Python 3.12 + uv
-            file: python-uv
-            args: python=3.12
+            args: v=2.3.0
           - name: Python 3.13 + uv
             file: python-uv
             args: python=3.13
     name: ${{ matrix.img.name }}${{ matrix.os.suffix }}
     runs-on: ${{ matrix.os.runs-on }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: docker build
         run: |
           args=()
@@ -58,19 +48,3 @@ jobs:
         working-directory: docker
       - run: docker run ${{ matrix.img.file }}
         working-directory: docker
-  # File an issue if anything fails, but only for scheduled ones (not manual "workflow_dispatch" runs).
-  create_issue_on_fail:
-    runs-on: ubuntu-24.04
-    needs: [docker]
-    if: (failure() || cancelled()) && github.event_name == 'schedule' && github.run_attempt == 1
-    steps:
-      - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v4
-      - name: Create Issue if Build Fails
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/workflows/failed-issue-template.md
-          assignees: jp-dark, aaronwolen
-          update_existing: true

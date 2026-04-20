@@ -77,14 +77,14 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
       "connectivities",
       asSparse = TRUE
     ),
-    "dgCMatrix"
+    "sparseMatrix"
   )
   expect_identical(dim(graph), c(n_obs, n_obs))
   expect_identical(SingleCellExperiment::rowPairNames(obj), "network")
   expect_s4_class(SingleCellExperiment::rowPair(obj, "network"), "SelfHits")
   expect_s4_class(
     net <- SingleCellExperiment::rowPair(obj, "network", asSparse = TRUE),
-    "dgCMatrix"
+    "sparseMatrix"
   )
   expect_identical(dim(net), c(n_var, n_var))
   # Test named

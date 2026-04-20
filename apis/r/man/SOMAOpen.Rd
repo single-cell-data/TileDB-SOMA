@@ -8,7 +8,7 @@ SOMAOpen(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   tiledb_timestamp = NULL
 )
@@ -36,7 +36,11 @@ A SOMA object
 }
 \description{
 Utility function to open the corresponding SOMA object given a URI
-(lifecycle: maturing).
+(lifecycle: maturing). The SOMA type is automatically detected from stored
+metadata and the appropriate subclass is returned. This is a safe
+alternative to the type-specific factory functions (e.g.,
+\code{\link{SOMAExperimentOpen}()}) when you don't know the exact type
+stored at a URI.
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}

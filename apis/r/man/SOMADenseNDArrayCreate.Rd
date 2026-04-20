@@ -9,7 +9,7 @@ SOMADenseNDArrayCreate(
   type,
   shape,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 )

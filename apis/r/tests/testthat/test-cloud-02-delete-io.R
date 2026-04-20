@@ -2,7 +2,8 @@
 
 test_that("DELETE mode member removal in cloud", {
   skip_if_no_cloud()
-  uri <- cloud_path()
+  with_cloud_env()
+  uri <- cloud_group_path()
 
   # Create collection with members
   SOMACollectionCreate(uri = uri)$close()

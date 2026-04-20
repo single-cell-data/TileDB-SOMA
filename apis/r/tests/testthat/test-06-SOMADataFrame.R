@@ -1244,22 +1244,13 @@ test_that("factor levels cannot extend beyond index limit", {
   }
 })
 
-test_that("deprecation warning for domain=NULL", {
+test_that("defunct warning for domain=NULL", {
   uri <- tempfile()
   schema <- arrow::schema(
     soma_joinid = arrow::int64(),
     data = arrow::int64(),
   )
-  with_mocked_bindings(
-    .tiledbsoma_deprecation_version = function() "2.1.0",
-    .deprecation_stage = function(when) "deprecate",
-    {
-      lifecycle::expect_deprecated(
-        soma_df <- SOMADataFrameCreate(uri, schema)
-      )
-    }
+  lifecycle::expect_defunct(
+    soma_df <- SOMADataFrameCreate(uri, schema)
   )
-  #if (utils::packageVersion("tiledbsoma") >= "2.1.0") {
-  #  lifecycle::expect_deprecated(soma_df <- SOMADataFrameCreate(tempfile(), schema))
-  #}
 })

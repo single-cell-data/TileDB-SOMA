@@ -31,7 +31,7 @@ class NDArray(SOMAArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[int | None],
+        shape: Sequence[int],
         platform_config: PlatformConfig | None = None,
         context: SOMAContext | SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -46,10 +46,6 @@ class NDArray(SOMAArray):
                 The maximum capacity of each dimension, including room
                 for any intended future appends, as a sequence.  E.g. ``(100, 10)``.
                 All lengths must be in the positive int64 range.
-
-                For :class:`SparseNDArray` only, if a slot is None, then the minimum
-                possible range will be used.  This makes a :class:`SparseNDArray`
-                growable using ``resize``.
             platform_config:
                 Platform-specific options used to create this array.
                 This may be provided as settings in a dictionary, with options

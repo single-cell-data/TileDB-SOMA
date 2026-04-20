@@ -9,8 +9,7 @@ import pytest
 import tiledbsoma as soma
 from tiledbsoma.options import SOMATileDBContext
 
-from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
-from ._util import raises_no_typeguard
+from ._util import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED, raises_no_typeguard
 
 
 @pytest.mark.parametrize("shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)])

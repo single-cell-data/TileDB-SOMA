@@ -1927,7 +1927,7 @@ def test_types_no_errors(
         [
             "BOOL-ALL",
             ["bool"],
-            None,
+            [[True, False]],
             [],
             TypeError,
         ],

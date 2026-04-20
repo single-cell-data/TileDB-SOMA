@@ -8,7 +8,7 @@ SOMACollectionOpen(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 )
@@ -38,6 +38,14 @@ A \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
 \description{
 Factory function to open a \link[tiledbsoma:SOMACollection]{SOMA collection}
 for reading (lifecycle: maturing).
+}
+\details{
+The \code{uri} must point to a \code{SOMACollection}. An error is raised if
+it points to a collection subtype such as
+\code{\link{SOMAExperiment}} or \code{\link{SOMAMeasurement}}. Use the
+corresponding type-specific factory function for those types, or use
+\code{\link{SOMAOpen}()} to automatically open any SOMA object with the
+appropriate type.
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) withAutoprint(\{ # examplesIf}

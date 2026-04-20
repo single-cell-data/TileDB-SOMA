@@ -30,7 +30,7 @@ class ManagedQuery:
     _array: SOMAArray
     _platform_config: PlatformConfig | None = None
     _handle: clib.ManagedQuery = attrs.field(init=False)
-    _ref_store: list[object] = attrs.field(init=False, default=[])
+    _ref_store: list[object] = attrs.field(factory=list)
 
     def __attrs_post_init__(self) -> None:
         array_handle = self._array._handle

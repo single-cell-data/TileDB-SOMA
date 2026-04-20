@@ -82,6 +82,7 @@ example, the schema of a :class:`DataFrame` is expressed as an
 
 Error handling
 ---------------
+
 Most errors will be signaled with a raised Exception. Of note:
 
 - :class:`NotImplementedError` will be raised when the requested function or method
@@ -92,10 +93,6 @@ Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 :class:`ValueError`.
 """
 
-# ^^ the rest is autogen whether viewed from Python on-line help, Sphinx/readthedocs, etc.  It's
-# crucial that we include a separator (e.g. "Classes and functions") to make an entry in the
-# readthedocs table of contents.
-
 import ctypes
 import os
 import pathlib
@@ -103,7 +100,7 @@ import sys
 
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
-try:
+try:  # noqa: RUF067
     from . import pytiledbsoma as clib
 
     del clib
@@ -196,7 +193,7 @@ from .stats import (
     tiledbsoma_stats_json,
 )
 
-_verify_expected_tiledb_version()
+_verify_expected_tiledb_version()  # noqa: RUF067
 __version__ = get_implementation_version()
 
 __all__ = [

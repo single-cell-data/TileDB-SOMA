@@ -522,7 +522,7 @@ def test_point_cloud_read_spatial_region_identity_transform(tmp_path):
 
     # Identity will always have a scale of 1.0
     assert list(coordinate_transform.scale_factors) == [1, 1]
-    assert coordinate_transform.scale == 1.0
+    assert coordinate_transform.scale == 1
     assert list(coordinate_transform.inverse_transform().scale_factors) == [1, 1]
 
 

@@ -34,9 +34,16 @@ write_soma <- function(
   uri,
   ...,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL
 ) {
+  if (lifecycle::is_present(tiledbsoma_ctx)) {
+    lifecycle::deprecate_stop(
+      what = "write_soma(tiledbsoma_ctx)",
+      when = "2.3.0",
+      details = "Use `context` instead."
+    )
+  }
   UseMethod(generic = "write_soma", object = x)
 }
 
@@ -97,7 +104,7 @@ write_soma.character <- function(
   key = NULL,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -110,7 +117,6 @@ write_soma.character <- function(
     key = key,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     relative = relative
   )
@@ -172,7 +178,7 @@ write_soma.data.frame <- function(
   key = NULL,
   ingest_mode = "write",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -278,7 +284,6 @@ write_soma.data.frame <- function(
     domain = domain,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   # Write values
@@ -331,7 +336,7 @@ write_soma.IterableMatrix <- function(
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -389,7 +394,6 @@ write_soma.IterableMatrix <- function(
     shape = shape,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   # TODO: Add support for resume-mode
@@ -473,7 +477,7 @@ write_soma.matrix <- function(
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -506,7 +510,6 @@ write_soma.matrix <- function(
       ingest_mode = ingest_mode,
       shape = shape,
       platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx,
       context = context,
       relative = relative
     ))
@@ -554,7 +557,6 @@ write_soma.matrix <- function(
     type = type %||% arrow::infer_type(x),
     shape = shape %||% dim(x),
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context
   )
   # Write values
@@ -642,7 +644,7 @@ write_soma.TsparseMatrix <- function(
   ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   context = NULL,
   relative = TRUE
 ) {
@@ -696,7 +698,6 @@ write_soma.TsparseMatrix <- function(
     shape = shape %||% dim(x),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx,
     context = context,
     tiledb_timestamp = Sys.time()
   )

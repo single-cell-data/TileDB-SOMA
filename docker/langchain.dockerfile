@@ -11,8 +11,6 @@ ENV PIP_CONSTRAINT=/api/constraints.txt
 # vcpkg requires this on ARM, elsewhere it's a no-op (as `pip install tiledbsoma` below installs wheels, skips vcpkg bootstrap)
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 
-# tiledbsoma>=1.16 requires GCC 13, which is more involved to install on this base image; see bookworm-pypi for an
-# example that works with both GCC 12 and 13
-ARG version=1.15.7
-RUN pip install tiledbsoma==$version
+ARG v=''
+RUN if [ -z $v ]; then pip install tiledbsoma; else pip install tiledbsoma==$v; fi
 ENTRYPOINT [ "python", "-c", "import tiledbsoma; tiledbsoma.show_package_versions()" ]

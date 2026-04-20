@@ -53,6 +53,10 @@ c_group_put_metadata <- function(xp, key, obj) {
     invisible(.Call(`_tiledbsoma_c_group_put_metadata`, xp, key, obj))
 }
 
+soma_group_member_is_relative <- function(group, name) {
+    .Call(`_tiledbsoma_soma_group_member_is_relative`, group, name)
+}
+
 get_metadata_num <- function(uri, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_metadata_num`, uri, is_array, ctxxp)
 }

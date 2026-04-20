@@ -3,16 +3,23 @@
 ## Added
 
 - Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
+- New `is_relative(name)` method on collection classes (`SOMACollection`, `SOMAExperiment`, `SOMAMeasurement`) to check whether a named member is stored as a relative URI. ([#4444](https://github.com/single-cell-data/TileDB-SOMA/pull/4444))
 
 ## Changed
 
-- Removed `data.table` package dependency by leveraging `rlang::obj_address()` for generating ephemeral collection URIs.
+- Remove `data.table` package dependency by leveraging `rlang::obj_address()` for generating ephemeral collection URIs.
+- `SOMACollectionOpen()` now enforces strict type checking and will error if the URI points to a `SOMAExperiment`, `SOMAMeasurement`, or other collection subtype. Users should use the appropriate type-specific function (`SOMAExperimentOpen()`, `SOMAMeasurementOpen()`) or `SOMAOpen()`, which automatically resolves the correct subclass. ([#4443](https://github.com/single-cell-data/TileDB-SOMA/pull/4443))
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 - Default log level changed from `info` to `warn` to reduce verbosity. Use `set_log_level("info")` or the `SPDLOG_LEVEL` environment variable to restore verbose logging. ([#4393](https://github.com/single-cell-data/TileDB-SOMA/pull/4393))
 
-## Deprecated
-
 ## Removed
+
+- Defunct `SOMATileDBContext` class. Use `SOMAContext` instead. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Defunct `soma_context()` function. Use the `SOMAContext` class instead. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Defunct `tiledbsoma_ctx` parameter in all functions and methods. Use the `context` parameter instead. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Remove `SOMANDArrayBase$set_data_type()`, deprecated since 2.1.0. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Remove deprecated support for removing collection-based class members in "WRITE" mode. Collections must now be in "DELETE" mode to remove members. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
+- Remove deprecated support using `domain=NULL` in `SOMADataFrameCreate`. ([#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431))
 
 ## Fixed
 

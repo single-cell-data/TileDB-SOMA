@@ -65,7 +65,7 @@ SOMADataFrameCreate <- function(
   domain = NULL,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -121,7 +121,7 @@ SOMADataFrameOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -183,7 +183,7 @@ SOMASparseNDArrayCreate <- function(
   shape,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -231,7 +231,7 @@ SOMASparseNDArrayOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -283,7 +283,7 @@ SOMADenseNDArrayCreate <- function(
   type,
   shape,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -325,7 +325,7 @@ SOMADenseNDArrayOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -375,7 +375,7 @@ SOMACollectionCreate <- function(
   uri,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -409,6 +409,13 @@ SOMACollectionCreate <- function(
 #' Factory function to open a \link[tiledbsoma:SOMACollection]{SOMA collection}
 #' for reading (lifecycle: maturing).
 #'
+#' The \code{uri} must point to a \code{SOMACollection}. An error is raised if
+#' it points to a collection subtype such as
+#' \code{\link{SOMAExperiment}} or \code{\link{SOMAMeasurement}}. Use the
+#' corresponding type-specific factory function for those types, or use
+#' \code{\link{SOMAOpen}()} to automatically open any SOMA object with the
+#' appropriate type.
+#'
 #' @inheritParams SOMADataFrameOpen
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp;
 #' defaults to the current time. If not \code{NULL}, all members accessed
@@ -425,7 +432,7 @@ SOMACollectionOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -487,7 +494,7 @@ SOMAMeasurementCreate <- function(
   uri,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -535,7 +542,7 @@ SOMAMeasurementOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -597,7 +604,7 @@ SOMAExperimentCreate <- function(
   uri,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
@@ -644,7 +651,7 @@ SOMAExperimentOpen <- function(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
+  tiledbsoma_ctx = lifecycle::deprecated(),
   tiledb_timestamp = NULL,
   context = NULL
 ) {
