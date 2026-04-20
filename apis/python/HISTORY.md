@@ -26,8 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - \[[#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431)\] Remove deprecated support for allowing a dimension in `shape` to be `None` in the `SparseNDArray`.
 - \[[#4431](https://github.com/single-cell-data/TileDB-SOMA/pull/4431)\] Remove deprecated support for setting `domain=None` in the `create` method for `DataFrame`, `PointCloudDataFrame`, and `GeometryDataFrame`.
-- Remove the deprecated `"resume"` ingest mode from `tiledbsoma.io.from_h5ad`, `tiledbsoma.io.from_anndata`, `tiledbsoma.io.add_X_layer`, and `tiledbsoma.io.add_matrix_to_collection`. The recommended approach for recovering from a failed ingestion is to delete the partially written SOMA Experiment and restart from the original input files or a known-good backup.
-- Remove the deprecated behavior of deleting collection members in write mode (`mode="w"`). Use `mode="d"` instead.
+- \[[#4448](https://github.com/single-cell-data/TileDB-SOMA/pull/4448)\] Remove the deprecated `"resume"` ingest mode from `tiledbsoma.io.from_h5ad`, `tiledbsoma.io.from_anndata`, `tiledbsoma.io.add_X_layer`, and `tiledbsoma.io.add_matrix_to_collection`. The recommended approach for recovering from a failed ingestion is to delete the partially written SOMA Experiment and restart from the original input files or a known-good backup.
+- \[[#4448](https://github.com/single-cell-data/TileDB-SOMA/pull/4448)\] Remove the deprecated behavior of deleting collection members in write mode (`mode="w"`). Use `mode="d"` instead.
 
 ### Fixed
 
