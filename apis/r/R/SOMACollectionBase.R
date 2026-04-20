@@ -221,7 +221,7 @@ SOMACollectionBase <- R6::R6Class(
     is_relative = function(name) {
       stopifnot(is_scalar_character(name) && nzchar(name))
       private$.check_open()
-      soma_group_member_is_relative(private$.handle, name)
+      soma_group_member_is_relative(super$handle, name)
     },
 
     #' @description Remove member. (lifecycle: maturing)

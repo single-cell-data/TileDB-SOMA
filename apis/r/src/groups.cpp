@@ -155,9 +155,9 @@ void c_group_put_metadata(Rcpp::XPtr<somaobj_wrap_t> xp, std::string key, SEXP o
 }
 
 // [[Rcpp::export]]
-bool soma_group_member_is_relative(Rcpp::XPtr<tiledbsoma::SOMAGroup> group, const std::string& name) {
+bool soma_group_member_is_relative(Rcpp::XPtr<somaobj_wrap_t> group, const std::string& name) {
     if (!group) {
         throw Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return group->is_relative(name);
+    return group->ptr<tdbs::SOMAGroup>()->is_relative(name);
 }
