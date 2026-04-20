@@ -81,14 +81,14 @@ class SOMACollectionBase : public SOMAGroup {
     /**
      * Closes the SOMACollectionBase object.
      */
-    void close([[maybe_unused]] bool recursive = false);
+    void close([[maybe_unused]] bool recursive = false) override;
 
     /**
      * Get the SOMAObject associated with the key.
      *
      * @param key of member
      */
-    std::shared_ptr<SOMAObject> get(const std::string& key);
+    std::shared_ptr<SOMAObject> get(const std::string& key) override;
 
     void set(
         const std::string& uri,
@@ -96,7 +96,7 @@ class SOMACollectionBase : public SOMAGroup {
         const std::string& name,
         const std::string& soma_type,
         std::shared_ptr<SOMAObject> member,
-        bool managed = true);
+        bool managed = true) override;
 
     /**
      * Remove a named member from the SOMAGroup.

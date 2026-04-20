@@ -14,7 +14,9 @@ MetadataValue decode_metadata(DataType type, uint32_t elements, const void* data
                 return MetadataValue(std::string(static_cast<const char*>(data), elements));
             }
         } else if constexpr (std::is_same_v<T, bool>) {
-            if (elements == 1) {
+            if (elements == 0 || (elements == 1 && data == nullptr)) {
+                return MetadataValue(std::vector<bool>(0));
+            } else if (elements == 1) {
                 return MetadataValue(reinterpret_cast<const uint8_t*>(data)[0] != 0);
             } else {
                 return MetadataValue(
@@ -22,7 +24,9 @@ MetadataValue decode_metadata(DataType type, uint32_t elements, const void* data
                         reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + elements));
             }
         } else {
-            if (elements == 1) {
+            if (elements == 0 || (elements == 1 && data == nullptr)) {
+                return MetadataValue(std::vector<T>());
+            } else if (elements == 1) {
                 return MetadataValue(reinterpret_cast<const T*>(data)[0]);
             } else {
                 return MetadataValue(

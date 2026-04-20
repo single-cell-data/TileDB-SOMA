@@ -1,3 +1,12 @@
+/**
+ * @file   metadata.cc
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ */
+
 #include "metadata.h"
 #include "../datatype/utils.h"
 #include "utils.h"
@@ -185,7 +194,7 @@ MetadataCache::DictMod MetadataCache::current_state_(const std::string& key) con
 }
 
 MetadataCache::DictMod MetadataCache::next_state_(DictMod current_state, const std::string& action) {
-    const std::map<std::pair<MetadataCache::DictMod, std::string>, MetadataCache::DictMod> action_map = {
+    static const std::map<std::pair<MetadataCache::DictMod, std::string>, MetadataCache::DictMod> action_map = {
         {{MetadataCache::DictMod::absent, "set"}, MetadataCache::DictMod::added},
         {{MetadataCache::DictMod::added, "set"}, MetadataCache::DictMod::added},
         {{MetadataCache::DictMod::added, "del"}, MetadataCache::DictMod::deleted},

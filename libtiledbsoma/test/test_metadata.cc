@@ -321,3 +321,25 @@ TEST_CASE("SOMAGroup: metadata operations", "[Metadata]") {
     REQUIRE_THROWS(soma_group->set_metadata("val", common::DataType::int64, 1, &val_wrong));
     REQUIRE_THROWS(soma_group->delete_metadata("val"));
 }
+
+TEST_CASE("Metadata edge cases", "[Metadata]") {
+    auto ctx = std::make_shared<SOMAContext>();
+
+    std::string uri = "mem://unit-test-group";
+    SOMAGroup::create(ctx, uri, "NONE", {}, TimestampRange(0, 2));
+    auto soma_group = SOMAGroup::open(OpenMode::soma_write, uri, ctx, "metadata", TimestampRange(1, 1));
+
+    soma_group->set_metadata("empty string from python", common::DataType::string_utf8, 1, nullptr);
+    soma_group->set_metadata("nullptr str", common::DataType::string_utf8, 0, nullptr);
+    soma_group->set_metadata("nullptr int", common::DataType::int64, 0, nullptr);
+    soma_group->set_metadata("nullptr bool", common::DataType::boolean, 0, nullptr);
+    soma_group->close();
+
+    // Read metadata
+    soma_group->open(OpenMode::soma_read);
+    REQUIRE(std::get<std::string>(soma_group->get_metadata("empty string from python").value()) == "");
+    REQUIRE(std::get<std::string>(soma_group->get_metadata("nullptr str").value()) == "");
+    REQUIRE(std::get<std::vector<int64_t>>(soma_group->get_metadata("nullptr int").value()) == std::vector<int64_t>());
+    REQUIRE(std::get<std::vector<bool>>(soma_group->get_metadata("nullptr bool").value()) == std::vector<bool>());
+    soma_group->close();
+}
