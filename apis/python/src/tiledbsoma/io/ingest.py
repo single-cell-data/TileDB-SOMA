@@ -2560,7 +2560,9 @@ def _ingest_uns_array(
             key,
             value,
             use_relative_uri=use_relative_uri,
-            **ingest_platform_ctx,
+            context=ingest_platform_ctx["context"],
+            additional_metadata=ingest_platform_ctx["additional_metadata"],
+            platform_config=ingest_platform_ctx["platform_config"],
         )
 
 
@@ -2706,7 +2708,6 @@ def _ingest_uns_ndarray(
     context: SOMAContext | None,
     *,
     use_relative_uri: bool | None,
-    ingestion_params: IngestionParams,  # noqa: ARG001
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
     data_protocol = coll.context.data_protocol(coll.uri)
