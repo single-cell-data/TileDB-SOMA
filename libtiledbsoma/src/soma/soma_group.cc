@@ -266,6 +266,15 @@ std::optional<TimestampRange> SOMAGroup::timestamp() {
 
 void SOMAGroup::set_metadata(
     const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force) {
+    if (!is_open())
+        throw TileDBSOMAError(fmt::format("Cannot set metadata item '{}'; object is closed.", key));
+    if (mode() != OpenMode::soma_write)
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot write metadata item to '{}'; current mode='{}'. Reopen in mode='write'.",
+                key,
+                open_mode_to_string(mode())));
+
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
@@ -276,6 +285,15 @@ void SOMAGroup::set_metadata(
 }
 
 void SOMAGroup::delete_metadata(const std::string& key, bool force) {
+    if (!is_open())
+        throw TileDBSOMAError(fmt::format("Cannot delete metadata item '{}'; object is closed.", key));
+    if (mode() != OpenMode::soma_write)
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot write metadata item to '{}'; current mode='{}'. Reopen in mode='write'.",
+                key,
+                open_mode_to_string(mode())));
+
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
     }
