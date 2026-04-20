@@ -237,9 +237,6 @@ class SOMACollectionBase : public SOMAGroup {
     std::map<std::string, std::shared_ptr<SOMAObject>> children_;
 
    private:
-    using SOMAGroup::get;
-    using SOMAGroup::set;
-
     std::map<std::string, std::shared_ptr<std::once_flag>> flags_;
     std::unordered_set<std::string> managed_children_;
 };
