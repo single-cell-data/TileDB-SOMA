@@ -88,7 +88,7 @@ class SOMACollectionBase : public SOMAGroup {
      *
      * @param key of member
      */
-    std::shared_ptr<SOMAObject> get(const std::string& key) override;
+    std::shared_ptr<SOMAObject> get(const std::string& key);
 
     void set(
         const std::string& uri,
@@ -96,7 +96,7 @@ class SOMACollectionBase : public SOMAGroup {
         const std::string& name,
         const std::string& soma_type,
         std::shared_ptr<SOMAObject> member,
-        bool managed = true) override;
+        bool managed = true);
 
     /**
      * Remove a named member from the SOMAGroup.
@@ -237,6 +237,9 @@ class SOMACollectionBase : public SOMAGroup {
     std::map<std::string, std::shared_ptr<SOMAObject>> children_;
 
    private:
+    using SOMAGroup::get;
+    using SOMAGroup::set;
+
     std::map<std::string, std::shared_ptr<std::once_flag>> flags_;
     std::unordered_set<std::string> managed_children_;
 };
