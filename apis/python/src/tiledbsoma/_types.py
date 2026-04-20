@@ -59,7 +59,7 @@ Labels = Union[Sequence[str], PDIndex]
 
 NTuple = tuple[int, ...]
 
-IngestMode = Literal["write", "schema_only", "resume"]  # for static-analysis checks
+IngestMode = Literal["write", "schema_only"]  # for static-analysis checks
 INGEST_MODES = get_args(IngestMode)  # for run-time checks
 
 # Internal version of ``IngestMode`` that includes "update"; see ``IngestionParams``.

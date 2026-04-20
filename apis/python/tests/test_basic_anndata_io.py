@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import gc
 import json
 import random
@@ -90,12 +89,6 @@ def h5ad_file_X_none(request):
         ["write"],
         # Schema only:
         ["schema_only"],
-        # Schema only, then populate:
-        ["schema_only", "resume"],
-        # User writes data, then a subsequent write creates nothing new:
-        ["write", "resume"],
-        # "Resume" after no write at all does write new data:
-        ["resume"],
     ],
 )
 @pytest.mark.parametrize(
@@ -117,14 +110,13 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
-        with pytest.deprecated_call() if ingest_mode == "resume" else contextlib.nullcontext():
-            uri = tiledbsoma.io.from_anndata(
-                output_path,
-                orig,
-                "RNA",
-                ingest_mode=ingest_mode,
-                X_kind=X_kind,
-            )
+        uri = tiledbsoma.io.from_anndata(
+            output_path,
+            orig,
+            "RNA",
+            ingest_mode=ingest_mode,
+            X_kind=X_kind,
+        )
         if ingest_mode != "schema_only":
             have_ingested = True
 
@@ -261,59 +253,6 @@ def test_named_X_layers(conftest_pbmc_small_h5ad_path, X_layer_name, tmp_path):
         else:
             assert X_layer_name in exp.ms["RNA"].X
             assert X_layer_name in exp.ms["raw"].X
-
-
-def _get_fragment_count(array_uri):
-    fragment_uri = Path(array_uri) / "__fragments"
-    return len(list(fragment_uri.iterdir())) if fragment_uri.exists() else 0
-
-
-@pytest.mark.parametrize(
-    "resume_mode_h5ad_file",
-    [
-        TESTDATA / "pbmc-small-x-dense.h5ad",
-        TESTDATA / "pbmc-small-x-csr.h5ad",
-        TESTDATA / "pbmc-small-x-csc.h5ad",
-    ],
-)
-def test_resume_mode(resume_mode_h5ad_file, tmp_path):
-    """
-    Makes sure resume-mode ingest after successful ingest of the same input data does not write
-    anything new
-    """
-    if not TESTDATA.exists():
-        raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
-
-    output_path1 = (tmp_path / "test_resume_mode_1_").as_posix()
-    tiledbsoma.io.from_h5ad(output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
-
-    output_path2 = (tmp_path / "test_resume_mode_2_").as_posix()
-    tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
-    with pytest.deprecated_call():
-        tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="resume")
-
-    exp1 = _factory.open(output_path1)
-    exp2 = _factory.open(output_path2)
-    with exp1, exp2:
-        assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
-        assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(exp2.ms["RNA"].var.uri)
-        assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(exp2.ms["RNA"].X["data"].uri)
-
-        meas1 = exp1.ms["RNA"]
-        meas2 = exp2.ms["RNA"]
-
-        if "obsm" in meas1:
-            for key in meas1.obsm:
-                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(meas2.obsm[key].uri)
-        if "varm" in meas1:
-            for key in meas1.varm:
-                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(meas2.obsm[key].uri)
-        if "obsp" in meas1:
-            for key in meas1.obsp:
-                assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(meas2.obsp[key].uri)
-        if "varp" in meas1:
-            for key in meas1.varp:
-                assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(meas2.varm[key].uri)
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
