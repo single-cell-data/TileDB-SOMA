@@ -43,12 +43,9 @@ def main():
         "--ingest-mode",
         help="""Write mode (the default) writes all data, creating new layers if the soma already exists.
 
-Resume mode skip data writes if data are within MBRs of the existing soma.
-This is useful for continuing after a partial/interrupted previous upload.
-
 Schema-only mode creates groups and array schema, without writing array data.
 This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.""",
-        choices=["write", "schema_only", "schema-only", "resume"],
+        choices=["write", "schema_only", "schema-only"],
         default=["write"],
         nargs=1,
     )

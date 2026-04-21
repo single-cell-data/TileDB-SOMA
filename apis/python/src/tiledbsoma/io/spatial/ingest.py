@@ -285,9 +285,6 @@ def from_visium(
             Otherwise, it is ingested into channel-last format. Defaults to ``True``.
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
-            - ``resume``: Adds data to an existing SOMA, skipping writing data
-              that was previously written. Useful for continuing after a partial
-              or interrupted ingestion operation.
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
@@ -717,7 +714,6 @@ def _write_X_layer(
             matrix,
             tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
             tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
-            ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray

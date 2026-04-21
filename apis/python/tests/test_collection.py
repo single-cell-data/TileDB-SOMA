@@ -200,7 +200,7 @@ def test_delete_add_write_mode(soma_object, tmp_path: pathlib.Path):
         create["porkchop sandwiches"] = soma_object
 
     with soma.open(tmp_uri, "w", soma_type=soma.Collection) as update:
-        with pytest.warns(DeprecationWarning):
+        with pytest.raises(soma.SOMAError):
             del update["porkchop sandwiches"]
         # TEMPORARY: This should no longer raise once TileDB supports replacing
         # an existing group member.

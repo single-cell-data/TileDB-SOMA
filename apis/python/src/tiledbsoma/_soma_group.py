@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
-import warnings
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
+from threading import Lock
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import attrs
@@ -144,13 +144,6 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             if self.closed:
                 raise SOMAError(f"Cannot delete '{key!r}'. {self} is closed")
             if self.mode == "d":
-                self._handle.remove(key)
-            elif self.mode == "w":
-                warnings.warn(
-                    f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
-                    DeprecationWarning,
-                    stacklevel=3,
-                )
                 self._handle.remove(key)
             else:
                 raise SOMAError(
