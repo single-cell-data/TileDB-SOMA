@@ -589,18 +589,12 @@ test_that("Write Seurat with BPCells layers", {
   }
 })
 
-test_that("Ragged array uploads to S3 (SOMA-906)", {
-  skip_if_not(
-    s3_tests(),
-    message = paste(
-      "Not running S3 tests; to run, please ensure {aws.s3} is installed and",
-      "the 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', and 'AWS_S3_BUCKET'",
-      "environment variables are set"
-    )
-  )
+test_that("Ragged array relative URIs (SOMA-906)", {
   skip_if(!extended_tests())
-  skip_if_not_installed("withr")
+  skip_if_not_installed("tiledb", minimum_version = "0.34.0")
   skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+  op <- options(Seurat.object.assay.calcn = FALSE)
+  on.exit(options(op), add = TRUE, after = FALSE)
   withr::local_options(Seurat.object.assay.calcn = FALSE)
 
   # Create and write a ragged `Seurat` object
@@ -621,50 +615,13 @@ test_that("Ragged array uploads to S3 (SOMA-906)", {
   )
   expect_no_condition(uri <- write_soma(obj, uri = tempfile("ragged-s3-")))
 
-  # Upload to S3
-  object_base <- basename(uri)
-  if (!suppressMessages(aws.s3::bucket_exists(Sys.getenv("AWS_S3_BUCKET")))) {
-    skip_if_not(
-      aws.s3::put_bucket(
-        Sys.getenv("AWS_S3_BUCKET"),
-        region = Sys.getenv("AWS_DEFAULT_REGION", unset = "us-east-1")
-      ),
-      message = "Failed to create S3 bucket for"
-    )
-    withr::defer(aws.s3::delete_bucket(Sys.getenv("AWS_S3_BUCKET")))
-  }
-  withr::defer({
-    contents <- aws.s3::get_bucket_df(
-      Sys.getenv("AWS_S3_BUCKET"),
-      prefix = object_base
-    )
-    aws.s3::delete_object(contents$Key, bucket = Sys.getenv("AWS_S3_BUCKET"))
-  })
-  for (f in list.files(uri, full.names = TRUE, recursive = TRUE)) {
-    skip_if_not(
-      aws.s3::put_object(
-        object = sub(
-          pattern = sprintf("^%s", uri),
-          replacement = object_base,
-          x = f
-        ),
-        bucket = Sys.getenv("AWS_S3_BUCKET"),
-        file = f
-      ),
-      message = sprintf(fmt = "Failed to upload '%s' to S3", f)
-    )
-  }
-
-  # Ensure that the members are all relative
-  s3_uri <- sprintf("s3://%s/%s", Sys.getenv("AWS_S3_BUCKET"), object_base)
-  expect_s3_class(exp <- SOMAExperimentOpen(s3_uri), "SOMAExperiment")
-  withr::defer(exp$close())
-  expect_type(members <- exp$ms$get("RNA")$X$members, "list")
-  expect_length(members, n = length(layers))
-  for (i in seq_along(members)) {
-    expect_true(
-      startsWith(members[[i]]$uri, sprintf("%s/", s3_uri)),
-      info = members[[i]]$name
-    )
+  # Check that the ragged arrays are relative to their group
+  expect_s3_class(exp <- SOMAExperimentOpen(uri), "SOMAExperiment")
+  on.exit(exp$close(), add = TRUE, after = FALSE)
+  group_uri <- exp$ms$get("RNA")$X$uri
+  grp <- tiledb::tiledb_group(group_uri, "READ")
+  on.exit(tiledb::tiledb_group_close(grp), add = TRUE, after = FALSE)
+  for (nm in names(layers)) {
+    expect_true(tiledb::tiledb_group_is_relative(grp, nm), info = nm)
   }
 })

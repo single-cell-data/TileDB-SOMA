@@ -55,7 +55,6 @@ LinkingTo:
     Rcpp,
     RcppInt64
 Suggests:
-    aws.s3,
     BPCells,
     datasets,
     iterators,
