@@ -11,6 +11,7 @@
 - `SOMACollectionOpen()` now enforces strict type checking and will error if the URI points to a `SOMAExperiment`, `SOMAMeasurement`, or other collection subtype. Users should use the appropriate type-specific function (`SOMAExperimentOpen()`, `SOMAMeasurementOpen()`) or `SOMAOpen()`, which automatically resolves the correct subclass. ([#4443](https://github.com/single-cell-data/TileDB-SOMA/pull/4443))
 - `ManagedQuery` reuses the same buffers for each incomplete read and allocates dedicated buffers when converting to Arrow. ([#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299))
 - Default log level changed from `info` to `warn` to reduce verbosity. Use `set_log_level("info")` or the `SPDLOG_LEVEL` environment variable to restore verbose logging. ([#4393](https://github.com/single-cell-data/TileDB-SOMA/pull/4393))
+- `SOMACollection$add_new_sparse_ndarray()` always adds relatively ([#4450](https://github.com/single-cell-data/TileDB-SOMA/pull/4450))
 
 ## Defunct
 
