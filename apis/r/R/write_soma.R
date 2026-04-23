@@ -184,7 +184,7 @@ write_soma.data.frame <- function(
 ) {
   stopifnot(
     "'x' must be named" = is_named(x, allow_empty = FALSE),
-    "'x' must have at lease one row and one column" = dim(x) > 0L,
+    "'x' must have at least one row and one column" = dim(x) > 0L,
     "'df_index' must be a single character value" = is.null(df_index) ||
       (is_scalar_character(df_index) && nzchar(df_index)),
     "'index_column_names' must be a character vector" = is.character(
@@ -791,6 +791,7 @@ write_soma.TsparseMatrix <- function(
     "'axis' must be a single character value" = is_scalar_character(axis),
     "'prefix' must be a single character value" = is_scalar_character(prefix)
   )
+  x <- as.data.frame(x)
   axis <- match.arg(axis, choices = c("obs", "var", "index"))
   default <- switch(EXPR = axis, index = "index", paste0(axis, "_id"))
   index <- ""

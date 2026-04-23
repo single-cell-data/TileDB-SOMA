@@ -17,13 +17,13 @@ object to a SOMA}
 )
 }
 \arguments{
-\item{x}{An object.}
+\item{x}{A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object.}
 
 \item{uri}{URI for resulting SOMA object.}
 
 \item{ms_name}{Name for resulting measurement.}
 
-\item{...}{Arguments passed to other methods}
+\item{...}{Reserved for future use.}
 
 \item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
 \itemize{

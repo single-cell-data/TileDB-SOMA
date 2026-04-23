@@ -589,6 +589,22 @@ test_that("Write Seurat with BPCells layers", {
   }
 })
 
+test_that("Write Seurat relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+  uri <- tempfile(pattern = SeuratObject::Project(pbmc_small))
+
+  for (i in c(TRUE, FALSE)) {
+    expect_error(
+      write_soma(pbmc_small, uri, relative = i),
+      regexp = "^The dots '\\.\\.\\.' must be empty when",
+      label = sprintf("write_soma.Seurat(relative = %s)", i)
+    )
+  }
+})
+
 test_that("Ragged array relative URIs (SOMA-906)", {
   skip_if(!extended_tests())
   skip_if_not_installed("tiledb", minimum_version = "0.34.0")

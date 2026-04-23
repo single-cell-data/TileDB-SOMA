@@ -487,6 +487,7 @@ write_soma.Graph <- function(
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
 #' @param x A \code{\link[SeuratObject]{Seurat}} object.
+#' @template param-dots-reserved
 #'
 #' @inherit write_soma return
 #'
@@ -546,7 +547,15 @@ write_soma.Seurat <- function(
       (is_scalar_character(uri) && nzchar(uri))
   )
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
-  if ("shape" %in% names(args <- rlang::dots_list(...))) {
+  args <- rlang::dots_list(...)
+  if (length(args) && (length(args) > 1L || names(args) != "shape")) {
+    stop(
+      "The dots '...' must be empty when calling `write_soma() on a '",
+      class(x)[1L], "' object",
+      call. = FALSE
+    )
+  }
+  if ("shape" %in% names(args)) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
