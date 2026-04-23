@@ -519,7 +519,7 @@ SOMACollectionBase <- R6::R6Class(
         private$.add_cache_member(name, object)
       } else {
         # v2: register with TileDB group
-        self$set(object, name)
+        self$set(object, name, relative = TRUE)
       }
       return(invisible(self))
     },

@@ -1,4 +1,12 @@
-# Shared Remote Test Utilities ------------------------------------------
+# Shared Remote Test Utilities
+
+s3_tests <- function() {
+  envvars <- c("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_S3_BUCKET")
+  return(
+    requireNamespace("aws.s3", quietly = TRUE) &&
+      all(nzchar(Sys.getenv(envvars)))
+  )
+}
 
 # Generate a unique ID for test assets
 generate_unique_id <- function(pattern = "") {

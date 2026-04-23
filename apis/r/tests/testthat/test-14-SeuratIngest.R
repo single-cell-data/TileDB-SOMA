@@ -588,3 +588,83 @@ test_that("Write Seurat with BPCells layers", {
     expect_identical(th, expected = "Matrix:dgCMatrix", info = lyr)
   }
 })
+
+test_that("Ragged array uploads to S3 (SOMA-906)", {
+  skip_if_not(
+    s3_tests(),
+    message = paste(
+      "Not running S3 tests; to run, please ensure {aws.s3} is installed and",
+      "the 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', and 'AWS_S3_BUCKET'",
+      "environment variables are set"
+    )
+  )
+  skip_if(!extended_tests())
+  skip_if_not_installed("withr")
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+  withr::local_options(Seurat.object.assay.calcn = FALSE)
+
+  # Create and write a ragged `Seurat` object
+  rna <- get_data("pbmc_small", package = "SeuratObject")[["RNA"]]
+  rna <- as(rna, "Assay5")
+  mat <- SeuratObject::LayerData(rna, "counts")
+  cells2 <- sprintf("%s.2", colnames(rna))
+  features2 <- sprintf("%s.2", rownames(rna))
+  layers <- list(
+    mat = mat,
+    cells2 = `colnames<-`(mat, cells2),
+    features2 = `rownames<-`(mat, features2),
+    c2f2 = `dimnames<-`(mat, list(features2, cells2))
+  )
+  expect_s4_class(
+    obj <- SeuratObject::CreateSeuratObject(SeuratObject::.CreateStdAssay(layers)),
+    "Seurat"
+  )
+  expect_no_condition(uri <- write_soma(obj, uri = tempfile("ragged-s3-")))
+
+  # Upload to S3
+  object_base <- basename(uri)
+  if (!suppressMessages(aws.s3::bucket_exists(Sys.getenv("AWS_S3_BUCKET")))) {
+    skip_if_not(
+      aws.s3::put_bucket(
+        Sys.getenv("AWS_S3_BUCKET"),
+        region = Sys.getenv("AWS_DEFAULT_REGION", unset = "us-east-1")
+      ),
+      message = "Failed to create S3 bucket for"
+    )
+    withr::defer(aws.s3::delete_bucket(Sys.getenv("AWS_S3_BUCKET")))
+  }
+  withr::defer({
+    contents <- aws.s3::get_bucket_df(
+      Sys.getenv("AWS_S3_BUCKET"),
+      prefix = object_base
+    )
+    aws.s3::delete_object(contents$Key, bucket = Sys.getenv("AWS_S3_BUCKET"))
+  })
+  for (f in list.files(uri, full.names = TRUE, recursive = TRUE)) {
+    skip_if_not(
+      aws.s3::put_object(
+        object = sub(
+          pattern = sprintf("^%s", uri),
+          replacement = object_base,
+          x = f
+        ),
+        bucket = Sys.getenv("AWS_S3_BUCKET"),
+        file = f
+      ),
+      message = sprintf(fmt = "Failed to upload '%s' to S3", f)
+    )
+  }
+
+  # Ensure that the members are all relative
+  s3_uri <- sprintf("s3://%s/%s", Sys.getenv("AWS_S3_BUCKET"), object_base)
+  expect_s3_class(exp <- SOMAExperimentOpen(s3_uri), "SOMAExperiment")
+  withr::defer(exp$close())
+  expect_type(members <- exp$ms$get("RNA")$X$members, "list")
+  expect_length(members, n = length(layers))
+  for (i in seq_along(members)) {
+    expect_true(
+      startsWith(members[[i]]$uri, sprintf("%s/", s3_uri)),
+      info = members[[i]]$name
+    )
+  }
+})
