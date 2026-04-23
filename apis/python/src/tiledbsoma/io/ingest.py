@@ -1412,6 +1412,13 @@ def update_obs(
         2. Modify values / add or drop columns while preserving row order.
         3. Pass the modified DataFrame as ``new_data``.
 
+    .. warning::
+
+        Currently this function does not work on Experiments that have had
+        observations deleted via :func:`obs_axis_delete`. Deletion creates gaps
+        in ``soma_joinid`` values, which causes an internal validation check to
+        fail. As a workaround, use :meth:`DataFrame.write` directly.
+
     Args:
         exp: :class:`Experiment` opened for write.
         new_data: A :class:`pandas.DataFrame` containing the final desired data for the existing ``obs`` DataFrame.
@@ -1449,6 +1456,13 @@ def update_var(
     """Replace the entire ``var`` DataFrame with the contents of a new :class:`pandas.DataFrame`.
 
     Analogous to ``update_obs``, but replaces the ``var`` DataFrame within a specific :class:`Measurement`. See :func:`update_obs` for details.
+
+    .. warning::
+
+        This function does not work on Experiments that have had variables
+        deleted via :func:`var_axis_delete`. Deletion creates gaps in
+        ``soma_joinid`` values, which causes an internal validation check to
+        fail. As a workaround, use :meth:`DataFrame.write` directly.
 
     Args:
         exp: :class:`Experiment` opened for write.
