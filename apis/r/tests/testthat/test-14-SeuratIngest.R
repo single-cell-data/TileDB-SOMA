@@ -154,6 +154,57 @@ test_that("Write Assay mechanics", {
   gc()
 })
 
+test_that("Write Assays relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("tiledb", minimum_version = "0.34.0")
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+
+  rna <- get_data("pbmc_small", package = "SeuratObject")[["RNA"]]
+  collection <- SOMACollectionCreate(tempfile("write-assay-relative-"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  # `relative = TRUE`
+  expect_s3_class(
+    ms <- write_soma(rna, soma_parent = collection, relative = TRUE),
+    "SOMAMeasurement"
+  )
+  on.exit(ms$close(), add = TRUE, after = FALSE)
+  ms$reopen("READ")
+  grp <- tiledb::tiledb_group(ms$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms)) {
+    expect_true(tiledb::tiledb_group_is_relative(grp, name = nm), info = nm)
+  }
+  x_grp <- tiledb::tiledb_group(ms$X$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(x_grp), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms$X)) {
+    expect_true(tiledb::tiledb_group_is_relative(x_grp, name = nm), info = nm)
+  }
+
+  # `relative = FALSE`
+  expect_s3_class(
+    ms_abs <- write_soma(
+      rna,
+      uri = tempfile("write-assay-absolute-"),
+      soma_parent = collection,
+      relative = FALSE
+    ),
+    "SOMAMeasurement"
+  )
+  on.exit(ms_abs$close(), add = TRUE, after = FALSE)
+  ms_abs$reopen("READ")
+  abs_grp <- tiledb::tiledb_group(ms_abs$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(abs_grp), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs)) {
+    expect_false(tiledb::tiledb_group_is_relative(abs_grp, name = nm), info = nm)
+  }
+  x_abs <- tiledb::tiledb_group(ms_abs$X$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(x_abs), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs$X)) {
+    expect_false(tiledb::tiledb_group_is_relative(x_abs, name = nm), info = nm)
+  }
+})
+
 test_that("Write v5 in-memory Assay mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
@@ -246,6 +297,58 @@ test_that("Write v5 in-memory Assay mechanics", {
   }
 })
 
+test_that("Write v5 Assays relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("tiledb", minimum_version = "0.34.0")
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+
+  rna <- get_data("pbmc_small", package = "SeuratObject")[["RNA"]]
+  rna <- as(rna, "Assay5")
+  collection <- SOMACollectionCreate(tempfile("write-assay-v5-relative-"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  # `relative = TRUE`
+  expect_s3_class(
+    ms <- write_soma(rna, soma_parent = collection, relative = TRUE),
+    "SOMAMeasurement"
+  )
+  on.exit(ms$close(), add = TRUE, after = FALSE)
+  ms$reopen("READ")
+  grp <- tiledb::tiledb_group(ms$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms)) {
+    expect_true(tiledb::tiledb_group_is_relative(grp, name = nm), info = nm)
+  }
+  x_grp <- tiledb::tiledb_group(ms$X$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(x_grp), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms$X)) {
+    expect_true(tiledb::tiledb_group_is_relative(x_grp, name = nm), info = nm)
+  }
+
+  # `relative = FALSE`
+  expect_s3_class(
+    ms_abs <- write_soma(
+      rna,
+      uri = tempfile("write-assay-absolute-"),
+      soma_parent = collection,
+      relative = FALSE
+    ),
+    "SOMAMeasurement"
+  )
+  on.exit(ms_abs$close(), add = TRUE, after = FALSE)
+  ms_abs$reopen("READ")
+  abs_grp <- tiledb::tiledb_group(ms_abs$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(abs_grp), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs)) {
+    expect_false(tiledb::tiledb_group_is_relative(abs_grp, name = nm), info = nm)
+  }
+  x_abs <- tiledb::tiledb_group(ms_abs$X$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(x_abs), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs$X)) {
+    expect_false(tiledb::tiledb_group_is_relative(x_abs, name = nm), info = nm)
+  }
+})
+
 test_that("Write DimReduc mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
@@ -322,6 +425,76 @@ test_that("Write DimReduc mechanics", {
   gc()
 })
 
+test_that("Write DimReducs relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("tiledb", minimum_version = "0.34.0")
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+  rna <- pbmc_small[["RNA"]]
+  pca <- pbmc_small[["pca"]]
+  fidx <- match(rownames(SeuratObject::Loadings(pca)), rownames(rna))
+  collection <- SOMACollectionCreate(tempfile("write-dimreduc-relative-"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  # `relative = TRUE`
+  ms_relative <- write_soma(rna, soma_parent = collection)
+  on.exit(ms_relative$close(), add = TRUE, after = FALSE)
+  expect_no_condition(write_soma(
+    pca,
+    soma_parent = ms_relative,
+    fidx = fidx,
+    nfeatures = nrow(rna),
+    relative = TRUE
+  ))
+  ms_relative$reopen("READ")
+  grp_rel <- tiledb::tiledb_group(ms_relative$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp_rel), add = TRUE, after = FALSE)
+  expect_true(tiledb::tiledb_group_is_relative(grp_rel, name = "obsm"))
+  expect_true(tiledb::tiledb_group_is_relative(grp_rel, name = "varm"))
+  obsm_rel <- tiledb::tiledb_group(ms_relative$obsm$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(obsm_rel), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_relative$obsm)) {
+    expect_true(tiledb::tiledb_group_is_relative(obsm_rel, name = nm), info = nm)
+  }
+  varm_rel <- tiledb::tiledb_group(ms_relative$varm$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(varm_rel), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_relative$varm)) {
+    expect_true(tiledb::tiledb_group_is_relative(varm_rel, name = nm), info = nm)
+  }
+
+  # `relative = FALSE`
+  ms_abs <- write_soma(
+    rna,
+    uri = tempfile("write-dimreduc-absolute-"),
+    soma_parent = collection,
+    relative = FALSE
+  )
+  on.exit(ms_abs$close(), add = TRUE, after = FALSE)
+  expect_no_condition(write_soma(
+    pca,
+    soma_parent = ms_abs,
+    fidx = fidx,
+    nfeatures = nrow(rna),
+    relative = FALSE
+  ))
+  ms_abs$reopen("READ")
+  grp_abs <- tiledb::tiledb_group(ms_abs$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp_abs), add = TRUE, after = FALSE)
+  expect_false(tiledb::tiledb_group_is_relative(grp_abs, name = "obsm"))
+  expect_false(tiledb::tiledb_group_is_relative(grp_abs, name = "varm"))
+  obsm_abs <- tiledb::tiledb_group(ms_abs$obsm$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(obsm_abs), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs$obsm)) {
+    expect_false(tiledb::tiledb_group_is_relative(obsm_abs, name = nm), info = nm)
+  }
+  varm_abs <- tiledb::tiledb_group(ms_abs$varm$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(varm_abs), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs$varm)) {
+    expect_false(tiledb::tiledb_group_is_relative(varm_abs, name = nm), info = nm)
+  }
+})
+
 test_that("Write Graph mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
@@ -346,6 +519,61 @@ test_that("Write Graph mechanics", {
   expect_error(write_soma(graph, collection = soma_parent))
 
   gc()
+})
+
+test_that("Write Graphs relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("tiledb", minimum_version = "0.34.0")
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+  rna <- pbmc_small[["RNA"]]
+  rna_snn <- pbmc_small[["RNA_snn"]]
+  collection <- SOMACollectionCreate(tempfile("write-graph-relative-"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  # `relative = TRUE`
+  ms_relative <- write_soma(rna, soma_parent = collection)
+  on.exit(ms_relative$close(), add = TRUE, after = FALSE)
+  expect_no_condition(write_soma(
+    rna_snn,
+    uri = "rna_snn",
+    soma_parent = ms_relative,
+    relative = TRUE
+  ))
+  ms_relative$reopen("READ")
+  grp_rel <- tiledb::tiledb_group(ms_relative$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp_rel), add = TRUE, after = FALSE)
+  expect_true(tiledb::tiledb_group_is_relative(grp_rel, name = "obsp"))
+  obsp_rel <- tiledb::tiledb_group(ms_relative$obsp$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(obsp_rel), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_relative$obsp)) {
+    expect_true(tiledb::tiledb_group_is_relative(obsp_rel, name = nm), info = nm)
+  }
+
+  # `relative = FALSE`
+  ms_abs <- write_soma(
+    rna,
+    uri = tempfile("write-graph-absolute-"),
+    soma_parent = collection,
+    relative = FALSE
+  )
+  on.exit(ms_abs$close(), add = TRUE, after = FALSE)
+  expect_no_condition(write_soma(
+    rna_snn,
+    uri = tempfile("rna-snn-"),
+    soma_parent = ms_abs,
+    relative = FALSE
+  ))
+  ms_abs$reopen("READ")
+  grp_abs <- tiledb::tiledb_group(ms_abs$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp_abs), add = TRUE, after = FALSE)
+  expect_false(tiledb::tiledb_group_is_relative(grp_abs, "obsp"))
+  obsp_abs <- tiledb::tiledb_group(ms_abs$obsp$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(obsp_abs), add = TRUE, after = FALSE)
+  for (nm in collection_members(ms_abs$obsp)) {
+    expect_false(tiledb::tiledb_group_is_relative(obsp_abs, name = nm), info = nm)
+  }
 })
 
 test_that("Write SeuratCommand mechanics", {
@@ -426,6 +654,46 @@ test_that("Write SeuratCommand mechanics", {
 
   uns$close()
   gc()
+})
+
+test_that("Write SeuratCommands relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("tiledb", minimum_version = "0.34.0")
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+
+  # `relative = TRUE`
+  uns_rel <- SOMACollectionCreate(tempfile("write-command-relative-"))
+  on.exit(uns_rel$close(), add = TRUE, after = FALSE)
+  for (cmd in SeuratObject::Command(pbmc_small)) {
+    write_soma(pbmc_small[[cmd]], soma_parent = uns_rel, relative = TRUE)
+  }
+  uns_rel$reopen("READ")
+  grp_rel <- tiledb::tiledb_group(uns_rel$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp_rel), add = TRUE, after = FALSE)
+  expect_true(tiledb::tiledb_group_is_relative(grp_rel, name = "seurat_commands"))
+  cmd_rel <- tiledb::tiledb_group(uns_rel$get("seurat_commands")$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(cmd_rel), add = TRUE, after = FALSE)
+  for (nm in collection_members(uns_rel$get("seurat_commands"))) {
+    expect_true(tiledb::tiledb_group_is_relative(cmd_rel, name = nm), info = nm)
+  }
+
+  # `relative = FALSE`
+  uns_abs <- SOMACollectionCreate(tempfile("write-command-relative-"))
+  on.exit(uns_abs$close(), add = TRUE, after = FALSE)
+  for (cmd in SeuratObject::Command(pbmc_small)) {
+    write_soma(pbmc_small[[cmd]], soma_parent = uns_abs, relative = FALSE)
+  }
+  uns_abs$reopen("READ")
+  grp_abs <- tiledb::tiledb_group(uns_abs$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(grp_abs), add = TRUE, after = FALSE)
+  expect_false(tiledb::tiledb_group_is_relative(grp_abs, name = "seurat_commands"))
+  cmd_abs <- tiledb::tiledb_group(uns_abs$get("seurat_commands")$uri, type = "READ")
+  on.exit(tiledb::tiledb_group_close(cmd_abs), add = TRUE, after = FALSE)
+  for (nm in collection_members(uns_abs$get("seurat_commands"))) {
+    expect_false(tiledb::tiledb_group_is_relative(cmd_abs, name = nm), info = nm)
+  }
 })
 
 test_that("Write Seurat mechanics", {
@@ -611,7 +879,6 @@ test_that("Ragged array relative URIs (SOMA-906)", {
   skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
   op <- options(Seurat.object.assay.calcn = FALSE)
   on.exit(options(op), add = TRUE, after = FALSE)
-  withr::local_options(Seurat.object.assay.calcn = FALSE)
 
   # Create and write a ragged `Seurat` object
   rna <- get_data("pbmc_small", package = "SeuratObject")[["RNA"]]
