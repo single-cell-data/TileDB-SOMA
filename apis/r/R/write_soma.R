@@ -716,7 +716,13 @@ write_soma.TsparseMatrix <- function(
       j = bit64::as.integer64(methods::slot(x, "j")),
       x = methods::slot(x, "x")
     )
-    tbl <- tbl[-which(tbl$i %in% row_ids & tbl$j %in% col_ids), , drop = FALSE]
+
+    # Only subset the table if there are existing joinid matches
+    idx <- which(tbl$i %in% row_ids & tbl$j %in% col_ids)
+    if (length(idx) > 0) {
+      tbl <- tbl[-idx, , drop = FALSE]
+    }
+
     x <- if (nrow(tbl)) {
       Matrix::sparseMatrix(
         i = as.integer(tbl$i),
