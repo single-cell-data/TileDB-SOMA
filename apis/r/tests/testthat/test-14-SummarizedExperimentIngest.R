@@ -58,6 +58,17 @@ test_that("Write SummarizedExperiment mechanics", {
     names(SummarizedExperiment::rowData(se))
   )
 
+  # Verify X data values round-trip correctly
+  for (assay in SummarizedExperiment::assayNames(se)) {
+    original <- SummarizedExperiment::assay(se, assay)
+    stored <- ms$X$get(assay)$read()$sparse_matrix()$concat()
+    expect_equal(
+      sum(stored != 0),
+      sum(original != 0),
+      label = sprintf("non-zero count for assay '%s'", assay)
+    )
+  }
+
   # Test ms_name assertions
   expect_error(write_soma(se, uri))
   expect_error(write_soma(se, uri, ""))
