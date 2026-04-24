@@ -270,4 +270,8 @@ std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_maxshape() {
     return _maybe_soma_joinid_maxshape();
 }
 
+std::string SOMADataFrame::classname() const {
+    return "DataFrame";
+}
+
 }  // namespace tiledbsoma

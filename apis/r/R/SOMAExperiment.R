@@ -93,12 +93,12 @@ SOMAExperiment <- R6::R6Class(
   private = list(
     # @description Open the handle for the C++ interface
     .open_handle = function(open_mode, timestamp) {
-      private$.handle <- open_experiment_handle(
+      private$.set_handle(open_experiment_handle(
         self$uri,
         open_mode,
         private$.context$handle,
         timestamp
-      )
+      ))
     },
 
     # @description Implementation for creating a collection.

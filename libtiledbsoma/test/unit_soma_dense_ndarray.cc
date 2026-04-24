@@ -175,9 +175,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
     REQUIRE(dnda->has_metadata("md"));
     auto mdval = dnda->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == common::DataType::int32);
-    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    REQUIRE(std::get<int32_t>(mdval.value()) == 100);
     dnda->close();
 
     // md should not be available at (0, 1)
@@ -195,7 +193,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
     REQUIRE(dnda->has_metadata("md"));
     mdval = dnda->get_metadata("md");
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    REQUIRE(std::get<int32_t>(mdval.value()) == 100);
 
     // Delete and have it reflected when reading metadata while in write mode
     dnda->delete_metadata("md");

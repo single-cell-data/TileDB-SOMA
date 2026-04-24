@@ -21,7 +21,7 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
     const nlohmann::json& soma_schema,
     const tiledb::Context& ctx,
     const tiledb::Array& array,
-    const std::map<std::string, tiledbsoma::MetadataValue>&) {
+    const std::map<std::string, common::MetadataValue>&) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
         throw TileDBSOMAError(
             "[SOMAAttribute][deserialize] Missing required field "

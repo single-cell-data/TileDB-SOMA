@@ -20,6 +20,7 @@
 #include "../utils/common.h"
 
 #include "common/datatype/datatype.h"
+#include "common/metadata/types.h"
 
 namespace tiledbsoma {
 
@@ -38,7 +39,7 @@ struct SOMAAxis {
 
 class SOMACoordinateSpace {
    public:
-    static SOMACoordinateSpace from_metadata(common::DataType value_type, uint32_t value_num, const void* value);
+    static SOMACoordinateSpace from_metadata(common::MetadataValue metadata);
 
     static SOMACoordinateSpace from_string(std::string_view metadata);
 

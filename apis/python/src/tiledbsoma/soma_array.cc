@@ -39,7 +39,7 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
 }
 
 void load_soma_array(py::module& m) {
-    py::class_<SOMAArray, SOMAObject>(m, "SOMAArray")
+    py::class_<SOMAArray, SOMAObject, py::smart_holder>(m, "SOMAArray")
         .def(
             py::init([](std::string_view uri,
                         std::map<std::string, std::string> platform_config,
@@ -52,14 +52,24 @@ void load_soma_array(py::module& m) {
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
 
-        .def("__enter__", [](SOMAArray& array) { return array; })
+        .def("__enter__", [](std::shared_ptr<SOMAArray> array) { return array; })
         .def(
             "__exit__",
-            [](SOMAArray& array, py::object exc_type, py::object exc_value, py::object traceback) { array.close(); })
+            [](std::shared_ptr<SOMAArray> array, py::object exc_type, py::object exc_value, py::object traceback) {
+                array->close();
+            })
 
         .def_property_readonly("type", &SOMAArray::type)
-        .def("close", &SOMAArray::close)
+        .def("close", &SOMAArray::close, py::arg("recursive") = false)
         .def_property_readonly("closed", [](SOMAArray& array) -> bool { return not array.is_open(); })
+        .def(
+            "reopen",
+            [](std::shared_ptr<SOMAArray> array, OpenMode mode, std::optional<TimestampRange> timestamp) {
+                array->close(true);
+                array->open(mode, timestamp);
+            },
+            "mode"_a,
+            "timestamp"_a = py::none())
         .def_property_readonly(
             "mode",
             [](SOMAArray& array) {

@@ -181,7 +181,7 @@ SEXP soma_array_read_impl(
 
 // [[Rcpp::export]]
 SEXP soma_array_read(
-    Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array,
+    Rcpp::XPtr<somaobj_wrap_t> soma_array,
     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
@@ -191,7 +191,14 @@ SEXP soma_array_read(
     const std::string& loglevel = "auto",
     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
     return soma_array_read_impl(
-        soma_array.get(), colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel);
+        soma_array->ptr<tiledbsoma::SOMAArray>().get(),
+        colnames,
+        qc,
+        dim_points,
+        dim_ranges,
+        batch_size,
+        result_order,
+        loglevel);
 }
 
 // [[Rcpp::export]]
@@ -295,11 +302,11 @@ void soma_warn(const std::string& msg) {
 }
 
 // [[Rcpp::export]]
-double nnz(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+double nnz(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return static_cast<double>(array->nnz());
+    return static_cast<double>(array->ptr<tiledbsoma::SOMAArray>()->nnz());
 }
 
 // [[Rcpp::export]]
@@ -315,44 +322,44 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector shape(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::NumericVector shape(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return Rcpp::toInteger64(array->shape());
+    return Rcpp::toInteger64(array->ptr<tiledbsoma::SOMAArray>()->shape());
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector maxshape(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::NumericVector maxshape(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return Rcpp::toInteger64(array->maxshape());
+    return Rcpp::toInteger64(array->ptr<tiledbsoma::SOMAArray>()->maxshape());
 }
 
 // [[Rcpp::export]]
-SEXP non_empty_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+SEXP non_empty_domain(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto arrow_table = array->get_non_empty_domain();
+    auto arrow_table = array->ptr<tiledbsoma::SOMAArray>()->get_non_empty_domain();
     return convert_domainish(arrow_table);
 }
 
 // [[Rcpp::export]]
-SEXP domain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe) {
+SEXP domain(Rcpp::XPtr<somaobj_wrap_t> dataframe) {
     if (!dataframe) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return convert_domainish(dataframe->get_soma_domain());
+    return convert_domainish(dataframe->ptr<tiledbsoma::SOMADataFrame>()->get_soma_domain());
 }
 
 // [[Rcpp::export]]
-SEXP maxdomain(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe) {
+SEXP maxdomain(Rcpp::XPtr<somaobj_wrap_t> dataframe) {
     if (!dataframe) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return convert_domainish(dataframe->get_soma_maxdomain());
+    return convert_domainish(dataframe->ptr<tiledbsoma::SOMADataFrame>()->get_soma_maxdomain());
 }
 
 /** Only used for testing. */
@@ -382,27 +389,27 @@ Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri, Rcpp::XPt
 }
 
 // [[Rcpp::export]]
-Rcpp::LogicalVector has_current_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::LogicalVector has_current_domain(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return Rcpp::LogicalVector(array->has_current_domain());
+    return Rcpp::LogicalVector(array->ptr<tiledbsoma::SOMAArray>()->has_current_domain());
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector ndim(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::NumericVector ndim(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return Rcpp::NumericVector::create(array->ndim());
+    return Rcpp::NumericVector::create(array->ptr<tiledbsoma::SOMAArray>()->ndim());
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto lib_retval = array->dimension_names();
+    auto lib_retval = array->ptr<tiledbsoma::SOMAArray>()->dimension_names();
 
     size_t n = lib_retval.size();
     Rcpp::CharacterVector retval(n);
@@ -413,11 +420,11 @@ Rcpp::CharacterVector c_dimnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto lib_retval = array->attribute_names();
+    auto lib_retval = array->ptr<tiledbsoma::SOMAArray>()->attribute_names();
 
     size_t n = lib_retval.size();
     Rcpp::CharacterVector retval(n);
@@ -428,11 +435,11 @@ Rcpp::CharacterVector c_attrnames(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 }
 
 // [[Rcpp::export]]
-SEXP c_schema(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+SEXP c_schema(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto lib_retval = array->arrow_schema(true);
+    auto lib_retval = array->ptr<tiledbsoma::SOMAArray>()->arrow_schema(true);
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
     auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
@@ -452,19 +459,19 @@ SEXP c_schema(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 }
 
 // [[Rcpp::export]]
-bool c_is_sparse(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+bool c_is_sparse(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return array->tiledb_schema()->array_type() == TILEDB_SPARSE;
+    return array->ptr<tiledbsoma::SOMAArray>()->tiledb_schema()->array_type() == TILEDB_SPARSE;
 }
 
 // [[Rcpp::export]]
-bool c_allows_dups(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+bool c_allows_dups(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    return array->tiledb_schema()->allows_dups();
+    return array->ptr<tiledbsoma::SOMAArray>()->tiledb_schema()->allows_dups();
 }
 
 // [[Rcpp::export]]
@@ -631,11 +638,11 @@ int _get_ncells(AttrOrDim x) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_attributes(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::List c_attributes(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto sch = array->tiledb_schema();
+    auto sch = array->ptr<tiledbsoma::SOMAArray>()->tiledb_schema();
 
     Rcpp::List result;
     int nattr = sch->attribute_num();
@@ -670,18 +677,19 @@ Rcpp::List c_attributes(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 // adapted from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L3027-L3042
 // [[Rcpp::export]]
-Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe) {
+Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<somaobj_wrap_t> dataframe) {
     if (!dataframe) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto sch = dataframe->tiledb_schema();
+    auto df = dataframe->ptr<tiledbsoma::SOMADataFrame>();
+    auto sch = df->tiledb_schema();
 
     int nattrs = sch->attribute_num();
     Rcpp::LogicalVector has_enum = Rcpp::LogicalVector(nattrs);
     Rcpp::CharacterVector names = Rcpp::CharacterVector(nattrs);
     for (int i = 0; i < nattrs; i++) {
         auto attr = sch->attribute(i);
-        auto enmr = tiledb::AttributeExperimental::get_enumeration_name(*(dataframe->ctx()->tiledb_ctx()), attr);
+        auto enmr = tiledb::AttributeExperimental::get_enumeration_name(*(df->ctx()->tiledb_ctx()), attr);
         has_enum(i) = enmr != std::nullopt;
         names(i) = attr.name();
     }
@@ -691,12 +699,12 @@ Rcpp::LogicalVector c_attributes_enumerated(Rcpp::XPtr<tiledbsoma::SOMADataFrame
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector c_attribute_enumeration_levels(
-    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe, const std::string& name) {
+Rcpp::CharacterVector c_attribute_enumeration_levels(Rcpp::XPtr<somaobj_wrap_t> dataframe, const std::string& name) {
     if (!dataframe) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    std::pair<ArrowArray*, ArrowSchema*> enum_values = dataframe->get_enumeration_values_for_column(name);
+    std::pair<ArrowArray*, ArrowSchema*> enum_values = dataframe->ptr<tiledbsoma::SOMADataFrame>()
+                                                           ->get_enumeration_values_for_column(name);
 
     if (enum_values.first->length > std::numeric_limits<int32_t>::max()) {
         Rcpp::stop("too many enumeration levels for R");
@@ -721,11 +729,11 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
+Rcpp::List c_domain(Rcpp::XPtr<somaobj_wrap_t> array) {
     if (!array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
-    auto sch = array->tiledb_schema();
+    auto sch = array->ptr<tiledbsoma::SOMAArray>()->tiledb_schema();
 
     Rcpp::List result;
     auto domain = make_xptr<tiledb::Domain>(new tiledb::Domain(sch->domain()));
@@ -765,13 +773,15 @@ Rcpp::List c_domain(Rcpp::XPtr<tiledbsoma::SOMAArray> array) {
 
 // [[Rcpp::export]]
 std::string resize(
-    Rcpp::XPtr<tiledbsoma::SOMAArray> ndarray,
+    Rcpp::XPtr<somaobj_wrap_t> ndarray,
     Rcpp::NumericVector new_shape,
     std::string function_name_for_messages,
     bool check_only) {
     if (!ndarray) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
+
+    auto array = ndarray->ptr<tiledbsoma::SOMAArray>();
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
     // variant-indexed dataframes is via upgrade_domain and change_domain.
@@ -779,43 +789,42 @@ std::string resize(
 
     std::string retval = "";
     if (check_only) {
-        auto status_and_reason = ndarray->can_resize(new_shape_i64, function_name_for_messages);
+        auto status_and_reason = array->can_resize(new_shape_i64, function_name_for_messages);
         retval = status_and_reason.second;
     } else {
-        ndarray->resize(new_shape_i64, function_name_for_messages);
+        array->resize(new_shape_i64, function_name_for_messages);
     }
     return retval;
 }
 
 // [[Rcpp::export]]
 void resize_soma_joinid_shape(
-    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe,
-    Rcpp::NumericVector new_shape,
-    std::string function_name_for_messages) {
+    Rcpp::XPtr<somaobj_wrap_t> dataframe, Rcpp::NumericVector new_shape, std::string function_name_for_messages) {
     if (!dataframe) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    dataframe->resize_soma_joinid_shape(new_shape_i64[0], function_name_for_messages);
+    dataframe->ptr<tiledbsoma::SOMADataFrame>()->resize_soma_joinid_shape(new_shape_i64[0], function_name_for_messages);
 }
 
 // [[Rcpp::export]]
 std::string tiledbsoma_upgrade_shape(
-    Rcpp::XPtr<tiledbsoma::SOMAArray> ndarray,
+    Rcpp::XPtr<somaobj_wrap_t> ndarray,
     Rcpp::NumericVector new_shape,
     std::string function_name_for_messages,
     bool check_only) {
     if (!ndarray) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
+    auto array = ndarray->ptr<tiledbsoma::SOMAArray>();
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
 
     std::string retval = "";
     if (check_only) {
-        auto status_and_reason = ndarray->can_upgrade_shape(new_shape_i64, function_name_for_messages);
+        auto status_and_reason = array->can_upgrade_shape(new_shape_i64, function_name_for_messages);
         retval = status_and_reason.second;
     } else {
-        ndarray->upgrade_shape(new_shape_i64, function_name_for_messages);
+        array->upgrade_shape(new_shape_i64, function_name_for_messages);
     }
 
     return retval;
@@ -823,7 +832,7 @@ std::string tiledbsoma_upgrade_shape(
 
 // [[Rcpp::export]]
 std::string upgrade_or_change_domain(
-    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe,
+    Rcpp::XPtr<somaobj_wrap_t> dataframe,
     bool is_change_domain,
     naxpArray nadimap,
     naxpSchema nadimsp,
@@ -832,6 +841,8 @@ std::string upgrade_or_change_domain(
     if (!dataframe) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
+    auto df = dataframe->ptr<tiledbsoma::SOMADataFrame>();
+
     // This is pointer manipulation from R -> Rcpp SEXP -> libtiledbsoma:
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
@@ -848,17 +859,17 @@ std::string upgrade_or_change_domain(
     std::string reason_string = "";
     if (is_change_domain) {
         if (check_only) {
-            auto status_and_reason = dataframe->can_change_domain(arrow_table, function_name_for_messages);
+            auto status_and_reason = df->can_change_domain(arrow_table, function_name_for_messages);
             reason_string = status_and_reason.second;
         } else {
-            dataframe->change_domain(arrow_table, function_name_for_messages);
+            df->change_domain(arrow_table, function_name_for_messages);
         }
     } else {
         if (check_only) {
-            auto status_and_reason = dataframe->can_upgrade_domain(arrow_table, function_name_for_messages);
+            auto status_and_reason = df->can_upgrade_domain(arrow_table, function_name_for_messages);
             reason_string = status_and_reason.second;
         } else {
-            dataframe->upgrade_domain(arrow_table, function_name_for_messages);
+            df->upgrade_domain(arrow_table, function_name_for_messages);
         }
     }
     return reason_string;
@@ -866,7 +877,7 @@ std::string upgrade_or_change_domain(
 
 // [[Rcpp::export]]
 void c_update_dataframe_schema(
-    Rcpp::XPtr<tiledbsoma::SOMADataFrame> dataframe,
+    Rcpp::XPtr<somaobj_wrap_t> dataframe,
     Rcpp::CharacterVector column_names_to_drop,
     Rcpp::List add_cols_types,
     Rcpp::List add_cols_enum_value_types,
@@ -937,5 +948,5 @@ void c_update_dataframe_schema(
         }
     }
 
-    dataframe->update_dataframe_schema(drop_attrs, add_attrs, add_enmrs);
+    dataframe->ptr<tiledbsoma::SOMADataFrame>()->update_dataframe_schema(drop_attrs, add_attrs, add_enmrs);
 }

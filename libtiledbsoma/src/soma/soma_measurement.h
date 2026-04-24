@@ -66,14 +66,17 @@ class SOMAMeasurement : public SOMACollectionBase {
         : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAMeasurement") {
     }
 
-    SOMAMeasurement(const SOMACollectionBase& other)
-        : SOMACollectionBase(other) {
+    SOMAMeasurement(SOMACollectionBase&& other)
+        : SOMACollectionBase(std::move(other)) {
     }
 
     SOMAMeasurement() = delete;
     SOMAMeasurement(const SOMAMeasurement&) = default;
     SOMAMeasurement(SOMAMeasurement&&) = default;
     ~SOMAMeasurement() = default;
+
+    using SOMACollectionBase::open;
+    using SOMACollectionBase::reopen;
 
     /**
      * @brief Get the primary annotations on the variable axis
@@ -130,30 +133,15 @@ class SOMAMeasurement : public SOMACollectionBase {
      */
     std::shared_ptr<SOMACollection> varp();
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static
     //===================================================================
-
-    // Primary annotations on the variable axis
-    std::shared_ptr<SOMADataFrame> var_ = nullptr;
-
-    // A collection of matrices, each containing measured feature vaues
-    std::shared_ptr<SOMACollection> X_ = nullptr;
-
-    // A collection of dense matrices containing annotations of each obs row
-    std::shared_ptr<SOMACollection> obsm_ = nullptr;
-
-    // A collection of sparse matrices containing pairwise annotations of each
-    // obs row
-    std::shared_ptr<SOMACollection> obsp_ = nullptr;
-
-    // A collection of dense matrices containing annotations of each var row
-    std::shared_ptr<SOMACollection> varm_ = nullptr;
-
-    // A collection of sparse matrices containing pairwise annotations of each
-    // var row
-    std::shared_ptr<SOMACollection> varp_ = nullptr;
 };
 }  // namespace tiledbsoma
 

@@ -41,6 +41,7 @@ add_executable(unit_soma
     test_platform_config.cc
     test_soma_object_basics.cc
     test_soma_column_selection.cc
+    test_metadata.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )

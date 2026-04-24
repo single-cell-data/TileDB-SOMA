@@ -4,8 +4,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
-from threading import Lock
+from collections.abc import Iterator
 from typing import Any, Callable, Generic, TypeVar, cast
 
 import attrs
@@ -16,7 +15,7 @@ from . import _tdb_handles
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._core_options import OpenMode
-from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
+from ._exception import DoesNotExistError, SOMAError, UnsupportedOperationError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
@@ -52,56 +51,50 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         Experimental.
     """
 
-    __slots__ = ("_contents", "_mutated_keys", "_reify_lock")
-
     def __init__(
         self,
         handle: _tdb_handles.RawHandle,
         *,
-        uri: str,
         context: SOMAContext,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
-        super().__init__(handle, uri=uri, context=context, **kwargs)
-        self._contents = {
-            name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
-        }
+        super().__init__(handle, context=context, **kwargs)
         """The contents of the persisted TileDB Group.
 
         This is loaded at startup when we have a read handle.
         """
-        self._mutated_keys: set[str] = set()
-        self._reify_lock = Lock()
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._handle
 
     def __len__(self) -> int:
         """Return the number of members in the collection."""
-        return len(self._contents)
+        return int(self._handle.__len__())
 
     def __getitem__(self, key: str) -> CollectionElementType:
         """Gets the value associated with the key."""
         err_str = f"{self.__class__.__name__} has no item {key!r}"
 
-        try:
-            entry = self._contents[key]
-        except KeyError:
+        if not isinstance(key, str) or key not in self._handle:
             raise KeyError(err_str) from None
 
-        with self._reify_lock:
-            if entry.soma is None:
-                from . import _factory  # Delayed binding to resolve circular import.
+        try:
+            handle: clib = getattr(self._handle, key) if hasattr(self._handle, key) else self._handle.get(key)
+        except (RuntimeError, SOMAError) as err:
+            if is_does_not_exist_error(err):
+                raise DoesNotExistError(err) from err
+            raise err
 
-                entry.soma = _factory._open_soma_object(
-                    uri=entry.uri,
-                    mode=self.mode,
-                    context=self.context,
-                    tiledb_timestamp=self.tiledb_timestamp_ms,
-                    clib_type=None if entry.tiledb_type is None else entry.tiledb_type.name,
-                )
+        from . import _factory  # Delayed binding to resolve circular import.
 
-                # Since we just opened this object, we own it and should close it.
-                self._close_stack.enter_context(entry.soma)
+        cls: type[SOMAObject] = _factory._type_name_to_cls(handle.type.lower())
+        soma_object = cls(
+            handle,
+            context=self.context,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
-        return cast("CollectionElementType", entry.soma)
+        return cast("CollectionElementType", soma_object)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """Default collection __setattr__."""
@@ -117,30 +110,9 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self._del_element(key)
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._contents)
+        return iter(self._handle.members())
 
-    def _contents_lines(self, last_indent: str) -> Iterable[str]:
-        indent = last_indent + "    "
-        if self.closed:
-            return
-        for key, entry in self._contents.items():
-            obj = entry.soma
-            if obj is None:
-                # We haven't reified this SOMA object yet. Don't try to open it.
-                yield f"{indent}{key!r}: {entry.uri!r} (unopened)"
-            else:
-                yield f"{indent}{key!r}: {obj._my_repr()}"
-                if isinstance(obj, SOMAGroup):
-                    yield from obj._contents_lines(indent)
-
-    def _set_element(
-        self,
-        key: str,
-        *,
-        uri: str,
-        relative: bool,
-        soma_object: _TDBO,
-    ) -> None:
+    def _set_element(self, key: str, *, uri: str, relative: bool, soma_object: _TDBO, managed: bool = False) -> None:
         """Internal implementation of element setting.
 
         Args:
@@ -153,25 +125,20 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             value:
                 The reified SOMA object to store locally.
         """
-        if key in self._mutated_keys.union(self._contents):
-            # TileDB groups currently do not support replacing elements.
-            # If we use a hack to flush writes, corruption is possible.
-            raise SOMAError(f"replacing key {key!r} is unsupported")
-        clib_collection = self._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
-        if self.context.is_tiledbv2_uri(self.uri):
-            clib_collection.add(
+        try:
+            self._handle.add(
                 uri=uri,
                 uri_type=relative_type,
                 name=key,
                 soma_type=soma_object.soma_type,
+                member=soma_object._handle,
+                managed=managed,
             )
-        self._contents[key] = _CachedElement(uri=soma_object.uri, tiledb_type=None, soma=soma_object)
-        self._mutated_keys.add(key)
+        except ValueError as err:
+            raise SOMAError(err) from err
 
     def _del_element(self, key: str) -> None:
-        if key in self._mutated_keys:
-            raise SOMAError(f"Cannot delete previously-mutated key '{key!r}'.")
         try:
             if self.closed:
                 raise SOMAError(f"Cannot delete '{key!r}'. {self} is closed")
@@ -181,12 +148,12 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                 raise SOMAError(
                     f"Deleting is not allowed in mode '{self.mode}'. {self} should be reopened with mode='d'."
                 )
+        except ValueError as err:
+            raise SOMAError(err) from err
         except Exception as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe
             raise
-        self._contents.pop(key, None)
-        self._mutated_keys.add(key)
 
     def _add_new_element(
         self,
@@ -221,12 +188,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             )
 
         child = factory(child_uri.full_uri)
-        self._set_element(
-            key,
-            uri=child_uri.add_uri,
-            relative=child_uri.relative,
-            soma_object=child,
-        )
+        self._set_element(key, uri=child_uri.add_uri, relative=child_uri.relative, soma_object=child, managed=True)
         self._close_stack.enter_context(child)
         return child
 
@@ -277,10 +239,6 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             Experimental.
         """
         super().reopen(mode, tiledb_timestamp)
-        self._contents = {
-            name: _CachedElement.from_handle_entry(entry) for name, entry in self._handle.members().items()
-        }
-        self._mutated_keys = set()
         return self
 
     def set(

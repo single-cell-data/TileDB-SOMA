@@ -22,6 +22,8 @@
 #include "common/datatype/datatype.h"
 #include "common/datatype/utils.h"
 #include "common/logging/impl/logger.h"
+#include "common/metadata/metadata.h"
+#include "common/metadata/utils.h"
 #include "common/query/managed_query.h"
 #include "coordinate_value_filters.h"
 #include "managed_query.h"
@@ -71,21 +73,6 @@ std::shared_ptr<tiledb::Array> open_tiledb_array(
     } catch (const std::exception& e) {
         throw TileDBSOMAError(fmt::format("Error opening array: '{}'\n  {}", uri, e.what()));
     }
-}
-
-std::map<std::string, MetadataValue> create_metadata_cache(tiledb::Array& array) {
-    std::map<std::string, MetadataValue> metadata_cache;
-    for (uint64_t idx = 0; idx < array.metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        array.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-        MetadataValue mdval(as<DataTypeFormat::SOMA>(value_type), value_num, value);
-        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-        metadata_cache.insert(mdpair);
-    }
-    return metadata_cache;
 }
 
 //===================================================================
@@ -178,8 +165,8 @@ SOMAArray::SOMAArray(
     , ctx_(ctx)
     , arr_(open_tiledb_array(get_tiledb_mode(mode), uri_, *ctx_->tiledb_ctx(), timestamp))
     , meta_cache_arr_{(mode == OpenMode::soma_read) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
-    , metadata_{create_metadata_cache(*meta_cache_arr_)}
-    , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
+    , metadata_cache_{std::make_shared<common::MetadataCache>(*meta_cache_arr_)}
+    , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_cache_->get(), uri_)}
     , timestamp_(timestamp)
     , soma_mode_(mode)
     , schema_(std::make_shared<tiledb::ArraySchema>(arr_->schema())) {
@@ -212,8 +199,8 @@ SOMAArray::SOMAArray(
     , ctx_(ctx)
     , arr_(arr)
     , meta_cache_arr_{(arr_->query_type() == TILEDB_READ) ? arr_ : open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp)}
-    , metadata_{create_metadata_cache(*meta_cache_arr_)}
-    , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_)}
+    , metadata_cache_{std::make_shared<common::MetadataCache>(*meta_cache_arr_)}
+    , columns_{SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_cache_->get(), uri_)}
     , timestamp_(timestamp)
     , schema_(std::make_shared<tiledb::ArraySchema>(arr->schema())) {
     switch (arr_->query_type()) {
@@ -236,6 +223,10 @@ SOMAArray::SOMAArray(
     }
 }
 
+SOMAArray::~SOMAArray() {
+    close();
+}
+
 const std::string SOMAArray::uri() const {
     return uri_;
 };
@@ -247,9 +238,14 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     meta_cache_arr_ = (mode == OpenMode::soma_read) ?
                           arr_ :
                           open_tiledb_array(TILEDB_READ, uri_, *ctx_->tiledb_ctx(), timestamp);
-    metadata_ = create_metadata_cache(*meta_cache_arr_);
-    columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_, uri_);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*meta_cache_arr_);
+    columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_cache_->get(), uri_);
     schema_ = std::make_shared<tiledb::ArraySchema>(arr_->schema());
+}
+
+void SOMAArray::reopen(OpenMode mode, std::optional<TimestampRange> timestamp) {
+    close();
+    open(mode, timestamp);
 }
 
 common::ManagedQuery SOMAArray::create_managed_query(std::string_view name) const {
@@ -269,10 +265,13 @@ CoordinateValueFilters SOMAArray::create_coordinate_value_filter() const {
         has_current_domain() ? Domainish::kind_core_current_domain : Domainish::kind_core_domain);
 }
 
-void SOMAArray::close() {
-    arr_->close();
-    meta_cache_arr_->close();
-    metadata_.clear();
+void SOMAArray::close([[maybe_unused]] bool recursive) {
+    if (metadata_cache_)
+        metadata_cache_->write(*arr_);
+    if (arr_)
+        arr_->close();
+    if (meta_cache_arr_)
+        meta_cache_arr_->close();
 }
 
 bool SOMAArray::is_open() const {
@@ -367,20 +366,34 @@ PlatformSchemaConfig SOMAArray::schema_config_options() const {
 
 void SOMAArray::set_metadata(
     const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force) {
+    if (!is_open())
+        throw TileDBSOMAError(fmt::format("Cannot set metadata item '{}'; object is closed.", key));
+    if (mode() != OpenMode::soma_write)
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot write metadata item to '{}'; current mode='{}'. Reopen in mode='write'.",
+                key,
+                open_mode_to_string(mode())));
+
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
     if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
-    arr_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
-
-    MetadataValue mdval(value_type, value_num, value);
-    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-    metadata_.insert(mdpair);
+    metadata_cache_->set(key, common::decode_metadata(value_type, value_num, value));
 }
 
 void SOMAArray::delete_metadata(const std::string& key, bool force) {
+    if (!is_open())
+        throw TileDBSOMAError(fmt::format("Cannot delete metadata item '{}'; object is closed.", key));
+    if (mode() != OpenMode::soma_write)
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot write metadata item to '{}'; current mode='{}'. Reopen in mode='write'.",
+                key,
+                open_mode_to_string(mode())));
+
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
     }
@@ -389,28 +402,23 @@ void SOMAArray::delete_metadata(const std::string& key, bool force) {
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
     }
 
-    arr_->delete_metadata(key);
-    metadata_.erase(key);
+    metadata_cache_->del(key);
 }
 
-std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
-    if (metadata_.count(key) == 0) {
-        return std::nullopt;
-    }
-
-    return metadata_[key];
+std::optional<common::MetadataValue> SOMAArray::get_metadata(const std::string& key) {
+    return metadata_cache_->get(key);
 }
 
-std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
-    return metadata_;
+std::map<std::string, common::MetadataValue> SOMAArray::get_metadata() {
+    return metadata_cache_->get();
 }
 
 bool SOMAArray::has_metadata(const std::string& key) const {
-    return metadata_.count(key) != 0;
+    return metadata_cache_->contains(key);
 }
 
 uint64_t SOMAArray::metadata_num() const {
-    return metadata_.size();
+    return metadata_cache_->size();
 }
 
 std::optional<TimestampRange> SOMAArray::timestamp() const {
@@ -695,6 +703,10 @@ std::vector<int64_t> SOMAArray::shape() {
 
 std::vector<int64_t> SOMAArray::maxshape() {
     return _shape_via_tiledb_domain();
+}
+
+std::string SOMAArray::classname() const {
+    return "Array";
 }
 
 // This is a helper for can_upgrade_shape and can_resize, which have

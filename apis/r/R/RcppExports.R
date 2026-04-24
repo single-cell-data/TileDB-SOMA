@@ -17,16 +17,40 @@ writeArrayFromArrow <- function(soma_array, naap, nasp, arraytype = "") {
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, soma_array, naap, nasp, arraytype))
 }
 
-soma_group_get_members <- function(group) {
-    .Call(`_tiledbsoma_soma_group_get_members`, group)
+c_group_has_member <- function(xp, key) {
+    .Call(`_tiledbsoma_c_group_has_member`, xp, key)
 }
 
-soma_group_set <- function(group, uri, uri_type_int, name, soma_type) {
-    invisible(.Call(`_tiledbsoma_soma_group_set`, group, uri, uri_type_int, name, soma_type))
+soma_group_get_member <- function(xp, key) {
+    .Call(`_tiledbsoma_soma_group_get_member`, xp, key)
 }
 
-soma_group_remove_member <- function(group, name) {
-    invisible(.Call(`_tiledbsoma_soma_group_remove_member`, group, name))
+c_group_member_count <- function(xp) {
+    .Call(`_tiledbsoma_c_group_member_count`, xp)
+}
+
+soma_group_get_members <- function(xp) {
+    .Call(`_tiledbsoma_soma_group_get_members`, xp)
+}
+
+c_group_get_metadata <- function(xp) {
+    .Call(`_tiledbsoma_c_group_get_metadata`, xp)
+}
+
+c_group_close <- function(xp) {
+    invisible(.Call(`_tiledbsoma_c_group_close`, xp))
+}
+
+soma_group_set <- function(xp, uri, uri_type_int, name, soma_type, child, managed) {
+    invisible(.Call(`_tiledbsoma_soma_group_set`, xp, uri, uri_type_int, name, soma_type, child, managed))
+}
+
+soma_group_remove_member <- function(xp, name) {
+    invisible(.Call(`_tiledbsoma_soma_group_remove_member`, xp, name))
+}
+
+c_group_put_metadata <- function(xp, key, obj) {
+    invisible(.Call(`_tiledbsoma_c_group_put_metadata`, xp, key, obj))
 }
 
 soma_group_member_is_relative <- function(group, name) {
@@ -53,8 +77,28 @@ delete_metadata <- function(uri, key, is_array, ctxxp) {
     invisible(.Call(`_tiledbsoma_delete_metadata`, uri, key, is_array, ctxxp))
 }
 
-set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
+set_object_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
     invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
+}
+
+soma_get_all_metadata <- function(xp) {
+    .Call(`_tiledbsoma_soma_get_all_metadata`, xp)
+}
+
+soma_get_metadata <- function(xp, key) {
+    .Call(`_tiledbsoma_soma_get_metadata`, xp, key)
+}
+
+soma_has_metadata <- function(xp, key) {
+    .Call(`_tiledbsoma_soma_has_metadata`, xp, key)
+}
+
+soma_delete_metadata <- function(xp, key) {
+    invisible(.Call(`_tiledbsoma_soma_delete_metadata`, xp, key))
+}
+
+soma_set_metadata <- function(xp, key, value) {
+    invisible(.Call(`_tiledbsoma_soma_set_metadata`, xp, key, value))
 }
 
 libtiledbsoma_empty_query_condition <- function(ctxxp) {
@@ -398,12 +442,16 @@ soma_object_get_metadata <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_get_metadata`, soma_object)
 }
 
-soma_object_set_metadata <- function(soma_object, key, value) {
-    invisible(.Call(`_tiledbsoma_soma_object_set_metadata`, soma_object, key, value))
+soma_object_open <- function(soma_object, mode, timestamp = NULL) {
+    .Call(`_tiledbsoma_soma_object_open`, soma_object, mode, timestamp)
 }
 
-soma_object_close <- function(soma_object) {
-    invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object))
+soma_object_reopen <- function(soma_object, mode, timestamp = NULL) {
+    .Call(`_tiledbsoma_soma_object_reopen`, soma_object, mode, timestamp)
+}
+
+soma_object_close <- function(soma_object, recursive) {
+    invisible(.Call(`_tiledbsoma_soma_object_close`, soma_object, recursive))
 }
 
 soma_object_is_open <- function(soma_object) {
@@ -412,6 +460,10 @@ soma_object_is_open <- function(soma_object) {
 
 soma_object_open_mode <- function(soma_object) {
     .Call(`_tiledbsoma_soma_object_open_mode`, soma_object)
+}
+
+open_soma_handle <- function(uri, mode, soma_context, tiledb_timestamp) {
+    .Call(`_tiledbsoma_open_soma_handle`, uri, mode, soma_context, tiledb_timestamp)
 }
 
 open_dataframe_handle <- function(uri, mode, soma_context, tiledb_timestamp) {

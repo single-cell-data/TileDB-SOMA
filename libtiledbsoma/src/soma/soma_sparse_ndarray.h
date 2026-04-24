@@ -116,8 +116,8 @@ class SOMASparseNDArray : public SOMAArray {
         : SOMAArray(mode, uri, ctx, timestamp, "SOMASparseNDArray") {
     }
 
-    SOMASparseNDArray(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMASparseNDArray(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMASparseNDArray() = delete;
@@ -126,6 +126,7 @@ class SOMASparseNDArray : public SOMAArray {
     ~SOMASparseNDArray() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     /**
      * Return whether the SOMASparseNDArray is sparse.
@@ -150,6 +151,11 @@ class SOMASparseNDArray : public SOMAArray {
      * @return std::string_view Arrow format string.
      */
     std::string_view soma_data_type();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 }  // namespace tiledbsoma
 

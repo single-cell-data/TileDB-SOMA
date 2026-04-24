@@ -28,14 +28,29 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
-    py::class_<SOMACollectionBase, SOMAGroup, SOMAObject>(m, "SOMACollectionBase")
+    py::class_<SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMACollectionBase")
+        // .def(
+        //     "__iter__",
+        //     [](SOMACollectionBase& collection) { return py::make_iterator(collection.begin(), collection.end()); },
+        //     py::keep_alive<0, 1>())
         .def(
-            "__iter__",
-            [](SOMACollectionBase& collection) { return py::make_iterator(collection.begin(), collection.end()); },
-            py::keep_alive<0, 1>())
+            "add",
+            [](std::shared_ptr<SOMACollectionBase> collection,
+               const std::string& uri,
+               URIType uri_type,
+               const std::string& name,
+               const std::string& soma_type,
+               std::shared_ptr<SOMAObject> member,
+               bool managed) { collection->set(uri, uri_type, name, soma_type, member, managed); },
+            "uri"_a,
+            "uri_type"_a,
+            "name"_a,
+            "soma_type"_a,
+            "member"_a,
+            "managed"_a)
         .def("get", &SOMACollectionBase::get);
 
-    py::class_<SOMACollection, SOMACollectionBase>(m, "SOMACollection")
+    py::class_<SOMACollection, SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMACollection")
         .def_static(
             "open",
             py::overload_cast<
@@ -63,10 +78,14 @@ void load_soma_collection(py::module& m) {
             "uri"_a,
             "timestamp"_a = py::none());
 
-    py::class_<SOMAExperiment, SOMACollectionBase>(m, "SOMAExperiment")
+    py::class_<SOMAExperiment, SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMAExperiment")
         .def_static(
             "open",
-            &SOMAExperiment::open,
+            py::overload_cast<
+                std::string_view,
+                OpenMode,
+                std::shared_ptr<SOMAContext>,
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAExperiment::open),
             "uri"_a,
             py::kw_only(),
             "mode"_a,
@@ -85,12 +104,18 @@ void load_soma_collection(py::module& m) {
             py::kw_only(),
             "ctx"_a,
             "uri"_a,
-            "timestamp"_a = py::none());
+            "timestamp"_a = py::none())
+        .def_property_readonly("obs", &SOMAExperiment::obs)
+        .def_property_readonly("ms", &SOMAExperiment::ms);
 
-    py::class_<SOMAMeasurement, SOMACollectionBase>(m, "SOMAMeasurement")
+    py::class_<SOMAMeasurement, SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMAMeasurement")
         .def_static(
             "open",
-            &SOMAMeasurement::open,
+            py::overload_cast<
+                std::string_view,
+                OpenMode,
+                std::shared_ptr<SOMAContext>,
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAMeasurement::open),
             "uri"_a,
             py::kw_only(),
             "mode"_a,
@@ -109,9 +134,15 @@ void load_soma_collection(py::module& m) {
             py::kw_only(),
             "ctx"_a,
             "uri"_a,
-            "timestamp"_a = py::none());
+            "timestamp"_a = py::none())
+        .def_property_readonly("var", &SOMAMeasurement::var)
+        .def_property_readonly("X", &SOMAMeasurement::X)
+        .def_property_readonly("obsm", &SOMAMeasurement::obsm)
+        .def_property_readonly("obsp", &SOMAMeasurement::obsp)
+        .def_property_readonly("varm", &SOMAMeasurement::varm)
+        .def_property_readonly("varp", &SOMAMeasurement::varp);
 
-    py::class_<SOMAScene, SOMACollectionBase>(m, "SOMAScene")
+    py::class_<SOMAScene, SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMAScene")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
@@ -144,15 +175,23 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none())
         .def_static(
             "open",
-            &SOMAScene::open,
+            py::overload_cast<
+                std::string_view,
+                OpenMode,
+                std::shared_ptr<SOMAContext>,
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAScene::open),
             "uri"_a,
             py::kw_only(),
             "mode"_a,
             "context"_a,
             "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>());
+            py::call_guard<py::gil_scoped_release>())
+        .def_property_readonly("img", &SOMAScene::img)
+        .def_property_readonly("obsl", &SOMAScene::obsl)
+        .def_property_readonly("varl", &SOMAScene::varl);
 
-    py::class_<SOMAMultiscaleImage, SOMACollectionBase>(m, "SOMAMultiscaleImage")
+    py::class_<SOMAMultiscaleImage, SOMACollectionBase, SOMAGroup, SOMAObject, py::smart_holder>(
+        m, "SOMAMultiscaleImage")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
@@ -175,7 +214,11 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none())
         .def_static(
             "open",
-            &SOMAMultiscaleImage::open,
+            py::overload_cast<
+                std::string_view,
+                OpenMode,
+                std::shared_ptr<SOMAContext>,
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAMultiscaleImage::open),
             "uri"_a,
             py::kw_only(),
             "mode"_a,

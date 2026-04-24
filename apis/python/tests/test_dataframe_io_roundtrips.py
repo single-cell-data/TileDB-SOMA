@@ -143,7 +143,7 @@ def test_adata_io_roundtrips(
     X = csr_matrix(np.array([0] * n_obs * n_var).reshape(n_obs, n_var))  # unused
     adata0 = AnnData(X=X, obs=original_df, var=var)
     ingested_uri = from_anndata(uri, adata0, "meas", obs_id_name=ingest_id_column_name)
-    assert ingested_uri == uri
+    assert ingested_uri == f"file://{uri}"
 
     # Verify column names and types
     obs_uri = join(uri, "obs")

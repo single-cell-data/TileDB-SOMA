@@ -24,6 +24,8 @@
 #include <tiledbsoma/reindexer/reindexer.h>
 #include "rutilities.h"
 
+#include <concepts>
+
 namespace tdbs = tiledbsoma;
 
 // We create a struct containing a shared pointer to a Context, this will have standard C++
@@ -41,6 +43,29 @@ struct SOMAContextWrapper {
     std::shared_ptr<tdbs::SOMAContext> ctxptr;
 };
 typedef struct SOMAContextWrapper somactx_wrap_t;
+
+struct SOMAWrapper {
+    SOMAWrapper(std::shared_ptr<tdbs::SOMAObject> objptr) : objptr_(objptr) {}
+
+    template <class T = tdbs::SOMAObject>
+    requires std::derived_from<T, tdbs::SOMAObject>
+    std::shared_ptr<T> ptr() {
+        auto result = std::dynamic_pointer_cast<T>(objptr_);
+
+        if (objptr_.get() == nullptr) {
+            throw std::runtime_error("Unexpected SOMA handle null pointer");
+        }
+
+        if (result == nullptr) {
+            throw std::runtime_error("SOMAObject cast failed from " + tdbs::common::demangle_name(typeid(objptr_.get()).name()) + " to " + tdbs::common::demangle_name(typeid(T*).name()));
+        }
+
+        return result;
+    }
+   private:
+    std::shared_ptr<tdbs::SOMAObject> objptr_;
+};
+typedef struct SOMAWrapper somaobj_wrap_t;
 
 
 // make the function signature nicer as using an uppercase SEXP 'screams'

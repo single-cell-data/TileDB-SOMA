@@ -920,12 +920,6 @@ write_soma.TsparseMatrix <- function(
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
 
-  # Carrara: children are auto-registered when created at nested URI
-  # Just return early - no explicit registration needed
-  if (soma_parent$context$is_tiledbv3(soma_parent$uri)) {
-    return(invisible(NULL))
-  }
-
   # v2: explicit registration via set()
   tryCatch(
     expr = {

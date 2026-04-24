@@ -40,6 +40,7 @@ struct ArrowSchema;
 
 namespace tiledbsoma::common {
 class ManagedQuery;
+class MetadataCache;
 }  // namespace tiledbsoma::common
 
 namespace tiledbsoma::common::arrow {
@@ -159,7 +160,7 @@ class SOMAArray : public SOMAObject {
     SOMAArray(SOMAArray&&) = default;
 
     SOMAArray() = delete;
-    virtual ~SOMAArray() = default;
+    virtual ~SOMAArray();
 
     /**
      * @brief Get URI of the SOMAArray.
@@ -183,7 +184,15 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
+
+    /**
+     * Reopen the SOMAArray object.
+     *
+     * @param mode read or write
+     * @param timestamp Timestamp
+     */
+    void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
      * Returns a shared pointer of the internal TileDB array.
@@ -216,7 +225,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Close the SOMAArray object.
      */
-    void close();
+    void close([[maybe_unused]] bool recursive = false) override;
 
     /**
      * Check if the SOMAArray is open.
@@ -370,7 +379,7 @@ class SOMAArray : public SOMAObject {
      * // Open the array for reading
      * tiledbsoma::SOMAArray soma_array = SOMAArray::open(TILEDB_READ,
      "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_array->get_metadata("key");
+     * tiledbsoma::MetadataEntry meta_val = soma_array->get_metadata("key");
      * std::string key = std::get<MetadataInfo::key>(meta_val);
      * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
      * uint32_t num = std::get<MetadataInfo::num>(meta_val);
@@ -380,18 +389,17 @@ class SOMAArray : public SOMAObject {
      *
      * @param key The key of the metadata item to be retrieved. UTF-8
      * encodings are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
+     * @return common::MetadataValue (std::variant<std::vector<uint64_t>, ..., int8_t>)
      */
-    std::optional<MetadataValue> get_metadata(const std::string& key);
+    std::optional<common::MetadataValue> get_metadata(const std::string& key);
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
      * number of values, and value in binary form.
      *
-     * @return std::map<std::string, MetadataValue>
+     * @return std::map<std::string, common::MetadataValue>
      */
-    std::map<std::string, MetadataValue> get_metadata();
+    std::map<std::string, common::MetadataValue> get_metadata();
 
     /**
      * Check if the key exists in metadata from an open array. The array
@@ -760,6 +768,11 @@ class SOMAArray : public SOMAObject {
     // Array associated with SOMAArray
     std::shared_ptr<tiledb::Array> arr_;
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static
@@ -872,7 +885,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<tiledb::Array> meta_cache_arr_;
 
     // Metadata cache
-    std::map<std::string, MetadataValue> metadata_;
+    std::shared_ptr<common::MetadataCache> metadata_cache_;
 
     // SOMAColumn list
     std::vector<std::shared_ptr<SOMAColumn>> columns_;

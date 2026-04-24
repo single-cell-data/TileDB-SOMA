@@ -21,6 +21,7 @@
 #include <string>
 
 #include "../utils/common.h"
+#include "common/metadata/types.h"
 #include "enums.h"
 #include "soma_context.h"
 
@@ -87,9 +88,25 @@ class SOMAObject {
     virtual OpenMode mode() const = 0;
 
     /**
+     * Open the SOMAObject.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    virtual void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) = 0;
+
+    /**
+     * Reopen the SOMAObject.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    virtual void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) = 0;
+
+    /**
      * @brief Close the SOMAObject.
      */
-    virtual void close() = 0;
+    virtual void close([[maybe_unused]] bool recursive = false) = 0;
 
     /**
      * @brief Check if the SOMAObject is open.
@@ -148,7 +165,7 @@ class SOMAObject {
      * // Open the group for reading
      * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
      "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
+     * tiledbsoma::MetadataEntry meta_val = soma_group->get_metadata("key");
      * std::string key = std::get<MetadataInfo::key>(meta_val);
      * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
      * uint32_t num = std::get<MetadataInfo::num>(meta_val);
@@ -159,17 +176,17 @@ class SOMAObject {
      * @param key The key of the metadata item to be retrieved. UTF-8
      encodings
      *     are acceptable.
-     * @return std::optional<MetadataValue>
+     * @return std::optional<MetadataEntry>
      */
-    virtual std::optional<MetadataValue> get_metadata(const std::string& key) = 0;
+    virtual std::optional<common::MetadataValue> get_metadata(const std::string& key) = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
      * number of values, and value in binary form.
      *
-     * @return std::map<std::string, MetadataValue>
+     * @return std::map<std::string, MetadataEntry>
      */
-    virtual std::map<std::string, MetadataValue> get_metadata() = 0;
+    virtual std::map<std::string, common::MetadataValue> get_metadata() = 0;
 
     /**
      * Check if the key exists in metadata from an open SOMAObject.
@@ -187,9 +204,19 @@ class SOMAObject {
     virtual uint64_t metadata_num() const = 0;
 
     /**
+     * Return the display name of the class.
+     */
+    virtual std::string classname() const = 0;
+
+    /**
      * @brief Given a soma_type, return the underlying TileDB type.
      */
     static ObjectType tiledb_type_from_soma_type(const std::string& soma_type);
+
+    virtual std::ostream& print(
+        std::ostream& stream, int level = 0, std::optional<std::string> key = std::nullopt) const;
+
+    friend std::ostream& operator<<(std::ostream& stream, const SOMAObject& object);
 };
 }  // namespace tiledbsoma
 

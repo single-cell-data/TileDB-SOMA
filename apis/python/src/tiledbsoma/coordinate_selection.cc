@@ -39,7 +39,9 @@ void add_slice(CoordinateValueFilters& value_filter, int64_t col_index, std::opt
 
 void load_coordinate_selection(py::module& m) {
     py::class_<CoordinateValueFilters>(m, "CoordinateValueFilters")
-        .def(py::init([](SOMAArray array) { return array.create_coordinate_value_filter(); }), py::arg("array"))
+        .def(
+            py::init([](std::shared_ptr<SOMAArray> array) { return array->create_coordinate_value_filter(); }),
+            py::arg("array"))
         .def(
             "add_arrow_points",
             [](CoordinateValueFilters& value_filter, int64_t col_index, py::object py_arrow_array) {

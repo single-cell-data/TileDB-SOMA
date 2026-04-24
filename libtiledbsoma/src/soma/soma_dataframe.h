@@ -192,8 +192,8 @@ class SOMADataFrame : public SOMAArray {
         : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp, "SOMADataFrame") {
     }
 
-    SOMADataFrame(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMADataFrame(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMADataFrame() = delete;
@@ -202,6 +202,7 @@ class SOMADataFrame : public SOMAArray {
     ~SOMADataFrame() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     /**
      * Return the data schema, in the form of a ArrowSchema.
@@ -242,6 +243,11 @@ class SOMADataFrame : public SOMAArray {
      * @return std::optional<int64_t>
      */
     std::optional<int64_t> maybe_soma_joinid_maxshape();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 };
 
 }  // namespace tiledbsoma

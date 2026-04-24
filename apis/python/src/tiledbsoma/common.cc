@@ -268,29 +268,13 @@ std::optional<py::object> to_table(std::optional<std::shared_ptr<common::ArrayBu
     return std::nullopt;
 }
 
-py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
+py::dict meta(std::map<std::string, common::MetadataValue> metadata_mapping) {
     py::dict results;
 
     for (auto [key, val] : metadata_mapping) {
-        auto [tdb_type, value_num, value] = val;
-
-        if (tdb_type == common::DataType::string_utf8 || tdb_type == common::DataType::string_ascii) {
-            // Empty strings stored as nullptr have a value_num of 1 and a \x00
-            // value
-            if (value_num == 1 && value == nullptr) {
-                results[py::str(key)] = "";
-            } else {
-                auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-                results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")("UTF-8");
-            }
-        } else if (tdb_type == common::DataType::blob) {
-            py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
-            results[py::str(key)] = py::array(value_type, value_num, value).attr("item")(0);
-        } else {
-            py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
-            results[py::str(key)] = py::array(value_type, value_num, value).attr("item")(0);
-        }
+        std::visit([&](auto&& arg) { results[py::str(key)] = arg; }, val);
     }
+
     return results;
 }
 
