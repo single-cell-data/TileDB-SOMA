@@ -433,6 +433,7 @@ write_soma.SummarizedExperiment <- function(
     expr = .register_soma_object(expms, soma_parent = experiment, key = "ms"),
     existingKeyWarning = .maybe_muffle
   )
+  on.exit(expms$close(), add = TRUE, after = FALSE)
   ms_uri <- .check_soma_uri(uri = ms_name, soma_parent = expms)
   ms <- SOMAMeasurementCreate(
     uri = ms_uri,
