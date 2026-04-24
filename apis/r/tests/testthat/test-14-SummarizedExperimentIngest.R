@@ -112,4 +112,8 @@ test_that("Resume-mode adds a second measurement to an existing experiment", {
   on.exit(exp$close(), add = TRUE, after = FALSE)
 
   expect_setequal(exp$ms$names(), c("ms1", "ms2"))
+
+  mat2 <- exp$ms$get("ms2")$X$get("counts")$read()$sparse_matrix()$concat()
+  # Verify that the second measurement's X data is not all zeros (CX-279)
+  expect_true(sum(mat2 != 0) > 0)
 })
