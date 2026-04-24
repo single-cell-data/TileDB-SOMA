@@ -259,7 +259,7 @@
           expr = {
             arr <- write_soma(
               x = ldat,
-              uri = layer,
+              uri = if (relative) layer else file_path(X$uri, layer),
               soma_parent = X,
               sparse = TRUE,
               transpose = TRUE,
@@ -267,7 +267,8 @@
               shape = shape,
               key = layer,
               platform_config = platform_config,
-              context = context
+              context = context,
+              relative = relative
             )
             arr$set_metadata(type)
           },
@@ -297,7 +298,8 @@
       arr <- X$add_new_sparse_ndarray(
         key = layer,
         type = atype,
-        shape = as.integer(shape)
+        shape = as.integer(shape),
+        relative = relative
       )
       arr$.write_coordinates(coo)
       arr$set_metadata(.ragged_array_hint())
@@ -341,7 +343,7 @@
       tryCatch(
         expr = write_soma(
           x = mat,
-          uri = layer,
+          uri = if (relative) layer else file_path(X$uri, layer),
           soma_parent = X,
           sparse = TRUE,
           transpose = TRUE,
@@ -349,7 +351,8 @@
           shape = shape,
           key = layer,
           platform_config = platform_config,
-          context = context
+          context = context,
+          relative = relative
         ),
         error = function(err) {
           if (slot == 'data') {
@@ -372,12 +375,13 @@
   soma_info("Adding feature-level metadata")
   write_soma(
     x = var_df,
-    uri = 'var',
+    uri = if (relative) "var" else file_path(ms$uri, "var"),
     soma_parent = ms,
     key = 'var',
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    context = context
+    context = context,
+    relative = relative
   )
 
   # Check for any potentially-missed data

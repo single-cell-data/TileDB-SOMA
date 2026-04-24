@@ -1,4 +1,4 @@
-# Shared Remote Test Utilities ------------------------------------------
+# Shared Remote Test Utilities
 
 # Generate a unique ID for test assets
 generate_unique_id <- function(pattern = "") {

@@ -381,6 +381,7 @@ SOMACollectionBase <- R6::R6Class(
     #' type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
+    #' @param relative Add the sparse array relative to the collection
     #'
     #' @return Returns the newly-created array stored at \code{key}.
     #'
@@ -388,7 +389,8 @@ SOMACollectionBase <- R6::R6Class(
       key,
       type,
       shape,
-      platform_config = NULL
+      platform_config = NULL,
+      relative = TRUE
     ) {
       if (key %in% self$names()) {
         stop(sprintf("Member '%s' already exists", key), call. = FALSE)
@@ -402,7 +404,7 @@ SOMACollectionBase <- R6::R6Class(
         context = self$context,
         tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-      private$.set_element(ndarr, key)
+      private$.set_element(ndarr, key, relative = relative)
       return(ndarr)
     },
 
@@ -499,7 +501,7 @@ SOMACollectionBase <- R6::R6Class(
     #
     # @return Invisibly returns self
     #
-    .set_element = function(object, name) {
+    .set_element = function(object, name, relative) {
       if (self$context$is_tiledbv3(self$uri)) {
         # Carrara requires member name to match URI basename
         if (basename(object$uri) != name) {
@@ -519,7 +521,7 @@ SOMACollectionBase <- R6::R6Class(
         private$.add_cache_member(name, object)
       } else {
         # v2: register with TileDB group
-        self$set(object, name)
+        self$set(object, name, relative = relative)
       }
       return(invisible(self))
     },
