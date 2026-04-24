@@ -169,6 +169,13 @@ class Experiment(CollectionBase[SOMAObject]):
 
         Note: Deleting observations does not change the size of the current domain or possible enumeration values.
 
+        .. warning::
+
+            After deleting observations, :func:`~tiledbsoma.io.update_obs` cannot
+            cannot be used to update the remaining ``obs`` data. Deletion creates gaps in
+            ``soma_joinid`` values that ``update_obs`` does not currently handle.
+            Use :meth:`DataFrame.write` directly as a workaround.
+
         Args:
             coords:
                 A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
@@ -232,6 +239,13 @@ class Experiment(CollectionBase[SOMAObject]):
             ...     exp.var_axis_delete(value_filter="feature_biotype == 'gene'")
 
         Note: Deleting variables does not change the size of the current domain or possible enumeration values.
+
+        .. warning::
+
+            After deleting variables, :func:`~tiledbsoma.io.update_var` cannot
+            be used to update the remaining ``var`` data. Deletion creates gaps in
+            ``soma_joinid`` values that ``update_var`` does not currently handle.
+            Use :meth:`DataFrame.write` directly as a workaround.
 
         Args:
             coords:
