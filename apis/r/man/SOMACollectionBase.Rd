@@ -372,7 +372,8 @@ Add a new SOMA SparseNdArray to this collection
   key,
   type,
   shape,
-  platform_config = NULL
+  platform_config = NULL,
+  relative = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -394,6 +395,8 @@ object}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
+
+\item{\code{relative}}{Add the sparse array relative to the collection}
 }
 \if{html}{\out{</div>}}
 }
