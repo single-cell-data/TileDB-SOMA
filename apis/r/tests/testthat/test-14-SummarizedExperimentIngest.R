@@ -66,3 +66,39 @@ test_that("Write SummarizedExperiment mechanics", {
   expect_error(write_soma(se, uri, 1))
   expect_error(write_soma(se, uri, TRUE))
 })
+
+test_that("Resume-mode adds a second measurement to an existing experiment", {
+  suppressWarnings(suppressMessages(skip_if_not_installed(
+    "SummarizedExperiment",
+    "1.28.0"
+  )))
+
+  n_obs <- 5L
+  obs <- S4Vectors::DataFrame(id = paste0("s", seq_len(n_obs)))
+  rownames(obs) <- obs$id
+
+  make_se <- function(n_var, prefix) {
+    x <- matrix(seq_len(n_obs * n_var), nrow = n_var, ncol = n_obs)
+    rownames(x) <- paste0(prefix, seq_len(n_var))
+    colnames(x) <- obs$id
+    var <- S4Vectors::DataFrame(id = rownames(x))
+    rownames(var) <- var$id
+    SummarizedExperiment::SummarizedExperiment(
+      assays = list(counts = x),
+      colData = obs,
+      rowData = var
+    )
+  }
+
+  se1 <- make_se(10L, "a")
+  se2 <- make_se(20L, "b")
+
+  uri <- withr::local_tempdir("multi-ms-se")
+  write_soma(se1, uri, ms_name = "ms1", ingest_mode = "write")
+  write_soma(se2, uri, ms_name = "ms2", ingest_mode = "resume")
+
+  exp <- SOMAExperimentOpen(uri)
+  on.exit(exp$close(), add = TRUE, after = FALSE)
+
+  expect_setequal(exp$ms$names(), c("ms1", "ms2"))
+})
