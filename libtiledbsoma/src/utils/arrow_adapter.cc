@@ -565,7 +565,7 @@ std::vector<common::arrow::ArrowTable> ArrowAdapter::buffer_to_arrow(
     for (const auto& name : buffer->names()) {
         arrow_futures.emplace_back(
             std::async(
-                std::launch::deferred,
+                std::launch::async,
                 common::arrow::column_buffer_to_arrow,
                 buffer->at<common::ReadColumnBuffer>(name).get(),
                 enumerations,
