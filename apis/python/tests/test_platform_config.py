@@ -6,6 +6,7 @@ import pytest
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_write_options as tco
+from tiledbsoma import pytiledbsoma as clib
 
 from ._util import assert_adata_equal
 
@@ -134,3 +135,13 @@ def test_dig_platform_config():
     # Unrecognized type (at tip)
     with pytest.raises(TypeError):
         tco._dig_platform_config({"a": {"b": "invalid"}}, int, ("a", "b"))
+
+
+def test_platform_config_dense_zstd_level_not_aliased():
+    """Regression: pytiledbsoma.cc:157 used to bind dense_nd_array_dim_zstd_level
+    to &PlatformConfig::sparse_nd_array_dim_zstd_level."""
+    cfg = clib.PlatformConfig()
+    cfg.sparse_nd_array_dim_zstd_level = 1
+    cfg.dense_nd_array_dim_zstd_level = 9
+    assert cfg.sparse_nd_array_dim_zstd_level == 1
+    assert cfg.dense_nd_array_dim_zstd_level == 9
