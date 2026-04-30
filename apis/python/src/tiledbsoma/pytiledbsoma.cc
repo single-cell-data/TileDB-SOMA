@@ -1,5 +1,7 @@
 #include <tiledbsoma/tiledbsoma>
 
+#include <sstream>
+
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
@@ -166,7 +168,45 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite("allows_duplicates", &PlatformConfig::allows_duplicates)
         .def_readwrite("tile_order", &PlatformConfig::tile_order)
         .def_readwrite("cell_order", &PlatformConfig::cell_order)
-        .def_readwrite("consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
+        .def_readwrite("consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum)
+        .def(
+            "to_dict",
+            [](const PlatformConfig& c) {
+                return py::dict(
+                    "dataframe_dim_zstd_level"_a = c.dataframe_dim_zstd_level,
+                    "sparse_nd_array_dim_zstd_level"_a = c.sparse_nd_array_dim_zstd_level,
+                    "dense_nd_array_dim_zstd_level"_a = c.dense_nd_array_dim_zstd_level,
+                    "write_X_chunked"_a = c.write_X_chunked,
+                    "goal_chunk_nnz"_a = c.goal_chunk_nnz,
+                    "remote_cap_nbytes"_a = c.remote_cap_nbytes,
+                    "capacity"_a = c.capacity,
+                    "offsets_filters"_a = c.offsets_filters,
+                    "validity_filters"_a = c.validity_filters,
+                    "allows_duplicates"_a = c.allows_duplicates,
+                    "tile_order"_a = c.tile_order,
+                    "cell_order"_a = c.cell_order,
+                    "attrs"_a = c.attrs,
+                    "dims"_a = c.dims,
+                    "consolidate_and_vacuum"_a = c.consolidate_and_vacuum);
+            })
+        .def("__repr__", [](const PlatformConfig& c) {
+            auto q = [](const std::optional<std::string>& v) { return v ? ("'" + *v + "'") : std::string("None"); };
+            std::ostringstream os;
+            os << "PlatformConfig("
+               << "dataframe_dim_zstd_level=" << c.dataframe_dim_zstd_level
+               << ", sparse_nd_array_dim_zstd_level=" << c.sparse_nd_array_dim_zstd_level
+               << ", dense_nd_array_dim_zstd_level=" << c.dense_nd_array_dim_zstd_level
+               << ", write_X_chunked=" << (c.write_X_chunked ? "True" : "False")
+               << ", goal_chunk_nnz=" << c.goal_chunk_nnz << ", remote_cap_nbytes=" << c.remote_cap_nbytes
+               << ", capacity=" << c.capacity << ", offsets_filters='" << c.offsets_filters << "'"
+               << ", validity_filters='" << c.validity_filters << "'"
+               << ", allows_duplicates=" << (c.allows_duplicates ? "True" : "False")
+               << ", tile_order=" << q(c.tile_order) << ", cell_order=" << q(c.cell_order) << ", attrs='" << c.attrs
+               << "'"
+               << ", dims='" << c.dims << "'"
+               << ", consolidate_and_vacuum=" << (c.consolidate_and_vacuum ? "True" : "False") << ")";
+            return os.str();
+        });
 
     py::class_<PlatformSchemaConfig>(m, "PlatformSchemaConfig")
         .def(py::init<>())
@@ -177,7 +217,33 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite("dims", &PlatformSchemaConfig::dims)
         .def_readwrite("allows_duplicates", &PlatformSchemaConfig::allows_duplicates)
         .def_readwrite("tile_order", &PlatformSchemaConfig::tile_order)
-        .def_readwrite("cell_order", &PlatformSchemaConfig::cell_order);
+        .def_readwrite("cell_order", &PlatformSchemaConfig::cell_order)
+        .def(
+            "to_dict",
+            [](const PlatformSchemaConfig& c) {
+                return py::dict(
+                    "capacity"_a = c.capacity,
+                    "offsets_filters"_a = c.offsets_filters,
+                    "validity_filters"_a = c.validity_filters,
+                    "attrs"_a = c.attrs,
+                    "dims"_a = c.dims,
+                    "allows_duplicates"_a = c.allows_duplicates,
+                    "tile_order"_a = c.tile_order,
+                    "cell_order"_a = c.cell_order);
+            })
+        .def("__repr__", [](const PlatformSchemaConfig& c) {
+            auto q = [](const std::optional<std::string>& v) { return v ? ("'" + *v + "'") : std::string("None"); };
+            std::ostringstream os;
+            os << "PlatformSchemaConfig("
+               << "capacity=" << c.capacity << ", allows_duplicates=" << (c.allows_duplicates ? "True" : "False")
+               << ", tile_order=" << q(c.tile_order) << ", cell_order=" << q(c.cell_order) << ", offsets_filters='"
+               << c.offsets_filters << "'"
+               << ", validity_filters='" << c.validity_filters << "'"
+               << ", attrs='" << c.attrs << "'"
+               << ", dims='" << c.dims << "'"
+               << ")";
+            return os.str();
+        });
 
     m.def("_update_dataframe_schema", &SOMADataFrame::update_dataframe_schema);
 

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - \[[#4299](https://github.com/single-cell-data/TileDB-SOMA/pull/4299)\] Use a global memory budget for read operations instead of a per column memory budget. The global memory budget allocates splits the budget per column depending on the type and characteristics of each column. Global memory budget is disabled by default under a feature flag and can be enabled by setting `soma.read.use_memory_pool`.
 - \[[#4363](https://github.com/single-cell-data/TileDB-SOMA/pull/4363)\] Add new `SOMAContext` class that replaces the `SOMATileDBContext` class.
+- `PlatformConfig` and `PlatformSchemaConfig` now support `to_dict()` and have a readable `__repr__` for diagnostic logging.
 
 ### Changed
 
