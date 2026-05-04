@@ -375,7 +375,9 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
     return candidates
 
 
-def _query_joinids(uri: str, coords: SparseDFCoords, value_filter: str | None, context: SOMATileDBContext) -> pa.Int64Array:
+def _query_joinids(
+    uri: str, coords: SparseDFCoords, value_filter: str | None, context: SOMATileDBContext
+) -> pa.Int64Array:
     with DataFrame.open(uri, context=context) as df:
         return (
             df

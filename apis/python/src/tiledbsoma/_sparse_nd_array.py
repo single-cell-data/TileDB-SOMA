@@ -27,7 +27,7 @@ from ._managed_query import ManagedQuery
 from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseCOOTensorReadIter, TableReadIter
 from ._types import NTuple, OpenTimestamp
 from ._util import from_clib_result_order
-from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
+from .options._soma_tiledb_context import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBDeleteOptions, TileDBWriteOptions
 from .options._util import build_clib_platform_config
 

@@ -121,7 +121,7 @@ class SOMAObject:
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
 
         try:
-            cls._handle_type.create(uri=uri, ctx=context._handle, timestamp=(0, timestamp_ms), **kwargs)
+            cls._handle_type.create(uri=uri, ctx=context.native_context, timestamp=(0, timestamp_ms), **kwargs)
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
@@ -130,7 +130,7 @@ class SOMAObject:
             handle = cls._handle_type.open(
                 uri,
                 mode=clib.OpenMode.soma_write,
-                context=context._handle,
+                context=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
         except (RuntimeError, SOMAError) as tdbe:

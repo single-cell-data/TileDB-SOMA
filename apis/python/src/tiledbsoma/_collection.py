@@ -25,7 +25,6 @@ from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of SOMAObject
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
