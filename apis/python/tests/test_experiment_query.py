@@ -20,7 +20,7 @@ from tiledbsoma import (
     AxisQuery,
     Experiment,
     ExperimentAxisQuery,
-    SOMAContext,
+    SOMATileDBContext,
     pytiledbsoma,
 )
 from tiledbsoma._collection import CollectionBase
@@ -544,7 +544,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     """
     from contextlib import closing
 
-    context = SOMAContext.create()
+    context = SOMATileDBContext()
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
 
     with soma_experiment.axis_query("RNA") as query:
@@ -852,7 +852,7 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
     pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=4))
     pool.submit.assert_not_called()
 
-    context = SOMAContext.create(threadpool=pool)
+    context = SOMATileDBContext(threadpool=pool)
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context=context)
 
     with soma_experiment.axis_query("RNA") as query:

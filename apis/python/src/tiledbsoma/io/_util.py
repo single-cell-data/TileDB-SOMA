@@ -18,7 +18,6 @@ from packaging.version import Version
 
 from tiledbsoma import pytiledbsoma as clib
 from tiledbsoma._exception import SOMAError
-from tiledbsoma._soma_context import SOMAContext
 from tiledbsoma._types import Path
 from tiledbsoma.options import SOMATileDBContext
 
@@ -45,7 +44,7 @@ _pa_type_to_str_fmt = {
 
 @contextmanager
 def read_h5ad(
-    input_path: Path | str, *, mode: str | None = "r", ctx: SOMAContext | SOMATileDBContext | None = None
+    input_path: Path | str, *, mode: str | None = "r", ctx: SOMATileDBContext | None = None
 ) -> Iterator[ad.AnnData]:
     """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
     # https://github.com/single-cell-data/TileDB-SOMA/issues/3920
@@ -61,14 +60,9 @@ def read_h5ad(
             f"anndata '{ad.__version__}' is incompatible with '{scipy.__version__}', and more generally, anndata 0.10.7-0.11.1 are incompatible with scipy 0.15. Please upgrade your anndata to >= 0.11.2, or downgrade your scipy to < 0.15.",
         )
 
-    if ctx is None:
-        if not SOMAContext.has_default():
-            SOMAContext.set_default()
-        ctx = SOMAContext.get_default()
-    elif isinstance(ctx, SOMATileDBContext):
-        ctx = ctx._to_soma_context()
+    ctx = ctx or SOMATileDBContext()
     input_handle = CachingReader(
-        clib.SOMAFileHandle(str(input_path), ctx._handle),
+        clib.SOMAFileHandle(str(input_path), ctx.native_context),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )
@@ -155,17 +149,3 @@ def get_arrow_str_format(pa_type: pa.DataType) -> str:
         return _pa_type_to_str_fmt[pa_type]
     except KeyError:
         raise SOMAError(f"Could not convert {pa_type} to Arrow string format") from None
-
-
-def _set_and_get_context(context: SOMAContext | SOMATileDBContext | None) -> SOMAContext:
-    """Get a SOMAContext from input context parameter.
-
-    If no context is provided, get and possibly set the default context.
-    """
-    if context is None:
-        if not SOMAContext.has_default():
-            SOMAContext.set_default()
-        return SOMAContext.get_default()
-    if isinstance(context, SOMATileDBContext):
-        return context._to_soma_context()
-    return context

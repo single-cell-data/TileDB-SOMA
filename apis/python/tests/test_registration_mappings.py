@@ -1038,8 +1038,10 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
 
     context = None
     if use_small_buffer:
-        context = tiledbsoma.SOMAContext.create(
-            config={"soma.init_buffer_bytes": 2048},
+        context = tiledbsoma.SOMATileDBContext(
+            tiledb_config={
+                "soma.init_buffer_bytes": 2048,
+            },
         )
 
     with tiledbsoma.Experiment.open(soma_larger, context=context) as exp:

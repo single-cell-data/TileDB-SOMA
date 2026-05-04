@@ -17,10 +17,10 @@ from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._core_options import OpenMode
 from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
-from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
 from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
+from .options import SOMATileDBContext
 
 CollectionElementType = TypeVar("CollectionElementType", bound=SOMAObject)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)
@@ -59,7 +59,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         handle: _tdb_handles.RawHandle,
         *,
         uri: str,
-        context: SOMAContext,
+        context: SOMATileDBContext,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(handle, uri=uri, context=context, **kwargs)
