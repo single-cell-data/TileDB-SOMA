@@ -4157,3 +4157,15 @@ def test_dataframe_batch_size_not_implemented(tmp_path):
 
         with pytest.raises(NotImplementedError, match=r"batch_size.*not yet implemented"):
             list(df.read(batch_size=BatchSize(count=10)))
+
+
+def test_dataframe_nnz_with_invalid_column_name(tmp_path):
+    uri = (tmp_path / "test_df").as_posix()
+    schema = pa.schema({"soma_joinid": pa.int64(), "__tiledb_aggregate_count__": pa.float32()})
+
+    with (
+        pytest.raises(match="Cannot add attribute: names starting with '__' are reserved"),
+        soma.DataFrame.create(uri, schema=schema, index_column_names=["soma_joinid"], domain=[[0, 2]]) as df,
+    ):
+        data = pa.Table.from_pydict({"soma_joinid": [0, 1, 2], "__tiledb_aggregate_count__": [10.0, 20.0, 30.0]})
+        df.write(data)
