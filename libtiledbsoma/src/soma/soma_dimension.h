@@ -38,7 +38,7 @@ class SOMADimension : public SOMAColumn {
         const nlohmann::json& soma_schema,
         const tiledb::Context& ctx,
         const tiledb::Array& array,
-        const std::map<std::string, tiledbsoma::MetadataValue>& metadata);
+        const std::map<std::string, common::MetadataValue>& metadata);
 
     static std::shared_ptr<SOMADimension> create(
         std::shared_ptr<tiledb::Context> ctx,

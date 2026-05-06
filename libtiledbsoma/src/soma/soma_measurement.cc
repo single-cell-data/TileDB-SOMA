@@ -43,50 +43,31 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
 }
 
 std::shared_ptr<SOMADataFrame> SOMAMeasurement::var() {
-    if (var_ == nullptr) {
-        var_ = SOMADataFrame::open(
-            (std::filesystem::path(uri()) / "var").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return var_;
+    return std::dynamic_pointer_cast<SOMADataFrame>(get("var"));
+    ;
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::X() {
-    if (X_ == nullptr) {
-        X_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "X").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return X_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("X"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::obsm() {
-    if (obsm_ == nullptr) {
-        obsm_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "obsm").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return obsm_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("obsm"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::obsp() {
-    if (obsp_ == nullptr) {
-        obsp_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "obsp").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return obsp_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("obsp"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::varm() {
-    if (varm_ == nullptr) {
-        varm_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "varm").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return varm_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("varm"));
 }
 
 std::shared_ptr<SOMACollection> SOMAMeasurement::varp() {
-    if (varp_ == nullptr) {
-        varp_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "varp").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return varp_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("varp"));
+}
+
+std::string SOMAMeasurement::classname() const {
+    return "Measurement";
 }
 }  // namespace tiledbsoma

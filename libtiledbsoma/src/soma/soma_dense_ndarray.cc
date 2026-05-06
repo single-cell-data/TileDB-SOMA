@@ -116,4 +116,8 @@ common::arrow::managed_unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const 
     return this->arrow_schema();
 }
 
+std::string SOMADenseNDArray::classname() const {
+    return "DenseNDArray";
+}
+
 }  // namespace tiledbsoma

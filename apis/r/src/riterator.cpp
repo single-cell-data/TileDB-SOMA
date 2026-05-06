@@ -77,7 +77,7 @@ namespace tdbs = tiledbsoma;
 // clang-format on
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(
-    Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array,
+    Rcpp::XPtr<somaobj_wrap_t> soma_array,
     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
@@ -88,12 +88,14 @@ Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(
     if (!soma_array) {
         Rcpp::exception("Internal error: SOMAObject handle is not initialized.");
     }
+
+    auto array = soma_array->ptr<tiledbsoma::SOMAArray>();
     if (loglevel != "auto") {
         tdbs::common::logging::LOG_SET_LEVEL(loglevel);
     }
 
     auto mq = make_xptr<tiledbsoma::common::ManagedQuery>(
-        new tiledbsoma::common::ManagedQuery(soma_array->create_managed_query()));
+        new tiledbsoma::common::ManagedQuery(array->create_managed_query()));
 
     auto tdb_result_order = get_tdb_result_order(result_order);
     mq->set_layout(tdb_result_order);
@@ -107,7 +109,7 @@ Rcpp::XPtr<tdbs::common::ManagedQuery> mq_setup(
     }
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
-    tiledb::Domain domain = soma_array->tiledb_schema()->domain();
+    tiledb::Domain domain = array->tiledb_schema()->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
         std::stringstream ss;

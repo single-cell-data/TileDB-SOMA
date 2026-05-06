@@ -106,8 +106,8 @@ class SOMAPointCloudDataFrame : public SOMAArray {
         : SOMAArray(mode, uri, ctx, timestamp, "SOMAPointCloudDataFrame") {
     }
 
-    SOMAPointCloudDataFrame(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMAPointCloudDataFrame(SOMAArray&& other)
+        : SOMAArray(std::move(other)) {
     }
 
     SOMAPointCloudDataFrame() = delete;
@@ -116,6 +116,7 @@ class SOMAPointCloudDataFrame : public SOMAArray {
     ~SOMAPointCloudDataFrame() = default;
 
     using SOMAArray::open;
+    using SOMAArray::reopen;
 
     inline const SOMACoordinateSpace& coordinate_space() const {
         return coord_space_;
@@ -141,6 +142,11 @@ class SOMAPointCloudDataFrame : public SOMAArray {
      * @return int64_t
      */
     uint64_t count();
+
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
 
    private:
     SOMACoordinateSpace coord_space_;

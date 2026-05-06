@@ -9,6 +9,7 @@ from collections.abc import MutableMapping
 from contextlib import ExitStack
 from typing import Any, ClassVar
 
+import attrs
 from typing_extensions import LiteralString, Self
 
 from . import _tdb_handles
@@ -21,6 +22,7 @@ from ._util import check_type, ms_to_datetime, tiledb_timestamp_to_ms
 from .options import SOMATileDBContext, _update_context_and_timestamp
 
 
+@attrs.define(slots=True, init=False)
 class SOMAObject:
     """Base class for all TileDB SOMA objects.
 
@@ -31,7 +33,13 @@ class SOMAObject:
     _handle_type: ClassVar[_tdb_handles.RawHandle]
     """Class variable of the clib class handle used to open this object type."""
 
-    __slots__ = ("_close_stack", "_context", "_handle", "_metadata", "_timestamp_ms", "_uri")
+    _close_stack: ExitStack = attrs.field(eq=False)
+    _context: SOMAContext = attrs.field(eq=False)
+    _handle: _tdb_handles.RawHandle
+    _is_running_in_context: bool = attrs.field(eq=False)
+    _metadata: _tdb_handles.MetadataWrapper
+    _timestamp_ms: int
+    _uri: str
 
     soma_type: ClassVar[LiteralString]
     """A string describing the SOMA type of this object. This is constant.
@@ -102,9 +110,7 @@ class SOMAObject:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     @classmethod
     def _create(
@@ -134,15 +140,12 @@ class SOMAObject:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     def __init__(
         self,
         handle: _tdb_handles.RawHandle,
         *,
-        uri: str,
         context: SOMAContext,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ) -> None:
@@ -154,6 +157,7 @@ class SOMAObject:
         if not isinstance(handle, self._handle_type):
             raise TypeError("Internal error: Unexpected handle type {type(handle)}. Expected {self._handle_type}.")
         self._close_stack = ExitStack()
+        self._is_running_in_context = False
         """An exit stack to manage closing handles owned by this object.
 
         This is used to manage both our direct handle (in the case of simple
@@ -174,10 +178,9 @@ class SOMAObject:
             )
         self._handle = handle
         self._context = context
-        self._uri = uri
+        self._uri = handle.uri
         self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
-        self._close_stack.enter_context(self._handle)
         self._parse_special_metadata()
 
     def _parse_special_metadata(self) -> None:
@@ -209,17 +212,16 @@ class SOMAObject:
         """
         open_mode = _tdb_handles._open_mode_to_clib_mode(mode)
         timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
-        self._metadata._write()
-        self._handle.close()
-        self._handle = self._handle_type.open(
-            uri=self._uri, mode=open_mode, context=self._context._handle, timestamp=(0, timestamp_ms)
-        )
+        self._handle.reopen(mode=open_mode, timestamp=(0, timestamp_ms))
         self._timestamp_ms = timestamp_ms
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(
             self._handle,
         )
-        self._close_stack.enter_context(self._handle)
         self._parse_special_metadata()
+
+        if self._is_running_in_context:
+            self._close_stack.enter_context(self._handle)
+
         return self
 
     @property
@@ -230,27 +232,23 @@ class SOMAObject:
     def metadata(self) -> MutableMapping[str, Any]:
         return self._metadata
 
-    __eq__ = object.__eq__
     __hash__ = object.__hash__
 
     def __enter__(self) -> Self:
+        self._is_running_in_context = True
+        self._close_stack.enter_context(self._handle)
         return self
 
     def __exit__(self, *_: Any) -> None:  # noqa: ANN401
-        self.close()
+        self._is_running_in_context = False
+        self._close_stack.close()
 
     def __del__(self) -> None:
-        self.close()
         super_del = getattr(super(), "__del__", lambda: None)
         super_del()
 
     def __repr__(self) -> str:
-        return f"<{self._my_repr()}>"
-
-    def _my_repr(self) -> str:
-        """``__repr__``, but without the ``<>``."""
-        open_str = "CLOSED" if self.closed else "open"
-        return f"{type(self).__name__} {self.uri!r} ({open_str} for {self.mode!r})"
+        return f"{self._handle}"
 
     @property
     def uri(self) -> str:
@@ -276,7 +274,8 @@ class SOMAObject:
             Maturing.
         """
         if not self.closed:
-            self._metadata._write()
+            self._handle.close(True)
+
         self._close_stack.close()
 
     @property

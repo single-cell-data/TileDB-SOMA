@@ -35,4 +35,8 @@ std::unique_ptr<SOMACollection> SOMACollection::open(
     }
 }
 
+std::string SOMACollection::classname() const {
+    return "Collection";
+}
+
 }  // namespace tiledbsoma

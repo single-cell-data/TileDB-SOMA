@@ -56,35 +56,24 @@ SOMAScene::SOMAScene(
     : SOMACollectionBase(mode, uri, ctx, timestamp, "SOMAScene") {
     auto coord_space_metadata = get_metadata(SOMA_COORDINATE_SPACE_KEY);
     if (coord_space_metadata.has_value()) {
-        coord_space_ = SOMACoordinateSpace::from_metadata(
-            std::get<0>(coord_space_metadata.value()),
-            std::get<1>(coord_space_metadata.value()),
-            std::get<2>(coord_space_metadata.value()));
+        coord_space_ = SOMACoordinateSpace::from_metadata(coord_space_metadata.value());
     }
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::img() {
-    if (img_ == nullptr) {
-        img_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "img").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return img_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("img"));
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::obsl() {
-    if (obsl_ == nullptr) {
-        obsl_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "obsl").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return obsl_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("obsl"));
 }
 
 std::shared_ptr<SOMACollection> SOMAScene::varl() {
-    if (varl_ == nullptr) {
-        varl_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "varl").string(), OpenMode::soma_read, ctx(), timestamp());
-    }
-    return varl_;
+    return std::dynamic_pointer_cast<SOMACollection>(get("varl"));
+}
+
+std::string SOMAScene::classname() const {
+    return "Scene";
 }
 
 }  // namespace tiledbsoma

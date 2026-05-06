@@ -77,4 +77,8 @@ uint64_t SOMAPointCloudDataFrame::count() {
     return this->nnz();
 }
 
+std::string SOMAPointCloudDataFrame::classname() const {
+    return "PointCloudDataFrame";
+}
+
 }  // namespace tiledbsoma

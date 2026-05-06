@@ -337,7 +337,8 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        auto external_query = open(OpenMode::soma_read)->create_managed_query();
+        sdf = open(OpenMode::soma_read);
+        auto external_query = sdf->create_managed_query();
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, 1234);
@@ -484,7 +485,8 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        auto external_query = open(OpenMode::soma_read)->create_managed_query();
+        sdf = open(OpenMode::soma_read);
+        auto external_query = sdf->create_managed_query();
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, 1234);

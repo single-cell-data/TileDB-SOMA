@@ -8,6 +8,7 @@
 #include <tiledbsoma/reindexer/reindexer.h>
 #include <tiledbsoma/tiledbsoma>
 
+#include "metadata.h"
 #include "rutilities.h"  // local declarations
 #include "xptr-utils.h"  // xptr taggging utilities
 
@@ -63,10 +64,8 @@ Rcpp::List get_all_metadata(std::string& uri, bool is_array, Rcpp::XPtr<somactx_
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
 
-    // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
-    auto mvmap = soup->get_metadata();
-    return metadata_as_rlist(mvmap);
+    std::shared_ptr<tiledbsoma::SOMAObject> soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
+    return soma_get_all_metadata(make_xptr<somaobj_wrap_t>(new SOMAWrapper(soup)));
 }
 
 // Read metadata (as a string)
@@ -83,22 +82,8 @@ std::string get_metadata(std::string& uri, std::string& key, bool is_array, Rcpp
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
 
-    // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
-    auto mv = soup->get_metadata(key);
-    if (!mv.has_value()) {
-        Rcpp::stop("No value for '%s'", key.c_str());
-    }
-    tdbs::MetadataValue val = *mv;
-    auto dtype = std::get<0>(val);
-    auto txt = tdbs::common::getName(dtype);
-    if (txt != "STRING_UTF8" && txt != "STRING_ASCII") {
-        Rcpp::stop("Currently unsupported type '%s'", txt.data());
-    }
-    auto len = std::get<1>(val);
-    const void* ptr = std::get<2>(val);
-    auto str = std::string((char*)ptr, len);
-    return str;
+    std::shared_ptr<tiledbsoma::SOMAObject> soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
+    return Rcpp::as<std::string>(soma_get_metadata(make_xptr<somaobj_wrap_t>(new SOMAWrapper(soup)), key));
 }
 
 // Check for metadata given key
@@ -114,9 +99,9 @@ std::string get_metadata(std::string& uri, std::string& key, bool is_array, Rcpp
 bool has_metadata(std::string& uri, std::string& key, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
-    return soup->has_metadata(key);
+
+    std::shared_ptr<tiledbsoma::SOMAObject> soup = getObjectUniquePointer(is_array, OpenMode::soma_read, uri, sctx);
+    return soma_has_metadata(make_xptr<somaobj_wrap_t>(new SOMAWrapper(soup)), key);
 }
 
 // Delete metadata for given key
@@ -132,10 +117,9 @@ bool has_metadata(std::string& uri, std::string& key, bool is_array, Rcpp::XPtr<
 void delete_metadata(std::string& uri, std::string& key, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::soma_write, uri, sctx);
-    soup->delete_metadata(key);
-    soup->close();
+
+    std::shared_ptr<tiledbsoma::SOMAObject> soup = getObjectUniquePointer(is_array, OpenMode::soma_write, uri, sctx);
+    return soma_delete_metadata(make_xptr<somaobj_wrap_t>(new SOMAWrapper(soup)), key);
 }
 
 // Set metadata (as a string)
@@ -161,26 +145,141 @@ void set_metadata(
     Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::soma_write, uri, sctx, tsvec);
 
-    if (type == "character") {
-        const tdbs::common::DataType value_type = tdbs::common::DataType::string_utf8;
-        std::string value = Rcpp::as<std::string>(valuesxp);
-        std::stringstream ss;
-        ss << "[set_metadata] key " << key << " value " << value << " is_array " << is_array << " type " << type;
-        tdbs::common::logging::LOG_DEBUG(ss.str());
-        soup->set_metadata(key, value_type, value.length(), (void*)value.c_str(), true);
-    } else if (type == "integer64") {
-        const tdbs::common::DataType value_type = tdbs::common::DataType::int64;
-        double dv = Rcpp::as<double>(valuesxp);
-        int64_t value = Rcpp::fromInteger64(dv);
-        std::stringstream ss;
-        ss << "[set_metadata] key " << key << " value " << value << " is_array " << is_array << " type " << type;
-        tdbs::common::logging::LOG_DEBUG(ss.str());
-        soup->set_metadata(key, value_type, 1, (void*)&value, true);
-    } else {
-        Rcpp::stop("Unsupported type '%s'", type);
+    std::shared_ptr<tiledbsoma::SOMAObject> soup = getObjectUniquePointer(
+        is_array, OpenMode::soma_read, uri, sctx, tsvec);
+    return soma_set_metadata(make_xptr<somaobj_wrap_t>(new SOMAWrapper(soup)), key, valuesxp);
+}
+
+// [[Rcpp::export]]
+void soma_delete_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp, const std::string& key) {
+    objxp->ptr()->delete_metadata(key);
+}
+
+// [[Rcpp::export]]
+bool soma_has_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp, const std::string& key) {
+    return objxp->ptr()->has_metadata(key);
+}
+
+// [[Rcpp::export]]
+Rcpp::List soma_get_all_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp) {
+    auto metadata = objxp->ptr()->get_metadata();
+
+    std::vector<std::string> namvec;
+    Rcpp::List lst;
+
+    for (const auto& [key, value] : metadata) {
+        namvec.push_back(key);
+        lst.push_back(_metadata_to_sexp(value));
     }
-    soup->close();
+
+    lst.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
+    return lst;
+}
+
+// [[Rcpp::export]]
+SEXP soma_get_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp, const std::string& key) {
+    auto result = objxp->ptr()->get_metadata(key);
+    if (!result.has_value()) {
+        // Rcpp::stop("No value for '%s'", key.c_str());
+        return R_NilValue;
+    }
+
+    return _metadata_to_sexp(result.value());
+}
+
+// [[Rcpp::export]]
+void soma_set_metadata(Rcpp::XPtr<somaobj_wrap_t> objxp, const std::string& key, SEXP value) {
+    switch (TYPEOF(value)) {
+        case VECSXP: {
+            Rcpp::stop("List objects are not supported.");
+            break;  // not reached
+        }
+        case REALSXP: {
+            Rcpp::NumericVector v(value);
+            if (Rcpp::isInteger64(value)) {
+                objxp->ptr()->set_metadata(key, tdbs::common::DataType::int64, v.size(), v.begin());
+            } else {
+                objxp->ptr()->set_metadata(key, tdbs::common::DataType::float64, v.size(), v.begin());
+            }
+            break;
+        }
+        case INTSXP: {
+            Rcpp::IntegerVector v(value);
+            objxp->ptr()->set_metadata(key, tdbs::common::DataType::int32, v.size(), v.begin());
+            break;
+        }
+        case STRSXP: {
+            Rcpp::CharacterVector v(value);
+            std::string s(v[0]);
+            objxp->ptr()->set_metadata(key, tdbs::common::DataType::string_utf8, s.length(), s.c_str());
+            break;
+        }
+        case LGLSXP: {  // experimental: map R logical (ie TRUE, FALSE, NA) to
+                        // int8
+            Rcpp::stop("Logical vector objects are not supported.");
+            break;  // not reached
+        }
+        default: {
+            Rcpp::stop("No support (yet) for type '%s'.", Rf_type2char(TYPEOF(value)));
+            break;  // not reached
+        }
+    }
+}
+
+// helper function to convert_metadata
+SEXP _metadata_to_sexp(const tdbs::common::MetadataValue& value) {
+    // This supports a limited set of basic types as the metadata
+    // annotation is not meant to support complete serialization
+
+    return std::visit(
+        [&](auto&& arg) -> SEXP {
+            using T = std::decay_t<decltype(arg)>;
+
+            if constexpr (std::is_same_v<T, std::string>) {
+                return Rcpp::wrap(arg);
+            } else if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, bool>) {
+                return Rcpp::LogicalVector({{static_cast<bool>(arg)}});
+            } else if constexpr (
+                std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
+                std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>) {
+                return copy_int_vector<T>({{arg}});
+            } else if constexpr (std::is_same_v<T, int32_t>) {
+                return Rcpp::IntegerVector({{arg}});
+            } else if constexpr (std::is_same_v<T, int64_t>) {
+                return Rcpp::toInteger64({{arg}});
+            } else if constexpr (std::is_same_v<T, float>) {
+                return Rcpp::NumericVector({{static_cast<double>(arg)}});
+            } else if constexpr (std::is_same_v<T, double>) {
+                return Rcpp::NumericVector({{arg}});
+            } else if constexpr (std::is_same_v<T, std::vector<int8_t>> || std::is_same_v<T, std::vector<bool>>) {
+                Rcpp::LogicalVector vec(arg.size());
+                for (size_t i = 0; i < arg.size(); i++)
+                    vec[i] = static_cast<bool>(arg[i]);
+                return vec;
+            } else if constexpr (
+                std::is_same_v<T, std::vector<uint8_t>> || std::is_same_v<T, std::vector<uint16_t>> ||
+                std::is_same_v<T, std::vector<int16_t>> || std::is_same_v<T, std::vector<uint32_t>> ||
+                std::is_same_v<T, std::vector<uint64_t>>) {
+                return copy_int_vector<typename T::value_type>(arg);
+            } else if constexpr (std::is_same_v<T, std::vector<int32_t>>) {
+                Rcpp::IntegerVector vec(arg.size());
+                std::copy(arg.cbegin(), arg.cend(), vec.begin());
+                return vec;
+            } else if constexpr (std::is_same_v<T, std::vector<int64_t>>) {
+                return Rcpp::toInteger64(arg);
+            } else if constexpr (std::is_same_v<T, std::vector<float>>) {
+                Rcpp::NumericVector vec(arg.size());
+                for (size_t i = 0; i < arg.size(); i++)
+                    vec[i] = static_cast<double>(arg[i]);
+                return vec;
+            } else if constexpr (std::is_same_v<T, std::vector<double>>) {
+                Rcpp::NumericVector vec(arg.size());
+                std::copy(arg.cbegin(), arg.cend(), vec.begin());
+                return vec;
+            } else {
+                Rcpp::stop("No support yet for TileDB data type %s", tdbs::common::demangle_name(typeid(T).name()));
+            }
+        },
+        value);
 }

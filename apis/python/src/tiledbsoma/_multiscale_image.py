@@ -222,10 +222,8 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
             )
             metadata = _tdb_handles.MetadataWrapper.from_handle(handle)
             metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
-            metadata._write()
             multiscale = cls(
                 handle,
-                uri=uri,
                 context=context,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
@@ -625,7 +623,9 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
 
     def levels(self) -> dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
-        return {level.name: (self._contents[level.name].uri, level.shape) for level in self._levels}
+        members = self._handle.members()
+
+        return {level.name: (members[level.name][0], level.shape) for level in self._levels}
 
     @property
     def level_count(self) -> int:
@@ -657,7 +657,7 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
         """
         if isinstance(level, int):
             level = self._levels[level].name
-        return self._contents[level].uri
+        return str(self._handle.members()[level][0])
 
     @property
     def nchannels(self) -> int:

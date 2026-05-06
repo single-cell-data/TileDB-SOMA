@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import abc
-import itertools
 from collections.abc import MutableMapping
 from typing import Any, Callable, ClassVar, Final, TypeVar, cast, overload
 
@@ -346,36 +345,11 @@ class CollectionBase(
         """Get a mapping of {member_name: (uri, soma_object_type)}."""
         return cast("dict[str, tuple[str, str]]", self._handle.members())
 
-    def __repr__(self) -> str:
-        """Default display for :class:`Collection`."""
-        lines = itertools.chain((self._my_repr(),), self._contents_lines(""))
-        return "<" + "\n".join(lines) + ">"
-
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
     # ================================================================
 
-    def _my_repr(self) -> str:
-        start = super()._my_repr()
-        if self.closed:
-            return start
-        n = len(self)
-        if n == 0:
-            count = "empty"
-        elif n == 1:
-            count = "1 item"
-        else:
-            count = f"{n} items"
-        return f"{start} ({count})"
-
-    def _set_element(
-        self,
-        key: str,
-        *,
-        uri: str,
-        relative: bool,
-        soma_object: _TDBO,
-    ) -> None:
+    def _set_element(self, key: str, *, uri: str, relative: bool, soma_object: _TDBO, managed: bool = False) -> None:
         """Internal implementation of element setting.
 
         Args:
@@ -389,7 +363,7 @@ class CollectionBase(
                 The reified SOMA object to store locally.
         """
         self._check_allows_child(key, type(soma_object))
-        super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object)
+        super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object, managed=managed)
 
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:

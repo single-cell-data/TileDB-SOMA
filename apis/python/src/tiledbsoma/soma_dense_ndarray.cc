@@ -42,7 +42,7 @@ void write(SOMAArray& array, py::array data) {
 }
 
 void load_soma_dense_ndarray(py::module& m) {
-    py::class_<SOMADenseNDArray, SOMAArray, SOMAObject>(m, "SOMADenseNDArray")
+    py::class_<SOMADenseNDArray, SOMAArray, SOMAObject, py::smart_holder>(m, "SOMADenseNDArray")
 
         .def_static(
             "create",

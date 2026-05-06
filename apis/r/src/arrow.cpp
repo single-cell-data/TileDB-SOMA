@@ -314,7 +314,7 @@ void createSchemaForNDArray(
 
 // [[Rcpp::export]]
 void writeArrayFromArrow(
-    Rcpp::XPtr<tiledbsoma::SOMAArray> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype = "") {
+    Rcpp::XPtr<somaobj_wrap_t> soma_array, naxpArray naap, naxpSchema nasp, const std::string arraytype = "") {
     if (!soma_array) {
         Rcpp::stop("Internal error: SOMAObject handle is not initialized.");
     }
@@ -328,7 +328,7 @@ void writeArrayFromArrow(
     auto schema = tdbs::common::arrow::make_managed_unique<ArrowSchema>();
     sp.move(schema.get());
 
-    auto mq = soma_array->create_managed_query("unnamed");
+    auto mq = soma_array->ptr<tiledbsoma::SOMAArray>()->create_managed_query("unnamed");
     mq.set_layout(
         arraytype == "SOMADenseNDArray" ? tdbs::common::ResultOrder::colmajor : tdbs::common::ResultOrder::automatic);
     mq.set_array_data(schema.get(), array.get());

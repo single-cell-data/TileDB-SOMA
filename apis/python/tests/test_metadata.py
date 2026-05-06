@@ -291,10 +291,8 @@ def test_metadata_good_key(soma_object, good_key):
 def test_metadata_bad_key(soma_object, bad_key):
     """Verify that unsupported metadata types raise an error immediately."""
 
-    soma_object.metadata[bad_key] = "test_value"
-
     with pytest.raises(soma.SOMAError):
-        soma_object._metadata._write()
+        soma_object.metadata[bad_key] = "test_value"
 
 
 @pytest.mark.parametrize(
@@ -315,7 +313,5 @@ def test_metadata_bad_key(soma_object, bad_key):
 def test_metadata_bad_string_value(soma_object, bad_value):
     """Verify that unsupported metadata types raise an error immediately."""
 
-    soma_object.metadata["test_key"] = bad_value
-
     with pytest.raises(soma.SOMAError):
-        soma_object._metadata._write()
+        soma_object.metadata["test_key"] = bad_value

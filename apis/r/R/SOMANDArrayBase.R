@@ -77,7 +77,7 @@ SOMANDArrayBase <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
+      self$open("WRITE")
       return(self)
     },
 

@@ -93,11 +93,6 @@ SEXP _get_dim_domain(Rcpp::XPtr<tiledb::Dimension> dim);
 SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim);
 
 /**
- * Convert C++ metadata map to R list.
- */
-Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap);
-
-/**
  * Convert R open mode string to C++ OpenMode.
  */
 inline OpenMode get_open_mode(const std::string& open_mode) {
@@ -124,4 +119,17 @@ inline std::string get_open_mode_string(const OpenMode open_mode) {
         default:
             throw Rcpp::exception("Unrecognized open mode.");  // TODO: Improve error message
     }
+}
+
+// borrowed with a tip-of-the-hat from tiledb::src/libtiledb.coo
+// helper function to copy int vector
+template <typename T>
+Rcpp::IntegerVector copy_int_vector(const std::vector<T>& values) {
+    // Strictly speaking a check for under/overflow would be needed here yet
+    // this for metadata annotation (and not data payload) so extreme ranges are
+    // less likely
+    Rcpp::IntegerVector vec(values.size());
+    for (size_t i = 0; i < values.size(); i++)
+        vec[i] = static_cast<int32_t>(values[i]);
+    return (vec);
 }

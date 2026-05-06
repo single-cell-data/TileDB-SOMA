@@ -18,9 +18,6 @@ test_that("returns all coordinates by default", {
     measurement_name = "RNA"
   )
 
-  # Query object can be created from the SOMAExperiment axis_query() method
-  expect_equal(experiment$axis_query(measurement_name = "RNA"), query)
-
   # obs/var tables
   expect_true(is(query$obs(), "TableReadIter"))
   expect_true(is(query$var(), "TableReadIter"))

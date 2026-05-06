@@ -53,19 +53,19 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             }
             if (array_type == "SOMADataFrame") {
                 array_->check_encoding_version();
-                return std::make_unique<SOMADataFrame>(*array_);
+                return std::make_unique<SOMADataFrame>(std::move(*array_));
             } else if (array_type == "SOMASparseNDArray") {
                 array_->check_encoding_version();
-                return std::make_unique<SOMASparseNDArray>(*array_);
+                return std::make_unique<SOMASparseNDArray>(std::move(*array_));
             } else if (array_type == "SOMADenseNDArray") {
                 array_->check_encoding_version();
-                return std::make_unique<SOMADenseNDArray>(*array_);
+                return std::make_unique<SOMADenseNDArray>(std::move(*array_));
             } else if (array_type == "SOMAPointCloudDataFrame") {
                 array_->check_encoding_version();
-                return std::make_unique<SOMAPointCloudDataFrame>(*array_);
+                return std::make_unique<SOMAPointCloudDataFrame>(std::move(*array_));
             } else if (array_type == "SOMAGeometryDataFrame") {
                 array_->check_encoding_version();
-                return std::make_unique<SOMAGeometryDataFrame>(*array_);
+                return std::make_unique<SOMAGeometryDataFrame>(std::move(*array_));
             } else {
                 throw TileDBSOMAError(
                     fmt::format(
@@ -87,19 +87,19 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             }
             if (group_type == "SOMACollection") {
                 group_->check_encoding_version();
-                return std::make_unique<SOMACollection>(*group_);
+                return std::make_unique<SOMACollection>(std::move(*group_));
             } else if (group_type == "SOMAExperiment") {
                 group_->check_encoding_version();
-                return std::make_unique<SOMAExperiment>(*group_);
+                return std::make_unique<SOMAExperiment>(std::move(*group_));
             } else if (group_type == "SOMAMeasurement") {
                 group_->check_encoding_version();
-                return std::make_unique<SOMAMeasurement>(*group_);
+                return std::make_unique<SOMAMeasurement>(std::move(*group_));
             } else if (group_type == "SOMAScene") {
                 group_->check_encoding_version();
-                return std::make_unique<SOMAScene>(*group_);
+                return std::make_unique<SOMAScene>(std::move(*group_));
             } else if (group_type == "SOMAMultiscaleImage") {
                 group_->check_encoding_version();
-                return std::make_unique<SOMAMultiscaleImage>(*group_);
+                return std::make_unique<SOMAMultiscaleImage>(std::move(*group_));
             } else {
                 throw TileDBSOMAError(
                     fmt::format(
@@ -120,10 +120,7 @@ const std::optional<std::string> SOMAObject::type() {
         return std::nullopt;
     }
 
-    const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(*soma_object_type));
-    uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
-
-    return std::string(dtype, sz);
+    return std::get<std::string>(soma_object_type.value());
 }
 
 const std::optional<std::string> SOMAObject::encoding_version() {
@@ -133,10 +130,7 @@ const std::optional<std::string> SOMAObject::encoding_version() {
         return std::nullopt;
     }
 
-    const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(*encoding_version));
-    uint32_t sz = std::get<MetadataInfo::num>(*encoding_version);
-
-    return std::string(dtype, sz);
+    return std::get<std::string>(encoding_version.value());
 }
 
 void SOMAObject::check_encoding_version() {
@@ -178,5 +172,44 @@ ObjectType SOMAObject::tiledb_type_from_soma_type(const std::string& soma_type) 
         return ObjectType::invalid;
     return iTileDBType->second;
 };
+
+std::ostream& SOMAObject::print(std::ostream& stream, int level, std::optional<std::string> key) const {
+    std::string indentation(level * 4, ' ');
+    if (key) {
+        stream << fmt::format(
+                      "{}'{}': {} '{}' ({} for '{}')",
+                      indentation,
+                      key.value(),
+                      classname(),
+                      uri(),
+                      is_open() ? "open" : "CLOSED",
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d")
+               << std::endl;
+    } else {
+        stream << fmt::format(
+                      "{}{} '{}' ({} for '{}')",
+                      indentation,
+                      classname(),
+                      uri(),
+                      is_open() ? "open" : "CLOSED",
+                      mode() == OpenMode::soma_read  ? "r" :
+                      mode() == OpenMode::soma_write ? "w" :
+                                                       "d")
+               << std::endl;
+    }
+
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SOMAObject& object) {
+    stream << '<';
+    object.print(stream);
+    stream.seekp(-1, std::ios_base::end);
+    stream << ">";
+
+    return stream;
+}
 
 }  // namespace tiledbsoma

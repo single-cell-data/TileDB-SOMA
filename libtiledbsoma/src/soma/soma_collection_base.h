@@ -55,36 +55,55 @@ class SOMACollectionBase : public SOMAGroup {
         std::optional<TimestampRange> timestamp,
         std::optional<std::string> soma_type);
 
-    SOMACollectionBase(const SOMAGroup& other)
-        : SOMAGroup(other) {
-    }
+    SOMACollectionBase(SOMAGroup&& other);
 
     SOMACollectionBase() = delete;
     SOMACollectionBase(const SOMACollectionBase&) = default;
     SOMACollectionBase(SOMACollectionBase&&) = default;
-    virtual ~SOMACollectionBase() = default;
+    virtual ~SOMACollectionBase();
 
-    using iterator = typename std::map<std::string, std::shared_ptr<SOMAObject>>::iterator;
-    iterator begin() {
-        return children_.begin();
-    }
-    iterator end() {
-        return children_.end();
-    }
+    /**
+     * Open the SOMAGroup object.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
-    using SOMAGroup::open;
+    /**
+     * Open the SOMAGroup object.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
      * Closes the SOMACollectionBase object.
      */
-    void close();
+    void close([[maybe_unused]] bool recursive = false) override;
 
     /**
      * Get the SOMAObject associated with the key.
      *
      * @param key of member
      */
-    std::unique_ptr<SOMAObject> get(const std::string& key);
+    std::shared_ptr<SOMAObject> get(const std::string& key);
+
+    void set(
+        const std::string& uri,
+        URIType uri_type,
+        const std::string& name,
+        const std::string& soma_type,
+        std::shared_ptr<SOMAObject> member,
+        bool managed = true);
+
+    /**
+     * Remove a named member from the SOMAGroup.
+     *
+     * @param name of member
+     */
+    void del(const std::string& name) override;
 
     /**
      * Create and add a SOMACollection to the SOMACollectionBase.
@@ -206,6 +225,9 @@ class SOMACollectionBase : public SOMAGroup {
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
+    std::ostream& print(
+        std::ostream& stream, int level = 0, std::optional<std::string> key = std::nullopt) const override;
+
    protected:
     //===================================================================
     //= protected non-static
@@ -213,6 +235,10 @@ class SOMACollectionBase : public SOMAGroup {
 
     // Members of the SOMACollectionBase
     std::map<std::string, std::shared_ptr<SOMAObject>> children_;
+
+   private:
+    std::map<std::string, std::shared_ptr<std::once_flag>> flags_;
+    std::unordered_set<std::string> managed_children_;
 };
 }  // namespace tiledbsoma
 

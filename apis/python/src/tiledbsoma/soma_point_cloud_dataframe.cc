@@ -28,7 +28,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_point_cloud_dataframe(py::module& m) {
-    py::class_<SOMAPointCloudDataFrame, SOMAArray, SOMAObject>(m, "SOMAPointCloudDataFrame")
+    py::class_<SOMAPointCloudDataFrame, SOMAArray, SOMAObject, py::smart_holder>(m, "SOMAPointCloudDataFrame")
 
         .def_static(
             "create",

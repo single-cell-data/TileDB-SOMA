@@ -819,12 +819,16 @@ test_that("Metadata", {
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch, domain = list(soma_joinid = c(0, 0)))
 
-  md <- list(string_column = "qux", int_column = "float_column")
+  md <- list(string_column = "qux", int_column = "float_column", delete_column = "del")
   sdf$set_metadata(md)
 
   # Read all metadata while the sdf is still open for write
   expect_equivalent(sdf$get_metadata("int_column"), "float_column")
   expect_equivalent(sdf$get_metadata("string_column"), "qux")
+
+  expect_equivalent(sdf$get_metadata("delete_column"), "del")
+  sdf$delete_metadata("delete_column")
+  expect_equivalent(sdf$get_metadata("delete_column"), NULL)
 
   readmd <- sdf$get_metadata()
   expect_equivalent(readmd[["string_column"]], "qux")

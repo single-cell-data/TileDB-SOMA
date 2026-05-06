@@ -93,13 +93,17 @@ test_that("SOMACollection metadata", {
   expect_equal(collection$soma_type, "SOMACollection")
 
   # Set metadata with different value types
-  md <- list(string_key = "abc", int_key = 42L, float_key = 3.14)
+  md <- list(string_key = "abc", int_key = 42L, float_key = 3.14, delete_key = "del")
   collection$set_metadata(md)
 
   # Read individual keys while still open for write
   expect_equal(collection$get_metadata("string_key"), "abc")
   expect_equal(collection$get_metadata("int_key"), 42L)
   expect_equal(collection$get_metadata("float_key"), 3.14)
+
+  expect_equal(collection$get_metadata("delete_key"), "del")
+  collection$delete_metadata("delete_key")
+  expect_equal(collection$get_metadata("delete_key"), NULL)
 
   # Read all metadata while still open for write
   readmd <- collection$get_metadata()

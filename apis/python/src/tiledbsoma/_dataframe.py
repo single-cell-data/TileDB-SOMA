@@ -241,9 +241,7 @@ class DataFrame(SOMAArray):
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(
-            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
-        )
+        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
 
     def keys(self) -> tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.

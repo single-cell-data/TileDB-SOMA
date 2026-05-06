@@ -20,7 +20,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_group(py::module& m) {
-    py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
+    py::class_<SOMAGroup, SOMAObject, py::smart_holder>(m, "SOMAGroup")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
@@ -38,10 +38,22 @@ void load_soma_group(py::module& m) {
             "uri"_a,
             "soma_type"_a,
             "timestamp"_a = py::none())
-        .def("__enter__", [](SOMAGroup& group) { return group; })
+        .def("__enter__", [](std::shared_ptr<SOMAGroup> group) { return group; })
         .def(
             "__exit__",
-            [](SOMAGroup& group, py::object exc_type, py::object exc_value, py::object traceback) { group.close(); })
+            [](std::shared_ptr<SOMAGroup> group, py::object exc_type, py::object exc_value, py::object traceback) {
+                group->close(true);
+            })
+        .def("__contains__", &SOMAGroup::has)
+        .def("__len__", &SOMAGroup::count)
+        .def(
+            "reopen",
+            [](std::shared_ptr<SOMAGroup> group, OpenMode mode, std::optional<TimestampRange> timestamp) {
+                group->close(true);
+                group->open(mode, timestamp);
+            },
+            "mode"_a,
+            "timestamp"_a = py::none())
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {
@@ -57,13 +69,12 @@ void load_soma_group(py::module& m) {
                         throw TileDBSOMAError("Internal error: unrecognized mode.");
                 }
             })
-        .def("close", &SOMAGroup::close)
+        .def("close", &SOMAGroup::close, py::arg("recursive") = false)
         .def_property_readonly("closed", [](SOMAGroup& group) -> bool { return not group.is_open(); })
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
         .def("is_relative", &SOMAGroup::is_relative)
         .def("has", &SOMAGroup::has)
-        .def("add", &SOMAGroup::set, "uri"_a, "uri_type"_a, "name"_a, "soma_type"_a)
         .def("count", &SOMAGroup::count)
         .def("remove", &SOMAGroup::del)
         .def("members", &SOMAGroup::members_map)

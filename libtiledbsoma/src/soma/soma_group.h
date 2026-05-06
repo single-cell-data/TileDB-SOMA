@@ -15,9 +15,11 @@
 #define SOMA_GROUP
 
 #include <future>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <stdexcept>
-#include <tiledb/tiledb>
-#include <tiledb/tiledb_experimental>
+#include <unordered_set>
 
 #include "../utils/common.h"
 #include "enums.h"
@@ -25,14 +27,19 @@
 
 #pragma region Forward declarations
 
+namespace tiledb {
+class Config;
+class Group;
+}  // namespace tiledb
+
 namespace tiledbsoma::common {
 enum class DataType;
+class MetadataCache;
 }  // namespace tiledbsoma::common
 
 #pragma endregion
 
 namespace tiledbsoma {
-using namespace tiledb;
 
 // Pair storing uri and soma type
 using SOMAGroupEntry = std::pair<std::string, std::string>;
@@ -107,7 +114,10 @@ class SOMAGroup : public SOMAObject {
      * or write mode.
      * @param timestamp
      */
-    SOMAGroup(std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Group> group, std::optional<TimestampRange> timestamp);
+    SOMAGroup(
+        std::shared_ptr<SOMAContext> ctx,
+        std::shared_ptr<tiledb::Group> group,
+        std::optional<TimestampRange> timestamp);
 
     SOMAGroup() = delete;
     SOMAGroup(const SOMAGroup&) = default;
@@ -120,12 +130,20 @@ class SOMAGroup : public SOMAObject {
      * @param mode read or write
      * @param timestamp Optional pair indicating timestamp start and end
      */
-    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
+
+    /**
+     * Reopen the SOMAGroup object.
+     *
+     * @param mode read or write
+     * @param timestamp Optional pair indicating timestamp start and end
+     */
+    void reopen(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt) override;
 
     /**
      * Close the SOMAGroup object.
      */
-    void close();
+    void close([[maybe_unused]] bool recursive = false) override;
 
     /**
      * Check if the SOMAGroup is open.
@@ -195,7 +213,12 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param soma_type the soma_type of the member
      */
-    void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type);
+    virtual void set(
+        const std::string& uri,
+        URIType uri_type,
+        const std::string& name,
+        const std::string& soma_type,
+        const std::string& absolute_uri);
 
     /**
      * Get the number of members in the SOMAGroup.
@@ -207,7 +230,7 @@ class SOMAGroup : public SOMAObject {
      *
      * @param name of member
      */
-    void del(const std::string& name);
+    virtual void del(const std::string& name);
 
     /**
      * Return a mapping of all members in the group with its uri and type.
@@ -266,7 +289,7 @@ class SOMAGroup : public SOMAObject {
      * // Open the group for reading
      * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
      "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
+     * tiledbsoma::MetadataEntry meta_val = soma_group->get_metadata("key");
      * std::string key = std::get<MetadataInfo::key>(meta_val);
      * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
      * uint32_t num = std::get<MetadataInfo::num>(meta_val);
@@ -276,11 +299,11 @@ class SOMAGroup : public SOMAObject {
      *
      * @param key The key of the metadata item to be retrieved. UTF-8 encodings
      *     are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * @return MetadataEntry (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::map<std::string, MetadataValue> get_metadata();
-    std::optional<MetadataValue> get_metadata(const std::string& key);
+    std::map<std::string, common::MetadataValue> get_metadata();
+    std::optional<common::MetadataValue> get_metadata(const std::string& key);
 
     /**
      * Check if the key exists in metadata from an open group. The group must
@@ -298,6 +321,11 @@ class SOMAGroup : public SOMAObject {
      */
     uint64_t metadata_num() const;
 
+    /**
+     * Return the display name of the class.
+     */
+    std::string classname() const override;
+
    private:
     //===================================================================
     //= private non-static
@@ -307,7 +335,7 @@ class SOMAGroup : public SOMAObject {
      * Helper function to set the pass in timestamp in the config associated
      * with the SOMAContext passed in
      */
-    static Config _set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp);
+    static tiledb::Config _set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp);
 
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
@@ -319,19 +347,19 @@ class SOMAGroup : public SOMAObject {
     std::string name_;
 
     // TileDB Group associated with the SOMAGroup
-    std::shared_ptr<Group> group_;
+    std::shared_ptr<tiledb::Group> group_;
 
     // Metadata values need to be accessible in write mode as well. When adding
     // or deleting values in the group, instead of closing to update to
     // metadata; then reopening to read the group; and again reopening to
     // restore the group back to write mode, we just store the modifications to
     // this cache
-    std::map<std::string, MetadataValue> metadata_;
+    std::shared_ptr<common::MetadataCache> metadata_cache_;
 
     // Group associated with metadata_. We need to keep this read-mode group
     // alive in order for the metadata value pointers in the cache to be
     // accessible
-    std::shared_ptr<Group> cache_group_;
+    std::shared_ptr<tiledb::Group> cache_group_;
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
@@ -341,6 +369,9 @@ class SOMAGroup : public SOMAObject {
 
     // Member-to-URI cache
     std::map<std::string, SOMAGroupEntry> members_map_;
+
+    // Set of mutated members for Group write ops
+    std::unordered_set<std::string> mutated_members_;
 };
 
 }  // namespace tiledbsoma

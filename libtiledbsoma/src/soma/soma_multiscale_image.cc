@@ -50,4 +50,8 @@ std::unique_ptr<SOMAMultiscaleImage> SOMAMultiscaleImage::open(
     }
 }
 
+std::string SOMAMultiscaleImage::classname() const {
+    return "MultiscaleImage";
+}
+
 }  // namespace tiledbsoma
