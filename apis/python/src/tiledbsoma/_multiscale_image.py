@@ -224,6 +224,7 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
             metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
             multiscale = cls(
                 handle,
+                uri=uri,
                 context=context,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )

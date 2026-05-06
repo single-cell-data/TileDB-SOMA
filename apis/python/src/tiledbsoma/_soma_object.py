@@ -102,7 +102,9 @@ class SOMAObject:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
+        return cls(
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+        )
 
     @classmethod
     def _create(
@@ -132,12 +134,15 @@ class SOMAObject:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
             raise SOMAError(tdbe) from tdbe
-        return cls(handle, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code")
+        return cls(
+            handle, uri=uri, context=context, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"
+        )
 
     def __init__(
         self,
         handle: _tdb_handles.RawHandle,
         *,
+        uri: str,
         context: SOMAContext,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ) -> None:
@@ -169,7 +174,7 @@ class SOMAObject:
             )
         self._handle = handle
         self._context = context
-        self._uri = handle.uri
+        self._uri = uri
         self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
         self._close_stack.enter_context(self._handle)

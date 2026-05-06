@@ -16,7 +16,7 @@ from . import _tdb_handles
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._core_options import OpenMode
-from ._exception import DoesNotExistError, SOMAError, UnsupportedOperationError, is_does_not_exist_error
+from ._exception import SOMAError, UnsupportedOperationError, is_does_not_exist_error
 from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, SOMABaseTileDBType
@@ -58,6 +58,7 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
         self,
         handle: _tdb_handles.RawHandle,
         *,
+        uri: str,
         context: SOMAContext,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
@@ -132,7 +133,14 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
                 if isinstance(obj, SOMAGroup):
                     yield from obj._contents_lines(indent)
 
-    def _set_element(self, key: str, *, uri: str, relative: bool, soma_object: _TDBO, managed: bool = False) -> None:
+    def _set_element(
+        self,
+        key: str,
+        *,
+        uri: str,
+        relative: bool,
+        soma_object: _TDBO,
+    ) -> None:
         """Internal implementation of element setting.
 
         Args:
@@ -213,7 +221,12 @@ class SOMAGroup(SOMAObject, Generic[CollectionElementType]):
             )
 
         child = factory(child_uri.full_uri)
-        self._set_element(key, uri=child_uri.add_uri, relative=child_uri.relative, soma_object=child, managed=True)
+        self._set_element(
+            key,
+            uri=child_uri.add_uri,
+            relative=child_uri.relative,
+            soma_object=child,
+        )
         self._close_stack.enter_context(child)
         return child
 
