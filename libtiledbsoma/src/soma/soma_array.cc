@@ -645,9 +645,9 @@ uint64_t SOMAArray::nnz() {
     QueryChannel default_channel = QueryExperimental::get_default_channel(query);
 
     // Apply count aggregate
-    default_channel.apply_aggregate("Count", CountOperation());
+    default_channel.apply_aggregate("__tiledb_aggregate_count__", CountOperation());
 
-    query.set_layout(TILEDB_UNORDERED).set_data_buffer("Count", count);
+    query.set_layout(TILEDB_UNORDERED).set_data_buffer("__tiledb_aggregate_count__", count);
     query.submit();
 
     return count[0];
