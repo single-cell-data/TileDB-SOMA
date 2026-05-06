@@ -669,3 +669,37 @@ def test_parallel_getitem(tmp_path) -> None:
     with soma.open(uri) as exp:
         results = list(tp.map(get_obsm, repeat(exp), ("X_umap", "X_umap", "X_umap", "X_umap")))
     assert all(r is results[0] for r in results)
+
+
+def test_close_behavior() -> None:
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04/1.16.1/pbmc3k_processed"
+    uri = str(path)
+    if not pathlib.Path(uri).is_dir():
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` from the TileDB-SOMA project root directory.",
+        )
+
+    # When not running under a context closing the parent collection should close the child members it owns
+    exp = soma.open(uri)
+    obs = exp.obs
+    exp.close()
+    assert exp.closed
+    assert obs.closed
+
+    # When not running under a context closing the parent collection should not close the child members it owns if recusrsive is set to False
+    exp = soma.open(uri)
+    obs = exp.obs
+    exp.close(False)
+    assert exp.closed
+    assert not obs.closed
+
+    # Temporary objects will by default close with recursive set to False
+    obs = soma.open(uri).obs
+    assert not obs.closed
+
+    # When running under a context closing the parent collection should close the child members
+    with soma.open(uri) as exp:
+        obs = exp.obs
+
+    assert exp.closed
+    assert obs.closed

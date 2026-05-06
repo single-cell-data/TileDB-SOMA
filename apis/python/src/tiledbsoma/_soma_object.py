@@ -31,7 +31,7 @@ class SOMAObject:
     _handle_type: ClassVar[_tdb_handles.RawHandle]
     """Class variable of the clib class handle used to open this object type."""
 
-    __slots__ = ("_close_stack", "_context", "_handle", "_metadata", "_timestamp_ms", "_uri")
+    __slots__ = ("_close_stack", "_context", "_handle", "_is_running_in_context", "_metadata", "_timestamp_ms", "_uri")
 
     soma_type: ClassVar[LiteralString]
     """A string describing the SOMA type of this object. This is constant.
@@ -154,6 +154,7 @@ class SOMAObject:
         if not isinstance(handle, self._handle_type):
             raise TypeError("Internal error: Unexpected handle type {type(handle)}. Expected {self._handle_type}.")
         self._close_stack = ExitStack()
+        self._is_running_in_context = False
         """An exit stack to manage closing handles owned by this object.
 
         This is used to manage both our direct handle (in the case of simple
@@ -177,7 +178,6 @@ class SOMAObject:
         self._uri = uri
         self._timestamp_ms = tiledb_timestamp_to_ms(self._handle.timestamp)
         self._metadata = _tdb_handles.MetadataWrapper.from_handle(self._handle)
-        self._close_stack.enter_context(self._handle)
         self._parse_special_metadata()
 
     def _parse_special_metadata(self) -> None:
@@ -234,13 +234,16 @@ class SOMAObject:
     __hash__ = object.__hash__
 
     def __enter__(self) -> Self:
+        self._is_running_in_context = True
+        self._close_stack.enter_context(self._handle)
         return self
 
     def __exit__(self, *_: Any) -> None:  # noqa: ANN401
+        self._is_running_in_context = False
         self.close()
 
     def __del__(self) -> None:
-        self.close()
+        self.close(False)
         super_del = getattr(super(), "__del__", lambda: None)
         super_del()
 
@@ -265,7 +268,7 @@ class SOMAObject:
         """
         return self._uri
 
-    def close(self) -> None:
+    def close(self, recursive: bool = True) -> None:
         """Release any resources held while the object is open.
         Closing an already-closed object is a no-op.
 
@@ -275,8 +278,11 @@ class SOMAObject:
         Lifecycle:
             Maturing.
         """
+        del recursive  # unused by default
+
         if not self.closed:
             self._metadata._write()
+            self._handle.close()
         self._close_stack.close()
 
     @property
