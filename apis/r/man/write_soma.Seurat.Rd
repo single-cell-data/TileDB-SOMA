@@ -19,7 +19,7 @@
 
 \item{uri}{URI for resulting SOMA object.}
 
-\item{...}{Arguments passed to other methods}
+\item{...}{Reserved for future use.}
 
 \item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
 \itemize{

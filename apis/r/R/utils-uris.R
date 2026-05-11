@@ -42,9 +42,8 @@ uri_scheme_remove <- function(uri) {
 #'
 make_uri_relative <- function(uri, relative_to) {
   stopifnot(
-    "'uri' and 'relative_to' must be scalar character vectors" = is_scalar_character(
-      uri
-    ) &&
+    "'uri' and 'relative_to' must be scalar character vectors" =
+      is_scalar_character(uri) &&
       is_scalar_character(relative_to)
   )
 

@@ -101,3 +101,25 @@ test_that("SingleCellExperiment mainExpName mechanics", {
   expect_no_condition(experiment <- SOMAExperimentOpen(uri))
   expect_identical(experiment$ms$names(), ms_name2)
 })
+
+test_that("Write SingleCellExperiment relatively (SOMA-906)", {
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed("pbmc3k")
+  suppressWarnings(suppressMessages(skip_if_not_installed(
+    "SingleCellExperiment",
+    .MINIMUM_SCE_VERSION("c")
+  )))
+
+  sce <- pbmc3k_sce()
+  SingleCellExperiment::mainExpName(sce) <- "RNA"
+
+  uri <- tempfile(pattern = "singlecellexperiment-relative-")
+
+  for (i in c(TRUE, FALSE)) {
+    expect_error(
+      write_soma(sce, uri, relative = i, ms_name = "RNA"),
+      regexp = "^The dots '\\.\\.\\.' must be empty when",
+      label = sprintf("write_soma.SingleCellExperiment(relative = %s)", i)
+    )
+  }
+})

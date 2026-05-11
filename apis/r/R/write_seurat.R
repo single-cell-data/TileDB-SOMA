@@ -292,7 +292,7 @@ write_soma.DimReduc <- function(
   # Always write reductions as sparse arrays
   write_soma(
     x = SeuratObject::Embeddings(x),
-    uri = embed,
+    uri = if (relative) embed else file_path(obsm$uri, embed),
     soma_parent = obsm,
     sparse = TRUE,
     transpose = FALSE,
@@ -300,7 +300,8 @@ write_soma.DimReduc <- function(
     ingest_mode = ingest_mode,
     shape = demb,
     platform_config = platform_config,
-    context = context
+    context = context,
+    relative = relative
   )
 
   # Add feature loadings
@@ -379,7 +380,7 @@ write_soma.DimReduc <- function(
     # Always write reductions as sparse arrays
     write_soma(
       x = mat,
-      uri = ldgs,
+      uri = if (relative) ldgs else file_path(varm$uri, ldgs),
       soma_parent = varm,
       sparse = TRUE,
       transpose = FALSE,
@@ -387,7 +388,8 @@ write_soma.DimReduc <- function(
       ingest_mode = ingest_mode,
       shape = dload,
       platform_config = platform_config,
-      context = context
+      context = context,
+      relative = relative
     )
   }
 
@@ -476,7 +478,8 @@ write_soma.Graph <- function(
     ingest_mode = ingest_mode,
     shape = shape,
     platform_config = platform_config,
-    context = context
+    context = context,
+    relative = relative
   )
 
   return(invisible(soma_parent))
@@ -487,6 +490,7 @@ write_soma.Graph <- function(
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
 #' @param x A \code{\link[SeuratObject]{Seurat}} object.
+#' @template param-dots-reserved
 #'
 #' @inherit write_soma return
 #'
@@ -546,7 +550,15 @@ write_soma.Seurat <- function(
       (is_scalar_character(uri) && nzchar(uri))
   )
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
-  if ("shape" %in% names(args <- rlang::dots_list(...))) {
+  args <- rlang::dots_list(...)
+  if (length(args) && (length(args) > 1L || names(args) != "shape")) {
+    stop(
+      "The dots '...' must be empty when calling `write_soma() on a '",
+      class(x)[1L], "' object",
+      call. = FALSE
+    )
+  }
+  if ("shape" %in% names(args)) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
@@ -810,11 +822,10 @@ write_soma.SeuratCommand <- function(
   )
 
   key <- "seurat_commands"
-  uri <- uri %||% methods::slot(x, name = "name")
 
   # Create a group for command logs
   logs_uri <- .check_soma_uri(
-    key,
+    file_path(soma_parent$uri, key),
     soma_parent = soma_parent,
     relative = relative
   )
@@ -826,7 +837,7 @@ write_soma.SeuratCommand <- function(
       platform_config = platform_config,
       context = context
     )
-    soma_parent$add_new_collection(logs, key)
+    # soma_parent$add_new_collection(logs, key)
     logs
   } else {
     logs <- soma_parent$get(key)
@@ -849,6 +860,10 @@ write_soma.SeuratCommand <- function(
     logs
   }
   on.exit(logs$close(), add = TRUE, after = FALSE)
+  withCallingHandlers(
+    .register_soma_object(logs, soma_parent, key = key, relative = relative),
+    existingKeyWarning = .maybe_muffle
+  )
 
   # Encode parameters
   soma_info("Encoding parameters in the command log")
@@ -883,6 +898,11 @@ write_soma.SeuratCommand <- function(
   enc <- as.character(jsonlite::toJSON(xlist, null = "null", auto_unbox = TRUE))
 
   # Write out and return
+  uri <- uri %||% if (relative) {
+    methods::slot(x, name = "name")
+  } else {
+    file_path(logs$uri, methods::slot(x, name = "name"))
+  }
   sdf <- write_soma(
     x = enc,
     uri = uri,
