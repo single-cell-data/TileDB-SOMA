@@ -20,7 +20,7 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
     const nlohmann::json& soma_schema,
     const tiledb::Context&,
     const tiledb::Array& array,
-    const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
+    const std::map<std::string, common::MetadataValue>& metadata) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
             "[SOMAGeometryColumn][deserialize] Missing required field "
@@ -68,7 +68,7 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
                 SOMA_COORDINATE_SPACE_KEY));
     }
 
-    auto coordinate_space = std::apply(SOMACoordinateSpace::from_metadata, metadata.at(SOMA_COORDINATE_SPACE_KEY));
+    auto coordinate_space = SOMACoordinateSpace::from_metadata(metadata.at(SOMA_COORDINATE_SPACE_KEY));
 
     return std::make_shared<SOMAGeometryColumn>(dimensions, attribute, coordinate_space);
 }

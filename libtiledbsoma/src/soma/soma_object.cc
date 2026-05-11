@@ -120,10 +120,7 @@ const std::optional<std::string> SOMAObject::type() {
         return std::nullopt;
     }
 
-    const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(*soma_object_type));
-    uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
-
-    return std::string(dtype, sz);
+    return std::get<std::string>(soma_object_type.value());
 }
 
 const std::optional<std::string> SOMAObject::encoding_version() {
@@ -133,10 +130,7 @@ const std::optional<std::string> SOMAObject::encoding_version() {
         return std::nullopt;
     }
 
-    const char* dtype = static_cast<const char*>(std::get<MetadataInfo::value>(*encoding_version));
-    uint32_t sz = std::get<MetadataInfo::num>(*encoding_version);
-
-    return std::string(dtype, sz);
+    return std::get<std::string>(encoding_version.value());
 }
 
 void SOMAObject::check_encoding_version() {

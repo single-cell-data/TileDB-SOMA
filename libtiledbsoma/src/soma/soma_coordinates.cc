@@ -116,24 +116,20 @@ SOMACoordinateSpace::SOMACoordinateSpace(
     }
 }
 
-SOMACoordinateSpace SOMACoordinateSpace::from_metadata(
-    common::DataType value_type, uint32_t value_num, const void* value) {
-    if (value_type != common::DataType::string_utf8 && value_type != common::DataType::string_ascii) {
+SOMACoordinateSpace SOMACoordinateSpace::from_metadata(common::MetadataValue metadata) {
+    if (!std::holds_alternative<std::string>(metadata)) {
         throw TileDBSOMAError(
             fmt::format(
                 "[SOMACoordinateSpace]: Unexpected datatype for coordinate space "
-                "metadata. Expected {} or {}; got {}",
+                "metadata. Expected {} or {}",
                 common::getName(common::DataType::string_utf8),
-                common::getName(common::DataType::string_ascii),
-                common::getName(value_type)));
+                common::getName(common::DataType::string_ascii)));
     }
-    if (value == nullptr) {
-        throw TileDBSOMAError(
-            "[SOMACoordinateSpace]: Missing value for coordinate space "
-            "metadata.");
+    if (std::get<std::string>(metadata).empty()) {
+        throw TileDBSOMAError("[SOMACoordinateSpace]: Missing value for coordinate space metadata.");
     }
 
-    return SOMACoordinateSpace::from_string(std::string_view(static_cast<const char*>(value), value_num));
+    return SOMACoordinateSpace::from_string(std::get<std::string>(metadata));
 }
 
 SOMACoordinateSpace SOMACoordinateSpace::from_string(std::string_view metadata) {

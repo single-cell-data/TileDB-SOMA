@@ -702,81 +702,81 @@ SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim) {
     }
 }
 
-// borrowed with a tip-of-the-hat from tiledb::src/libtiledb.coo
-// helper function to copy int vector
 template <typename T>
-Rcpp::IntegerVector copy_int_vector(const uint32_t v_num, const void* v) {
+Rcpp::IntegerVector copy_int_vector(const std::vector<T>& values) {
     // Strictly speaking a check for under/overflow would be needed here yet
     // this for metadata annotation (and not data payload) so extreme ranges are
     // less likely
-    Rcpp::IntegerVector vec(v_num);
-    const T* ivec = static_cast<const T*>(v);
-    size_t n = static_cast<size_t>(v_num);
-    for (size_t i = 0; i < n; i++)
-        vec[i] = static_cast<int32_t>(ivec[i]);
+    Rcpp::IntegerVector vec(values.size());
+    for (size_t i = 0; i < values.size(); i++)
+        vec[i] = static_cast<int32_t>(values[i]);
     return (vec);
 }
 
-SEXP _metadata_to_r(const tdbs::common::DataType v_type, const uint32_t v_num, const void* v) {
+SEXP _metadata_to_r(const tdbs::common::MetadataValue& value) {
     // This supports a limited set of basic types as the metadata
     // annotation is not meant to support complete serialization
-    if (v_type == tdbs::common::DataType::int32) {
-        Rcpp::IntegerVector vec(v_num);
-        std::memcpy(vec.begin(), v, v_num * sizeof(int32_t));
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::float64) {
-        Rcpp::NumericVector vec(v_num);
-        std::memcpy(vec.begin(), v, v_num * sizeof(double));
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::float32) {
-        Rcpp::NumericVector vec(v_num);
-        const float* fvec = static_cast<const float*>(v);
-        size_t n = static_cast<size_t>(v_num);
-        for (size_t i = 0; i < n; i++)
-            vec[i] = static_cast<double>(fvec[i]);
-        return (vec);
-    } else if (
-        v_type == tdbs::common::DataType::character || v_type == tdbs::common::DataType::string_ascii ||
-        v_type == tdbs::common::DataType::string_utf8) {
-        std::string s(static_cast<const char*>(v), v_num);
-        return (Rcpp::wrap(s));
-    } else if (v_type == tdbs::common::DataType::int8) {
-        Rcpp::LogicalVector vec(v_num);
-        const int8_t* ivec = static_cast<const int8_t*>(v);
-        size_t n = static_cast<size_t>(v_num);
-        for (size_t i = 0; i < n; i++)
-            vec[i] = static_cast<bool>(ivec[i]);
-        return (vec);
-    } else if (v_type == tdbs::common::DataType::uint8) {
-        // Strictly speaking a check for under/overflow would be needed here
-        // (and below) yet this is for metadata annotation (and not data
-        // payload) so extreme ranges are less likely
-        return copy_int_vector<uint8_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::int16) {
-        return copy_int_vector<int16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::uint16) {
-        return copy_int_vector<uint16_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::uint32) {
-        return copy_int_vector<uint32_t>(v_num, v);
-    } else if (v_type == tdbs::common::DataType::int64) {
-        std::vector<int64_t> iv(v_num);
-        std::memcpy(&(iv[0]), v, v_num * sizeof(int64_t));
-        return Rcpp::toInteger64(iv);
-    } else if (v_type == tdbs::common::DataType::uint64) {
-        return copy_int_vector<uint64_t>(v_num, v);
-    } else {
-        Rcpp::stop("No support yet for TileDB data type %s", tdbs::common::getName(v_type));
-    }
+
+    return std::visit(
+        [&](auto&& arg) -> SEXP {
+            using T = std::decay_t<decltype(arg)>;
+
+            if constexpr (std::is_same_v<T, std::string>) {
+                return Rcpp::wrap(arg);
+            } else if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, bool>) {
+                return Rcpp::LogicalVector({{static_cast<bool>(arg)}});
+            } else if constexpr (
+                std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
+                std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>) {
+                return copy_int_vector<T>({{arg}});
+            } else if constexpr (std::is_same_v<T, int32_t>) {
+                return Rcpp::IntegerVector({{arg}});
+            } else if constexpr (std::is_same_v<T, int64_t>) {
+                return Rcpp::toInteger64({{arg}});
+            } else if constexpr (std::is_same_v<T, float>) {
+                return Rcpp::NumericVector({{static_cast<double>(arg)}});
+            } else if constexpr (std::is_same_v<T, double>) {
+                return Rcpp::NumericVector({{arg}});
+            } else if constexpr (std::is_same_v<T, std::vector<int8_t>> || std::is_same_v<T, std::vector<bool>>) {
+                Rcpp::LogicalVector vec(arg.size());
+                for (size_t i = 0; i < arg.size(); i++)
+                    vec[i] = static_cast<bool>(arg[i]);
+                return vec;
+            } else if constexpr (
+                std::is_same_v<T, std::vector<uint8_t>> || std::is_same_v<T, std::vector<uint16_t>> ||
+                std::is_same_v<T, std::vector<int16_t>> || std::is_same_v<T, std::vector<uint32_t>> ||
+                std::is_same_v<T, std::vector<uint64_t>>) {
+                return copy_int_vector<typename T::value_type>(arg);
+            } else if constexpr (std::is_same_v<T, std::vector<int32_t>>) {
+                Rcpp::IntegerVector vec(arg.size());
+                std::copy(arg.cbegin(), arg.cend(), vec.begin());
+                return vec;
+            } else if constexpr (std::is_same_v<T, std::vector<int64_t>>) {
+                return Rcpp::toInteger64(arg);
+            } else if constexpr (std::is_same_v<T, std::vector<float>>) {
+                Rcpp::NumericVector vec(arg.size());
+                for (size_t i = 0; i < arg.size(); i++)
+                    vec[i] = static_cast<double>(arg[i]);
+                return vec;
+            } else if constexpr (std::is_same_v<T, std::vector<double>>) {
+                Rcpp::NumericVector vec(arg.size());
+                std::copy(arg.cbegin(), arg.cend(), vec.begin());
+                return vec;
+            } else {
+                Rcpp::stop("No support yet for TileDB data type %s", tdbs::common::demangle_name(typeid(T).name()));
+            }
+        },
+        value);
 }
 
-Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap) {
+Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::common::MetadataValue>& mvmap) {
     std::vector<std::string> namvec;
     Rcpp::List list;
     for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
         std::string key = it->first;
         namvec.push_back(key);
-        tdbs::MetadataValue val = it->second;
-        list.push_back(_metadata_to_r(std::get<0>(val), std::get<1>(val), std::get<2>(val)));
+        tdbs::common::MetadataValue val = it->second;
+        list.push_back(_metadata_to_r(val));
     }
     list.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
     return list;

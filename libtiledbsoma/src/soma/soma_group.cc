@@ -16,6 +16,9 @@
 #include "common/datatype/datatype.h"
 #include "common/datatype/utils.h"
 #include "common/logging/impl/logger.h"
+#include "common/logging/logger.h"
+#include "common/metadata/metadata.h"
+#include "common/metadata/utils.h"
 #include "enums.h"
 
 namespace tiledbsoma {
@@ -24,20 +27,6 @@ using namespace common::type;
 //==================================================================
 // helper functions
 //==================================================================
-
-std::map<std::string, MetadataValue> create_metadata_cache(Group& group) {
-    std::map<std::string, MetadataValue> metadata_cache{};
-    for (uint64_t idx = 0; idx < group.metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        group.get_metadata_from_index(idx, &key, &value_type, &value_num, &value);
-
-        metadata_cache[key] = MetadataValue(as<DataTypeFormat::SOMA>(value_type), value_num, value);
-    }
-    return metadata_cache;
-}
 
 std::map<std::string, SOMAGroupEntry> create_member_cache(Group& group) {
     auto get_object_type_string = [](tiledb::Object& group_member) {
@@ -133,8 +122,8 @@ SOMAGroup::SOMAGroup(
         _set_timestamp(ctx, timestamp));
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
-                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    metadata_ = create_metadata_cache(*cache_group_);
+                       std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -164,8 +153,8 @@ SOMAGroup::SOMAGroup(
     }
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
-                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    metadata_ = create_metadata_cache(*cache_group_);
+                       std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
@@ -178,17 +167,17 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     group_->open(mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE);
     cache_group_ = (group_->query_type() == TILEDB_READ) ?
                        group_ :
-                       std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    metadata_ = create_metadata_cache(*cache_group_);
+                       std::make_shared<tiledb::Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+    metadata_cache_ = std::make_shared<common::MetadataCache>(*cache_group_);
     members_map_ = create_member_cache(*cache_group_);
 }
 
 void SOMAGroup::close() {
-    if (cache_group_ != nullptr) {
+    if (metadata_cache_)
+        metadata_cache_->write(*group_);
+    if (cache_group_)
         cache_group_->close();
-    }
     group_->close();
-    metadata_.clear();
 }
 
 const std::string SOMAGroup::uri() const {
@@ -244,19 +233,34 @@ std::optional<TimestampRange> SOMAGroup::timestamp() {
 
 void SOMAGroup::set_metadata(
     const std::string& key, common::DataType value_type, uint32_t value_num, const void* value, bool force) {
+    if (!is_open())
+        throw TileDBSOMAError(fmt::format("Cannot set metadata item '{}'; object is closed.", key));
+    if (mode() != OpenMode::soma_write)
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot write metadata item to '{}'; current mode='{}'. Reopen in mode='write'.",
+                key,
+                open_mode_to_string(mode())));
+
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
     if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
-    group_->put_metadata(key, as<DataTypeFormat::TILEDB>(value_type), value_num, value);
-    MetadataValue mdval(value_type, value_num, value);
-    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-    metadata_.insert(mdpair);
+    metadata_cache_->set(key, common::decode_metadata(value_type, value_num, value));
 }
 
 void SOMAGroup::delete_metadata(const std::string& key, bool force) {
+    if (!is_open())
+        throw TileDBSOMAError(fmt::format("Cannot delete metadata item '{}'; object is closed.", key));
+    if (mode() != OpenMode::soma_write)
+        throw TileDBSOMAError(
+            fmt::format(
+                "Cannot write metadata item to '{}'; current mode='{}'. Reopen in mode='write'.",
+                key,
+                open_mode_to_string(mode())));
+
     if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
     }
@@ -265,27 +269,23 @@ void SOMAGroup::delete_metadata(const std::string& key, bool force) {
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
     }
 
-    group_->delete_metadata(key);
-    metadata_.erase(key);
+    metadata_cache_->del(key);
 }
 
-std::optional<MetadataValue> SOMAGroup::get_metadata(const std::string& key) {
-    if (metadata_.count(key) == 0)
-        return std::nullopt;
-
-    return metadata_[key];
+std::optional<common::MetadataValue> SOMAGroup::get_metadata(const std::string& key) {
+    return metadata_cache_->get(key);
 }
 
-std::map<std::string, MetadataValue> SOMAGroup::get_metadata() {
-    return metadata_;
+std::map<std::string, common::MetadataValue> SOMAGroup::get_metadata() {
+    return metadata_cache_->get();
 }
 
 bool SOMAGroup::has_metadata(const std::string& key) const {
-    return metadata_.count(key) != 0;
+    return metadata_cache_->contains(key);
 }
 
 uint64_t SOMAGroup::metadata_num() const {
-    return metadata_.size();
+    return metadata_cache_->size();
 }
 
 Config SOMAGroup::_set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {

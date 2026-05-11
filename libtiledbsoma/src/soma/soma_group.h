@@ -27,6 +27,7 @@
 
 namespace tiledbsoma::common {
 enum class DataType;
+class MetadataCache;
 }  // namespace tiledbsoma::common
 
 #pragma endregion
@@ -266,7 +267,7 @@ class SOMAGroup : public SOMAObject {
      * // Open the group for reading
      * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
      "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
+     * tiledbsoma::MetadataEntry meta_val = soma_group->get_metadata("key");
      * std::string key = std::get<MetadataInfo::key>(meta_val);
      * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
      * uint32_t num = std::get<MetadataInfo::num>(meta_val);
@@ -276,11 +277,11 @@ class SOMAGroup : public SOMAObject {
      *
      * @param key The key of the metadata item to be retrieved. UTF-8 encodings
      *     are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * @return MetadataEntry (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::map<std::string, MetadataValue> get_metadata();
-    std::optional<MetadataValue> get_metadata(const std::string& key);
+    std::map<std::string, common::MetadataValue> get_metadata();
+    std::optional<common::MetadataValue> get_metadata(const std::string& key);
 
     /**
      * Check if the key exists in metadata from an open group. The group must
@@ -326,7 +327,7 @@ class SOMAGroup : public SOMAObject {
     // metadata; then reopening to read the group; and again reopening to
     // restore the group back to write mode, we just store the modifications to
     // this cache
-    std::map<std::string, MetadataValue> metadata_;
+    std::shared_ptr<common::MetadataCache> metadata_cache_;
 
     // Group associated with metadata_. We need to keep this read-mode group
     // alive in order for the metadata value pointers in the cache to be

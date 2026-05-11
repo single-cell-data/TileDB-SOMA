@@ -95,7 +95,7 @@ SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim);
 /**
  * Convert C++ metadata map to R list.
  */
-Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::MetadataValue>& mvmap);
+Rcpp::List metadata_as_rlist(std::map<std::string, tiledbsoma::common::MetadataValue>& mvmap);
 
 /**
  * Convert R open mode string to C++ OpenMode.

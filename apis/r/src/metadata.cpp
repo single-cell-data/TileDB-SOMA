@@ -89,16 +89,19 @@ std::string get_metadata(std::string& uri, std::string& key, bool is_array, Rcpp
     if (!mv.has_value()) {
         Rcpp::stop("No value for '%s'", key.c_str());
     }
-    tdbs::MetadataValue val = *mv;
-    auto dtype = std::get<0>(val);
-    auto txt = tdbs::common::getName(dtype);
-    if (txt != "STRING_UTF8" && txt != "STRING_ASCII") {
-        Rcpp::stop("Currently unsupported type '%s'", txt.data());
+    tdbs::common::MetadataValue val = *mv;
+    if (!std::holds_alternative<std::string>(val)) {
+        Rcpp::stop(
+            "Currently unsupported type '%s'",
+            std::visit(
+                [](auto&& arg) -> std::string {
+                    using T = std::decay_t<decltype(arg)>;
+                    return tdbs::common::demangle_name(typeid(T).name());
+                },
+                val));
     }
-    auto len = std::get<1>(val);
-    const void* ptr = std::get<2>(val);
-    auto str = std::string((char*)ptr, len);
-    return str;
+
+    return std::get<std::string>(val);
 }
 
 // Check for metadata given key
