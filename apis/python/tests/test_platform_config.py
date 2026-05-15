@@ -6,6 +6,7 @@ import pytest
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_write_options as tco
+from tiledbsoma import pytiledbsoma as clib
 
 from ._util import assert_adata_equal
 
@@ -134,3 +135,97 @@ def test_dig_platform_config():
     # Unrecognized type (at tip)
     with pytest.raises(TypeError):
         tco._dig_platform_config({"a": {"b": "invalid"}}, int, ("a", "b"))
+
+
+def test_platform_schema_config_to_dict_keys():
+    cfg = clib.PlatformSchemaConfig()
+    d = cfg.to_dict()
+    assert type(d) is dict
+    assert set(d) == {
+        "capacity",
+        "offsets_filters",
+        "validity_filters",
+        "attrs",
+        "dims",
+        "allows_duplicates",
+        "tile_order",
+        "cell_order",
+    }
+
+
+def test_platform_schema_config_to_dict_values_match_attrs():
+    cfg = clib.PlatformSchemaConfig()
+    cfg.capacity = 1234
+    cfg.tile_order = "row-major"
+    d = cfg.to_dict()
+    assert d["capacity"] == 1234
+    assert d["tile_order"] == "row-major"
+    assert d["cell_order"] is None
+    assert isinstance(d["allows_duplicates"], bool)
+
+
+def test_platform_schema_config_to_dict_json_fields_parse(conftest_pbmc_small, tmp_path):
+    output_path = tmp_path.as_posix()
+    create_cfg = {
+        "capacity": 8888,
+        "offsets_filters": [
+            "RleFilter",
+            {"_type": "GzipFilter", "level": 7},
+            "NoOpFilter",
+        ],
+        "dims": {
+            "soma_dim_0": {"tile": 6, "filters": ["RleFilter"]},
+            "soma_dim_1": {"filters": []},
+        },
+        "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
+        "cell_order": "row-major",
+        "tile_order": "column-major",
+    }
+    tiledbsoma.io.from_anndata(
+        output_path,
+        conftest_pbmc_small,
+        "RNA",
+        platform_config={"tiledb": {"create": create_cfg}},
+    )
+    x_arr_uri = str(Path(output_path) / "ms" / "RNA" / "X" / "data")
+    with tiledbsoma.SparseNDArray.open(x_arr_uri) as x_arr:
+        cfg = x_arr.schema_config_options()
+        d = cfg.to_dict()
+        assert d["capacity"] == create_cfg["capacity"]
+        assert d["tile_order"] == create_cfg["tile_order"]
+        assert d["cell_order"] == create_cfg["cell_order"]
+        # JSON-string fields should parse cleanly
+        assert isinstance(json.loads(d["offsets_filters"]), list)
+        assert isinstance(json.loads(d["attrs"]), dict)
+        assert isinstance(json.loads(d["dims"]), dict)
+
+
+def test_platform_schema_config_repr():
+    cfg = clib.PlatformSchemaConfig()
+    r = repr(cfg)
+    assert r.startswith("PlatformSchemaConfig(")
+    assert r.endswith(")")
+    assert "capacity=" in r
+    assert "tile_order=None" in r
+
+
+def test_platform_config_to_dict_keys():
+    cfg = clib.PlatformConfig()
+    d = cfg.to_dict()
+    assert type(d) is dict
+    assert {"capacity", "tile_order", "consolidate_and_vacuum"} <= set(d)
+
+
+def test_platform_config_repr():
+    cfg = clib.PlatformConfig()
+    assert repr(cfg).startswith("PlatformConfig(")
+
+
+def test_platform_config_dense_zstd_level_not_aliased():
+    """Regression: pytiledbsoma.cc:157 used to bind dense_nd_array_dim_zstd_level
+    to &PlatformConfig::sparse_nd_array_dim_zstd_level."""
+    cfg = clib.PlatformConfig()
+    cfg.sparse_nd_array_dim_zstd_level = 1
+    cfg.dense_nd_array_dim_zstd_level = 9
+    assert cfg.sparse_nd_array_dim_zstd_level == 1
+    assert cfg.dense_nd_array_dim_zstd_level == 9
