@@ -1356,10 +1356,10 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 @pytest.mark.medium_runner
 def test_soma_file_handling_65831_65864():
-    context = tiledbsoma.SOMAContext.create()
+    context = tiledbsoma.SOMATileDBContext()
     if not TESTDATA.exists():
         raise RuntimeError(f"Missing directory '{TESTDATA}'. Try re-running `make data` from the project root.")
-    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(str(TESTDATA / "pbmc-small.h5ad"), context._handle)
+    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(str(TESTDATA / "pbmc-small.h5ad"), context.native_context)
     del context  # https://app.shortcut.com/tiledb-inc/story/65864/
     gc.collect()  # Make sure that context is freed
     fb.read(100)  # Implicitly ensure that read does not segfault

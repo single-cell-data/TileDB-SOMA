@@ -57,7 +57,6 @@ from tiledbsoma import (
     Experiment,
     Measurement,
     PointCloudDataFrame,
-    SOMAContext,
     SparseNDArray,
     _factory,
     _util,
@@ -73,6 +72,7 @@ from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._tdb_handles import RawHandle
 from tiledbsoma._types import _INGEST_MODES, INGEST_MODES, IngestMode, NPNDArray, Path, _IngestMode
 from tiledbsoma.options import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 from . import conversions
@@ -93,7 +93,7 @@ from ._registration import (
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
 )
-from ._util import _set_and_get_context, get_arrow_str_format, read_h5ad
+from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)
@@ -154,7 +154,7 @@ def register_h5ads(
     obs_field_name: str,
     var_field_name: str,
     append_obsm_varm: bool = False,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     use_multiprocessing: bool = False,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
@@ -196,7 +196,7 @@ def register_h5ads(
     if isinstance(h5ad_file_names, str):
         h5ad_file_names = [h5ad_file_names]
 
-    context = _set_and_get_context(context)
+    context = _validate_soma_tiledb_context(context)
     concurrency_level = _concurrency_level(context)
 
     logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
@@ -250,7 +250,7 @@ def register_anndatas(
     obs_field_name: str,
     var_field_name: str,
     append_obsm_varm: bool = False,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Register ``AnnData`` objects to extend an existing SOMA ``Experiment``.
@@ -260,7 +260,7 @@ def register_anndatas(
     if isinstance(adatas, ad.AnnData):
         adatas = [adatas]
 
-    context = _set_and_get_context(context)
+    context = _validate_soma_tiledb_context(context)
 
     axes_metadata = [
         ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
@@ -287,7 +287,7 @@ def from_h5ad(
     input_path: Path,
     measurement_name: str,
     *,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
@@ -316,8 +316,7 @@ def from_h5ad(
 
         measurement_name: The name of the measurement to store data in.
 
-        context: If provided, the :class:`SOMAContext` to use when creating and opening this experiment. Otherwise, the
-            default context will be used and possibly initialized.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to create this array, provided in the form
           ``{\"tiledb\": {\"create\": {\"sparse_nd_array_dim_zstd_level\": 7}}}``.
@@ -406,7 +405,7 @@ def from_h5ad(
     if isinstance(input_path, ad.AnnData):
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
 
-    context = _set_and_get_context(context)
+    context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
@@ -441,7 +440,7 @@ def from_h5ad(
 class IngestCtx(TypedDict):
     """Convenience type-alias for kwargs passed to ingest functions."""
 
-    context: Optional[SOMAContext]  # noqa: UP045
+    context: SOMATileDBContext | None
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
 
@@ -461,7 +460,7 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
@@ -493,8 +492,7 @@ def from_anndata(
 
         measurement_name: The name of the measurement to store data in.
 
-        context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
-            provide the default context will be used and possibly initialized.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to create this array. See
           :func:`from_h5ad` for details.
@@ -562,7 +560,7 @@ def _from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
@@ -617,7 +615,7 @@ def _from_anndata(
         joinid_maps = registration_mapping.id_mappings_for_anndata(anndata, measurement_name=measurement_name)
         filter_existing_obs_joinids = registration_mapping.obs_axis.allow_duplicate_ids
 
-    context = _set_and_get_context(context)
+    context = _validate_soma_tiledb_context(context)
 
     # Without _at least_ one index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
@@ -892,7 +890,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Experiment: ...
 
@@ -903,7 +901,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Measurement: ...
 
@@ -914,7 +912,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Collection[_TDBO]: ...
 
@@ -925,7 +923,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> CollectionBase[_TDBO]:
     try:
@@ -947,7 +945,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
 ) -> Experiment: ...
 
 
@@ -957,7 +955,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
 ) -> Measurement: ...
 
 
@@ -967,7 +965,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
 ) -> Collection[_TDBO]: ...
 
 
@@ -976,7 +974,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
 ) -> Any:
     return _create_or_open_collection(
         cls,
@@ -1111,7 +1109,7 @@ def _extract_new_values_for_append(
     df_uri: str,
     arrow_table: pa.Table,
     filter_existing_joinids: bool,
-    context: SOMAContext | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> pa.Table:
     """For append mode: mostly we just go ahead and write the data, except var.
 
@@ -1173,7 +1171,7 @@ def _write_dataframe(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMAContext | None = None,
+    context: SOMATileDBContext | None = None,
     axis_mapping: AxisIDMapping,
     must_exist: bool = False,
     filter_existing_joinids: bool = True,
@@ -1219,7 +1217,7 @@ def _write_dataframe_impl(
     additional_metadata: AdditionalMetadata = None,
     original_index_metadata: str | None = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMAContext | None = None,
+    context: SOMATileDBContext | None = None,
     must_exist: bool = False,
     filter_existing_joinids: bool = True,
 ) -> DataFrame:
@@ -1307,7 +1305,7 @@ def _create_from_matrix(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     platform_config: PlatformConfig | None = None,
-    context: SOMAContext | None = None,
+    context: SOMATileDBContext | None = None,
     axis_0_mapping: AxisIDMapping,
     axis_1_mapping: AxisIDMapping,
     must_exist: bool = False,
@@ -1392,7 +1390,7 @@ def update_obs(
     exp: Experiment,
     new_data: pd.DataFrame,
     *,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "obs_id",
 ) -> None:
@@ -1422,8 +1420,7 @@ def update_obs(
     Args:
         exp: :class:`Experiment` opened for write.
         new_data: A :class:`pandas.DataFrame` containing the final desired data for the existing ``obs`` DataFrame.
-        context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
-            provide the default context will be used and possibly initialized.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
         default_index_name: Name to assign the index column if it is unnamed or is named ``"index"`` in the ``new_data`` class:`pandas.DataFrame`.
 
@@ -1433,7 +1430,6 @@ def update_obs(
     Lifecycle:
         Maturing.
     """
-    context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
     _update_dataframe(
         exp.obs,
         new_data,
@@ -1449,7 +1445,7 @@ def update_var(
     new_data: pd.DataFrame,
     measurement_name: str,
     *,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
@@ -1468,8 +1464,7 @@ def update_var(
         exp: :class:`Experiment` opened for write.
         new_data: A ``pandas.DataFrame`` containing the final desired data for the ``Measurement``'s ``var``.
         measurement_name: Key in ``exp.ms`` identifying the ``Measurement`` whose ``var`` will be replaced.
-        context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
-            provide the default context will be used and possibly initialized.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to update this array, provided in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
         default_index_name: Name to assign the index column if it is unnamed or is named ``"index"`` in the ``new_data`` class:`pandas.DataFrame`.
 
@@ -1482,7 +1477,6 @@ def update_var(
     if measurement_name not in exp.ms:
         raise ValueError(f"cannot find measurement name {measurement_name} within experiment at {exp.uri}")
 
-    context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
     _update_dataframe(
         exp.ms[measurement_name].var,
         new_data,
@@ -1498,7 +1492,7 @@ def _update_dataframe(
     new_data: pd.DataFrame,
     caller_name: str,
     *,
-    context: SOMAContext | None = None,
+    context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None,
     default_index_name: str,
 ) -> None:
@@ -1584,7 +1578,7 @@ def update_matrix(
     soma_ndarray: SparseNDArray | DenseNDArray,
     new_data: Matrix | h5py.Dataset,
     *,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,  # noqa: ARG001
     platform_config: PlatformConfig | None = None,
 ) -> None:
     """Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
@@ -1607,7 +1601,7 @@ def update_matrix(
             AnnData ``CSCDataset`` / ``CSRDataset``. If the ``soma_ndarray`` is dense,
             a NumPy NDArray.
 
-        context: Optional :class:`SOMAContext` for TileDB operations.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to update this array, provided
             in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
@@ -1634,8 +1628,6 @@ def update_matrix(
         f"Writing {soma_ndarray.uri}",
         f"START  UPDATING {soma_ndarray.uri}",
     )
-
-    context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
 
     if isinstance(soma_ndarray, DenseNDArray):
         _write_matrix_to_denseNDArray(
@@ -1756,7 +1748,7 @@ def add_X_layer(
     X_layer_data: Matrix | h5py.Dataset,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     schema_validation: bool = True,
 ) -> None:
     """Add a new X layer to a measurement in the experiment.
@@ -1789,7 +1781,6 @@ def add_X_layer(
         Maturing.
     """
     exp.verify_open_for_writing()
-    context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
     add_matrix_to_collection(
         exp,
         measurement_name,
@@ -1812,7 +1803,7 @@ def add_matrix_to_collection(
     matrix_data: Matrix | h5py.Dataset,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    context: SOMAContext | SOMATileDBContext | None = None,
+    context: SOMATileDBContext | None = None,
     schema_validation: bool = True,
 ) -> None:
     """Add a matrix to a specified collection within a measurement.
@@ -1850,7 +1841,6 @@ def add_matrix_to_collection(
         Maturing.
     """
     ingestion_params = IngestionParams(ingest_mode, None)
-    context = context._to_soma_context() if isinstance(context, SOMATileDBContext) else context
 
     # For local disk and S3, creation and storage URIs are identical.  For
     # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
@@ -2407,7 +2397,7 @@ def _maybe_ingest_uns(
     uns: UnsMapping,
     *,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     ingestion_params: IngestionParams,
     use_relative_uri: bool | None,
     uns_keys: Sequence[str] | None = None,
@@ -2435,7 +2425,7 @@ def _ingest_uns_dict(
     dct: UnsMapping,
     *,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     ingestion_params: IngestionParams,
     use_relative_uri: bool | None,
     uns_keys: Sequence[str] | None = None,
@@ -2477,7 +2467,7 @@ def _ingest_uns_node(
     value: UnsNode,
     *,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     use_relative_uri: bool | None,
@@ -2585,7 +2575,7 @@ def _ingest_uns_string_array(
     key: str,
     value: NPNDArray,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     *,
     use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
@@ -2624,7 +2614,7 @@ def _ingest_uns_1d_string_array(
     key: str,
     value: NPNDArray,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     *,
     use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
@@ -2671,7 +2661,7 @@ def _ingest_uns_2d_string_array(
     key: str,
     value: NPNDArray,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     *,
     use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
@@ -2719,7 +2709,7 @@ def _ingest_uns_ndarray(
     key: str,
     value: NPNDArray,
     platform_config: PlatformConfig | None,
-    context: SOMAContext | None,
+    context: SOMATileDBContext | None,
     *,
     use_relative_uri: bool | None,
     additional_metadata: AdditionalMetadata = None,
@@ -2764,7 +2754,7 @@ def _ingest_uns_ndarray(
     logging.log_io(msg, msg)
 
 
-def _concurrency_level(context: SOMAContext) -> int:
+def _concurrency_level(context: SOMATileDBContext) -> int:
     """Private helper function to determine appropriate concurrency level for
     ingestion of H5AD when use_multiprocessing is enabled.
 
@@ -2775,6 +2765,6 @@ def _concurrency_level(context: SOMAContext) -> int:
     if context is not None:
         concurrency_level = min(
             concurrency_level,
-            int(context.config.get("soma.compute_concurrency_level", concurrency_level)),
+            int(context.tiledb_config.get("soma.compute_concurrency_level", concurrency_level)),
         )
     return concurrency_level

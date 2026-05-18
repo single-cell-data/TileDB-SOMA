@@ -27,8 +27,7 @@ from ._coordinate_space import CoordinateSpace, CoordinateTransform, IdentityTra
 from ._core_iters import SpatialRead
 from ._core_options import DenseCoord, PlatformConfig, ResultOrder, ResultOrderStr, SpatialRegion
 from ._dense_nd_array import DenseNDArray
-from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error, map_exception_for_create
-from ._soma_context import SOMAContext
+from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
 from ._spatial_util import (
     coordinate_space_from_json,
@@ -36,8 +35,8 @@ from ._spatial_util import (
     process_image_region,
 )
 from ._types import OpenTimestamp
-from ._util import tiledb_timestamp_to_ms
-from .options import SOMATileDBContext, _update_context_and_timestamp
+from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
 @attrs.define(frozen=True)
@@ -117,7 +116,7 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
         data_axis_order: Sequence[str] | None = None,
         has_channel_axis: bool = True,
         platform_config: PlatformConfig | None = None,
-        context: SOMAContext | SOMATileDBContext | None = None,
+        context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new ``MultiscaleImage`` at the given URI.
@@ -145,8 +144,7 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
             has_channel_axis: Save the image with a dedicated "channel" axis.
             platform_config: platform-specific configuration; keys are SOMA
                 implementation names.
-            context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
-                provide the default context will be used and possibly initialized.
+            context: Other implementation-specific configuration.
             tiledb_timestamp: set timestamp for created TileDB SOMA objects.
 
 
@@ -159,6 +157,8 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
         """
         # Warn about the experimental nature of the spatial classes.
         warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
+
+        context = _validate_soma_tiledb_context(context)
 
         # Create the coordinate space.
         if isinstance(coordinate_space, CoordinateSpace):
@@ -200,25 +200,19 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
             shape=level_shape,  # type: ignore[arg-type]
             datatype=type,
         )
-        image_meta_str_ = image_meta.to_json()
 
-        context, tiledb_timestamp = _update_context_and_timestamp(context, tiledb_timestamp)
-        timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
+        image_meta_str_ = image_meta.to_json()
         try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAMultiscaleImage.create(
                 uri=uri,
                 axis_names=axis_names,
                 axis_units=axis_units,
-                ctx=context._handle,
+                ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
-        except SOMAError as e:
-            raise map_exception_for_create(e, uri) from None
-
-        try:
-            timestamp_ms = tiledb_timestamp_to_ms(tiledb_timestamp)
             handle = clib.SOMAMultiscaleImage.open(
-                uri, mode=clib.OpenMode.soma_write, context=context._handle, timestamp=(0, timestamp_ms)
+                uri, mode=clib.OpenMode.soma_write, context=context.native_context, timestamp=(0, timestamp_ms)
             )
             metadata = _tdb_handles.MetadataWrapper.from_handle(handle)
             metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = image_meta_str_
@@ -229,10 +223,8 @@ class MultiscaleImage(SOMAGroup[DenseNDArray]):
                 context=context,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
-        except (RuntimeError, SOMAError) as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise SOMAError(tdbe) from tdbe
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
 
         multiscale.add_new_level(
             level_key,

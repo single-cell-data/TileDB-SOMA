@@ -14,9 +14,10 @@ from typing_extensions import Self
 
 from ._core_options import PlatformConfig
 from ._soma_array import SOMAArray
-from ._soma_context import SOMAContext
 from ._types import OpenTimestamp, StatusAndReason
-from .options._soma_tiledb_context import SOMATileDBContext
+from .options._soma_tiledb_context import (
+    SOMATileDBContext,
+)
 from .options._tiledb_create_write_options import TileDBCreateOptions
 
 
@@ -33,7 +34,7 @@ class NDArray(SOMAArray):
         type: pa.DataType,
         shape: Sequence[int],
         platform_config: PlatformConfig | None = None,
-        context: SOMAContext | SOMATileDBContext | None = None,
+        context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a SOMA ``NDArray`` at the given URI.
@@ -51,8 +52,6 @@ class NDArray(SOMAArray):
                 This may be provided as settings in a dictionary, with options
                 located in the ``{'tiledb': {'create': ...}}`` key,
                 or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
-            context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. If not,
-                provide the default context will be used and possibly initialized.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by

@@ -553,13 +553,13 @@ def assert_anndata_equal(src_adata: ad.AnnData, read_adata: ad.AnnData) -> None:
     data=st.data(),
     adata=anndatas(),
     measurement_name=posix_filename(),
-    context=st.one_of(st.from_type(tiledbsoma.SOMAContext), st.none()),
+    context=st.one_of(st.from_type(tiledbsoma.SOMATileDBContext), st.none()),
 )
 def test_roundtrip_from_anndata_to_anndata(
     data: st.DataFn,
     adata: ad.AnnData,
     measurement_name: str,
-    context: tiledbsoma.SOMAContext | None,
+    context: tiledbsoma.SOMATileDBContext | None,
     tmp_path_factory,  # fixture
 ) -> None:
     """

@@ -549,24 +549,18 @@ def test_timestamped_ops(tmp_path):
         ]
 
     # open A via collection @ t=25 => A should reflect first write only
-    with (
-        pytest.warns(DeprecationWarning),
-        soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)) as sc,
-    ):
+    with soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)) as sc:
         assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
             [0, 0],
             [0, 0],
         ]
 
     # open collection @ t=15 => A should not even be there
-    with (
-        pytest.warns(DeprecationWarning),
-        soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)) as sc,
-    ):
+    with soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)) as sc:
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError):
+    with pytest.raises(ValueError):
         SOMATileDBContext(timestamp=-1)
 
 
@@ -584,12 +578,13 @@ def test_issue919(tmp_path):
     for i in range(25):
         uri = str(tmp_path / str(i))
 
-        with soma.Collection.create(uri, tiledb_timestamp=100) as c:
+        context = SOMATileDBContext(timestamp=100)
+        with soma.Collection.create(uri, context=context) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
             expt.add_new_dataframe("df", schema=schema, index_column_names=["soma_joinid"], domain=[[0, 100]])
 
-        with soma.Collection.open(uri, tiledb_timestamp=100) as c:
+        with soma.Collection.open(uri, context=context) as c:
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
             df = c["expt"]["df"].read().concat().to_pandas()
             assert len(df) == 0
@@ -597,8 +592,7 @@ def test_issue919(tmp_path):
 
 def test_context_timestamp(tmp_path: pathlib.Path):
     """Verifies that timestamps are inherited by collections."""
-    with pytest.warns(DeprecationWarning):
-        fixed_time = SOMATileDBContext(timestamp=123)
+    fixed_time = SOMATileDBContext(timestamp=123)
     with soma.Collection.create(tmp_path.as_uri(), context=fixed_time) as coll:
         assert coll.tiledb_timestamp_ms == 123
         sub = coll.add_new_collection("sub_1")
