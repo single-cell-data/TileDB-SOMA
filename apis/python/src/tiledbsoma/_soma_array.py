@@ -34,7 +34,7 @@ class SOMAArray(SOMAObject):
 
     def schema_config_options(self) -> clib.PlatformSchemaConfig:
         """Returns metadata about the array schema that is not encompassed within
-        the Arrow Schema, in the form of a PlatformConfig.
+        the Arrow Schema, in the form of a PlatformSchemaConfig.
 
         Available attributes are:
             * capacity: int
