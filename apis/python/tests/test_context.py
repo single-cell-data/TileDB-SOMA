@@ -13,8 +13,7 @@ import tiledbsoma.pytiledbsoma as clib
 def test_lazy_init():
     """Verifies we don't construct a Ctx until we have to."""
     with mock.patch.object(clib, "SOMAContext", wraps=clib.SOMAContext) as mock_ctx:
-        with pytest.warns(DeprecationWarning):
-            context = stc.SOMATileDBContext(tiledb_config={})
+        context = stc.SOMATileDBContext(tiledb_config={})
         assert context.tiledb_config == {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
         mock_ctx.assert_not_called()
         assert context._native_context is None
@@ -27,10 +26,8 @@ def test_lazy_init():
 def test_lazy_replace_config():
     """Verifies we don't construct a Ctx even if we call ``.replace``."""
     with mock.patch.object(clib, "SOMAContext", wraps=clib.SOMAContext) as mock_ctx:
-        with pytest.warns(DeprecationWarning):
-            context = stc.SOMATileDBContext()
-        with pytest.warns(DeprecationWarning):
-            new_context = context.replace(tiledb_config={"hello": "goodbye"})
+        context = stc.SOMATileDBContext()
+        new_context = context.replace(tiledb_config={"hello": "goodbye"})
         assert new_context.tiledb_config == {
             "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3,
             "hello": "goodbye",
@@ -39,59 +36,47 @@ def test_lazy_replace_config():
 
 
 def test_delete_config_entry():
-    with pytest.warns(DeprecationWarning):
-        context = stc.SOMATileDBContext(tiledb_config={"hither": "yon"})
+    context = stc.SOMATileDBContext(tiledb_config={"hither": "yon"})
     assert context.tiledb_config == {
         "hither": "yon",
         "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3,
     }
-    with pytest.warns(DeprecationWarning):
-        new_context = context.replace(tiledb_config={"hither": None})
+    new_context = context.replace(tiledb_config={"hither": None})
     # We've removed the only non-default entry; this should work.
     assert new_context.tiledb_config == {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
 
 
 def test_shared_ctx():
     """Verifies that one global context is shared by default."""
-    with pytest.warns(DeprecationWarning):
-        ctx = stc.SOMATileDBContext()
-    with pytest.warns(DeprecationWarning):
-        ctx_2 = stc.SOMATileDBContext()
+    ctx = stc.SOMATileDBContext()
+    ctx_2 = stc.SOMATileDBContext()
     assert ctx.native_context is ctx_2.native_context
 
 
 def test_unshared_ctx():
     """Verifies that contexts are not shared when not appropriate."""
-    with pytest.warns(DeprecationWarning):
-        ctx = stc.SOMATileDBContext()
-    with pytest.warns(DeprecationWarning):
-        ctx_2 = stc.SOMATileDBContext(tiledb_config={})
-    with pytest.warns(DeprecationWarning):
-        ctx_3 = stc.SOMATileDBContext(tiledb_config={})
+    ctx = stc.SOMATileDBContext()
+    ctx_2 = stc.SOMATileDBContext(tiledb_config={})
+    ctx_3 = stc.SOMATileDBContext(tiledb_config={})
     assert ctx.native_context is not ctx_2.native_context
     assert ctx_2.native_context is not ctx_3.native_context
 
 
 def test_replace_timestamp():
-    with pytest.warns(DeprecationWarning):
-        orig_ctx = stc.SOMATileDBContext()
+    orig_ctx = stc.SOMATileDBContext()
     assert orig_ctx.timestamp is None
     assert orig_ctx.timestamp_ms is None
-    with pytest.warns(DeprecationWarning):
-        ts_ctx = orig_ctx.replace(timestamp=1683817200000)
+    ts_ctx = orig_ctx.replace(timestamp=1683817200000)
     assert ts_ctx.timestamp == datetime.datetime(2023, 5, 11, 15, 0, tzinfo=datetime.timezone.utc)
     assert ts_ctx.timestamp_ms == 1683817200000
-    with pytest.warns(DeprecationWarning):
-        same_ts_ctx = ts_ctx.replace()  # replace nothing!
+    same_ts_ctx = ts_ctx.replace()  # replace nothing!
     assert ts_ctx.timestamp == same_ts_ctx.timestamp
-    with pytest.warns(DeprecationWarning):
-        no_ts_ctx = ts_ctx.replace(timestamp=None)
+    no_ts_ctx = ts_ctx.replace(timestamp=None)
     assert no_ts_ctx.timestamp is None
 
 
 def test_replace_config_after_construction():
-    with pytest.warns(DeprecationWarning):
-        context = stc.SOMATileDBContext()
+    context = stc.SOMATileDBContext()
 
     # verify defaults expected by subsequent tests
     assert context.timestamp_ms is None
@@ -107,8 +92,7 @@ def test_replace_config_after_construction():
     assert -100 < now - open_ts < 100
     assert context._open_timestamp_ms(999) == 999
 
-    with pytest.warns(DeprecationWarning):
-        context_ts_1 = context.replace(timestamp=1)
+    context_ts_1 = context.replace(timestamp=1)
 
     assert context_ts_1.timestamp_ms == 1
     assert context_ts_1._open_timestamp_ms(None) == 1
@@ -116,8 +100,7 @@ def test_replace_config_after_construction():
 
     with mock.patch.object(clib, "SOMAContext", wraps=clib.SOMAContext) as mock_ctx:
         # verify that the new context is lazily initialized.
-        with pytest.warns(DeprecationWarning):
-            new_soma_ctx = context.replace(tiledb_config={"vfs.s3.region": "us-west-2"})
+        new_soma_ctx = context.replace(tiledb_config={"vfs.s3.region": "us-west-2"})
         assert new_soma_ctx.tiledb_config["vfs.s3.region"] == "us-west-2"
         mock_ctx.assert_not_called()
         new_tdb_ctx = new_soma_ctx.native_context
@@ -129,8 +112,7 @@ def test_malformed_concurrency_config_value():
     import numpy as np
 
     with pytest.raises(tiledbsoma.SOMAError):
-        with pytest.warns(DeprecationWarning):
-            ctx = tiledbsoma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": "not-a-number"})
+        ctx = tiledbsoma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": "not-a-number"})
 
         tiledbsoma.IntIndexer(np.arange(100, dtype=np.int64), context=ctx).get_indexer(np.array([0, 1]))
 
@@ -139,11 +121,10 @@ def test_malformed_concurrency_config_value():
 def test_tiledb_ctx_without_tiledb():
     # Test that tiledb_ctx errors out as expected without tiledb-py
 
-    with pytest.raises(ModuleNotFoundError), pytest.warns(DeprecationWarning):
+    with pytest.raises(ModuleNotFoundError):
         tiledbsoma.SOMATileDBContext(tiledb_ctx="junk")
 
-    with pytest.warns(DeprecationWarning):
-        sctx = tiledbsoma.SOMATileDBContext()
+    sctx = tiledbsoma.SOMATileDBContext()
     with pytest.raises(ModuleNotFoundError):
         sctx.tiledb_ctx
 
@@ -157,16 +138,13 @@ def test_tiledb_ctx_with_tiledb():
     import tiledb
 
     # Default
-    with pytest.warns(DeprecationWarning):
-        sctx = tiledbsoma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
+    sctx = tiledbsoma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
     assert sctx.tiledb_ctx.config() == tiledb.Ctx().config()
 
     # Pass config
-    with pytest.warns(DeprecationWarning):
-        sctx = tiledbsoma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx({"foo": "bar"}))
+    sctx = tiledbsoma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx({"foo": "bar"}))
     assert sctx.tiledb_ctx.config()["foo"] == "bar"
 
     # Replace config
-    with pytest.warns(DeprecationWarning):
-        sctx = sctx.replace(tiledb_ctx=tiledb.Ctx({"foo": "baz"}))
+    sctx = sctx.replace(tiledb_ctx=tiledb.Ctx({"foo": "baz"}))
     assert sctx.tiledb_ctx.config()["foo"] == "baz"

@@ -20,7 +20,6 @@ from ._core_options import PlatformConfig
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._funcs import typeguard_ignore
-from ._soma_context import SOMAContext
 from ._soma_group import SOMAGroup
 from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
@@ -51,7 +50,7 @@ class CollectionBase(
         uri: str,
         *,
         platform_config: PlatformConfig | None = None,  # noqa: ARG003
-        context: SOMAContext | SOMATileDBContext | None = None,
+        context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates and opens a new SOMA collection in storage.
@@ -68,8 +67,9 @@ class CollectionBase(
                 located in the ``{'tiledb': {'create': ...}}`` key,
                 or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
                 (Currently unused for collections.)
-            context: If provided, the :class:`SOMAContext` to use when creating and opening this collection. Otherwise,
-                the default context will be used and possibly initialized.
+            context:
+                If provided, the :class:`SOMATileDBContext` to use when creating and
+                opening this collection.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by

@@ -20,7 +20,7 @@ from tests.ht._ht_util import (
 
 
 @pytest.fixture(scope="class")
-def setup_fixtures(request, tmp_path_factory, soma_tiledb_context: soma.SOMAContext) -> None:
+def setup_fixtures(request, tmp_path_factory, soma_tiledb_context: soma.SOMATileDBContext) -> None:
     """Set a class variable pointing at required fixtures - useful for Hypothesis RuleBasedStateMachine test objects."""
     request.cls.tmp_path_factory = tmp_path_factory
     request.cls.soma_tiledb_context = soma_tiledb_context
@@ -32,8 +32,8 @@ def ht_test_config() -> dict[str, Any]:
 
 
 @pytest.fixture
-def context() -> soma.SOMAContext:
-    return soma.SOMAContext.create()
+def context() -> soma.SOMATileDBContext:
+    return soma.SOMATileDBContext()
 
 
 # Register Hypothesis strategies for use with `strategies.from_type()`
@@ -53,7 +53,7 @@ st.register_type_strategy(
     ),
 )
 # TODO: vary context configuration?
-st.register_type_strategy(soma.SOMAContext, st.just(soma.SOMAContext.create()))
+st.register_type_strategy(soma.SOMATileDBContext, st.just(soma.SOMATileDBContext()))
 
 
 # Register hypothesis profile for extensive/expensive test runs

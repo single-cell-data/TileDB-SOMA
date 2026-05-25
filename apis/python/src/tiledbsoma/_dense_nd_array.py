@@ -21,7 +21,6 @@ from ._core_options import DenseNDCoords, PlatformConfig, ReadPartitions, Result
 from ._exception import SOMAError
 from ._managed_query import ManagedQuery
 from ._read_iters import TableReadIter
-from ._soma_context import SOMAContext
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
 from .options._soma_tiledb_context import SOMATileDBContext
@@ -92,7 +91,7 @@ class DenseNDArray(NDArray):
         type: pa.DataType,
         shape: Sequence[int | None],
         platform_config: PlatformConfig | None = None,
-        context: SOMAContext | SOMATileDBContext | None = None,
+        context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a SOMA ``DenseNDArray`` at the given URI.

@@ -17,7 +17,8 @@ from numpy.typing import NDArray
 from typing_extensions import TypeAlias
 
 from tiledbsoma._core_options import SparseNDCoord, SparseNDCoords
-from tiledbsoma._soma_context import SOMAContext
+from tiledbsoma.options import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import ConfigVal
 
 ChunkSize = Union[int, tuple[Union[int, None], int]]
 JoinIDs: TypeAlias = NDArray[int64]
@@ -33,7 +34,7 @@ class SOMADaskConfig(TypedDict, total=False):
     """
 
     chunk_size: ChunkSize
-    tiledb_config: dict[str, Union[str, float]]  # noqa: UP007
+    tiledb_config: dict[str, ConfigVal]
 
 
 def chunk_ids_sizes(joinids: JoinIDs, chunk_size: int, dim_size: int) -> tuple[list[JoinIDs], list[int]]:  # noqa: ARG001
@@ -52,7 +53,7 @@ def chunk_ids_sizes(joinids: JoinIDs, chunk_size: int, dim_size: int) -> tuple[l
     return chunk_joinids, chunk_sizes
 
 
-def make_context(tiledb_config: dict[str, Any]) -> SOMAContext:
+def make_context(tiledb_config: dict[str, Any]) -> SOMATileDBContext:
     """Create and cache ``SOMATileDBContext``s within Dask worker processes.
 
     This wrapper just flattens the ``tiledb_config`` ``dict`` into hashable ``tuple``s (for use with ``cache``).
@@ -61,12 +62,12 @@ def make_context(tiledb_config: dict[str, Any]) -> SOMAContext:
 
 
 @cache
-def _make_context(tiledb_configs: tuple[tuple[str, Any], ...]) -> SOMAContext:
+def _make_context(tiledb_configs: tuple[tuple[str, Any], ...]) -> SOMATileDBContext:
     """Create and cache ``SOMATileDBContext``s within Dask worker processes.
 
     ``tiledb_config`` is conceptually a ``dict``, but flattened into hashable ``tuple``s here, for use with ``cache``.
     """
-    return SOMAContext.create(config=dict(tiledb_configs))
+    return SOMATileDBContext(tiledb_config=dict(tiledb_configs))
 
 
 def coord_to_joinids(coord: SparseNDCoord, n: int) -> JoinIDs:

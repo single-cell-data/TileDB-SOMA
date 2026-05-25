@@ -26,9 +26,9 @@ from ._measurement import Measurement
 from ._point_cloud_dataframe import PointCloudDataFrame
 from ._query import ExperimentAxisQuery
 from ._scene import Scene
-from ._soma_context import SOMAContext
 from ._soma_object import SOMAObject
 from ._sparse_nd_array import SparseNDArray
+from .options import SOMATileDBContext
 from .options._tiledb_create_write_options import TileDBDeleteOptions
 
 
@@ -375,7 +375,9 @@ def _create_var_axis_candidates(exp: Experiment, ms_name: str) -> list[_ArrayDel
     return candidates
 
 
-def _query_joinids(uri: str, coords: SparseDFCoords, value_filter: str | None, context: SOMAContext) -> pa.Int64Array:
+def _query_joinids(
+    uri: str, coords: SparseDFCoords, value_filter: str | None, context: SOMATileDBContext
+) -> pa.Int64Array:
     with DataFrame.open(uri, context=context) as df:
         return (
             df
