@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `PlatformConfig.dense_nd_array_dim_zstd_level` was incorrectly aliased to `sparse_nd_array_dim_zstd_level` and is now bound to the correct field.
+
 ### Security
 
 ## [2.3.0]

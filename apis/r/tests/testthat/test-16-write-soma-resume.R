@@ -314,6 +314,36 @@ test_that("Resume-mode sparse arrays", {
   gc()
 })
 
+test_that("Resume-mode sparse array to new URI preserves data", {
+  collection <- SOMACollectionCreate(tempfile(pattern = "sparse-new-resume"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  # Create a sparse matrix with known non-zero values
+  mat <- Matrix::rsparsematrix(10L, 8L, 0.5, repr = "T")
+
+  # Writing a new sparse array in "resume" mode should still write all data even
+  # if the array doesn't exist yet.
+  expect_s3_class(
+    ndarray <- write_soma(
+      mat,
+      uri = "new-array",
+      soma_parent = collection,
+      ingest_mode = "resume"
+    ),
+    "SOMASparseNDArray"
+  )
+  on.exit(ndarray$close(), add = TRUE, after = FALSE)
+
+  ndarray$reopen("READ")
+  result <- ndarray$read()$sparse_matrix()$concat()
+  expect_equal(
+    as.matrix(result),
+    as.matrix(mat),
+    label = "result",
+    expected.label = "mat"
+  )
+})
+
 test_that("Resume-mode dense arrays", {
   skip_if(!extended_tests())
   skip_if_not_installed("datasets")
