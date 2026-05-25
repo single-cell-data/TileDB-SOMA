@@ -440,7 +440,7 @@ def from_h5ad(
 class IngestCtx(TypedDict):
     """Convenience type-alias for kwargs passed to ingest functions."""
 
-    context: SOMATileDBContext | None
+    context: Optional[SOMATileDBContext]
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
 
