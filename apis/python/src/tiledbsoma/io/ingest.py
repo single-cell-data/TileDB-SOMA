@@ -739,6 +739,10 @@ def _from_anndata(
                         _maybe_set(x, X_layer_name, data, use_relative_uri=use_relative_uri)
 
                 for layer_name, layer in anndata.layers.items():
+                    # 'X' is assigned the None key
+                    if layer_name is None:
+                        continue
+
                     with _create_from_matrix(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(layer_name, data_protocol)),
