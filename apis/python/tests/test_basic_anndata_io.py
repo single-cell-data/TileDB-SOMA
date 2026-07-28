@@ -1069,11 +1069,11 @@ def test_outgest_X_layers(tmp_path):
 
         bdata = tiledbsoma.io.to_anndata(exp, measurement_name)
         assert bdata.X is not None
-        assert len(bdata.layers) == 0
+        assert len(bdata.layers) == 1
 
         bdata = tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name=None, extra_X_layer_names=[])
         assert bdata.X is None
-        assert len(bdata.layers) == 0
+        assert len(bdata.layers) == 1
 
         with pytest.raises(ValueError):
             tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name=None, extra_X_layer_names=["data"])
