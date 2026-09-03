@@ -191,7 +191,9 @@ test_that("Blockwise iterator for sparse matrices", {
   it <- bi$sparse_matrix()
   at <- it$concat()
   expect_s4_class(at, "dgTMatrix")
-  expect_equal(dim(at), c(2638, 1838))
+  # Re-indexing is disabled on both axes, so blocks keep global coordinates
+  # and span the full array extent (for this legacy array, its domain)
+  expect_equal(dim(at), as.integer(it$array$shape()))
 })
 
 test_that("Sparse matrix blockwise iterator: re-indexed", {
