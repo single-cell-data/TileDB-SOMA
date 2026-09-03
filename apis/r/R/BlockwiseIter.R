@@ -408,7 +408,20 @@ BlockwiseSparseReadIter <- R6::R6Class(
         if (!bit64::as.integer64(1L) %in% self$reindex_disable_on_axis) "C"
       )
       private$.repr <- match.arg(repr, choices = reprs)
-      private$.shape <- sapply(coords, length)
+      # Matrix shape follows the Python API: a re-indexed axis has its
+      # coordinates compacted to `0:(n - 1)` so its extent is the number of
+      # requested coordinates; a non-re-indexed axis keeps its global
+      # coordinates so its extent is the full array extent. The iterated
+      # axis is sized per block in `soma_reader_transform()`
+      shape <- self$array$shape()
+      for (i in seq_along(shape)) {
+        ax <- bit64::as.integer64(i - 1L)
+        if (ax == self$axis || ax %in% self$reindex_disable_on_axis) {
+          next
+        }
+        shape[i] <- private$.axis_strider(i)$length()
+      }
+      private$.shape <- shape
     },
     #' @description Concatenate the remainder of the blockwise iterator.
     #'
@@ -435,19 +448,11 @@ BlockwiseSparseReadIter <- R6::R6Class(
       tbl <- private$reindex_arrow_table(soma_array_to_arrow_table(x))
       shape <- private$.shape
       axis <- as.integer(self$axis)
-      axname <- sprintf("soma_dim_%i", axis)
-      stride <- self$coords[[axname]]$stride
-      # For re-indexed blockwise iterators, shape should reflect the re-indexed
-      # axes; this can generally be the stride of the iterator, but for the end
-      # of each iterator this needs to be the remainder (see ?`%%`).
-      # Note: this only applies to the major axis, minor axes always return
-      # the full domain.
-      if (self$reindexable && shape[axis + 1L] > stride) {
-        shape[axis + 1L] <- if (self$coords[[axname]]$has_next()) {
-          as.numeric(stride)
-        } else {
-          as.numeric(self$coords[[axname]]$end %% stride) + 1L
-        }
+      # When the iterated axis is re-indexed, this block's coordinates are
+      # compacted to `0:(n - 1)`, so the extent is the number of coordinates
+      # in the block (the stride, or the remainder for the final block)
+      if (!bit64::as.integer64(axis) %in% self$reindex_disable_on_axis) {
+        shape[axis + 1L] <- length(private$.nextelems)
       }
       mat <- arrow_table_to_sparse(
         tbl,
