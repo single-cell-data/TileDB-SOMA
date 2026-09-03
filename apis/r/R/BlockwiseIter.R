@@ -92,28 +92,18 @@ BlockwiseReadIterBase <- R6::R6Class(
         ))
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
+      # Build re-indexers for the minor axes over the *requested* coordinates
+      # (or the full domain when the axis is unrestricted), so re-indexed
+      # coordinates are compacted to `0:(n - 1)` where `n` is the number of
+      # requested coordinates, matching the Python API
       axes_to_reindex <- self$axes_to_reindex
       private$.reindexers <- vector("list", length = length(axes_to_reindex))
-      shape <- self$array$shape()
       dnames <- self$array$dimnames()
       for (i in seq_along(axes_to_reindex)) {
         ax <- as.numeric(axes_to_reindex[i]) + 1L
-        # Re-index against the coordinates actually requested for this axis,
-        # not the array's full domain; an axis with no explicit coordinates
-        # (ie a full-domain strider) has no restriction to account for and
-        # keeps the previous full-domain re-indexing
-        restricted <- self$coords[[dnames[ax]]]$coords
-        coords <- if (!is.null(restricted)) {
-          restricted
-        } else {
-          coords <- as.list(CoordsStrider$new(start = 0L, end = shape[ax] - 1L))
-          if (length(coords) == 1L) {
-            coords[[1L]]
-          } else {
-            unlist64(coords)
-          }
-        }
-        private$.reindexers[[i]] <- IntIndexer$new(coords)
+        private$.reindexers[[i]] <- IntIndexer$new(
+          strider_coords(private$.axis_strider(ax))
+        )
         names(private$.reindexers)[i] <- dnames[ax]
       }
     },
@@ -278,7 +268,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       }
       for (dname in names(private$.reindexers)) {
         if (!dname %in% names(tbl)) {
-          ""
+          next
         }
         indexer <- private$.reindexers[[dname]]
         tbl[[dname]] <- indexer$get_indexer(
