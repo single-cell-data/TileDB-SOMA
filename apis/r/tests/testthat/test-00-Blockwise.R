@@ -376,6 +376,22 @@ test_that("CoordsStrider length and chunking for ranges not starting at zero", {
   strider <- CoordsStrider$new(start = 5L, end = 14L, stride = 3L)
   expect_equal(strider$length(), 10)
   expect_length(as.list(strider), 4L)
+  expect_equal(
+    tiledbsoma:::strider_coords(CoordsStrider$new(start = 5L, end = 14L)),
+    bit64::as.integer64(5:14)
+  )
+  expect_true(tiledbsoma:::strider_is_full_domain(
+    CoordsStrider$new(start = 0L, end = 19L),
+    extent = 20L
+  ))
+  expect_false(tiledbsoma:::strider_is_full_domain(
+    CoordsStrider$new(start = 0L, end = 18L),
+    extent = 20L
+  ))
+  expect_false(tiledbsoma:::strider_is_full_domain(
+    CoordsStrider$new(bit64::as.integer64(0:19)),
+    extent = 20L
+  ))
 })
 
 # Helpers for the coordinate-restricted blockwise tests below (SOMA-990).
