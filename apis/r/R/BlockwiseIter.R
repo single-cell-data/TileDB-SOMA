@@ -139,22 +139,15 @@ BlockwiseReadIterBase <- R6::R6Class(
       if (self$read_complete()) {
         return(private$.readComplete())
       }
+      # `reset()` rebuilds the query from scratch and discards *every*
+      # coordinate restriction, so re-apply the restrictions on all
+      # non-iterated axes along with this block's coordinates on the
+      # iterated axis
       private$reset()
       dimnam <- self$array$dimnames()[self$axis + 1L]
       private$.nextelems <- self$coords_axis$next_element()
       private$set_dim_points(dimnam, private$.nextelems)
-      # `reset()` rebuilds the underlying query from scratch, dropping every
-      # dim-point restriction that was applied when the read was first set up
-      # (see `mq_setup()`); restore the restrictions on the non-iterated axes
-      # here since only the iterated axis's block points are set above. Axes
-      # without explicit coords (ie unrestricted, full-domain striders) have
-      # nothing to restore
-      for (minor in setdiff(names(self$coords), dimnam)) {
-        points <- self$coords[[minor]]$coords
-        if (!is.null(points)) {
-          private$set_dim_points(minor, points)
-        }
-      }
+      private$restore_minor_axes()
       return(private$.read_next())
     }
   ),
@@ -213,6 +206,37 @@ BlockwiseReadIterBase <- R6::R6Class(
         message = "Re-indexed blockwise iterators are not concatenatable",
         class = "notConcatenatableError"
       ))
+    },
+    # @description Get the strider for a given (1-based) axis; axes without
+    # an explicit strider are treated as spanning their full domain
+    .axis_strider = function(ax) {
+      dname <- self$array$dimnames()[ax]
+      strider <- self$coords[[dname]]
+      if (is.null(strider)) {
+        strider <- CoordsStrider$new(
+          start = 0L,
+          end = self$array$shape()[ax] - 1L
+        )
+      }
+      return(strider)
+    },
+    # @description Re-apply the coordinate restrictions for every axis other
+    # than the iterated axis; axes spanning their full domain are skipped
+    # since they impose no restriction
+    restore_minor_axes = function() {
+      dnames <- self$array$dimnames()
+      shape <- self$array$shape()
+      for (i in seq_along(dnames)) {
+        if (i == self$axis + 1L) {
+          next
+        }
+        strider <- private$.axis_strider(i)
+        if (strider_is_full_domain(strider, shape[i])) {
+          next
+        }
+        private$set_dim_points(dnames[i], strider_coords(strider))
+      }
+      return(invisible(NULL))
     },
     # @description Reset internal state of SOMA Reader while keeping array open
     reset = function() {
