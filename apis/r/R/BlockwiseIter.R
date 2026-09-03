@@ -102,7 +102,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       for (i in seq_along(axes_to_reindex)) {
         ax <- as.numeric(axes_to_reindex[i]) + 1L
         private$.reindexers[[i]] <- IntIndexer$new(
-          strider_coords(private$.axis_strider(ax))
+          private$.axis_strider(ax)$full_coords
         )
         names(private$.reindexers)[i] <- dnames[ax]
       }
@@ -137,7 +137,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       dimnam <- self$array$dimnames()[self$axis + 1L]
       private$.nextelems <- self$coords_axis$next_element()
       private$set_dim_points(dimnam, private$.nextelems)
-      private$restore_minor_axes()
+      private$.restore_minor_axes()
       return(private$.read_next())
     }
   ),
@@ -213,7 +213,7 @@ BlockwiseReadIterBase <- R6::R6Class(
     # @description Re-apply the coordinate restrictions for every axis other
     # than the iterated axis; axes spanning their full domain are skipped
     # since they impose no restriction
-    restore_minor_axes = function() {
+    .restore_minor_axes = function() {
       dnames <- self$array$dimnames()
       shape <- self$array$shape()
       for (i in seq_along(dnames)) {
@@ -221,10 +221,10 @@ BlockwiseReadIterBase <- R6::R6Class(
           next
         }
         strider <- private$.axis_strider(i)
-        if (strider_is_full_domain(strider, shape[i])) {
+        if (strider$is_full_domain(shape[i])) {
           next
         }
-        private$set_dim_points(dnames[i], strider_coords(strider))
+        private$set_dim_points(dnames[i], strider$full_coords)
       }
       return(invisible(NULL))
     },
