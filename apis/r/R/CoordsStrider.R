@@ -277,6 +277,40 @@ nextElem.CoordsStrider <- function(obj, ...) obj$next_element()
 #'
 hasNext.CoordsStrider <- function(obj, ...) obj$has_next()
 
+#' Materialize every coordinate covered by a strider without advancing it
+#'
+#' @param x A `CoordsStrider`
+#'
+#' @return An `integer64` vector of all coordinates in `x`
+#'
+#' @noRd
+#'
+strider_coords <- function(x) {
+  stopifnot("'x' must be a CoordsStrider" = inherits(x, "CoordsStrider"))
+  if (!is.null(x$coords)) {
+    return(x$coords)
+  }
+  if (x$start == x$end) {
+    return(bit64::as.integer64(x$start))
+  }
+  return(seq(from = bit64::as.integer64(x$start), to = x$end, by = 1L))
+}
+
+#' Does a strider cover the full domain `[0, extent)` of a dimension?
+#'
+#' @param x A `CoordsStrider`
+#' @param extent The extent (shape) of the dimension
+#'
+#' @return `TRUE` if `x` is a range strider spanning `0:(extent - 1)`,
+#' otherwise `FALSE`
+#'
+#' @noRd
+#'
+strider_is_full_domain <- function(x, extent) {
+  stopifnot("'x' must be a CoordsStrider" = inherits(x, "CoordsStrider"))
+  return(is.null(x$coords) && x$start == 0L && x$end == extent - 1L)
+}
+
 unlist64 <- function(x) {
   stopifnot(
     "'x' must be a list" = is.list(x),
