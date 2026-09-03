@@ -98,11 +98,20 @@ BlockwiseReadIterBase <- R6::R6Class(
       dnames <- self$array$dimnames()
       for (i in seq_along(axes_to_reindex)) {
         ax <- as.numeric(axes_to_reindex[i]) + 1L
-        coords <- as.list(CoordsStrider$new(start = 0L, end = shape[ax] - 1L))
-        coords <- if (length(coords) == 1L) {
-          coords[[1L]]
+        # Re-index against the coordinates actually requested for this axis,
+        # not the array's full domain; an axis with no explicit coordinates
+        # (ie a full-domain strider) has no restriction to account for and
+        # keeps the previous full-domain re-indexing
+        restricted <- self$coords[[dnames[ax]]]$coords
+        coords <- if (!is.null(restricted)) {
+          restricted
         } else {
-          unlist64(coords)
+          coords <- as.list(CoordsStrider$new(start = 0L, end = shape[ax] - 1L))
+          if (length(coords) == 1L) {
+            coords[[1L]]
+          } else {
+            unlist64(coords)
+          }
         }
         private$.reindexers[[i]] <- IntIndexer$new(coords)
         names(private$.reindexers)[i] <- dnames[ax]
@@ -134,6 +143,18 @@ BlockwiseReadIterBase <- R6::R6Class(
       dimnam <- self$array$dimnames()[self$axis + 1L]
       private$.nextelems <- self$coords_axis$next_element()
       private$set_dim_points(dimnam, private$.nextelems)
+      # `reset()` rebuilds the underlying query from scratch, dropping every
+      # dim-point restriction that was applied when the read was first set up
+      # (see `mq_setup()`); restore the restrictions on the non-iterated axes
+      # here since only the iterated axis's block points are set above. Axes
+      # without explicit coords (ie unrestricted, full-domain striders) have
+      # nothing to restore
+      for (minor in setdiff(names(self$coords), dimnam)) {
+        points <- self$coords[[minor]]$coords
+        if (!is.null(points)) {
+          private$set_dim_points(minor, points)
+        }
+      }
       return(private$.read_next())
     }
   ),

@@ -371,3 +371,67 @@ test_that("Blockwise iterate through full array", {
   }
   expect_true(it$read_complete())
 })
+
+test_that("Blockwise iteration preserves restrictions on non-iterated axes", {
+  skip_if(!extended_tests() || covr_tests())
+
+  uri <- tempfile("blockwise-minor-axis-restriction")
+  n <- 20L
+  # Densely fill the array (with a general, non-symmetric matrix) so every
+  # requested coordinate is guaranteed to have data, regardless of sparsity
+  mat <- Matrix::sparseMatrix(
+    i = rep(1:n, times = n),
+    j = rep(1:n, each = n),
+    x = 1,
+    dims = c(n, n)
+  )
+  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = dim(mat))
+  ndarray$write(as(mat, "TsparseMatrix"))
+  ndarray$close()
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  on.exit(ndarray$close(), add = TRUE, after = FALSE)
+
+  major <- bit64::as.integer64(5:14)
+  minor <- bit64::as.integer64(3:9)
+  coords <- list(soma_dim_0 = major, soma_dim_1 = minor)
+
+  # Tables: the un-iterated axis's restriction must survive every block,
+  # not just the first
+  it <- ndarray$read(coords = coords)$blockwise(
+    axis = 0L,
+    size = 3L,
+    reindex_disable_on_axis = TRUE
+  )$tables()
+  seen <- 0L
+  while (!it$read_complete()) {
+    tbl <- it$read_next()
+    if (is.null(tbl)) {
+      next
+    }
+    seen <- seen + nrow(tbl)
+    d0 <- as.numeric(tbl$soma_dim_0$as_vector())
+    d1 <- as.numeric(tbl$soma_dim_1$as_vector())
+    expect_true(all(d0 %in% as.numeric(major)))
+    expect_true(all(d1 %in% as.numeric(minor)))
+  }
+  expect_identical(seen, length(major) * length(minor))
+
+  # Sparse matrices: shape and coordinates of each block must reflect the
+  # requested minor-axis restriction, not the array's full domain
+  it <- ndarray$read(coords = coords)$blockwise(
+    axis = 0L,
+    size = 3L,
+    reindex_disable_on_axis = FALSE
+  )$sparse_matrix(repr = "R")
+  nblocks <- 0L
+  while (!it$read_complete()) {
+    mat <- it$read_next()
+    if (is.null(mat)) {
+      next
+    }
+    nblocks <- nblocks + 1L
+    expect_identical(ncol(mat), length(minor))
+    expect_true(nrow(mat) <= 3L)
+  }
+  expect_identical(nblocks, as.integer(ceiling(length(major) / 3)))
+})
