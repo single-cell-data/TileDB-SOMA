@@ -22,18 +22,7 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
           "SOMASparseNDArray"
         )
       )
-      if (is.null(coords)) {
-        private$.coords <- vector(mode = "list", length = array$ndim())
-        shape <- array$shape()
-        for (i in seq_along(private$.coords)) {
-          private$.coords[[i]] <- CoordsStrider$new(
-            start = 0L,
-            end = shape[i] - 1L,
-            stride = .Machine$integer.max
-          )
-        }
-        names(private$.coords) <- array$dimnames()
-      } else {
+      if (!is.null(coords)) {
         stopifnot(
           "'coords' must be a list of integer64 values" = is.list(coords) &&
             all(vapply_lgl(
@@ -47,17 +36,28 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
           ) &&
             all(names(coords) %in% array$dimnames())
         )
-        if (all(vapply_lgl(coords, inherits, what = "CoordsStrider"))) {
-          private$.coords <- coords
-        } else {
-          private$.coords <- vector(mode = "list", length = length(coords))
-          names(private$.coords) <- names(coords)
-          for (i in names(coords)) {
-            private$.coords[[i]] <- CoordsStrider$new(
-              coords[[i]],
-              stride = .Machine$integer.max
-            )
+      }
+      # Build one strider per dimension; dimensions without a coordinate
+      # restriction get a strider spanning their full domain so downstream
+      # code (e.g. blockwise iterators) can rely on every dimension being present
+      shape <- array$shape()
+      dnames <- array$dimnames()
+      private$.coords <- vector(mode = "list", length = length(dnames))
+      names(private$.coords) <- dnames
+      for (i in seq_along(dnames)) {
+        dname <- dnames[i]
+        private$.coords[[i]] <- if (dname %in% names(coords)) {
+          if (inherits(coords[[dname]], "CoordsStrider")) {
+            coords[[dname]]
+          } else {
+            CoordsStrider$new(coords[[dname]], stride = .Machine$integer.max)
           }
+        } else {
+          CoordsStrider$new(
+            start = 0L,
+            end = shape[i] - 1L,
+            stride = .Machine$integer.max
+          )
         }
       }
       private$.sr <- sr

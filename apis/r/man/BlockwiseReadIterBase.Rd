@@ -13,76 +13,70 @@ Derived classes: \code{\link{BlockwiseTableReadIter}},
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{BlockwiseReadIterBase}
+\code{\link[tiledbsoma:ReadIter]{ReadIter}} -> \code{BlockwiseReadIterBase}
 }
 \section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{array}}{The underlying SOMA array.}
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{array}}{The underlying SOMA array.}
 
-\item{\code{axis}}{The axis to iterate over in a blockwise fashion.}
+    \item{\code{axis}}{The axis to iterate over in a blockwise fashion.}
 
-\item{\code{axes_to_reindex}}{The axes to re-index.}
+    \item{\code{axes_to_reindex}}{The axes to re-index.}
 
-\item{\code{coords}}{A list of \code{\link{CoordsStrider}} objects.}
+    \item{\code{coords}}{A list of \code{\link{CoordsStrider}} objects.}
 
-\item{\code{coords_axis}}{The \code{\link{CoordsStrider}} for \code{axis}.}
+    \item{\code{coords_axis}}{The \code{\link{CoordsStrider}} for \code{axis}.}
 
-\item{\code{reindex_disable_on_axis}}{Additional axes that will not be
+    \item{\code{reindex_disable_on_axis}}{Additional axes that will not be
 re-indexed.}
 
-\item{\code{reindexable}}{Shorthand to see if this iterator is poised to be
+    \item{\code{reindexable}}{Shorthand to see if this iterator is poised to be
 re-indexed or not.}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-BlockwiseReadIterBase-new}{\code{BlockwiseReadIterBase$new()}}
-\item \href{#method-BlockwiseReadIterBase-read_complete}{\code{BlockwiseReadIterBase$read_complete()}}
-\item \href{#method-BlockwiseReadIterBase-read_next}{\code{BlockwiseReadIterBase$read_next()}}
-\item \href{#method-BlockwiseReadIterBase-clone}{\code{BlockwiseReadIterBase$clone()}}
+  \itemize{
+    \item \href{#method-BlockwiseReadIterBase-initialize}{\code{BlockwiseReadIterBase$new()}}
+    \item \href{#method-BlockwiseReadIterBase-read_complete}{\code{BlockwiseReadIterBase$read_complete()}}
+    \item \href{#method-BlockwiseReadIterBase-read_next}{\code{BlockwiseReadIterBase$read_next()}}
+    \item \href{#method-BlockwiseReadIterBase-clone}{\code{BlockwiseReadIterBase$clone()}}
+  }
 }
-}
-\if{html}{\out{
-<details open><summary>Inherited methods</summary>
+\if{html}{\out{<details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="concat"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-concat'><code>tiledbsoma::ReadIter$concat()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="concat"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-concat'><code>ReadIter$concat()</code></a></span></li>
 </ul>
-</details>
-}}
+</details>}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-BlockwiseReadIterBase-new"></a>}}
-\if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-new}{}}}
-\subsection{Method \code{new()}}{
-Create.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$new(
+\if{html}{\out{<a id="method-BlockwiseReadIterBase-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-initialize}{}}}
+\subsection{\code{BlockwiseReadIterBase$new()}}{
+  Create.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlockwiseReadIterBase$new(
   sr,
   array,
   coords,
   axis,
   ...,
   reindex_disable_on_axis = NA
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{sr}}{SOMA read pointer}
-
-\item{\code{array}}{Underlying \code{\link{SOMASparseNDArray}}}
-
-\item{\code{coords}}{Named list of \code{\link{CoordsStrider}} objects; must be
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{sr}}{SOMA read pointer}
+      \item{\code{array}}{Underlying \code{\link{SOMASparseNDArray}}}
+      \item{\code{coords}}{Named list of \code{\link{CoordsStrider}} objects; must be
 named after \code{array$dimnames()}}
-
-\item{\code{axis}}{Axis to iterate over in a blockwise manner}
-
-\item{\code{...}}{Ignored}
-
-\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
+      \item{\code{axis}}{Axis to iterate over in a blockwise manner}
+      \item{\code{...}}{Ignored}
+      \item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
 the following values may be used as shorthands for common settings:
 \itemize{
 \item \dQuote{\code{TRUE}}: disable re-indexing on all axes
@@ -91,53 +85,60 @@ re-indexing on all others
 \item \dQuote{\code{FALSE}}: re-index on \emph{all} axes, do \strong{not}
 disable re-indexing
 }}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BlockwiseReadIterBase-read_complete"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-read_complete}{}}}
-\subsection{Method \code{read_complete()}}{
-Check if the iterated read is complete or not.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$read_complete()}\if{html}{\out{</div>}}
+\subsection{\code{BlockwiseReadIterBase$read_complete()}}{
+  Check if the iterated read is complete or not.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlockwiseReadIterBase$read_complete()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    \code{TRUE} if read is complete, otherwise \code{FALSE}.
+  }
 }
 
-\subsection{Returns}{
-\code{TRUE} if read is complete, otherwise \code{FALSE}.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BlockwiseReadIterBase-read_next"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-read_next}{}}}
-\subsection{Method \code{read_next()}}{
-Read the next chunk of the iterated read. If read
+\subsection{\code{BlockwiseReadIterBase$read_next()}}{
+  Read the next chunk of the iterated read. If read
 is complete, throws an \code{iterationCompleteWarning} warning and
 returns \code{NULL}.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$read_next()}\if{html}{\out{</div>}}
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlockwiseReadIterBase$read_next()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    \code{NULL} or the next blockwise chunk of the iterated read.
+  }
 }
 
-\subsection{Returns}{
-\code{NULL} or the next blockwise chunk of the iterated read.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BlockwiseReadIterBase-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\subsection{\code{BlockwiseReadIterBase$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlockwiseReadIterBase$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }

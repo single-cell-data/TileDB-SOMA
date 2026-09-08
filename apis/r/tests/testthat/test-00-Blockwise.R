@@ -191,7 +191,9 @@ test_that("Blockwise iterator for sparse matrices", {
   it <- bi$sparse_matrix()
   at <- it$concat()
   expect_s4_class(at, "dgTMatrix")
-  expect_equal(dim(at), c(2638, 1838))
+  # Re-indexing is disabled on both axes, so blocks keep global coordinates
+  # and span the full array extent (for this legacy array, its domain)
+  expect_equal(dim(at), as.integer(it$array$shape()))
 })
 
 test_that("Sparse matrix blockwise iterator: re-indexed", {
@@ -370,4 +372,150 @@ test_that("Blockwise iterate through full array", {
     )
   }
   expect_true(it$read_complete())
+})
+
+test_that("CoordsStrider length and chunking for ranges not starting at zero", {
+  strider <- CoordsStrider$new(start = 5L, end = 14L, stride = 3L)
+  expect_equal(strider$length(), 10)
+  expect_length(as.list(strider), 4L)
+  expect_equal(
+    CoordsStrider$new(start = 5L, end = 14L)$full_coords,
+    bit64::as.integer64(5:14)
+  )
+  expect_true(
+    CoordsStrider$new(start = 0L, end = 19L)$is_full_domain(20L)
+  )
+  expect_false(
+    CoordsStrider$new(start = 0L, end = 18L)$is_full_domain(20L)
+  )
+  expect_false(
+    CoordsStrider$new(bit64::as.integer64(0:19))$is_full_domain(20L)
+  )
+})
+
+test_that("Blockwise tables honor a restriction on the non-iterated axis", {
+  fx <- blockwise_fixture()
+  arr <- SOMASparseNDArrayOpen(fx$uri)
+  on.exit(arr$close(), add = TRUE, after = FALSE)
+  rows <- 5:14
+  cols <- 3:9
+  coords <- list(soma_dim_0 = rows, soma_dim_1 = cols)
+  row_chunks <- chunk(rows, 3L)
+
+  for (mode in reindex_modes) {
+    blocks <- read_blocks(arr, coords, axis = 0L, size = 3L, mode$reindex)
+    expected <- lapply(row_chunks, function(br) {
+      expected_table(fx$mat, br, cols, mode$rows, mode$cols)
+    })
+    expect_blocks(
+      blocks,
+      expected,
+      sprintf("reindex = %s", format(mode$reindex))
+    )
+  }
+})
+
+test_that("Blockwise sparse matrices honor a restriction on the non-iterated axis", {
+  fx <- blockwise_fixture()
+  arr <- SOMASparseNDArrayOpen(fx$uri)
+  on.exit(arr$close(), add = TRUE, after = FALSE)
+  rows <- 5:14
+  cols <- 3:9
+  coords <- list(soma_dim_0 = rows, soma_dim_1 = cols)
+  row_chunks <- chunk(rows, 3L)
+
+  for (mode in reindex_modes) {
+    blocks <- read_blocks(
+      arr,
+      coords,
+      axis = 0L,
+      size = 3L,
+      mode$reindex,
+      repr = "T"
+    )
+    expected <- lapply(row_chunks, function(br) {
+      expected_block(fx$mat, br, cols, mode$rows, mode$cols)
+    })
+    expect_blocks(
+      blocks,
+      expected,
+      sprintf("reindex = %s", format(mode$reindex))
+    )
+  }
+
+  # The compressed representation from the original report
+  blocks <- read_blocks(
+    arr,
+    coords,
+    axis = 0L,
+    size = 3L,
+    reindex = NA,
+    repr = "R"
+  )
+  expect_s4_class(blocks[[1L]], "dgRMatrix")
+  expected <- lapply(row_chunks, function(br) {
+    expected_block(fx$mat, br, cols, compact_rows = TRUE, compact_cols = FALSE)
+  })
+  expect_blocks(blocks, expected, "repr = R")
+
+  # Iterate over the second axis with a restriction on the first
+  col_chunks <- chunk(cols, 4L)
+  blocks <- read_blocks(
+    arr,
+    coords,
+    axis = 1L,
+    size = 4L,
+    reindex = NA,
+    repr = "T"
+  )
+  expected <- lapply(col_chunks, function(bc) {
+    expected_block(fx$mat, rows, bc, compact_rows = FALSE, compact_cols = TRUE)
+  })
+  expect_blocks(blocks, expected, "axis = 1")
+})
+
+test_that("Blockwise reads accept coords for a subset of dimensions", {
+  fx <- blockwise_fixture()
+  arr <- SOMASparseNDArrayOpen(fx$uri)
+  on.exit(arr$close(), add = TRUE, after = FALSE)
+  all_rows <- seq_len(nrow(fx$mat)) - 1L
+  all_cols <- all_rows
+
+  # Restrict only the minor axis; the iterated axis spans the full domain
+  cols <- 3:9
+  row_chunks <- chunk(all_rows, 8L)
+  blocks <- read_blocks(
+    arr,
+    list(soma_dim_1 = cols),
+    axis = 0L,
+    size = 8L,
+    reindex = NA,
+    repr = "T"
+  )
+  expected <- lapply(row_chunks, function(br) {
+    expected_block(fx$mat, br, cols, compact_rows = TRUE, compact_cols = FALSE)
+  })
+  expect_blocks(blocks, expected, "minor axis only")
+
+  # Restrict only the iterated axis
+  rows <- 5:14
+  row_chunks <- chunk(rows, 4L)
+  blocks <- read_blocks(
+    arr,
+    list(soma_dim_0 = rows),
+    axis = 0L,
+    size = 4L,
+    reindex = NA,
+    repr = "T"
+  )
+  expected <- lapply(row_chunks, function(br) {
+    expected_block(
+      fx$mat,
+      br,
+      all_cols,
+      compact_rows = TRUE,
+      compact_cols = FALSE
+    )
+  })
+  expect_blocks(blocks, expected, "major axis only")
 })
