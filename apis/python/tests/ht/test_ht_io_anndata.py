@@ -585,7 +585,7 @@ def test_roundtrip_from_anndata_to_anndata(
     # Pick X and raw.X layer names that are NOT already used by the layers mapping
     # Case insensitive on MacOS.
     if sys.platform == "darwin":
-        used_layer_names = set(lname.upper() for lname in adata.layers)
+        used_layer_names = set(lname.upper() for lname in adata.layers if lname is not None)
         X_layer_name = data.draw(posix_filename().filter(lambda x: x.upper() not in used_layer_names))
         raw_X_layer_name = data.draw(
             posix_filename().filter(lambda x: x.upper() not in used_layer_names and x.upper() != X_layer_name.upper())
