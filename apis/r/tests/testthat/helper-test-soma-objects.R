@@ -1,3 +1,17 @@
+
+collection_members <- function(collection) {
+  if (!inherits(collection, "SOMACollectionBase")) {
+    stop("'collection' must be a SOMACollection")
+  }
+  return(vapply(
+    X = collection$members,
+    FUN = `[[`,
+    FUN.VALUE = character(length = 1L),
+    "name",
+    USE.NAMES = FALSE
+  ))
+}
+
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_soma_dataframe <- function(
   uri,

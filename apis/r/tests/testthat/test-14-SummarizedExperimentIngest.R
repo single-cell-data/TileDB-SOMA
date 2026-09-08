@@ -117,3 +117,30 @@ test_that("Resume-mode adds a second measurement to an existing experiment", {
   # Verify that the second measurement's X data is not all zeros (CX-279)
   expect_true(sum(mat2 != 0) > 0)
 })
+
+test_that("Write SummarizedExperiment relatively (SOMA-906)", {
+  skip_if(!extended_tests())
+  suppressWarnings(suppressMessages(skip_if_not_installed(
+    "SummarizedExperiment",
+    "1.28.0"
+  )))
+  skip_if_not_installed("pbmc3k")
+
+  se <- pbmc3k_sce()
+  var_df <- SummarizedExperiment::rowData(se)
+  features <- rownames(se)
+
+  se <- as(se, "SummarizedExperiment")
+  SummarizedExperiment::rowData(se) <- var_df
+  rownames(se) <- features
+
+  uri <- tempfile(pattern = "summarizedexperiment-relative-")
+
+  for (i in c(TRUE, FALSE)) {
+    expect_error(
+      write_soma(se, uri, relative = i, ms_name = "RNA"),
+      regexp = "^The dots '\\.\\.\\.' must be empty when",
+      label = sprintf("write_soma.SummarizedExperiment(relative = %s)", i)
+    )
+  }
+})
