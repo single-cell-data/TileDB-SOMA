@@ -112,13 +112,20 @@ CoordsStrider <- R6::R6Class(
     #'
     length = function() {
       if (is.null(self$coords)) {
-        len <- as.numeric(abs(self$end - self$start))
-        if (!self$start) {
-          len <- len + 1L
-        }
-        return(len)
+        return(as.numeric(abs(self$end - self$start)) + 1L)
       }
       return(length(self$coords))
+    },
+    #' @description Determine if this strider covers the full domain
+    #' \code{[0, extent)} of a dimension
+    #'
+    #' @param extent The extent (shape) of the dimension
+    #'
+    #' @return \code{TRUE} if the strider is a range strider spanning
+    #' \code{0:(extent - 1)}, otherwise \code{FALSE}
+    #'
+    is_full_domain = function(extent) {
+      return(is.null(self$coords) && self$start == 0L && self$end == extent - 1L)
     },
     #' @description Determine if there are more coordinates to yield
     #'
@@ -163,6 +170,19 @@ CoordsStrider <- R6::R6Class(
     #' @field coords If set, the coordinates to iterate over
     #'
     coords = function() private$.coords,
+
+    #' @field full_coords Every coordinate covered by the strider, without
+    #' advancing it
+    #'
+    full_coords = function() {
+      if (!is.null(self$coords)) {
+        return(self$coords)
+      }
+      if (self$start == self$end) {
+        return(bit64::as.integer64(self$start))
+      }
+      return(seq(from = bit64::as.integer64(self$start), to = self$end, by = 1L))
+    },
 
     #' @field start If set, the starting point of the iterated coordinates;
     #' otherwise the minimum value of \code{self$coords}
@@ -223,10 +243,7 @@ CoordsStrider <- R6::R6Class(
     .stride = NULL,
     .index = NULL,
     .stopIteration = function() {
-      stop(errorCondition(
-        "StopIteration",
-        class = "stopIteration"
-      ))
+      stop(errorCondition("StopIteration", class = "stopIteration"))
     }
   )
 )

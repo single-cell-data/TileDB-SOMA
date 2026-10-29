@@ -49,108 +49,142 @@ while (itertools::hasNext(strider)) {
 }
 \keyword{internal}
 \section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{coords}}{If set, the coordinates to iterate over}
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{coords}}{If set, the coordinates to iterate over}
 
-\item{\code{start}}{If set, the starting point of the iterated coordinates;
+    \item{\code{full_coords}}{Every coordinate covered by the strider, without
+advancing it}
+
+    \item{\code{start}}{If set, the starting point of the iterated coordinates;
 otherwise the minimum value of \code{self$coords}}
 
-\item{\code{end}}{If set, the end point of the iterated coordinates;
+    \item{\code{end}}{If set, the end point of the iterated coordinates;
 otherwise the maximum value of \code{self$coords}}
 
-\item{\code{stride}}{The stride, or how many coordinates to generate per
+    \item{\code{stride}}{The stride, or how many coordinates to generate per
 iteration; note: this field is settable, which will reset the iterator}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-CoordsStrider-new}{\code{CoordsStrider$new()}}
-\item \href{#method-CoordsStrider-print}{\code{CoordsStrider$print()}}
-\item \href{#method-CoordsStrider-length}{\code{CoordsStrider$length()}}
-\item \href{#method-CoordsStrider-has_next}{\code{CoordsStrider$has_next()}}
-\item \href{#method-CoordsStrider-next_element}{\code{CoordsStrider$next_element()}}
-}
+  \itemize{
+    \item \href{#method-CoordsStrider-initialize}{\code{CoordsStrider$new()}}
+    \item \href{#method-CoordsStrider-print}{\code{CoordsStrider$print()}}
+    \item \href{#method-CoordsStrider-length}{\code{CoordsStrider$length()}}
+    \item \href{#method-CoordsStrider-is_full_domain}{\code{CoordsStrider$is_full_domain()}}
+    \item \href{#method-CoordsStrider-has_next}{\code{CoordsStrider$has_next()}}
+    \item \href{#method-CoordsStrider-next_element}{\code{CoordsStrider$next_element()}}
+  }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CoordsStrider-new"></a>}}
-\if{latex}{\out{\hypertarget{method-CoordsStrider-new}{}}}
-\subsection{Method \code{new()}}{
-Create a coordinate strider
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$new(coords, ..., stride = NULL, start = NULL, end = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{coords}}{An integer vector of coordinates}
-
-\item{\code{...}}{Ignored}
-
-\item{\code{stride}}{The stride of how many coordinates to yield per iteration;
+\if{html}{\out{<a id="method-CoordsStrider-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-CoordsStrider-initialize}{}}}
+\subsection{\code{CoordsStrider$new()}}{
+  Create a coordinate strider
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CoordsStrider$new(coords, ..., stride = NULL, start = NULL, end = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{coords}}{An integer vector of coordinates}
+      \item{\code{...}}{Ignored}
+      \item{\code{stride}}{The stride of how many coordinates to yield per iteration;
 by default, will try to yield all coordinates per iteration}
-
-\item{\code{start}}{If \code{coords} is missing, the starting coordinate
+      \item{\code{start}}{If \code{coords} is missing, the starting coordinate
 to generate}
-
-\item{\code{end}}{If \code{coords} is missing, the ending coordinate
+      \item{\code{end}}{If \code{coords} is missing, the ending coordinate
 to generate}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CoordsStrider-print"></a>}}
 \if{latex}{\out{\hypertarget{method-CoordsStrider-print}{}}}
-\subsection{Method \code{print()}}{
-Print the coordinate strider to the screen
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$print()}\if{html}{\out{</div>}}
+\subsection{\code{CoordsStrider$print()}}{
+  Print the coordinate strider to the screen
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CoordsStrider$print()}
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CoordsStrider-length"></a>}}
 \if{latex}{\out{\hypertarget{method-CoordsStrider-length}{}}}
-\subsection{Method \code{length()}}{
-Get the length (span) of the coordinates within the strider
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$length()}\if{html}{\out{</div>}}
+\subsection{\code{CoordsStrider$length()}}{
+  Get the length (span) of the coordinates within the strider
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CoordsStrider$length()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The length (span) of the coordinate strider
+  }
 }
 
-\subsection{Returns}{
-The length (span) of the coordinate strider
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CoordsStrider-is_full_domain"></a>}}
+\if{latex}{\out{\hypertarget{method-CoordsStrider-is_full_domain}{}}}
+\subsection{\code{CoordsStrider$is_full_domain()}}{
+  Determine if this strider covers the full domain
+\code{[0, extent)} of a dimension
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CoordsStrider$is_full_domain(extent)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{extent}}{The extent (shape) of the dimension}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    \code{TRUE} if the strider is a range strider spanning
+\code{0:(extent - 1)}, otherwise \code{FALSE}
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CoordsStrider-has_next"></a>}}
 \if{latex}{\out{\hypertarget{method-CoordsStrider-has_next}{}}}
-\subsection{Method \code{has_next()}}{
-Determine if there are more coordinates to yield
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$has_next()}\if{html}{\out{</div>}}
+\subsection{\code{CoordsStrider$has_next()}}{
+  Determine if there are more coordinates to yield
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CoordsStrider$has_next()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    \code{TRUE} if there are more coordinates to yield or
+\code{FALSE} if otherwise
+  }
 }
 
-\subsection{Returns}{
-\code{TRUE} if there are more coordinates to yield or
-\code{FALSE} if otherwise
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CoordsStrider-next_element"></a>}}
 \if{latex}{\out{\hypertarget{method-CoordsStrider-next_element}{}}}
-\subsection{Method \code{next_element()}}{
-Generate the next set of coordinates to yield. If there are
+\subsection{\code{CoordsStrider$next_element()}}{
+  Generate the next set of coordinates to yield. If there are
 no more coordinates to yield, raises a \code{stopIteration} error
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$next_element()}\if{html}{\out{</div>}}
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CoordsStrider$next_element()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An integer vector of the next set of coordinates
+  }
 }
 
-\subsection{Returns}{
-An integer vector of the next set of coordinates
-}
-}
 }

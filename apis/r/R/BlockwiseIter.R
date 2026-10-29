@@ -92,19 +92,18 @@ BlockwiseReadIterBase <- R6::R6Class(
         ))
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
+      # Build re-indexers for the minor axes over the *requested* coordinates
+      # (or the full domain when the axis is unrestricted), so re-indexed
+      # coordinates are compacted to `0:(n - 1)` where `n` is the number of
+      # requested coordinates, matching the Python API
       axes_to_reindex <- self$axes_to_reindex
       private$.reindexers <- vector("list", length = length(axes_to_reindex))
-      shape <- self$array$shape()
       dnames <- self$array$dimnames()
       for (i in seq_along(axes_to_reindex)) {
         ax <- as.numeric(axes_to_reindex[i]) + 1L
-        coords <- as.list(CoordsStrider$new(start = 0L, end = shape[ax] - 1L))
-        coords <- if (length(coords) == 1L) {
-          coords[[1L]]
-        } else {
-          unlist64(coords)
-        }
-        private$.reindexers[[i]] <- IntIndexer$new(coords)
+        private$.reindexers[[i]] <- IntIndexer$new(
+          private$.axis_strider(ax)$full_coords
+        )
         names(private$.reindexers)[i] <- dnames[ax]
       }
     },
@@ -130,10 +129,15 @@ BlockwiseReadIterBase <- R6::R6Class(
       if (self$read_complete()) {
         return(private$.readComplete())
       }
+      # `reset()` rebuilds the query from scratch and discards *every*
+      # coordinate restriction, so re-apply the restrictions on all
+      # non-iterated axes along with this block's coordinates on the
+      # iterated axis
       private$reset()
       dimnam <- self$array$dimnames()[self$axis + 1L]
       private$.nextelems <- self$coords_axis$next_element()
       private$set_dim_points(dimnam, private$.nextelems)
+      private$.restore_minor_axes()
       return(private$.read_next())
     }
   ),
@@ -193,6 +197,37 @@ BlockwiseReadIterBase <- R6::R6Class(
         class = "notConcatenatableError"
       ))
     },
+    # @description Get the strider for a given (1-based) axis; axes without
+    # an explicit strider are treated as spanning their full domain
+    .axis_strider = function(ax) {
+      dname <- self$array$dimnames()[ax]
+      strider <- self$coords[[dname]]
+      if (is.null(strider)) {
+        strider <- CoordsStrider$new(
+          start = 0L,
+          end = self$array$shape()[ax] - 1L
+        )
+      }
+      return(strider)
+    },
+    # @description Re-apply the coordinate restrictions for every axis other
+    # than the iterated axis; axes spanning their full domain are skipped
+    # since they impose no restriction
+    .restore_minor_axes = function() {
+      dnames <- self$array$dimnames()
+      shape <- self$array$shape()
+      for (i in seq_along(dnames)) {
+        if (i == self$axis + 1L) {
+          next
+        }
+        strider <- private$.axis_strider(i)
+        if (strider$is_full_domain(shape[i])) {
+          next
+        }
+        private$set_dim_points(dnames[i], strider$full_coords)
+      }
+      return(invisible(NULL))
+    },
     # @description Reset internal state of SOMA Reader while keeping array open
     reset = function() {
       if (is.null(private$soma_reader_pointer)) {
@@ -233,7 +268,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       }
       for (dname in names(private$.reindexers)) {
         if (!dname %in% names(tbl)) {
-          ""
+          next
         }
         indexer <- private$.reindexers[[dname]]
         tbl[[dname]] <- indexer$get_indexer(
@@ -373,7 +408,20 @@ BlockwiseSparseReadIter <- R6::R6Class(
         if (!bit64::as.integer64(1L) %in% self$reindex_disable_on_axis) "C"
       )
       private$.repr <- match.arg(repr, choices = reprs)
-      private$.shape <- sapply(coords, length)
+      # Matrix shape follows the Python API: a re-indexed axis has its
+      # coordinates compacted to `0:(n - 1)` so its extent is the number of
+      # requested coordinates; a non-re-indexed axis keeps its global
+      # coordinates so its extent is the full array extent. The iterated
+      # axis is sized per block in `soma_reader_transform()`
+      shape <- self$array$shape()
+      for (i in seq_along(shape)) {
+        ax <- bit64::as.integer64(i - 1L)
+        if (ax == self$axis || ax %in% self$reindex_disable_on_axis) {
+          next
+        }
+        shape[i] <- private$.axis_strider(i)$length()
+      }
+      private$.shape <- shape
     },
     #' @description Concatenate the remainder of the blockwise iterator.
     #'
@@ -400,19 +448,11 @@ BlockwiseSparseReadIter <- R6::R6Class(
       tbl <- private$reindex_arrow_table(soma_array_to_arrow_table(x))
       shape <- private$.shape
       axis <- as.integer(self$axis)
-      axname <- sprintf("soma_dim_%i", axis)
-      stride <- self$coords[[axname]]$stride
-      # For re-indexed blockwise iterators, shape should reflect the re-indexed
-      # axes; this can generally be the stride of the iterator, but for the end
-      # of each iterator this needs to be the remainder (see ?`%%`).
-      # Note: this only applies to the major axis, minor axes always return
-      # the full domain.
-      if (self$reindexable && shape[axis + 1L] > stride) {
-        shape[axis + 1L] <- if (self$coords[[axname]]$has_next()) {
-          as.numeric(stride)
-        } else {
-          as.numeric(self$coords[[axname]]$end %% stride) + 1L
-        }
+      # When the iterated axis is re-indexed, this block's coordinates are
+      # compacted to `0:(n - 1)`, so the extent is the number of coordinates
+      # in the block (the stride, or the remainder for the final block)
+      if (!bit64::as.integer64(axis) %in% self$reindex_disable_on_axis) {
+        shape[axis + 1L] <- length(private$.nextelems)
       }
       mat <- arrow_table_to_sparse(
         tbl,
