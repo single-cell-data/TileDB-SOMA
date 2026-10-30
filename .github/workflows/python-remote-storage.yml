@@ -38,7 +38,7 @@ jobs:
         include:
           - name: linux
             os: ubuntu-latest
-            python_version: "3.10" # Should match TileDB-Cloud version
+            python_version: "3.10"
             cc: gcc-13
             cxx: g++-13
 
@@ -102,3 +102,25 @@ jobs:
       - name: Run pytests for Python
         shell: bash
         run: python -m pytest apis/python/remote_tests -v --durations=20 --maxfail=50
+
+  # UDFs are pickled locally and run on TileDB Cloud, so this job's Python must match the Cloud UDF
+  # runtime, which may be older than tiledbsoma supports. It deliberately doesn't install the local
+  # tiledbsoma: the UDF uses the version installed on TileDB Cloud.
+  udf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.9" # Must match the TileDB Cloud UDF runtime
+
+      - name: Install dependencies
+        run: pip install --prefer-binary pytest tiledb-cloud
+
+      - name: Show tiledb.cloud version
+        run: python -c 'import tiledb.cloud; print(tiledb.cloud.version.version)'
+
+      - name: Run UDF tests
+        run: python -m pytest apis/python/remote_udf_tests -v
