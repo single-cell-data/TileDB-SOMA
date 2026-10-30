@@ -29,9 +29,9 @@ jobs:
           - name: Langchain
             file: langchain
             args: v=2.3.0
-          - name: Python 3.14 + uv
+          - name: Python 3.13 + uv
             file: python-uv
-            args: python=3.14
+            args: python=3.13
     name: ${{ matrix.img.name }}${{ matrix.os.suffix }}
     runs-on: ${{ matrix.os.runs-on }}
     steps:

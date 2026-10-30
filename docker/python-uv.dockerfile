@@ -1,4 +1,4 @@
-ARG python=3.14
+ARG python=3.13
 FROM python:$python
 
 # Required by vcpkg source build on ARM
