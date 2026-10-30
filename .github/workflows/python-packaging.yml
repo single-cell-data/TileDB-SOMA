@@ -46,7 +46,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        exclude:
+          # No numba wheels for osx-64 on these Python versions
+          - os: macos-15-intel
+            python_version: "3.13"
+          - os: macos-15-intel
+            python_version: "3.14"
     steps:
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v6
@@ -73,7 +79,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python_name: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        python_name: ['cp310', 'cp311', 'cp312', 'cp313', 'cp314']
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
         include:
           - platform: manylinux_x86_64
@@ -147,7 +153,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python_version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
         include:
           - platform: manylinux_x86_64
@@ -166,8 +172,6 @@ jobs:
             os: macos-15-intel
           - wheel_suffix: macosx_13_0_arm64
             os: macos-15
-          - python_name: "cp39"
-            python_version: "3.9"
           - python_name: "cp310"
             python_version: "3.10"
           - python_name: "cp311"
@@ -176,9 +180,13 @@ jobs:
             python_version: "3.12"
           - python_name: "cp313"
             python_version: "3.13"
+          - python_name: "cp314"
+            python_version: "3.14"
         exclude:
           - os: macos-15-intel
             python_version: 3.13
+          - os: macos-15-intel
+            python_version: 3.14
       fail-fast: false
     steps:
       - name: Set up Python ${{ matrix.python_version }}

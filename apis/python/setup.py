@@ -295,11 +295,11 @@ setuptools.setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages("src"),
@@ -356,7 +356,7 @@ setuptools.setup(
         "spatial-io": open("requirements_spatial.txt").read(),  # noqa: SIM115
         "all": open("requirements_dev.txt").read() + open("requirements_spatial.txt").read(),  # noqa: SIM115
     },
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
     version=version.get_version(),
 )
