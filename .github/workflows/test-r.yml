@@ -56,7 +56,7 @@ jobs:
 
       - uses: ./.github/actions/setup-r
         with:
-            os: ${{ inputs.os }}}
+            os: ${{ inputs.os }}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
             extra-packages: any::rcmdcheck, any::nanoarrow
@@ -90,7 +90,7 @@ jobs:
 
       - uses: ./.github/actions/setup-r
         with:
-            os: ${{ inputs.os }}}
+            os: ${{ inputs.os }}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
             extra-packages: any::covr, any::xml2, any::nanoarrow
@@ -104,10 +104,6 @@ jobs:
             path = "apis/r",
             quiet = FALSE,
             clean = FALSE,
-            ine_exclusions = list(
-              nanoarrow_c = "apis/r/src/nanoarrow.c",
-              nanoarrow_h = "apis/r/src/nanoarrow.h"
-            ),
             install_path = file.path(
               normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"),
               "package"

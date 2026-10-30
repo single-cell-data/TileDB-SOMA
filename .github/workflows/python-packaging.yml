@@ -40,7 +40,7 @@ jobs:
           path: apis/python/dist/
 
   test_sdist:
-    name: Build source distribution
+    name: Test source distribution
     needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
@@ -214,10 +214,9 @@ jobs:
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python_version[0] }} bash -ec "
-            apt-get -qq update && apt-get install -y python3-pip python3-wheel
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
           "

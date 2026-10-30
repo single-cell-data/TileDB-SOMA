@@ -6,7 +6,7 @@ on:
       - 'libtiledbsoma/**'
       - 'apis/**'
       - '!**.md'
-      - '.github/workflows/r-python-interop-testing.yml'
+      - '.github/workflows/ci-r-python-interop.yml'
       - '.github/actions/setup-r/**'
       - ".github/workflows/build-cpp.yml"
   push:
