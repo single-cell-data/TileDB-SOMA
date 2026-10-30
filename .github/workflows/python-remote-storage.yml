@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Check out TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
@@ -59,7 +59,7 @@ jobs:
         run: cat /proc/cpuinfo
 
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
@@ -108,10 +108,10 @@ jobs:
   udf:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.9
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.9" # Must match the TileDB Cloud UDF runtime
 

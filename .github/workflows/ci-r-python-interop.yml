@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
@@ -100,7 +100,7 @@ jobs:
         run: Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip

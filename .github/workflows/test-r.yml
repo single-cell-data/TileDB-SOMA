@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
@@ -78,7 +78,7 @@ jobs:
     steps:
 
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v8
@@ -114,7 +114,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           flags: r
           files: ./cobertura.xml
