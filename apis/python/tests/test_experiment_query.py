@@ -157,7 +157,7 @@ def test_experiment_query_all(soma_experiment):
         var.index = var.index.map(str)
         assert (var == ad.var).all().all()
 
-        assert len(ad.layers) == 0
+        assert len(ad.layers) == 1  # `X` layer with key None
 
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data",))])

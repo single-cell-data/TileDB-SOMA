@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
@@ -40,16 +40,16 @@ jobs:
           path: apis/python/dist/
 
   test_sdist:
-    name: Build source distribution
+    name: Test source distribution
     needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15]
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python_version }}
       - name: Download sdist artifact
@@ -57,9 +57,11 @@ jobs:
         with:
           name: sdist
           path: apis/python/dist/
-      - name: Install older version of numba to prevent building from source on osx-64 (no wheels for numba 0.63+)
+      - name: Constrain numba to the last release with osx-64 wheels (no wheels for numba 0.63+)
         if: ${{ matrix.os == 'macos-15-intel' }}
-        run: pip install numba==0.60.0
+        run: |
+          echo 'numba<0.63' > "$RUNNER_TEMP/constraints.txt"
+          echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
       - name: Install sdist artifact
         working-directory: apis/python
         run: |
@@ -73,7 +75,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python_name: ['cp39', 'cp310', 'cp311', 'cp312', 'cp313']
+        python_name: ['cp310', 'cp311', 'cp312', 'cp313']
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
         include:
           - platform: manylinux_x86_64
@@ -87,7 +89,7 @@ jobs:
 
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags needed for python API version number
@@ -118,7 +120,7 @@ jobs:
           pip list
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.4.0
+        uses: pypa/cibuildwheel@v4.3.5
         with:
           package-dir: apis/python/
           output-dir: wheelhouse
@@ -147,7 +149,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
         include:
           - platform: manylinux_x86_64
@@ -166,8 +168,6 @@ jobs:
             os: macos-15-intel
           - wheel_suffix: macosx_13_0_arm64
             os: macos-15
-          - python_name: "cp39"
-            python_version: "3.9"
           - python_name: "cp310"
             python_version: "3.10"
           - python_name: "cp311"
@@ -176,22 +176,21 @@ jobs:
             python_version: "3.12"
           - python_name: "cp313"
             python_version: "3.13"
-        exclude:
-          - os: macos-15-intel
-            python_version: 3.13
       fail-fast: false
     steps:
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python_version }}
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
           name: wheel-${{ matrix.python_name }}-${{ matrix.platform }}
-      - name: Install numba to prevent building from source
+      - name: Constrain numba to the last release with osx-64 wheels (no wheels for numba 0.63+)
         if: ${{ matrix.os == 'macos-15-intel' }}
-        run: pip install numba==0.60.0
+        run: |
+          echo 'numba<0.63' > "$RUNNER_TEMP/constraints.txt"
+          echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
       - name: Install wheel
         run: |
           set -x
@@ -206,10 +205,9 @@ jobs:
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python_version[0] }} bash -ec "
-            apt-get -qq update && apt-get install -y python3-pip python3-wheel
+          docker run -v $(pwd):/mnt python:${{ matrix.python_version }} bash -ec "
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
           "
@@ -236,7 +234,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-          packages_dir: dist
+          packages-dir: dist
           verbose: true
 
   # Publish to PyPI upon release.
@@ -262,7 +260,7 @@ jobs:
       - name: Publish packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages_dir: dist
+          packages-dir: dist
           verbose: true
 
   # File a bug report if anything fails, but don't file tickets for manual runs
@@ -271,14 +269,23 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [test_sdist, test_wheels, publish_test_pypi, publish_pypi]
     if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && github.run_attempt == 1
+    permissions:
+      issues: write
     steps:
-      - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v6
+      # Comment on the existing open issue if there is one, rather than filing a new one each night
       - name: Create Issue if Build Fails
-        uses: JasonEtco/create-an-issue@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/workflows/failed-issue-template.md
-          assignees: jp-dark, aaronwolen
-          update_existing: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: Failed scheduled CI run
+          BODY: |
+            See run for more details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == env.TITLE)) | first | .number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label bug --assignee jp-dark,aaronwolen
+          fi
