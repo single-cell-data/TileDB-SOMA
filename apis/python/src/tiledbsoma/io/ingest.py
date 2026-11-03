@@ -41,8 +41,7 @@ import scipy.sparse as sp
 from more_itertools import batched
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
-# But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
-# exist for Python 3.9. And we have not yet dropped support for Python 3.9.
+# But anndata.abc doesn't exist in anndata 0.10, which we still support.
 try:
     from anndata.abc import CSCDataset
 except (AttributeError, ModuleNotFoundError):

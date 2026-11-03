@@ -8,7 +8,7 @@ unset TILEDB_REST_TOKEN                  # If you have that set
 unset TILEDB_REST_PAYER_NAMESPACE        # If you have that set
 ```
 
-As of 2025-02-07, use Python 3.9 to run UDF tests; otherwise they will be skipped.
+UDF tests live separately in `../remote_udf_tests/`, since they must run on the same Python version as the TileDB Cloud UDF runtime (3.9 as of 2025-02-07) and must not import the local `tiledbsoma`.
 
 ```
 python -m pytest path/to/this/directory
