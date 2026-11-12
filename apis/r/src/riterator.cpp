@@ -266,7 +266,11 @@ void mq_set_dim_points(Rcpp::XPtr<tdbs::common::ManagedQuery> mq, std::string di
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);
     mq->select_points<int64_t>(dim, vec);
     std::stringstream ss;
-    ss << "[mq_set_dim_points] Set on dim '" << dim << "' for " << points.length() << " points, first two are "
-       << vec[0] << " and " << vec[1];
+    ss << "[mq_set_dim_points] Set on dim '" << dim << "' for " << points.length() << " points";
+    if (vec.size() >= 2) {
+        ss << ", first two are " << vec[0] << " and " << vec[1];
+    } else if (vec.size() == 1) {
+        ss << ", first is " << vec[0];
+    }
     tdbs::common::logging::LOG_DEBUG(ss.str());
 }

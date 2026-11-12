@@ -38,14 +38,18 @@ jobs:
         include:
           - name: linux
             os: ubuntu-latest
-            python_version: 3.9 # Should match TileDB-Cloud version
+            python_version: "3.10"
             cc: gcc-13
             cxx: g++-13
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out TileDB-SOMA
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
+          fetch-tags: true  # Tags used for Python package version.
 
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
@@ -55,16 +59,11 @@ jobs:
         run: cat /proc/cpuinfo
 
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
           cache-dependency-path: ./apis/python/setup.py
-
-      - name: Check out TileDB-SOMA
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0  # ensure we get all tags to inform package version determination
 
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v8
@@ -102,3 +101,25 @@ jobs:
       - name: Run pytests for Python
         shell: bash
         run: python -m pytest apis/python/remote_tests -v --durations=20 --maxfail=50
+
+  # UDFs are pickled locally and run on TileDB Cloud, so this job's Python must match the Cloud UDF
+  # runtime, which may be older than tiledbsoma supports. It deliberately doesn't install the local
+  # tiledbsoma: the UDF uses the version installed on TileDB Cloud.
+  udf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.9" # Must match the TileDB Cloud UDF runtime
+
+      - name: Install dependencies
+        run: pip install --prefer-binary pytest tiledb-cloud
+
+      - name: Show tiledb.cloud version
+        run: python -c 'import tiledb.cloud; print(tiledb.cloud.version.version)'
+
+      - name: Run UDF tests
+        run: python -m pytest apis/python/remote_udf_tests -v

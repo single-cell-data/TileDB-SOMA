@@ -29,7 +29,7 @@ from tiledbsoma._core_options import BatchSize, IOfN
 from tiledbsoma.experiment_query import X_as_series
 from tiledbsoma.io import to_anndata as io_to_anndata
 
-from tests._util import raises_no_typeguard
+from tests._util import ANNDATA_LAYERS_INCLUDE_X, raises_no_typeguard
 
 from ._util import ROOT_DATA_DIR, assert_adata_equal_extra_columns_exempt
 
@@ -157,7 +157,7 @@ def test_experiment_query_all(soma_experiment):
         var.index = var.index.map(str)
         assert (var == ad.var).all().all()
 
-        assert len(ad.layers) == 0
+        assert len(ad.layers) == (1 if ANNDATA_LAYERS_INCLUDE_X else 0)
 
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("data",))])
