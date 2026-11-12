@@ -737,10 +737,12 @@ def _from_anndata(
                     ) as data:
                         _maybe_set(x, X_layer_name, data, use_relative_uri=use_relative_uri)
 
-                for layer_name, layer in anndata.layers.items():
-                    # 'X' is assigned the None key
+                for layer_name in anndata.layers:
+                    # anndata>=0.13 exposes X under the None key; X is ingested above. Skip it before
+                    # indexing: for a backed AnnData whose file has no X, `layers[None]` raises KeyError.
                     if layer_name is None:
                         continue
+                    layer = anndata.layers[layer_name]
 
                     with _create_from_matrix(
                         X_kind,
