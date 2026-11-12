@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata
 import re
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
@@ -249,6 +250,9 @@ PY_ROOT = HERE.parent
 PROJECT_ROOT = PY_ROOT.parent.parent
 ROOT_DATA_DIR = PROJECT_ROOT / "data"
 TESTDATA = PROJECT_ROOT / "data" / "simple-testdata"
+
+# anndata>=0.13 exposes a non-None `X` in `adata.layers` under the key `None`.
+ANNDATA_LAYERS_INCLUDE_X = Version(importlib.metadata.version("anndata")) >= Version("0.13.0")
 
 
 @contextmanager
