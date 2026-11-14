@@ -609,7 +609,8 @@ def test_roundtrip_from_anndata_to_anndata(
                 E,
                 measurement_name=measurement_name,
                 X_layer_name=X_layer_name if adata.X is not None else None,
-                extra_X_layer_names=list(adata.layers.keys()),
+                # anndata>=0.13 lists a non-None X in `layers` under the key None.
+                extra_X_layer_names=[k for k in adata.layers if k is not None],
             )
 
             # TODO: io.to_anndata does not load raw. Do a manual verification
