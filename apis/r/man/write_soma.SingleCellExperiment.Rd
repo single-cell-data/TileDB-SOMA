@@ -17,14 +17,14 @@ object to a SOMA}
 )
 }
 \arguments{
-\item{x}{An object.}
+\item{x}{A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
 \item{uri}{URI for resulting SOMA object.}
 
 \item{ms_name}{Name for resulting measurement; defaults to
 \code{\link[SingleCellExperiment]{mainExpName}(x)}.}
 
-\item{...}{Arguments passed to other methods}
+\item{...}{Reserved for future use.}
 
 \item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
 \itemize{

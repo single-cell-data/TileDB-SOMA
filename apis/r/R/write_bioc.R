@@ -104,8 +104,10 @@ write_soma.Hits <- function(
 #'
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
+#' @param x A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param ms_name Name for resulting measurement; defaults to
 #' \code{\link[SingleCellExperiment]{mainExpName}(x)}.
+#' @template param-dots-reserved
 #'
 #' @inherit write_soma.SummarizedExperiment return sections
 #'
@@ -167,7 +169,15 @@ write_soma.SingleCellExperiment <- function(
 ) {
   check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
-  if ("shape" %in% names(args <- rlang::dots_list(...))) {
+  args <- rlang::dots_list(...)
+  if (length(args) && (length(args) > 1L || names(args) != "shape")) {
+    stop(
+      "The dots '...' must be empty when calling `write_soma() on a '",
+      class(x)[1L], "' object",
+      call. = FALSE
+    )
+  }
+  if ("shape" %in% names(args)) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
@@ -178,9 +188,8 @@ write_soma.SingleCellExperiment <- function(
   }
   ms_name <- ms_name %||% SingleCellExperiment::mainExpName(x)
 
-  uri <- NextMethod(
-    "write_soma",
-    x,
+  uri <- write_soma(
+    methods::as(x, "SummarizedExperiment"),
     uri = uri,
     ms_name = ms_name,
     ...,
@@ -188,6 +197,7 @@ write_soma.SingleCellExperiment <- function(
     platform_config = platform_config,
     context = context
   )
+
   experiment <- SOMAExperimentOpen(
     uri = uri,
     mode = "WRITE",
@@ -320,7 +330,9 @@ write_soma.SingleCellExperiment <- function(
 #'
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
+#' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
 #' @param ms_name Name for resulting measurement.
+#' @template param-dots-reserved
 #'
 #' @inherit write_soma return
 #'
@@ -389,7 +401,15 @@ write_soma.SummarizedExperiment <- function(
       !is.na(ms_name)
   )
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
-  if ("shape" %in% names(args <- rlang::dots_list(...))) {
+  args <- rlang::dots_list(...)
+  if (length(args) && (length(args) > 1L || names(args) != "shape")) {
+    stop(
+      "The dots '...' must be empty when calling `write_soma() on a '",
+      class(x)[1L], "' object",
+      call. = FALSE
+    )
+  }
+  if ("shape" %in% names(args)) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
