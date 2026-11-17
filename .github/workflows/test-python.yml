@@ -49,7 +49,7 @@ jobs:
           brew install automake llvm
 
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
@@ -63,7 +63,7 @@ jobs:
         run: make data
 
       - name: Set up Python ${{ inputs.python_version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python_version }}
           cache: pip
@@ -90,7 +90,7 @@ jobs:
 
       - name: Report coverage to Codecov
         if: inputs.report_codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           flags: python
           # Although Codecov isn't supposed to require an auth token for public repos like this one,

@@ -41,8 +41,7 @@ import scipy.sparse as sp
 from more_itertools import batched
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
-# But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
-# exist for Python 3.9. And we have not yet dropped support for Python 3.9.
+# But anndata.abc doesn't exist in anndata 0.10, which we still support.
 try:
     from anndata.abc import CSCDataset
 except (AttributeError, ModuleNotFoundError):
@@ -738,7 +737,13 @@ def _from_anndata(
                     ) as data:
                         _maybe_set(x, X_layer_name, data, use_relative_uri=use_relative_uri)
 
-                for layer_name, layer in anndata.layers.items():
+                for layer_name in anndata.layers:
+                    # anndata>=0.13 exposes X under the None key; X is ingested above. Skip it before
+                    # indexing: for a backed AnnData whose file has no X, `layers[None]` raises KeyError.
+                    if layer_name is None:
+                        continue
+                    layer = anndata.layers[layer_name]
+
                     with _create_from_matrix(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(layer_name, data_protocol)),

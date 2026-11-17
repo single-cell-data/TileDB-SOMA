@@ -21,7 +21,7 @@ jobs:
   catch2:
     runs-on: ${{ inputs.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v8
@@ -36,7 +36,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: ${{ inputs.report_codecov }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           flags: libtiledbsoma
           gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
@@ -48,7 +48,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Download C++ ASAN build artifact
         uses: actions/download-artifact@v8
         with:

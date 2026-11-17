@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build and install libtiledbsoma
         run: |

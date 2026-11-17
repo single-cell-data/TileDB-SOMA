@@ -3,7 +3,7 @@
 ## System Dependencies
 
 - C++20 compiler
-- Python 3.9+ (for Python API)
+- Python 3.10+ (for Python API)
 - R (for R API)
 - vcpkg (for dependency management)
 

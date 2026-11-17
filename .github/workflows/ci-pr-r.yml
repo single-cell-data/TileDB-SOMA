@@ -9,7 +9,7 @@ on:
       - 'apis/r/**'
       - '!**.md'
       - '.github/workflows/ci-pr-r.yml'
-      - '.github/workslows/test-r.yml'
+      - '.github/workflows/test-r.yml'
       - '.github/actions/setup-r/**'
       - ".github/workflows/build-cpp.yml"
   workflow_dispatch:

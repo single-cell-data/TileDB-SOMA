@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required to fetch tags: https://github.com/actions/checkout/issues/2199
           fetch-tags: true  # Tags used for Python package version.
@@ -56,7 +56,7 @@ jobs:
 
       - uses: ./.github/actions/setup-r
         with:
-            os: ${{ inputs.os }}}
+            os: ${{ inputs.os }}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
             extra-packages: any::rcmdcheck, any::nanoarrow
@@ -78,7 +78,7 @@ jobs:
     steps:
 
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download pre-built C++ library
         uses: actions/download-artifact@v8
@@ -90,7 +90,7 @@ jobs:
 
       - uses: ./.github/actions/setup-r
         with:
-            os: ${{ inputs.os }}}
+            os: ${{ inputs.os }}
             r: ${{ inputs.r }}
             http-user-agent: ${{ inputs.http-user-agent }}
             extra-packages: any::covr, any::xml2, any::nanoarrow
@@ -104,10 +104,6 @@ jobs:
             path = "apis/r",
             quiet = FALSE,
             clean = FALSE,
-            ine_exclusions = list(
-              nanoarrow_c = "apis/r/src/nanoarrow.c",
-              nanoarrow_h = "apis/r/src/nanoarrow.h"
-            ),
             install_path = file.path(
               normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"),
               "package"
@@ -118,7 +114,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           flags: r
           files: ./cobertura.xml

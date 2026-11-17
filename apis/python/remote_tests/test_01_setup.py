@@ -4,14 +4,12 @@
 from __future__ import annotations
 
 import os
-import sys
 
 import pytest
 import scanpy as sc
 
 import tiledbsoma
 import tiledbsoma.io
-import tiledb.cloud
 
 from .util import util_make_uri, util_tear_down_uri
 
@@ -63,18 +61,3 @@ def test_basic_write(conftest_context, conftest_namespace, conftest_default_s3_p
         assert exp.ms["RNA"].var.count == 32738
 
     util_tear_down_uri(readback_uri)
-
-
-@pytest.mark.skipif(
-    (sys.version_info.major, sys.version_info.minor) != (3, 9),
-    reason="As of 2025-02-05 UDFs require Python 3.9",
-)
-def test_remote_version(conftest_tiledb_cloud_login):
-    def remote_version():
-        import tiledbsoma
-
-        return {"tiledbsoma": tiledbsoma.__version__}
-
-    output = tiledb.cloud.udf.exec(remote_version)
-    assert "tiledbsoma" in output
-    assert output["tiledbsoma"].startswith("2.")
