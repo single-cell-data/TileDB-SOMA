@@ -11,7 +11,7 @@ show_error_codes = true
 ignore_missing_imports = true
 warn_unreachable = true
 strict = true
-python_version = 3.9
+python_version = 3.11
 
 [[tool.mypy.overrides]]
 module = "tiledbsoma._query_condition"
@@ -21,7 +21,7 @@ ignore_errors = true
 fix = true
 preview = true  # enables "beta" rules: https://docs.astral.sh/ruff/preview/
 exclude = ["*.cc"]
-target-version = "py39"
+target-version = "py311"
 line-length = 120
 
 [tool.ruff.lint]
