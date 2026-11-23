@@ -67,8 +67,8 @@ def test_experiment_reopen(tmp_path, soma_type):
         assert x1.tiledb_timestamp_ms == 3
     assert x1.closed
 
-    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
-    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.UTC)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.UTC)
     for _mode in ["r", "w"]:
         with tiledbsoma.open(uri, "r", tiledb_timestamp=ts1) as x1:
             x2 = x1.reopen("r", tiledb_timestamp=ts2)
@@ -81,7 +81,7 @@ def test_experiment_reopen(tmp_path, soma_type):
             x2 = x1.reopen("w", tiledb_timestamp=None)
             assert x1 is x1
             assert x1.mode == "w"
-            now = datetime.datetime.now(datetime.timezone.utc)
+            now = datetime.datetime.now(datetime.UTC)
             assert x1.tiledb_timestamp <= now
         assert x1.closed
 

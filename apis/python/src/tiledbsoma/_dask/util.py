@@ -8,18 +8,17 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from functools import cache
-from typing import Any, TypedDict, Union
+from typing import Any, TypeAlias, TypedDict, Union
 
 import numpy as np
 import pyarrow as pa
 from numpy import int64
 from numpy.typing import NDArray
-from typing_extensions import TypeAlias
 
 from tiledbsoma._core_options import SparseNDCoord, SparseNDCoords
 from tiledbsoma._soma_context import SOMAContext
 
-ChunkSize = Union[int, tuple[Union[int, None], int]]
+ChunkSize = Union[int, tuple[int | None, int]]
 JoinIDs: TypeAlias = NDArray[int64]
 
 

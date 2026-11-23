@@ -8,10 +8,8 @@ from __future__ import annotations
 
 import abc
 import itertools
-from collections.abc import MutableMapping
-from typing import Any, Callable, ClassVar, Final, TypeVar, cast, overload
-
-from typing_extensions import Self
+from collections.abc import Callable, MutableMapping
+from typing import Any, ClassVar, Final, Self, TypeVar, cast, overload
 
 from . import _funcs
 from . import pytiledbsoma as clib

@@ -79,7 +79,7 @@ def test_replace_timestamp():
     assert orig_ctx.timestamp_ms is None
     with pytest.warns(DeprecationWarning):
         ts_ctx = orig_ctx.replace(timestamp=1683817200000)
-    assert ts_ctx.timestamp == datetime.datetime(2023, 5, 11, 15, 0, tzinfo=datetime.timezone.utc)
+    assert ts_ctx.timestamp == datetime.datetime(2023, 5, 11, 15, 0, tzinfo=datetime.UTC)
     assert ts_ctx.timestamp_ms == 1683817200000
     with pytest.warns(DeprecationWarning):
         same_ts_ctx = ts_ctx.replace()  # replace nothing!

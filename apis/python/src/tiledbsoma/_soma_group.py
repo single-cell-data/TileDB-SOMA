@@ -4,12 +4,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from threading import Lock
-from typing import Any, Callable, Generic, TypeVar, cast
+from typing import Any, Generic, Self, TypeVar, cast
 
 import attrs
-from typing_extensions import Self
 
 from . import _tdb_handles
 

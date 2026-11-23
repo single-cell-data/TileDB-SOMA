@@ -9,10 +9,10 @@ from __future__ import annotations
 import enum
 import json
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Lock
-from typing import TYPE_CHECKING, Any, Callable, Literal, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Literal, Protocol, Self, TypeVar, Union
 
 import attrs
 import numpy as np
@@ -22,7 +22,7 @@ import pyarrow as pa
 import pyarrow.compute as pacomp
 import scipy.sparse as sp
 from anndata import AnnData
-from typing_extensions import Self, TypedDict
+from typing_extensions import TypedDict
 
 from ._axis import AxisQuery
 from ._collection import Collection

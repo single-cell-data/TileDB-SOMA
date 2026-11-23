@@ -7,14 +7,14 @@ from __future__ import annotations
 import datetime
 import enum
 import pathlib
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, get_args
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard, TypeVar, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typing_extensions import Literal, Protocol, TypeGuard
+from typing_extensions import Protocol
 
 StatusAndReason = tuple[bool, str]
 """Information for whether an upgrade-shape or resize would succeed

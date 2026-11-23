@@ -9,7 +9,8 @@ filtering query results on attribute values.
 from __future__ import annotations
 
 import ast
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any, Union
 
 import attrs
 import numpy as np

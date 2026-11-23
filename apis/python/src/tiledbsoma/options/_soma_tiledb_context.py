@@ -10,9 +10,7 @@ import time
 import warnings
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Literal, Optional, Union, cast
-
-from typing_extensions import Self
+from typing import Any, Literal, Self, Union, cast
 
 from tiledbsoma import pytiledbsoma as clib
 from tiledbsoma._soma_context import SOMAContext
@@ -42,7 +40,7 @@ def _check_tiledb_ctx() -> None:
 ConfigVal = Union[str, float]
 ConfigDict = dict[str, ConfigVal]
 ConfigMap = Mapping[str, ConfigVal]
-ReplaceConfig = dict[str, Optional[ConfigVal]]
+ReplaceConfig = dict[str, ConfigVal | None]
 """Replacing a value with ``None`` serves to delete that key."""
 
 

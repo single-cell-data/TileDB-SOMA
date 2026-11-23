@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import io
 import sys
-from typing import Any, Callable, TypeVar, Union, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, Union, cast
 
 import tiledbsoma
 from tiledbsoma._soma_object import SOMAObject

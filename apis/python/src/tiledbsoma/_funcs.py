@@ -5,10 +5,9 @@
 """Utilities and decorators around modifying functions."""
 
 import inspect
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from typing import (
     Any,
-    Callable,
     TypeVar,
 )
 

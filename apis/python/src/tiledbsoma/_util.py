@@ -249,7 +249,7 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
     range for a Python datetime.
     """
     secs, millis = divmod(millis, 1000)
-    dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
+    dt = datetime.datetime.fromtimestamp(secs, tz=datetime.UTC)
     return dt.replace(microsecond=millis * 1000)
 
 

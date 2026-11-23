@@ -5,11 +5,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, Optional, TypedDict, TypeVar, Union
+from typing import Any, Optional, Self, TypedDict, TypeVar, Union
 
 import attrs as attrs_  # We use the name `attrs` later.
 import attrs.validators as vld  # Short name because we use this a bunch.
-from typing_extensions import Self
 
 from tiledbsoma._core_options import PlatformConfig
 

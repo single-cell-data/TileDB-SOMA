@@ -9,12 +9,11 @@ import abc
 import collections.abc
 import itertools
 from collections.abc import Iterable, Sequence
-from typing import Union
+from typing import Self, Union
 
 import attrs
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import Self
 
 from ._types import str_or_seq_length, to_string_tuple
 

@@ -3,14 +3,13 @@
 # Licensed under the MIT License.
 from __future__ import annotations
 
-from typing import cast
+from typing import Self, cast
 
 import anndata as ad
 import attrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from typing_extensions import Self
 
 
 @attrs.define(kw_only=True, frozen=True)

@@ -7,10 +7,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
+from typing import Self, cast
 
 import pyarrow as pa
-from typing_extensions import Self
 
 from ._core_options import PlatformConfig
 from ._soma_array import SOMAArray

@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Sequence
-from typing import Any, Final, Literal, Union, cast
+from typing import Any, Final, Literal, Self, Union, cast
 
 import numpy as np
 import pyarrow as pa
-from typing_extensions import Self
 
 from . import _util
 from . import pytiledbsoma as clib

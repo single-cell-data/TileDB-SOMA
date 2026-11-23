@@ -47,7 +47,7 @@ try:
 except (AttributeError, ModuleNotFoundError):
     from anndata.experimental import CSCDataset
 
-from typing_extensions import get_args
+from typing import get_args
 
 from tiledbsoma import (
     Collection,

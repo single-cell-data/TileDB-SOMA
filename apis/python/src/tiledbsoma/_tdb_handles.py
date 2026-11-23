@@ -7,11 +7,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, MutableMapping, Sequence
-from typing import Any, TypeVar, Union
+from typing import Any, Self, TypeVar, Union
 
 import attrs
 import numpy as np
-from typing_extensions import Self
 
 from . import pytiledbsoma as clib
 from ._core_options import OpenMode

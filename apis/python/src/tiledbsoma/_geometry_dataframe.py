@@ -7,10 +7,9 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import Any, Final
+from typing import Any, Final, Self
 
 import pyarrow as pa
-from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib

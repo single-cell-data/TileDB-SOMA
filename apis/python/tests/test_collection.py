@@ -3,14 +3,13 @@ import os
 import pathlib
 import textwrap
 from itertools import repeat
-from typing import TypeVar, Union
+from typing import Literal, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
 from typeguard import suppress_type_checks
-from typing_extensions import Literal
 
 import tiledbsoma as soma
 from tiledbsoma import _collection, _factory, _soma_object

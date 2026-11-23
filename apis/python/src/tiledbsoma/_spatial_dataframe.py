@@ -7,10 +7,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Self
 
 import pyarrow as pa
-from typing_extensions import Self
 
 from ._coordinate_space import CoordinateSpace, CoordinateTransform
 from ._core_iters import ReadIter, SpatialRead

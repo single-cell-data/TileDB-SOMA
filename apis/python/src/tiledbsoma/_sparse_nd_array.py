@@ -7,11 +7,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Self
 
 import numpy as np
 import pyarrow as pa
-from typing_extensions import Self, Unpack
+from typing_extensions import Unpack
 
 from . import _util
 

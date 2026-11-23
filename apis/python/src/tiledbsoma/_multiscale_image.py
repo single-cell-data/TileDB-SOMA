@@ -8,11 +8,10 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
-from typing import Any, Final
+from typing import Any, Final, Self
 
 import attrs
 import pyarrow as pa
-from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib

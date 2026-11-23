@@ -7,9 +7,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import MutableMapping
 from contextlib import ExitStack
-from typing import Any, ClassVar
-
-from typing_extensions import LiteralString, Self
+from typing import Any, ClassVar, LiteralString, Self
 
 from . import _tdb_handles
 from . import pytiledbsoma as clib

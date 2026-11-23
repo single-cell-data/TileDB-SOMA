@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import warnings
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, Self, TypeAlias, cast
 
 import anndata as ad
 import attrs
@@ -16,7 +16,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typing_extensions import Self, TypeAlias
 
 import tiledbsoma
 import tiledbsoma.io

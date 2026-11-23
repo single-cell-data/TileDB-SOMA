@@ -2648,7 +2648,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         ],
     )
 
-    start = datetime.datetime(2021, 3, 10, 19, 0, tzinfo=datetime.timezone.utc)
+    start = datetime.datetime(2021, 3, 10, 19, 0, tzinfo=datetime.UTC)
     with soma.DataFrame.create(
         uri,
         schema=schema,
