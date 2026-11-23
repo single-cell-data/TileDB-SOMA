@@ -8,20 +8,19 @@ from __future__ import annotations
 import math
 import re
 from abc import abstractmethod
-from typing import Any, Literal, Protocol, Union
+from typing import Any, Literal, Protocol, TypeAlias
 
 import numpy as np
 import pyarrow as pa
 from hypothesis import strategies as st
 from hypothesis.stateful import RuleBasedStateMachine, invariant, precondition, rule
-from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
 from tiledbsoma._core_options import OpenMode
 
 from tests.ht._ledger import Ledger, PyDictLedgerEntry
 
-SOMAArray: TypeAlias = Union[soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray]
+SOMAArray: TypeAlias = soma.DataFrame | soma.SparseNDArray | soma.DenseNDArray
 
 
 class SOMAArrayStateMachine(RuleBasedStateMachine):

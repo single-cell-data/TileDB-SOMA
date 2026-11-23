@@ -10,7 +10,7 @@ import abc
 from collections.abc import Iterator, Sequence
 from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -45,14 +45,14 @@ BlockwiseTableReadIterResult = tuple[pa.Table, tuple[pa.Array, ...]]
 BlockwiseSingleAxisTableIter = Iterator[BlockwiseTableReadIterResult]
 
 BlockwiseScipyReadIterResult = tuple[
-    Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix],
+    sparse.csr_matrix | sparse.csc_matrix | sparse.coo_matrix,
     tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
 ]
 
 IndicesType = tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]
 IJDType = tuple[
     tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
-    npt.NDArray[Union[np.integer[Any], np.floating[Any]]],
+    npt.NDArray[np.integer[Any] | np.floating[Any]],
 ]
 
 

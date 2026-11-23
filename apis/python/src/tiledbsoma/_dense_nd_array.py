@@ -7,11 +7,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Final
+from typing import Final, Self
 
 import numpy as np
 import pyarrow as pa
-from typing_extensions import Self
 
 from . import _util
 from . import pytiledbsoma as clib

@@ -7,15 +7,15 @@ import io
 import sys
 import threading
 from collections import OrderedDict
-from typing import Any, Union, cast
+from typing import Any, TypeAlias, cast
 
 import attrs
 import pyarrow as pa
-from typing_extensions import Buffer, TypeAlias
+from typing_extensions import Buffer
 
 # typeguard and cython memoryview incompat in older versions
 if sys.version_info >= (3, 12):
-    WritableBuffer: TypeAlias = Union[memoryview, Buffer]
+    WritableBuffer: TypeAlias = memoryview | Buffer
 else:
     WritableBuffer: TypeAlias = Any
 

@@ -7,12 +7,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 import attrs
 import numpy as np
 import pyarrow as pa
-from typing_extensions import Self
 
 from . import pytiledbsoma as clib
 from ._core_options import DenseCoord, DenseNDCoords, SparseDFCoord, SparseDFCoords, SparseNDCoord, SparseNDCoords

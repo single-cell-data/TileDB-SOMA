@@ -6,9 +6,7 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal
-
-from typing_extensions import Self
+from typing import Literal, Self
 
 from . import pytiledbsoma as clib
 from ._types import DataProtocol

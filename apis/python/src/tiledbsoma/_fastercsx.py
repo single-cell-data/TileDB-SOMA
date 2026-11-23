@@ -7,19 +7,18 @@ from __future__ import annotations
 import collections.abc
 import math
 from collections.abc import Sequence
-from typing import Any, Literal, Union, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
 import scipy.sparse
-from typing_extensions import TypeAlias
 
 from ._soma_context import SOMAContext
 from .pytiledbsoma.fastercsx import compress_coo, copy_csx_to_dense, sort_csx_indices
 
 NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
-NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
+NDArrayNumber: TypeAlias = npt.NDArray[np.integer[Any] | np.floating[Any]]
 Format = Literal["csc", "csr"]
 
 

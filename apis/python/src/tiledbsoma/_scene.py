@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
-from typing import Any, ClassVar, Final, TypeVar, Union
-
-from typing_extensions import Self
+from typing import Any, ClassVar, Final, Self, TypeVar, Union
 
 from . import _funcs, _mixin
 from . import pytiledbsoma as clib

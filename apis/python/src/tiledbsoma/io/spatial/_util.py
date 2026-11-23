@@ -5,14 +5,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import h5py
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
 import pyarrow.compute as pacomp
-from typing_extensions import Self
 
 from tiledbsoma._exception import SOMAError
 

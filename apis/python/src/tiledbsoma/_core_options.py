@@ -11,14 +11,13 @@ from __future__ import annotations
 
 import enum
 from collections.abc import Mapping, Sequence
-from typing import Any, Final, TypeVar, Union
+from typing import Any, Final, Literal, TypeVar, Union
 
 import attrs
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
 import shapely
-from typing_extensions import Literal
 
 from ._types import Slice
 

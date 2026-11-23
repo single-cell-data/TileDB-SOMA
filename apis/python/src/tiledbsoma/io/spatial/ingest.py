@@ -14,14 +14,13 @@ import json
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TypeVar
+from typing import Self, TypeVar
 
 import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from typing_extensions import Self
 
 try:
     from PIL import Image

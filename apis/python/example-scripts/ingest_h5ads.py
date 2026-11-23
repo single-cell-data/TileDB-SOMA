@@ -62,10 +62,10 @@ import multiprocessing
 import os
 import pathlib
 import sys
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import Executor, Future, ProcessPoolExecutor
 from itertools import repeat
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 import anndata as ad
 

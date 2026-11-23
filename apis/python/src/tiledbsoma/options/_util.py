@@ -13,7 +13,7 @@ from tiledbsoma._core_options import PlatformConfig
 
 from ._tiledb_create_write_options import TileDBCreateOptions, _ColumnConfig, _DictFilterSpec
 
-_JSONFilter = Union[str, dict[str, Union[str, Union[int, float]]]]
+_JSONFilter = Union[str, dict[str, str | int | float]]
 _JSONFilterList = Union[str, list[_JSONFilter]]
 
 
@@ -127,6 +127,6 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
                 if option_name == "_type":
                     filter["name"] = filter_name
                 else:
-                    filter[convert_option_[filter_name][option_name]] = cast(Union[float, int], option_value)
+                    filter[convert_option_[filter_name][option_name]] = cast(float | int, option_value)
         filter_list.append(filter)
     return json.dumps(filter_list) if return_json else filter_list
